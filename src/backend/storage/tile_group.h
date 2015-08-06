@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_group.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_group.h
+//
+// Identification: src/backend/storage/tile_group.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -28,7 +28,7 @@ namespace storage {
 class AbstractTable;
 class TileGroupIterator;
 
-typedef std::map<oid_t, std::pair<oid_t, oid_t> > column_map_type;
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 /**
  * Represents a group of tiles logically horizontally contiguous.
@@ -51,8 +51,7 @@ class TileGroup {
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
             AbstractBackend *backend,
             const std::vector<catalog::Schema> &schemas,
-            const column_map_type& column_map,
-            int tuple_count);
+            const column_map_type &column_map, int tuple_count);
 
   ~TileGroup() {
     // clean up tiles
@@ -140,7 +139,7 @@ class TileGroup {
     return nullptr;
   }
 
-  const std::map<oid_t, std::pair<oid_t, oid_t> >& GetColumnMap() const {
+  const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
   }
 
@@ -205,7 +204,6 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
-
 };
 
 }  // End storage namespace

@@ -1,9 +1,14 @@
-/**
- * @brief Header for all plan nodes
- *
- * Copyright(c) 2015, CMU
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// nodes.h
+//
+// Identification: src/backend/planner/nodes.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

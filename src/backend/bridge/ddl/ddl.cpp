@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl.cpp
+//
+// Identification: src/backend/bridge/ddl/ddl.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <cassert>
 #include <iostream>
@@ -39,14 +39,12 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, 
-                         const char *queryString,
-                         Peloton_Status* status,
-                         TransactionId txn_id) {
+void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+                         Peloton_Status *status, TransactionId txn_id) {
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
-  static std::vector<Node*> parsetree_stack;
+  static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
@@ -103,12 +101,12 @@ void DDL::ProcessUtility(Node *parsetree,
     } break;
   }
 
-/*
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  std::cout << "Print db :: \n"<<*db << std::endl;
-  */
-
+  /*
+    auto& manager = catalog::Manager::GetInstance();
+    storage::Database* db =
+    manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+    std::cout << "Print db :: \n"<<*db << std::endl;
+    */
 }
 
 }  // namespace bridge

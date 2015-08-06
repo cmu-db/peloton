@@ -1,8 +1,14 @@
-/**
- * @brief Header for postgres ddl.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl.h
+//
+// Identification: src/backend/bridge/ddl/ddl.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -30,10 +36,8 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree, 
-                             const char *queryString,
-                             Peloton_Status* status,
-                             TransactionId txn_id);
+  static void ProcessUtility(Node *parsetree, const char *queryString,
+                             Peloton_Status *status, TransactionId txn_id);
 };
 
 }  // namespace bridge

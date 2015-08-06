@@ -1,8 +1,14 @@
-/**
- * @brief Header for postgres plan transformer.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper.h
+//
+// Identification: src/backend/bridge/dml/mapper/mapper.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -39,7 +45,7 @@ class PlanTransformer {
 
   static void PrintPlanState(const PlanState *plan_state);
 
-  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state){
+  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state) {
     return TransformPlan(plan_state, kDefaultOptions);
   }
 
@@ -53,16 +59,15 @@ class PlanTransformer {
   //======-----------------------------------
   class TransformOptions {
    public:
-    bool use_projInfo = true; // Use PlanState.projInfo or not
+    bool use_projInfo = true;  // Use PlanState.projInfo or not
     TransformOptions() = default;
-    TransformOptions(bool pi)
-      :use_projInfo(pi){}
+    TransformOptions(bool pi) : use_projInfo(pi) {}
   };
 
   static const TransformOptions kDefaultOptions;
 
   static planner::AbstractPlanNode *TransformPlan(
-      const PlanState *plan_state, const TransformOptions options );
+      const PlanState *plan_state, const TransformOptions options);
 
   //======---------------------------------------
   // MODIFY TABLE FAMILY
@@ -81,11 +86,15 @@ class PlanTransformer {
   // SCAN FAMILY
   //======---------------------------------------
   /*
-   * The ScanState.projInfo in ScanState may be processed in three possible ways:
-   * 1. It is stolen by the scan's parent. Then, options.use_projInfo should be false
+   * The ScanState.projInfo in ScanState may be processed in three possible
+   * ways:
+   * 1. It is stolen by the scan's parent. Then, options.use_projInfo should be
+   * false
    * and the transform methods will skip processing projInfo.
-   * 2. It is a pure direct map, which will be converted to a column list for AbstractScanNode.
-   * 3. It contains non-trivial projections. In this case, the transform methods will
+   * 2. It is a pure direct map, which will be converted to a column list for
+   * AbstractScanNode.
+   * 3. It contains non-trivial projections. In this case, the transform methods
+   * will
    * generate a projection plan node and put it on top of the scan node.
    */
   static planner::AbstractPlanNode *TransformSeqScan(
@@ -114,31 +123,30 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformLimit(
       const LimitState *plan_state);
+
   static planner::AbstractPlanNode *TransformResult(
       const ResultState *plan_state);
 
-
+  static planner::AbstractPlanNode *TransformAgg(const AggState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
-
-
 
   //========-----------------------------------------
   // Common utility functions for Scan's
   //========-----------------------------------------
-  static void GetGenericInfoFromScanState(planner::AbstractPlanNode*& parent,
-                                          expression::AbstractExpression*& predicate,
-                                          std::vector<oid_t>& out_col_list,
-                                          const ScanState* sstate,
-                                          bool use_projInfo = true);
+  static void GetGenericInfoFromScanState(
+      planner::AbstractPlanNode *&parent,
+      expression::AbstractExpression *&predicate,
+      std::vector<oid_t> &out_col_list, const ScanState *sstate,
+      bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
-  static expression::AbstractExpression* BuildPredicateFromQual(List* qual);
+  static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
-  static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
-
+  static const std::vector<oid_t> BuildColumnListFromDirectMap(
+      planner::ProjectInfo::DirectMapList dmlist);
 };
 
 }  // namespace bridge

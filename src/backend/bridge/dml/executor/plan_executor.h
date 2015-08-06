@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * plan_executor.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/plan_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// plan_executor.h
+//
+// Identification: src/backend/bridge/dml/executor/plan_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

@@ -1,8 +1,14 @@
-/**
- * @brief Implementation of logical tile factory.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// logical_tile_factory.cpp
+//
+// Identification: src/backend/executor/logical_tile_factory.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/logical_tile_factory.h"
 
@@ -117,7 +123,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
   std::vector<LogicalTile *> result;
 
   // Get the list of blocks
-  std::map<oid_t, std::vector<oid_t> > blocks;
+  std::map<oid_t, std::vector<oid_t>> blocks;
 
   for (auto tuple_location : tuple_locations) {
     blocks[tuple_location.block].push_back(tuple_location.offset);
@@ -129,8 +135,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     const bool own_base_tile = false;
     const int position_list_idx = 0;
 
-    auto& manager = catalog::Manager::GetInstance();
-    storage::TileGroup* tile_group = manager.GetTileGroup(block.first);
+    auto &manager = catalog::Manager::GetInstance();
+    storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
     // Add visible tuples to logical tile

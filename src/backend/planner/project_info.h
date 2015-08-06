@@ -1,8 +1,14 @@
-/*
- * project_info.h
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// project_info.h
+//
+// Identification: src/backend/planner/project_info.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -34,16 +40,16 @@ namespace planner {
  */
 class ProjectInfo {
  public:
-  ProjectInfo(ProjectInfo&) = delete;
-  ProjectInfo operator=(ProjectInfo&) = delete;
-  ProjectInfo(ProjectInfo&&) = delete;
-  ProjectInfo operator=(ProjectInfo&&) = delete;
+  ProjectInfo(ProjectInfo &) = delete;
+  ProjectInfo operator=(ProjectInfo &) = delete;
+  ProjectInfo(ProjectInfo &&) = delete;
+  ProjectInfo operator=(ProjectInfo &&) = delete;
 
   /**
    * @brief Generic specification of a projection target:
    *        < DEST_column_id , expression >
    */
-  typedef std::pair<oid_t, const expression::AbstractExpression*> Target;
+  typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
 
   typedef std::vector<Target> TargetList;
 
@@ -53,25 +59,25 @@ class ProjectInfo {
    *        <tuple_index (left or right tuple), OLD_col_id>
    *        >
    */
-  typedef std::pair<oid_t, std::pair<oid_t, oid_t> > DirectMap;
+  typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
   typedef std::vector<DirectMap> DirectMapList;
 
-  ProjectInfo(TargetList& tl, DirectMapList& dml)
+  ProjectInfo(TargetList &tl, DirectMapList &dml)
       : target_list_(tl), direct_map_list_(dml) {}
 
-  ProjectInfo(TargetList&& tl, DirectMapList&& dml)
+  ProjectInfo(TargetList &&tl, DirectMapList &&dml)
       : target_list_(tl), direct_map_list_(dml) {}
 
-  const TargetList& GetTargetList() const { return target_list_; }
+  const TargetList &GetTargetList() const { return target_list_; }
 
-  const DirectMapList& GetDirectMapList() const { return direct_map_list_; }
+  const DirectMapList &GetDirectMapList() const { return direct_map_list_; }
 
   bool isNonTrivial() const { return target_list_.size() > 0; };
 
-  bool Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
-                const AbstractTuple* tuple2,
-                executor::ExecutorContext* econtext) const;
+  bool Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
+                const AbstractTuple *tuple2,
+                executor::ExecutorContext *econtext) const;
 
   std::string Debug() const;
 
