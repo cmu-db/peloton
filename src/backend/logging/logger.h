@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/common/types.h"
-#include "backend/logging/logdefs.h"
 #include "backend/logging/logproxy.h"
 #include "backend/logging/logrecord.h"
 
@@ -37,7 +36,7 @@ class Logger{
     void log(LogRecord record);
 
   private:
-    LoggerId logger_id = INVALID_LOGGER_ID;
+    LoggerId logger_id = LOGGER_ID_INVALID;
 
     LogProxy *proxy;
 };

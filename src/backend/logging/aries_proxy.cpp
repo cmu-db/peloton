@@ -19,10 +19,10 @@ namespace peloton {
 namespace logging {
 
 void AriesProxy::logging_MainLoop() const{
-
   // TODO :: performance optimization
-  for(int i=0;i<50;i+=2){
-    sleep(2);
+  for(int i=0;i<50;i++){
+    sleep(5);
+    printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
     if( GetBufferSize() > buffer_size ) Flush();
   }
 }
@@ -32,8 +32,9 @@ void AriesProxy::logging_MainLoop() const{
  * @param log record 
  */
 void AriesProxy::log(LogRecord record) const{
-  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  aries_buffer_mutex.lock();
   aries_buffer.push_back(record);
+  aries_buffer_mutex.unlock();
 }
 
 /**
@@ -41,8 +42,10 @@ void AriesProxy::log(LogRecord record) const{
  * @return return the size of buffer
  */
 size_t AriesProxy::GetBufferSize() const{
-  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
-  return aries_buffer.size();
+  aries_buffer_mutex.lock();
+  size_t size = aries_buffer.size();
+  aries_buffer_mutex.unlock();
+  return size;
 }
 
 /**
@@ -50,10 +53,11 @@ size_t AriesProxy::GetBufferSize() const{
  * @brief flush all record, for now it's just printing out
  */
 void AriesProxy::Flush() const{
-  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  aries_buffer_mutex.lock();
   for( auto record : aries_buffer )
     std::cout << "record : " << record << std::endl;
   aries_buffer.clear();
+  aries_buffer_mutex.unlock();
 }
 
 }  // namespace logging

@@ -41,7 +41,6 @@ class LogManager{
     LogManager() {}
 
     // Default buffer size is 0, which means logger is 'LOG ONLY'
-    // not for running main loop
     void InitAriesLogger(oid_t buffer_size = 0 /* LOG ONLY */);
     void InitPelotonLogger(oid_t buffer_size = 0 /*LOG ONLY*/);
 
