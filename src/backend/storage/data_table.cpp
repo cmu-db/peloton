@@ -15,10 +15,10 @@
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
-
 #include "backend/common/exception.h"
-#include "backend/index/index.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
+#include "backend/logging/logmanager.h"
 
 namespace peloton {
 namespace storage {
@@ -162,6 +162,18 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+
+  // only log if we are writing to a physical table.
+  auto& logManager = logging::LogManager::GetInstance();
+  auto logger = logManager.GetAriesLogger();
+  const char* serialized_data = tuple->GetInfo().c_str();
+  logging::LogRecord record(LOGRECORD_TYPE_INSERT, 
+      bridge::Bridge::GetCurrentDatabaseOid(),
+      transaction,
+      // store the table oid or tuple group id ?? here ...
+      serialized_data,
+      strlen(serialized_data));
+  logger->log(record);
 
   return location;
 }
