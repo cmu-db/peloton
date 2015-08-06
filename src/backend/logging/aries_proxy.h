@@ -36,7 +36,8 @@ class AriesProxy : public LogProxy{
 
     // Default buffer size is 0, which means logger is 'LOG ONLY'
     // not for running main loop
-    AriesProxy(oid_t buffer_size = 0 /*LOG ONLY*/) 
+    // TODO :: file name 
+    AriesProxy(oid_t buffer_size = 0 /*LOG ONLY*/)  
     : buffer_size(buffer_size){}
 
     void logging_MainLoop(void) const;
