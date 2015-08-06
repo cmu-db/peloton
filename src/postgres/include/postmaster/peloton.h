@@ -51,8 +51,6 @@ typedef struct Peloton_MsgHdr
   BackendId m_backend_id;
   Oid   m_dbid;
   TransactionId m_txn_id;
-  MemoryContext m_top_transaction_context;
-  MemoryContext m_cur_transaction_context;
 } Peloton_MsgHdr;
 
 /* ----------

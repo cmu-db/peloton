@@ -97,9 +97,8 @@ static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
                               BackendId m_backend_id,
                               Oid MyDatabaseId,
-                              TransactionId txn_id,
-                              MemoryContext top_transaction_context,
-                              MemoryContext cur_transaction_context);
+                              TransactionId txn_id);
+
 static void peloton_send(void *msg, int len);
 
 static void peloton_process_dml(Peloton_MsgDML *msg);
@@ -771,14 +770,10 @@ peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
                   BackendId m_backend_id,
                   Oid MyDatabaseId,
-                  TransactionId txn_id,
-                  MemoryContext top_transaction_context,
-                  MemoryContext cur_transaction_context) {
+                  TransactionId txn_id) {
   hdr->m_type = mtype;
   hdr->m_backend_id = m_backend_id;
   hdr->m_dbid = MyDatabaseId;
-  hdr->m_top_transaction_context = top_transaction_context;
-  hdr->m_cur_transaction_context = cur_transaction_context;
   hdr->m_txn_id = txn_id;
 }
 
@@ -827,16 +822,12 @@ peloton_send_dml(Peloton_Status  *status,
 
   // Set header
   auto transaction_id = GetTopTransactionId();
-  auto top_transaction_context = TopTransactionContext;
-  auto cur_transaction_context = CurTransactionContext;
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DML,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id,
-                    top_transaction_context,
-                    cur_transaction_context);
+                    transaction_id);
 
   // Set msg-specific information
   msg.m_status = status;
@@ -868,16 +859,12 @@ peloton_send_ddl(Peloton_Status  *status,
 
   // Set header
   auto transaction_id = GetTopTransactionId();
-  auto top_transaction_context = TopTransactionContext;
-  auto cur_transaction_context = CurTransactionContext;
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DDL,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id,
-                    top_transaction_context,
-                    cur_transaction_context);
+                    transaction_id);
 
   // Set msg-specific information
   msg.m_status = status;
@@ -907,16 +894,12 @@ peloton_send_bootstrap(Peloton_Status  *status){
 
   // Set header
   auto transaction_id = GetTopTransactionId();
-  auto top_transaction_context = TopTransactionContext;
-  auto cur_transaction_context = CurTransactionContext;
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_BOOTSTRAP,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id,
-                    top_transaction_context,
-                    cur_transaction_context);
+                    transaction_id);
 
   // Set msg-specific information
   msg.m_status = status;
@@ -976,8 +959,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
-  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
-  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
 
   auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
@@ -1045,8 +1026,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
-  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
-  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
 
   queryString = msg->m_queryString;
@@ -1089,9 +1068,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
+  // This is required
   MyDatabaseId = msg->m_hdr.m_dbid;
-  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
-  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
   if(raw_database != NULL) {
     try {
