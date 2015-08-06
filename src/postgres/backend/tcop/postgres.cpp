@@ -78,6 +78,9 @@
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
+// TODO: Peloton Changes
+#include "backend/common/message_queue.h"
+
 /* ----------------
  *		global variables
  * ----------------
@@ -3720,7 +3723,8 @@ PostgresMain(int argc, char *argv[],
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
   // TODO :: Peloton Changes
-
+  auto queue_name = peloton::get_message_queue_name(MyBackendId);
+  MyBackendQueue = peloton::create_message_queue(queue_name);
 
   if(IsPostmasterEnvironment == true){
     StartTransactionCommand();

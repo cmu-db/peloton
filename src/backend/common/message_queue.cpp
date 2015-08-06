@@ -1,18 +1,31 @@
 
 
+#include <signal.h>
+
 #include "backend/common/message_queue.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 
+std::string get_message_queue_name(oid_t id) {
+  return std::string("/backend_" + std::to_string(id));
+}
+
+
 mqd_t create_message_queue(const std::string queue_name) {
-  int flags;
 
-  flags = O_CREAT | O_RDONLY | O_NONBLOCK;
-
-  mqd_t mqd = mq_open(queue_name.c_str(), flags, S_IRUSR | S_IWUSR, NULL);
+  mqd_t mqd = mq_open(queue_name.c_str(),
+                      O_CREAT | O_RDONLY | O_NONBLOCK,
+                      S_IRUSR | S_IWUSR,
+                      NULL);
   if (mqd == (mqd_t) -1) {
-    perror("mq_open during create");
+    LOG_ERROR("mq_open during create : %s pid : %d \n",
+              queue_name.c_str(), getpid());
+    return mqd;
   }
+
+  printf("CREATED QUEUE :: %s getpid : %d \n",
+         queue_name.c_str(), getpid());
 
   return mqd;
 }
@@ -34,10 +47,13 @@ void send_message(mqd_t mqd, const std::string message) {
 
   int prio = 0;
 
+  printf("TRYING TO SEND MESSAGE :: %s \n", message.c_str());
+
   if (mq_send(mqd, message.c_str(), message.size(), prio) == -1) {
     perror("mq_send");
   }
 
+  printf("SENT MESSAGE \n");
 }
 
 void receive_message(union sigval sv) {
@@ -46,7 +62,7 @@ void receive_message(union sigval sv) {
   void *buffer;
   struct mq_attr attr;
 
-  printf("HANDLER START \n");
+  printf("HANDLER START :: pid : %d \n", getpid());
 
   mqdp = (mqd_t *) sv.sival_ptr;
 
@@ -58,9 +74,6 @@ void receive_message(union sigval sv) {
   if (buffer == NULL)
     perror("malloc");
 
-  // Reregister for message notification
-  notify_message(mqdp);
-
   while ((numRead = mq_receive(*mqdp, (char *) buffer, attr.mq_msgsize, NULL)) >= 0)
     printf("Read %ld bytes\n", (long) numRead);
 
@@ -69,6 +82,8 @@ void receive_message(union sigval sv) {
 
   free(buffer);
   printf("HANDLER DONE \n");
+
+  kill(getpid(), SIGCONT);
 
   pthread_exit(NULL);
 }
@@ -96,9 +111,11 @@ void notify_message(mqd_t *mqdp)
 void wait_for_message(mqd_t *mqdp) {
   notify_message(mqdp);
 
-  printf("GOING TO PAUSE \n");
+  printf("GOING TO PAUSE :: pid : %d \n", getpid());
 
-  pause();                    /* Wait for notifications via thread function */
+  pause();
+
+  printf("FINISH PAUSE \n");
 }
 
 }  // End peloton namespace
