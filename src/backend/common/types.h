@@ -452,7 +452,7 @@ enum LoggerId{
 enum LogRecordType{
   LOGRECORD_TYPE_INVALID = 0, 
 
-  LOGRECORD_TYPE_INSERT  = 1
+  LOGRECORD_TYPE_INSERT_TUPLE  = 1
 };
 
 //===--------------------------------------------------------------------===//
@@ -540,6 +540,9 @@ PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
+
+std::string LogRecordTypeToString(LogRecordType type);
+LogRecordType StringToLogRecordType(std::string str);
 
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
