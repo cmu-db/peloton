@@ -115,6 +115,11 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_MERGEJOIN:
+      child_executor =
+          new executor::MergeJoinExecutor(plan, executor_context);
+      break;
+
     case PLAN_NODE_TYPE_PROJECTION:
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
@@ -177,6 +182,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
   executor::AbstractExecutor *new_root = root;
 
   switch (type) {
+    case PLAN_NODE_TYPE_MERGEJOIN:
     case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
