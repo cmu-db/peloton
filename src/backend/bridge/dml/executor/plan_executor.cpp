@@ -199,8 +199,9 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @return status of execution.
  */
 void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
-                               PlanState *planstate, TupleDesc tuple_desc,
-                               Peloton_Status *pstatus, TransactionId txn_id) {
+                               PlanState *planstate,
+                               Peloton_Status *pstatus,
+                               TransactionId txn_id) {
   assert(plan);
 
   bool status;
@@ -228,6 +229,10 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
+
+  // Get the tuple descriptor
+  auto result_tuple_slot = planstate->ps_ResultTupleSlot;
+  auto tuple_desc = result_tuple_slot->tts_tupleDescriptor;
 
   // Initialize the executor tree
   status = executor_tree->Init();
