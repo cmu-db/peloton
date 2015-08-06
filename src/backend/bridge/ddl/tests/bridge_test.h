@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * bridge_test.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/bridge/bridge_test.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// bridge_test.h
+//
+// Identification: src/backend/bridge/ddl/tests/bridge_test.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -38,10 +38,10 @@ namespace bridge {
 
 class BridgeTest {
  public:
-  BridgeTest(const BridgeTest&) = delete;
-  BridgeTest& operator=(const BridgeTest&) = delete;
-  BridgeTest(BridgeTest&&) = delete;
-  BridgeTest& operator=(BridgeTest&&) = delete;
+  BridgeTest(const BridgeTest &) = delete;
+  BridgeTest &operator=(const BridgeTest &) = delete;
+  BridgeTest(BridgeTest &&) = delete;
+  BridgeTest &operator=(BridgeTest &&) = delete;
 
   // Bridge Test Main Function
   static void RunTests();
@@ -95,20 +95,20 @@ class BridgeTest {
 
   static std::vector<catalog::Column> CreateSimpleColumns();
 
-  static bool CheckColumn(catalog::Column& column, std::string column_name,
+  static bool CheckColumn(catalog::Column &column, std::string column_name,
                           int length, ValueType type);
 
-  static bool CheckColumnWithConstraint(catalog::Column& column,
+  static bool CheckColumnWithConstraint(catalog::Column &column,
                                         ConstraintType constraint_type,
                                         std::string constraint_name,
                                         int constraint_count,
                                         int foreign_key_offset = -1);
 
-  static bool CheckIndex(index::Index* index, std::string index_name,
+  static bool CheckIndex(index::Index *index, std::string index_name,
                          oid_t column_count, IndexType method_type,
                          IndexConstraintType constraint_type, bool unique);
 
-  static bool CheckForeignKey(catalog::ForeignKey* foreign_key,
+  static bool CheckForeignKey(catalog::ForeignKey *foreign_key,
                               oid_t pktable_oid, std::string constraint_name,
                               int pk_column_names_count,
                               int fk_column_names_count, char fk_update_action,
@@ -121,7 +121,7 @@ class BridgeTest {
 
   static void CreateSampleForeignKey(oid_t pktable_oid,
                                      std::string pktable_name,
-                                     std::vector<catalog::Column>& columns,
+                                     std::vector<catalog::Column> &columns,
                                      oid_t table_oid);
 
   static oid_t CreateTableInPostgres(std::string table_name);

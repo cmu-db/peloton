@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* tuple_schema_test.cpp
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/test/tuple_schema_test.cpp
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_schema_test.cpp
+//
+// Identification: tests/catalog/tuple_schema_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 
