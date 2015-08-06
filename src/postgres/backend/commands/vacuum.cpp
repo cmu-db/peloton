@@ -50,6 +50,9 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+// TODO: Peloton Changes
+#include "backend/common/logger.h"
+
 
 /*
  * GUC parameters
@@ -150,6 +153,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 {
   // TODO :: Peloton Changes
   // Disabled vacuumming in Postgres
+  peloton::LOG_INFO("Postgres Vacuumming is disabled now");
   if(false){
 	const char *stmttype;
 	volatile bool in_outer_xact,
