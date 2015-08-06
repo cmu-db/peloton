@@ -30,6 +30,8 @@ class LogProxy{
 
     virtual void logging_MainLoop(void) const = 0;
 
+    virtual void flush(void) const = 0;
+
     virtual ~LogProxy() {}
  
 };

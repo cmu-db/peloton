@@ -32,13 +32,15 @@ public:
   LogRecord() = delete;
   LogRecord(LogRecordType log_record_type,
             const concurrency::Transaction *transaction,
-            // TODO :: tile group id or table id or tuple schema??
+            oid_t table_oid,
             const void* data) 
-  : log_record_type(log_record_type), transaction(transaction)
+  : log_record_type(log_record_type), transaction(transaction), table_oid(table_oid)
   {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
     database_oid = bridge::Bridge::GetCurrentDatabaseOid(),
     assert(database_oid != INVALID_OID);
+    assert(table_oid != INVALID_OID);
+    //TODO :: Maybe, we dont' need all information ...
     assert(transaction !=  nullptr);
     assert(SerializeData(data));
   }
@@ -50,6 +52,8 @@ public:
   LogRecordType GetType() const;
 
   oid_t GetDbOid() const;
+
+  oid_t GetTableOid() const;
 
   const concurrency::Transaction* GetTxn() const;
 
@@ -64,13 +68,17 @@ private:
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
+  const concurrency::Transaction *transaction;
+
   oid_t database_oid = INVALID_OID;
 
-  const concurrency::Transaction *transaction;
+  oid_t table_oid = INVALID_OID;
 
   char* serialized_data;
 
   size_t serialized_data_size;
+
+
 };
 
 }  // namespace logging

@@ -29,6 +29,15 @@ void Logger::log(LogRecord record){
   proxy->log(record);
 }
 
+/**
+ * @brief Run logging_MainLoop to receive log record and flush
+ */
+void Logger::flush(void){
+  proxy->flush();
+}
+
+
+
 }  // namespace logging
 }  // namespace peloton
 

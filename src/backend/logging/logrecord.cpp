@@ -59,6 +59,10 @@ oid_t LogRecord::GetDbOid() const{
   return database_oid;
 }
 
+oid_t LogRecord::GetTableOid() const{
+  return table_oid;
+}
+
 const concurrency::Transaction* LogRecord::GetTxn() const{
   return transaction;
 }
@@ -73,9 +77,10 @@ size_t LogRecord::GetDataSize() const{
 
 std::ostream& operator<<(std::ostream& os, const LogRecord& record) {
   os << "#LOG TYPE:" << LogRecordTypeToString(record.GetType());
-  os << "#DB OID:" << record.GetDbOid();
-  os << "#Txn ID:" << record.GetTxn()->GetTransactionId();
-  os << "#Serialized Data:" << record.GetData();
+  os << " #DB OID:" << record.GetDbOid();
+  os << " #TB OID:" << record.GetTableOid();
+  os << " #Txn ID:" << record.GetTxn()->GetTransactionId();
+  os << " #Serialized Data:" << record.GetData();
 
   return os;
 }
