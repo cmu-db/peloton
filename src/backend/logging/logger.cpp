@@ -33,7 +33,7 @@ void Logger::log(LogRecord record){
 /**
  * @brief Run flush
  */
-void Logger::flush(void){
+void Logger::checkpoint(void){
   proxy->flush();
 }
 

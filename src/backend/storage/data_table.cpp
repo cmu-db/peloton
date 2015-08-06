@@ -159,14 +159,13 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
 
-  // TODO : on going ..
   // only log if we are writing to a physical table.
   auto& logManager = logging::LogManager::GetInstance();
   auto logger = logManager.GetAriesLogger();
 
   logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
                             transaction,
-                            GetOid(),
+                            GetOid()/*table oid*/,
                             (void*)tuple);
   logger->log(record);
 
