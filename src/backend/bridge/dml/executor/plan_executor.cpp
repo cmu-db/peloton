@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * plan_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/plan_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// plan_executor.cpp
+//
+// Identification: src/backend/bridge/dml/executor/plan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "plan_executor.h"
 #include <cassert>
@@ -18,7 +18,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple_iterator.h"
 
 #include "access/tupdesc.h"
 #include "nodes/print.h"
@@ -111,7 +111,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
+      child_executor =
+          new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
@@ -119,7 +120,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_MATERIALIZE:
-      child_executor = new executor::MaterializationExecutor(plan, executor_context);
+      child_executor =
+          new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     default:
@@ -178,7 +180,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-      /* FALL THRU */
+    /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr, nullptr);
       new_root->AddChild(root);
@@ -258,7 +260,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Get result base tile and iterate over it
     auto base_tile = tile.get()->GetBaseTile(0);
     assert(base_tile);
-    storage::TileIterator tile_itr(base_tile);
+    storage::TupleIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
     // Switch to TopSharedMemoryContext to construct list and slots
@@ -269,7 +271,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-//        print_slot(slot);
+        //        print_slot(slot);
       }
     }
 
@@ -280,15 +282,16 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Set the result
   pstatus->m_result_slots = slots;
 
-  // final cleanup
-  cleanup:
+// final cleanup
+cleanup:
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
-    switch(status) {
+    switch (status) {
       case Result::RESULT_SUCCESS:
-        LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(), txn->GetCommitId());
+        LOG_INFO("Committing txn_id : %lu , cid : %lu\n",
+                 txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
 
@@ -296,8 +299,9 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(), txn->GetCommitId());
-        //Abort
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
+                 txn->GetCommitId());
+        // Abort
         txn_manager.AbortTransaction(txn);
     }
   }

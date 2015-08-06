@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * schema_transformaer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/tuple_schema.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// schema_transformer.h
+//
+// Identification: src/backend/bridge/ddl/schema_transformer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -25,15 +25,14 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class SchemaTransformer {
-public:
+ public:
   SchemaTransformer(const SchemaTransformer &) = delete;
   SchemaTransformer &operator=(const SchemaTransformer &) = delete;
   SchemaTransformer(SchemaTransformer &&) = delete;
   SchemaTransformer &operator=(SchemaTransformer &&) = delete;
 
-  static catalog::Schema* GetSchemaFromTupleDesc(TupleDesc tupleDesc);
+  static catalog::Schema *GetSchemaFromTupleDesc(TupleDesc tupleDesc);
 };
 
 }  // End bridge namespace
 }  // End peloton namespace
-

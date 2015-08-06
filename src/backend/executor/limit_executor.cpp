@@ -1,8 +1,14 @@
-/**
- * @brief Executor for Limit node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// limit_executor.cpp
+//
+// Identification: src/backend/executor/limit_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/limit_executor.h"
 
