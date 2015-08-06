@@ -32,7 +32,8 @@ public:
   LogRecord(LogRecordType log_record_type,
             oid_t database_oid,
             const concurrency::Transaction *transaction,
-            char* serialized_data,
+            // tile group id or table id ...
+            const char* serialized_data,
             size_t serialized_data_size) 
   : log_record_type(log_record_type),
     database_oid(database_oid),
@@ -42,11 +43,10 @@ public:
     {
       assert(log_record_type != LOGRECORD_TYPE_INVALID);
       assert(database_oid != INVALID_OID);
+      assert(transaction !=  nullptr);
       assert(serialized_data != nullptr); 
       assert(serialized_data_size > 0); 
-      // make a buffer as much as given data size 
-      // memcpy 
-    } ;
+    };
 
   LogRecordType GetType() const;
 
@@ -54,7 +54,7 @@ public:
 
   const concurrency::Transaction* GetTxn() const;
 
-  char* GetData() const;
+  const char* GetData() const;
 
   size_t GetDataSize() const;
 
@@ -67,10 +67,9 @@ private:
 
   const concurrency::Transaction *transaction;
 
-  char* serialized_data;
+  const char* serialized_data;
 
   size_t serialized_data_size;
-
 };
 
 }  // namespace logging

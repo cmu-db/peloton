@@ -29,7 +29,7 @@ const concurrency::Transaction* LogRecord::GetTxn() const{
   return transaction;
 }
 
-char* LogRecord::GetData() const{
+const char* LogRecord::GetData() const{
   return serialized_data;
 }
 
@@ -40,7 +40,7 @@ size_t LogRecord::GetDataSize() const{
 std::ostream& operator<<(std::ostream& os, const LogRecord& record) {
   os << "LOG TYPE (" << record.GetType() << ")\n";
   os << "DB OID (" << record.GetDbOid() << ") \n";
-  os << "GetData (" << record.GetData() << ") \n";
+  os << "Serialized Data (" << record.GetData() << ") \n";
 
   return os;
 }
