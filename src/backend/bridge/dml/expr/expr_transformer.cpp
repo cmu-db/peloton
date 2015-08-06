@@ -372,5 +372,10 @@ expression::AbstractExpression* ReMapPgFunc(
   return nullptr;
 }
 
+expression::AbstractExpression* ExprTransformer::TranformMergeJoinClauses(const MergeJoinClause *join_clauses,
+                                                                          const int num_clauses) {
+
+}
+
 }  // namespace bridge
 }  // namespace peloton
