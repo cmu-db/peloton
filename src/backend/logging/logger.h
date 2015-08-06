@@ -35,7 +35,7 @@ class Logger{
 
     void log(LogRecord record);
 
-    void flush(void);
+    void checkpoint(void);
 
   private:
     LoggerId logger_id = LOGGER_ID_INVALID;
