@@ -6,6 +6,7 @@
 #include "backend/common/logger.h"
 
 #define NOTIFY_SIG SIGUSR1
+#define MAX_MESSAGE_SIZE 8192
 
 namespace peloton {
 
@@ -63,7 +64,7 @@ handler(int sig)
 
 void receive_message(mqd_t *mqdp) {
   ssize_t chars_read;
-  void *buffer;
+  char buffer[MAX_MESSAGE_SIZE];
   struct mq_attr attr;
   LOG_TRACE("HANDLER :: pid : %d \n", getpid());
 
@@ -71,17 +72,11 @@ void receive_message(mqd_t *mqdp) {
   if (mq_getattr(*mqdp, &attr) == -1)
     perror("mq_getattr");
 
-  buffer = malloc(attr.mq_msgsize);
-  if (buffer == NULL)
-    perror("malloc");
-
-  while ((chars_read = mq_receive(*mqdp, (char *) buffer, attr.mq_msgsize, NULL)) >= 0)
+  while ((chars_read = mq_receive(*mqdp, buffer, MAX_MESSAGE_SIZE, NULL)) >= 0)
     LOG_TRACE("Read %ld bytes\n", (long) chars_read);
 
   if (errno != EAGAIN)  // Unexpected error
     perror("mq_receive");
-
-  free(buffer);
 }
 
 
