@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/logdefs.h"
 #include "backend/logging/logmanager.h"
 #include "backend/logging/logproxy.h"
 #include "backend/logging/aries_proxy.h"
