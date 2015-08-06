@@ -23,6 +23,8 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 
+// TODO: Peloton Changes
+#include "backend/common/message_queue.h"
 
 ProtocolVersion FrontendProtocol;
 
@@ -69,6 +71,8 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 #endif
 
 BackendId	MyBackendId = InvalidBackendId;
+
+mqd_t MyBackendQueue = InvalidBackendId;
 
 thread_local Oid  MyDatabaseId = InvalidOid;
 
