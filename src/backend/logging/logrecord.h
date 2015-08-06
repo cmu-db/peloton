@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/concurrency/transaction.h"
 
 #include <mutex>
 #include <vector>
@@ -28,18 +29,47 @@ class LogRecord{
 
 public:
   LogRecord() = delete;
-  LogRecord(LogType log_type, oid_t database_oid) 
-  : log_type(log_type), database_oid(database_oid) {} ;
+  LogRecord(LogRecordType log_record_type,
+            oid_t database_oid,
+            const concurrency::Transaction *transaction,
+            char* serialized_data,
+            size_t serialized_data_size) 
+  : log_record_type(log_record_type),
+    database_oid(database_oid),
+    transaction(transaction),
+    serialized_data(serialized_data),
+    serialized_data_size(serialized_data_size)
+    {
+      assert(log_record_type != LOGRECORD_TYPE_INVALID);
+      assert(database_oid != INVALID_OID);
+      assert(serialized_data != nullptr); 
+      assert(serialized_data_size > 0); 
+      // make a buffer as much as given data size 
+      // memcpy 
+    } ;
+
+  LogRecordType GetType() const;
 
   oid_t GetDbOid() const;
 
-  LogType GetType() const;
+  const concurrency::Transaction* GetTxn() const;
+
+  char* GetData() const;
+
+  size_t GetDataSize() const;
 
   friend std::ostream &operator<<(std::ostream &os, const LogRecord& record);
 
 private:
-  LogType log_type = LOG_TYPE_INVALID;
+  LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
+
   oid_t database_oid = INVALID_OID;
+
+  const concurrency::Transaction *transaction;
+
+  char* serialized_data;
+
+  size_t serialized_data_size;
 
 };
 
