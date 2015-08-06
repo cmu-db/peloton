@@ -91,8 +91,8 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
   if (database == nullptr) {
     storage::Database *db = new storage::Database(database_oid);
     manager.AddDatabase(db);
-  } else {
-    LOG_WARN("Database(%u) is already existed!!", database_oid);
+  }else {
+    LOG_TRACE("Database(%u) already exists!!", database_oid);
     return false;
   }
 
