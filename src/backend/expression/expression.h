@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expressions.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/expressions.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// expression.h
+//
+// Identification: src/backend/expression/expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

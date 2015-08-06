@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * executors.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/executors.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// executors.h
+//
+// Identification: src/backend/executor/executors.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

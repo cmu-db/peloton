@@ -1,8 +1,14 @@
-/**
- * @brief Header for postgres bridge.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// bridge.h
+//
+// Identification: src/backend/bridge/ddl/bridge.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -39,8 +45,6 @@ class Bridge {
 
   static Oid GetCurrentDatabaseOid(void);
 
-  static void GetDbInfo(void);
-
   static void GetDatabaseList(void);
 
   static void GetTableList(bool catalog_only);
@@ -60,7 +64,6 @@ class Bridge {
   static void PelotonCommitTransactionCommand();
 
   static void SetCurrentResourceOwner();
-
 };
 
 }  // namespace bridge

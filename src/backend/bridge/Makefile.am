@@ -15,6 +15,7 @@ bridge_FILES = \
 			   backend/bridge/ddl/bootstrap.cpp \
 			   backend/bridge/ddl/bootstrap_utils.cpp \
 			   backend/bridge/ddl/schema_transformer.cpp \
+			   backend/bridge/ddl/format_transformer.cpp \
 			   backend/bridge/ddl/tests/bridge_test_main.cpp \
 			   backend/bridge/ddl/tests/bridge_test_helper.cpp \
 			   backend/bridge/ddl/tests/bridge_test_database.cpp \
@@ -29,6 +30,7 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \
 			   backend/bridge/dml/mapper/mapper_lock_rows.cpp \
 			   backend/bridge/dml/mapper/mapper_materialization.cpp \
+			   backend/bridge/dml/mapper/mapper_agg.cpp \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
 			   backend/bridge/dml/tuple/tuple_transformer.cpp \
 			   backend/bridge/dml/executor/plan_executor.cpp \

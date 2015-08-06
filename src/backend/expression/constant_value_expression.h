@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// constant_value_expression.h
+//
+// Identification: src/backend/expression/constant_value_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -20,7 +31,7 @@ class SerializeOutput;
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const Value &cvalue)
- : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
     /**
      * A deep copy is desired here because we don't know
      * if the expression will live longer than the passed value
