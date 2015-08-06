@@ -163,16 +163,16 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
 
+  // TODO : on going ..
   // only log if we are writing to a physical table.
+
   auto& logManager = logging::LogManager::GetInstance();
   auto logger = logManager.GetAriesLogger();
-  const char* serialized_data = tuple->GetInfo().c_str();
-  logging::LogRecord record(LOGRECORD_TYPE_INSERT, 
-      bridge::Bridge::GetCurrentDatabaseOid(),
-      transaction,
-      // store the table oid or tuple group id ?? here ...
-      serialized_data,
-      strlen(serialized_data));
+
+  logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
+                            transaction,
+                            // store the table oid or tuple group id ?? here ...
+                            (void*)tuple);
   logger->log(record);
 
   return location;

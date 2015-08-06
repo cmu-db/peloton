@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/concurrency/transaction.h"
 
 #include <mutex>
@@ -30,23 +31,21 @@ class LogRecord{
 public:
   LogRecord() = delete;
   LogRecord(LogRecordType log_record_type,
-            oid_t database_oid,
             const concurrency::Transaction *transaction,
-            // tile group id or table id ...
-            const char* serialized_data,
-            size_t serialized_data_size) 
-  : log_record_type(log_record_type),
-    database_oid(database_oid),
-    transaction(transaction),
-    serialized_data(serialized_data),
-    serialized_data_size(serialized_data_size)
-    {
-      assert(log_record_type != LOGRECORD_TYPE_INVALID);
-      assert(database_oid != INVALID_OID);
-      assert(transaction !=  nullptr);
-      assert(serialized_data != nullptr); 
-      assert(serialized_data_size > 0); 
-    };
+            // TODO :: tile group id or table id or tuple schema??
+            const void* data) 
+  : log_record_type(log_record_type), transaction(transaction)
+  {
+    assert(log_record_type != LOGRECORD_TYPE_INVALID);
+    database_oid = bridge::Bridge::GetCurrentDatabaseOid(),
+    assert(database_oid != INVALID_OID);
+    assert(transaction !=  nullptr);
+    assert(SerializeData(data));
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Accessor
+  //===--------------------------------------------------------------------===//
 
   LogRecordType GetType() const;
 
@@ -61,13 +60,15 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const LogRecord& record);
 
 private:
+  bool SerializeData(const void* data);
+
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
   oid_t database_oid = INVALID_OID;
 
   const concurrency::Transaction *transaction;
 
-  const char* serialized_data;
+  char* serialized_data;
 
   size_t serialized_data_size;
 };
