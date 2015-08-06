@@ -38,7 +38,7 @@ class BootstrapUtils {
 
   static void CopyRawForeignkeys(
       raw_database_info *raw_database,
-      std::vector<raw_foreignkey_info *> raw_foreignkeys);
+      std::vector<raw_foreign_key_info *> raw_foreignkeys);
 
   static char *CopyString(const char *string);
 
@@ -53,7 +53,7 @@ class BootstrapUtils {
 
   static void PrintRawIndexes(raw_index_info **raw_indexes, oid_t index_count);
 
-  static void PrintRawForeignkeys(raw_foreignkey_info **raw_foreignkeys,
+  static void PrintRawForeignkeys(raw_foreign_key_info **raw_foreignkeys,
                                   oid_t foreignkey_count);
 
   static void PrintRawTable(raw_table_info *raw_table);

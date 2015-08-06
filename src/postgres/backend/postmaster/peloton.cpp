@@ -1122,8 +1122,8 @@ peloton_process_status(Peloton_Status *status) {
   code = status->m_result;
   switch(code) {
     case peloton::RESULT_SUCCESS: {
-      // check dirty bit
-      if( status->m_dirty_count ){
+      // check dirty bit to see if we need to update stats
+      if(status->m_dirty_count){
         peloton_update_stats(status);
       }
     }
@@ -1186,14 +1186,19 @@ peloton_update_stats(Peloton_Status *status) {
 
   int dirty_table_count = status->m_dirty_count;
 
+  // Go over each dirty table and update stats
+  // This is executed with Backend
   for(int table_itr=0; table_itr<dirty_table_count; table_itr++){
     auto dirty_table = status->m_dirty_tables[table_itr];
-    peloton::bridge::Bridge::SetNumberOfTuples(dirty_table->table_oid, dirty_table->number_of_tuples);
+    peloton::bridge::Bridge::SetNumberOfTuples(dirty_table->table_oid,
+                                               dirty_table->number_of_tuples);
 
     int dirty_index_count = dirty_table->dirty_index_count;
+    // Go over each index within the table
     for(int index_itr=0; index_itr<dirty_index_count; index_itr++){
       auto dirty_index = dirty_table->dirty_indexes[index_itr];
-      peloton::bridge::Bridge::SetNumberOfTuples(dirty_index->index_oid, dirty_index->number_of_tuples);
+      peloton::bridge::Bridge::SetNumberOfTuples(dirty_index->index_oid,
+                                                 dirty_index->number_of_tuples);
     }
 
   }
