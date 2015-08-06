@@ -23,7 +23,7 @@ void PelotonProxy::logging_MainLoop() const{
   // TODO :: performance optimization
   for(int i=0;i<50;i+=2){
     sleep(2);
-    if( GetBufferSize() > 2 ) Flush();
+    if( GetBufferSize() > 2 ) flush();
   }
 }
 
@@ -37,7 +37,7 @@ size_t PelotonProxy::GetBufferSize() const{
   return peloton_buffer.size();
 }
 
-void PelotonProxy::Flush() const{
+void PelotonProxy::flush() const{
   std::lock_guard<std::mutex> lock(peloton_buffer_mutex);
   for( auto record : peloton_buffer )
     std::cout << "record : " << record << std::endl;

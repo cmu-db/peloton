@@ -161,13 +161,12 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 
   // TODO : on going ..
   // only log if we are writing to a physical table.
-
   auto& logManager = logging::LogManager::GetInstance();
   auto logger = logManager.GetAriesLogger();
 
   logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
                             transaction,
-                            // store the table oid or tuple group id ?? here ...
+                            GetOid(),
                             (void*)tuple);
   logger->log(record);
 
