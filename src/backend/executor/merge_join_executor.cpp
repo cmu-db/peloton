@@ -29,6 +29,7 @@ namespace executor {
 MergeJoinExecutor::MergeJoinExecutor(planner::AbstractPlanNode *node,
                                      ExecutorContext *executor_context)
     : AbstractJoinExecutor(node, executor_context) {
+  join_clause_ = nullptr;
 }
 
 bool MergeJoinExecutor::DInit() {
@@ -39,6 +40,8 @@ bool MergeJoinExecutor::DInit() {
   const planner::MergeJoinNode &node = GetPlanNode<planner::MergeJoinNode>();
 
   join_clause_ = node.GetJoinClauses();
+
+  if (join_clause_ == nullptr) return false;
 
   return true;
 }
@@ -51,7 +54,6 @@ bool MergeJoinExecutor::DInit() {
 bool MergeJoinExecutor::DExecute() {
   LOG_TRACE("********** Merge Join executor :: 2 children \n");
 
-  bool right_scan_end = false;
   // Try to get next tile from RIGHT child
   if (children_[1]->Execute() == false) {
     LOG_ERROR("Did not get right tile \n");
@@ -108,8 +110,8 @@ bool MergeJoinExecutor::DExecute() {
   assert(right_tile_column_count > 0);
 
   // Compute output tile row count
-  size_t left_tile_row_count = left_tile_position_lists[0].size();
-  size_t right_tile_row_count = right_tile_position_lists[0].size();
+  //size_t left_tile_row_count = left_tile_position_lists[0].size();
+  //size_t right_tile_row_count = right_tile_position_lists[0].size();
 
   // Construct position lists for output tile
   std::vector<std::vector<oid_t> > position_lists;
@@ -140,7 +142,7 @@ bool MergeJoinExecutor::DExecute() {
     bool equal = false;
 
     // try to match the join clauses
-    for (auto &clause : join_clause_) {
+    for (auto &clause : *join_clause_) {
       auto left_value = clause.left_.get()->Evaluate(&left_tuple, &right_tuple,
                                                      nullptr);
       auto right_value = clause.right_.get()->Evaluate(&left_tuple,
@@ -259,7 +261,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
                                                                  this_row);
     expression::ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
 
-    for (auto &clause : join_clause_) {
+    for (auto &clause : *join_clause_) {
       // Go thru each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
       peloton::Value this_value = expr->Evaluate(&this_tuple, &this_tuple,
