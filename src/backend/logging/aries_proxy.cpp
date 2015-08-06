@@ -23,7 +23,7 @@ void AriesProxy::logging_MainLoop() const{
   for(int i=0;i<50;i++){
     sleep(5);
     printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
-    if( GetBufferSize() > buffer_size ) Flush();
+    if( GetBufferSize() >= buffer_size ) Flush();
   }
 }
 
