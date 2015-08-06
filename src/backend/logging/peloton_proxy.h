@@ -43,13 +43,13 @@ class PelotonProxy : public LogProxy{
 
     void log(LogRecord records) const;
 
+    void flush() const;
+
   private:
     oid_t buffer_size;
 
     size_t GetBufferSize() const;
 
-    void Flush() const;
- 
 };
 
 }  // namespace logging

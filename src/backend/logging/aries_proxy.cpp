@@ -23,7 +23,7 @@ void AriesProxy::logging_MainLoop() const{
   for(int i=0;i<50;i++){
     sleep(5);
     //printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
-    if( GetBufferSize() >= buffer_size ) Flush();
+    if( GetBufferSize() >= buffer_size ) flush();
   }
 }
 
@@ -49,7 +49,7 @@ size_t AriesProxy::GetBufferSize() const{
  * TODO :: it should flush the log into file .. and mark the commit the end of the log file
  * @brief flush all record, for now it's just printing out
  */
-void AriesProxy::Flush() const{
+void AriesProxy::flush() const{
   std::lock_guard<std::mutex> lock(aries_buffer_mutex);
   std::cout << "\n::StartFlush::\n";
   for( auto record : aries_buffer )
