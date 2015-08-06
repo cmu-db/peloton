@@ -42,11 +42,13 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     const PlanState *plan_state, const TransformOptions options) {
+
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
   // Ignore empty plans
-  if (plan == nullptr) return nullptr;
+  if (plan == nullptr)
+    return nullptr;
 
   planner::AbstractPlanNode *plan_node = nullptr;
 
@@ -93,6 +95,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformMaterialization(
           reinterpret_cast<const MaterialState *>(plan_state));
       break;
+
+    case T_Agg:
+      plan_node = PlanTransformer::TransformAgg(
+          reinterpret_cast<const AggState*>(plan_state));
+          /* no break */
+
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
                 nodeTag(plan_state), nodeTag(plan));
@@ -108,7 +116,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
  * @brief Recursively destroy the nodes in a plan node tree.
  */
 bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode *root) {
-  if (!root) return false;
+  if (!root)
+    return false;
 
   // Clean all children subtrees
   auto children = root->GetChildren();
