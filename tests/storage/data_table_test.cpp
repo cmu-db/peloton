@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * data_table_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/storage/data_table_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// data_table_test.cpp
+//
+// Identification: tests/storage/data_table_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 

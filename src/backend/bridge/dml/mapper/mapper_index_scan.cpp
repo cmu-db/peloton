@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_index_scan.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_index_scan.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper_index_scan.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_index_scan.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/index_scan_node.h"
@@ -49,12 +49,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan = reinterpret_cast<IndexScan *>(iss_plan_state->ss
-      .ps.plan);
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(iss_plan_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable *>(catalog::Manager::GetInstance()
-          .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
 
@@ -66,7 +65,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
-  //assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", iss_plan_state->iss_NumScanKeys);
@@ -77,17 +76,17 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode* parent = nullptr;
-  expression::AbstractExpression* predicate = nullptr;
+  planner::AbstractPlanNode *parent = nullptr;
+  expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
   GetGenericInfoFromScanState(parent, predicate, column_ids,
                               &(iss_plan_state->ss), options.use_projInfo);
 
-  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table,
-                                              index_scan_desc);
+  auto scan_node =
+      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode* rv = nullptr;
+  planner::AbstractPlanNode *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -116,17 +115,26 @@ static void BuildScanKey(
   assert(num_keys > 0);
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
-    assert(!(scan_key->sk_flags & SK_ISNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ORDER_BY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_UNARY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_HEADER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_MEMBER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_END));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_SEARCHNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));  // currently, only support simple case
-    Value value = TupleTransformer::GetValue(scan_key->sk_argument,
-                                             scan_key->sk_subtype);
-    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
+    assert(!(scan_key->sk_flags &
+             SK_ISNULL));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ORDER_BY));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_UNARY));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_HEADER));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_MEMBER));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_END));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_SEARCHNULL));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_SEARCHNOTNULL));  // currently, only support simple case
+    Value value =
+        TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno -
+                                             1);  // 1 indexed
 
     index_scan_desc.values.push_back(value);
     std::ostringstream oss;
@@ -135,32 +143,37 @@ static void BuildScanKey(
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
         LOG_INFO("key < %s", oss.str().c_str());
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
         break;
       case BTLessEqualStrategyNumber:
         LOG_INFO("key <= %s", oss.str().c_str());
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
         break;
       case BTEqualStrategyNumber:
         LOG_INFO("key = %s", oss.str().c_str());
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
         break;
       case BTGreaterEqualStrategyNumber:
         LOG_INFO("key >= %s", oss.str().c_str());
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
         break;
       case BTGreaterStrategyNumber:
         LOG_INFO("key > %s", oss.str().c_str());
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
         break;
       default:
         LOG_ERROR("Invalid strategy num %d", scan_key->sk_strategy);
-        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_INVALID);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_INVALID);
         break;
     }
   }
 }
-
 
 /**
  * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
@@ -185,12 +198,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan = reinterpret_cast<IndexScan *>(ioss_plan_state->ss
-      .ps.plan);
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(ioss_plan_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable *>(catalog::Manager::GetInstance()
-          .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
 
@@ -202,7 +214,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
-  //assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", ioss_plan_state->ioss_NumScanKeys);
@@ -213,17 +225,17 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode* parent = nullptr;
-  expression::AbstractExpression* predicate = nullptr;
+  planner::AbstractPlanNode *parent = nullptr;
+  expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
   GetGenericInfoFromScanState(parent, predicate, column_ids,
                               &(ioss_plan_state->ss), options.use_projInfo);
 
-  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table,
-                                              index_scan_desc);
+  auto scan_node =
+      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode* rv = nullptr;
+  planner::AbstractPlanNode *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -251,18 +263,18 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
 
-  assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);  // only support a bitmap index scan at lower
-                                                                               // level
+  assert(nodeTag(outerPlanState(bhss_plan_state)) ==
+         T_BitmapIndexScanState);  // only support a bitmap index scan at lower
+                                   // level
 
   const BitmapIndexScanState *biss_state =
-      reinterpret_cast<const BitmapIndexScanState *>(outerPlanState(
-          bhss_plan_state));
+      reinterpret_cast<const BitmapIndexScanState *>(
+          outerPlanState(bhss_plan_state));
   const BitmapIndexScan *biss_plan =
       reinterpret_cast<const BitmapIndexScan *>(biss_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable *>(catalog::Manager::GetInstance()
-          .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
   LOG_INFO("Scan from: database oid %u table oid %u", database_oid, table_oid);
@@ -270,12 +282,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
 
-  if(nullptr == index_scan_desc.index){
+  if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Can't find Index oid %u \n", biss_plan->indexid);
   }
   LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
            biss_plan->indexid, index_scan_desc.index->GetName().c_str());
-
 
   assert(index_scan_desc.index);
 
@@ -292,17 +303,17 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode* parent = nullptr;
-  expression::AbstractExpression* predicate = nullptr;
+  planner::AbstractPlanNode *parent = nullptr;
+  expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
   GetGenericInfoFromScanState(parent, predicate, column_ids,
                               &(bhss_plan_state->ss), options.use_projInfo);
 
-  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table,
-                                              index_scan_desc);
+  auto scan_node =
+      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode* rv = nullptr;
+  planner::AbstractPlanNode *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -312,7 +323,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   }
 
   return rv;
-
 }
 
 }  // namespace bridge

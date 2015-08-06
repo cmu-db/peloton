@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tilestats.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tilestats.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_stats.h
+//
+// Identification: src/backend/storage/tile_stats.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -35,20 +35,20 @@ class TableStats : public stats::StatsSource {
    * Static method to generate the remaining schema information for
    * the tables which contain persistent table stats.
    */
-  static void populateTableStatsSchema(std::vector<ValueType>& types,
-                                       std::vector<int32_t>& columnLengths,
-                                       std::vector<bool>& allowNull);
+  static void populateTableStatsSchema(std::vector<ValueType> &types,
+                                       std::vector<int32_t> &columnLengths,
+                                       std::vector<bool> &allowNull);
 
   /**
    * Return an empty TableStats table
    */
-  static Table* generateEmptyTableStatsTable();
+  static Table *generateEmptyTableStatsTable();
 
   /*
    * Constructor caches reference to the table that will be generating the
    * statistics
    */
-  TableStats(voltdb::Table* table);
+  TableStats(voltdb::Table *table);
 
   /**
    * Configure a StatsSource superclass for a set of statistics. Since this
@@ -69,7 +69,7 @@ class TableStats : public stats::StatsSource {
    * Update the stats tuple with the latest statistics available to this
    * StatsSource.
    */
-  virtual void updateStatsTuple(Tuple* tuple);
+  virtual void updateStatsTuple(Tuple *tuple);
 
   /**
    * Generates the list of column names that will be in the statTable_. Derived
@@ -85,9 +85,9 @@ class TableStats : public stats::StatsSource {
    * an offset into the tuple schema instead of appending to
    * end of a list.
    */
-  virtual void populateSchema(std::vector<ValueType>& types,
-                              std::vector<int32_t>& columnLengths,
-                              std::vector<bool>& allowNull);
+  virtual void populateSchema(std::vector<ValueType> &types,
+                              std::vector<int32_t> &columnLengths,
+                              std::vector<bool> &allowNull);
 
   ~TableStats();
 
@@ -95,7 +95,7 @@ class TableStats : public stats::StatsSource {
   /**
    * Table whose stats are being collected.
    */
-  Table* m_table;
+  Table *m_table;
 
   Value m_tableName;
 

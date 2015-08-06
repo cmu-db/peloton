@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// conjunction_expression.h
+//
+// Identification: src/backend/expression/conjunction_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "backend/common/serializer.h"
@@ -32,7 +44,8 @@ class ConjunctionExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
-    retval = spacer + "ConjunctionExpression : " + ExpressionTypeToString(expr_type) + "\n";
+    retval = spacer + "ConjunctionExpression : " +
+             ExpressionTypeToString(expr_type) + "\n";
     if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
     if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
     return retval;

@@ -1,8 +1,14 @@
-/**
- * @brief Base class for all plan nodes.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_plan_node.cpp
+//
+// Identification: src/backend/planner/abstract_plan_node.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <sstream>
 #include <stdexcept>
@@ -29,15 +35,15 @@ AbstractPlanNode::~AbstractPlanNode() {}
 // Children + Parent Helpers
 //===--------------------------------------------------------------------===//
 
-void AbstractPlanNode::AddChild(AbstractPlanNode* child) {
+void AbstractPlanNode::AddChild(AbstractPlanNode *child) {
   children_.push_back(child);
 }
 
-const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() const {
+const std::vector<AbstractPlanNode *> &AbstractPlanNode::GetChildren() const {
   return children_;
 }
 
-AbstractPlanNode* AbstractPlanNode::GetParent() { return parent_; }
+AbstractPlanNode *AbstractPlanNode::GetParent() { return parent_; }
 
 //===--------------------------------------------------------------------===//
 // Accessors
@@ -54,7 +60,7 @@ oid_t AbstractPlanNode::GetPlanNodeId() const { return plan_node_id_; }
 //===--------------------------------------------------------------------===//
 
 // Get a string representation of this plan node
-std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node) {
+std::ostream &operator<<(std::ostream &os, const AbstractPlanNode &node) {
   os << PlanNodeTypeToString(node.GetPlanNodeType());
   os << "[" << node.GetPlanNodeId() << "]";
 
