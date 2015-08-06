@@ -19,10 +19,10 @@ namespace peloton {
 namespace logging {
 
 void AriesProxy::logging_MainLoop() const{
-  // TODO :: performance optimization
+  // TODO :: performance optimization..
   for(int i=0;i<50;i++){
     sleep(5);
-    printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
+    //printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
     if( GetBufferSize() >= buffer_size ) Flush();
   }
 }
@@ -46,13 +46,15 @@ size_t AriesProxy::GetBufferSize() const{
 }
 
 /**
- * TODO ::
+ * TODO :: it should flush the log into file .. and mark the commit the end of the log file
  * @brief flush all record, for now it's just printing out
  */
 void AriesProxy::Flush() const{
   std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  std::cout << "\n::StartFlush::\n";
   for( auto record : aries_buffer )
-    std::cout << "record : " << record << std::endl;
+    std::cout << record;
+  std::cout << "::Commit::" << std::endl;
   aries_buffer.clear();
 }
 
