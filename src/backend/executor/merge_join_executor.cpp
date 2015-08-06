@@ -33,7 +33,7 @@ MergeJoinExecutor::MergeJoinExecutor(planner::AbstractPlanNode *node,
 }
 
 bool MergeJoinExecutor::DInit() {
-  auto status = AbstractJoinExecutor::Init();
+  auto status = AbstractJoinExecutor::DInit();
   if (status == false)
     return status;
 
@@ -52,7 +52,7 @@ bool MergeJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool MergeJoinExecutor::DExecute() {
-  LOG_TRACE("********** Merge Join executor :: 2 children \n");
+  LOG_INFO("********** Merge Join executor :: 2 children \n");
 
   // Try to get next tile from RIGHT child
   if (children_[1]->Execute() == false) {
@@ -60,14 +60,14 @@ bool MergeJoinExecutor::DExecute() {
     return false;
   }
 
-  LOG_TRACE("Got right tile \n");
+  LOG_INFO("Got right tile \n");
 
   // Try to get next tile from LEFT child
   if (children_[0]->Execute() == false) {
-    LOG_TRACE("Did not get left tile \n");
+    LOG_INFO("Did not get left tile \n");
     return false;
   }
-  LOG_TRACE("Got left tile \n");
+  LOG_INFO("Got left tile \n");
 
   std::unique_ptr<LogicalTile> left_tile(children_[0]->GetOutput());
   std::unique_ptr<LogicalTile> right_tile(children_[1]->GetOutput());
@@ -119,13 +119,13 @@ bool MergeJoinExecutor::DExecute() {
       column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
-  LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count,
+  LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
             right_tile_column_count);
-  LOG_TRACE("left col count: %lu, right col count: %lu",
+  LOG_INFO("left col count: %lu, right col count: %lu",
             left_tile.get()->GetColumnCount(),
             right_tile.get()->GetColumnCount());
-  LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
-            right_tile_row_count);
+  //LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
+  //          right_tile_row_count);
 
   size_t left_start_row = 0;
   size_t right_start_row = 0;
@@ -139,7 +139,7 @@ bool MergeJoinExecutor::DExecute() {
         left_tile.get(), left_start_row);
     expression::ContainerTuple<executor::LogicalTile> right_tuple(
         right_tile.get(), right_start_row);
-    bool equal = false;
+    bool diff = false;
 
     // try to match the join clauses
     for (auto &clause : *join_clause_) {
@@ -151,26 +151,29 @@ bool MergeJoinExecutor::DExecute() {
 
       if (ret < 0) {
         // Left key < Right key, advance left
+        LOG_INFO("left < right, advance left");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile.get(), left_start_row, true);
-        equal = false;
+        diff = true;
         break;
       } else if (ret > 0) {
         // Left key > Right key, advance right
+        LOG_INFO("left > right, advance right");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile.get(), right_start_row, false);
-        equal = false;
+        diff = true;
         break;
       }
       // Left key == Right key, go check next join clause
     }
 
-    if (!equal) {
+    if (diff) {
       // join clauses are not matched, one of the tile has been advanced
       continue;
     }
 
     // join clauses are matched, try to match predicate
+    LOG_INFO("one join clause matched");
 
     // Join predicate exists
     if (predicate_ != nullptr) {
@@ -219,10 +222,10 @@ bool MergeJoinExecutor::DExecute() {
   }
 
   for (auto col : position_lists) {
-    LOG_TRACE("col");
+    LOG_INFO("col");
     for (auto elm : col) {
       (void) elm;  // silent compiler
-      LOG_TRACE("elm: %u", elm);
+      LOG_INFO("elm: %u", elm);
     }
   }
 
@@ -261,6 +264,8 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
                                                                  this_row);
     expression::ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
 
+    bool diff = false;
+
     for (auto &clause : *join_clause_) {
       // Go thru each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
@@ -269,13 +274,21 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       peloton::Value next_value = expr->Evaluate(&next_tuple, &next_tuple,
                                                  nullptr);
       if (0 != this_value.Compare(next_value)) {
+        diff = true;
         break;
       }
     }
+
+    if (diff) {
+      break;
+    }
+
     // the two tuples are the same, we advance by 1
     end_row++;
     this_row = end_row;
   }
+
+  LOG_INFO("Advanced %s with subset size %lu", is_left ? "left" : "right", end_row - start_row);
   return end_row;
 }
 
