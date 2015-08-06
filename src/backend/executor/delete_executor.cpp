@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * delete_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/delete_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// delete_executor.cpp
+//
+// Identification: src/backend/executor/delete_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/delete_executor.h"
 

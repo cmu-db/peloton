@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * schema.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/catalog/schema.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// schema.h
+//
+// Identification: src/backend/catalog/schema.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -61,7 +61,7 @@ class Schema {
   // Append subsets of columns in the given schemas.
   static Schema *AppendSchemaPtrList(
       const std::vector<Schema *> &schema_list,
-      const std::vector<std::vector<oid_t> > &subsets);
+      const std::vector<std::vector<oid_t>> &subsets);
 
   // Compare two schemas
   bool operator==(const Schema &other) const;

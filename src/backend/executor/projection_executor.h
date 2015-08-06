@@ -1,8 +1,14 @@
-/**
- * @brief Header file for Project executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// projection_executor.h
+//
+// Identification: src/backend/executor/projection_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -33,10 +39,10 @@ class ProjectionExecutor : public AbstractExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief Projection Info.            */
-  const planner::ProjectInfo* project_info_ = nullptr;
+  const planner::ProjectInfo *project_info_ = nullptr;
 
   /** @brief Schema of projected tuples. */
-  const catalog::Schema* schema_ = nullptr;
+  const catalog::Schema *schema_ = nullptr;
 };
 
 } /* namespace executor */
