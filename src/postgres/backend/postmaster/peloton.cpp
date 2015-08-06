@@ -383,7 +383,7 @@ peloton_MainLoop(void) {
   }
 
   // Launching a thread for logging
-  std::thread logger(peloton::logging::LogManager::StartAriesLogging, 10);
+  std::thread logger(peloton::logging::LogManager::StartAriesLogging, 2);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
