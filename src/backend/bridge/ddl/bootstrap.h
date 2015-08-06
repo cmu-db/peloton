@@ -15,10 +15,9 @@
 #include <vector>
 
 #include "backend/catalog/schema.h"
-#include "backend/bridge/ddl/raw_structure.h"
-
 #include "postgres.h"
 #include "c.h"
+#include "ddl_raw_structures.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 
@@ -45,7 +44,7 @@ class Bootstrap {
                                   std::vector<raw_index_info *> &raw_indexes);
 
   static void GetRawForeignKeys(
-      std::vector<raw_foreignkey_info *> &raw_foreignkeys);
+      std::vector<raw_foreign_key_info *> &raw_foreignkeys);
 
   static raw_table_info *GetRawTable(
       oid_t table_oid, std::string table_name,
@@ -63,7 +62,7 @@ class Bootstrap {
 
   static void CreateIndexes(raw_index_info **raw_indexes, oid_t index_count);
 
-  static void CreateForeignkeys(raw_foreignkey_info **raw_foreignkeys,
+  static void CreateForeignkeys(raw_foreign_key_info **raw_foreignkeys,
                                 oid_t foreignkey_count);
 
   static std::vector<catalog::Column> CreateColumns(

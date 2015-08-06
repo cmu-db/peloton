@@ -53,7 +53,7 @@ raw_database_info *Bootstrap::GetRawDatabase(void) {
 
   std::vector<raw_table_info *> raw_tables;
   std::vector<raw_index_info *> raw_indexes;
-  std::vector<raw_foreignkey_info *> raw_foreignkeys;
+  std::vector<raw_foreign_key_info *> raw_foreignkeys;
 
   // Get objects from Postgres
   GetRawTableAndIndex(raw_tables, raw_indexes);
@@ -94,10 +94,8 @@ bool Bootstrap::BootstrapPeloton(raw_database_info *raw_database,
   auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   db->UpdateStats(peloton_status, false);
 
-  /*
   // Verbose mode
-  std::cout << "Print db :: \n"<<*db << std::endl;
-  */
+  //std::cout << "Print db :: \n"<<*db << std::endl;
 
   elog(LOG, "Finished initializing Peloton");
   return true;
@@ -397,7 +395,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
 }
 
 void Bootstrap::GetRawForeignKeys(
-    std::vector<raw_foreignkey_info *> &raw_foreignkeys) {
+    std::vector<raw_foreign_key_info *> &raw_foreignkeys) {
   Relation pg_constraint_rel;
   HeapScanDesc pg_constraint_scan;
   HeapTuple pg_constraint_tuple;
@@ -423,8 +421,8 @@ void Bootstrap::GetRawForeignKeys(
 
     // store raw information from here..
 
-    raw_foreignkey_info *raw_foreignkey =
-        (raw_foreignkey_info *)palloc(sizeof(raw_foreignkey_info));
+    raw_foreign_key_info *raw_foreignkey =
+        (raw_foreign_key_info *)palloc(sizeof(raw_foreign_key_info));
 
     // Extract oid
     raw_foreignkey->source_table_id = pg_constraint->conrelid;
@@ -533,7 +531,7 @@ void Bootstrap::CreateIndexes(raw_index_info **raw_indexes, oid_t index_count) {
   }
 }
 
-void Bootstrap::CreateForeignkeys(raw_foreignkey_info **raw_foreignkeys,
+void Bootstrap::CreateForeignkeys(raw_foreign_key_info **raw_foreignkeys,
                                   oid_t foreignkey_count) {
   for (int foreignkey_itr = 0; foreignkey_itr < foreignkey_count;
        foreignkey_itr++) {
