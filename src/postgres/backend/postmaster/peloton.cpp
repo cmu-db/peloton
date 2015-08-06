@@ -298,10 +298,6 @@ PelotonMain(int argc, char *argv[]) {
   /* Start main loop */
   peloton_MainLoop();
 
-  // TODO: Peloton Changes
-  MemoryContextDelete(MessageContext);
-  MemoryContextDelete(CacheMemoryContext);
-
   /* All done, go away */
   proc_exit(0);
 }
@@ -883,9 +879,9 @@ peloton_send_bootstrap(Peloton_Status  *status){
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   // construct raw database for bootstrap
-  peloton::bridge::raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  auto raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
   MemoryContextSwitchTo(oldcxt);
 
   // Set header
