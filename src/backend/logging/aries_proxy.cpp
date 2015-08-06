@@ -32,9 +32,8 @@ void AriesProxy::logging_MainLoop() const{
  * @param log record 
  */
 void AriesProxy::log(LogRecord record) const{
-  aries_buffer_mutex.lock();
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
   aries_buffer.push_back(record);
-  aries_buffer_mutex.unlock();
 }
 
 /**
@@ -42,10 +41,8 @@ void AriesProxy::log(LogRecord record) const{
  * @return return the size of buffer
  */
 size_t AriesProxy::GetBufferSize() const{
-  aries_buffer_mutex.lock();
-  size_t size = aries_buffer.size();
-  aries_buffer_mutex.unlock();
-  return size;
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  return aries_buffer.size();
 }
 
 /**
@@ -53,11 +50,10 @@ size_t AriesProxy::GetBufferSize() const{
  * @brief flush all record, for now it's just printing out
  */
 void AriesProxy::Flush() const{
-  aries_buffer_mutex.lock();
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
   for( auto record : aries_buffer )
     std::cout << "record : " << record << std::endl;
   aries_buffer.clear();
-  aries_buffer_mutex.unlock();
 }
 
 }  // namespace logging
