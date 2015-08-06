@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/executor/abstract_join_executor.h"
+#include "backend/planner/merge_join_node.h"
 
 #include <vector>
 
@@ -37,7 +38,7 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
   /** @beief a vector of join clauses */
-  std::vector<planner::MergeJoinNode::JoinClause> join_clause_;
+  const std::vector<planner::MergeJoinNode::JoinClause> *join_clause_;
 
 };
 

@@ -61,8 +61,8 @@ class MergeJoinNode : public AbstractJoinPlanNode {
     return PLAN_NODE_TYPE_MERGEJOIN;
   }
 
-  const inline std::vector<JoinClause> &GetJoinClauses() const {
-    return join_clauses_;
+  const std::vector<JoinClause> *GetJoinClauses() const {
+    return &join_clauses_;
   }
 
   inline std::string GetInfo() const { return "MergeJoin"; }
