@@ -21,6 +21,8 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // Nested Loop Join
 //===--------------------------------------------------------------------===//
+static std::vector<planner::MergeJoinNode::JoinClause> BuildMergeJoinClauses(const MergeJoinClause join_clauses,
+                                                         const int num_clauses);
 
 /**
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
@@ -29,6 +31,7 @@ namespace bridge {
 planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
     const MergeJoinState* mj_plan_state) {
   const JoinState *js = &(mj_plan_state->js);
+  //const MergeJoin *mj_plan = reinterpret_cast<const MergeJoin *>(js->ps.plan);
   planner::AbstractPlanNode *result = nullptr;
   planner::MergeJoinNode *plan_node = nullptr;
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
@@ -37,10 +40,10 @@ planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
     return nullptr;
   }
 
-  expression::AbstractExpression *join_clause = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(mj_plan_state->mj_Clauses));
+  LOG_INFO("Handle merge join with join type: %d", join_type);
 
-  LOG_INFO("Merge Cond: %s", join_clause->Debug(" ").c_str());
+  std::vector<planner::MergeJoinNode::JoinClause> join_clauses = BuildMergeJoinClauses(
+      mj_plan_state->mj_Clauses, mj_plan_state->mj_NumClauses);
 
   expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(js->joinqual));
@@ -71,11 +74,11 @@ planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(mj_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
     result = new planner::ProjectionNode(project_info.release(), project_schema);
-    plan_node = new planner::MergeJoinNode(predicate, nullptr, join_clause);
+    plan_node = new planner::MergeJoinNode(predicate, nullptr, join_clauses);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::MergeJoinNode(predicate, project_info.release(), join_clause);
+    plan_node = new planner::MergeJoinNode(predicate, project_info.release(), join_clauses);
     result = plan_node;
   }
 
@@ -91,6 +94,25 @@ planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
   return result;
 }
 
+static std::vector<planner::MergeJoinNode::JoinClause> BuildMergeJoinClauses(const MergeJoinClause join_clauses,
+                                                         const int num_clauses) {
+  MergeJoinClause join_clause = join_clauses;
+  expression::AbstractExpression *left = nullptr;
+  expression::AbstractExpression *right = nullptr;
+  std::vector<planner::MergeJoinNode::JoinClause> clauses;
+  LOG_INFO("Mapping merge join clauses of size %d", num_clauses);
+  for (int i = 0; i < num_clauses; ++i, ++join_clause) {
+    left = ExprTransformer::TransformExpr(join_clause->lexpr);
+    right = ExprTransformer::TransformExpr(join_clause->rexpr);
+    planner::MergeJoinNode::JoinClause clause(left, right, join_clause->ssup.ssup_reverse);
+    clauses.push_back(std::move(clause));
+
+    LOG_INFO("left: %s\nright: %s", clause.left_->Debug(" ").c_str(),
+             clause.right_->Debug(" ").c_str());
+  }
+  LOG_INFO("Build join clauses of size %lu", clauses.size());
+  return clauses;
+}
 }  // namespace bridge
 }  // namespace peloton
 
