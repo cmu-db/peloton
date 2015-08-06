@@ -38,8 +38,9 @@ class PlanExecutor {
   static void PrintPlan(const planner::AbstractPlanNode *plan,
                         std::string prefix = "");
 
-  static void ExecutePlan(planner::AbstractPlanNode *plan, PlanState *planstate,
-                          TupleDesc tuple_desc, Peloton_Status *pstatus,
+  static void ExecutePlan(planner::AbstractPlanNode *plan,
+                          PlanState *planstate,
+                          Peloton_Status *pstatus,
                           TransactionId txn_id);
 
   static executor::AbstractExecutor *AddMaterialization(

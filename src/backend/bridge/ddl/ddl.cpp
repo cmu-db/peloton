@@ -39,10 +39,9 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+void DDL::ProcessUtility(Node *parsetree,
                          Peloton_Status *status, TransactionId txn_id) {
   assert(parsetree != nullptr);
-  assert(queryString != nullptr);
 
   static std::vector<Node *> parsetree_stack;
 

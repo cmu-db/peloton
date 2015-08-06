@@ -813,8 +813,7 @@ peloton_send(void *msg, int len) {
  */
 void
 peloton_send_dml(Peloton_Status  *status,
-                 PlanState *node,
-                 TupleDesc tuple_desc) {
+                 PlanState *node) {
   Peloton_MsgDML msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -832,7 +831,6 @@ peloton_send_dml(Peloton_Status  *status,
   // Set msg-specific information
   msg.m_status = status;
   msg.m_planstate = node;
-  msg.m_tuple_desc = tuple_desc;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -845,8 +843,7 @@ peloton_send_dml(Peloton_Status  *status,
  */
 void
 peloton_send_ddl(Peloton_Status  *status,
-                 Node *parsetree,
-                 const char *queryString) {
+                 Node *parsetree) {
   Peloton_MsgDDL msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -869,7 +866,6 @@ peloton_send_ddl(Peloton_Status  *status,
   // Set msg-specific information
   msg.m_status = status;
   msg.m_parsetree = parsetree;
-  msg.m_queryString = queryString;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -969,7 +965,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
       /* Execute the plantree */
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
                                                  planstate,
-                                                 msg->m_tuple_desc,
                                                  msg->m_status,
                                                  txn_id);
 
@@ -1013,7 +1008,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 static void
 peloton_process_ddl(Peloton_MsgDDL *msg) {
   Node* parsetree;
-  const char *queryString;
   assert(msg);
 
   /* Get the parsetree */
@@ -1028,13 +1022,9 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   MyDatabaseId = msg->m_hdr.m_dbid;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-  queryString = msg->m_queryString;
-
-  if(queryString != NULL) {
     try {
       /* Process the utility statement */
       peloton::bridge::DDL::ProcessUtility(parsetree,
-                                           queryString,
                                            msg->m_status,
                                            txn_id);
     }
@@ -1042,7 +1032,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
       // Nothing to do here !
     }
-  }
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;

@@ -110,7 +110,6 @@ typedef struct Peloton_MsgDML
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   PlanState *m_planstate;
-  TupleDesc m_tuple_desc;
 } Peloton_MsgDML;
 
 /* ----------
@@ -122,7 +121,6 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   Node *m_parsetree;
-  const char *m_queryString;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -167,12 +165,10 @@ extern int  peloton_start(void);
  */
 
 extern void peloton_send_dml(Peloton_Status  *status,
-                             PlanState *node,
-                             TupleDesc tuple_desc);
+                             PlanState *node);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
-                             Node *parsetree,
-                             const char *queryString);
+                             Node *parsetree);
 
 extern void peloton_send_bootstrap(Peloton_Status *status);
 

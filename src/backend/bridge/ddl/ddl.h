@@ -36,7 +36,7 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree, const char *queryString,
+  static void ProcessUtility(Node *parsetree,
                              Peloton_Status *status, TransactionId txn_id);
 };
 
