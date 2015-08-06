@@ -25,9 +25,11 @@ class MergeJoinNode : public AbstractJoinPlanNode {
   MergeJoinNode(MergeJoinNode &&) = delete;
   MergeJoinNode &operator=(MergeJoinNode &&) = delete;
 
-  MergeJoinNode(expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
+  MergeJoinNode(const expression::AbstractExpression *predicate,
+                const ProjectInfo *proj_info,
+                const expression::AbstractExpression *join_clause)
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info),
+        join_clause_(join_clause) {  // FIXME
     // Nothing to see here...
   }
 
@@ -35,10 +37,14 @@ class MergeJoinNode : public AbstractJoinPlanNode {
     return PLAN_NODE_TYPE_MERGEJOIN;
   }
 
+  const inline expression::AbstractExpression *GetJoinClause() const {
+    return join_clause_.get();
+  }
+
   inline std::string GetInfo() const { return "MergeJoin"; }
 
  private:
-  // There is nothing special that we need here
+  std::unique_ptr<const expression::AbstractExpression> join_clause_;
 };
 
 }  // namespace planner
