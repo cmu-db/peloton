@@ -24,6 +24,7 @@
 #include <thread>
 
 #include "backend/common/logger.h"
+#include "backend/common/message_queue.h"
 #include "backend/scheduler/tbb_scheduler.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -89,6 +90,7 @@ static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
+                              BackendId m_backend_id,
                               Oid MyDatabaseId,
                               TransactionId txn_id,
                               MemoryContext top_transaction_context,
@@ -761,11 +763,13 @@ peloton_init(void) {
 static void
 peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
+                  BackendId m_backend_id,
                   Oid MyDatabaseId,
                   TransactionId txn_id,
                   MemoryContext top_transaction_context,
                   MemoryContext cur_transaction_context) {
   hdr->m_type = mtype;
+  hdr->m_backend_id = m_backend_id;
   hdr->m_dbid = MyDatabaseId;
   hdr->m_top_transaction_context = top_transaction_context;
   hdr->m_cur_transaction_context = cur_transaction_context;
@@ -801,39 +805,6 @@ peloton_send(void *msg, int len) {
 }
 
 /* ----------
- * peloton_send_ping() -
- *
- *  Send some junk data to the collector to increase traffic.
- * ----------
- */
-void
-peloton_send_ping(void) {
-  Peloton_MsgDummy msg;
-
-  if (pelotonSock == PGINVALID_SOCKET)
-    return;
-
-  peloton_setheader(&msg.m_hdr,
-                    PELOTON_MTYPE_DUMMY,
-                    InvalidOid,
-                    InvalidOid,
-                    NULL,
-                    NULL);
-
-  peloton_send(&msg, sizeof(msg));
-}
-
-/* ----------
- * peloton_send_reply() -
- *
- *  Send reply to backend.
- * ----------
- */
-void
-peloton_send_reply(int status) {
-}
-
-/* ----------
  * peloton_send_dml() -
  *
  *  Execute the given node to return a(nother) tuple.
@@ -855,6 +826,7 @@ peloton_send_dml(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DML,
+                    MyBackendId,
                     MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
@@ -895,6 +867,7 @@ peloton_send_ddl(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DDL,
+                    MyBackendId,
                     MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
@@ -933,6 +906,7 @@ peloton_send_bootstrap(Peloton_Status  *status){
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_BOOTSTRAP,
+                    MyBackendId,
                     MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
@@ -1055,6 +1029,14 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
+
+  auto backend_id = msg->m_hdr.m_backend_id;
+  auto queue_name = peloton::get_message_queue_name(backend_id);
+  auto mqd = peloton::open_message_queue(queue_name);
+
+  // Send some message
+  peloton::send_message(mqd, "test_msg");
+
 }
 
 /* ----------
@@ -1066,6 +1048,8 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 static void
 peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   assert(msg);
+
+  printf("BOOTSTRAP \n");
 
   /* Get the raw databases */
   peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
@@ -1080,6 +1064,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
+  printf("DO SOME STUFF \n");
+
   if(raw_database != NULL) {
     try {
       /* Process the utility statement */
@@ -1092,8 +1078,19 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
     }
   }
 
+  printf("DONE STUFF \n");
+
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
+
+  printf("SEND MESSAGE \n");
+
+  auto backend_id = msg->m_hdr.m_backend_id;
+  auto queue_name = peloton::get_message_queue_name(backend_id);
+  auto mqd = peloton::open_message_queue(queue_name);
+
+  // Send some message
+  peloton::send_message(mqd, "test_msg");
 }
 
 /* ----------
@@ -1122,23 +1119,9 @@ peloton_create_status() {
  */
 void
 peloton_process_status(Peloton_Status *status) {
-  struct timespec duration = {0, 100}; // 100 us
   int code;
-  int rc;
 
-  assert(status);
-
-  // Busy wait till we get a valid result
-  while(status->m_result == peloton::RESULT_INVALID) {
-    rc = nanosleep(&duration, NULL);
-    if(rc < 0) {
-      break;
-    }
-
-    /* additive increase */
-    duration.tv_nsec += 100;
-    //elog(DEBUG2, "Busy waiting");
-  }
+  peloton::wait_for_message(&MyBackendQueue);
 
   // Process the status code
   code = status->m_result;

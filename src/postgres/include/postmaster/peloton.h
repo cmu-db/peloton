@@ -14,6 +14,7 @@
 #define PELOTON_H
 
 #include "backend/common/types.h"
+#include "backend/common/message_queue.h"
 #include "backend/bridge/ddl/bootstrap.h"
 
 #include "libpq/libpq-be.h"
@@ -47,6 +48,7 @@ typedef struct Peloton_MsgHdr
 {
   PelotonMsgType m_type;
   int     m_size;
+  BackendId m_backend_id;
   Oid   m_dbid;
   TransactionId m_txn_id;
   MemoryContext m_top_transaction_context;
@@ -160,8 +162,6 @@ extern bool IsPelotonQuery(List *relationOids);
 
 extern void peloton_init(void);
 extern int  peloton_start(void);
-
-extern void peloton_send_ping(void);
 
 /* ----------
  * Functions called from execMain and utility
