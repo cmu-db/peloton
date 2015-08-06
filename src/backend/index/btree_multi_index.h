@@ -191,6 +191,31 @@ class BtreeMultiIndex : public Index {
     return result;
   }
 
+  std::vector<ItemPointer> Scan() {
+    std::vector<ItemPointer> result;
+
+    {
+      index_lock.ReadLock();
+
+      auto itr = container.begin();
+
+      // scan all entries comparing against arbitrary key
+      while (itr != container.end()) {
+        auto index_key = itr->first;
+        auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
+
+        ItemPointer location = itr->second;
+        result.push_back(location);
+        itr++;
+      }
+
+      index_lock.Unlock();
+    }
+
+    return result;
+  }
+
+
   std::string GetTypeName() const { return "BtreeMulti"; }
 
  protected:
