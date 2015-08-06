@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scan_plan_node.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/planner/abstract_scan_plan_node.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_scan_node.h
+//
+// Identification: src/backend/planner/abstract_scan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -37,9 +37,7 @@ class AbstractScanNode : public AbstractPlanNode {
 
   AbstractScanNode(expression::AbstractExpression *predicate,
                    const std::vector<oid_t> &column_ids)
-      : predicate_(predicate),
-        column_ids_(column_ids) {
-  }
+      : predicate_(predicate), column_ids_(column_ids) {}
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
@@ -47,12 +45,13 @@ class AbstractScanNode : public AbstractPlanNode {
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ABSTRACT_SCAN; }
+  inline PlanNodeType GetPlanNodeType() const {
+    return PLAN_NODE_TYPE_ABSTRACT_SCAN;
+  }
 
   inline std::string GetInfo() const { return "AbstractScan"; }
 
  private:
-
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 

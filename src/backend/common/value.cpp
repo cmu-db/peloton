@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * value.cc
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value.cc
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// value.cpp
+//
+// Identification: src/backend/common/value.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/common/value.h"
 
@@ -689,8 +689,8 @@ int Value::CompareStringValue(const Value rhs) const {
              ValueTypeToString(GetValueType()).c_str());
     throw Exception(message);
   }
-  const char* left = reinterpret_cast<const char*>(GetObjectValue());
-  const char* right = reinterpret_cast<const char*>(rhs.GetObjectValue());
+  const char *left = reinterpret_cast<const char *>(GetObjectValue());
+  const char *right = reinterpret_cast<const char *>(rhs.GetObjectValue());
   if (IsNull()) {
     if (rhs.IsNull()) {
       return VALUE_COMPARE_EQUAL;
@@ -726,8 +726,8 @@ int Value::CompareBinaryValue(const Value rhs) const {
              ValueTypeToString(GetValueType()).c_str());
     throw Exception(message);
   }
-  const char* left = reinterpret_cast<const char*>(GetObjectValue());
-  const char* right = reinterpret_cast<const char*>(rhs.GetObjectValue());
+  const char *left = reinterpret_cast<const char *>(GetObjectValue());
+  const char *right = reinterpret_cast<const char *>(rhs.GetObjectValue());
   if (IsNull()) {
     if (rhs.IsNull()) {
       return VALUE_COMPARE_EQUAL;
@@ -881,7 +881,7 @@ bool Value::IsZero() const {
   }
 }
 
-void Value::HashCombine(std::size_t& seed) const {
+void Value::HashCombine(std::size_t &seed) const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TINYINT:
@@ -906,7 +906,7 @@ void Value::HashCombine(std::size_t& seed) const {
       } else {
         const int32_t length = GetObjectLength();
         boost::hash_combine(
-            seed, std::string(reinterpret_cast<const char*>(GetObjectValue()),
+            seed, std::string(reinterpret_cast<const char *>(GetObjectValue()),
                               length));
       }
       break;
@@ -916,7 +916,7 @@ void Value::HashCombine(std::size_t& seed) const {
         boost::hash_combine(seed, std::string(""));
       } else {
         const int32_t length = GetObjectLength();
-        char* data = reinterpret_cast<char*>(GetObjectValue());
+        char *data = reinterpret_cast<char *>(GetObjectValue());
         for (int32_t i = 0; i < length; i++) boost::hash_combine(seed, data[i]);
       }
       break;
@@ -1124,9 +1124,9 @@ Value Value::OpAddBigInts(const int64_t lhs, const int64_t rhs) const {
   if (lhs == INT64_NULL || rhs == INT64_NULL) return GetBigIntValue(INT64_NULL);
   // Scary overflow check
   if (((lhs ^ rhs) |
-      (((lhs ^ (~(lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) +
-          rhs) ^
-          rhs)) >= 0) {
+       (((lhs ^ (~(lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) +
+         rhs) ^
+        rhs)) >= 0) {
     char message[4096];
     ::snprintf(message, 4096, "Adding %jd and %jd will overflow BigInt storage",
                (intmax_t)lhs, (intmax_t)rhs);
@@ -1139,9 +1139,9 @@ Value Value::OpSubtractBigInts(const int64_t lhs, const int64_t rhs) const {
   if (lhs == INT64_NULL || rhs == INT64_NULL) return GetBigIntValue(INT64_NULL);
   // Scary overflow check
   if (((lhs ^ rhs) &
-      (((lhs ^ ((lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) -
-          rhs) ^
-          rhs)) < 0) {
+       (((lhs ^ ((lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) -
+         rhs) ^
+        rhs)) < 0) {
     char message[4096];
     ::snprintf(message, 4096,
                "Subtracting %jd from %jd will overflow BigInt storage",
@@ -1357,7 +1357,7 @@ std::string Value::CreateStringFromDecimal() const {
   }
   std::string fractionalString = fractional.ToString(10);
   for (int ii = static_cast<int>(fractionalString.size());
-      ii < Value::max_decimal_scale; ii++) {
+       ii < Value::max_decimal_scale; ii++) {
     buffer << '0';
   }
   buffer << fractionalString;
@@ -1365,7 +1365,7 @@ std::string Value::CreateStringFromDecimal() const {
 }
 
 // Set a decimal value from a serialized representation
-void Value::CreateDecimalFromString(const std::string& txt) {
+void Value::CreateDecimalFromString(const std::string &txt) {
   if (txt.length() == 0) {
     throw DecimalException("Empty string provided");
   }
@@ -1434,6 +1434,8 @@ void Value::CreateDecimalFromString(const std::string& txt) {
     whole.SetSign();
   }
 
+  assert(sizeof(TTInt) == sizeof(value_data));
+
   GetDecimal() = whole;
 }
 
@@ -1443,7 +1445,7 @@ void Value::CreateDecimalFromString(const std::string& txt) {
  * is a*b*E-24 and have to further multiply to get back to the assumed
  * E-12, which can overflow unnecessarily at the middle step.
  */
-Value Value::OpMultiplyDecimals(const Value& lhs, const Value& rhs) const {
+Value Value::OpMultiplyDecimals(const Value &lhs, const Value &rhs) const {
   if ((lhs.GetValueType() != VALUE_TYPE_DECIMAL) &&
       (rhs.GetValueType() != VALUE_TYPE_DECIMAL)) {
     throw DecimalException("No decimal Value in decimal multiply.");
@@ -1564,40 +1566,39 @@ Value Value::OpDivideDecimals(const Value lhs, const Value rhs) const {
 }
 
 Value Value::GetMinValue(ValueType type) {
-
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-            return GetTinyIntValue(PELOTON_INT8_MIN);
-    break;
+      return GetTinyIntValue(PELOTON_INT8_MIN);
+      break;
     case (VALUE_TYPE_SMALLINT):
-            return GetSmallIntValue(PELOTON_INT16_MIN);
-    break;
+      return GetSmallIntValue(PELOTON_INT16_MIN);
+      break;
     case (VALUE_TYPE_INTEGER):
-            return GetIntegerValue(PELOTON_INT32_MIN);
-    break;
-    break;
+      return GetIntegerValue(PELOTON_INT32_MIN);
+      break;
+      break;
     case (VALUE_TYPE_BIGINT):
-            return GetBigIntValue(PELOTON_INT64_MIN);
-    break;
+      return GetBigIntValue(PELOTON_INT64_MIN);
+      break;
     case (VALUE_TYPE_DOUBLE):
-            return GetDoubleValue(-DBL_MAX);
-    break;
+      return GetDoubleValue(-DBL_MAX);
+      break;
     case (VALUE_TYPE_VARCHAR):
-            return GetStringValue("", nullptr);
-    break;
-    break;
+      return GetStringValue("", nullptr);
+      break;
+      break;
     case (VALUE_TYPE_VARBINARY):
-            return  GetBinaryValue("", nullptr);
-    break;
+      return GetBinaryValue("", nullptr);
+      break;
     case (VALUE_TYPE_TIMESTAMP):
-            return GetTimestampValue(PELOTON_INT64_MIN);
-    break;
+      return GetTimestampValue(PELOTON_INT64_MIN);
+      break;
     case (VALUE_TYPE_DECIMAL):
-            return GetDecimalValue(DECIMAL_MIN);
-    break;
+      return GetDecimalValue(DECIMAL_MIN);
+      break;
     case (VALUE_TYPE_BOOLEAN):
-            return GetFalse();
-    break;
+      return GetFalse();
+      break;
 
     case (VALUE_TYPE_INVALID):
     case (VALUE_TYPE_NULL):
@@ -1606,7 +1607,6 @@ Value Value::GetMinValue(ValueType type) {
       throw UnknownTypeException((int)type, "Can't get min value for type");
     }
   }
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -1614,7 +1614,7 @@ Value Value::GetMinValue(ValueType type) {
 //===--------------------------------------------------------------------===//
 
 // Get a string representation of this value
-std::ostream& operator<<(std::ostream& os, const Value& value) {
+std::ostream &operator<<(std::ostream &os, const Value &value) {
   os << value.GetInfo();
   return os;
 }
@@ -1630,7 +1630,7 @@ std::string Value::GetInfo() const {
   }
 
   std::string out_val;
-  const char* ptr;
+  const char *ptr;
   int64_t addr;
 
   os << GetTypeName(type) << "::";
@@ -1652,7 +1652,7 @@ std::string Value::GetInfo() const {
       os << GetDouble();
       break;
     case VALUE_TYPE_VARCHAR:
-      ptr = reinterpret_cast<const char*>(GetObjectValue());
+      ptr = reinterpret_cast<const char *>(GetObjectValue());
       // addr = reinterpret_cast<int64_t>(ptr);
       out_val = std::string(ptr, GetObjectLength());
       os << "[" << GetObjectLength() << "]";
@@ -1660,7 +1660,7 @@ std::string Value::GetInfo() const {
       // os << "\"" << out_val << "\"[@" << addr << "]";
       break;
     case VALUE_TYPE_VARBINARY:
-      ptr = reinterpret_cast<const char*>(GetObjectValue());
+      ptr = reinterpret_cast<const char *>(GetObjectValue());
       addr = reinterpret_cast<int64_t>(ptr);
       out_val = std::string(ptr, GetObjectLength());
       os << "[" << GetObjectLength() << "]";
@@ -1682,44 +1682,44 @@ std::string Value::GetTypeName(ValueType type) {
   std::string ret;
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-              ret = "tinyint";
-    break;
+      ret = "tinyint";
+      break;
     case (VALUE_TYPE_SMALLINT):
-              ret = "smallint";
-    break;
+      ret = "smallint";
+      break;
     case (VALUE_TYPE_INTEGER):
-              ret = "integer";
-    break;
+      ret = "integer";
+      break;
     case (VALUE_TYPE_BIGINT):
-              ret = "bigint";
-    break;
+      ret = "bigint";
+      break;
     case (VALUE_TYPE_DOUBLE):
-              ret = "double";
-    break;
+      ret = "double";
+      break;
     case (VALUE_TYPE_VARCHAR):
-              ret = "varchar";
-    break;
+      ret = "varchar";
+      break;
     case (VALUE_TYPE_VARBINARY):
-              ret = "varbinary";
-    break;
+      ret = "varbinary";
+      break;
     case (VALUE_TYPE_TIMESTAMP):
-              ret = "timestamp";
-    break;
+      ret = "timestamp";
+      break;
     case (VALUE_TYPE_DECIMAL):
-              ret = "decimal";
-    break;
+      ret = "decimal";
+      break;
     case (VALUE_TYPE_INVALID):
-              ret = "INVALID";
-    break;
+      ret = "INVALID";
+      break;
     case (VALUE_TYPE_NULL):
-              ret = "NULL";
-    break;
+      ret = "NULL";
+      break;
     case (VALUE_TYPE_BOOLEAN):
-              ret = "boolean";
-    break;
+      ret = "boolean";
+      break;
     case (VALUE_TYPE_ADDRESS):
-              ret = "address";
-    break;
+      ret = "address";
+      break;
     default: {
       char buffer[32];
       snprintf(buffer, 32, "UNKNOWN[%d]", type);

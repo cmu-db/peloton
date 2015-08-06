@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_utils.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_utils.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper_utils.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_utils.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
@@ -32,12 +32,9 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
     }
   }
 
-  LOG_INFO("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
+  LOG_TRACE("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
   return params;
 }
-
-
-
 
 /**
  * @brief Extract the common things shared by all Scan types:
@@ -46,28 +43,31 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @param[out]  parent  Set to a created projection plan node if one is needed,
  *              or NULL otherwise.
  *
- * @param[out]  predicate   Set to the transformed Expression based on qual. Or NULL if so is qual.
+ * @param[out]  predicate   Set to the transformed Expression based on qual. Or
+ *NULL if so is qual.
  *
- * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo contains only
- *              direct mapping of attributes. \b Empty if no direct map is presented.
+ * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo
+ *contains only
+ *              direct mapping of attributes. \b Empty if no direct map is
+ *presented.
  *
  * @param[in]   sstate  The ScanState from which generic things are extracted.
  *
- * @param[in]   use_projInfo  Parse projInfo or not. Sometimes the projInfo of a Scan may have been
+ * @param[in]   use_projInfo  Parse projInfo or not. Sometimes the projInfo of a
+ *Scan may have been
  *              stolen by its parent.
  *
  * @return      Nothing.
  */
 void PlanTransformer::GetGenericInfoFromScanState(
-    planner::AbstractPlanNode*& parent,
-    expression::AbstractExpression*& predicate,
-    std::vector<oid_t>& out_col_list,
-    const ScanState* sstate,
+    planner::AbstractPlanNode *&parent,
+    expression::AbstractExpression *&predicate,
+    std::vector<oid_t> &out_col_list, const ScanState *sstate,
     bool use_projInfo) {
-
-  List* qual = sstate->ps.qual;
+  List *qual = sstate->ps.qual;
   const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
-  oid_t out_column_count = static_cast<oid_t>(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+  oid_t out_column_count = static_cast<oid_t>(
+      sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;
@@ -78,26 +78,31 @@ void PlanTransformer::GetGenericInfoFromScanState(
 
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
-  if(use_projInfo){
+  if (use_projInfo) {
     project_info.reset(BuildProjectInfo(pg_proj_info, out_column_count));
   }
 
   /*
-   * Based on project_info, see whether we should create a functional projection node
+   * Based on project_info, see whether we should create a functional projection
+   * node
    * on top, or simply pushed in an output column list.
    */
-  if(nullptr == project_info.get()){  // empty predicate, or ignore projInfo, pass thru
-    LOG_INFO("No projections (all pass through)");
+  if (nullptr ==
+      project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
+    LOG_TRACE("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
-  }
-  else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_INFO("Non-trivial projections are found. Projection node will be created. \n");
+  } else if (project_info->GetTargetList().size() >
+             0) {  // Have non-trivial projection, add a plan node
+    LOG_TRACE(
+        "Non-trivial projections are found. Projection node will be "
+        "created. \n");
 
-    auto project_schema =
-        SchemaTransformer::GetSchemaFromTupleDesc(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
+        sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
-    parent = new planner::ProjectionNode(project_info.release(), project_schema);
+    parent =
+        new planner::ProjectionNode(project_info.release(), project_schema);
 
   }
 
@@ -105,7 +110,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_INFO("Pure direct map projection.\n");
+    LOG_TRACE("Pure direct map projection.\n");
 
     std::vector<oid_t> column_ids;
     column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
@@ -129,11 +134,9 @@ void PlanTransformer::GetGenericInfoFromScanState(
  * For example, the "row" projection
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
-    const ProjectionInfo *pg_pi,
-    oid_t column_count) {
-
+    const ProjectionInfo *pg_pi, oid_t column_count) {
   if (pg_pi == nullptr) {
-    LOG_INFO("pg proj info is null, no projection");
+    LOG_TRACE("pg proj info is null, no projection");
     return nullptr;
   }
 
@@ -149,11 +152,9 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
     AttrNumber resind = tle->resno - 1;
 
-    if (!(resind < column_count
-          && AttributeNumberIsValid(tle->resno)
-          && AttrNumberIsForUserDefinedAttr(tle->resno)
-          && !tle->resjunk)){
-      LOG_INFO("Invalid / Junk attribute. Skipped. \n");
+    if (!(resind < column_count && AttributeNumberIsValid(tle->resno) &&
+          AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
+      LOG_TRACE("Invalid / Junk attribute. Skipped.");
       continue;  // skip junk attributes
     }
 
@@ -161,12 +162,13 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
-    if(peloton_expr == nullptr){
-      LOG_INFO("Seems to be a row value expression. Skipped.\n");
+    if (peloton_expr == nullptr) {
+      LOG_TRACE("Seems to be a row value expression. Skipped.");
       continue;
     }
 
-    LOG_INFO("Target : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
+    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
+              peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -181,7 +183,6 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
   if (pg_pi->pi_numSimpleVars > 0) {
     int numSimpleVars = pg_pi->pi_numSimpleVars;
-    //bool *isnull = pg_pi->pi_slot->tts_isnull;
     int *varSlotOffsets = pg_pi->pi_varSlotOffsets;
     int *varNumbers = pg_pi->pi_varNumbers;
 
@@ -196,18 +197,11 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(i);
 
-        if (true) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant, added to target_list
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id,
+                                     std::make_pair(tuple_idx, in_col_id));
 
-        LOG_INFO("Input column : %u , Output column : %u \n", in_col_id,
-                 out_col_id);
+        LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
+                  out_col_id);
       }
     } else  // Non-sequential direct map
     {
@@ -223,43 +217,32 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(varOutputCol);
 
-        if (true) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id,
+                                     std::make_pair(tuple_idx, in_col_id));
 
-        LOG_INFO("Input column : %u , Output column : %u \n", in_col_id,
-                 out_col_id);
+        LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
+                  out_col_id);
       }
     }
   }
 
-  if(target_list.empty() && direct_map_list.empty())
-    return nullptr;
+  if (target_list.empty() && direct_map_list.empty()) return nullptr;
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
 }
-
-
 
 /**
  * @brief Transform a PG qual list to an expression tree.
  *
  * @return Expression tree, null if empty.
  */
-expression::AbstractExpression*
-PlanTransformer::BuildPredicateFromQual(List* qual){
-
-  expression::AbstractExpression* predicate =
-      ExprTransformer::TransformExpr(
-          reinterpret_cast<ExprState*>(qual) );
-  LOG_INFO("Predicate:\n%s \n", (nullptr==predicate)? "NULL" : predicate->DebugInfo().c_str());
+expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
+    List *qual) {
+  expression::AbstractExpression *predicate =
+      ExprTransformer::TransformExpr(reinterpret_cast<ExprState *>(qual));
+  LOG_TRACE("Predicate:\n%s \n",
+            (nullptr == predicate) ? "NULL" : predicate->DebugInfo().c_str());
 
   return predicate;
 }
@@ -270,27 +253,26 @@ PlanTransformer::BuildPredicateFromQual(List* qual){
  * The caller should make sure the direct map list has output columns positions.
  * from 0 ~ N-1
  */
-const std::vector<oid_t>
-PlanTransformer::BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist){
+const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
+    planner::ProjectInfo::DirectMapList dmlist) {
   std::sort(dmlist.begin(), dmlist.end(),
             [](const planner::ProjectInfo::DirectMap &a,
-               const planner::ProjectInfo::DirectMap &b){
-                return a.first < b.first; }
-            );
+               const planner::ProjectInfo::DirectMap &b) {
+              return a.first < b.first;
+            });
 
   assert(dmlist.front().first == 0);
-  assert(dmlist.back().first == dmlist.size()-1 );
+  assert(dmlist.back().first == dmlist.size() - 1);
 
   std::vector<oid_t> rv;
 
-  for(auto map : dmlist) {
+  for (auto map : dmlist) {
     assert(map.second.first == 0);
     rv.emplace_back(map.second.second);
   }
 
   return rv;
 }
-
 
 /**
  * Convet a Postgres JoinType into a Peloton JoinType

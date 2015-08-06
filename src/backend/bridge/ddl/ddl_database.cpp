@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_database.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_database.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl_database.cpp
+//
+// Identification: src/backend/bridge/ddl/ddl_database.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
@@ -29,8 +29,8 @@ namespace bridge {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecCreatedbStmt(Node* parsetree) {
-  CreatedbStmt* stmt = (CreatedbStmt*)parsetree;
+bool DDLDatabase::ExecCreatedbStmt(Node *parsetree) {
+  CreatedbStmt *stmt = (CreatedbStmt *)parsetree;
   DDLDatabase::CreateDatabase(stmt->database_id);
   return true;
 }
@@ -40,8 +40,8 @@ bool DDLDatabase::ExecCreatedbStmt(Node* parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
-  DropdbStmt* stmt = (DropdbStmt*)parsetree;
+bool DDLDatabase::ExecDropdbStmt(Node *parsetree) {
+  DropdbStmt *stmt = (DropdbStmt *)parsetree;
   DDLDatabase::DropDatabase(stmt->database_id);
   return true;
 }
@@ -51,8 +51,8 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
-  VacuumStmt* vacuum = (VacuumStmt*)parsetree;
+bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
+  VacuumStmt *vacuum = (VacuumStmt *)parsetree;
   std::string relation_name;
 
   if (vacuum->relation != NULL) relation_name = vacuum->relation->relname;
@@ -61,11 +61,11 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   // Get data table based on dabase oid and table name
-  auto& manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
   auto db = manager.GetDatabaseWithOid(database_oid);
 
   // Update every table and index
-  if(relation_name.empty()){
+  if (relation_name.empty()) {
     db->UpdateStats(status, true);
   }
   // Otherwise, update the specific table
@@ -85,18 +85,18 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
 bool DDLDatabase::CreateDatabase(Oid database_oid) {
   if (database_oid == INVALID_OID) return false;
 
-  auto& manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
   auto database = manager.GetDatabaseWithOid(database_oid);
 
-  if( database == nullptr ){
-    storage::Database* db = new storage::Database(database_oid);
+  if (database == nullptr) {
+    storage::Database *db = new storage::Database(database_oid);
     manager.AddDatabase(db);
-  }else {
+  } else {
     LOG_WARN("Database(%u) is already existed!!", database_oid);
     return false;
   }
 
-  elog(LOG,"Create database (%u)", database_oid);
+  elog(LOG, "Create database (%u)", database_oid);
   return true;
 }
 
@@ -106,7 +106,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
  * @return true if we dropped the database, false otherwise
  */
 bool DDLDatabase::DropDatabase(Oid database_oid) {
-  auto& manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 
   LOG_INFO("Dropped database with oid : %u\n", database_oid);

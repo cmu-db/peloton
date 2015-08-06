@@ -1,8 +1,14 @@
-/**
- * @brief Header for nested loop index join plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// nested_loop_index_join_node.h
+//
+// Identification: src/backend/planner/nested_loop_index_join_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -26,7 +32,8 @@ class NestedLoopIndexJoinNode : public AbstractJoinPlanNode {
 
   NestedLoopIndexJoinNode(const expression::AbstractExpression *predicate,
                           const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate,
+                             proj_info) {  // FIXME
     // Nothing to see here...
   }
 
