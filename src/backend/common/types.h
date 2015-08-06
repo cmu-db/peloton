@@ -442,13 +442,17 @@ enum SetOpType {
 // Log Types
 //===--------------------------------------------------------------------===//
 
-enum LogType {
-  LOG_TYPE_INVALID = 0,
+enum LoggerId{
+  LOGGER_ID_INVALID = 0, 
 
-  /* FIXME */
-  LOG_TYPE_DEFAULT = 1,
-  LOG_TYPE_INSERT  = 2,
-  LOG_TYPE_UPDATE  = 3
+  ARIES_LOGGER_ID   = 1, 
+  PELOTON_LOGGER_ID = 2
+};
+
+enum LogRecordType{
+  LOGRECORD_TYPE_INVALID = 0, 
+
+  LOGRECORD_TYPE_INSERT  = 1
 };
 
 //===--------------------------------------------------------------------===//
