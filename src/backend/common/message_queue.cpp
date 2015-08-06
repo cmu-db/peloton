@@ -26,7 +26,6 @@ mqd_t create_mq(const std::string queue_name) {
               queue_name.c_str(), getpid());
     return mqd;
   }
-
   LOG_TRACE("CREATED QUEUE :: %s getpid : %d \n",
          queue_name.c_str(), getpid());
 
@@ -59,15 +58,14 @@ void send_message(mqd_t mqd, const std::string message) {
 static void
 handler(int sig)
 {
-    /* Just interrupt sigsuspend() */
+  // Just interrupt sigsuspend()
 }
 
 void receive_message(mqd_t *mqdp) {
-  ssize_t numRead;
+  ssize_t chars_read;
   void *buffer;
   struct mq_attr attr;
-
-  LOG_TRACE("HANDLER START :: pid : %d \n", getpid());
+  LOG_TRACE("HANDLER :: pid : %d \n", getpid());
 
   // Determine mq_msgsize for message queue, and allocate space
   if (mq_getattr(*mqdp, &attr) == -1)
@@ -77,14 +75,13 @@ void receive_message(mqd_t *mqdp) {
   if (buffer == NULL)
     perror("malloc");
 
-  while ((numRead = mq_receive(*mqdp, (char *) buffer, attr.mq_msgsize, NULL)) >= 0)
-    LOG_TRACE("Read %ld bytes\n", (long) numRead);
+  while ((chars_read = mq_receive(*mqdp, (char *) buffer, attr.mq_msgsize, NULL)) >= 0)
+    LOG_TRACE("Read %ld bytes\n", (long) chars_read);
 
-  if (errno != EAGAIN)                        /* Unexpected error */
+  if (errno != EAGAIN)  // Unexpected error
     perror("mq_receive");
 
   free(buffer);
-  LOG_TRACE("HANDLER DONE \n");
 }
 
 
@@ -96,8 +93,7 @@ void notify_message(mqd_t *mqdp)
 
   LOG_TRACE("SETUP NOTIFY \n");
 
-  /* Block the notification signal and establish a handler for it */
-
+  // Block the notification signal and establish a handler for it
   sigemptyset(&blockMask);
   sigaddset(&blockMask, NOTIFY_SIG);
   if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
@@ -109,15 +105,12 @@ void notify_message(mqd_t *mqdp)
   if (sigaction(NOTIFY_SIG, &sa, NULL) == -1)
     perror("sigaction");
 
-  /* Register for message notification via a signal */
-
+  // Register for message notification via a signal
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = NOTIFY_SIG;
 
   if (mq_notify(*mqdp, &sev) == -1)
     perror("mq_notify");
-
-  LOG_TRACE("FINISHED SETUP NOTIFY \n");
 
 }
 
@@ -125,16 +118,14 @@ void wait_for_message(mqd_t *mqdp) {
   sigset_t emptyMask;
 
   notify_message(mqdp);
-  LOG_TRACE("GOING TO SUSPEND :: pid : %d \n", getpid());
+  LOG_TRACE("SUSPENDING :: pid : %d \n", getpid());
 
   sigemptyset(&emptyMask);
-  sigsuspend(&emptyMask); /* Wait for notification signal */
+  sigsuspend(&emptyMask); // Wait for notification signal
 
   LOG_TRACE("WOKE UP :: pid : %d \n", getpid());
 
   receive_message(mqdp);
-
-  LOG_TRACE("FINISH PAUSE \n");
 }
 
 }  // End peloton namespace
