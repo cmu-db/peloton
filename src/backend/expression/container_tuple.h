@@ -1,11 +1,14 @@
-/**
- * @brief Implementation of the tuple interface that wraps a container
- *        such as a tile group or logical tile, allowing it to be used
- *        with the expression system without materializing a tuple as an
- *        intermediate step.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// container_tuple.h
+//
+// Identification: src/backend/expression/container_tuple.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

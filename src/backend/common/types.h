@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * types.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/types.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// types.h
+//
+// Identification: src/backend/common/types.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -225,7 +225,7 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1     // btree
+  INDEX_TYPE_BTREE = 1  // btree
 };
 
 enum IndexConstraintType {
@@ -509,8 +509,6 @@ extern ItemPointer INVALID_ITEMPOINTER;
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
-
-std::string GetTypeName(ValueType type);
 
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type);
