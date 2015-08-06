@@ -9,12 +9,13 @@
 
 namespace peloton {
 
-std::string get_message_queue_name(oid_t id) {
+void notify_message(mqd_t *mqdp);
+
+std::string get_mq_name(oid_t id) {
   return std::string("/backend_" + std::to_string(id));
 }
 
-
-mqd_t create_message_queue(const std::string queue_name) {
+mqd_t create_mq(const std::string queue_name) {
 
   mqd_t mqd = mq_open(queue_name.c_str(),
                       O_CREAT | O_RDONLY | O_NONBLOCK,
@@ -26,15 +27,14 @@ mqd_t create_message_queue(const std::string queue_name) {
     return mqd;
   }
 
-  printf("CREATED QUEUE :: %s getpid : %d \n",
+  LOG_TRACE("CREATED QUEUE :: %s getpid : %d \n",
          queue_name.c_str(), getpid());
 
   return mqd;
 }
 
-mqd_t open_message_queue(const std::string queue_name) {
+mqd_t open_mq(const std::string queue_name) {
   int flags;
-
   flags = O_WRONLY | O_NONBLOCK;
 
   mqd_t mqd = mq_open(queue_name.c_str(), flags);
@@ -46,16 +46,14 @@ mqd_t open_message_queue(const std::string queue_name) {
 }
 
 void send_message(mqd_t mqd, const std::string message) {
-
   int prio = 0;
-
-  printf("TRYING TO SEND MESSAGE :: %s \n", message.c_str());
+  LOG_TRACE("TRYING TO SEND MESSAGE :: %s \n", message.c_str());
 
   if (mq_send(mqd, message.c_str(), message.size(), prio) == -1) {
     perror("mq_send");
   }
 
-  printf("SENT MESSAGE \n");
+  LOG_TRACE("SENT MESSAGE \n");
 }
 
 static void
@@ -69,7 +67,7 @@ void receive_message(mqd_t *mqdp) {
   void *buffer;
   struct mq_attr attr;
 
-  printf("HANDLER START :: pid : %d \n", getpid());
+  LOG_TRACE("HANDLER START :: pid : %d \n", getpid());
 
   // Determine mq_msgsize for message queue, and allocate space
   if (mq_getattr(*mqdp, &attr) == -1)
@@ -80,13 +78,13 @@ void receive_message(mqd_t *mqdp) {
     perror("malloc");
 
   while ((numRead = mq_receive(*mqdp, (char *) buffer, attr.mq_msgsize, NULL)) >= 0)
-    printf("Read %ld bytes\n", (long) numRead);
+    LOG_TRACE("Read %ld bytes\n", (long) numRead);
 
   if (errno != EAGAIN)                        /* Unexpected error */
     perror("mq_receive");
 
   free(buffer);
-  printf("HANDLER DONE \n");
+  LOG_TRACE("HANDLER DONE \n");
 }
 
 
@@ -96,7 +94,7 @@ void notify_message(mqd_t *mqdp)
   sigset_t blockMask;
   struct sigaction sa;
 
-  printf("SETUP NOTIFY \n");
+  LOG_TRACE("SETUP NOTIFY \n");
 
   /* Block the notification signal and establish a handler for it */
 
@@ -119,7 +117,7 @@ void notify_message(mqd_t *mqdp)
   if (mq_notify(*mqdp, &sev) == -1)
     perror("mq_notify");
 
-  printf("FINISHED SETUP NOTIFY \n");
+  LOG_TRACE("FINISHED SETUP NOTIFY \n");
 
 }
 
@@ -127,17 +125,16 @@ void wait_for_message(mqd_t *mqdp) {
   sigset_t emptyMask;
 
   notify_message(mqdp);
-
-  printf("GOING TO SUSPEND :: pid : %d \n", getpid());
+  LOG_TRACE("GOING TO SUSPEND :: pid : %d \n", getpid());
 
   sigemptyset(&emptyMask);
   sigsuspend(&emptyMask); /* Wait for notification signal */
 
-  printf("WOKE UP :: pid : %d \n", getpid());
+  LOG_TRACE("WOKE UP :: pid : %d \n", getpid());
 
   receive_message(mqdp);
 
-  printf("FINISH PAUSE \n");
+  LOG_TRACE("FINISH PAUSE \n");
 }
 
 }  // End peloton namespace

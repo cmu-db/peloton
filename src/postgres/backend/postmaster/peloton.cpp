@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <time.h>
 #include <thread>
+#include <map>
 
 #include "backend/common/logger.h"
 #include "backend/common/message_queue.h"
@@ -74,6 +75,10 @@ static volatile sig_atomic_t got_SIGHUP = false;
 
 /* Flags to tell if we are in an peloton process */
 static bool am_peloton = false;
+
+/* Peloton map to keep track of backend queues */
+std::map<BackendId, mqd_t> backend_queue_map;
+std::mutex backend_queue_map_mutex;
 
 /* ----------
  * Local function forward declarations
@@ -928,11 +933,26 @@ peloton_send_bootstrap(Peloton_Status  *status){
  */
 static void
 peloton_reply_to_backend(mqd_t backend_id) {
-  auto queue_name = peloton::get_message_queue_name(backend_id);
-  auto mqd = peloton::open_message_queue(queue_name);
+  mqd_t mqd = -1;
+
+  // Access queue map
+  {
+    std::lock_guard<std::mutex> lock(backend_queue_map_mutex);
+
+    // Check if we already have opened the queue
+    if(backend_queue_map.count(backend_id) != 0) {
+      mqd = backend_queue_map[backend_id];
+    }
+    else {
+      auto queue_name = peloton::get_mq_name(backend_id);
+      mqd = peloton::open_mq(queue_name);
+      backend_queue_map[backend_id] = mqd;
+    }
+  }
 
   // Send some message
   peloton::send_message(mqd, "test_msg");
+
 }
 
 /* ----------
@@ -1060,8 +1080,6 @@ static void
 peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   assert(msg);
 
-  printf("BOOTSTRAP \n");
-
   /* Get the raw databases */
   peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
 
@@ -1075,8 +1093,6 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
-  printf("DO SOME STUFF \n");
-
   if(raw_database != NULL) {
     try {
       /* Process the utility statement */
@@ -1088,8 +1104,6 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       // Nothing to do here !
     }
   }
-
-  printf("DONE STUFF \n");
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
