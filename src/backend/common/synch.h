@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * synch.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/synch.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// synch.h
+//
+// Identification: src/backend/common/synch.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <thread>
 #include <atomic>
@@ -25,7 +25,7 @@
 namespace peloton {
 
 template <typename T>
-inline bool atomic_cas(T* object, T old_value, T new_value) {
+inline bool atomic_cas(T *object, T old_value, T new_value) {
   return __sync_bool_compare_and_swap(object, old_value, new_value);
 }
 
@@ -37,8 +37,8 @@ inline bool atomic_cas(T* object, T old_value, T new_value) {
 
 struct RWLock {
  public:
-  RWLock(RWLock const&) = delete;
-  RWLock& operator=(RWLock const&) = delete;
+  RWLock(RWLock const &) = delete;
+  RWLock &operator=(RWLock const &) = delete;
 
   RWLock() { pthread_rwlock_init(&rw_lock, nullptr); }
 
@@ -57,8 +57,8 @@ struct RWLock {
 
 struct RecursiveLock {
  public:
-  RecursiveLock(RecursiveLock const&) = delete;
-  RecursiveLock& operator=(RecursiveLock const&) = delete;
+  RecursiveLock(RecursiveLock const &) = delete;
+  RecursiveLock &operator=(RecursiveLock const &) = delete;
 
   RecursiveLock() {
     pthread_mutexattr_init(&attr);
@@ -79,17 +79,17 @@ struct RecursiveLock {
 };
 
 struct SharedLock {
-  const RWLock& shared_lock;
+  const RWLock &shared_lock;
 
-  SharedLock(const RWLock& mtx) : shared_lock(mtx) { mtx.ReadLock(); }
+  SharedLock(const RWLock &mtx) : shared_lock(mtx) { mtx.ReadLock(); }
 
   ~SharedLock() { shared_lock.Unlock(); }
 };
 
 struct ExclusiveLock {
-  const RWLock& exclusive_lock;
+  const RWLock &exclusive_lock;
 
-  ExclusiveLock(const RWLock& mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
+  ExclusiveLock(const RWLock &mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
 
   ~ExclusiveLock() { exclusive_lock.Unlock(); }
 };

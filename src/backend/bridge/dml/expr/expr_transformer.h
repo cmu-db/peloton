@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expr_transformer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// expr_transformer.h
+//
+// Identification: src/backend/bridge/dml/expr/expr_transformer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,22 +25,20 @@ namespace bridge {
  */
 class ExprTransformer {
  public:
-  ExprTransformer(const ExprTransformer&) = delete;
-  ExprTransformer& operator=(const ExprTransformer&) = delete;
-  ExprTransformer(const ExprTransformer&&) = delete;
-  ExprTransformer& operator=(const ExprTransformer&&) = delete;
+  ExprTransformer(const ExprTransformer &) = delete;
+  ExprTransformer &operator=(const ExprTransformer &) = delete;
+  ExprTransformer(const ExprTransformer &&) = delete;
+  ExprTransformer &operator=(const ExprTransformer &&) = delete;
 
-  static void PrintPostgressExprTree(const ExprState* expr_state,
+  static void PrintPostgressExprTree(const ExprState *expr_state,
                                      std::string prefix = "");
 
-  static expression::AbstractExpression* TransformExpr(
-      const ExprState* expr_state);
-
-  static bool CleanExprTree(expression::AbstractExpression* root);
+  static expression::AbstractExpression *TransformExpr(
+      const ExprState *expr_state);
   static expression::AbstractExpression* TranformMergeJoinClauses(
       const MergeJoinClause *join_clauses,
       const int num_clauses);
-
+  static bool CleanExprTree(expression::AbstractExpression* root);
  private:
   /*
    * This set of TransformXXX methods should transform an PG ExprState tree
@@ -46,17 +46,17 @@ class ExprTransformer {
    * A XXX Expr node should have a nodeTag of T_XXX.
    */
 
-  static expression::AbstractExpression* TransformConst(const ExprState* es);
-  static expression::AbstractExpression* TransformOp(const ExprState* es);
-  static expression::AbstractExpression* TransformVar(const ExprState* es);
-  static expression::AbstractExpression* TransformBool(const ExprState* es);
-  static expression::AbstractExpression* TransformParam(const ExprState* es);
-  static expression::AbstractExpression* TransformRelabelType(
-      const ExprState* es);
-  static expression::AbstractExpression* TransformFunc(const ExprState* es);
+  static expression::AbstractExpression *TransformConst(const ExprState *es);
+  static expression::AbstractExpression *TransformOp(const ExprState *es);
+  static expression::AbstractExpression *TransformVar(const ExprState *es);
+  static expression::AbstractExpression *TransformBool(const ExprState *es);
+  static expression::AbstractExpression *TransformParam(const ExprState *es);
+  static expression::AbstractExpression *TransformRelabelType(
+      const ExprState *es);
+  static expression::AbstractExpression *TransformFunc(const ExprState *es);
 
-  static expression::AbstractExpression* TransformList(
-      const ExprState* es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
+  static expression::AbstractExpression *TransformList(
+      const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
 };
 
 }  // namespace bridge

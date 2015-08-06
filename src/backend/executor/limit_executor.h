@@ -1,8 +1,14 @@
-/**
- * @brief Header file for limit executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// limit_executor.h
+//
+// Identification: src/backend/executor/limit_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
