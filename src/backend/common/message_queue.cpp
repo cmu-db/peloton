@@ -5,6 +5,8 @@
 #include "backend/common/message_queue.h"
 #include "backend/common/logger.h"
 
+#define NOTIFY_SIG SIGUSR1
+
 namespace peloton {
 
 std::string get_message_queue_name(oid_t id) {
@@ -56,15 +58,18 @@ void send_message(mqd_t mqd, const std::string message) {
   printf("SENT MESSAGE \n");
 }
 
-void receive_message(union sigval sv) {
+static void
+handler(int sig)
+{
+    /* Just interrupt sigsuspend() */
+}
+
+void receive_message(mqd_t *mqdp) {
   ssize_t numRead;
-  mqd_t *mqdp;
   void *buffer;
   struct mq_attr attr;
 
   printf("HANDLER START :: pid : %d \n", getpid());
-
-  mqdp = (mqd_t *) sv.sival_ptr;
 
   // Determine mq_msgsize for message queue, and allocate space
   if (mq_getattr(*mqdp, &attr) == -1)
@@ -82,38 +87,55 @@ void receive_message(union sigval sv) {
 
   free(buffer);
   printf("HANDLER DONE \n");
-
-  kill(getpid(), SIGCONT);
-
-  pthread_exit(NULL);
 }
 
 
 void notify_message(mqd_t *mqdp)
 {
-    struct sigevent sev;
+  struct sigevent sev;
+  sigset_t blockMask;
+  struct sigaction sa;
 
-    printf("SETUP NOTIFY \n");
+  printf("SETUP NOTIFY \n");
 
-    sev.sigev_notify = SIGEV_THREAD;            /* Notify via thread */
-    sev.sigev_notify_function = receive_message;
-    sev.sigev_notify_attributes = NULL;
-            /* Could be pointer to pthread_attr_t structure */
-    sev.sigev_value.sival_ptr = mqdp;           /* Argument to threadFunc() */
+  /* Block the notification signal and establish a handler for it */
 
-    if (mq_notify(*mqdp, &sev) == -1)
-        perror("mq_notify");
+  sigemptyset(&blockMask);
+  sigaddset(&blockMask, NOTIFY_SIG);
+  if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    perror("sigprocmask");
 
-    printf("FINISHED SETUP NOTIFY \n");
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handler;
+  if (sigaction(NOTIFY_SIG, &sa, NULL) == -1)
+    perror("sigaction");
+
+  /* Register for message notification via a signal */
+
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = NOTIFY_SIG;
+
+  if (mq_notify(*mqdp, &sev) == -1)
+    perror("mq_notify");
+
+  printf("FINISHED SETUP NOTIFY \n");
 
 }
 
 void wait_for_message(mqd_t *mqdp) {
+  sigset_t emptyMask;
+
   notify_message(mqdp);
 
-  printf("GOING TO PAUSE :: pid : %d \n", getpid());
+  printf("GOING TO SUSPEND :: pid : %d \n", getpid());
 
-  pause();
+  sigemptyset(&emptyMask);
+  sigsuspend(&emptyMask); /* Wait for notification signal */
+
+  printf("WOKE UP :: pid : %d \n", getpid());
+
+  receive_message(mqdp);
 
   printf("FINISH PAUSE \n");
 }

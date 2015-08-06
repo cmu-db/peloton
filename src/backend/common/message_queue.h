@@ -26,8 +26,6 @@ mqd_t open_message_queue(const std::string queue_name);
 
 void send_message(mqd_t mqd, const std::string message);
 
-void receive_message(union sigval sv);
-
 void notify_message(mqd_t *mqdp);
 
 void wait_for_message(mqd_t *mqdp);
