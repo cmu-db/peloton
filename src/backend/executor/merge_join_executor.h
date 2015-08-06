@@ -37,7 +37,8 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
 
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
-  /** @beief a vector of join clauses */
+  /** @beief a vector of join clauses
+   * Get this from plan node while init */
   const std::vector<planner::MergeJoinNode::JoinClause> *join_clause_;
 
 };
