@@ -35,6 +35,9 @@ class ExprTransformer {
       const ExprState* expr_state);
 
   static bool CleanExprTree(expression::AbstractExpression* root);
+  static expression::AbstractExpression* TranformMergeJoinClauses(
+      const MergeJoinClause *join_clauses,
+      const int num_clauses);
 
  private:
   /*
