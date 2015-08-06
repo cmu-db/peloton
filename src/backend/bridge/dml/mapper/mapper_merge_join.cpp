@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * mapper_nested_loop_join.cpp
+ * mapper_merge_join.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/bridge/dml/mapper/mapper_nested_loop_join.cpp
+ * /peloton/src/backend/bridge/dml/mapper/mapper_merge_join.cpp
  *
  *-------------------------------------------------------------------------
  */
 
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/nested_loop_join_node.h"
+#include "backend/planner/merge_join_node.h"
 #include "backend/planner/projection_node.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 
@@ -23,19 +23,24 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
+ * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
-    const NestLoopState* nl_plan_state) {
-  const JoinState *js = &(nl_plan_state->js);
+planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
+    const MergeJoinState* mj_plan_state) {
+  const JoinState *js = &(mj_plan_state->js);
   planner::AbstractPlanNode *result = nullptr;
-  planner::NestedLoopJoinNode *plan_node = nullptr;
+  planner::MergeJoinNode *plan_node = nullptr;
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);
     return nullptr;
   }
+
+  expression::AbstractExpression *join_clause = ExprTransformer::TransformExpr(
+      reinterpret_cast<ExprState *>(mj_plan_state->mj_Clauses));
+
+  LOG_INFO("Merge Cond: %s", join_clause->Debug(" ").c_str());
 
   expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(js->joinqual));
@@ -64,18 +69,18 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(mj_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
     result = new planner::ProjectionNode(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinNode(predicate, nullptr);
+    plan_node = new planner::MergeJoinNode(predicate, nullptr, join_clause);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::NestedLoopJoinNode(predicate, project_info.release());
+    plan_node = new planner::MergeJoinNode(predicate, project_info.release(), join_clause);
     result = plan_node;
   }
 
-  planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+  planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(mj_plan_state));
+  planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(mj_plan_state));
 
   /* Add the children nodes */
   plan_node->SetJoinType(join_type);
@@ -88,3 +93,4 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
 
 }  // namespace bridge
 }  // namespace peloton
+
