@@ -30,6 +30,8 @@ static std::vector<LogRecord> aries_buffer;
 
 static std::mutex aries_buffer_mutex;
 
+static std::mutex aries_log_file_mutex;
+
 class AriesProxy : public LogProxy{
 
   public:
@@ -48,7 +50,7 @@ class AriesProxy : public LogProxy{
 
   private:
     oid_t buffer_size;
-
+    
     size_t GetBufferSize() const;
 };
 
