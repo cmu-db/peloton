@@ -68,6 +68,7 @@
 
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
+#include "backend/common/logger.h"
 
 void peloton_ProcessUtility(Node *parsetree, const char *queryString,
                             ProcessUtilityContext context, ParamListInfo params,
@@ -670,6 +671,7 @@ standard_ProcessUtility(Node *parsetree,
       {
         // TODO :: Peloton Changes
         // Disabled Vacuumming in Postgres
+        peloton::LOG_INFO("Postgres Vacuumming is disabled now\n");
         if(false){
           VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
