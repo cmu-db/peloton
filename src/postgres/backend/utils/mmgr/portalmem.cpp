@@ -106,11 +106,12 @@ EnablePortalManager(void)
 	Assert(PortalMemory == NULL);
 
   // TODO: Peloton Changes
-	PortalMemory = AllocSetContextCreate(TopMemoryContext,
+	PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
 	                                     "PortalMemory",
 	                                     ALLOCSET_DEFAULT_MINSIZE,
 	                                     ALLOCSET_DEFAULT_INITSIZE,
-	                                     ALLOCSET_DEFAULT_MAXSIZE);
+	                                     ALLOCSET_DEFAULT_MAXSIZE,
+	                                     SHM_DEFAULT_SEGMENT);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -219,7 +220,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
 	/* initialize portal heap context; typically it won't store much */
-	// TODO: Peloton Changes, params for prepared stmt are built in heap
+	// TODO: Peloton Changes
 	portal->heap = SHMAllocSetContextCreate(TopSharedMemoryContext,
 	                                        "PortalHeapMemory",
 	                                        ALLOCSET_SMALL_MINSIZE,

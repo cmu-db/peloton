@@ -1016,7 +1016,7 @@ AtStart_Memory(void)
 	 * Create a toplevel context for the transaction.
 	 */
 	TopTransactionContext =
-	    AllocSetContextCreate(TopSharedMemoryContext,
+	    AllocSetContextCreate(TopMemoryContext,
 	                          "TopTransactionContext",
 	                          ALLOCSET_DEFAULT_MINSIZE,
 	                          ALLOCSET_DEFAULT_INITSIZE,
