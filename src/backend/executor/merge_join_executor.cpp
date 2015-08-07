@@ -79,24 +79,24 @@ bool MergeJoinExecutor::DExecute() {
   // Construct output logical tile.
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
 
-  auto left_tile_schema = left_tile.get()->GetSchema();
-  auto right_tile_schema = right_tile.get()->GetSchema();
+  auto left_tile_schema = left_tile->GetSchema();
+  auto right_tile_schema = right_tile->GetSchema();
 
   for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile.get()->GetPositionLists().size();
+    col.position_list_idx += left_tile->GetPositionLists().size();
   }
 
   /* build the schema given the projection */
   auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
 
   // Set the output logical tile schema
-  output_tile.get()->SetSchema(std::move(output_tile_schema));
+  output_tile->SetSchema(std::move(output_tile_schema));
 
-  // Now, let's compute the position lists for the output tile
+  // Transfer the base tile ownership
+  left_tile->TransferOwnershipTo(output_tile.get());
+  right_tile->TransferOwnershipTo(output_tile.get());
 
-  // Cartesian product
-
-  // Add everything from two logical tiles
+  // Get position list from two logical tiles
   auto left_tile_position_lists = left_tile.get()->GetPositionLists();
   auto right_tile_position_lists = right_tile.get()->GetPositionLists();
 
@@ -119,11 +119,11 @@ bool MergeJoinExecutor::DExecute() {
       column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
-  LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
-            right_tile_column_count);
-  LOG_INFO("left col count: %lu, right col count: %lu",
-            left_tile.get()->GetColumnCount(),
-            right_tile.get()->GetColumnCount());
+  //LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
+  //          right_tile_column_count);
+  //LOG_INFO("left col count: %lu, right col count: %lu",
+  //          left_tile.get()->GetColumnCount(),
+  //          right_tile.get()->GetColumnCount());
   //LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
   //          right_tile_row_count);
 
@@ -143,9 +143,9 @@ bool MergeJoinExecutor::DExecute() {
 
     // try to match the join clauses
     for (auto &clause : *join_clause_) {
-      auto left_value = clause.left_.get()->Evaluate(&left_tuple, &right_tuple,
+      auto left_value = clause.left_->Evaluate(&left_tuple, &right_tuple,
                                                      nullptr);
-      auto right_value = clause.right_.get()->Evaluate(&left_tuple,
+      auto right_value = clause.right_->Evaluate(&left_tuple,
                                                        &right_tuple, nullptr);
       int ret = left_value.Compare(right_value);
 
@@ -173,13 +173,13 @@ bool MergeJoinExecutor::DExecute() {
     }
 
     // join clauses are matched, try to match predicate
-    LOG_INFO("one join clause matched");
+    LOG_INFO("one pair of tuples matches join clause");
 
     // Join predicate exists
     if (predicate_ != nullptr) {
-      // Join predicate is false. Advance both.
       if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
           .IsFalse()) {
+        // Join predicate is false. Advance both.
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile.get(), left_start_row, true);
         right_start_row = right_end_row;
@@ -187,7 +187,7 @@ bool MergeJoinExecutor::DExecute() {
       }
     }
 
-    // subtile matched, do a cartesian product
+    // sub tile matched, do a Cartesian product
     // Go over every pair of tuples in left and right logical tiles
     for (size_t left_tile_row_itr = left_start_row; left_tile_row_itr < left_end_row;
         left_tile_row_itr++) {
@@ -231,7 +231,7 @@ bool MergeJoinExecutor::DExecute() {
 
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
-    output_tile.get()->SetPositionListsAndVisibility(std::move(position_lists));
+    output_tile->SetPositionListsAndVisibility(std::move(position_lists));
     SetOutput(output_tile.release());
     return true;
   }
