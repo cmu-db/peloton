@@ -40,8 +40,8 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
     std::vector<catalog::Constraint> constraint_infos;
 
     PostgresValueFormat postgresValueFormat( tupleDesc->attrs[column_itr]->atttypid, 
-                                             tupleDesc->attrs[column_itr]->atttypmod,
-                                             tupleDesc->attrs[column_itr]->attlen ); 
+                                             tupleDesc->attrs[column_itr]->attlen,
+                                             tupleDesc->attrs[column_itr]->atttypmod);
 
     PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
 
@@ -66,6 +66,7 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
       constraint_infos.push_back(constraint);
     }
 
+    LOG_TRACE("Column length: %d/%d, is inlined: %d", tupleDesc->attrs[column_itr]->attlen, column_length, is_inlined);
     catalog::Column column(value_type, column_length,
                            NameStr(tupleDesc->attrs[column_itr]->attname),
                            is_inlined);
