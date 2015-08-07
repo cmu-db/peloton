@@ -66,8 +66,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
     bool use_projInfo) {
   List *qual = sstate->ps.qual;
   const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
-  oid_t out_column_count = static_cast<oid_t>(
-      sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+  oid_t out_column_count = static_cast<oid_t>(sstate->ps.ps_ResultTupleSlot
+      ->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;
@@ -87,22 +87,19 @@ void PlanTransformer::GetGenericInfoFromScanState(
    * node
    * on top, or simply pushed in an output column list.
    */
-  if (nullptr ==
-      project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
+  if (nullptr == project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
     LOG_TRACE("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
-  } else if (project_info->GetTargetList().size() >
-             0) {  // Have non-trivial projection, add a plan node
+  } else if (project_info->GetTargetList().size() > 0) {  // Have non-trivial projection, add a plan node
     LOG_TRACE(
-        "Non-trivial projections are found. Projection node will be "
-        "created. \n");
+        "Non-trivial projections are found. Projection node will be " "created. \n");
 
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
-    parent =
-        new planner::ProjectionNode(project_info.release(), project_schema);
+    parent = new planner::ProjectionNode(project_info.release(),
+                                         project_schema);
 
   }
 
@@ -143,35 +140,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
   /*
    * (A) Transform non-trivial target list
    */
-  planner::ProjectInfo::TargetList target_list;
-
-  ListCell *tl;
-
-  foreach (tl, pg_pi->pi_targetlist) {
-    GenericExprState *gstate = (GenericExprState *)lfirst(tl);
-    TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
-    AttrNumber resind = tle->resno - 1;
-
-    if (!(resind < column_count && AttributeNumberIsValid(tle->resno) &&
-          AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
-      LOG_TRACE("Invalid / Junk attribute. Skipped.");
-      continue;  // skip junk attributes
-    }
-
-    oid_t col_id = static_cast<oid_t>(resind);
-
-    auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
-
-    if (peloton_expr == nullptr) {
-      LOG_TRACE("Seems to be a row value expression. Skipped.");
-      continue;
-    }
-
-    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
-              peloton_expr->DebugInfo().c_str());
-
-    target_list.emplace_back(col_id, peloton_expr);
-  }
+  planner::ProjectInfo::TargetList target_list = BuildTargetList(
+      pg_pi->pi_targetlist, column_count);
 
   /*
    * (B) Transform direct map list
@@ -190,9 +160,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     {
       /* especially simple case where vars go to output in order */
       for (int i = 0; i < numSimpleVars && i < column_count; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                                                                         : 0);
+        oid_t tuple_idx = (
+            varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1 : 0);
         int varNumber = varNumbers[i] - 1;
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(i);
@@ -209,9 +178,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
       int *varOutputCols = pg_pi->pi_varOutputCols;
 
       for (int i = 0; i < numSimpleVars; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                                                                         : 0);
+        oid_t tuple_idx = (
+            varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1 : 0);
         int varNumber = varNumbers[i] - 1;
         int varOutputCol = varOutputCols[i] - 1;
         oid_t in_col_id = static_cast<oid_t>(varNumber);
@@ -226,10 +194,52 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     }
   }
 
-  if (target_list.empty() && direct_map_list.empty()) return nullptr;
+  if (target_list.empty() && direct_map_list.empty())
+    return nullptr;
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
+}
+
+/**
+ * Transform a target list.
+ */
+const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
+    const List* targetList, oid_t column_count) {
+
+  planner::ProjectInfo::TargetList target_list;
+
+  ListCell *tl;
+
+  foreach (tl, targetList)
+  {
+    GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+    TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+    AttrNumber resind = tle->resno - 1;
+
+    if (!(resind < column_count && AttributeNumberIsValid(tle->resno)
+        && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
+      LOG_INFO("Invalid / Junk attribute. Skipped.");
+      continue;  // skip junk attributes
+    }
+
+    oid_t col_id = static_cast<oid_t>(resind);
+
+    auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+
+    if (peloton_expr == nullptr) {
+      LOG_INFO("Seems to be a row value expression. Skipped.");
+      continue;
+    }
+
+    LOG_INFO("Target : column id %u, Expression : \n%s", col_id,
+             peloton_expr->DebugInfo().c_str());
+
+    target_list.emplace_back(col_id, peloton_expr);
+  }
+
+  return std::move(target_list);
+
 }
 
 /**
@@ -239,8 +249,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
  */
 expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
-  expression::AbstractExpression *predicate =
-      ExprTransformer::TransformExpr(reinterpret_cast<ExprState *>(qual));
+  expression::AbstractExpression *predicate = ExprTransformer::TransformExpr(
+      reinterpret_cast<ExprState *>(qual));
   LOG_TRACE("Predicate:\n%s \n",
             (nullptr == predicate) ? "NULL" : predicate->DebugInfo().c_str());
 
@@ -257,7 +267,7 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
     planner::ProjectInfo::DirectMapList dmlist) {
   std::sort(dmlist.begin(), dmlist.end(),
             [](const planner::ProjectInfo::DirectMap &a,
-               const planner::ProjectInfo::DirectMap &b) {
+                const planner::ProjectInfo::DirectMap &b) {
               return a.first < b.first;
             });
 
