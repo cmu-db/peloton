@@ -48,7 +48,6 @@ storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
 
 void Manager::AddDatabase(storage::Database *database) {
   {
-    printf("in %s db oid %u \n", __func__, database->GetOid());
     std::lock_guard<std::mutex> lock(catalog_mutex);
     databases.push_back(database);
   }
@@ -67,8 +66,6 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 
     oid_t database_offset = 0;
     for (auto database : databases) {
-      printf("in %s dboid %u cur dboid %u \n", __func__, database_oid,
-             database->GetOid());
       if (database->GetOid() == database_oid) {
         break;
       }

@@ -160,12 +160,11 @@ CreateCachedPlan(Node *raw_parse_tree, const char *query_string,
    * that it will be cleaned up on error.
    */
   // TODO: Peloton Changes
-  source_context = SHMAllocSetContextCreate(CurrentMemoryContext,
-                                            "CachedPlanSource",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+  source_context = AllocSetContextCreate(CurrentMemoryContext,
+                                         "CachedPlanSource",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
 
   /*
    * Create and fill the CachedPlanSource struct within the new___ context.
