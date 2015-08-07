@@ -202,11 +202,12 @@ RelationBuildRowSecurity(Relation relation)
 	 * relation's row security policy.  This makes it easy to clean up
 	 * during a relcache flush.
 	 */
-	rscxt = AllocSetContextCreate(CacheMemoryContext,
-	                              "row security descriptor",
-	                              ALLOCSET_SMALL_MINSIZE,
-	                              ALLOCSET_SMALL_INITSIZE,
-	                              ALLOCSET_SMALL_MAXSIZE);
+	rscxt = SHMAllocSetContextCreate(CacheMemoryContext,
+	                                 "row security descriptor",
+	                                 ALLOCSET_SMALL_MINSIZE,
+	                                 ALLOCSET_SMALL_INITSIZE,
+	                                 ALLOCSET_SMALL_MAXSIZE,
+	                                 SHM_DEFAULT_SEGMENT);
 
 	/*
 	 * Since rscxt lives under CacheMemoryContext, it is long-lived.  Use

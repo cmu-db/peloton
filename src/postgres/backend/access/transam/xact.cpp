@@ -1016,11 +1016,12 @@ AtStart_Memory(void)
 	 * Create a toplevel context for the transaction.
 	 */
 	TopTransactionContext =
-	    AllocSetContextCreate(TopMemoryContext,
-	                          "TopTransactionContext",
-	                          ALLOCSET_DEFAULT_MINSIZE,
-	                          ALLOCSET_DEFAULT_INITSIZE,
-	                          ALLOCSET_DEFAULT_MAXSIZE);
+		SHMAllocSetContextCreate(TopSharedMemoryContext,
+							  "TopTransactionContext",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE,
+							  SHM_DEFAULT_SEGMENT);
 
 	/*
 	 * In a top-level transaction, CurTransactionContext is the same as
@@ -1076,11 +1077,12 @@ AtSubStart_Memory(void)
 	 * survives subtransaction commit but disappears on subtransaction abort.
 	 * We make it a child of the immediate parent's CurTransactionContext.
 	 */
-	CurTransactionContext = AllocSetContextCreate(CurTransactionContext,
-	                                              "CurTransactionContext",
-	                                              ALLOCSET_DEFAULT_MINSIZE,
-	                                              ALLOCSET_DEFAULT_INITSIZE,
-	                                              ALLOCSET_DEFAULT_MAXSIZE);
+	CurTransactionContext = SHMAllocSetContextCreate(CurTransactionContext,
+												  "CurTransactionContext",
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE,
+												  SHM_DEFAULT_SEGMENT);
 	s->curTransactionContext = CurTransactionContext;
 
 	/* Make the CurTransactionContext active. */
