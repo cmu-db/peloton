@@ -449,5 +449,5 @@ PersistHoldablePortal(Portal portal)
 	 * but this will clean up anything that glommed onto the portal's heap via
 	 * PortalContext.
 	 */
-	SHMContextDeleteChildren(PortalGetHeapMemory(portal));
+	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 }
