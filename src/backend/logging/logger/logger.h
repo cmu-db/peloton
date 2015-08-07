@@ -1,39 +1,36 @@
 /*-------------------------------------------------------------------------
  *
- * logproxy.h
+ * logger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logproxy.h
+ * /peloton/src/backend/logging/logger.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/logging/logrecord.h"
+#include "backend/common/types.h"
 
 namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Log Proxy
+// Logger 
 //===--------------------------------------------------------------------===//
 
-
-class LogProxy{
+class Logger{
 
   public:
+    LoggerType GetLoggerType(void) const;
+    LoggingType GetLoggingType(void) const;
 
-    virtual void log(LogRecord record) const = 0;
+  protected:
+    LoggerType logger_type = LOGGER_TYPE_INVALID;
+    LoggingType logging_type = LOGGING_TYPE_INVALID;
 
-    virtual void logging_MainLoop(void) const = 0;
-
-    virtual void flush(void) const = 0;
-
-    virtual ~LogProxy() {}
- 
 };
 
 }  // namespace logging

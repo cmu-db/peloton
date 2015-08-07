@@ -78,7 +78,6 @@ private:
 
   size_t serialized_data_size;
 
-
 };
 
 }  // namespace logging
