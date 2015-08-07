@@ -31,6 +31,22 @@ NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     : AbstractJoinExecutor(node, executor_context) {}
 
 /**
+ * @brief Do some basic checks and create the schema for the output logical
+ * tiles.
+ * @return true on success, false otherwise.
+ */
+bool NestedLoopJoinExecutor::DInit() {
+  auto status = AbstractJoinExecutor::DInit();
+  if (status == false) {
+    return status;
+  }
+
+  left_scan_start = true;
+  return true;
+}
+
+
+/**
  * @brief Creates logical tiles from the two input logical tiles after applying
  * join predicate.
  * @return true on success, false otherwise.
