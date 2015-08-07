@@ -103,11 +103,12 @@ BuildEventTriggerCache(void)
 		if (CacheMemoryContext == NULL)
 			CreateCacheMemoryContext();
 		EventTriggerCacheContext =
-		    AllocSetContextCreate(CacheMemoryContext,
-		                          "EventTriggerCache",
-		                          ALLOCSET_DEFAULT_MINSIZE,
-		                          ALLOCSET_DEFAULT_INITSIZE,
-		                          ALLOCSET_DEFAULT_MAXSIZE);
+		    SHMAllocSetContextCreate(CacheMemoryContext,
+		                             "EventTriggerCache",
+		                             ALLOCSET_DEFAULT_MINSIZE,
+		                             ALLOCSET_DEFAULT_INITSIZE,
+		                             ALLOCSET_DEFAULT_MAXSIZE,
+		                             SHM_DEFAULT_SEGMENT);
 		CacheRegisterSyscacheCallback(EVENTTRIGGEROID,
 									  InvalidateEventCacheCallback,
 									  (Datum) 0);
