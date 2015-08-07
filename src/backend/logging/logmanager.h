@@ -12,7 +12,14 @@
 
 #pragma once
 
-#include "backend/logging/logger.h"
+#include "backend/common/types.h"
+#include "backend/logging/logger/logger.h"
+#include "backend/logging/logger/frontendlogger.h"
+#include "backend/logging/logger/backendlogger.h"
+
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace peloton {
 namespace logging {
@@ -21,32 +28,27 @@ namespace logging {
 // Log Manager
 //===--------------------------------------------------------------------===//
 
+static std::mutex logManager_mutex;
+static std::mutex frontend_logger_mutex;
+static std::mutex backend_logger_mutex;
+
 /**
- * A LogManager contains a hard coded set of loggers that have counterpart loggers elsewhere.
+ * Global Log Manager
  */
 class LogManager{
-
   public:
-    static LogManager& GetInstance(void);
-
-    static void StartAriesLogging(oid_t buffer_size);
-
-    static void StartPelotonLogging(oid_t buffer_size);
-
-    Logger* GetAriesLogger(void) ;
-
-    Logger* GetPelotonLogger(void) ;
-
+    static std::shared_ptr<LogManager>& GetInstance(void);
+    
   private:
-    LogManager() {}
+    void StartLogging(LoggerType logger_type);
 
-    // Default buffer size is 0, which means logger is 'LOG ONLY'
-    void InitAriesLogger(oid_t buffer_size = 0 /* LOG ONLY */);
-    void InitPelotonLogger(oid_t buffer_size = 0 /*LOG ONLY*/);
+    BackendLogger* GetBackendLogger(LoggerType logger_type);
+ 
+    // frontend logger is only one for each stdoud, aries, and peloton
+    std::vector<FrontendLogger*> frontend_loggers;
 
-    Logger* aries_logger;
+    std::vector<BackendLogger*> backend_loggers;
 
-    Logger* peloton_logger;
 };
 
 }  // namespace logging
