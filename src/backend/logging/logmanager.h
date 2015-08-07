@@ -44,7 +44,8 @@ class LogManager{
 
     BackendLogger* GetBackendLogger(LoggerType logger_type);
  
-    // frontend logger is only one for each stdoud, aries, and peloton
+    // frontend_logger is only one for each stdoud, aries, and peloton
+    // so that we can identify frontend_logger using logger_type
     std::vector<FrontendLogger*> frontend_loggers;
 
     std::vector<BackendLogger*> backend_loggers;
