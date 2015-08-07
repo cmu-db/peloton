@@ -140,16 +140,18 @@ SPI_connect(void)
 	 * Perhaps CurTransactionContext would do?	For now it doesn't matter
 	 * because we clean up explicitly in AtEOSubXact_SPI().
 	 */
-	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
+	_SPI_current->procCxt = SHMAllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
 												  ALLOCSET_DEFAULT_MINSIZE,
 												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
-	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
+												  ALLOCSET_DEFAULT_MAXSIZE,
+												  SHM_DEFAULT_SEGMENT);
+	_SPI_current->execCxt = SHMAllocSetContextCreate(TopTransactionContext,
 												  "SPI Exec",
 												  ALLOCSET_DEFAULT_MINSIZE,
 												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_MAXSIZE,
+												  SHM_DEFAULT_SEGMENT);
 	/* ... and switch to procedure's context */
 	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
