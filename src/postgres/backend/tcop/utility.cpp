@@ -342,14 +342,6 @@ ProcessUtility(Node *parsetree,
     standard_ProcessUtility(parsetree, queryString,
                 context, params,
                 dest, completionTag);
-
-    if(IsPostmasterEnvironment == true)
-    {
-      // TODO: Peloton Changes
-      peloton_ProcessUtility(parsetree, queryString,
-                             context, params,
-                             dest, completionTag);
-    }
   }
 }
 
