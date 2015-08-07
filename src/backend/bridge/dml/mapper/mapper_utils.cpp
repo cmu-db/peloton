@@ -219,7 +219,9 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
 
     if (!(resind < column_count && AttributeNumberIsValid(tle->resno)
         && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
-      LOG_INFO("Invalid / Junk attribute. Skipped.");
+      LOG_INFO(
+          "Invalid / Junk attribute. Skipped.  resno : %u , resjunk : %u \n",
+          tle->resno, tle->resjunk);
       continue;  // skip junk attributes
     }
 
