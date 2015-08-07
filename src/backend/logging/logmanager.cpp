@@ -11,88 +11,77 @@
  */
 
 #include "backend/logging/logmanager.h"
-#include "backend/logging/logproxy.h"
-#include "backend/logging/aries_proxy.h"
-#include "backend/logging/peloton_proxy.h"
 
 namespace peloton {
 namespace logging {
 
 /**
- * @brief Getting the singleton for log manager
- * @return thread local log manager
+ * @brief Return the global unique instance for log manager
  */
-LogManager& LogManager::GetInstance(void)
-{
-  static LogManager logManager;
+std::shared_ptr<LogManager>& LogManager::GetInstance(){
+  std::lock_guard<std::mutex> lock(logManager_mutex);
+  static std::shared_ptr<LogManager> logManager(new LogManager());
   return logManager;
 }
 
 /**
- * @brief Start Aries logging
- * @param buffer size size of the buffer to flush
+ * @brief Start logging based on logger type
+    and store it into the vector
+ * @param logger type can be stdout(debug), aries, peloton
  */
-void LogManager::StartAriesLogging(oid_t buffer_size){
-  auto& logManager = GetInstance();
-  logManager.InitAriesLogger(buffer_size);
-  auto logger = logManager.GetAriesLogger();
-  logger->logging_MainLoop();
+void LogManager::StartLogging(LoggerType logger_type){
+  {
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+    // TODO :: Check whether it already has frontend logger or not
+    FrontendLogger* frontend_logger = FrontendLogger::GetFrontendLogger(logger_type);
+    frontend_loggers.push_back(frontend_logger);
+    frontend_logger->MainLoop();
+  }
 }
 
 /**
- * @brief Start Peloton logging
- * @param buffer size size of the buffer to flush
+ * @brief Return the backend logger based on logger type
+    and store it into the vector
+ * @param logger type can be stdout(debug), aries, peloton
  */
-void LogManager::StartPelotonLogging(oid_t buffer_size){
-  auto& logManager = GetInstance();
-  logManager.InitPelotonLogger(buffer_size);
-  auto logger = logManager.GetPelotonLogger();
-  logger->logging_MainLoop();
+BackendLogger* LogManager::GetBackendLogger(LoggerType logger_type){
+  BackendLogger* backend_logger = BackendLogger::GetBackendLogger(logger_type);
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    backend_loggers.push_back(backend_logger);
+  }
+  return backend_logger;
 }
 
-/**
- * @brief Initialize Aries logger
- * @param buffer size size of the buffer to flush
- */
-void LogManager::InitAriesLogger(oid_t buffer_size) {
-  AriesProxy* aries_proxy = new AriesProxy(buffer_size);
-  aries_logger = new Logger(ARIES_LOGGER_ID, aries_proxy);
-}
-
-/**
- * @brief Initialize Peloton logger
- * @param buffer size size of the buffer to flush
- */
-void LogManager::InitPelotonLogger(oid_t buffer_size) {
-  PelotonProxy* peloton_proxy = new PelotonProxy(buffer_size);
-  peloton_logger = new Logger(PELOTON_LOGGER_ID, peloton_proxy);
-}
-
-/**
- * @brief Get the Aries logger
- *  NOTE :: buffer size is only needed for logger that runs logging_MainLoop
- *  otherwise, logger will be initialized without buffer size and it will
- *  be used for log record
- * @return aries logger
- */
-Logger* LogManager::GetAriesLogger(void) {
-  if(aries_logger==nullptr) InitAriesLogger();
-  return aries_logger;
-}
-
-/**
- * @brief Get the Peloton logger
- *  NOTE :: buffer size is only needed for logger that runs logging_MainLoop
- *  otherwise, logger will be initialized without buffer size and it will
- *  be used for log record
- * @return peloton logger
- */
-Logger* LogManager::GetPelotonLogger(void) {
-  if( peloton_logger==nullptr) InitPelotonLogger();
-  return peloton_logger;
-}
+///** FIXME :: Do we need this function?
+// * @brief Return the logger based on logger type and logging_type
+// * @param logger type can be stdout(debug), aries, peloton
+// * @param logging type can be frontend or backend
+//    frontend logger is only one for each logger type
+// */
+////TODO :: Do not create new instance, just return existing object
+//Logger* Logger::GetLogger(LoggerType logger_type,
+//                          LoggingType logging_type){
+//  Logger* logger;
+//
+//  // it should be changed to use vector. .
+//  // i mean look over vector..
+//  switch(logging_type){
+//    case LOGGING_TYPE_FRONTEND:{
+//      logger = GetFrontendLogger(logger_type);
+//    }break;
+//
+//    case LOGGING_TYPE_BACKEND:{
+//      logger = GetBackendLogger(logger_type);
+//    }break;
+//
+//    default:
+//    LOG_ERROR("Unsupported logging type");
+//    break;
+//  }
+//
+//  return logger;
+//}
 
 }  // namespace logging
 }  // namespace peloton
-
-
