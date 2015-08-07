@@ -71,6 +71,18 @@ planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
+  LOG_INFO("ps.ps_ResultTupleSlot->tts_tupleDescriptor->natt : %u \n",
+           js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+  auto target_list = BuildTargetList(
+      js->ps.targetlist, js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+  LOG_INFO("js->ps.targetlist : \n");
+  for (auto target : target_list) {
+    LOG_INFO("dest : %u , expr : %s \n", target.first,
+             target.second->DebugInfo().c_str());
+    delete target.second;
+    target.second = nullptr;
+  }
+
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
