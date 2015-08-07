@@ -1099,20 +1099,12 @@ exec_simple_query(const char *query_string)
      */
     MemoryContextSwitchTo(oldcontext);
 
-    // TODO: Peloton Changes
-    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
-
     /*
      * Now we can create the destination receiver object.
      */
     receiver = CreateDestReceiver(dest);
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
-
-    /*
-     * Switch back to transaction context for execution.
-     */
-    MemoryContextSwitchTo(oldcontext);
 
     /*
      * Run the portal to completion, and then drop it (and the receiver).
