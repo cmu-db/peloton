@@ -1,46 +1,43 @@
 /*-------------------------------------------------------------------------
  *
- * logger.h
+ * stdoutfrontendlogger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/backend/logging/stdoutfrontendlogger.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/logging/logproxy.h"
 #include "backend/logging/logrecord.h"
+#include "backend/logging/logger/frontendlogger.h"
 
 namespace peloton {
 namespace logging {
 
+static std::vector<LogRecord> stdout_buffer;
+
+static std::mutex stdout_buffer_mutex;
+
 //===--------------------------------------------------------------------===//
-// Logger 
+// Stdout Frontend Logger 
 //===--------------------------------------------------------------------===//
 
-class Logger{
-
+class StdoutFrontendLogger : public FrontendLogger{
   public:
-    Logger() = delete;
+    StdoutFrontendLogger(){ logger_type = LOGGER_TYPE_STDOUT;}
 
-    Logger(LoggerId logger_id, LogProxy *proxy) 
-    : logger_id(logger_id), proxy(proxy) {};
-    
-    void logging_MainLoop(void);
+    void MainLoop(void) const;
 
-    void log(LogRecord record);
-
-    void checkpoint(void);
+    void flush(void) const;
 
   private:
-    LoggerId logger_id = LOGGER_ID_INVALID;
-
-    LogProxy *proxy;
+    oid_t buffer_size = 10;
+    
+    size_t GetBufferSize() const;
 };
 
 }  // namespace logging
