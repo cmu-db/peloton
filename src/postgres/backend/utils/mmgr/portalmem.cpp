@@ -219,12 +219,13 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
 	/* initialize portal heap context; typically it won't store much */
-	// TODO: Peloton Changes
-	portal->heap = AllocSetContextCreate(TopMemoryContext,
-	                                     "PortalHeapMemory",
-	                                     ALLOCSET_SMALL_MINSIZE,
-	                                     ALLOCSET_SMALL_INITSIZE,
-	                                     ALLOCSET_SMALL_MAXSIZE);
+	// TODO: Peloton Changes, params for prepared stmt are built in heap
+	portal->heap = SHMAllocSetContextCreate(TopSharedMemoryContext,
+	                                        "PortalHeapMemory",
+	                                        ALLOCSET_SMALL_MINSIZE,
+	                                        ALLOCSET_SMALL_INITSIZE,
+	                                        ALLOCSET_SMALL_MAXSIZE,
+	                                        SHM_DEFAULT_SEGMENT);
 
 	/* create a resource owner for the portal */
 	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,

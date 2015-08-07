@@ -1099,12 +1099,20 @@ exec_simple_query(const char *query_string)
      */
     MemoryContextSwitchTo(oldcontext);
 
+    // TODO: Peloton Changes
+    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
     /*
      * Now we can create the destination receiver object.
      */
     receiver = CreateDestReceiver(dest);
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
+
+    /*
+     * Switch back to transaction context for execution.
+     */
+    MemoryContextSwitchTo(oldcontext);
 
     /*
      * Run the portal to completion, and then drop it (and the receiver).
@@ -1269,11 +1277,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
     drop_unnamed_stmt();
     /* Create context for parsing */
     unnamed_stmt_context =
-        AllocSetContextCreate(MessageContext,
-                              "unnamed prepared statement",
-                              ALLOCSET_DEFAULT_MINSIZE,
-                              ALLOCSET_DEFAULT_INITSIZE,
-                              ALLOCSET_DEFAULT_MAXSIZE);
+        SHMAllocSetContextCreate(MessageContext,
+                                 "unnamed prepared statement",
+                                 ALLOCSET_DEFAULT_MINSIZE,
+                                 ALLOCSET_DEFAULT_INITSIZE,
+                                 ALLOCSET_DEFAULT_MAXSIZE,
+                                 SHM_DEFAULT_SEGMENT);
     oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
   }
 
@@ -3791,11 +3800,12 @@ PostgresMain(int argc, char *argv[],
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = AllocSetContextCreate(TopMemoryContext,
-                                         "MessageContext",
-                                         ALLOCSET_DEFAULT_MINSIZE,
-                                         ALLOCSET_DEFAULT_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE);
+  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                            "MessageContext",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE,
+                                            SHM_DEFAULT_SEGMENT);
 
   /*
    * Remember stand-alone backend startup time
