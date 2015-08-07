@@ -33,10 +33,10 @@ namespace planner {
  * We separate it in this way for two reasons:
  * i) Postgres does the same thing;
  * ii) It makes it possible to use a more efficient executor to handle pure
- *direct map projections.
+ * direct map projections.
  *
  * NB: in case of a constant-valued projection, it is still under the umbrella
- *of \b target_list, though it sounds simple enough.
+ * of \b target_list, though it sounds simple enough.
  */
 class ProjectInfo {
  public:
@@ -56,7 +56,7 @@ class ProjectInfo {
   /**
    * @brief Generic specification of a direct map:
    *        < NEW_col_id ,
-   *        <tuple_index (left or right tuple), OLD_col_id>
+   *          <tuple_index (left or right tuple), OLD_col_id>
    *        >
    */
   typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
