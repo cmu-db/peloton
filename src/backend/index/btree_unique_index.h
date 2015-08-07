@@ -179,9 +179,6 @@ class BtreeUniqueIndex : public Index {
       auto itr = container.begin();
 
       while (itr != container.end()) {
-        auto index_key = itr->first;
-        auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
-
         ItemPointer location = itr->second;
         result.push_back(location);
         itr++;

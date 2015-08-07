@@ -85,6 +85,10 @@ class LogicalTile {
   void SetPositionListsAndVisibility(
       std::vector<std::vector<oid_t>> &&position_lists);
 
+  void TransferOwnershipTo(LogicalTile *other);
+
+  std::unordered_set<storage::Tile *> &GetOwnedBaseTiles();
+
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
 

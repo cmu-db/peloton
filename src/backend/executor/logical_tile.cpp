@@ -104,6 +104,28 @@ void LogicalTile::SetPositionListsAndVisibility(
 }
 
 /**
+ * @brief Transfer all owned basetiles to another logical tile
+ *        and give up all the base tiles
+ *
+ */
+void LogicalTile::TransferOwnershipTo(LogicalTile *other) {
+  auto other_ownership_set = other->GetOwnedBaseTiles();
+  other_ownership_set.insert(owned_base_tiles_.begin(), owned_base_tiles_.end());
+  owned_base_tiles_.clear();
+}
+
+/**
+ * @brief Get the underlying owned base tile set
+ * @return Owned base tile set of the tile
+ */
+std::unordered_set<storage::Tile *> &LogicalTile::GetOwnedBaseTiles() {
+  return owned_base_tiles_;
+}
+
+
+
+
+/**
  * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
  * @param own_base_tile True if the logical tile should assume ownership of
@@ -192,7 +214,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
 
-  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
+  LOG_INFO("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
 
   return value;

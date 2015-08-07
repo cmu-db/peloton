@@ -199,11 +199,8 @@ class BtreeMultiIndex : public Index {
 
       auto itr = container.begin();
 
-      // scan all entries comparing against arbitrary key
+      // scan all entries
       while (itr != container.end()) {
-        auto index_key = itr->first;
-        auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
-
         ItemPointer location = itr->second;
         result.push_back(location);
         itr++;
