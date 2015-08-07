@@ -28,7 +28,12 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
                                   ExecutorContext *executor_context);
 
  protected:
+  bool DInit();
+
   bool DExecute();
+
+  /** @brief Starting left table scan. */
+  bool left_scan_start = false;
 
  private:
   // nothing special here
