@@ -38,9 +38,9 @@ class ExprTransformer {
   static bool CleanExprTree(expression::AbstractExpression* root);
  private:
   /*
-   * This set of TransformXXX methods should transform an PG ExprState tree
-   * rooted at a ExprState pointing to a XXX Expr node.
-   * A XXX Expr node should have a nodeTag of T_XXX.
+   * This set of TransformYYY methods should transform an PG ExprState tree
+   * rooted at a ExprState pointing to a YYY Expr node.
+   * A YYY Expr node should have a nodeTag of T_YYY.
    */
 
   static expression::AbstractExpression *TransformConst(const ExprState *es);
@@ -51,6 +51,7 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformRelabelType(
       const ExprState *es);
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
+  static expression::AbstractExpression *TransformAggRef(const ExprState *es);
 
   static expression::AbstractExpression *TransformList(
       const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
