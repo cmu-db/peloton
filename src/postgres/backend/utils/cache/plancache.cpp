@@ -343,12 +343,11 @@ void CompleteCachedPlan(CachedPlanSource *plansource, List *querytree_list,
   } else {
     /* Again, it's a good bet the querytree_context can be small */
     // TODO: Peloton Changes
-    querytree_context = SHMAllocSetContextCreate(source_context,
-                                                 "CachedPlanQuery",
-                                                 ALLOCSET_DEFAULT_MINSIZE,
-                                                 ALLOCSET_DEFAULT_INITSIZE,
-                                                 ALLOCSET_DEFAULT_MAXSIZE,
-                                                 SHM_DEFAULT_SEGMENT);
+    querytree_context = AllocSetContextCreate(source_context,
+                                              "CachedPlanQuery",
+                                              ALLOCSET_DEFAULT_MINSIZE,
+                                              ALLOCSET_DEFAULT_INITSIZE,
+                                              ALLOCSET_DEFAULT_MAXSIZE);
     /*
      querytree_context = AllocSetContextCreate(source_context,
      "CachedPlanQuery",
@@ -711,12 +710,11 @@ RevalidateCachedQuery(CachedPlanSource *plansource) {
    * Allocate new___ query_context and copy the completed querytree into it.
    * It's transient until we complete the copying and dependency extraction.
    */
-  querytree_context = SHMAllocSetContextCreate(CurrentMemoryContext,
-                                               "CachedPlanQuery",
-                                               ALLOCSET_DEFAULT_MINSIZE,
-                                               ALLOCSET_DEFAULT_INITSIZE,
-                                               ALLOCSET_DEFAULT_MAXSIZE,
-                                               SHM_DEFAULT_SEGMENT);
+  querytree_context = AllocSetContextCreate(CurrentMemoryContext,
+                                            "CachedPlanQuery",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE);
 
   /*
    querytree_context = AllocSetContextCreate(CurrentMemoryContext,
@@ -927,12 +925,11 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
    * memory context.
    */
   if (!plansource->is_oneshot) {
-    plan_context = SHMAllocSetContextCreate(CurrentMemoryContext,
-                                            "CachedPlanQuery",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+    plan_context = AllocSetContextCreate(CurrentMemoryContext,
+                                         "CachedPlanQuery",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
     /*
      plan_context = AllocSetContextCreate(CurrentMemoryContext, "CachedPlan",
      ALLOCSET_SMALL_MINSIZE,
@@ -1277,12 +1274,11 @@ CopyCachedPlan(CachedPlanSource *plansource) {
     elog(ERROR, "cannot copy a one-shot cached plan");
 
   // TODO: Peloton Changes
-  source_context = SHMAllocSetContextCreate(CurrentMemoryContext,
-                                            "CachedPlanQuery",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+  source_context = AllocSetContextCreate(CurrentMemoryContext,
+                                         "CachedPlanQuery",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
 
   oldcxt = MemoryContextSwitchTo(source_context);
 
@@ -1311,17 +1307,12 @@ CopyCachedPlan(CachedPlanSource *plansource) {
   newsource->context = source_context;
 
   // TODO: Peloton Changes
-  querytree_context = SHMAllocSetContextCreate(source_context,
-                                               "CachedPlanQuery",
-                                               ALLOCSET_DEFAULT_MINSIZE,
-                                               ALLOCSET_DEFAULT_INITSIZE,
-                                               ALLOCSET_DEFAULT_MAXSIZE,
-                                               SHM_DEFAULT_SEGMENT);
-  /*
-  querytree_context = AllocSetContextCreate(source_context, "CachedPlanQuery",
-  ALLOCSET_SMALL_MINSIZE,
-                                            ALLOCSET_SMALL_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE);*/
+  querytree_context = AllocSetContextCreate(source_context,
+                                            "CachedPlanQuery",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE);
+
   MemoryContextSwitchTo(querytree_context);
   newsource->query_list = (List *) copyObject(plansource->query_list);
   newsource->relationOids = (List *) copyObject(plansource->relationOids);
