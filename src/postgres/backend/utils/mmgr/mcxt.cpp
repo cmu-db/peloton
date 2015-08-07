@@ -1137,3 +1137,18 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
+
+void *
+SHMAlloc(Size size)
+{
+  void *location = nullptr;
+
+  // Allocate in Top Shared Memory Context
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  location = palloc(size);
+
+  MemoryContextSwitchTo(oldcxt);
+  return location;
+}
+

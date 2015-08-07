@@ -192,4 +192,6 @@ MM   *SHMFindMMContext(MemoryContext ac);
 
 #define SHMPointerIsValid(pointer) ((void*)(pointer) != NULL)
 
+extern void *SHMAlloc(Size size);
+
 #endif   /* MEMUTILS_H */

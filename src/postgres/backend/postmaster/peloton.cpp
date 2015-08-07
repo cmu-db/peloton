@@ -1081,7 +1081,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
  */
 Peloton_Status *
 peloton_create_status() {
-  Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
+  Peloton_Status *status =
+      static_cast<Peloton_Status *>(SHMAlloc(sizeof(Peloton_Status)));
 
   status->m_result = peloton::RESULT_INVALID;
   status->m_result_slots = NULL;
