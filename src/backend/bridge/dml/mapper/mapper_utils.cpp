@@ -169,8 +169,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         direct_map_list.emplace_back(out_col_id,
                                      std::make_pair(tuple_idx, in_col_id));
 
-        LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
-                  out_col_id);
+        LOG_INFO("DirectMap: Input : [%u , %u] , Output column : %u \n",
+                 tuple_idx, in_col_id, out_col_id);
       }
     } else  // Non-sequential direct map
     {
@@ -188,8 +188,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         direct_map_list.emplace_back(out_col_id,
                                      std::make_pair(tuple_idx, in_col_id));
 
-        LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
-                  out_col_id);
+        LOG_INFO("DirectMap: Input : [%u , %u] , Output column : %u \n",
+                 tuple_idx, in_col_id, out_col_id);
       }
     }
   }
