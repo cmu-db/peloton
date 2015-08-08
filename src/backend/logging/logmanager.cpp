@@ -31,18 +31,32 @@ std::shared_ptr<LogManager>& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartLogging(LoggingType logging_type){
-  FrontendLogger* frontend_logger;
+
+  FrontendLogger* frontend_logger = nullptr;
+  bool is_frontend_exist = false;
+
+  // Check whether the frontend logger that has the same logging type with given logging type exists or not
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
     for(auto frontend_logger : frontend_loggers){
       if( frontend_logger->GetLoggingType() == logging_type){
-        LOG_ERROR("(%s)FrontendLogger already exists!!\n",LoggingTypeToString(logging_type).c_str());
+        is_frontend_exist = true;
+        break;
       }
     }
-    frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
-    frontend_loggers.push_back(frontend_logger);
+
+    // Create the frontend logger 
+    if( !is_frontend_exist ){
+      frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
+      frontend_loggers.push_back(frontend_logger);
+    }
   }
-  frontend_logger->MainLoop();
+
+  if( is_frontend_exist ){
+    LOG_ERROR("The same LoggingType(%s) FrontendLogger already exists!!\n",LoggingTypeToString(logging_type).c_str());
+  }else{
+      frontend_logger->MainLoop();
+  }
 }
 
 /**
@@ -51,12 +65,29 @@ void LogManager::StartLogging(LoggingType logging_type){
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
-  //TODO :: check whether frontend logger is running or not
-  // and set the frontend logger to corresponding backend server
-  BackendLogger* backend_logger = BackendLogger::GetBackendLogger(logging_type);
+  BackendLogger* backend_logger =  nullptr;
+  bool is_frontend_exist = false;
+
+  // Check whether the corresponding frontend logger exists or not
   {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-    backend_loggers.push_back(backend_logger);
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+    for(auto frontend_logger : frontend_loggers){
+      if(frontend_logger->GetLoggingType() == logging_type){
+        is_frontend_exist = true;
+        break;
+      }
+    }
+  }
+
+  // Create the backend logger only if the corresponding frontend logger exists
+  if( is_frontend_exist ){
+    backend_logger = BackendLogger::GetBackendLogger(logging_type);
+    {
+      std::lock_guard<std::mutex> lock(backend_logger_mutex);
+      backend_loggers.push_back(backend_logger);
+    }
+  }else{
+    LOG_ERROR("The corresponding frontendLogger(%s) is not exist!!\n",LoggingTypeToString(logging_type).c_str());
   }
   return backend_logger;
 }
