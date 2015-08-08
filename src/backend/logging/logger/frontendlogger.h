@@ -34,7 +34,7 @@ class FrontendLogger : public Logger{
 
     virtual void MainLoop(void) const = 0;
 
-    virtual void flush(void) const = 0;
+    virtual void commit(void) const = 0;
 };
 
 }  // namespace logging

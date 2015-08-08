@@ -32,7 +32,7 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     void MainLoop(void) const;
 
-    void flush(void) const;
+    void commit(void) const;
 
   private:
     oid_t buffer_size = 3;
