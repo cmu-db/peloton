@@ -19,14 +19,14 @@ void StdoutFrontendLogger::MainLoop(void) const {
   for(int i=0;;i++){
     sleep(5);
     printf("buffer size %u GetBufferSize() %d \n", buffer_size,(int) GetBufferSize());
-    if( GetBufferSize() >= buffer_size ) flush();
+    if( GetBufferSize() >= buffer_size ) commit();
   }
 }
 
 /**
- * @brief flush all record, for now it's just printing out
+ * @brief commit all record, for now it's just printing out
  */
-void StdoutFrontendLogger::flush(void) const {
+void StdoutFrontendLogger::commit(void) const {
   std::lock_guard<std::mutex> buffer_lock(stdout_buffer_mutex);
 
   std::cout << "\n::StartFlush::\n";

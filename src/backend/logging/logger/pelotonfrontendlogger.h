@@ -25,7 +25,7 @@ class PelotonFrontendLogger : public FrontendLogger{
   public:
     void MainLoop(void) const;
 
-    void flush(void) const;
+    void commit(void) const;
 };
 
 }  // namespace logging

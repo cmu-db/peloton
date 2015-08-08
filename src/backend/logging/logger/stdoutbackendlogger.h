@@ -27,6 +27,8 @@ class StdoutBackendLogger : public BackendLogger{
     StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
     void log(LogRecord record);
+
+    void flush(void);
   private:
     std::vector<LogRecord> stdout_buffer;
     

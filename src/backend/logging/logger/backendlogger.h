@@ -34,6 +34,8 @@ class BackendLogger : public Logger{
 
     virtual void log(LogRecord record) = 0;
 
+    virtual void flush(void) = 0;
+
     oid_t GetBackendLoggerId() const;
 
   protected:
