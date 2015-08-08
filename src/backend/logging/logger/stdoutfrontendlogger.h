@@ -35,7 +35,7 @@ class StdoutFrontendLogger : public FrontendLogger{
     void flush(void) const;
 
   private:
-    oid_t buffer_size = 10;
+    oid_t buffer_size = 3;
     
     size_t GetBufferSize() const;
 };
