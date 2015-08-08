@@ -1,37 +1,40 @@
 /*-------------------------------------------------------------------------
  *
- * stdoutbackendlogger.h
+ * frontendlogger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/stdoutbackendlogger.h
+ * /peloton/src/backend/logging/frontendlogger.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/logging/logger/backendlogger.h"
+#include "backend/common/types.h"
+#include "backend/logging/logger.h"
+
+#include <vector>
+#include <mutex>
 
 namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Stdout Backend Logger 
+// Frontend Logger 
 //===--------------------------------------------------------------------===//
 
-class StdoutBackendLogger : public BackendLogger{
+class FrontendLogger : public Logger{
 
   public:
-    StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
+    FrontendLogger(){ logger_type=LOGGER_TYPE_FRONTEND; }
 
-    void log(LogRecord record);
+    static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
-    void flush(void);
-  private:
-    std::vector<LogRecord> stdout_buffer;
-    
+    virtual void MainLoop(void) const = 0;
+
+    virtual void commit(void) const = 0;
 };
 
 }  // namespace logging

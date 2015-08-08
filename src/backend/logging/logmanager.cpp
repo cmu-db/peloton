@@ -80,6 +80,7 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
   }
 
   // Create the backend logger only if the corresponding frontend logger exists
+  // TODO :: Set frontend logger inside backend logger ?
   if( is_frontend_exist ){
     backend_logger = BackendLogger::GetBackendLogger(logging_type);
     {
