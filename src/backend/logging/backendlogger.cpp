@@ -10,8 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/logger/backendlogger.h"
-#include "backend/logging/logger/stdoutbackendlogger.h"
+#include "backend/logging/backendlogger.h"
+#include "backend/logging/loggers/stdoutbackendlogger.h"
 
 namespace peloton {
 namespace logging {

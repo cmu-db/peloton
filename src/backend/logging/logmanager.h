@@ -13,9 +13,9 @@
 #pragma once
 
 #include "backend/common/types.h"
-#include "backend/logging/logger/logger.h"
-#include "backend/logging/logger/frontendlogger.h"
-#include "backend/logging/logger/backendlogger.h"
+#include "backend/logging/logger.h"
+#include "backend/logging/frontendlogger.h"
+#include "backend/logging//backendlogger.h"
 
 #include <memory>
 #include <mutex>
