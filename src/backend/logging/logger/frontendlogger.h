@@ -28,9 +28,9 @@ namespace logging {
 class FrontendLogger : public Logger{
 
   public:
-    FrontendLogger(){ logging_type=LOGGING_TYPE_FRONTEND; }
+    FrontendLogger(){ logger_type=LOGGER_TYPE_FRONTEND; }
 
-    static FrontendLogger* GetFrontendLogger(LoggerType logger_type);
+    static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
     virtual void MainLoop(void) const = 0;
 
