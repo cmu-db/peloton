@@ -25,27 +25,27 @@ std::shared_ptr<LogManager>& LogManager::GetInstance(){
 }
 
 /**
- * @brief Start logging based on logger type
+ * @brief Start logging based on logging type
     and store it into the vector
- * @param logger type can be stdout(debug), aries, peloton
+ * @param logging type can be stdout(debug), aries, peloton
  */
-void LogManager::StartLogging(LoggerType logger_type){
+void LogManager::StartLogging(LoggingType logging_type){
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
     // TODO :: Check whether it already has frontend logger or not
-    FrontendLogger* frontend_logger = FrontendLogger::GetFrontendLogger(logger_type);
+    FrontendLogger* frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
     frontend_loggers.push_back(frontend_logger);
     frontend_logger->MainLoop();
   }
 }
 
 /**
- * @brief Return the backend logger based on logger type
+ * @brief Return the backend logger based on logging type
     and store it into the vector
- * @param logger type can be stdout(debug), aries, peloton
+ * @param logging type can be stdout(debug), aries, peloton
  */
-BackendLogger* LogManager::GetBackendLogger(LoggerType logger_type){
-  BackendLogger* backend_logger = BackendLogger::GetBackendLogger(logger_type);
+BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
+  BackendLogger* backend_logger = BackendLogger::GetBackendLogger(logging_type);
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
     backend_loggers.push_back(backend_logger);

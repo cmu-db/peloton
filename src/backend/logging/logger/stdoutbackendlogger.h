@@ -24,7 +24,7 @@ namespace logging {
 class StdoutBackendLogger : public BackendLogger{
 
   public:
-    StdoutBackendLogger(){ logger_type = LOGGER_TYPE_STDOUT;}
+    StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
     void log(LogRecord record);
   private:

@@ -17,14 +17,14 @@ namespace peloton {
 namespace logging {
 
 /**
- * @brief Return the frontend logger based on logger type
- * @param logger type can be stdout(debug), aries, peloton
+ * @brief Return the frontend logger based on logging type
+ * @param logging type can be stdout(debug), aries, peloton
  */
-FrontendLogger* FrontendLogger::GetFrontendLogger(LoggerType logger_type){
+FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
   FrontendLogger* frontendLogger;
 
-  switch(logger_type){
-    case LOGGER_TYPE_STDOUT:{
+  switch(logging_type){
+    case LOGGING_TYPE_STDOUT:{
       frontendLogger = new StdoutFrontendLogger();
     }break;
 

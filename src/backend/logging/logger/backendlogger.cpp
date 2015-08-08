@@ -17,14 +17,14 @@ namespace peloton {
 namespace logging {
 
 /**
- * @brief Return the backend logger based on logger type
- * @param logger type can be stdout(debug), aries, peloton
+ * @brief Return the backend logger based on logging type
+ * @param logging type can be stdout(debug), aries, peloton
  */
-BackendLogger* BackendLogger::GetBackendLogger(LoggerType logger_type){
+BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
   BackendLogger* backendLogger;
 
-  switch(logger_type){
-    case LOGGER_TYPE_STDOUT:{
+  switch(logging_type){
+    case LOGGING_TYPE_STDOUT:{
       backendLogger = new StdoutBackendLogger();
     }break;
 
@@ -48,7 +48,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggerType logger_type){
  * @brief Return uniqe backend logger id
  */
 oid_t BackendLogger::GetBackendLoggerId() const{
-  return logger_id;
+  return backend_id;
 }
 
 }  // namespace logging
