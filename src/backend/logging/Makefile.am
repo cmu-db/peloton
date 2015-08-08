@@ -6,11 +6,11 @@
 
 logging_FILES = \
 			   backend/logging/logmanager.cpp \
-			   backend/logging/logger/logger.cpp \
-			   backend/logging/logger/frontendlogger.cpp \
-			   backend/logging/logger/backendlogger.cpp \
-			   backend/logging/logger/stdoutfrontendlogger.cpp \
-			   backend/logging/logger/stdoutbackendlogger.cpp \
+			   backend/logging/logger.cpp \
+			   backend/logging/frontendlogger.cpp \
+			   backend/logging/backendlogger.cpp \
+			   backend/logging/loggers/stdoutfrontendlogger.cpp \
+			   backend/logging/loggers/stdoutbackendlogger.cpp \
 			   backend/logging/logrecord.cpp 
 
 logging_INCLUDES = \

@@ -13,7 +13,7 @@
 #pragma once
 
 #include "backend/logging/logrecord.h"
-#include "backend/logging/logger/logger.h"
+#include "backend/logging/logger.h"
 
 namespace peloton {
 namespace logging {
