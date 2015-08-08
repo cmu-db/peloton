@@ -33,6 +33,7 @@ void LogManager::StartLogging(LoggingType logging_type){
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
     // TODO :: Check whether it already has frontend logger or not
+    // just look over the queue and check logging type, it's sufficient
     FrontendLogger* frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
     frontend_loggers.push_back(frontend_logger);
     frontend_logger->MainLoop();
@@ -45,6 +46,8 @@ void LogManager::StartLogging(LoggingType logging_type){
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
+  //TODO :: check whether frontend logger is running or not
+  // and set the frontend logger to corresponding backend server
   BackendLogger* backend_logger = BackendLogger::GetBackendLogger(logging_type);
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
@@ -52,36 +55,6 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
   }
   return backend_logger;
 }
-
-///** FIXME :: Do we need this function?
-// * @brief Return the logger based on logger type and logging_type
-// * @param logger type can be stdout(debug), aries, peloton
-// * @param logging type can be frontend or backend
-//    frontend logger is only one for each logger type
-// */
-////TODO :: Do not create new instance, just return existing object
-//Logger* Logger::GetLogger(LoggerType logger_type,
-//                          LoggingType logging_type){
-//  Logger* logger;
-//
-//  // it should be changed to use vector. .
-//  // i mean look over vector..
-//  switch(logging_type){
-//    case LOGGING_TYPE_FRONTEND:{
-//      logger = GetFrontendLogger(logger_type);
-//    }break;
-//
-//    case LOGGING_TYPE_BACKEND:{
-//      logger = GetBackendLogger(logger_type);
-//    }break;
-//
-//    default:
-//    LOG_ERROR("Unsupported logging type");
-//    break;
-//  }
-//
-//  return logger;
-//}
 
 }  // namespace logging
 }  // namespace peloton
