@@ -24,12 +24,12 @@ namespace logging {
 class Logger{
 
   public:
-    LoggerType GetLoggerType(void) const;
     LoggingType GetLoggingType(void) const;
+    LoggerType GetLoggerType(void) const;
 
   protected:
-    LoggerType logger_type = LOGGER_TYPE_INVALID;
     LoggingType logging_type = LOGGING_TYPE_INVALID;
+    LoggerType logger_type = LOGGER_TYPE_INVALID;
 
 };
 
