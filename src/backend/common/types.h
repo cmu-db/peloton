@@ -442,19 +442,19 @@ enum SetOpType {
 // Log Types
 //===--------------------------------------------------------------------===//
 
-enum LoggerType{
-  LOGGER_TYPE_INVALID = 0, 
-
-  LOGGER_TYPE_STDOUT  = 1, 
-  LOGGER_TYPE_ARIES   = 2,
-  LOGGER_TYPE_PELOTON = 3 
-};
-
 enum LoggingType{
   LOGGING_TYPE_INVALID = 0, 
 
-  LOGGING_TYPE_FRONTEND = 1, 
-  LOGGING_TYPE_BACKEND = 2
+  LOGGING_TYPE_STDOUT  = 1, 
+  LOGGING_TYPE_ARIES   = 2,
+  LOGGING_TYPE_PELOTON = 3 
+};
+
+enum LoggerType{
+  LOGGER_TYPE_INVALID = 0, 
+
+  LOGGER_TYPE_FRONTEND = 1, 
+  LOGGER_TYPE_BACKEND = 2
 
 };
 

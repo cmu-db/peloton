@@ -28,7 +28,7 @@ static std::mutex stdout_buffer_mutex;
 
 class StdoutFrontendLogger : public FrontendLogger{
   public:
-    StdoutFrontendLogger(){ logger_type = LOGGER_TYPE_STDOUT;}
+    StdoutFrontendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
     void MainLoop(void) const;
 

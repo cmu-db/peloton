@@ -38,11 +38,11 @@ static std::mutex backend_logger_mutex;
 class LogManager{
   public:
     static std::shared_ptr<LogManager>& GetInstance(void);
+
+    void StartLogging(LoggingType logging_type);
     
   private:
-    void StartLogging(LoggerType logger_type);
-
-    BackendLogger* GetBackendLogger(LoggerType logger_type);
+    BackendLogger* GetBackendLogger(LoggingType logging_type);
  
     // frontend_logger is only one for each stdoud, aries, and peloton
     // so that we can identify frontend_logger using logger_type

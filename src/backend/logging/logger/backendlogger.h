@@ -22,22 +22,22 @@ namespace logging {
 // Backend Logger 
 //===--------------------------------------------------------------------===//
 
-static oid_t logger_id_count=0;
+static oid_t backend_id_count=0;
 
 class BackendLogger : public Logger{
 
   public:
-    BackendLogger() { logging_type = LOGGING_TYPE_BACKEND;
-                      logger_id = logger_id_count++;}
+    BackendLogger() { logger_type = LOGGER_TYPE_BACKEND;
+                      backend_id = backend_id_count++;}
 
-    static BackendLogger* GetBackendLogger(LoggerType logger_type);
+    static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
     virtual void log(LogRecord record) = 0;
 
     oid_t GetBackendLoggerId() const;
 
   protected:
-    oid_t logger_id;
+    oid_t backend_id;
 };
 
 }  // namespace logging
