@@ -350,8 +350,10 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
+	  elog(LOG, "PelotonQuery :: %d", queryDesc->plannedstmt->pelotonQuery);
+
 	  // PG Query
-	  if(true)
+	  if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {
 	    ExecutePlan(estate,
 	                queryDesc->planstate,
@@ -1644,6 +1646,18 @@ peloton_ExecutePlan(EState *estate,
   Peloton_Status *status;
 
   status = peloton_create_status();
+
+  // Copy the parsetree
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  Node     *planstate_copy = (List *) copyObject(planstate);
+  /* This checks both copyObject() and the equal() routines... */
+  if (!equal(planstate_copy, planstate))
+    elog(WARNING, "copyObject() failed to produce an equal parse tree");
+  else
+    elog(INFO, "Copied planstate : %p", planstate_copy);
+
+  MemoryContextSwitchTo(oldcxt);
 
   peloton_send_dml(status, planstate);
 
