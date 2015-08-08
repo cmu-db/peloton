@@ -23,5 +23,13 @@ void StdoutBackendLogger::log(LogRecord record){
   stdout_buffer.push_back(record);
 }
 
+/**
+ * @brief Flushing the local queue to frontend logger
+ */
+void StdoutBackendLogger::flush(){
+  //stdout_buffer.push_back(record);
+  //TODO do something here
+}
+
 }  // namespace logging
 }  // namespace peloton
