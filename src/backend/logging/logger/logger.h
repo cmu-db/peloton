@@ -25,10 +25,12 @@ class Logger{
 
   public:
     LoggingType GetLoggingType(void) const;
+
     LoggerType GetLoggerType(void) const;
 
   protected:
     LoggingType logging_type = LOGGING_TYPE_INVALID;
+
     LoggerType logger_type = LOGGER_TYPE_INVALID;
 
 };

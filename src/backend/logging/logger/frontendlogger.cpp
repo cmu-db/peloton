@@ -28,16 +28,16 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
       frontendLogger = new StdoutFrontendLogger();
     }break;
 
-//    case LOGGER_TYPE_ARIES:{
+    case LOGGING_TYPE_ARIES:{
 //      frontendLogger = new AriesFrontendLogger();
-//    }break;
+    }break;
 //
-//    case LOGGER_TYPE_PELOTON:{
+    case LOGGING_TYPE_PELOTON:{
 //      frontendLogger = new PelotonFrontendLogger();
-//    }break;
+    }break;
 
     default:
-    LOG_ERROR("Unsupported frontend logger type");
+    LOG_ERROR("Unsupported frontend logging type");
     break;
   }
 
