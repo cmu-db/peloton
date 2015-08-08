@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/common/logger.h"
 #include "backend/logging/logmanager.h"
 
 namespace peloton {
@@ -30,14 +31,18 @@ std::shared_ptr<LogManager>& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartLogging(LoggingType logging_type){
+  FrontendLogger* frontend_logger;
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-    // TODO :: Check whether it already has frontend logger or not
-    // just look over the queue and check logging type, it's sufficient
-    FrontendLogger* frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
+    for(auto frontend_logger : frontend_loggers){
+      if( frontend_logger->GetLoggingType() == logging_type){
+        LOG_ERROR("(%s)FrontendLogger already exists!!\n",LoggingTypeToString(logging_type).c_str());
+      }
+    }
+    frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
     frontend_loggers.push_back(frontend_logger);
-    frontend_logger->MainLoop();
   }
+  frontend_logger->MainLoop();
 }
 
 /**
