@@ -106,12 +106,11 @@ EnablePortalManager(void)
 	Assert(PortalMemory == NULL);
 
   // TODO: Peloton Changes
-	PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
+	PortalMemory = AllocSetContextCreate(TopMemoryContext,
 	                                     "PortalMemory",
 	                                     ALLOCSET_DEFAULT_MINSIZE,
 	                                     ALLOCSET_DEFAULT_INITSIZE,
-	                                     ALLOCSET_DEFAULT_MAXSIZE,
-	                                     SHM_DEFAULT_SEGMENT);
+	                                     ALLOCSET_DEFAULT_MAXSIZE);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -221,12 +220,11 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 
 	/* initialize portal heap context; typically it won't store much */
 	// TODO: Peloton Changes
-	portal->heap = SHMAllocSetContextCreate(TopSharedMemoryContext,
-	                                        "PortalHeapMemory",
-	                                        ALLOCSET_SMALL_MINSIZE,
-	                                        ALLOCSET_SMALL_INITSIZE,
-	                                        ALLOCSET_SMALL_MAXSIZE,
-	                                        SHM_DEFAULT_SEGMENT);
+	portal->heap = AllocSetContextCreate(TopMemoryContext,
+	                                     "PortalHeapMemory",
+	                                     ALLOCSET_SMALL_MINSIZE,
+	                                     ALLOCSET_SMALL_INITSIZE,
+	                                     ALLOCSET_SMALL_MAXSIZE);
 
 	/* create a resource owner for the portal */
 	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,
@@ -571,7 +569,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 		MemoryContextDelete(portal->holdContext);
 
 	/* release subsidiary storage */
-	SHMContextDelete(PortalGetHeapMemory(portal));
+	MemoryContextDelete(PortalGetHeapMemory(portal));
 
 	/* release portal struct (it's in PortalMemory) */
 	pfree(portal);
@@ -793,7 +791,7 @@ AtAbort_Portals(void)
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		SHMContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 
@@ -930,7 +928,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		SHMContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 
