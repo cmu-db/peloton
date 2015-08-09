@@ -813,7 +813,9 @@ peloton_send(void *msg, int len) {
  */
 void
 peloton_send_dml(Peloton_Status  *status,
-                 PlanState *node) {
+                 Plan *plantree,
+                 ParamListInfo param_list,
+                 TupleDesc tuple_desc) {
   Peloton_MsgDML msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -830,7 +832,9 @@ peloton_send_dml(Peloton_Status  *status,
 
   // Set msg-specific information
   msg.m_status = status;
-  msg.m_planstate = node;
+  msg.m_plantree = plantree;
+  msg.m_param_list = param_list;
+  msg.m_tuple_desc = tuple_desc;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -942,33 +946,38 @@ peloton_reply_to_backend(mqd_t backend_id) {
  */
 static void
 peloton_process_dml(Peloton_MsgDML *msg) {
-  PlanState *planstate;
   assert(msg);
 
   /* Get the planstate */
-  planstate = msg->m_planstate;
+  Plan *plantree = msg->m_plantree;
+
+  return;
 
   /* Ignore invalid plans */
-  if(planstate == NULL || nodeTag(planstate) == T_Invalid) {
+  if(plantree == NULL || nodeTag(plantree) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
+  ParamListInfo param_list = msg->m_param_list;
+  TupleDesc tuple_desc = msg->m_tuple_desc;
 
-  auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+  //auto plan = peloton::bridge::PlanTransformer::TransformPlan(plantree);
+  peloton::planner::AbstractPlanNode *plan = nullptr;
 
   if(plan){
 
     try {
-      /* Execute the plantree */
+      // Execute the plantree
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
-                                                 planstate,
+                                                 param_list,
+                                                 tuple_desc,
                                                  msg->m_status,
                                                  txn_id);
 
-      /* Clean up the plantree */
+      // Clean up the plantree
       peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
 
     }
@@ -987,7 +996,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     // at the end. At this moment, 'MergeJoin'/'HashJoin' is required. However, HashJoin
     // has not been implemented yet in TransformPlan, so we set this special case 
     // NOTE :: Remove this special case with 'T_MergeJoin/T_HashJoin' case in TransformPlan
-    if (nodeTag(planstate->plan) == T_MergeJoin || nodeTag(planstate->plan) == T_HashJoin ) {
+    if (nodeTag(plantree) == T_MergeJoin || nodeTag(plantree) == T_HashJoin ) {
       msg->m_status->m_result = peloton::RESULT_SUCCESS;
     }else{
       /* Could not get the plan */

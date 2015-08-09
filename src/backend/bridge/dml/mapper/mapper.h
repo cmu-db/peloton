@@ -43,10 +43,10 @@ class PlanTransformer {
 
   PlanTransformer(){};
 
-  static void PrintPlanState(const PlanState *plan_state);
+  static void PrintPlanState(const PlanState *plan);
 
-  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state) {
-    return TransformPlan(plan_state, kDefaultOptions);
+  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan) {
+    return TransformPlan(plan, kDefaultOptions);
   }
 
   static bool CleanPlanNodeTree(planner::AbstractPlanNode *root);
@@ -67,7 +67,7 @@ class PlanTransformer {
   static const TransformOptions kDefaultOptions;
 
   static planner::AbstractPlanNode *TransformPlan(
-      const PlanState *plan_state, const TransformOptions options);
+      const PlanState *plan, const TransformOptions options);
 
   //======---------------------------------------
   // MODIFY TABLE FAMILY
