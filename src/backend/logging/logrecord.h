@@ -30,6 +30,7 @@ class LogRecord{
 
 public:
   LogRecord() = delete;
+
   LogRecord(LogRecordType log_record_type,
             const concurrency::Transaction *transaction,
             oid_t table_oid,

@@ -24,12 +24,16 @@ namespace logging {
 class StdoutBackendLogger : public BackendLogger{
 
   public:
+
+    //TODO :: It alaways returns different value, make this as a singleton
     StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
     void log(LogRecord record);
 
-    void flush(void);
+    void localCommit(void);
+
   private:
+
     std::vector<LogRecord> stdout_buffer;
     
 };
