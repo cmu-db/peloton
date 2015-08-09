@@ -27,9 +27,7 @@ class StdoutBackendLogger : public BackendLogger{
 
   public:
 
-    //TODO :: It alaways returns different value, make this as a singleton
-    StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
-
+    static StdoutBackendLogger* GetInstance(void);
 
     void Log(LogRecord record);
 
@@ -41,9 +39,11 @@ class StdoutBackendLogger : public BackendLogger{
 
   private:
 
+    StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
+
     // TODO change vector to list
     std::vector<LogRecord> stdout_buffer;
-    
+
 };
 
 }  // namespace logging

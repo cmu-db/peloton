@@ -15,6 +15,11 @@
 namespace peloton {
 namespace logging {
 
+StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
+  static StdoutBackendLogger pInstance; 
+  return &pInstance;
+}
+
 /**
  * @brief Recording log record
  * @param log record 
@@ -24,6 +29,8 @@ void StdoutBackendLogger::Log(LogRecord record){
     std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
     stdout_buffer.push_back(record);
   }
+  //TODO :: Testing
+  Commit();
 }
 
 /**
@@ -33,18 +40,6 @@ void StdoutBackendLogger::Commit(){
   {
     std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
     commit_offset = stdout_buffer.size();
-  }
-}
-
-/**
- * @brief Get the LogRecord with offset
- * @param offset
- */
-LogRecord StdoutBackendLogger::GetLogRecord(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
-    assert(offset < stdout_buffer.size());
-    return stdout_buffer[offset];
   }
 }
 
@@ -60,6 +55,18 @@ void StdoutBackendLogger::Truncate(oid_t offset){
     // It will be updated larger than 0 if we update commit_offset during the
     // flush in frontend logger
     commit_offset -= offset;
+  }
+}
+
+/**
+ * @brief Get the LogRecord with offset
+ * @param offset
+ */
+LogRecord StdoutBackendLogger::GetLogRecord(oid_t offset){
+  {
+    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    assert(offset < stdout_buffer.size());
+    return stdout_buffer[offset];
   }
 }
 
