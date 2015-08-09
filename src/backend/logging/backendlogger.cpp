@@ -25,16 +25,16 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
 
   switch(logging_type){
     case LOGGING_TYPE_STDOUT:{
-      backendLogger = new StdoutBackendLogger();
+      backendLogger = StdoutBackendLogger::GetInstance();
     }break;
 
-//    case LOGGER_TYPE_ARIES:{
+    case LOGGING_TYPE_ARIES:{
 //      backendLogger = new AriesBackendLogger();
-//    }break;
-//
-//    case LOGGER_TYPE_PELOTON:{
+    }break;
+
+    case LOGGING_TYPE_PELOTON:{
 //      backendLogger = new PelotonBackendLogger();
-//    }break;
+    }break;
 
     default:
     LOG_ERROR("Unsupported backend logger type");
@@ -43,6 +43,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
 
   return backendLogger;
 }
+
 oid_t BackendLogger::GetCommitOffset() const{
   return commit_offset;
 }
