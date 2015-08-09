@@ -25,6 +25,7 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
 
   switch(logging_type){
     case LOGGING_TYPE_STDOUT:{
+      // TODO :: change to singleton?
       frontendLogger = new StdoutFrontendLogger();
     }break;
 
@@ -42,6 +43,21 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
   }
 
   return frontendLogger;
+}
+
+/**
+ * @brief Store backend logger
+ * @param backend logger
+ */
+void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    backend_loggers.push_back(backend_logger);
+  }
+}
+
+std::vector<BackendLogger*> FrontendLogger::GetBackendLoggers(){
+    return backend_loggers;
 }
 
 }  // namespace logging

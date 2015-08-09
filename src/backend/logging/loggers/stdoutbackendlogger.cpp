@@ -24,11 +24,10 @@ void StdoutBackendLogger::log(LogRecord record){
 }
 
 /**
- * @brief Flushing the local queue to frontend logger
+ * @brief set the local commit offset to size  of buffer
  */
-void StdoutBackendLogger::flush(){
-  //stdout_buffer.push_back(record);
-  //TODO do something here
+void StdoutBackendLogger::localCommit(){
+  local_commit_offset = stdout_buffer.size();
 }
 
 }  // namespace logging
