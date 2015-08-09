@@ -25,16 +25,9 @@
 namespace peloton {
 namespace planner {
 
-AbstractPlan::AbstractPlan(oid_t plan_node_id)
-    : plan_node_id_(plan_node_id) {}
-
-AbstractPlan::AbstractPlan() : plan_node_id_(-1) {}
+AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
-
-//===--------------------------------------------------------------------===//
-// Children + Parent Helpers
-//===--------------------------------------------------------------------===//
 
 void AbstractPlan::AddChild(AbstractPlan *child) {
   children_.push_back(child);
@@ -46,24 +39,9 @@ const std::vector<AbstractPlan *> &AbstractPlan::GetChildren() const {
 
 AbstractPlan *AbstractPlan::GetParent() { return parent_; }
 
-//===--------------------------------------------------------------------===//
-// Accessors
-//===--------------------------------------------------------------------===//
-
-void AbstractPlan::SetPlanNodeId(oid_t plan_node_id) {
-  plan_node_id_ = plan_node_id;
-}
-
-oid_t AbstractPlan::GetPlanNodeId() const { return plan_node_id_; }
-
-//===--------------------------------------------------------------------===//
-// Utilities
-//===--------------------------------------------------------------------===//
-
-// Get a string representation of this plan node
-std::ostream &operator<<(std::ostream &os, const AbstractPlan &node) {
-  os << PlanNodeTypeToString(node.GetPlanNodeType());
-  os << "[" << node.GetPlanNodeId() << "]";
+// Get a string representation of this plan
+std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {
+  os << PlanNodeTypeToString(plan.GetPlanNodeType());
 
   return os;
 }
@@ -85,6 +63,21 @@ std::string AbstractPlan::GetInfo(std::string spacer) const {
 }
 
 std::string AbstractPlan::GetInfo() const { return ""; }
+
+//===--------------------------------------------------------------------===//
+// Abstract Plan State
+//===--------------------------------------------------------------------===//
+
+NodeTag AbstractPlanState::GetNodeTag() const { return type_; }
+
+// Get a string representation of this plan state
+std::ostream &operator<<(std::ostream &os, const AbstractPlanState &planstate) {
+
+  os << planstate.GetNodeTag();
+
+  return os;
+}
+
 
 }  // namespace planner
 }  // namespace peloton
