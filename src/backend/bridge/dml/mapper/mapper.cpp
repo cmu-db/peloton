@@ -14,14 +14,12 @@
 #include <cassert>
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
 
-#include "../executor/plan_executor.h"
 #include "nodes/print.h"
 #include "nodes/pprint.h"
 #include "utils/lsyscache.h"
 #include "parser/parsetree.h"
-
-void printPlanStateTree(const PlanState *planstate);
 
 namespace peloton {
 namespace bridge {
@@ -32,8 +30,7 @@ const PlanTransformer::TransformOptions PlanTransformer::kDefaultOptions;
  * @brief Pretty print the plan state tree.
  * @return none.
  */
-void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
-  printPlanStateTree(plan_state);
+void PlanTransformer::PrintPlanState(const PlanState *plan) {
 }
 
 /**
