@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/limit_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/limit_node.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,
@@ -28,9 +28,9 @@ namespace bridge {
  * @brief Convert a Postgres LimitState into a Peloton LimitPlanNode
  *        does not support LIMIT ALL
  *        does not support cases where there is only OFFSET
- * @return Pointer to the constructed AbstractPlanNode
+ * @return Pointer to the constructed AbstractPlan
  */
-planner::AbstractPlanNode *PlanTransformer::TransformLimit(
+planner::AbstractPlan *PlanTransformer::TransformLimit(
     const LimitState *node) {
   ExprContext *econtext = node->ps.ps_ExprContext;
   Datum val;
@@ -84,7 +84,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
    * is 0 */
   LOG_INFO("Flags :: Limit: %d, Offset: %d", noLimit, noOffset);
   LOG_INFO("Limit: %ld, Offset: %ld", limit, offset);
-  auto plan_node = new planner::LimitNode(limit, offset);
+  auto plan_node = new planner::LimitPlan(limit, offset);
 
   /* Resolve child plan */
   PlanState *subplan_state = outerPlanState(node);

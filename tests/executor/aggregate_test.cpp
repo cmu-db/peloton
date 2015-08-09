@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "../../src/backend/planner/abstract_plan.h"
+#include "../../src/backend/planner/aggregate_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -23,8 +25,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/abstract_plan_node.h"
-#include "backend/planner/aggregate_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -79,7 +79,7 @@ TEST(AggregateTests, DistinctTest) {
   auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
-  planner::AggregateNode node(
+  planner::AggregatePlan node(
       aggregate_columns, aggregate_columns_map, group_by_columns, nullptr,
       pass_through_columns_map, aggregate_types, output_table_schema);
 
@@ -152,7 +152,7 @@ TEST(AggregateTests, GroupByTest) {
   auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
-  planner::AggregateNode node(
+  planner::AggregatePlan node(
       aggregate_columns, aggregate_columns_map, group_by_columns, nullptr,
       pass_through_columns_map, aggregate_types, output_table_schema);
 
@@ -231,7 +231,7 @@ TEST(AggregateTests, AggregateTest) {
   auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
-  planner::AggregateNode node(
+  planner::AggregatePlan node(
       aggregate_columns, aggregate_columns_map, group_by_columns, nullptr,
       pass_through_columns_map, aggregate_types, output_table_schema);
 

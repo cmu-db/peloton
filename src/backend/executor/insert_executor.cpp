@@ -12,10 +12,10 @@
 
 #include "backend/executor/insert_executor.h"
 
+#include "../planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/insert_node.h"
 #include "backend/storage/tuple_iterator.h"
 
 namespace peloton {
@@ -25,7 +25,7 @@ namespace executor {
  * @brief Constructor for insert executor.
  * @param node Insert node corresponding to this executor.
  */
-InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
+InsertExecutor::InsertExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -50,7 +50,7 @@ bool InsertExecutor::DExecute() {
 
   assert(!done_);
 
-  const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
+  const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
   auto transaction_ = executor_context_->GetTransaction();
 

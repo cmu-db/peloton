@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace planner {
@@ -27,14 +27,14 @@ namespace planner {
  * IMPORTANT All tiles got from child must have the same physical schema.
  */
 
-class OrderByNode : public AbstractPlanNode {
+class OrderByPlan : public AbstractPlan {
  public:
-  OrderByNode(const OrderByNode &) = delete;
-  OrderByNode &operator=(const OrderByNode &) = delete;
-  OrderByNode(const OrderByNode &&) = delete;
-  OrderByNode &operator=(const OrderByNode &&) = delete;
+  OrderByPlan(const OrderByPlan &) = delete;
+  OrderByPlan &operator=(const OrderByPlan &) = delete;
+  OrderByPlan(const OrderByPlan &&) = delete;
+  OrderByPlan &operator=(const OrderByPlan &&) = delete;
 
-  OrderByNode(const std::vector<oid_t> &sort_keys,
+  OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids,
               storage::AbstractBackend *backend)

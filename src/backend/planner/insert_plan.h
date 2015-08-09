@@ -12,22 +12,22 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan_node.h"
+#include "abstract_plan.h"
 #include "backend/planner/project_info.h"
 #include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace planner {
 
-class InsertNode : public AbstractPlanNode {
+class InsertPlan : public AbstractPlan {
  public:
-  InsertNode() = delete;
-  InsertNode(const InsertNode &) = delete;
-  InsertNode &operator=(const InsertNode &) = delete;
-  InsertNode(InsertNode &&) = delete;
-  InsertNode &operator=(InsertNode &&) = delete;
+  InsertPlan() = delete;
+  InsertPlan(const InsertPlan &) = delete;
+  InsertPlan &operator=(const InsertPlan &) = delete;
+  InsertPlan(InsertPlan &&) = delete;
+  InsertPlan &operator=(InsertPlan &&) = delete;
 
-  explicit InsertNode(storage::DataTable *table,
+  explicit InsertPlan(storage::DataTable *table,
                       const planner::ProjectInfo *project_info)
       : target_table_(table), project_info_(project_info) {}
 

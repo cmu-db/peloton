@@ -965,7 +965,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   TupleDesc tuple_desc = msg->m_tuple_desc;
 
   //auto plan = peloton::bridge::PlanTransformer::TransformPlan(plantree);
-  peloton::planner::AbstractPlanNode *plan = nullptr;
+  peloton::planner::AbstractPlan *plan = nullptr;
 
   if(plan){
 

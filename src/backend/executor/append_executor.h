@@ -31,7 +31,7 @@ class AppendExecutor : public AbstractExecutor {
   AppendExecutor(const AppendExecutor &&) = delete;
   AppendExecutor &operator=(const AppendExecutor &&) = delete;
 
-  explicit AppendExecutor(planner::AbstractPlanNode *node,
+  explicit AppendExecutor(planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
  protected:

@@ -61,7 +61,7 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  * into a new tuple in the output tile group as well as passing through any
  * additional columns from the input tile group.
  */
-bool Helper(const planner::AggregateNode *node, Agg **aggregates,
+bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
             storage::DataTable *output_table, AbstractTuple *prev_tuple,
             const concurrency::Transaction *transaction) {
   // Ignore null tuples
@@ -120,7 +120,7 @@ bool Helper(const planner::AggregateNode *node, Agg **aggregates,
 
 template <>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
-    const planner::AggregateNode *node, storage::DataTable *output_table,
+    const planner::AggregatePlan *node, storage::DataTable *output_table,
     const concurrency::Transaction *transaction)
     : node(node), output_table(output_table), transaction(transaction) {
   group_by_columns = node->GetGroupByColumns();
@@ -217,7 +217,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
 
 template <>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
-    const planner::AggregateNode *node, storage::DataTable *output_table,
+    const planner::AggregatePlan *node, storage::DataTable *output_table,
     const concurrency::Transaction *transaction)
     : node(node), output_table(output_table), transaction(transaction) {
   group_by_columns = node->GetGroupByColumns();

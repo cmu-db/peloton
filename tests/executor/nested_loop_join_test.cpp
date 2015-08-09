@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "../../src/backend/planner/nested_loop_join_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -21,7 +22,6 @@
 #include "backend/executor/nested_loop_join_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression.h"
-#include "backend/planner/nested_loop_join_node.h"
 #include "backend/storage/data_table.h"
 
 #include "mock_executor.h"
@@ -98,7 +98,7 @@ planner::ProjectInfo *CreateProjection() {
 TEST(NestedLoopJoinTests, CartesianProductTest) {
   // Create plan node.
   auto projction = CreateProjection();
-  planner::NestedLoopJoinNode node(nullptr, projction);
+  planner::NestedLoopJoinPlan node(nullptr, projction);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
@@ -203,7 +203,7 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   auto projection = CreateProjection();
 
   // Create plan node.
-  planner::NestedLoopJoinNode node(predicate, projection);
+  planner::NestedLoopJoinPlan node(predicate, projection);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);

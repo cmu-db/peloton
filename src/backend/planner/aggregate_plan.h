@@ -12,25 +12,26 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/common/types.h"
+#include "backend/catalog/schema.h"
 
 #include <map>
+#include "abstract_plan.h"
 
 namespace peloton {
 namespace planner {
 
 // IMPORTANT:: Need own copy of output table schema.
 // TODO: Can we relax this constraint ?
-class AggregateNode : public AbstractPlanNode {
+class AggregatePlan : public AbstractPlan {
  public:
-  AggregateNode() = delete;
-  AggregateNode(const AggregateNode &) = delete;
-  AggregateNode &operator=(const AggregateNode &) = delete;
-  AggregateNode(AggregateNode &&) = delete;
-  AggregateNode &operator=(AggregateNode &&) = delete;
+  AggregatePlan() = delete;
+  AggregatePlan(const AggregatePlan &) = delete;
+  AggregatePlan &operator=(const AggregatePlan &) = delete;
+  AggregatePlan(AggregatePlan &&) = delete;
+  AggregatePlan &operator=(AggregatePlan &&) = delete;
 
-  AggregateNode(const std::vector<oid_t> &aggregate_columns,
+  AggregatePlan(const std::vector<oid_t> &aggregate_columns,
                 const std::map<oid_t, oid_t> &aggregate_columns_map,
                 const std::vector<oid_t> &group_by_columns,
                 const catalog::Schema *group_by_key_schema,

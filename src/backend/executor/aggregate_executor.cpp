@@ -14,12 +14,12 @@
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/aggregate_node.h"
 #include "backend/storage/table_factory.h"
 #include "backend/expression/container_tuple.h"
 
 #include <utility>
 #include <vector>
+#include "../planner/aggregate_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -28,7 +28,7 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
+AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -47,7 +47,7 @@ bool AggregateExecutor::DInit() {
   LOG_TRACE("Aggregate Scan executor :: 1 child \n");
 
   // Grab info from plan node and check it
-  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
+  const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
 
   // Construct the output table
   auto output_table_schema = node.GetOutputTableSchema();
@@ -80,7 +80,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   // Grab info from plan node
-  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
+  const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
   auto transaction_ = executor_context_->GetTransaction();
 
   // Get an aggregator
