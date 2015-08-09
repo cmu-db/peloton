@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/index_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/index_scan_node.h"
 
 namespace peloton {
 namespace bridge {
@@ -25,7 +25,7 @@ namespace bridge {
  * */
 static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
-    planner::IndexScanNode::IndexScanDesc &index_scan_desc);
+    planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
 
 /**
  * @brief Convert a Postgres IndexScanState into a Peloton IndexScanNode.
@@ -40,12 +40,12 @@ static void BuildScanKey(
  *          6. null test: indexkey IS NULL/IS NOT NULL
  *          7. order by
  *          8. unary op
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
+planner::AbstractPlan *PlanTransformer::TransformIndexScan(
     const IndexScanState *iss_plan_state, const TransformOptions options) {
   /* info needed to initialize plan node */
-  planner::IndexScanNode::IndexScanDesc index_scan_desc;
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
@@ -76,7 +76,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode *parent = nullptr;
+  planner::AbstractPlan *parent = nullptr;
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
@@ -84,9 +84,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
                               &(iss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode *rv = nullptr;
+  planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -110,7 +110,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
  */
 static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
-    planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
+    planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
   ScanKey scan_key = scan_keys;
   assert(num_keys > 0);
 
@@ -188,12 +188,12 @@ static void BuildScanKey(
  *          6. null test: indexkey IS NULL/IS NOT NULL
  *          7. order by
  *          8. unary op
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
+planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
     const IndexOnlyScanState *ioss_plan_state, const TransformOptions options) {
   /* info needed to initialize plan node */
-  planner::IndexScanNode::IndexScanDesc index_scan_desc;
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
@@ -225,7 +225,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode *parent = nullptr;
+  planner::AbstractPlan *parent = nullptr;
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
@@ -233,9 +233,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
                               &(ioss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode *rv = nullptr;
+  planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -252,12 +252,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
  *        We currently only handle the case where the lower plan is a
  *BitmapIndexScan
  *
- * @return Pointer to the constructed AbstractPlanNode
+ * @return Pointer to the constructed AbstractPlan
  */
-planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
+planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
     const BitmapHeapScanState *bhss_plan_state,
     const TransformOptions options) {
-  planner::IndexScanNode::IndexScanDesc index_scan_desc;
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
   Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
@@ -303,7 +303,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   /* ORDER BY, not support */
 
   /* Extract the generic scan info (including qual and projInfo) */
-  planner::AbstractPlanNode *parent = nullptr;
+  planner::AbstractPlan *parent = nullptr;
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
@@ -311,9 +311,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
                               &(bhss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
 
-  planner::AbstractPlanNode *rv = nullptr;
+  planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);

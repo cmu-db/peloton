@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/projection_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/planner/projection_node.h"
 
 namespace peloton {
 namespace bridge {
@@ -60,7 +60,7 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @return      Nothing.
  */
 void PlanTransformer::GetGenericInfoFromScanState(
-    planner::AbstractPlanNode *&parent,
+    planner::AbstractPlan *&parent,
     expression::AbstractExpression *&predicate,
     std::vector<oid_t> &out_col_list, const ScanState *sstate,
     bool use_projInfo) {
@@ -102,7 +102,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
         sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
     parent =
-        new planner::ProjectionNode(project_info.release(), project_schema);
+        new planner::ProjectionPlan(project_info.release(), project_schema);
 
   }
 

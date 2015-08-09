@@ -25,10 +25,10 @@ namespace bridge {
  *    currently, we just ignore the lock step, and return the
  *    underlying node
  *
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  *
  */
-planner::AbstractPlanNode *PlanTransformer::TransformLockRows(
+planner::AbstractPlan *PlanTransformer::TransformLockRows(
     const LockRowsState *lr_plan_state) {
   assert(nodeTag(lr_plan_state) == T_LockRowsState);
 

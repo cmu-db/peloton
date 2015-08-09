@@ -12,10 +12,10 @@
 
 #include "backend/executor/delete_executor.h"
 
+#include "../planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/delete_node.h"
 
 namespace peloton {
 namespace executor {
@@ -24,7 +24,7 @@ namespace executor {
  * @brief Constructor for delete executor.
  * @param node Delete node corresponding to this executor.
  */
-DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
+DeleteExecutor::DeleteExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -42,7 +42,7 @@ bool DeleteExecutor::DInit() {
   LOG_TRACE("Delete executor :: 1 child \n");
 
   // Grab data from plan node.
-  const planner::DeleteNode &node = GetPlanNode<planner::DeleteNode>();
+  const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
 
   target_table_ = node.GetTable();
 

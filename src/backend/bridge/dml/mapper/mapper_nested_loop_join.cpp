@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/nested_loop_join_plan.h"
+#include "../../../planner/projection_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/nested_loop_join_node.h"
-#include "backend/planner/projection_node.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 
 namespace peloton {
@@ -24,13 +24,13 @@ namespace bridge {
 
 /**
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformNestLoop(
+planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     const NestLoopState *nl_plan_state) {
   const JoinState *js = &(nl_plan_state->js);
-  planner::AbstractPlanNode *result = nullptr;
-  planner::NestedLoopJoinNode *plan_node = nullptr;
+  planner::AbstractPlan *result = nullptr;
+  planner::NestedLoopJoinPlan *plan_node = nullptr;
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);
@@ -68,19 +68,19 @@ planner::AbstractPlanNode *PlanTransformer::TransformNestLoop(
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
     result =
-        new planner::ProjectionNode(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinNode(predicate, nullptr);
+        new planner::ProjectionPlan(project_info.release(), project_schema);
+    plan_node = new planner::NestedLoopJoinPlan(predicate, nullptr);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node =
-        new planner::NestedLoopJoinNode(predicate, project_info.release());
+        new planner::NestedLoopJoinPlan(predicate, project_info.release());
     result = plan_node;
   }
 
-  planner::AbstractPlanNode *outer =
+  planner::AbstractPlan *outer =
       PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlanNode *inner =
+  planner::AbstractPlan *inner =
       PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
 
   /* Add the children nodes */

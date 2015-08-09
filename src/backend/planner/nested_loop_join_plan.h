@@ -16,24 +16,24 @@
 #include <string>
 #include <vector>
 
+#include "abstract_join_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/project_info.h"
-#include "backend/planner/abstract_join_node.h"
 
 namespace peloton {
 namespace planner {
 
-class NestedLoopJoinNode : public AbstractJoinPlanNode {
+class NestedLoopJoinPlan : public AbstractJoinPlan {
  public:
-  NestedLoopJoinNode(const NestedLoopJoinNode &) = delete;
-  NestedLoopJoinNode &operator=(const NestedLoopJoinNode &) = delete;
-  NestedLoopJoinNode(NestedLoopJoinNode &&) = delete;
-  NestedLoopJoinNode &operator=(NestedLoopJoinNode &&) = delete;
+  NestedLoopJoinPlan(const NestedLoopJoinPlan &) = delete;
+  NestedLoopJoinPlan &operator=(const NestedLoopJoinPlan &) = delete;
+  NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
+  NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
-  NestedLoopJoinNode(expression::AbstractExpression *predicate,
+  NestedLoopJoinPlan(expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate,
+      : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate,
                              proj_info) {  // FIXME
     // Nothing to see here...
   }

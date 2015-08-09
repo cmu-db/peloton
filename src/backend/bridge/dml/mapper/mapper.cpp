@@ -34,10 +34,10 @@ void PlanTransformer::PrintPlanState(const PlanState *plan) {
 }
 
 /**
- * @brief Convert Postgres PlanState (tree) into AbstractPlanNode (tree).
+ * @brief Convert Postgres PlanState (tree) into AbstractPlan (tree).
  * @return Pointer to the constructed AbstractPlan Node.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformPlan(
+planner::AbstractPlan *PlanTransformer::TransformPlan(
     const PlanState *plan_state, const TransformOptions options) {
   assert(plan_state);
 
@@ -45,7 +45,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   // Ignore empty plans
   if (plan == nullptr) return nullptr;
 
-  planner::AbstractPlanNode *plan_node = nullptr;
+  planner::AbstractPlan *plan_node = nullptr;
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
@@ -104,7 +104,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
 /**
  * @brief Recursively destroy the nodes in a plan node tree.
  */
-bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode *root) {
+bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlan *root) {
   if (!root) return false;
 
   // Clean all children subtrees

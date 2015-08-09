@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/delete_plan.h"
+#include "../../../planner/insert_plan.h"
+#include "../../../planner/update_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/storage/data_table.h"
-#include "backend/planner/insert_node.h"
-#include "backend/planner/update_node.h"
-#include "backend/planner/delete_node.h"
 
 namespace peloton {
 namespace bridge {
@@ -24,12 +24,12 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief Convert ModifyTableState into AbstractPlanNode.
- * @return Pointer to the constructed AbstractPlanNode.
+ * @brief Convert ModifyTableState into AbstractPlan.
+ * @return Pointer to the constructed AbstractPlan.
  *
  * Basically, it multiplexes into helper methods based on operation type.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
+planner::AbstractPlan *PlanTransformer::TransformModifyTable(
     const ModifyTableState *mt_plan_state, const TransformOptions options) {
   ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
 
@@ -58,12 +58,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 }
 
 /**
- * @brief Convert ModifyTableState Insert case into AbstractPlanNode.
- * @return Pointer to the constructed AbstractPlanNode.
+ * @brief Convert ModifyTableState Insert case into AbstractPlan.
+ * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformInsert(
+planner::AbstractPlan *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state, const TransformOptions options) {
-  planner::AbstractPlanNode *plan_node = nullptr;
+  planner::AbstractPlan *plan_node = nullptr;
 
   /* Resolve result table */
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
@@ -105,7 +105,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     auto project_info =
         BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
 
-    plan_node = new planner::InsertNode(target_table, project_info);
+    plan_node = new planner::InsertPlan(target_table, project_info);
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
@@ -115,7 +115,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   return plan_node;
 }
 
-planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
+planner::AbstractPlan *PlanTransformer::TransformUpdate(
     const ModifyTableState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
@@ -160,7 +160,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
-  planner::AbstractPlanNode *plan_node = nullptr;
+  planner::AbstractPlan *plan_node = nullptr;
 
   auto child_tag = nodeTag(sub_planstate->plan);
 
@@ -175,7 +175,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
     auto project_info =
         BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
 
-    plan_node = new planner::UpdateNode(target_table, project_info);
+    plan_node = new planner::UpdatePlan(target_table, project_info);
     TransformOptions new_options = options;
     new_options.use_projInfo = false;
     plan_node->AddChild(TransformPlan(sub_planstate, new_options));
@@ -189,14 +189,14 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
 /**
  * @brief Convert a Postgres ModifyTableState with DELETE operation
  * into a Peloton DeleteNode.
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  *
  * Just like Peloton,
  * the delete plan state in Postgres simply deletes tuples
  * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
-planner::AbstractPlanNode *PlanTransformer::TransformDelete(
+planner::AbstractPlan *PlanTransformer::TransformDelete(
     const ModifyTableState *mt_plan_state, const TransformOptions options) {
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
@@ -221,7 +221,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformDelete(
   bool truncate = false;
 
   // Create the peloton plan node
-  auto plan_node = new planner::DeleteNode(target_table, truncate);
+  auto plan_node = new planner::DeletePlan(target_table, truncate);
 
   // Add child plan node(s)
   TransformOptions new_options = options;

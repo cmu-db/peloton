@@ -17,9 +17,8 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
-#include "backend/planner/aggregate_node.h"
-
 #include <unordered_map>
+#include "../planner/aggregate_plan.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -244,7 +243,7 @@ typedef std::unordered_map<storage::Tuple, AggregateList *,
 template <PlanNodeType aggregate_type>
 class Aggregator {
  public:
-  Aggregator(const planner::AggregateNode *node,
+  Aggregator(const planner::AggregatePlan *node,
              storage::DataTable *output_table,
              const concurrency::Transaction *transaction_id);
 
@@ -256,7 +255,7 @@ class Aggregator {
 
  private:
   /** @brief Plan node */
-  const planner::AggregateNode *node;
+  const planner::AggregatePlan *node;
 
   /** @brief Output table */
   storage::DataTable *output_table;

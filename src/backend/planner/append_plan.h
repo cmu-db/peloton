@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace planner {
@@ -21,14 +21,14 @@ namespace planner {
 /**
  * @brief Plan node for append.
  */
-class AppendNode : public AbstractPlanNode {
+class AppendPlan : public AbstractPlan {
  public:
-  AppendNode(const AppendNode &) = delete;
-  AppendNode &operator=(const AppendNode &) = delete;
-  AppendNode(const AppendNode &&) = delete;
-  AppendNode &operator=(const AppendNode &&) = delete;
+  AppendPlan(const AppendPlan &) = delete;
+  AppendPlan &operator=(const AppendPlan &) = delete;
+  AppendPlan(const AppendPlan &&) = delete;
+  AppendPlan &operator=(const AppendPlan &&) = delete;
 
-  AppendNode() {}
+  AppendPlan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_APPEND; }
 
