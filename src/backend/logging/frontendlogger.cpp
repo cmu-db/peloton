@@ -25,7 +25,6 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
 
   switch(logging_type){
     case LOGGING_TYPE_STDOUT:{
-      // TODO :: change to singleton?
       frontendLogger = new StdoutFrontendLogger();
     }break;
 

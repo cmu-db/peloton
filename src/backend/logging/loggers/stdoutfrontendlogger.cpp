@@ -17,27 +17,32 @@ namespace peloton {
 namespace logging {
 
 /**
- * @brief Collect LogRecords from BackendLogger 
- *  and flush if LogRecordCount() is greater than buffer size
+ * @brief MainLoop
  */
 void StdoutFrontendLogger::MainLoop(void) {
   for(int i=0;;i++){
     sleep(5);
 
+    // Collect LogRecords from BackendLogger 
     CollectLogRecord();
 
+    // If LogRecound count is greater than bufer size,
     if( GetLogRecordCount() >= buffer_size ){
+      // flush the buffer to stdout
       Flush();
     }
   }
 }
 
+/**
+ * @brief Collect the LogRecord from BackendLogger
+ */
 void StdoutFrontendLogger::CollectLogRecord(void) {
   backend_loggers = GetBackendLoggers();
 
   // Look over current frontend logger's backend loggers
-  for(auto backend_logger : backend_loggers){
-    auto commit_offset = backend_logger->GetCommitOffset();
+  for( auto backend_logger : backend_loggers){
+    auto commit_offset = ((StdoutBackendLogger*)backend_logger)->GetCommitOffset();
 
     // Skip this backend_logger, nothing to do
     if( commit_offset == 0 ) continue; 
