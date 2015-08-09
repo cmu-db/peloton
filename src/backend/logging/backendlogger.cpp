@@ -43,8 +43,8 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
 
   return backendLogger;
 }
-oid_t BackendLogger::GetLocalCommitOffset() const{
-  return local_commit_offset;
+oid_t BackendLogger::GetCommitOffset() const{
+  return commit_offset;
 }
 
 }  // namespace logging

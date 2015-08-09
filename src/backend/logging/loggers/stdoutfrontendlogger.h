@@ -30,15 +30,15 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     StdoutFrontendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
-    void MainLoop(void) const;
+    void MainLoop(void);
 
-    void commit(void) const;
+    void CollectLogRecord(void);
 
-    void CollectLogRecords(void);
-
-    size_t GetLogCount(void) const;
+    void Flush(void) const;
 
   private:
+
+    size_t GetLogRecordCount(void) const;
 
     // FIXME :: Hard coded buffer size
     oid_t buffer_size = 3;
