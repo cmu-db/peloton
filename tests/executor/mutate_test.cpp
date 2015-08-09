@@ -37,10 +37,10 @@
 #include "harness.h"
 
 #include <atomic>
-#include "../../src/backend/planner/delete_plan.h"
-#include "../../src/backend/planner/insert_plan.h"
-#include "../../src/backend/planner/seq_scan_plan.h"
-#include "../../src/backend/planner/update_plan.h"
+#include "backend/planner/delete_plan.h"
+#include "backend/planner/insert_plan.h"
+#include "backend/planner/seq_scan_plan.h"
+#include "backend/planner/update_plan.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
