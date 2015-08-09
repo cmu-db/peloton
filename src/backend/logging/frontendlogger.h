@@ -37,20 +37,26 @@ class FrontendLogger : public Logger{
 
     std::vector<BackendLogger*> GetBackendLoggers(void);
 
-
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
 
-    virtual void MainLoop(void) const = 0;
+    /**
+     * Check whether any BackendLogger has been committed or not
+     */
+    virtual void MainLoop(void) = 0;
 
-    virtual void commit(void) const = 0;
+    /**
+     * Collect LogRecord from BackendLoggers
+     */
+    virtual void CollectLogRecord(void) = 0;
 
-    virtual void CollectLogRecords(void) = 0;
+    /**
+     * Flush collected LogRecord to stdout or file or nvram
+     */
+    virtual void Flush(void) const = 0;
 
-    virtual size_t GetLogCount(void) const = 0;
-
-  private:
+  protected:
 
     std::vector<BackendLogger*> backend_loggers;
 

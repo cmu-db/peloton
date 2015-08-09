@@ -30,19 +30,23 @@ class BackendLogger : public Logger{
 
     static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
+    oid_t GetCommitOffset(void) const;
+
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
 
-    virtual void log(LogRecord record) = 0;
+    virtual void Log(LogRecord record) = 0;
 
-    virtual void localCommit(void) = 0;
+    virtual void Commit(void) = 0;
 
-    oid_t GetLocalCommitOffset(void) const;
+    virtual void Truncate(oid_t offset) = 0;
+
+    virtual LogRecord GetLogRecord(oid_t offset) = 0;
 
   protected:
 
-    oid_t local_commit_offset = INVALID_OID;
+    oid_t commit_offset = 0;
 
 };
 

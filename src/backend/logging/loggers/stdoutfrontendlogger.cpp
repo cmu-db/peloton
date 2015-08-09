@@ -11,22 +11,50 @@
  */
 
 #include "backend/logging/loggers/stdoutfrontendlogger.h"
+#include "backend/logging/loggers/stdoutbackendlogger.h"
 
 namespace peloton {
 namespace logging {
 
-void StdoutFrontendLogger::MainLoop(void) const {
+/**
+ * @brief Collect LogRecords from BackendLogger 
+ *  and flush if LogRecordCount() is greater than buffer size
+ */
+void StdoutFrontendLogger::MainLoop(void) {
   for(int i=0;;i++){
     sleep(5);
-    printf("buffer size %u GetLogCount() %d \n", buffer_size,(int) GetLogCount());
-    if( GetLogCount() >= buffer_size ) commit();
+
+    CollectLogRecord();
+
+    if( GetLogRecordCount() >= buffer_size ){
+      Flush();
+    }
+  }
+}
+
+void StdoutFrontendLogger::CollectLogRecord(void) {
+  backend_loggers = GetBackendLoggers();
+
+  // Look over current frontend logger's backend loggers
+  for(auto backend_logger : backend_loggers){
+    auto commit_offset = backend_logger->GetCommitOffset();
+
+    // Skip this backend_logger, nothing to do
+    if( commit_offset == 0 ) continue; 
+
+    for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
+      // Copy LogRecord from backend_logger to here
+      stdout_buffer.push_back(backend_logger->GetLogRecord(log_record_itr));
+    }
+    backend_logger->Truncate(commit_offset);
   }
 }
 
 /**
- * @brief commit all record, for now it's just printing out
+ * @brief flush all record, for now it's just printing out
  */
-void StdoutFrontendLogger::commit(void) const {
+void StdoutFrontendLogger::Flush(void) const {
+
   std::cout << "\n::StartFlush::\n";
 
   for( auto record : stdout_buffer ){
@@ -40,23 +68,8 @@ void StdoutFrontendLogger::commit(void) const {
  * @brief Get buffer size
  * @return return the size of buffer
  */
-size_t StdoutFrontendLogger::GetLogCount() const{
+size_t StdoutFrontendLogger::GetLogRecordCount() const{
   return stdout_buffer.size();
-}
-
-void StdoutFrontendLogger::CollectLogRecords(void){
-  std::vector<BackendLogger*> backend_loggers = GetBackendLoggers();
-
-  // Look over backend loggers' local_commit_offset
-  for(auto backend_logger : backend_loggers){
-    auto local_commit_offset = backend_logger->GetLocalCommitOffset();
-    std::cout << "lco : " << local_commit_offset << std::endl;
-    // How to lock the be logger's lock
-    // if it's has valid value, lock that vector and move
-    // into frontend vector
-    // set the local commit offset to invalid_oid
-    //auto& queue = backend_logger->Lock()?
-  }
 }
 
 }  // namespace logging
