@@ -345,20 +345,8 @@ ProcessUtility(Node *parsetree,
 
     if(IsPostmasterEnvironment == true)
     {
-      // Copy the parsetree
-      MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-
-      Node     *parsetree_copy = (List *) copyObject(parsetree);
-      /* This checks both copyObject() and the equal() routines... */
-      if (!equal(parsetree_copy, parsetree))
-        elog(WARNING, "copyObject() failed to produce an equal parse tree");
-      else
-        elog(INFO, "Copied parsetree : %p", parsetree_copy);
-
-      MemoryContextSwitchTo(oldcxt);
-
       // TODO: Peloton Changes
-      peloton_ProcessUtility(parsetree_copy, queryString,
+      peloton_ProcessUtility(parsetree, queryString,
                              context, params,
                              dest, completionTag);
     }

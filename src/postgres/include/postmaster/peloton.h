@@ -167,8 +167,7 @@ extern int  peloton_start(void);
  */
 
 extern void peloton_send_dml(Peloton_Status  *status,
-                             Plan *plantree,
-                             ParamListInfo param_list,
+                             PlanState *planstate,
                              TupleDesc tuple_desc);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
