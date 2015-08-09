@@ -109,7 +109,9 @@ typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  PlanState *m_planstate;
+  Plan *m_plantree;
+  ParamListInfo m_param_list;
+  TupleDesc m_tuple_desc;
 } Peloton_MsgDML;
 
 /* ----------
@@ -165,7 +167,9 @@ extern int  peloton_start(void);
  */
 
 extern void peloton_send_dml(Peloton_Status  *status,
-                             PlanState *node);
+                             Plan *plantree,
+                             ParamListInfo param_list,
+                             TupleDesc tuple_desc);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree);

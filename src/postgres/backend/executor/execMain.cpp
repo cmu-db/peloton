@@ -1659,7 +1659,7 @@ peloton_ExecutePlan(EState *estate,
 
   MemoryContextSwitchTo(oldcxt);
 
-  peloton_send_dml(status, planstate);
+  //peloton_send_dml(status, planstate);
 
   peloton_process_status(status);
 
