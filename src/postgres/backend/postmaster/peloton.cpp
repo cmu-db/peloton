@@ -108,6 +108,8 @@ static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 static void peloton_update_stats(Peloton_Status *status);
 static void peloton_reply_to_backend(mqd_t backend_id);
 
+static Node *peloton_copy_parsetree(Node *parsetree);
+static Plan *peloton_copy_plantree(Plan *plantree);
 
 bool
 IsPelotonProcess(void) {
@@ -813,8 +815,7 @@ peloton_send(void *msg, int len) {
  */
 void
 peloton_send_dml(Peloton_Status  *status,
-                 Plan *plantree,
-                 ParamListInfo param_list,
+                 PlanState *planstate,
                  TupleDesc tuple_desc) {
   Peloton_MsgDML msg;
 
@@ -832,9 +833,17 @@ peloton_send_dml(Peloton_Status  *status,
 
   // Set msg-specific information
   msg.m_status = status;
-  msg.m_plantree = plantree;
-  msg.m_param_list = param_list;
   msg.m_tuple_desc = tuple_desc;
+
+  // Copy the plantree or get it from the plan cache
+  // TODO: Use the plan cache
+  Plan *plantree = planstate->plan;
+  auto shm_plantree = peloton_copy_plantree(plantree);
+  msg.m_plantree = shm_plantree;
+
+  // Prepare the planstate
+
+  // Copy the param list as well
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -869,7 +878,10 @@ peloton_send_ddl(Peloton_Status  *status,
 
   // Set msg-specific information
   msg.m_status = status;
-  msg.m_parsetree = parsetree;
+
+  // Copy the parsetree
+  auto shm_parsetree = peloton_copy_parsetree(parsetree);
+  msg.m_parsetree = shm_parsetree;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -1202,5 +1214,31 @@ peloton_update_stats(Peloton_Status *status) {
 
   }
 
+}
+
+static
+Node *peloton_copy_parsetree(Node *parsetree) {
+
+  // Copy the parsetree
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  Node     *shm_parsetree = (Node *) copyObject(parsetree);
+  MemoryContextSwitchTo(oldcxt);
+
+  elog(INFO, "Copied parsetree : %p", shm_parsetree);
+
+  return shm_parsetree;
+}
+
+static
+Plan *peloton_copy_plantree(Plan *plantree) {
+
+  // Copy the parsetree
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  Plan     *shm_plantree = (Plan *) copyObject(plantree);
+  MemoryContextSwitchTo(oldcxt);
+
+  elog(INFO, "Copied plantree : %p", shm_plantree);
+
+  return shm_plantree;
 }
 

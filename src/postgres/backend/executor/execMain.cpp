@@ -74,7 +74,8 @@ static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 bool sendTuples,
                                 long numberTuples,
                                 ScanDirection direction,
-                                DestReceiver *dest);
+                                DestReceiver *dest,
+                                TupleDesc tupDesc);
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -372,7 +373,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                        sendTuples,
 	                        count,
 	                        direction,
-	                        dest);
+	                        dest,
+	                        queryDesc->tupDesc);
 	  }
 
 	}
@@ -1640,7 +1642,8 @@ peloton_ExecutePlan(EState *estate,
       bool sendTuples,
       long numberTuples,
       ScanDirection direction,
-      DestReceiver *dest)
+      DestReceiver *dest,
+      TupleDesc tupDesc)
 {
   TupleTableSlot *slot;
   Peloton_Status *status;
@@ -1659,7 +1662,7 @@ peloton_ExecutePlan(EState *estate,
 
   MemoryContextSwitchTo(oldcxt);
 
-  //peloton_send_dml(status, planstate);
+  peloton_send_dml(status, planstate, tupDesc);
 
   peloton_process_status(status);
 
