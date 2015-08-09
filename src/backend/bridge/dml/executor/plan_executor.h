@@ -39,7 +39,8 @@ class PlanExecutor {
                         std::string prefix = "");
 
   static void ExecutePlan(planner::AbstractPlanNode *plan,
-                          PlanState *planstate,
+                          ParamListInfo m_param_list,
+                          TupleDesc m_tuple_desc,
                           Peloton_Status *pstatus,
                           TransactionId txn_id);
 

@@ -29,7 +29,7 @@ namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              PlanState *planstate,
+                                              ParamListInfo param_list,
                                               concurrency::Transaction *txn);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
@@ -63,18 +63,13 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan,
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              PlanState *planstate,
+                                              ParamListInfo param_list,
                                               concurrency::Transaction *txn) {
   // Base case
   if (plan == nullptr) return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
 
-  // TODO: Set params
-  assert(planstate);
-  assert(planstate->state);
-
-  const ParamListInfo param_list = planstate->state->es_param_list_info;
   ValueArray params = PlanTransformer::BuildParams(param_list);
 
   executor::ExecutorContext *executor_context =
@@ -140,7 +135,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto children = plan->GetChildren();
   for (auto child : children) {
-    child_executor = BuildExecutorTree(child_executor, child, planstate, txn);
+    child_executor = BuildExecutorTree(child_executor, child,
+                                       param_list, txn);
   }
 
   return root;
@@ -199,7 +195,8 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @return status of execution.
  */
 void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
-                               PlanState *planstate,
+                               ParamListInfo param_list,
+                               TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
                                TransactionId txn_id) {
   assert(plan);
@@ -224,15 +221,12 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   // Build the executor tree
   executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, planstate, txn);
+      BuildExecutorTree(nullptr, plan, param_list, txn);
+
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
-
-  // Get the tuple descriptor
-  auto result_tuple_slot = planstate->ps_ResultTupleSlot;
-  auto tuple_desc = result_tuple_slot->tts_tupleDescriptor;
 
   // Initialize the executor tree
   status = executor_tree->Init();
