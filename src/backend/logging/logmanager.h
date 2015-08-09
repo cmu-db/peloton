@@ -15,7 +15,7 @@
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
 #include "backend/logging/frontendlogger.h"
-#include "backend/logging//backendlogger.h"
+#include "backend/logging/backendlogger.h"
 
 #include <memory>
 #include <mutex>
@@ -30,7 +30,6 @@ namespace logging {
 
 static std::mutex logManager_mutex;
 static std::mutex frontend_logger_mutex;
-static std::mutex backend_logger_mutex;
 
 /**
  * Global Log Manager
@@ -39,6 +38,7 @@ class LogManager{
 
   public:
 
+    // global singleton
     static std::shared_ptr<LogManager>& GetInstance(void);
 
     void StartLogging(LoggingType logging_type);
@@ -51,9 +51,8 @@ class LogManager{
     // so that we can identify frontend_logger using logger_type
     std::vector<FrontendLogger*> frontend_loggers;
 
-    std::vector<BackendLogger*> backend_loggers;
-
 };
+
 
 }  // namespace logging
 }  // namespace peloton
