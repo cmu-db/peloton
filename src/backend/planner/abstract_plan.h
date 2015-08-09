@@ -19,6 +19,8 @@
 
 #include "backend/common/types.h"
 
+#include "nodes/nodes.h"
+
 namespace peloton {
 
 namespace executor {
@@ -29,7 +31,7 @@ class LogicalTile;
 namespace planner {
 
 //===--------------------------------------------------------------------===//
-// Abstract Plan Node
+// Abstract Plan
 //===--------------------------------------------------------------------===//
 
 class AbstractPlan {
@@ -39,8 +41,8 @@ class AbstractPlan {
   AbstractPlan(AbstractPlan &&) = delete;
   AbstractPlan &operator=(AbstractPlan &&) = delete;
 
-  explicit AbstractPlan(oid_t plan_node_id);
   AbstractPlan();
+
   virtual ~AbstractPlan();
 
   //===--------------------------------------------------------------------===//
@@ -56,10 +58,6 @@ class AbstractPlan {
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
-
-  oid_t GetPlanNodeId() const;
-
-  void SetPlanNodeId(oid_t plan_node_id);
 
   // Each sub-class will have to implement this function to return their type
   // This is better than having to store redundant types in all the objects
@@ -78,13 +76,46 @@ class AbstractPlan {
   virtual std::string GetInfo() const;
 
  private:
-  // Every plan node will have a unique id assigned to it at compile time
-  oid_t plan_node_id_;
 
-  // A node can have multiple children and parents
+  // A plan node can have multiple children
   std::vector<AbstractPlan *> children_;
 
   AbstractPlan *parent_ = nullptr;
+};
+
+//===--------------------------------------------------------------------===//
+// Abstract Plan State
+//===--------------------------------------------------------------------===//
+
+class AbstractPlanState {
+ public:
+  AbstractPlanState(const AbstractPlanState &) = delete;
+  AbstractPlanState &operator=(const AbstractPlanState &) = delete;
+  AbstractPlanState(AbstractPlan &&) = delete;
+  AbstractPlanState &operator=(AbstractPlanState &&) = delete;
+
+  explicit AbstractPlanState(NodeTag plan_state_id);
+  virtual ~AbstractPlanState();
+
+  virtual NodeTag GetNodeTag() const = 0;
+
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
+
+  // Debugging convenience methods
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const AbstractPlanState &node);
+
+ private:
+
+  // type of the plan state
+  NodeTag type_;
+
+  // A plan state can have multiple children
+  std::vector<AbstractPlanState *> children_;
+
+  AbstractPlanState *parent_ = nullptr;
 };
 
 }  // namespace planner
