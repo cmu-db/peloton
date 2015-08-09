@@ -19,15 +19,48 @@ namespace logging {
  * @brief Recording log record
  * @param log record 
  */
-void StdoutBackendLogger::log(LogRecord record){
-  stdout_buffer.push_back(record);
+void StdoutBackendLogger::Log(LogRecord record){
+  {
+    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    stdout_buffer.push_back(record);
+  }
 }
 
 /**
- * @brief set the local commit offset to size  of buffer
+ * @brief set the current size of buffer
  */
-void StdoutBackendLogger::localCommit(){
-  local_commit_offset = stdout_buffer.size();
+void StdoutBackendLogger::Commit(){
+  {
+    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    commit_offset = stdout_buffer.size();
+  }
+}
+
+/**
+ * @brief Get the LogRecord with offset
+ * @param offset
+ */
+LogRecord StdoutBackendLogger::GetLogRecord(oid_t offset){
+  {
+    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    assert(offset < stdout_buffer.size());
+    return stdout_buffer[offset];
+  }
+}
+
+/**
+ * @brief truncate buffer with commit_offset
+ * @param offset
+ */
+void StdoutBackendLogger::Truncate(oid_t offset){
+  {
+    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    stdout_buffer.erase(stdout_buffer.begin(), stdout_buffer.begin()+offset);
+
+    // It will be updated larger than 0 if we update commit_offset during the
+    // flush in frontend logger
+    commit_offset -= offset;
+  }
 }
 
 }  // namespace logging

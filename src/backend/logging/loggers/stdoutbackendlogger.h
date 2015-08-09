@@ -21,6 +21,8 @@ namespace logging {
 // Stdout Backend Logger 
 //===--------------------------------------------------------------------===//
 
+static std::mutex stdout_buffer_mutex;
+
 class StdoutBackendLogger : public BackendLogger{
 
   public:
@@ -28,12 +30,18 @@ class StdoutBackendLogger : public BackendLogger{
     //TODO :: It alaways returns different value, make this as a singleton
     StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
-    void log(LogRecord record);
 
-    void localCommit(void);
+    void Log(LogRecord record);
+
+    void Commit(void);
+
+    void Truncate(oid_t offset);
+
+    LogRecord GetLogRecord(oid_t offset);
 
   private:
 
+    // TODO change vector to list
     std::vector<LogRecord> stdout_buffer;
     
 };

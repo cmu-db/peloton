@@ -56,6 +56,10 @@ void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
   }
 }
 
+/**
+ * @brief Get backend loggers
+ * @return the backend loggers
+ */
 std::vector<BackendLogger*> FrontendLogger::GetBackendLoggers(){
     return backend_loggers;
 }
