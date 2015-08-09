@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "../../src/backend/planner/set_op_plan.h"
+#include "backend/planner/set_op_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

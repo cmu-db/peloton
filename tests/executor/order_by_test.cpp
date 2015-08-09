@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "../../src/backend/planner/order_by_plan.h"
+#include "backend/planner/order_by_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

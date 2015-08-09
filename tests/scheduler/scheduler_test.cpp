@@ -16,7 +16,7 @@
 #include "backend/main/kernel.h"
 
 #include <sstream>
-#include "../../src/backend/scheduler/tbb_scheduler.h"
+#include "backend/scheduler/tbb_scheduler.h"
 
 namespace peloton {
 namespace test {
