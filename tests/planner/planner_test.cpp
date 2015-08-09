@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../src/backend/planner/abstract_plan.h"
+#include "backend/planner/abstract_plan.h"
 #include "gtest/gtest.h"
 
 #include "harness.h"

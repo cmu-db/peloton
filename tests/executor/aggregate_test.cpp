@@ -15,8 +15,8 @@
 #include <string>
 #include <vector>
 
-#include "../../src/backend/planner/abstract_plan.h"
-#include "../../src/backend/planner/aggregate_plan.h"
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/aggregate_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
