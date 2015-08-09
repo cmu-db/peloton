@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "../../src/backend/planner/nested_loop_join_plan.h"
+#include "backend/planner/nested_loop_join_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

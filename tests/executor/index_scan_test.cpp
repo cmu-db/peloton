@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "../../src/backend/planner/index_scan_plan.h"
+#include "backend/planner/index_scan_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
