@@ -34,7 +34,7 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
+SeqScanExecutor::SeqScanExecutor(planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 
@@ -48,7 +48,7 @@ bool SeqScanExecutor::DInit() {
   if (!status) return false;
 
   // Grab data from plan node.
-  const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
+  const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
 
   table_ = node.GetTable();
 

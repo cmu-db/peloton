@@ -28,7 +28,7 @@ namespace peloton {
 namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              planner::AbstractPlanNode *plan,
+                                              planner::AbstractPlan *plan,
                                               ParamListInfo param_list,
                                               concurrency::Transaction *txn);
 
@@ -39,7 +39,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @param The plan tree
  * @return none.
  */
-void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan,
+void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
                              std::string prefix) {
   if (plan == nullptr) return;
 
@@ -62,7 +62,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan,
  * @return The updated executor tree.
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              planner::AbstractPlanNode *plan,
+                                              planner::AbstractPlan *plan,
                                               ParamListInfo param_list,
                                               concurrency::Transaction *txn) {
   // Base case
@@ -194,7 +194,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
                                ParamListInfo param_list,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,

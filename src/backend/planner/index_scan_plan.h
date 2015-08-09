@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
 
@@ -32,12 +32,12 @@ class Tuple;
 
 namespace planner {
 
-class IndexScanNode : public AbstractScanNode {
+class IndexScanPlan : public AbstractScan {
  public:
-  IndexScanNode(const IndexScanNode &) = delete;
-  IndexScanNode &operator=(const IndexScanNode &) = delete;
-  IndexScanNode(IndexScanNode &&) = delete;
-  IndexScanNode &operator=(IndexScanNode &&) = delete;
+  IndexScanPlan(const IndexScanPlan &) = delete;
+  IndexScanPlan &operator=(const IndexScanPlan &) = delete;
+  IndexScanPlan(IndexScanPlan &&) = delete;
+  IndexScanPlan &operator=(IndexScanPlan &&) = delete;
 
   struct IndexScanDesc {
     IndexScanDesc() : index(nullptr) {}
@@ -59,11 +59,11 @@ class IndexScanNode : public AbstractScanNode {
     std::vector<Value> values;
   };
 
-  IndexScanNode(expression::AbstractExpression *predicate,
+  IndexScanPlan(expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 storage::AbstractTable *table,
                 const IndexScanDesc &index_scan_desc)
-      : AbstractScanNode(predicate, column_ids),
+      : AbstractScan(predicate, column_ids),
         table_(table),
         index_(index_scan_desc.index),
         column_ids_(column_ids),
@@ -71,7 +71,7 @@ class IndexScanNode : public AbstractScanNode {
         expr_types_(std::move(index_scan_desc.expr_types)),
         values_(std::move(index_scan_desc.values)) {}
 
-  ~IndexScanNode() {}
+  ~IndexScanPlan() {}
 
   const storage::AbstractTable *GetTable() const { return table_; }
 

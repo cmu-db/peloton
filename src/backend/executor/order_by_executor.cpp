@@ -14,7 +14,8 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/order_by_executor.h"
-#include "backend/planner/order_by_node.h"
+
+#include "../planner/order_by_plan.h"
 #include "backend/storage/tile.h"
 
 namespace peloton {
@@ -24,7 +25,7 @@ namespace executor {
  * @brief Constructor
  * @param node  OrderByNode plan node corresponding to this executor
  */
-OrderByExecutor::OrderByExecutor(planner::AbstractPlanNode *node,
+OrderByExecutor::OrderByExecutor(planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -52,7 +53,7 @@ bool OrderByExecutor::DExecute() {
   assert(input_tiles_.size() > 0);
 
   // Grab data from plan node
-  const planner::OrderByNode &node = GetPlanNode<planner::OrderByNode>();
+  const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
 
   // TODO: Should we move backend out of this executor?
   backend_ = node.GetBackend();
@@ -111,7 +112,7 @@ bool OrderByExecutor::DoSort() {
   if (count == 0) return true;
 
   // Grab data from plan node
-  const planner::OrderByNode &node = GetPlanNode<planner::OrderByNode>();
+  const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
   descend_flags_ = node.GetDescendFlags();
 
   // Extract the schema for sort keys.

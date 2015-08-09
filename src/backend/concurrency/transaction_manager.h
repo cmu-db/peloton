@@ -20,13 +20,12 @@
 
 #include "backend/common/types.h"
 
-#include "postgres.h"
-#include "c.h"
-
 namespace peloton {
 namespace concurrency {
 
 #define BASE_REF_COUNT 1
+
+typedef unsigned int TransactionId;
 
 class Transaction;
 

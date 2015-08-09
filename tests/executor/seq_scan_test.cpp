@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "backend/planner/seq_scan_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -28,7 +29,6 @@
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
-#include "backend/planner/seq_scan_node.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_factory.h"
 
@@ -243,7 +243,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   std::vector<oid_t> column_ids({0, 1, 3});
 
   // Create plan node.
-  planner::SeqScanNode node(table.get(), CreatePredicate(g_tuple_ids),
+  planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
                             column_ids);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -266,7 +266,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   std::vector<oid_t> column_ids;
 
   // Create plan node.
-  planner::SeqScanNode node(table, CreatePredicate(g_tuple_ids), column_ids);
+  planner::SeqScanPlan node(table, CreatePredicate(g_tuple_ids), column_ids);
 
   // Set up executor and its child.
   auto &txn_manager = concurrency::TransactionManager::GetInstance();

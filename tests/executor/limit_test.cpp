@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "../../src/backend/planner/limit_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -23,7 +24,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/limit_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/limit_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -65,7 +65,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
   size_t offset = tile_size / 2, limit = tile_size;
 
   // Create the plan node
-  planner::LimitNode node(limit, offset);
+  planner::LimitPlan node(limit, offset);
 
   // Create and set up executor
   executor::LimitExecutor executor(&node, nullptr);
@@ -102,7 +102,7 @@ TEST(LimitTests, NonLeafSkipAllTest) {
   size_t offset = tile_size * 10, limit = tile_size;
 
   // Create the plan node
-  planner::LimitNode node(limit, offset);
+  planner::LimitPlan node(limit, offset);
 
   // Create and set up executor
   executor::LimitExecutor executor(&node, nullptr);
@@ -140,7 +140,7 @@ TEST(LimitTests, NonLeafReturnAllTest) {
   size_t offset = 0, limit = tile_size * 10;
 
   // Create the plan node
-  planner::LimitNode node(limit, offset);
+  planner::LimitPlan node(limit, offset);
 
   // Create and set up executor
   executor::LimitExecutor executor(&node, nullptr);
@@ -178,7 +178,7 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
   size_t offset = tile_size / 2, limit = tile_size * 10;
 
   // Create the plan node
-  planner::LimitNode node(limit, offset);
+  planner::LimitPlan node(limit, offset);
 
   // Create and set up executor
   executor::LimitExecutor executor(&node, nullptr);

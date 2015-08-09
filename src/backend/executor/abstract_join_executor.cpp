@@ -16,9 +16,10 @@
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/abstract_join_executor.h"
+
+#include "../planner/abstract_join_plan.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/abstract_join_node.h"
 
 namespace peloton {
 namespace executor {
@@ -27,7 +28,7 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-AbstractJoinExecutor::AbstractJoinExecutor(planner::AbstractPlanNode *node,
+AbstractJoinExecutor::AbstractJoinExecutor(planner::AbstractPlan *node,
                                            ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -40,8 +41,8 @@ bool AbstractJoinExecutor::DInit() {
   assert(children_.size() == 2);
 
   // Grab data from plan node.
-  const planner::AbstractJoinPlanNode &node =
-      GetPlanNode<planner::AbstractJoinPlanNode>();
+  const planner::AbstractJoinPlan &node =
+      GetPlanNode<planner::AbstractJoinPlan>();
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();

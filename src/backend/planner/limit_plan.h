@@ -16,8 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace planner {
@@ -27,14 +27,14 @@ namespace planner {
  * IMPORTANT: now only works on logical_tile and returns with the same schema as
  * the input.
  */
-class LimitNode : public AbstractPlanNode {
+class LimitPlan : public AbstractPlan {
  public:
-  LimitNode(const LimitNode &) = delete;
-  LimitNode &operator=(const LimitNode &) = delete;
-  LimitNode(LimitNode &&) = delete;
-  LimitNode &operator=(LimitNode &&) = delete;
+  LimitPlan(const LimitPlan &) = delete;
+  LimitPlan &operator=(const LimitPlan &) = delete;
+  LimitPlan(LimitPlan &&) = delete;
+  LimitPlan &operator=(LimitPlan &&) = delete;
 
-  LimitNode(size_t limit, size_t offset) : limit_(limit), offset_(offset) {}
+  LimitPlan(size_t limit, size_t offset) : limit_(limit), offset_(offset) {}
 
   // Accessors
   size_t GetLimit() const { return limit_; }
