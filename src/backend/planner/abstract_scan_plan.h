@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 
@@ -28,14 +28,14 @@ class DataTable;
 
 namespace planner {
 
-class AbstractScanNode : public AbstractPlanNode {
+class AbstractScan : public AbstractPlan {
  public:
-  AbstractScanNode(const AbstractScanNode &) = delete;
-  AbstractScanNode &operator=(const AbstractScanNode &) = delete;
-  AbstractScanNode(AbstractScanNode &&) = delete;
-  AbstractScanNode &operator=(AbstractScanNode &&) = delete;
+  AbstractScan(const AbstractScan &) = delete;
+  AbstractScan &operator=(const AbstractScan &) = delete;
+  AbstractScan(AbstractScan &&) = delete;
+  AbstractScan &operator=(AbstractScan &&) = delete;
 
-  AbstractScanNode(expression::AbstractExpression *predicate,
+  AbstractScan(expression::AbstractExpression *predicate,
                    const std::vector<oid_t> &column_ids)
       : predicate_(predicate), column_ids_(column_ids) {}
 

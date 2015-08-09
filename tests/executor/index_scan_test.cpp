@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "../../src/backend/planner/index_scan_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -19,7 +20,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/index_scan_executor.h"
-#include "backend/planner/index_scan_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -54,13 +54,13 @@ TEST(IndexScanTests, IndexPredicateTest) {
   values.push_back(ValueFactory::GetIntegerValue(110));
 
   // Create index scan desc
-  planner::IndexScanNode::IndexScanDesc index_scan_desc(index, key_column_ids,
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
                                                         expr_types, values);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(predicate, column_ids, data_table.get(),
+  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
                               index_scan_desc);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -117,13 +117,13 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   values.push_back(ValueFactory::GetIntegerValue(70));
 
   // Create index scan desc
-  planner::IndexScanNode::IndexScanDesc index_scan_desc(index, key_column_ids,
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
                                                         expr_types, values);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(predicate, column_ids, data_table.get(),
+  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
                               index_scan_desc);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();

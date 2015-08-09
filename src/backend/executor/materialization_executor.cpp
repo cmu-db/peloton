@@ -16,9 +16,9 @@
 #include <memory>
 #include <utility>
 
+#include "../planner/materialization_plan.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/materialization_node.h"
 #include "backend/storage/tile.h"
 
 namespace peloton {
@@ -29,7 +29,7 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    planner::AbstractPlanNode *node, ExecutorContext *executor_context)
+    planner::AbstractPlan *node, ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
 /**
@@ -138,8 +138,8 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   }
   // Else use the mapping in the given plan node
   else {
-    const planner::MaterializationNode &node =
-        GetPlanNode<planner::MaterializationNode>();
+    const planner::MaterializationPlan &node =
+        GetPlanNode<planner::MaterializationPlan>();
     if (node.GetSchema()) {
       output_schema = node.GetSchema();
       old_to_new_cols = node.old_to_new_cols();
@@ -194,8 +194,8 @@ bool MaterializationExecutor::DExecute() {
   bool physify_flag = true;  // by default, we create a physical tile
 
   if (node != nullptr) {
-    const planner::MaterializationNode &node =
-        GetPlanNode<planner::MaterializationNode>();
+    const planner::MaterializationPlan &node =
+        GetPlanNode<planner::MaterializationPlan>();
     physify_flag = node.GetPhysifyFlag();
   }
 

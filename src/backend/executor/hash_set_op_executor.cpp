@@ -17,7 +17,8 @@
 #include "backend/common/value.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/hash_set_op_executor.h"
-#include "backend/planner/set_op_node.h"
+
+#include "../planner/set_op_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -25,7 +26,7 @@ namespace executor {
 /**
  * @brief Constructor
  */
-HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlanNode *node,
+HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -65,7 +66,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
   assert(!hash_done_);
 
   // Grab data from plan node
-  const planner::SetOpNode &node = GetPlanNode<planner::SetOpNode>();
+  const planner::SetOpPlan &node = GetPlanNode<planner::SetOpPlan>();
   set_op_ = node.GetSetOp();
   assert(set_op_ != SETOP_TYPE_INVALID);
 

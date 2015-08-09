@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../../../planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/seq_scan_node.h"
 
 namespace peloton {
 namespace bridge {
@@ -22,11 +22,11 @@ namespace bridge {
 
 /**
  * @brief Convert a Postgres SeqScanState into a Peloton SeqScanNode.
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
-planner::AbstractPlanNode *PlanTransformer::TransformSeqScan(
+planner::AbstractPlan *PlanTransformer::TransformSeqScan(
     const SeqScanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
@@ -45,7 +45,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformSeqScan(
   /**
    * SeqScan only needs the "generic" settings, so grab it.
    */
-  planner::AbstractPlanNode *parent = nullptr;
+  planner::AbstractPlan *parent = nullptr;
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
@@ -59,9 +59,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformSeqScan(
 
   /* Construct and return the Peloton plan node */
   auto scan_node =
-      new planner::SeqScanNode(target_table, predicate, column_ids);
+      new planner::SeqScanPlan(target_table, predicate, column_ids);
 
-  planner::AbstractPlanNode *rv = nullptr;
+  planner::AbstractPlan *rv = nullptr;
 
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {

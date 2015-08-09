@@ -16,10 +16,10 @@
 #include <memory>
 #include <vector>
 
+#include "../planner/abstract_plan.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace executor {
@@ -53,13 +53,13 @@ class AbstractExecutor {
   // in test cases.
   virtual LogicalTile *GetOutput();
 
-  const planner::AbstractPlanNode *GetRawNode() const { return node_; }
+  const planner::AbstractPlan *GetRawNode() const { return node_; }
 
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times
   // with different executor contexts
-  explicit AbstractExecutor(planner::AbstractPlanNode *node,
+  explicit AbstractExecutor(planner::AbstractPlan *node,
                             ExecutorContext *executor_context);
 
   /** @brief Init function to be overriden by derived class. */
@@ -92,7 +92,7 @@ class AbstractExecutor {
   std::unique_ptr<LogicalTile> output;
 
   /** @brief Plan node corresponding to this executor. */
-  const planner::AbstractPlanNode *node_ = nullptr;
+  const planner::AbstractPlan *node_ = nullptr;
 
  protected:
   // Executor context

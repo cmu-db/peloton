@@ -12,11 +12,11 @@
 
 #include "backend/executor/update_executor.h"
 
+#include "../planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/update_node.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 
@@ -27,7 +27,7 @@ namespace executor {
  * @brief Constructor for update executor.
  * @param node Update node corresponding to this executor.
  */
-UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
+UpdateExecutor::UpdateExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -41,7 +41,7 @@ bool UpdateExecutor::DInit() {
   assert(project_info_ == nullptr);
 
   // Grab settings from node
-  const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
+  const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   project_info_ = node.GetProjectInfo();
 

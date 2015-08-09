@@ -33,7 +33,7 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
+IndexScanExecutor::IndexScanExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 
@@ -50,7 +50,7 @@ bool IndexScanExecutor::DInit() {
   LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
-  const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
   index_ = node.GetIndex();
   assert(index_ != nullptr);

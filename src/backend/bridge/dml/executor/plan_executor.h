@@ -35,10 +35,10 @@ class PlanExecutor {
 
   PlanExecutor(){};
 
-  static void PrintPlan(const planner::AbstractPlanNode *plan,
+  static void PrintPlan(const planner::AbstractPlan *plan,
                         std::string prefix = "");
 
-  static void ExecutePlan(planner::AbstractPlanNode *plan,
+  static void ExecutePlan(planner::AbstractPlan *plan,
                           ParamListInfo m_param_list,
                           TupleDesc m_tuple_desc,
                           Peloton_Status *pstatus,

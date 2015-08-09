@@ -20,7 +20,7 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,
+AbstractExecutor::AbstractExecutor(planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)
     : node_(node), executor_context_(executor_context) {}
 
