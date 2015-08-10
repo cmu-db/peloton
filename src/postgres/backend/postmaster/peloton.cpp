@@ -838,18 +838,18 @@ peloton_send_dml(Peloton_Status  *status,
   msg.m_status = status;
   msg.m_tuple_desc = tuple_desc;
 
-  // Copy the plantree or get it from the plan cache
-  // TODO: Use the plan cache
-  Plan *plantree = planstate->plan;
-  auto shm_plantree = peloton_copy_plantree(plantree);
-  msg.m_plantree = shm_plantree;
-
   // Copy the param list
   assert(planstate != NULL);
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
   auto shm_param_list = peloton_copy_paramlist(param_list);
   msg.m_param_list = shm_param_list;
+
+  // Copy the plantree or get it from the plan cache
+  // TODO: Use the plan cache
+  Plan *plantree = planstate->plan;
+  auto shm_plantree = peloton_copy_plantree(plantree);
+  msg.m_plantree = shm_plantree;
 
   // Prepare the planstate
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
@@ -1261,6 +1261,11 @@ ParamListInfo peloton_copy_paramlist(ParamListInfo param_list) {
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   auto shm_param_list = copyParamList(param_list);
   MemoryContextSwitchTo(oldcxt);
+
+  elog(INFO, "Copied param list : %p", shm_param_list);
+
+  if(shm_param_list)
+    elog(LOG, "Param Count :: %d", shm_param_list->numParams);
 
   return shm_param_list;
 }
