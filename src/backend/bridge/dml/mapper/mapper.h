@@ -135,7 +135,7 @@ class PlanTransformer {
   static PelotonJoinType TransformJoinType(const JoinType type);
 
   //========-----------------------------------------
-  // Common utility functions for Scan's
+  // Common utility functions
   //========-----------------------------------------
   static void GetGenericInfoFromScanState(
       planner::AbstractPlanNode *&parent,
@@ -153,6 +153,8 @@ class PlanTransformer {
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
 };
 
 }  // namespace bridge

@@ -287,7 +287,80 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
 }
 
 /**
- * Convet a Postgres JoinType into a Peloton JoinType
+ * @brief Build a Peloton ProjectInfo from PG PlanState.targetlist.
+ * 1. The target list will be separated into generic targets and direct maps.
+ * 2. Junk attributes will be \b removed.
+ *
+ * NB: The 1) above is overlapped with PG function ExecBuildProjectionInfo(),
+ * however, that function doesn't do 2). What's worse, it loses the information
+ * about junk attributes for direct maps.
+ */
+const planner::ProjectInfo*
+PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+  ListCell* tl;
+
+  foreach(tl, targetList)
+  {
+    GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+    TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+
+    if (tle->resjunk || !AttributeNumberIsValid(tle->resno) || !AttrNumberIsForUserDefinedAttr(tle->resno)) {
+      continue;  // SKIP junk / invalid attributes.
+    }
+
+    Var *variable = (Var *) gstate->arg->expr;
+    bool isSimpleVar = false;
+
+    if (variable != NULL && IsA(variable, Var) && variable->varattno > 0) {
+      isSimpleVar = true;
+    }
+
+    if (isSimpleVar) {
+      AttrNumber attnum = variable->varattno;
+
+      oid_t input_col_id = static_cast<oid_t>(attnum - 1);
+      oid_t output_col_id = static_cast<oid_t>(tle->resno - 1);
+      oid_t tuple_idx = 0;
+
+      switch (variable->varno) {
+        case INNER_VAR:
+          tuple_idx = 1;
+          break;
+
+        case OUTER_VAR:
+          break;
+
+        default:
+          break;
+      }
+
+      // Add it to direct map list
+      direct_map_list.emplace_back(output_col_id,
+                                   std::make_pair(tuple_idx, input_col_id));
+    } else {
+      /* Not a simple variable, add it to generic targetlist */
+      oid_t output_col_id = static_cast<oid_t>(tle->resno - 1);
+      auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+
+      assert(peloton_expr);
+//      if (peloton_expr == nullptr) {
+//        LOG_INFO("Seems to be a row value expression. Skipped.");
+//        continue;
+//      }
+
+      target_list.emplace_back(output_col_id, peloton_expr);
+    }
+  } // end foreach
+
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
+
+}
+
+/**
+ * Convert a Postgres JoinType into a Peloton JoinType
  *
  * We may want to have a uniform JoinType enum, instead of a transformation
  */
