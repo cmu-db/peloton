@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../../../planner/abstract_plan.h"
+#include "backend/planner/abstract_plan.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/dml/expr/expr_transformer.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
@@ -21,6 +21,7 @@
 #include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
 #include "backend/planner/project_info.h"
+#include "backend/bridge/dml/mapper/dml_raw_structures.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -43,13 +44,15 @@ class PlanTransformer {
 
   PlanTransformer(){};
 
-  static void PrintPlanState(const PlanState *plan);
+  static void PrintPlan(const Plan *plan);
 
-  static planner::AbstractPlan *TransformPlan(const PlanState *plan) {
-    return TransformPlan(plan, kDefaultOptions);
+  static planner::AbstractPlan *TransformPlan(planner::AbstractPlanState *planstate) {
+    return TransformPlan(planstate, kDefaultOptions);
   }
 
-  static bool CleanPlanNodeTree(planner::AbstractPlan *root);
+  static bool CleanPlanTree(planner::AbstractPlan *root);
+
+  static bool CleanPlanStateTree(planner::AbstractPlanState *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
@@ -59,7 +62,7 @@ class PlanTransformer {
   //======-----------------------------------
   class TransformOptions {
    public:
-    bool use_projInfo = true;  // Use PlanState.projInfo or not
+    bool use_projInfo = true;  // Use Plan.projInfo or not
     TransformOptions() = default;
     TransformOptions(bool pi) : use_projInfo(pi) {}
   };
@@ -67,26 +70,31 @@ class PlanTransformer {
   static const TransformOptions kDefaultOptions;
 
   static planner::AbstractPlan *TransformPlan(
-      const PlanState *plan, const TransformOptions options);
+      planner::AbstractPlanState *planstate,
+      const TransformOptions options);
 
   //======---------------------------------------
   // MODIFY TABLE FAMILY
   //======---------------------------------------
   static planner::AbstractPlan *TransformModifyTable(
-      const ModifyTableState *plan_state, const TransformOptions options);
+      planner::ModifyTablePlanState *planstate,
+      const TransformOptions options);
 
   static planner::AbstractPlan *TransformInsert(
-      const ModifyTableState *plan_state, const TransformOptions options);
+      planner::ModifyTablePlanState *planstate,
+      const TransformOptions options);
   static planner::AbstractPlan *TransformUpdate(
-      const ModifyTableState *plan_state, const TransformOptions options);
+      planner::ModifyTablePlanState *planstate,
+      const TransformOptions options);
   static planner::AbstractPlan *TransformDelete(
-      const ModifyTableState *plan_state, const TransformOptions options);
+      planner::ModifyTablePlanState *planstate,
+      const TransformOptions options);
 
   //======---------------------------------------
   // SCAN FAMILY
   //======---------------------------------------
   /*
-   * The ScanState.projInfo in ScanState may be processed in three possible
+   * The Scan.projInfo in Scan may be processed in three possible
    * ways:
    * 1. It is stolen by the scan's parent. Then, options.use_projInfo should be
    * false
@@ -98,43 +106,50 @@ class PlanTransformer {
    * generate a projection plan node and put it on top of the scan node.
    */
   static planner::AbstractPlan *TransformSeqScan(
-      const SeqScanState *plan_state, const TransformOptions options);
+      planner::SeqScanPlanState *planstate,
+      const TransformOptions options);
   static planner::AbstractPlan *TransformIndexScan(
-      const IndexScanState *plan_state, const TransformOptions options);
+      planner::IndexScanPlanState *planstate,
+      const TransformOptions options);
   static planner::AbstractPlan *TransformIndexOnlyScan(
-      const IndexOnlyScanState *plan_state, const TransformOptions options);
+      planner::IndexOnlyScanPlanState *planstate,
+      const TransformOptions options);
   static planner::AbstractPlan *TransformBitmapScan(
-      const BitmapHeapScanState *plan_state, const TransformOptions options);
+      planner::BitmapHeapScanPlanState *planstate,
+      const TransformOptions options);
 
   //======---------------------------------------
   // JOIN FAMILY
   //======---------------------------------------
   static planner::AbstractPlan *TransformNestLoop(
-      const NestLoopState *plan_state);
+      planner::NestLoopPlanState *planstate);
 
   //======---------------------------------------
   // OTHERS
   //======---------------------------------------
   static planner::AbstractPlan *TransformLockRows(
-      const LockRowsState *plan_state);
+      planner::LockRowsPlanState *planstate);
 
   static planner::AbstractPlan *TransformMaterialization(
-      const MaterialState *plan_state);
+      planner::MaterialPlanState *planstate);
 
   static planner::AbstractPlan *TransformLimit(
-      const LimitState *plan_state);
+      planner::LimitPlanState *planstate);
+
   static planner::AbstractPlan *TransformResult(
-      const ResultState *plan_state);
+      planner::ResultPlanState *planstate);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
   //========-----------------------------------------
   // Common utility functions for Scan's
   //========-----------------------------------------
-  static void GetGenericInfoFromScanState(
-      planner::AbstractPlan *&parent,
-      expression::AbstractExpression *&predicate,
-      std::vector<oid_t> &out_col_list, const ScanState *sstate,
+
+  static void GetGenericInfoFromScan(
+      planner::AbstractPlan *parent,
+      expression::AbstractExpression *predicate,
+      std::vector<oid_t> &out_col_list,
+      planner::AbstractScanPlanState *sstate,
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(

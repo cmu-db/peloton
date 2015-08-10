@@ -15,6 +15,7 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
+#include "backend/planner/insert_plan.h"
 
 #include "nodes/print.h"
 #include "nodes/pprint.h"
@@ -27,90 +28,112 @@ namespace bridge {
 const PlanTransformer::TransformOptions PlanTransformer::kDefaultOptions;
 
 /**
- * @brief Pretty print the plan state tree.
+ * @brief Pretty print the plan  tree.
  * @return none.
  */
-void PlanTransformer::PrintPlanState(const PlanState *plan) {
+void PlanTransformer::PrintPlan(const Plan *plan) {
 }
 
 /**
- * @brief Convert Postgres PlanState (tree) into AbstractPlan (tree).
+ * @brief Convert Postgres Plan (tree) into AbstractPlan (tree).
  * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlan *PlanTransformer::TransformPlan(
-    const PlanState *plan_state, const TransformOptions options) {
-  assert(plan_state);
+    planner::AbstractPlanState *planstate,
+    const TransformOptions options) {
 
-  Plan *plan = plan_state->plan;
+  const Plan *plan = planstate->GetPlan();
   // Ignore empty plans
   if (plan == nullptr) return nullptr;
 
-  planner::AbstractPlan *plan_node = nullptr;
+  planner::AbstractPlan *peloton_plan = nullptr;
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state), options);
+      peloton_plan = PlanTransformer::TransformModifyTable(
+          reinterpret_cast<planner::ModifyTablePlanState *>(planstate),
+          options);
       break;
     case T_SeqScan:
-      plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState *>(plan_state), options);
+      peloton_plan = PlanTransformer::TransformSeqScan(
+          reinterpret_cast<planner::SeqScanPlanState *>(planstate),
+          options);
       break;
     case T_IndexScan:
-      plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState *>(plan_state), options);
+      peloton_plan = PlanTransformer::TransformIndexScan(
+          reinterpret_cast<planner::IndexScanPlanState *>(planstate),
+          options);
       break;
     case T_IndexOnlyScan:
-      plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState *>(plan_state), options);
+      peloton_plan = PlanTransformer::TransformIndexOnlyScan(
+          reinterpret_cast<planner::IndexOnlyScanPlanState *>(planstate),
+          options);
       break;
     case T_BitmapHeapScan:
-      plan_node = PlanTransformer::TransformBitmapScan(
-          reinterpret_cast<const BitmapHeapScanState *>(plan_state), options);
+      peloton_plan = PlanTransformer::TransformBitmapScan(
+          reinterpret_cast<planner::BitmapHeapScanPlanState *>(planstate),
+          options);
       break;
     case T_LockRows:
-      plan_node = PlanTransformer::TransformLockRows(
-          reinterpret_cast<const LockRowsState *>(plan_state));
+      peloton_plan = PlanTransformer::TransformLockRows(
+          reinterpret_cast<planner::LockRowsPlanState *>(planstate));
       break;
     case T_Limit:
-      plan_node = PlanTransformer::TransformLimit(
-          reinterpret_cast<const LimitState *>(plan_state));
+      peloton_plan = PlanTransformer::TransformLimit(
+          reinterpret_cast<planner::LimitPlanState *>(planstate));
       break;
     case T_MergeJoin:
     case T_HashJoin:
     // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
-    // need this
-    // case to operate AlterTable
+    // need this case to operate AlterTable
     // Also - Added special case in peloton_process_dml
     case T_NestLoop:
-      plan_node = PlanTransformer::TransformNestLoop(
-          reinterpret_cast<const NestLoopState *>(plan_state));
+      peloton_plan = PlanTransformer::TransformNestLoop(
+          reinterpret_cast<planner::NestLoopPlanState *>(planstate));
       break;
     case T_Material:
-      plan_node = PlanTransformer::TransformMaterialization(
-          reinterpret_cast<const MaterialState *>(plan_state));
+      peloton_plan = PlanTransformer::TransformMaterialization(
+          reinterpret_cast<planner::MaterialPlanState *>(planstate));
       break;
     default: {
-      LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
-                nodeTag(plan_state), nodeTag(plan));
+      LOG_ERROR("Unsupported Postgres Plan  Tag: %u Plan Tag: %u ",
+                nodeTag(plan), nodeTag(plan));
       elog(INFO, "Query: ");
       break;
     }
   }
 
-  return plan_node;
+  return peloton_plan;
 }
 
 /**
- * @brief Recursively destroy the nodes in a plan node tree.
+ * @brief Recursively destroy the nodes in a plan tree.
  */
-bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlan *root) {
+bool PlanTransformer::CleanPlanTree(planner::AbstractPlan *root) {
   if (!root) return false;
 
   // Clean all children subtrees
   auto children = root->GetChildren();
   for (auto child : children) {
-    auto rv = CleanPlanNodeTree(child);
+    auto rv = CleanPlanTree(child);
+    assert(rv);
+  }
+
+  // Clean the root
+  delete root;
+  return true;
+}
+
+/**
+ * @brief Recursively destroy the nodes in a plan state tree.
+ */
+bool PlanTransformer::CleanPlanStateTree(planner::AbstractPlanState *root) {
+  if (!root) return false;
+
+  // Clean all children subtrees
+  auto children = root->GetChildren();
+  for (auto child : children) {
+    auto rv = CleanPlanStateTree(child);
     assert(rv);
   }
 

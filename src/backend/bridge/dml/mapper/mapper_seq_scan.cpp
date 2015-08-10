@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../planner/seq_scan_plan.h"
+#include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
 namespace peloton {
@@ -27,13 +27,14 @@ namespace bridge {
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
 planner::AbstractPlan *PlanTransformer::TransformSeqScan(
-    const SeqScanState *ss_plan_state, const TransformOptions options) {
+    planner::SeqScanPlanState *ss_plan_state,
+    const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
+  assert(ss_plan_state->table_oid);  // Null if not a base table scan
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
+  Oid table_oid = ss_plan_state->table_oid;
 
   /* Grab the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -49,8 +50,10 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids, ss_plan_state,
-                              options.use_projInfo);
+  GetGenericInfoFromScan(parent, predicate,
+                         column_ids,
+                         ss_plan_state,
+                         options.use_projInfo);
 
   if (column_ids.empty()) {
     column_ids.resize(target_table->GetSchema()->GetColumnCount());
