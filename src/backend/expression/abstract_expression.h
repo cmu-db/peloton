@@ -65,6 +65,7 @@ class AbstractExpression {
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
       executor::ExecutorContext *context /* = nullptr */) const = 0;
 
+  // TODO Please remove this function from here and all derived classes
   // set parameter values for this node and its descendants
   virtual void Substitute(const ValueArray &params);
 
