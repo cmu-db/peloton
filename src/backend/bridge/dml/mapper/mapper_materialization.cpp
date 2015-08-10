@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../planner/materialization_plan.h"
+#include "backend/planner/materialization_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
 namespace peloton {
