@@ -93,7 +93,7 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
 
   planner::AbstractPlanState *sub_planstate = mt_planstate->mt_plans[0];
 
-  if (nodeTag(sub_planstate->GetPlan()) == T_Result) {  // Child is a result node
+  if (nodeTag(sub_planstate) == T_ResultState) {  // Child is a result node
     LOG_TRACE("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState *>(sub_planstate);
 
@@ -108,7 +108,7 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
-              nodeTag(sub_planstate->GetPlan()));
+              nodeTag(sub_planstate));
   }
 
   return plan_node;
@@ -159,11 +159,12 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
 
   planner::AbstractPlan *plan_node = nullptr;
 
-  auto child_tag = nodeTag(sub_planstate->GetPlan());
+  auto child_tag = nodeTag(sub_planstate);
 
-  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
-      child_tag == T_IndexOnlyScan ||
-      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
+  if (child_tag == T_SeqScanState ||
+      child_tag == T_IndexScanState ||
+      child_tag == T_IndexOnlyScanState ||
+      child_tag == T_BitmapHeapScanState ) {  // Sub plan is a Scan of any type
 
     LOG_TRACE("Child of Update is %u \n", child_tag);
     // Extract the projection info from the underlying scan
