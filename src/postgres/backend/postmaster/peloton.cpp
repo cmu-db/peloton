@@ -382,10 +382,13 @@ peloton_MainLoop(void) {
     return;
   }
 
+  // Launching a thread
+
   // Launching a thread for stdout logging(debuging)
   std::thread thread(&peloton::logging::LogManager::StartLogging,
                      peloton::logging::LogManager::GetInstance(),
-                     peloton::LOGGING_TYPE_STDOUT);
+                     peloton::LOGGING_TYPE_ARIES);
+//                   peloton::LOGGING_TYPE_STDOUT);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
