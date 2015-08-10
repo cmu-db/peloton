@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../planner/abstract_scan_plan.h"
+#include "backend/planner/abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 
