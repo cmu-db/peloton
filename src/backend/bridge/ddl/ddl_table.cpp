@@ -189,11 +189,11 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
   storage::DataTable *table = storage::TableFactory::GetDataTable(
       database_oid, relation_oid, schema, table_name);
 
-  db->AddTable(table);
-
   if (table != nullptr) {
     LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid,
              table_name.c_str(), database_oid);
+
+    db->AddTable(table);
     return true;
   }
   return false;
