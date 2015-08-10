@@ -55,6 +55,10 @@ class ExprTransformer {
 
   static expression::AbstractExpression *TransformList(
       const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
+
+  /* Utilities */
+  static expression::AbstractExpression*
+  ReMapPgFunc(Oid pg_func_id, List* args);
 };
 
 }  // namespace bridge
