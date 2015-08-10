@@ -44,7 +44,9 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetTableOid() const { return table_oid_; }
 
-  storage::DataTable *GetTable() const { return target_table_; }
+  storage::DataTable *GetTable() const {
+    return target_table_;
+  }
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();

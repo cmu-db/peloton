@@ -50,7 +50,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief Pointer to table to scan from. */
-  storage::DataTable *table_ = nullptr;
+  storage::DataTable *target_table_ = nullptr;
 };
 
 }  // namespace executor

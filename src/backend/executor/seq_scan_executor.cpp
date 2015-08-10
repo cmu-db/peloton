@@ -55,36 +55,17 @@ bool SeqScanExecutor::DInit() {
   return true;
 }
 
-storage::DataTable *InitTable(const planner::SeqScanPlan &node) {
-  auto database_oid = node.GetDatabaseOid();
-  auto table_oid = node.GetTableOid();
-
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
-  if (target_table == nullptr) {
-    LOG_ERROR("Target table is not found : database oid %u table oid %u",
-              database_oid, table_oid);
-    return nullptr;
-  }
-
-  LOG_TRACE("Seq Scan: database oid %u table oid %u",
-           database_oid, table_oid);
-
-  return target_table;
-}
-
 /**
  * @brief Creates logical tile from tile group and applies scan predicate.
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
+
   // Scanning over a logical tile.
   if (children_.size() == 1) {
     LOG_TRACE("Seq Scan executor :: 1 child \n");
 
-    assert(table_ == nullptr);
-    assert(column_ids_.size() == 0);
+    assert(target_table_ == nullptr);
 
     if (!children_[0]->Execute()) {
       return false;
@@ -111,19 +92,20 @@ bool SeqScanExecutor::DExecute() {
     LOG_TRACE("Seq Scan executor :: 0 child \n");
 
     const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
-    table_ = node.GetTable();
-    if(table_ == nullptr) {
-      table_ = InitTable(node);
-      assert(table_ != nullptr);
-
-      table_tile_group_count_ = table_->GetTileGroupCount();
-
-      if (column_ids_.empty()) {
-        column_ids_.resize(table_->GetSchema()->GetColumnCount());
-        std::iota(column_ids_.begin(), column_ids_.end(), 0);
-      }
+    target_table_ = node.GetTable();
+    if(target_table_ == nullptr) {
+      auto database_oid = node.GetDatabaseOid();
+      auto table_oid = node.GetTableOid();
+      target_table_ = static_cast<storage::DataTable *>
+      (catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
     }
-    assert(column_ids_.size() > 0);
+    assert(target_table_ != nullptr);
+
+    table_tile_group_count_ = target_table_->GetTileGroupCount();
+    if (column_ids_.empty()) {
+      column_ids_.resize(target_table_->GetSchema()->GetColumnCount());
+      std::iota(column_ids_.begin(), column_ids_.end(), 0);
+    }
 
     // Retrieve next tile group.
     if (current_tile_group_offset_ == table_tile_group_count_) {
@@ -134,7 +116,7 @@ bool SeqScanExecutor::DExecute() {
              table_tile_group_count_);
 
     storage::TileGroup *tile_group =
-        table_->GetTileGroup(current_tile_group_offset_++);
+        target_table_->GetTileGroup(current_tile_group_offset_++);
 
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     auto transaction_ = executor_context_->GetTransaction();
