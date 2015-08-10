@@ -43,8 +43,14 @@ bool DeleteExecutor::DInit() {
 
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
-
   target_table_ = node.GetTable();
+  if(target_table_ == nullptr) {
+    auto database_oid = node.GetDatabaseOid();
+    auto table_oid = node.GetTableOid();
+    target_table_ = static_cast<storage::DataTable *>
+    (catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+  }
+  assert(target_table_);
 
   return true;
 }
