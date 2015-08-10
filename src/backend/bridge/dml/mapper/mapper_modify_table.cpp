@@ -68,25 +68,10 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   /* Resolve result table */
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
+  oid_t table_nattrs = result_relation_desc->rd_att->natts;
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
-
-  /* Get the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
-  if (target_table == nullptr) {
-    LOG_ERROR("Target table is not found : database oid %u table oid %u",
-              database_oid, table_oid);
-    return nullptr;
-  }
-
-  LOG_TRACE("Insert into: database oid %u table oid %u", database_oid,
-            table_oid);
-
-  /* Get the tuple schema */
-  auto schema = target_table->GetSchema();
 
   /* Should be only one sub plan which is a Result  */
   assert(mt_plan_state->mt_nplans == 1);
@@ -103,9 +88,9 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
                  i.e., ResultState should have no children/sub plans */
 
     auto project_info =
-        BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
+        BuildProjectInfo(result_ps->ps.ps_ProjInfo, table_nattrs);
 
-    plan_node = new planner::InsertPlan(target_table, project_info);
+    plan_node = new planner::InsertPlan(database_oid, table_oid, project_info);
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",

@@ -27,7 +27,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -41,6 +41,25 @@ bool InsertExecutor::DInit() {
   return true;
 }
 
+storage::DataTable *InitTable(const planner::InsertPlan &node) {
+  auto database_oid = node.GetDatabaseOid();
+  auto table_oid = node.GetTableOid();
+
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
+    return nullptr;
+  }
+
+  LOG_INFO("Insert into: database oid %u table oid %u",
+           database_oid, table_oid);
+
+  return target_table;
+}
+
 /**
  * @brief Adds a column to the logical tile, using the position lists.
  * @return true on success, false otherwise.
@@ -52,6 +71,10 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
+  if(target_table == nullptr) {
+    target_table = InitTable(node);
+  }
+  assert(target_table);
   auto transaction_ = executor_context_->GetTransaction();
 
   // Inserting a logical tile.
@@ -103,8 +126,8 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
-    assert(project_info->GetDirectMapList().size() ==
-           0);  // There should be no direct maps
+    // There should be no direct maps
+    assert(project_info->GetDirectMapList().size() == 0);
 
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
