@@ -97,7 +97,10 @@ enum config_group
 	ERROR_HANDLING_OPTIONS,
 	PRESET_OPTIONS,
 	CUSTOM_OPTIONS,
-	DEVELOPER_OPTIONS
+	DEVELOPER_OPTIONS,
+// TODO: Peloton mode ====================================================
+	PELOTON_MODE_OPTIONS
+// TODO: Peloton mode ====================================================
 };
 
 /*
