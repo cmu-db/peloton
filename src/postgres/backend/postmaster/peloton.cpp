@@ -156,7 +156,15 @@ NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
 
 // TODO: Peloton mode ====================================================
-  puts("reading peloton_mode...");
+  puts("Before SetConfigOption...");
+  elog(LOG, "Before SetConfigOption...");
+  puts(GetConfigOption("peloton_mode", false, false));
+
+  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
+  puts("\n");
+
+  puts("After SetConfigOption...");
+  elog(LOG, "After SetConfigOption...");
   puts(GetConfigOption("peloton_mode", false, false));
 // TODO: Peloton mode ====================================================
 
