@@ -50,8 +50,6 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   /* Resolve target relation */
   Oid table_oid = iss_plan_state->table_oid;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan =
-      reinterpret_cast<const IndexScan *>(iss_plan_state->GetPlan());
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -59,13 +57,13 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+  index_scan_desc.index = table->GetIndexWithOid(iss_plan_state->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan_state->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  LOG_INFO("Scan order: %d", iss_plan_state->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
@@ -200,8 +198,6 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->table_oid;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan =
-      reinterpret_cast<const IndexScan *>(ioss_plan_state->GetPlan());
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -209,13 +205,13 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+  index_scan_desc.index = table->GetIndexWithOid(ioss_plan_state->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", ioss_plan_state->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  LOG_INFO("Scan order: %d", ioss_plan_state->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */

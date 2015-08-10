@@ -42,62 +42,61 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
     planner::AbstractPlanState *planstate,
     const TransformOptions options) {
 
-  const Plan *plan = planstate->GetPlan();
   // Ignore empty plans
-  if (plan == nullptr) return nullptr;
+  if (planstate == nullptr) return nullptr;
 
   planner::AbstractPlan *peloton_plan = nullptr;
 
-  switch (nodeTag(plan)) {
-    case T_ModifyTable:
+  switch (nodeTag(planstate)) {
+    case T_ModifyTableState:
       peloton_plan = PlanTransformer::TransformModifyTable(
           reinterpret_cast<planner::ModifyTablePlanState *>(planstate),
           options);
       break;
-    case T_SeqScan:
+    case T_SeqScanState:
       peloton_plan = PlanTransformer::TransformSeqScan(
           reinterpret_cast<planner::SeqScanPlanState *>(planstate),
           options);
       break;
-    case T_IndexScan:
+    case T_IndexScanState:
       peloton_plan = PlanTransformer::TransformIndexScan(
           reinterpret_cast<planner::IndexScanPlanState *>(planstate),
           options);
       break;
-    case T_IndexOnlyScan:
+    case T_IndexOnlyScanState:
       peloton_plan = PlanTransformer::TransformIndexOnlyScan(
           reinterpret_cast<planner::IndexOnlyScanPlanState *>(planstate),
           options);
       break;
-    case T_BitmapHeapScan:
+    case T_BitmapHeapScanState:
       peloton_plan = PlanTransformer::TransformBitmapScan(
           reinterpret_cast<planner::BitmapHeapScanPlanState *>(planstate),
           options);
       break;
-    case T_LockRows:
+    case T_LockRowsState:
       peloton_plan = PlanTransformer::TransformLockRows(
           reinterpret_cast<planner::LockRowsPlanState *>(planstate));
       break;
-    case T_Limit:
+    case T_LimitState:
       peloton_plan = PlanTransformer::TransformLimit(
           reinterpret_cast<planner::LimitPlanState *>(planstate));
       break;
-    case T_MergeJoin:
-    case T_HashJoin:
+    case T_MergeJoinState:
+    case T_HashJoinState:
     // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
     // need this case to operate AlterTable
     // Also - Added special case in peloton_process_dml
-    case T_NestLoop:
+    case T_NestLoopState:
       peloton_plan = PlanTransformer::TransformNestLoop(
           reinterpret_cast<planner::NestLoopPlanState *>(planstate));
       break;
-    case T_Material:
+    case T_MaterialState:
       peloton_plan = PlanTransformer::TransformMaterialization(
           reinterpret_cast<planner::MaterialPlanState *>(planstate));
       break;
     default: {
-      LOG_ERROR("Unsupported Postgres Plan  Tag: %u Plan Tag: %u ",
-                nodeTag(plan), nodeTag(plan));
+      LOG_ERROR("Unsupported Postgres Plan  Tag: %u ",
+                nodeTag(planstate));
       elog(INFO, "Query: ");
       break;
     }
