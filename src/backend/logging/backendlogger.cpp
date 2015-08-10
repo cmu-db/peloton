@@ -12,6 +12,7 @@
 
 #include "backend/logging/backendlogger.h"
 #include "backend/logging/loggers/stdoutbackendlogger.h"
+#include "backend/logging/loggers/ariesbackendlogger.h"
 
 namespace peloton {
 namespace logging {
@@ -29,7 +30,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
     }break;
 
     case LOGGING_TYPE_ARIES:{
-//      backendLogger = new AriesBackendLogger();
+      backendLogger = AriesBackendLogger::GetInstance();
     }break;
 
     case LOGGING_TYPE_PELOTON:{
