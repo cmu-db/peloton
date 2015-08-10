@@ -57,6 +57,8 @@ struct IndexScanPlanState : public AbstractScanPlanState {
   int iss_NumScanKeys;
   ScanKey   iss_ScanKeys;
 
+  Oid indexid;
+  ScanDirection indexorderdir;
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {
@@ -67,6 +69,9 @@ struct IndexOnlyScanPlanState : public AbstractScanPlanState {
 
   int ioss_NumScanKeys;
   ScanKey  ioss_ScanKeys;
+
+  Oid indexid;
+  ScanDirection indexorderdir;
 
 };
 
