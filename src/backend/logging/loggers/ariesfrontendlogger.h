@@ -17,7 +17,7 @@
 namespace peloton {
 namespace logging {
 
-static std::vector<LogRecord> aries_buffer;
+static std::vector<LogRecord> aries_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Aries Frontend Logger 
@@ -42,8 +42,8 @@ class AriesFrontendLogger : public FrontendLogger{
     // FIXME :: Hard coded based dir
     std::string baseDirectory = "/home/parallels/git/peloton/build/";
 
-    // FIXME :: Hard coded buffer size
-    oid_t buffer_size = 3;
+    // FIXME :: Hard coded global_queue size
+    oid_t aries_global_queue_size = 3;
 
     int fd;
 
