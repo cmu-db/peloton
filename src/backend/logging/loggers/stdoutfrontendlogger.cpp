@@ -21,7 +21,7 @@ namespace logging {
  */
 void StdoutFrontendLogger::MainLoop(void) {
   for(int i=0;;i++){
-    sleep(5);
+    sleep(1);
 
     // Collect LogRecords from BackendLogger 
     CollectLogRecord();

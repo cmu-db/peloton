@@ -60,6 +60,11 @@ class FrontendLogger : public Logger{
     virtual void Flush(void) const = 0;
 
     /**
+     * Restore database
+     */
+    virtual void Restore(void) const = 0;
+
+    /**
      * Redo
      */
     //TODO::virtual void Redo(void) = 0;

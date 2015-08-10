@@ -32,7 +32,7 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
     case LOGGING_TYPE_ARIES:{
       frontendLogger = new AriesFrontendLogger();
     }break;
-//
+
     case LOGGING_TYPE_PELOTON:{
 //      frontendLogger = new PelotonFrontendLogger();
     }break;
