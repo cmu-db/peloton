@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/materialization_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/planner/materialization_plan.h"
 
 namespace peloton {
 namespace bridge {
@@ -25,12 +25,9 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformMaterialization(
-    planner::MaterialPlanState *plan_state) {
-
-  auto children = plan_state->GetChildren();
-  planner::AbstractPlanState *outer_plan_state = children[0];
+    const MaterialState *plan_state) {
+  PlanState *outer_plan_state = outerPlanState(plan_state);
   planner::AbstractPlan *child = TransformPlan(outer_plan_state);
-
   bool physify_flag =
       false;  // current, we just pass the underlying plan node for this case
 

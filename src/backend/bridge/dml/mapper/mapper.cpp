@@ -39,7 +39,7 @@ void PlanTransformer::PrintPlan(const Plan *plan) {
  * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlan *PlanTransformer::TransformPlan(
-    planner::AbstractPlanState *planstate,
+    PlanState *planstate,
     const TransformOptions options) {
 
   // Ignore empty plans
@@ -50,36 +50,36 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
   switch (nodeTag(planstate)) {
     case T_ModifyTableState:
       peloton_plan = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<planner::ModifyTablePlanState *>(planstate),
+          reinterpret_cast<const ModifyTableState *>(planstate),
           options);
       break;
     case T_SeqScanState:
       peloton_plan = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<planner::SeqScanPlanState *>(planstate),
+          reinterpret_cast<const SeqScanState *>(planstate),
           options);
       break;
     case T_IndexScanState:
       peloton_plan = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<planner::IndexScanPlanState *>(planstate),
+          reinterpret_cast<const IndexScanState *>(planstate),
           options);
       break;
     case T_IndexOnlyScanState:
       peloton_plan = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<planner::IndexOnlyScanPlanState *>(planstate),
+          reinterpret_cast<const IndexOnlyScanState *>(planstate),
           options);
       break;
     case T_BitmapHeapScanState:
       peloton_plan = PlanTransformer::TransformBitmapScan(
-          reinterpret_cast<planner::BitmapHeapScanPlanState *>(planstate),
+          reinterpret_cast<const BitmapHeapScanState *>(planstate),
           options);
       break;
     case T_LockRowsState:
       peloton_plan = PlanTransformer::TransformLockRows(
-          reinterpret_cast<planner::LockRowsPlanState *>(planstate));
+          reinterpret_cast<const LockRowsState *>(planstate));
       break;
     case T_LimitState:
       peloton_plan = PlanTransformer::TransformLimit(
-          reinterpret_cast<planner::LimitPlanState *>(planstate));
+          reinterpret_cast<const LimitState *>(planstate));
       break;
     case T_MergeJoinState:
     case T_HashJoinState:
@@ -88,11 +88,11 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
     // Also - Added special case in peloton_process_dml
     case T_NestLoopState:
       peloton_plan = PlanTransformer::TransformNestLoop(
-          reinterpret_cast<planner::NestLoopPlanState *>(planstate));
+          reinterpret_cast<const NestLoopState *>(planstate));
       break;
     case T_MaterialState:
       peloton_plan = PlanTransformer::TransformMaterialization(
-          reinterpret_cast<planner::MaterialPlanState *>(planstate));
+          reinterpret_cast<const MaterialState *>(planstate));
       break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan  Tag: %u ",
@@ -108,31 +108,13 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
 /**
  * @brief Recursively destroy the nodes in a plan tree.
  */
-bool PlanTransformer::CleanPlanTree(planner::AbstractPlan *root) {
+bool PlanTransformer::CleanPlan(planner::AbstractPlan *root) {
   if (!root) return false;
 
   // Clean all children subtrees
   auto children = root->GetChildren();
   for (auto child : children) {
-    auto rv = CleanPlanTree(child);
-    assert(rv);
-  }
-
-  // Clean the root
-  delete root;
-  return true;
-}
-
-/**
- * @brief Recursively destroy the nodes in a plan state tree.
- */
-bool PlanTransformer::CleanPlanStateTree(planner::AbstractPlanState *root) {
-  if (!root) return false;
-
-  // Clean all children subtrees
-  auto children = root->GetChildren();
-  for (auto child : children) {
-    auto rv = CleanPlanStateTree(child);
+    auto rv = CleanPlan(child);
     assert(rv);
   }
 

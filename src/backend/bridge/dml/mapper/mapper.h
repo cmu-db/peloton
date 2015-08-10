@@ -21,7 +21,6 @@
 #include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
 #include "backend/planner/project_info.h"
-#include "backend/bridge/dml/mapper/dml_raw_structures.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -46,13 +45,11 @@ class PlanTransformer {
 
   static void PrintPlan(const Plan *plan);
 
-  static planner::AbstractPlan *TransformPlan(planner::AbstractPlanState *planstate) {
+  static planner::AbstractPlan *TransformPlan(PlanState *planstate) {
     return TransformPlan(planstate, kDefaultOptions);
   }
 
-  static bool CleanPlanTree(planner::AbstractPlan *root);
-
-  static bool CleanPlanStateTree(planner::AbstractPlanState *root);
+  static bool CleanPlan(planner::AbstractPlan *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
@@ -70,24 +67,24 @@ class PlanTransformer {
   static const TransformOptions kDefaultOptions;
 
   static planner::AbstractPlan *TransformPlan(
-      planner::AbstractPlanState *planstate,
+      PlanState *planstate,
       const TransformOptions options);
 
   //======---------------------------------------
   // MODIFY TABLE FAMILY
   //======---------------------------------------
   static planner::AbstractPlan *TransformModifyTable(
-      planner::ModifyTablePlanState *planstate,
+      const ModifyTableState *planstate,
       const TransformOptions options);
 
   static planner::AbstractPlan *TransformInsert(
-      planner::ModifyTablePlanState *planstate,
+      const ModifyTableState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformUpdate(
-      planner::ModifyTablePlanState *planstate,
+      const ModifyTableState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformDelete(
-      planner::ModifyTablePlanState *planstate,
+      const ModifyTableState *planstate,
       const TransformOptions options);
 
   //======---------------------------------------
@@ -106,38 +103,38 @@ class PlanTransformer {
    * generate a projection plan node and put it on top of the scan node.
    */
   static planner::AbstractPlan *TransformSeqScan(
-      planner::SeqScanPlanState *planstate,
+      const SeqScanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexScan(
-      planner::IndexScanPlanState *planstate,
+      const IndexScanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexOnlyScan(
-      planner::IndexOnlyScanPlanState *planstate,
+      const IndexOnlyScanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformBitmapScan(
-      planner::BitmapHeapScanPlanState *planstate,
+      const BitmapHeapScanState *planstate,
       const TransformOptions options);
 
   //======---------------------------------------
   // JOIN FAMILY
   //======---------------------------------------
   static planner::AbstractPlan *TransformNestLoop(
-      planner::NestLoopPlanState *planstate);
+      const NestLoopState *planstate);
 
   //======---------------------------------------
   // OTHERS
   //======---------------------------------------
   static planner::AbstractPlan *TransformLockRows(
-      planner::LockRowsPlanState *planstate);
+      const LockRowsState *planstate);
 
   static planner::AbstractPlan *TransformMaterialization(
-      planner::MaterialPlanState *planstate);
+      const MaterialState *planstate);
 
   static planner::AbstractPlan *TransformLimit(
-      planner::LimitPlanState *planstate);
+      const LimitState *planstate);
 
   static planner::AbstractPlan *TransformResult(
-      planner::ResultPlanState *planstate);
+      const ResultState *planstate);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
@@ -145,11 +142,11 @@ class PlanTransformer {
   // Common utility functions for Scan's
   //========-----------------------------------------
 
-  static void GetGenericInfoFromScan(
-      planner::AbstractPlan *parent,
-      expression::AbstractExpression *predicate,
+  static void GetGenericInfoFromScanState(
+      planner::AbstractPlan *&parent,
+      expression::AbstractExpression *&predicate,
       std::vector<oid_t> &out_col_list,
-      planner::AbstractScanPlanState *sstate,
+      const ScanState *sstate,
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(

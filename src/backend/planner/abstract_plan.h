@@ -83,54 +83,5 @@ class AbstractPlan {
   AbstractPlan *parent_ = nullptr;
 };
 
-//===--------------------------------------------------------------------===//
-// Abstract Plan State
-//===--------------------------------------------------------------------===//
-
-class AbstractPlanState {
- public:
-  AbstractPlanState(const AbstractPlanState &) = delete;
-  AbstractPlanState &operator=(const AbstractPlanState &) = delete;
-  AbstractPlanState(AbstractPlan &&) = delete;
-  AbstractPlanState &operator=(AbstractPlanState &&) = delete;
-
-  explicit AbstractPlanState(NodeTag plan_state_id);
-  virtual ~AbstractPlanState();
-
-  //===--------------------------------------------------------------------===//
-  // Children + Parent Helpers
-  //===--------------------------------------------------------------------===//
-
-  void AddChild(AbstractPlanState *child);
-
-  const std::vector<AbstractPlanState *> &GetChildren() const;
-
-  AbstractPlanState *GetParent();
-
-  //===--------------------------------------------------------------------===//
-  // Accessors
-  //===--------------------------------------------------------------------===//
-
-  virtual NodeTag GetNodeTag() const = 0;
-
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
-
-  // Debugging convenience methods
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const AbstractPlanState &node);
-
- private:
-
-  // type of the plan state
-  NodeTag type_;
-
-  // A plan state can have multiple children
-  std::vector<AbstractPlanState *> children_;
-
-  AbstractPlanState *parent_ = nullptr;
-};
-
 }  // namespace planner
 }  // namespace peloton

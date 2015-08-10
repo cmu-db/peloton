@@ -29,14 +29,13 @@ namespace bridge {
  *
  */
 planner::AbstractPlan *PlanTransformer::TransformLockRows(
-    planner::LockRowsPlanState *lr_planstate) {
-  assert(nodeTag(lr_planstate) == T_LockRowsState);
+    const LockRowsState *lr_plan_state) {
+  assert(nodeTag(lr_plan_state) == T_LockRowsState);
 
   LOG_INFO("Handle LockRows");
 
   /* get the underlying plan */
-  auto children = lr_planstate->GetChildren();
-  planner::AbstractPlanState *outer_plan_state = children[0];
+  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
 
   TransformOptions options = kDefaultOptions;
   options.use_projInfo = false;
