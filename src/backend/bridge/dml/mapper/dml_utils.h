@@ -32,7 +32,12 @@ class DMLUtils {
   DMLUtils(DMLUtils &&) = delete;
   DMLUtils &operator=(DMLUtils &&) = delete;
 
-  static peloton::planner::AbstractPlanState *peloton_prepare_data(PlanState *planstate);
+  static peloton::planner::AbstractPlanState *BuildPlanState(
+      peloton::planner::AbstractPlanState *root,
+      PlanState *planstate);
+
+  static peloton::planner::AbstractPlanState *peloton_prepare_data(
+      PlanState *planstate);
 
 };
 
