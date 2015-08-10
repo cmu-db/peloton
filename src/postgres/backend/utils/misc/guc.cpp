@@ -392,6 +392,21 @@ static const struct config_enum_entry row_security_options[] = {
 	{NULL, 0, false}
 };
 
+// TODO: Peloton mode ====================================================
+/*
+ * Peloton Mode Options can take values 0,1,2
+ * Range of values may be changed
+ * Values have to be defined as enum
+ */
+static const struct config_enum_entry peloton_mode_options[] = {
+	{"peloton_mode_0", 0, false},
+	{"peloton_mode_1", 1, false},
+	{"peloton_mode_2", 2, false},
+	{NULL, 0, false}
+};
+// TODO: Peloton mode ====================================================
+
+
 /*
  * Options for enum values stored in other modules
  */
@@ -451,6 +466,9 @@ int			tcp_keepalives_count;
 
 int			row_security;
 
+// TODO: Peloton mode ====================================================
+int			peloton_mode = 0;
+// TODO: Peloton mode ====================================================
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
@@ -3648,6 +3666,21 @@ static struct config_enum ConfigureNamesEnum[] =
 		ROW_SECURITY_ON, row_security_options,
 		NULL, NULL, NULL
 	},
+
+// TODO: Peloton mode ====================================================
+	{
+		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
+		// TODO: Peloton mode: check guc_tables.h for PELOTON_MODE_OPTIONS declaration
+			gettext_noop("Change peloton mode"),
+			gettext_noop("System behavior will be modified depending on the specific peloton mode")
+		},
+		&peloton_mode,
+		0, peloton_mode_options,
+		// TODO: peloton mode: 0 can be replaced by enum and new class def may be required
+		// TODO: peloton mode: tally with previous entries to understand better
+		NULL, NULL, NULL
+	},
+// TODO: Peloton mode ====================================================
 
 	/* End-of-list marker */
 	{
