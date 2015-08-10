@@ -21,13 +21,41 @@ StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
 }
 
 /**
- * @brief Recording log record
+ * @brief Insert LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Log(LogRecord record){
+void StdoutBackendLogger::Insert(LogRecord afterRecord){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(record);
+    stdout_local_queue.push_back(afterRecord);
+  }
+  //FIXME :: Commit everytime for testing
+  Commit();
+}
+
+/**
+ * @brief Delete LogRecord
+ * @param log record 
+ */
+void StdoutBackendLogger::Delete(LogRecord beforeRecord){
+  {
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    stdout_local_queue.push_back(beforeRecord);
+  }
+  //FIXME :: Commit everytime for testing
+  Commit();
+}
+
+/**
+ * @brief Delete LogRecord
+ * @param log record 
+ */
+void StdoutBackendLogger::Update(LogRecord beforeRecord, 
+                                LogRecord afterRecord){
+  {
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    stdout_local_queue.push_back(beforeRecord);
+    stdout_local_queue.push_back(afterRecord);
   }
   //FIXME :: Commit everytime for testing
   Commit();
