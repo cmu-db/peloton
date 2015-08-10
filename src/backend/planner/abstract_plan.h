@@ -97,6 +97,20 @@ class AbstractPlanState {
   explicit AbstractPlanState(NodeTag plan_state_id);
   virtual ~AbstractPlanState();
 
+  //===--------------------------------------------------------------------===//
+  // Children + Parent Helpers
+  //===--------------------------------------------------------------------===//
+
+  void AddChild(AbstractPlanState *child);
+
+  const std::vector<AbstractPlanState *> &GetChildren() const;
+
+  AbstractPlanState *GetParent();
+
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
   virtual NodeTag GetNodeTag() const = 0;
 
   //===--------------------------------------------------------------------===//

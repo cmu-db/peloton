@@ -70,6 +70,16 @@ std::string AbstractPlan::GetInfo() const { return ""; }
 
 NodeTag AbstractPlanState::GetNodeTag() const { return type_; }
 
+void AbstractPlanState::AddChild(AbstractPlanState *child) {
+  children_.push_back(child);
+}
+
+const std::vector<AbstractPlanState *> &AbstractPlanState::GetChildren() const {
+  return children_;
+}
+
+AbstractPlanState *AbstractPlanState::GetParent() { return parent_; }
+
 // Get a string representation of this plan state
 std::ostream &operator<<(std::ostream &os, const AbstractPlanState &planstate) {
 
