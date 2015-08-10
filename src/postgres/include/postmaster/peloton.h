@@ -16,6 +16,7 @@
 #include "backend/common/types.h"
 #include "backend/common/message_queue.h"
 #include "backend/bridge/ddl/bootstrap.h"
+#include "backend/planner/abstract_plan.h"
 
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
@@ -112,6 +113,7 @@ typedef struct Peloton_MsgDML
   Plan *m_plantree;
   ParamListInfo m_param_list;
   TupleDesc m_tuple_desc;
+  peloton::planner::AbstractPlanState *m_peloton_planstate;
 } Peloton_MsgDML;
 
 /* ----------
