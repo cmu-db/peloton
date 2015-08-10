@@ -29,7 +29,7 @@ void StdoutBackendLogger::Log(LogRecord record){
     std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
     stdout_buffer.push_back(record);
   }
-  //TODO :: Testing
+  //FIXME :: Commit everytime for testing
   Commit();
 }
 
