@@ -214,7 +214,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
 
-  LOG_INFO("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
+  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
 
   return value;
