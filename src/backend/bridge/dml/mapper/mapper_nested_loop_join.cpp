@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../planner/nested_loop_join_plan.h"
-#include "../../../planner/projection_plan.h"
+#include "backend/planner/nested_loop_join_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 
@@ -27,21 +27,20 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformNestLoop(
-    const NestLoopState *nl_plan_state) {
-  const JoinState *js = &(nl_plan_state->js);
+    planner::NestLoopPlanState *nl_plan_state) {
   planner::AbstractPlan *result = nullptr;
   planner::NestedLoopJoinPlan *plan_node = nullptr;
-  PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
+  PelotonJoinType join_type = PlanTransformer::TransformJoinType(nl_plan_state->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
-    LOG_ERROR("unsupported join type: %d", js->jointype);
+    LOG_ERROR("unsupported join type: %d", nl_plan_state->jointype);
     return nullptr;
   }
 
   expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->joinqual));
+      reinterpret_cast<ExprState *>(nl_plan_state->joinqual));
 
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->ps.qual));
+      reinterpret_cast<ExprState *>(nl_plan_state->qual));
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
@@ -57,8 +56,8 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   project_info.reset(
-      BuildProjectInfo(js->ps.ps_ProjInfo,
-                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+      BuildProjectInfo(nl_plan_state->ps_ProjInfo,
+                       nl_plan_state->tts_tupleDescriptor->natts));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
@@ -66,7 +65,7 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+        nl_plan_state->tts_tupleDescriptor);
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
     plan_node = new planner::NestedLoopJoinPlan(predicate, nullptr);
@@ -78,15 +77,14 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     result = plan_node;
   }
 
-  planner::AbstractPlan *outer =
-      PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlan *inner =
-      PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+  auto children = nl_plan_state->GetChildren();
+  for(auto child : children){
+    auto child_plan_node = PlanTransformer::TransformPlan(child);
+    plan_node->AddChild(child_plan_node);
+  }
 
   /* Add the children nodes */
   plan_node->SetJoinType(join_type);
-  plan_node->AddChild(outer);
-  plan_node->AddChild(inner);
 
   LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
   return result;
