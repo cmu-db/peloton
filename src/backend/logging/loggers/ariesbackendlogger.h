@@ -28,7 +28,11 @@ class AriesBackendLogger : public BackendLogger{
 
     static AriesBackendLogger* GetInstance(void);
 
-    void Log(LogRecord record);
+    void Insert(LogRecord afterRecord);
+
+    void Delete(LogRecord beforeRecord);
+
+    void Update(LogRecord beforeRecord, LogRecord afterRecord);
 
     void Commit(void);
 

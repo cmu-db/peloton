@@ -39,7 +39,11 @@ class BackendLogger : public Logger{
     /**
      * Record log
      */
-    virtual void Log(LogRecord record) = 0;
+    virtual void Insert(LogRecord afterRecord) = 0;
+
+    virtual void Delete(LogRecord beforeRecord) = 0;
+
+    virtual void Update(LogRecord beforeRecord, LogRecord afterRecord) = 0;
 
     /**
      * Commit locally so that FrontendLogger can collect LogRecord from here
