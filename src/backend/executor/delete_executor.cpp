@@ -16,6 +16,7 @@
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/delete_node.h"
+#include "backend/logging/logmanager.h"
 
 namespace peloton {
 namespace executor {
@@ -96,6 +97,14 @@ bool DeleteExecutor::DExecute() {
       return false;
     }
     transaction_->RecordDelete(delete_location);
+
+    // Logging 
+    auto logManager = logging::LogManager::GetInstance();
+    auto logger = logManager->GetBackendLogger(LOGGING_TYPE_ARIES);
+    logging::LogRecord record(LOGRECORD_TYPE_DELETE_TUPLE, 
+                             transaction_->GetTransactionId(), 
+                             delete_location);
+    logger->Delete(record);
   }
 
   return true;

@@ -14,6 +14,8 @@
 
 #include "backend/logging/frontendlogger.h"
 
+#include <sstream>
+
 namespace peloton {
 namespace logging {
 

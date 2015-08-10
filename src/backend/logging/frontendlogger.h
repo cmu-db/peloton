@@ -16,6 +16,9 @@
 #include "backend/logging/logger.h"
 #include "backend/logging/backendlogger.h"
 
+#include <iostream>
+#include <unistd.h>
+
 namespace peloton {
 namespace logging {
 
@@ -55,6 +58,16 @@ class FrontendLogger : public Logger{
      * Flush collected LogRecord to stdout or file or nvram
      */
     virtual void Flush(void) const = 0;
+
+    /**
+     * Redo
+     */
+    //TODO::virtual void Redo(void) = 0;
+
+    /**
+     * Undo
+     */
+    //TODO::virtual void Undo(void) = 0;
 
   protected:
 

@@ -18,7 +18,6 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
-#include "backend/logging/logmanager.h"
 
 namespace peloton {
 namespace storage {
@@ -158,16 +157,6 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
-
-  // only log if we are writing to a physical table.
-  auto logManager = logging::LogManager::GetInstance();
-  auto logger = logManager->GetBackendLogger(LOGGING_TYPE_ARIES);
-
-  logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
-                            transaction,
-                            GetOid(),
-                            (void*)tuple);
-  logger->Insert(record);
 
   return location;
 }
