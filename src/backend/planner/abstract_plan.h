@@ -19,10 +19,7 @@
 
 #include "backend/common/types.h"
 
-#include "postgres.h"
-#include "c.h"
 #include "nodes/nodes.h"
-#include "nodes/plannodes.h"
 
 namespace peloton {
 
@@ -110,10 +107,6 @@ class AbstractPlanState {
 
   AbstractPlanState *GetParent();
 
-  const Plan *GetPlan() const {
-    return plan;
-  }
-
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -132,9 +125,6 @@ class AbstractPlanState {
 
   // type of the plan state
   NodeTag type_;
-
-  // underlying plan
-  const Plan *plan;
 
   // A plan state can have multiple children
   std::vector<AbstractPlanState *> children_;
