@@ -14,7 +14,6 @@
 
 #include "backend/common/types.h"
 #include "backend/bridge/ddl/bridge.h"
-#include "backend/concurrency/transaction.h"
 
 #include <mutex>
 #include <vector>
@@ -29,21 +28,16 @@ namespace logging {
 class LogRecord{
 
 public:
+
   LogRecord() = delete;
 
   LogRecord(LogRecordType log_record_type,
-            const concurrency::Transaction *transaction,
-            oid_t table_oid,
-            const void* data) 
-  : log_record_type(log_record_type), transaction(transaction), table_oid(table_oid)
+            const txn_id_t txn_id,
+            ItemPointer itemPointer)
+  : log_record_type(log_record_type), txn_id(txn_id), itemPointer(itemPointer)
   {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
-    database_oid = bridge::Bridge::GetCurrentDatabaseOid(),
-    assert(database_oid != INVALID_OID);
-    assert(table_oid != INVALID_OID);
-    //TODO :: Maybe, we dont' need all information ...
-    assert(transaction !=  nullptr);
-    assert(SerializeData(data));
+    assert(txn_id != INVALID_TXN_ID );
   }
 
   //===--------------------------------------------------------------------===//
@@ -52,32 +46,19 @@ public:
 
   LogRecordType GetType() const;
 
-  oid_t GetDbOid() const;
+  txn_id_t GetTxnId() const;
 
-  oid_t GetTableOid() const;
-
-  const concurrency::Transaction* GetTxn() const;
-
-  const char* GetData() const;
-
-  size_t GetDataSize() const;
+  ItemPointer GetItemPointer() const;
 
   friend std::ostream &operator<<(std::ostream &os, const LogRecord& record);
 
 private:
-  bool SerializeData(const void* data);
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
-  const concurrency::Transaction *transaction;
+  txn_id_t txn_id;
 
-  oid_t database_oid = INVALID_OID;
-
-  oid_t table_oid = INVALID_OID;
-
-  char* serialized_data;
-
-  size_t serialized_data_size;
+  ItemPointer itemPointer;
 
 };
 

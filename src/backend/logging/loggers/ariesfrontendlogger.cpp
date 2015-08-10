@@ -27,10 +27,11 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
-  fd = open(filename.c_str(), O_WRONLY | O_APPEND | O_CREAT , mode);
+  fd = open(filename.c_str(), O_WRONLY | O_TRUNC | O_CREAT , mode);
 
-  if (fd == -1)
-    LOG_ERROR("Something went wrong while creating the logfile\n");
+  if (fd == -1){
+    LOG_ERROR("Something went wrong while creating the logfile (%s) \n",  strerror(errno) );
+  }
 
 }
 
@@ -39,14 +40,13 @@ AriesFrontendLogger::AriesFrontendLogger(){
  */
 void AriesFrontendLogger::MainLoop(void) {
   for(int i=0;;i++){
-    sleep(5);
+    sleep(1);
 
     // Collect LogRecords from BackendLogger 
     CollectLogRecord();
 
-    // If LogRecound count is greater than bufer size,
+    // Checkpoint ?
     if( GetLogRecordCount() >= aries_global_queue_size ){
-      // flush the global_queue to aries
       Flush();
     }
   }
@@ -79,13 +79,10 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 void AriesFrontendLogger::Flush(void) const {
 
   std::stringstream log;
-
-  log << "\n::StartFlush::\n";
   for( auto record : aries_global_queue ){
     log << record;
   }
-  log << "::EndFlush::\n";
-
+  log << "Commit\n";
   //Since frontend logger is only one, we don't need lock anymore
   write(fd, (void*)log.str().c_str(), log.str().length());
 

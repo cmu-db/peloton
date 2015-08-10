@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "backend/common/types.h"
 #include "backend/logging/logger.h"
 #include "backend/logging/frontendlogger.h"
 #include "backend/logging/backendlogger.h"
@@ -42,6 +41,8 @@ class LogManager{
     static std::shared_ptr<LogManager>& GetInstance(void);
 
     void StartLogging(LoggingType logging_type);
+
+    void Restore(LoggingType logging_type);
     
     BackendLogger* GetBackendLogger(LoggingType logging_type);
 
