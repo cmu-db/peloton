@@ -36,12 +36,24 @@ class BackendLogger : public Logger{
     // Virtual Functions
     //===--------------------------------------------------------------------===//
 
+    /**
+     * Record log
+     */
     virtual void Log(LogRecord record) = 0;
 
+    /**
+     * Commit locally so that FrontendLogger can collect LogRecord from here
+     */
     virtual void Commit(void) = 0;
 
+    /**
+     * Remove LogRecord that already collected by FrontendLogger
+     */
     virtual void Truncate(oid_t offset) = 0;
 
+    /**
+     * Return LogRecord with offset
+     */
     virtual LogRecord GetLogRecord(oid_t offset) = 0;
 
   protected:
