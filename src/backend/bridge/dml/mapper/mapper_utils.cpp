@@ -307,6 +307,7 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
     TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
 
     if (tle->resjunk || !AttributeNumberIsValid(tle->resno) || !AttrNumberIsForUserDefinedAttr(tle->resno)) {
+      LOG_INFO("Skip junk / invalid attribute. \n");
       continue;  // SKIP junk / invalid attributes.
     }
 
