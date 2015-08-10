@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace bridge {
@@ -22,19 +22,18 @@ namespace bridge {
 
 /**
  * @brief Convert a Postgres SeqScanState into a Peloton SeqScanNode.
- * @return Pointer to the constructed AbstractPlan.
+ * @return Pointer to the constructed AbstractPlanNode.
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
 planner::AbstractPlan *PlanTransformer::TransformSeqScan(
-    planner::SeqScanPlanState *ss_plan_state,
-    const TransformOptions options) {
+    const SeqScanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  assert(ss_plan_state->table_oid);  // Null if not a base table scan
+  assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = ss_plan_state->table_oid;
+  Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
 
   /* Grab the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -50,9 +49,7 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScan(parent, predicate,
-                         column_ids,
-                         ss_plan_state,
+  GetGenericInfoFromScanState(parent, predicate, column_ids, ss_plan_state,
                          options.use_projInfo);
 
   if (column_ids.empty()) {
@@ -61,8 +58,7 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   }
 
   /* Construct and return the Peloton plan node */
-  auto scan_node =
-      new planner::SeqScanPlan(target_table, predicate, column_ids);
+  auto scan_node = new planner::SeqScanPlan(target_table, predicate, column_ids);
 
   planner::AbstractPlan *rv = nullptr;
 
