@@ -70,6 +70,10 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
     catalog::Column column(value_type, column_length,
                            NameStr(tupleDesc->attrs[column_itr]->attname),
                            is_inlined);
+
+    for (auto constraint : constraint_infos)
+      column.AddConstraint(constraint);
+
     columns.push_back(column);
   }
 
