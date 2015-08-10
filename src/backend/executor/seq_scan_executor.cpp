@@ -50,20 +50,28 @@ bool SeqScanExecutor::DInit() {
   // Grab data from plan node.
   const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
 
-  table_ = node.GetTable();
-
   current_tile_group_offset_ = START_OID;
 
-  if (table_ != nullptr) {
-    table_tile_group_count_ = table_->GetTileGroupCount();
+  return true;
+}
 
-    if (column_ids_.empty()) {
-      column_ids_.resize(table_->GetSchema()->GetColumnCount());
-      std::iota(column_ids_.begin(), column_ids_.end(), 0);
-    }
+storage::DataTable *InitTable(const planner::SeqScanPlan &node) {
+  auto database_oid = node.GetDatabaseOid();
+  auto table_oid = node.GetTableOid();
+
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
+    return nullptr;
   }
 
-  return true;
+  LOG_TRACE("Seq Scan: database oid %u table oid %u",
+           database_oid, table_oid);
+
+  return target_table;
 }
 
 /**
@@ -102,7 +110,19 @@ bool SeqScanExecutor::DExecute() {
   else if (children_.size() == 0) {
     LOG_TRACE("Seq Scan executor :: 0 child \n");
 
-    assert(table_ != nullptr);
+    const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
+    table_ = node.GetTable();
+    if(table_ == nullptr) {
+      table_ = InitTable(node);
+      assert(table_ != nullptr);
+
+      table_tile_group_count_ = table_->GetTileGroupCount();
+
+      if (column_ids_.empty()) {
+        column_ids_.resize(table_->GetSchema()->GetColumnCount());
+        std::iota(column_ids_.begin(), column_ids_.end(), 0);
+      }
+    }
     assert(column_ids_.size() > 0);
 
     // Retrieve next tile group.
@@ -110,8 +130,12 @@ bool SeqScanExecutor::DExecute() {
       return false;
     }
 
+    LOG_TRACE("Current : %u Count : %u", current_tile_group_offset_,
+             table_tile_group_count_);
+
     storage::TileGroup *tile_group =
         table_->GetTileGroup(current_tile_group_offset_++);
+
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     auto transaction_ = executor_context_->GetTransaction();
     txn_id_t txn_id = transaction_->GetTransactionId();
