@@ -25,23 +25,16 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
     LOG_INFO("Unique Agg # : %d , transfn_oid : %u \n", aggno, transfn_oid);
   }
 
-  auto output_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-      agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+  std::unique_ptr<catalog::Schema> output_schema(
+      SchemaTransformer::GetSchemaFromTupleDesc(
+          agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor));
 
-  LOG_INFO("ps.targetlist : ");
-  auto target_list = (
-      BuildTargetList(agg_state->ss.ps.targetlist,
-                      output_schema->GetColumnCount()));
-
-  for(auto target : target_list){
-    delete target.second;
-    target.second = nullptr;
-  }
-
-  LOG_INFO("ps.ps_ProjInfo : ");
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      BuildProjectInfo(agg_state->ss.ps.ps_ProjInfo,
-                       output_schema->GetColumnCount()));
+      BuildProjectInfoFromTLSkipJunk(agg_state->ss.ps.targetlist));
+//      BuildProjectInfo(agg_state->ss.ps.ps_ProjInfo,
+//                       output_schema->GetColumnCount()));
+
+  LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
 
   return nullptr;
 }

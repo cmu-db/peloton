@@ -64,16 +64,10 @@ planner::AbstractPlanNode* PlanTransformer::TransformMergeJoin(
 
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
-//  project_info.reset(
-//      BuildProjectInfo(js->ps.ps_ProjInfo,
-//                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+
   project_info.reset(BuildProjectInfoFromTLSkipJunk(js->ps.targetlist));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
-
-  LOG_INFO("ps.ps_ResultTupleSlot->tts_tupleDescriptor->natt : %u \n",
-           js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
-
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection

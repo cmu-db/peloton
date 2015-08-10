@@ -61,7 +61,7 @@ bool MergeJoinExecutor::DExecute() {
   if (right_end_) {
     // Try to get next tile from RIGHT child
     if (children_[1]->Execute() == false) {
-      LOG_ERROR("Did not get right tile \n");
+      LOG_INFO("Did not get right tile \n");
       return false;
     }
   }
