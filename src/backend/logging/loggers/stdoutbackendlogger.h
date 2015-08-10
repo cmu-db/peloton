@@ -21,8 +21,6 @@ namespace logging {
 // Stdout Backend Logger 
 //===--------------------------------------------------------------------===//
 
-static std::mutex stdout_buffer_mutex;
-
 class StdoutBackendLogger : public BackendLogger{
 
   public:
@@ -43,6 +41,8 @@ class StdoutBackendLogger : public BackendLogger{
 
     // TODO change vector to list
     std::vector<LogRecord> stdout_buffer;
+
+    std::mutex stdout_buffer_mutex;
 
 };
 
