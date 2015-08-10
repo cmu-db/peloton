@@ -27,8 +27,8 @@ void StdoutFrontendLogger::MainLoop(void) {
     CollectLogRecord();
 
     // If LogRecound count is greater than bufer size,
-    if( GetLogRecordCount() >= buffer_size ){
-      // flush the buffer to stdout
+    if( GetLogRecordCount() >= stdout_global_queue_size ){
+      // flush the global_queue to stdout
       Flush();
     }
   }
@@ -49,7 +49,7 @@ void StdoutFrontendLogger::CollectLogRecord(void) {
 
     for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
       // Copy LogRecord from backend_logger to here
-      stdout_buffer.push_back(backend_logger->GetLogRecord(log_record_itr));
+      stdout_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
     }
     backend_logger->Truncate(commit_offset);
   }
@@ -62,19 +62,19 @@ void StdoutFrontendLogger::Flush(void) const {
 
   std::cout << "\n::StartFlush::\n";
 
-  for( auto record : stdout_buffer ){
+  for( auto record : stdout_global_queue ){
     std::cout << record;
   }
   std::cout << "::Commit::" << std::endl;
-  stdout_buffer.clear();
+  stdout_global_queue.clear();
 }
 
 /**
- * @brief Get buffer size
- * @return return the size of buffer
+ * @brief Get global_queue size
+ * @return return the size of global_queue
  */
 size_t StdoutFrontendLogger::GetLogRecordCount() const{
-  return stdout_buffer.size();
+  return stdout_global_queue.size();
 }
 
 }  // namespace logging

@@ -42,8 +42,8 @@ void AriesFrontendLogger::MainLoop(void) {
     CollectLogRecord();
 
     // If LogRecound count is greater than bufer size,
-    if( GetLogRecordCount() >= buffer_size ){
-      // flush the buffer to aries
+    if( GetLogRecordCount() >= aries_global_queue_size ){
+      // flush the global_queue to aries
       Flush();
     }
   }
@@ -64,7 +64,7 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 
     for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
       // Copy LogRecord from backend_logger to here
-      aries_buffer.push_back(backend_logger->GetLogRecord(log_record_itr));
+      aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
     }
     backend_logger->Truncate(commit_offset);
   }
@@ -78,7 +78,7 @@ void AriesFrontendLogger::Flush(void) const {
   std::stringstream log;
 
   log << "\n::StartFlush::\n";
-  for( auto record : aries_buffer ){
+  for( auto record : aries_global_queue ){
     log << record;
   }
   log << "::Commit::\n";
@@ -86,15 +86,15 @@ void AriesFrontendLogger::Flush(void) const {
   //Since frontend logger is only one, we don't need lock anymore
   write(fd, (void*)log.str().c_str(), log.str().length());
 
-  aries_buffer.clear();
+  aries_global_queue.clear();
 }
 
 /**
- * @brief Get buffer size
- * @return return the size of buffer
+ * @brief Get global_queue size
+ * @return return the size of global_queue
  */
 size_t AriesFrontendLogger::GetLogRecordCount() const{
-  return aries_buffer.size();
+  return aries_global_queue.size();
 }
 
 }  // namespace logging
