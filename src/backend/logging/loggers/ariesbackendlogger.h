@@ -41,9 +41,9 @@ class AriesBackendLogger : public BackendLogger{
     AriesBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
     // TODO change vector to list
-    std::vector<LogRecord> aries_buffer;
+    std::vector<LogRecord> aries_local_queue;
 
-    std::mutex aries_buffer_mutex;
+    std::mutex aries_local_queue_mutex;
 
 };
 
