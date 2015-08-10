@@ -154,6 +154,12 @@ int peloton_start(void) {
  */
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
+
+// TODO: Peloton mode ====================================================
+  puts("reading peloton_mode...");
+  puts(GetConfigOption("peloton_mode", false, false));
+// TODO: Peloton mode ====================================================
+
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
