@@ -21,7 +21,6 @@ namespace logging {
 // Aries Backend Logger 
 //===--------------------------------------------------------------------===//
 
-static std::mutex aries_buffer_mutex;
 
 class AriesBackendLogger : public BackendLogger{
 
@@ -43,6 +42,8 @@ class AriesBackendLogger : public BackendLogger{
 
     // TODO change vector to list
     std::vector<LogRecord> aries_buffer;
+
+    std::mutex aries_buffer_mutex;
 
 };
 

@@ -27,7 +27,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
   public:
 
-    AriesFrontendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
+    AriesFrontendLogger(void);
 
     void MainLoop(void);
 
@@ -39,8 +39,13 @@ class AriesFrontendLogger : public FrontendLogger{
 
     size_t GetLogRecordCount(void) const;
 
+    // FIXME :: Hard coded based dir
+    std::string baseDirectory = "/home/parallels/git/peloton/build/";
+
     // FIXME :: Hard coded buffer size
     oid_t buffer_size = 3;
+
+    int fd;
 
 };
 
