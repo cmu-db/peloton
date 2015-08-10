@@ -41,25 +41,6 @@ bool InsertExecutor::DInit() {
   return true;
 }
 
-storage::DataTable *InitTable(const planner::InsertPlan &node) {
-  auto database_oid = node.GetDatabaseOid();
-  auto table_oid = node.GetTableOid();
-
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
-  if (target_table == nullptr) {
-    LOG_ERROR("Target table is not found : database oid %u table oid %u",
-              database_oid, table_oid);
-    return nullptr;
-  }
-
-  LOG_INFO("Insert into: database oid %u table oid %u",
-           database_oid, table_oid);
-
-  return target_table;
-}
-
 /**
  * @brief Adds a column to the logical tile, using the position lists.
  * @return true on success, false otherwise.
@@ -70,11 +51,15 @@ bool InsertExecutor::DExecute() {
   assert(!done_);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
-  storage::DataTable *target_table = node.GetTable();
-  if(target_table == nullptr) {
-    target_table = InitTable(node);
+  storage::DataTable *target_table_ = node.GetTable();
+  if(target_table_ == nullptr) {
+    auto database_oid = node.GetDatabaseOid();
+    auto table_oid = node.GetTableOid();
+    target_table_ = static_cast<storage::DataTable *>
+    (catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
   }
-  assert(target_table);
+  assert(target_table_);
+
   auto transaction_ = executor_context_->GetTransaction();
 
   // Inserting a logical tile.
@@ -92,7 +77,7 @@ bool InsertExecutor::DExecute() {
     storage::Tile *physical_tile = logical_tile.get()->GetBaseTile(0);
 
     // Next, check logical tile schema against table schema
-    auto schema = target_table->GetSchema();
+    auto schema = target_table_->GetSchema();
     const catalog::Schema *tile_schema = physical_tile->GetSchema();
 
     if (*schema != *tile_schema) {
@@ -106,7 +91,7 @@ bool InsertExecutor::DExecute() {
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {
-      ItemPointer location = target_table->InsertTuple(transaction_, &tuple);
+      ItemPointer location = target_table_->InsertTuple(transaction_, &tuple);
       if (location.block == INVALID_OID) {
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
@@ -122,7 +107,7 @@ bool InsertExecutor::DExecute() {
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
-    auto schema = target_table->GetSchema();
+    auto schema = target_table_->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
@@ -136,7 +121,7 @@ bool InsertExecutor::DExecute() {
     }
 
     // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(transaction_, tuple.get());
+    ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
     if (location.block == INVALID_OID) {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;

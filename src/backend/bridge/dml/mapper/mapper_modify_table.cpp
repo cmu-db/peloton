@@ -191,14 +191,6 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
-  /* Grab the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
-  assert(target_table);
-  LOG_INFO("Delete from: database oid %u table oid %u", database_oid,
-           table_oid);
-
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -206,7 +198,7 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
   bool truncate = false;
 
   // Create the peloton plan node
-  auto plan_node = new planner::DeletePlan(target_table, truncate);
+  auto plan_node = new planner::DeletePlan(database_oid, table_oid, truncate);
 
   // Add child plan node(s)
   TransformOptions new_options = options;
