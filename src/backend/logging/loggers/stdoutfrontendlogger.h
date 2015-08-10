@@ -18,7 +18,7 @@
 namespace peloton {
 namespace logging {
 
-static std::vector<LogRecord> stdout_buffer;
+static std::vector<LogRecord> stdout_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Stdout Frontend Logger 
@@ -40,8 +40,8 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     size_t GetLogRecordCount(void) const;
 
-    // FIXME :: Hard coded buffer size
-    oid_t buffer_size = 3;
+    // FIXME :: Hard coded global_queue size
+    oid_t stdout_global_queue_size = 3;
 
 };
 

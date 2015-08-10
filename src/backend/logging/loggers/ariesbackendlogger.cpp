@@ -26,35 +26,35 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
  */
 void AriesBackendLogger::Log(LogRecord record){
   {
-    std::lock_guard<std::mutex> lock(aries_buffer_mutex);
-    aries_buffer.push_back(record);
+    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    aries_local_queue.push_back(record);
   }
   //FIXME :: Commit everytime for testing
   Commit();
 }
 
 /**
- * @brief set the current size of buffer
+ * @brief set the current size of local_queue
  */
 void AriesBackendLogger::Commit(){
   {
-    std::lock_guard<std::mutex> lock(aries_buffer_mutex);
-    commit_offset = aries_buffer.size();
+    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    commit_offset = aries_local_queue.size();
   }
 }
 
 /**
- * @brief truncate buffer with commit_offset
+ * @brief truncate local_queue with commit_offset
  * @param offset
  */
 void AriesBackendLogger::Truncate(oid_t offset){
   {
-    std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
 
     if(commit_offset == offset){
-      aries_buffer.clear();
+      aries_local_queue.clear();
     }else{
-      aries_buffer.erase(aries_buffer.begin(), aries_buffer.begin()+offset);
+      aries_local_queue.erase(aries_local_queue.begin(), aries_local_queue.begin()+offset);
     }
 
     // It will be updated larger than 0 if we update commit_offset during the
@@ -69,9 +69,9 @@ void AriesBackendLogger::Truncate(oid_t offset){
  */
 LogRecord AriesBackendLogger::GetLogRecord(oid_t offset){
   {
-    std::lock_guard<std::mutex> lock(aries_buffer_mutex);
-    assert(offset < aries_buffer.size());
-    return aries_buffer[offset];
+    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    assert(offset < aries_local_queue.size());
+    return aries_local_queue[offset];
   }
 }
 

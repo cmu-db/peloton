@@ -26,35 +26,35 @@ StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
  */
 void StdoutBackendLogger::Log(LogRecord record){
   {
-    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
-    stdout_buffer.push_back(record);
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    stdout_local_queue.push_back(record);
   }
   //FIXME :: Commit everytime for testing
   Commit();
 }
 
 /**
- * @brief set the current size of buffer
+ * @brief set the current size of local_queue
  */
 void StdoutBackendLogger::Commit(){
   {
-    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
-    commit_offset = stdout_buffer.size();
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    commit_offset = stdout_local_queue.size();
   }
 }
 
 /**
- * @brief truncate buffer with commit_offset
+ * @brief truncate local_queue with commit_offset
  * @param offset
  */
 void StdoutBackendLogger::Truncate(oid_t offset){
   {
-    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
 
     if(commit_offset == offset){
-      stdout_buffer.clear();
+      stdout_local_queue.clear();
     }else{
-      stdout_buffer.erase(stdout_buffer.begin(), stdout_buffer.begin()+offset);
+      stdout_local_queue.erase(stdout_local_queue.begin(), stdout_local_queue.begin()+offset);
     }
 
     // It will be updated larger than 0 if we update commit_offset during the
@@ -69,9 +69,9 @@ void StdoutBackendLogger::Truncate(oid_t offset){
  */
 LogRecord StdoutBackendLogger::GetLogRecord(oid_t offset){
   {
-    std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
-    assert(offset < stdout_buffer.size());
-    return stdout_buffer[offset];
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    assert(offset < stdout_local_queue.size());
+    return stdout_local_queue[offset];
   }
 }
 
