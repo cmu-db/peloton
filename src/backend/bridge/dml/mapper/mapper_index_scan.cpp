@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/index_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/planner/index_scan_plan.h"
 
 namespace peloton {
 namespace bridge {
@@ -28,7 +28,7 @@ static void BuildScanKey(
     planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
 
 /**
- * @brief Convert a Postgres IndexScanState into a Peloton IndexScanNode.
+ * @brief Convert a Postgres IndexScanState into a Peloton IndexScanPlan.
  *        able to handle:
  *          1. simple operator with constant comparison value: indexkey op
  * constant)
@@ -43,13 +43,14 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexScan(
-    planner::IndexScanPlanState *iss_plan_state,
-    const TransformOptions options) {
+    const IndexScanState *iss_plan_state, const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
-  Oid table_oid = iss_plan_state->table_oid;
+  Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(iss_plan_state->ss.ps.plan);
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -57,13 +58,13 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexWithOid(iss_plan_state->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan_state->indexid,
+  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", iss_plan_state->indexorderdir);
+  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
@@ -79,8 +80,8 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScan(parent, predicate, column_ids,
-                         iss_plan_state, options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              &(iss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -175,7 +176,7 @@ static void BuildScanKey(
 }
 
 /**
- * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
+ * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanPlan.
  *        able to handle:
  *          1. simple operator with constant comparison value: indexkey op
  * constant)
@@ -190,14 +191,15 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
-    planner::IndexOnlyScanPlanState *ioss_plan_state,
-    const TransformOptions options) {
+    const IndexOnlyScanState *ioss_plan_state, const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* Resolve target relation */
-  Oid table_oid = ioss_plan_state->table_oid;
+  Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(ioss_plan_state->ss.ps.plan);
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -205,13 +207,13 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexWithOid(ioss_plan_state->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", ioss_plan_state->indexid,
+  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", ioss_plan_state->indexorderdir);
+  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
@@ -227,9 +229,8 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScan(parent, predicate, column_ids,
-                         ioss_plan_state,
-                         options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              &(ioss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -247,19 +248,19 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
 }
 
 /**
- * @brief Convert a Postgres BitmapScan into a Peloton IndexScanNode
+ * @brief Convert a Postgres BitmapScan into a Peloton IndexScanPlan
  *        We currently only handle the case where the lower plan is a
  *BitmapIndexScan
  *
  * @return Pointer to the constructed AbstractPlan
  */
 planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
-    planner::BitmapHeapScanPlanState *bhss_plan_state,
+    const BitmapHeapScanState *bhss_plan_state,
     const TransformOptions options) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
-  Oid table_oid = bhss_plan_state->table_oid;
+  Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
 
   assert(nodeTag(outerPlanState(bhss_plan_state)) ==
@@ -306,9 +307,8 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScan(parent, predicate, column_ids,
-                         bhss_plan_state,
-                         options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              &(bhss_plan_state->ss), options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);

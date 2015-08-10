@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/delete_plan.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/planner/update_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/storage/data_table.h"
+#include "backend/planner/insert_plan.h"
+#include "backend/planner/update_plan.h"
+#include "backend/planner/delete_plan.h"
 
 namespace peloton {
 namespace bridge {
@@ -24,33 +24,33 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief Convert ModifyTable into AbstractPlan.
+ * @brief Convert ModifyTableState into AbstractPlan.
  * @return Pointer to the constructed AbstractPlan.
  *
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlan *PlanTransformer::TransformModifyTable(
-    planner::ModifyTablePlanState *mt_planstate,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
+  ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
 
-  switch (mt_planstate->operation) {
+  switch (plan->operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
-      return PlanTransformer::TransformInsert(mt_planstate, options);
+      return PlanTransformer::TransformInsert(mt_plan_state, options);
       break;
 
     case CMD_UPDATE:
       LOG_INFO("CMD_UPDATE");
-      return PlanTransformer::TransformUpdate(mt_planstate, options);
+      return PlanTransformer::TransformUpdate(mt_plan_state, options);
       break;
 
     case CMD_DELETE:
       LOG_INFO("CMD_DELETE");
-      return PlanTransformer::TransformDelete(mt_planstate, options);
+      return PlanTransformer::TransformDelete(mt_plan_state, options);
       break;
 
     default:
-      LOG_ERROR("Unrecognized operation type : %u", mt_planstate->operation);
+      LOG_ERROR("Unrecognized operation type : %u", plan->operation);
       break;
   }
 
@@ -58,18 +58,19 @@ planner::AbstractPlan *PlanTransformer::TransformModifyTable(
 }
 
 /**
- * @brief Convert ModifyTable Insert case into AbstractPlan.
+ * @brief Convert ModifyTableState Insert case into AbstractPlan.
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformInsert(
-    planner::ModifyTablePlanState *mt_planstate,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   planner::AbstractPlan *plan_node = nullptr;
 
   /* Resolve result table */
+  ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
+  Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = mt_planstate->table_oid;
+  Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -88,12 +89,12 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   auto schema = target_table->GetSchema();
 
   /* Should be only one sub plan which is a Result  */
-  assert(mt_planstate->mt_nplans == 1);
-  assert(mt_planstate->mt_plans != nullptr);
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
 
-  planner::AbstractPlanState *sub_planstate = mt_planstate->mt_plans[0];
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
-  if (nodeTag(sub_planstate) == T_ResultState) {  // Child is a result node
+  if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_TRACE("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState *>(sub_planstate);
 
@@ -108,15 +109,14 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
-              nodeTag(sub_planstate));
+              nodeTag(sub_planstate->plan));
   }
 
   return plan_node;
 }
 
 planner::AbstractPlan *PlanTransformer::TransformUpdate(
-    planner::ModifyTablePlanState *mt_planstate,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -130,12 +130,15 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
    */
 
   /* Should be only one sub plan which is a SeqScan */
-  assert(mt_planstate->mt_nplans == 1);
-  assert(mt_planstate->mt_plans != nullptr);
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
 
   /* Resolve result table */
+  ResultRelInfo result_rel_info = mt_plan_state->resultRelInfo[0];
+  Relation result_relation_desc = result_rel_info.ri_RelationDesc;
+
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = mt_planstate->table_oid;
+  Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -151,7 +154,7 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
             table_oid);
 
   /* Get the first sub plan state */
-  planner::AbstractPlanState *sub_planstate = mt_planstate->mt_plans[0];
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
   assert(sub_planstate);
 
   /* Get the tuple schema */
@@ -159,12 +162,11 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
 
   planner::AbstractPlan *plan_node = nullptr;
 
-  auto child_tag = nodeTag(sub_planstate);
+  auto child_tag = nodeTag(sub_planstate->plan);
 
-  if (child_tag == T_SeqScanState ||
-      child_tag == T_IndexScanState ||
-      child_tag == T_IndexOnlyScanState ||
-      child_tag == T_BitmapHeapScanState ) {  // Sub plan is a Scan of any type
+  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
+      child_tag == T_IndexOnlyScan ||
+      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
 
     LOG_TRACE("Child of Update is %u \n", child_tag);
     // Extract the projection info from the underlying scan
@@ -185,7 +187,7 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
 }
 
 /**
- * @brief Convert a Postgres ModifyTable with DELETE operation
+ * @brief Convert a Postgres ModifyTableState with DELETE operation
  * into a Peloton DeleteNode.
  * @return Pointer to the constructed AbstractPlan.
  *
@@ -195,14 +197,14 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlan *PlanTransformer::TransformDelete(
-    planner::ModifyTablePlanState *mt_planstate,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   // Grab Database ID and Table ID
-  assert(mt_planstate->table_oid);  // Input must come from a subplan
-  assert(mt_planstate->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
+  assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
+  assert(mt_plan_state->mt_nplans ==
+         1);  // Maybe relax later. I don't know when they can have >1 subplans.
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = mt_planstate->table_oid;
+  Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
   /* Grab the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -213,8 +215,8 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
            table_oid);
 
   /* Grab the subplan -> child plan node */
-  assert(mt_planstate->mt_nplans == 1);
-  planner::AbstractPlanState *sub_planstate = mt_planstate->mt_plans[0];
+  assert(mt_plan_state->mt_nplans == 1);
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
   bool truncate = false;
 
