@@ -31,16 +31,10 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  auto relation = ss_plan_state->ss_currentRelation;
+  assert(relation); // Assert base table scan
   Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
-
-  /* Grab the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
-  assert(target_table);
-  LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
   /**
    * SeqScan only needs the "generic" settings, so grab it.
@@ -49,16 +43,17 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids, ss_plan_state,
-                         options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              ss_plan_state,
+                              options.use_projInfo);
 
   if (column_ids.empty()) {
-    column_ids.resize(target_table->GetSchema()->GetColumnCount());
+    column_ids.resize(relation->rd_att->natts);
     std::iota(column_ids.begin(), column_ids.end(), 0);
   }
 
   /* Construct and return the Peloton plan node */
-  auto scan_node = new planner::SeqScanPlan(target_table, predicate, column_ids);
+  auto scan_node = new planner::SeqScanPlan(database_oid, table_oid, predicate, column_ids);
 
   planner::AbstractPlan *rv = nullptr;
 
