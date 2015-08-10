@@ -65,7 +65,7 @@ void StdoutFrontendLogger::Flush(void) const {
   for( auto record : stdout_global_queue ){
     std::cout << record;
   }
-  std::cout << "::Commit::" << std::endl;
+  std::cout << "::EndFlush::" << std::endl;
   stdout_global_queue.clear();
 }
 
