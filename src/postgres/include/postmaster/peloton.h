@@ -110,10 +110,9 @@ typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  Plan *m_plan;
+  peloton::planner::AbstractPlan *m_plan;
   ParamListInfo m_param_list;
   TupleDesc m_tuple_desc;
-  peloton::planner::AbstractPlanState *m_peloton_planstate;
 } Peloton_MsgDML;
 
 /* ----------

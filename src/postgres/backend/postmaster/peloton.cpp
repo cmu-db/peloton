@@ -32,7 +32,6 @@
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/mapper/dml_utils.h"
 #include "backend/common/stack_trace.h"
 
 #include "postgres.h"
@@ -111,7 +110,6 @@ static void peloton_update_stats(Peloton_Status *status);
 static void peloton_reply_to_backend(mqd_t backend_id);
 
 static Node *peloton_copy_parsetree(Node *parsetree);
-static Plan *peloton_copy_plantree(Plan *plantree);
 static ParamListInfo peloton_copy_paramlist(ParamListInfo param_list);
 
 bool
@@ -845,17 +843,11 @@ peloton_send_dml(Peloton_Status  *status,
   auto shm_param_list = peloton_copy_paramlist(param_list);
   msg.m_param_list = shm_param_list;
 
-  // Copy the plantree or get it from the plan cache
-  // TODO: Use the plan cache
-  Plan *plantree = planstate->plan;
-  auto shm_plantree = peloton_copy_plantree(plantree);
-  msg.m_plan = shm_plantree;
-
-  // Prepare the planstate
+  // Prepare the plan
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  auto shm_peloton_planstate = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
   MemoryContextSwitchTo(oldcxt);
-  msg.m_peloton_planstate = shm_peloton_planstate;
+  msg.m_plan = plan;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -973,10 +965,10 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   assert(msg);
 
   /* Get the planstate */
-  Plan *plan = msg->m_plan;
+  auto plan = msg->m_plan;
 
-  /* Ignore invalid plans */
-  if(plan == NULL || nodeTag(plan) == T_Invalid) {
+  /* Ignore empty plans */
+  if(plan == NULL) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
@@ -985,44 +977,24 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   TransactionId txn_id = msg->m_hdr.m_txn_id;
   ParamListInfo param_list = msg->m_param_list;
   TupleDesc tuple_desc = msg->m_tuple_desc;
-  auto peloton_planstate = msg->m_peloton_planstate;
 
-  auto peloton_plan = peloton::bridge::PlanTransformer::TransformPlan(peloton_planstate);
+  try {
+    // Execute the plantree
+    peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                               param_list,
+                                               tuple_desc,
+                                               msg->m_status,
+                                               txn_id);
 
-  if(peloton_plan){
-
-    try {
-      // Execute the plantree
-      peloton::bridge::PlanExecutor::ExecutePlan(peloton_plan,
-                                                 param_list,
-                                                 tuple_desc,
-                                                 msg->m_status,
-                                                 txn_id);
-
-      // Clean up the plantree
-      peloton::bridge::PlanTransformer::CleanPlanTree(peloton_plan);
-    }
-    catch(const std::exception &exception) {
-      elog(ERROR, "Peloton exception :: %s", exception.what());
-
-      peloton::GetStackTrace();
-
-      msg->m_status->m_result = peloton::RESULT_FAILURE;
-    }
-
+    // Clean up the plantree
+    peloton::bridge::PlanTransformer::CleanPlan(plan);
   }
-  else {
-    // TODO :: Special case for AlterTable
-    // Whenever AlterTable command is executed, it needs scans/rewrites tables
-    // at the end. At this moment, 'MergeJoin'/'HashJoin' is required. However, HashJoin
-    // has not been implemented yet in TransformPlan, so we set this special case 
-    // NOTE :: Remove this special case with 'T_MergeJoin/T_HashJoin' case in TransformPlan
-    if (nodeTag(plan) == T_MergeJoin || nodeTag(plan) == T_HashJoin ) {
-      msg->m_status->m_result = peloton::RESULT_SUCCESS;
-    }else{
-      /* Could not get the plan */
-      msg->m_status->m_result = peloton::RESULT_FAILURE;
-    }
+  catch(const std::exception &exception) {
+    elog(ERROR, "Peloton exception :: %s", exception.what());
+
+    peloton::GetStackTrace();
+
+    msg->m_status->m_result = peloton::RESULT_FAILURE;
   }
 
   // Send reply
@@ -1236,19 +1208,6 @@ Node *peloton_copy_parsetree(Node *parsetree) {
   elog(INFO, "Copied parsetree : %p", shm_parsetree);
 
   return shm_parsetree;
-}
-
-static
-Plan *peloton_copy_plantree(Plan *plantree) {
-
-  // Copy the parsetree
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  Plan     *shm_plantree = (Plan *) copyObject(plantree);
-  MemoryContextSwitchTo(oldcxt);
-
-  elog(INFO, "Copied plantree : %p", shm_plantree);
-
-  return shm_plantree;
 }
 
 static
