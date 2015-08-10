@@ -20,6 +20,7 @@ INSERT INTO B VALUES(6, 'Joy says World Hello 6');
 INSERT INTO B VALUES(7, 'Joy says World Hello 7');
 
 
+/*
 -- nested loop join
 SELECT * FROM A,B;
 SELECT * FROM B,A;
@@ -64,5 +65,10 @@ SELECT a.id,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.data,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+*/
+
+SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
 SELECT b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
 SELECT b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
