@@ -42,9 +42,9 @@ class LogManager{
 
     void StartLogging(LoggingType logging_type);
 
-    void Restore(LoggingType logging_type);
-    
     BackendLogger* GetBackendLogger(LoggingType logging_type);
+
+    void Restore(LoggingType logging_type);
 
   private:
      FrontendLogger* GetFrontendLogger(LoggingType logging_type);
