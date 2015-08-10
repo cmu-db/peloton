@@ -19,6 +19,7 @@
 #include "backend/planner/update_node.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/logging/logmanager.h"
 
 namespace peloton {
 namespace executor {
@@ -108,6 +109,20 @@ bool UpdateExecutor::DExecute() {
       return false;
     }
     transaction_->RecordInsert(location);
+
+    // Logging 
+    auto logManager = logging::LogManager::GetInstance();
+    auto logger = logManager->GetBackendLogger(LOGGING_TYPE_ARIES);
+
+    logging::LogRecord beforeRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
+                                    transaction_->GetTransactionId(), 
+                                    delete_location);
+    logging::LogRecord afterRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
+                                   transaction_->GetTransactionId(), 
+                                   location);
+
+    logger->Update(beforeRecord, afterRecord);
+
     delete new_tuple;
   }
 
