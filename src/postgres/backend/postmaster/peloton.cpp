@@ -32,6 +32,7 @@
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/mapper/dml_utils.h"
 #include "backend/common/stack_trace.h"
 
 #include "postgres.h"
@@ -44,6 +45,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
+#include "nodes/params.h"
 #include "utils/guc.h"
 #include "utils/errcodes.h"
 #include "utils/ps_status.h"
@@ -110,6 +112,7 @@ static void peloton_reply_to_backend(mqd_t backend_id);
 
 static Node *peloton_copy_parsetree(Node *parsetree);
 static Plan *peloton_copy_plantree(Plan *plantree);
+static ParamListInfo peloton_copy_paramlist(ParamListInfo param_list);
 
 bool
 IsPelotonProcess(void) {
@@ -841,9 +844,18 @@ peloton_send_dml(Peloton_Status  *status,
   auto shm_plantree = peloton_copy_plantree(plantree);
   msg.m_plantree = shm_plantree;
 
-  // Prepare the planstate
+  // Copy the param list
+  assert(planstate != NULL);
+  assert(planstate->state != NULL);
+  auto param_list = planstate->state->es_param_list_info;
+  auto shm_param_list = peloton_copy_paramlist(param_list);
+  msg.m_param_list = shm_param_list;
 
-  // Copy the param list as well
+  // Prepare the planstate
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  auto shm_peloton_planstate = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  MemoryContextSwitchTo(oldcxt);
+  msg.m_peloton_planstate = shm_peloton_planstate;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -862,7 +874,7 @@ peloton_send_ddl(Peloton_Status  *status,
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  // Prepare data depends on query for DDL
+  // Prepare data required by peloton for DDL requests
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
   MemoryContextSwitchTo(oldcxt);
@@ -1240,5 +1252,16 @@ Plan *peloton_copy_plantree(Plan *plantree) {
   elog(INFO, "Copied plantree : %p", shm_plantree);
 
   return shm_plantree;
+}
+
+static
+ParamListInfo peloton_copy_paramlist(ParamListInfo param_list) {
+
+  // Copy the parsetree
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  auto shm_param_list = copyParamList(param_list);
+  MemoryContextSwitchTo(oldcxt);
+
+  return shm_param_list;
 }
 
