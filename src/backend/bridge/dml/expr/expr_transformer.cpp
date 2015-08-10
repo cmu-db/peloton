@@ -166,13 +166,21 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
   auto rettype = fn_expr->funcresulttype;
 
   LOG_INFO("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
-
   LOG_INFO("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
 
-  // TODO: not implemented yet
-  LOG_ERROR("Not implemented.\n");
+  auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
-  return nullptr;
+
+  // FIXME It will generate incorrect results.
+  if(!retval){
+    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
+    assert(list_length(fn_es->args) > 0);
+
+    ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
+    return TransformExpr(first_child);
+  }
+
+  return retval;
 }
 
 expression::AbstractExpression* ExprTransformer::TransformVar(
@@ -331,7 +339,7 @@ expression::AbstractExpression*
 ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
 
   assert(pg_func_id > 0);
-  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
+
 
   // Perform lookup
   auto itr = kPgFuncMap.find(pg_func_id);
@@ -342,6 +350,8 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
     return nullptr;
   }
   PltFuncMetaInfo func_meta = itr->second;
+
+  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
 
   // Extract function arguments (at most two)
   expression::AbstractExpression* lc = nullptr;
