@@ -50,7 +50,12 @@ void StdoutBackendLogger::Commit(){
 void StdoutBackendLogger::Truncate(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(stdout_buffer_mutex);
-    stdout_buffer.erase(stdout_buffer.begin(), stdout_buffer.begin()+offset);
+
+    if(commit_offset == offset){
+      stdout_buffer.clear();
+    }else{
+      stdout_buffer.erase(stdout_buffer.begin(), stdout_buffer.begin()+offset);
+    }
 
     // It will be updated larger than 0 if we update commit_offset during the
     // flush in frontend logger
