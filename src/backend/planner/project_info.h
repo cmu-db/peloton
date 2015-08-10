@@ -17,6 +17,10 @@
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/tuple.h"
+#include "backend/common/shm_allocator.h"
+
+#include "postgres.h"
+#include "common/fe_memutils.h"
 
 namespace peloton {
 namespace planner {
@@ -51,7 +55,7 @@ class ProjectInfo {
    */
   typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
 
-  typedef std::vector<Target> TargetList;
+  typedef std::vector<Target, peloton::SHMAllocator<Target> > TargetList;
 
   /**
    * @brief Generic specification of a direct map:
@@ -61,7 +65,7 @@ class ProjectInfo {
    */
   typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
-  typedef std::vector<DirectMap> DirectMapList;
+  typedef std::vector<DirectMap, peloton::SHMAllocator<DirectMap> > DirectMapList;
 
   ProjectInfo(TargetList &tl, DirectMapList &dml)
       : target_list_(tl), direct_map_list_(dml) {}
@@ -83,8 +87,42 @@ class ProjectInfo {
 
   ~ProjectInfo();
 
+  //===--------------------------------------------------------------------===//
+  // Override allocators
+  //===--------------------------------------------------------------------===//
+
+  void* operator new(std::size_t sz) {
+    if(CurrentMemoryContext)
+      return palloc(sz);
+    else
+      return malloc(sz);
+  }
+
+  void* operator new[](std::size_t sz) {
+    if(CurrentMemoryContext)
+      return palloc(sz);
+    else
+      return malloc(sz);
+  }
+
+  void operator delete(void* ptr) {
+    if(CurrentMemoryContext)
+      return pfree(ptr);
+    else
+      return free(ptr);
+  }
+
+  void operator delete[](void* ptr) {
+    if(CurrentMemoryContext)
+      return pfree(ptr);
+    else
+      return free(ptr);
+  }
+
  private:
+
   TargetList target_list_;
+
   DirectMapList direct_map_list_;
 };
 
