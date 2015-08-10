@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/common/logger.h"
 #include "backend/logging/logmanager.h"
 
 namespace peloton {
@@ -27,7 +26,7 @@ std::shared_ptr<LogManager>& LogManager::GetInstance(){
 
 /**
  * @brief Start logging based on logging type
-    and store it into the vector
+ *  and store it into the vector
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartLogging(LoggingType logging_type){
@@ -57,6 +56,14 @@ void LogManager::StartLogging(LoggingType logging_type){
   }else{
       frontend_logger->MainLoop();
   }
+}
+
+/**
+ * @brief Restore database based on logging type
+ * @param logging type can be stdout(debug), aries, peloton
+ */
+void LogManager::Restore(LoggingType logging_type){
+  // read .. ?
 }
 
 /**

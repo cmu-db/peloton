@@ -26,7 +26,7 @@ void StdoutFrontendLogger::MainLoop(void) {
     // Collect LogRecords from BackendLogger 
     CollectLogRecord();
 
-    // If LogRecound count is greater than bufer size,
+    // Checkpoint ?
     if( GetLogRecordCount() >= stdout_global_queue_size ){
       // flush the global_queue to stdout
       Flush();

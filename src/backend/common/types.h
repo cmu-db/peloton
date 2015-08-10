@@ -461,7 +461,9 @@ enum LoggerType{
 enum LogRecordType{
   LOGRECORD_TYPE_INVALID = 0, 
 
-  LOGRECORD_TYPE_INSERT_TUPLE  = 1
+  LOGRECORD_TYPE_INSERT_TUPLE  = 1,
+  LOGRECORD_TYPE_DELETE_TUPLE  = 2,
+  LOGRECORD_TYPE_UPDATE_TUPLE  = 3
 };
 
 //===--------------------------------------------------------------------===//

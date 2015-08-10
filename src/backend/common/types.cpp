@@ -656,6 +656,12 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_INSERT_TUPLE: {
       return "LOGRECORD_TYPE_INSERT_TUPLE";
     }
+    case LOGRECORD_TYPE_DELETE_TUPLE: {
+      return "LOGRECORD_TYPE_DELETE_TUPLE";
+    }
+    case LOGRECORD_TYPE_UPDATE_TUPLE: {
+      return "LOGRECORD_TYPE_UPDATE_TUPLE";
+    }
   }
   return "INVALID";
 }
