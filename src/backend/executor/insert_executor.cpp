@@ -103,6 +103,7 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
+    assert(project_info);
     assert(project_info->GetDirectMapList().size() ==
            0);  // There should be no direct maps
 

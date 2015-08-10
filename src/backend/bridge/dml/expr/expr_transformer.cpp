@@ -28,16 +28,10 @@
 namespace peloton {
 namespace bridge {
 
-expression::AbstractExpression* ReMapPgFunc(Oid pg_func_id,
-                                            expression::AbstractExpression* lc,
-                                            expression::AbstractExpression* rc);
-
-extern std::unordered_map<Oid, peloton::ExpressionType> pg_func_map;
-
 void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
                                              std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
-  (void)tag;
+  (void) tag;
 
   /* TODO Not complete.
    * Not all ExprState has a child / children list,
@@ -68,8 +62,6 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
     peloton_expr = TransformList(expr_state);
     return peloton_expr;
   }
-
-
 
   switch (nodeTag(expr_state->expr)) {
     case T_Const:
@@ -106,7 +98,8 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
-                nodeTag(expr_state->expr));
+                nodeTag(expr_state->expr))
+      ;
   }
 
   return peloton_expr;
@@ -139,7 +132,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
         "%lu \n",
         const_expr->constlen, const_expr->constbyval,
-        (long unsigned)const_expr->constvalue);
+        (long unsigned )const_expr->constvalue);
   }
 
   // A Const Expr has no children.
@@ -155,31 +148,31 @@ expression::AbstractExpression* ExprTransformer::TransformOp(
   auto op_expr = reinterpret_cast<const OpExpr*>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState*>(es);
 
-  assert(op_expr->opfuncid !=
-         0);  // Hopefully it has been filled in by PG planner
-  assert(list_length(func_state->args) <=
-         2);  // Hopefully it has at most two parameters
+  assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
 
-  expression::AbstractExpression* lc = nullptr;
-  expression::AbstractExpression* rc = nullptr;
+  auto pg_func_id = op_expr->opfuncid;
 
-  // Add function arguments as children
-  int i = 0;
-  ListCell* arg;
-  foreach (arg, func_state->args) {
-    ExprState* argstate = (ExprState*)lfirst(arg);
+  return ReMapPgFunc(pg_func_id, func_state->args);
+}
 
-    if (i == 0)
-      lc = TransformExpr(argstate);
-    else if (i == 1)
-      rc = TransformExpr(argstate);
-    else
-      break;  // skip >2 arguments
+expression::AbstractExpression* ExprTransformer::TransformFunc(
+    const ExprState* es) {
+  auto fn_es = reinterpret_cast<const FuncExprState*>(es);
+  auto fn_expr = reinterpret_cast<const FuncExpr*>(es->expr);
 
-    i++;
-  }
+  assert(fn_expr->xpr.type == T_FuncExpr);
 
-  return ReMapPgFunc(op_expr->opfuncid, lc, rc);
+  auto pg_func_id = fn_expr->funcid;
+  auto rettype = fn_expr->funcresulttype;
+
+  LOG_INFO("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
+
+  LOG_INFO("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
+
+  // TODO: not implemented yet
+  LOG_ERROR("Not implemented.\n");
+
+  return nullptr;
 }
 
 expression::AbstractExpression* ExprTransformer::TransformVar(
@@ -187,23 +180,20 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   // Var expr only needs default ES
   auto var_expr = reinterpret_cast<const Var*>(es->expr);
 
-  oid_t tuple_idx =
-      (var_expr->varno == INNER_VAR
-           ? 1
-           : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
   /*
    * Special case: an varattno of zero in PG
    * means return the whole row.
    * We don't want that, just return null.
    */
-  if(!AttributeNumberIsValid(var_expr->varattno)
-      || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)){
+  if (!AttributeNumberIsValid(
+      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
     return nullptr;
   }
 
-  oid_t value_idx =
-      static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
+  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
+      var_expr->varattno));
 
   LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
@@ -249,7 +239,8 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
     }
 
     default:
-      LOG_ERROR("Unrecognized BoolExpr : %u", bool_op);
+      LOG_ERROR("Unrecognized BoolExpr : %u", bool_op)
+      ;
   }
 
   return nullptr;
@@ -262,11 +253,11 @@ expression::AbstractExpression* ExprTransformer::TransformParam(
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
       LOG_TRACE("Handle EXTREN PARAM");
-      return expression::ParameterValueFactory(param_expr->paramid -
-                                               1);  // 1 indexed
+      return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
       break;
     default:
-      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
+      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind)
+      ;
       break;
   }
 
@@ -282,32 +273,12 @@ expression::AbstractExpression* ExprTransformer::TransformRelabelType(
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
-  expression::AbstractExpression* child =
-      ExprTransformer::TransformExpr(child_state);
+  expression::AbstractExpression* child = ExprTransformer::TransformExpr(
+      child_state);
 
   PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
 
   return expression::CastFactory(type, child);
-}
-
-expression::AbstractExpression* ExprTransformer::TransformFunc(
-    const ExprState* es) {
-  // auto state = reinterpret_cast<const FuncExprState*>(es);
-  auto expr = reinterpret_cast<const FuncExpr*>(es->expr);
-  // auto expr_args = reinterpret_cast<const ExprState*>(state->args);
-
-  assert(expr->xpr.type == T_FuncExpr);
-
-  LOG_TRACE("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype,
-            expr->funcretset, expr->funcformat);
-  // expression::AbstractExpression *args =
-  // ExprTransformer::TransformExpr(expr_args);
-  // LOG_TRACE("args : %s", args->DebugInfo(" ").c_str());
-
-  // TODO: not implemented yet
-  LOG_ERROR("Not implemented.\n");
-
-  return nullptr;
 }
 
 expression::AbstractExpression* ExprTransformer::TransformAggRef(
@@ -326,18 +297,19 @@ expression::AbstractExpression* ExprTransformer::TransformAggRef(
 
 expression::AbstractExpression* ExprTransformer::TransformList(
     const ExprState* es, ExpressionType et) {
-  assert(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
-         et == EXPRESSION_TYPE_CONJUNCTION_OR);
+  assert(
+      et == EXPRESSION_TYPE_CONJUNCTION_AND
+          || et == EXPRESSION_TYPE_CONJUNCTION_OR);
 
   const List* list = reinterpret_cast<const List*>(es);
   ListCell* l;
   int length = list_length(list);
   assert(length > 0);
   LOG_TRACE("Expression List of length %d", length);
-  std::list<expression::AbstractExpression*>
-      exprs;  // a list of AND'ed expressions
+  std::list<expression::AbstractExpression*> exprs;  // a list of AND'ed expressions
 
-  foreach (l, list) {
+  foreach (l, list)
+  {
     const ExprState* expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
     exprs.push_back(ExprTransformer::TransformExpr(expr_state));
   }
@@ -346,48 +318,75 @@ expression::AbstractExpression* ExprTransformer::TransformList(
 }
 
 /**
- * @brief Helper function: re-map Postgres's builtin function Oid
+ * @brief Helper function: re-map Postgres's builtin function
  * to proper expression type in Peloton
  *
  * @param pg_func_id  PG Function Id used to lookup function in \b
  *fmrg_builtin[]
  * (see Postgres source file 'fmgrtab.cpp')
- * @param lc          Left child.
- * @param rc          Right child.
+ * @param args  The argument list in PG ExprState
  * @return            Corresponding expression tree in peloton.
  */
-expression::AbstractExpression* ReMapPgFunc(
-    Oid func_id, expression::AbstractExpression* lc,
-    expression::AbstractExpression* rc) {
-  auto itr = pg_func_map.find(func_id);
+expression::AbstractExpression*
+ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
 
-  if (itr == pg_func_map.end()) {
-    LOG_ERROR("Unsupported PG Function ID : %u (check fmgrtab.cpp)\n", func_id);
+  assert(pg_func_id > 0);
+  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
+
+  // Perform lookup
+  auto itr = kPgFuncMap.find(pg_func_id);
+
+  if (itr == kPgFuncMap.end()) {
+    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)\n",
+              pg_func_id);
     return nullptr;
   }
+  PltFuncMetaInfo func_meta = itr->second;
 
-  auto pl_expr_type = itr->second;
+  // Extract function arguments (at most two)
+  expression::AbstractExpression* lc = nullptr;
+  expression::AbstractExpression* rc = nullptr;
+  int i = 0;
+  ListCell* arg;
+  foreach (arg, args)
+  {
+    ExprState* argstate = (ExprState*) lfirst(arg);
 
-  switch (pl_expr_type) {
+    if (i >= func_meta.nargs)
+      break;
+    if (i == 0)
+      lc = TransformExpr(argstate);
+    else if (i == 1)
+      rc = TransformExpr(argstate);
+    else break;
+
+    i++;
+  }
+
+  // Construct the corresponding Peloton expression
+  auto plt_exprtype = func_meta.exprtype;
+
+  switch (plt_exprtype) {
     case EXPRESSION_TYPE_COMPARE_EQ:
     case EXPRESSION_TYPE_COMPARE_NE:
     case EXPRESSION_TYPE_COMPARE_GT:
     case EXPRESSION_TYPE_COMPARE_LT:
     case EXPRESSION_TYPE_COMPARE_GTE:
     case EXPRESSION_TYPE_COMPARE_LTE:
-      return expression::ComparisonFactory(pl_expr_type, lc, rc);
+      return expression::ComparisonFactory(plt_exprtype, lc, rc);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      return expression::OperatorFactory(pl_expr_type, lc, rc);
+      return expression::OperatorFactory(plt_exprtype, lc, rc);
 
     default:
       LOG_ERROR(
           "This Peloton ExpressionType is in our map but not transformed here "
           ": %u",
-          pl_expr_type);
+          plt_exprtype)
+      ;
   }
 
   return nullptr;

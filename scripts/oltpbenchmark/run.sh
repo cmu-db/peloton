@@ -14,3 +14,4 @@ pg_ctl -D data start
 sleep 1
 createuser -r -s postgres
 echo "create database ycsb;" | psql postgres
+echo "create database tpcc;" | psql postgres
