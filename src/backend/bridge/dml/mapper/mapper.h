@@ -54,9 +54,11 @@ class PlanTransformer {
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
  private:
-  //======-----------------------------------
+
+  //===--------------------------------------------------------------------===//
   // Options controlling some transform operations
-  //======-----------------------------------
+  //===--------------------------------------------------------------------===//
+
   class TransformOptions {
    public:
     bool use_projInfo = true;  // Use Plan.projInfo or not
@@ -70,9 +72,10 @@ class PlanTransformer {
       PlanState *planstate,
       const TransformOptions options);
 
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
   // MODIFY TABLE FAMILY
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
+
   static planner::AbstractPlan *TransformModifyTable(
       const ModifyTableState *planstate,
       const TransformOptions options);
@@ -87,9 +90,10 @@ class PlanTransformer {
       const ModifyTableState *planstate,
       const TransformOptions options);
 
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
   // SCAN FAMILY
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
+
   /*
    * The Scan.projInfo in Scan may be processed in three possible
    * ways:
@@ -115,15 +119,17 @@ class PlanTransformer {
       const BitmapHeapScanState *planstate,
       const TransformOptions options);
 
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
   // JOIN FAMILY
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
+
   static planner::AbstractPlan *TransformNestLoop(
       const NestLoopState *planstate);
 
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
   // OTHERS
-  //======---------------------------------------
+  //===--------------------------------------------------------------------===//
+
   static planner::AbstractPlan *TransformLockRows(
       const LockRowsState *planstate);
 
@@ -138,9 +144,9 @@ class PlanTransformer {
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
-  //========-----------------------------------------
-  // Common utility functions for Scan's
-  //========-----------------------------------------
+  //===--------------------------------------------------------------------===//
+  // Common utility functions for Scans
+  //===--------------------------------------------------------------------===//
 
   static void GetGenericInfoFromScanState(
       planner::AbstractPlan *&parent,
@@ -156,6 +162,7 @@ class PlanTransformer {
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
 };
 
 }  // namespace bridge

@@ -201,6 +201,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
                                TransactionId txn_id) {
   assert(plan);
 
+  LOG_INFO("PlanExecutor Start \n");
+
   bool status;
   bool init_failure = false;
   bool single_statement_txn = false;
@@ -216,8 +218,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   }
   assert(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_TRACE("Building the executor tree");
+  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_INFO("Building the executor tree");
 
   // Build the executor tree
   executor::AbstractExecutor *executor_tree =
@@ -226,7 +228,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
-  LOG_TRACE("Initializing the executor tree");
+  LOG_INFO("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -238,7 +240,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_TRACE("Running the executor tree");
+  LOG_INFO("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
