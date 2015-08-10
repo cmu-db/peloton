@@ -36,12 +36,14 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     void Flush(void) const;
 
+    void Restore(void) const{};
+
   private:
 
     size_t GetLogRecordCount(void) const;
 
     // FIXME :: Hard coded global_queue size
-    oid_t stdout_global_queue_size = 3;
+    oid_t stdout_global_queue_size = 1;
 
 };
 
