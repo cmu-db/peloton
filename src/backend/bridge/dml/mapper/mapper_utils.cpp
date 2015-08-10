@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../planner/projection_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 
@@ -59,22 +59,18 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  *
  * @return      Nothing.
  */
-void PlanTransformer::GetGenericInfoFromScanState(
-    planner::AbstractPlan *&parent,
-    expression::AbstractExpression *&predicate,
-    std::vector<oid_t> &out_col_list, const ScanState *sstate,
+void PlanTransformer::GetGenericInfoFromScan(
+    planner::AbstractPlan *parent,
+    expression::AbstractExpression *predicate,
+    std::vector<oid_t> &out_col_list,
+    planner::AbstractScanPlanState *sstate,
     bool use_projInfo) {
-  List *qual = sstate->ps.qual;
-  const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
+
+  const ProjectionInfo *pg_proj_info = sstate->ps_ProjInfo;
   oid_t out_column_count = static_cast<oid_t>(
-      sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+      sstate->tts_tupleDescriptor->natts);
 
-  parent = nullptr;
-  predicate = nullptr;
   out_col_list.clear();
-
-  /* Transform predicate */
-  predicate = BuildPredicateFromQual(qual);
 
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
@@ -99,11 +95,12 @@ void PlanTransformer::GetGenericInfoFromScanState(
         "created. \n");
 
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+        sstate->tts_tupleDescriptor);
 
     parent =
         new planner::ProjectionPlan(project_info.release(), project_schema);
 
+    LOG_INFO("Parent :: %p", parent);
   }
 
   else {  // Pure direct map

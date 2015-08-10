@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../../../planner/index_scan_plan.h"
+#include "backend/planner/index_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
 namespace peloton {
@@ -43,14 +43,15 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexScan(
-    const IndexScanState *iss_plan_state, const TransformOptions options) {
+    planner::IndexScanPlanState *iss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
-  Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid table_oid = iss_plan_state->table_oid;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   const IndexScan *iss_plan =
-      reinterpret_cast<IndexScan *>(iss_plan_state->ss.ps.plan);
+      reinterpret_cast<const IndexScan *>(iss_plan_state->GetPlan());
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -80,8 +81,8 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids,
-                              &(iss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScan(parent, predicate, column_ids,
+                         iss_plan_state, options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -191,15 +192,16 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState *ioss_plan_state, const TransformOptions options) {
+    planner::IndexOnlyScanPlanState *ioss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* Resolve target relation */
-  Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid table_oid = ioss_plan_state->table_oid;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   const IndexScan *iss_plan =
-      reinterpret_cast<IndexScan *>(ioss_plan_state->ss.ps.plan);
+      reinterpret_cast<const IndexScan *>(ioss_plan_state->GetPlan());
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -229,8 +231,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids,
-                              &(ioss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScan(parent, predicate, column_ids,
+                         ioss_plan_state,
+                         options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -255,12 +258,12 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
  * @return Pointer to the constructed AbstractPlan
  */
 planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
-    const BitmapHeapScanState *bhss_plan_state,
+    planner::BitmapHeapScanPlanState *bhss_plan_state,
     const TransformOptions options) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
-  Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid table_oid = bhss_plan_state->table_oid;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
 
   assert(nodeTag(outerPlanState(bhss_plan_state)) ==
@@ -307,8 +310,9 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids,
-                              &(bhss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScan(parent, predicate, column_ids,
+                         bhss_plan_state,
+                         options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);

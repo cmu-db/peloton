@@ -849,7 +849,7 @@ peloton_send_dml(Peloton_Status  *status,
   // TODO: Use the plan cache
   Plan *plantree = planstate->plan;
   auto shm_plantree = peloton_copy_plantree(plantree);
-  msg.m_plantree = shm_plantree;
+  msg.m_plan = shm_plantree;
 
   // Prepare the planstate
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
@@ -973,12 +973,10 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   assert(msg);
 
   /* Get the planstate */
-  Plan *plantree = msg->m_plantree;
-
-  return;
+  Plan *plan = msg->m_plan;
 
   /* Ignore invalid plans */
-  if(plantree == NULL || nodeTag(plantree) == T_Invalid) {
+  if(plan == NULL || nodeTag(plan) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
@@ -987,23 +985,22 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   TransactionId txn_id = msg->m_hdr.m_txn_id;
   ParamListInfo param_list = msg->m_param_list;
   TupleDesc tuple_desc = msg->m_tuple_desc;
+  auto peloton_planstate = msg->m_peloton_planstate;
 
-  //auto plan = peloton::bridge::PlanTransformer::TransformPlan(plantree);
-  peloton::planner::AbstractPlan *plan = nullptr;
+  auto peloton_plan = peloton::bridge::PlanTransformer::TransformPlan(peloton_planstate);
 
-  if(plan){
+  if(peloton_plan){
 
     try {
       // Execute the plantree
-      peloton::bridge::PlanExecutor::ExecutePlan(plan,
+      peloton::bridge::PlanExecutor::ExecutePlan(peloton_plan,
                                                  param_list,
                                                  tuple_desc,
                                                  msg->m_status,
                                                  txn_id);
 
       // Clean up the plantree
-      peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
-
+      peloton::bridge::PlanTransformer::CleanPlanTree(peloton_plan);
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -1020,7 +1017,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     // at the end. At this moment, 'MergeJoin'/'HashJoin' is required. However, HashJoin
     // has not been implemented yet in TransformPlan, so we set this special case 
     // NOTE :: Remove this special case with 'T_MergeJoin/T_HashJoin' case in TransformPlan
-    if (nodeTag(plantree) == T_MergeJoin || nodeTag(plantree) == T_HashJoin ) {
+    if (nodeTag(plan) == T_MergeJoin || nodeTag(plan) == T_HashJoin ) {
       msg->m_status->m_result = peloton::RESULT_SUCCESS;
     }else{
       /* Could not get the plan */
