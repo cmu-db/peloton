@@ -38,6 +38,7 @@
 #include "c.h"
 #include "access/xact.h"
 #include "access/transam.h"
+#include "access/tupdesc.h"
 #include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
 #include "libpq/ip.h"
@@ -819,6 +820,7 @@ peloton_send_dml(Peloton_Status  *status,
                  PlanState *planstate,
                  TupleDesc tuple_desc) {
   Peloton_MsgDML msg;
+  MemoryContext oldcxt;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
@@ -834,7 +836,12 @@ peloton_send_dml(Peloton_Status  *status,
 
   // Set msg-specific information
   msg.m_status = status;
-  msg.m_tuple_desc = tuple_desc;
+
+  // Copy the tuple desc
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  msg.m_tuple_desc = CreateTupleDescCopy(tuple_desc);
+  MemoryContextSwitchTo(oldcxt);
+  elog(INFO, "Copied tuple desc : %p", msg.m_tuple_desc);
 
   // Copy the param list
   assert(planstate != NULL);
@@ -844,7 +851,7 @@ peloton_send_dml(Peloton_Status  *status,
   msg.m_param_list = shm_param_list;
 
   // Prepare the plan
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
   MemoryContextSwitchTo(oldcxt);
   msg.m_plan = plan;
@@ -977,6 +984,8 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   TransactionId txn_id = msg->m_hdr.m_txn_id;
   ParamListInfo param_list = msg->m_param_list;
   TupleDesc tuple_desc = msg->m_tuple_desc;
+
+  elog(LOG, "ParamList :: %p", param_list);
 
   try {
     // Execute the plantree
