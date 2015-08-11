@@ -56,14 +56,23 @@ class DMLUtils {
                                  ModifyTableState *mt_plan_state);
 
   static ResultPlanState *PrepareResultState(
-      ResultState *result_planstate);
+      ResultState *result_plan_state);
 
   static void PrepareAbstractScanState(
-      AbstractScanPlanState* ss_planstate,
+      AbstractScanPlanState* ss_plan_state,
       ScanState *ss_state);
 
   static SeqScanPlanState *PrepareSeqScanState(
-      SeqScanState *ss_planstate);
+      SeqScanState *ss_plan_state);
+
+  static LockRowsPlanState *PrepareLockRowsState(
+      LockRowsState *lr_plans_tate);
+
+  static LimitPlanState *PrepareLimitState(
+      LimitState *limit_plan_state);
+
+  static MaterialPlanState *PrepareMaterialState(
+      MaterialState *material_plan_state);
 
   static PelotonProjectionInfo *BuildProjectInfo(
       ProjectionInfo *proj_info,

@@ -30,6 +30,16 @@ struct AbstractPlanState {
   AbstractPlanState *right_tree;
 };
 
+/* ----------------
+ *  these are defined to avoid confusion problems with "left"
+ *  and "right" and "inner" and "outer".  The convention is that
+ *  the "left" plan is the "outer" plan and the "right" plan is
+ *  the inner plan, but these make the code more readable.
+ * ----------------
+ */
+#define innerAbstractPlanState(node)    (((AbstractPlanState *)(node))->right_tree)
+#define outerAbstractPlanState(node)    (((AbstractPlanState *)(node))->left_tree)
+
 struct PelotonProjectionInfo {
 
   List *expr_states;
@@ -108,6 +118,8 @@ struct LimitPlanState : public AbstractPlanState {
 
   int64 limit;
   int64 offset;
+  bool noLimit;
+  bool noOffset;
 
 };
 
