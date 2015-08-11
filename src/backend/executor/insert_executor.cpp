@@ -85,9 +85,9 @@ bool InsertExecutor::DExecute() {
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {
-      ItemPointer location = target_table_->InsertTuple(transaction_, &tuple);
+      peloton::ItemPointer location = target_table_->InsertTuple(transaction_, &tuple);
       if (location.block == INVALID_OID) {
-        transaction_->SetResult(Result::RESULT_FAILURE);
+        transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
       transaction_->RecordInsert(location);
@@ -115,9 +115,9 @@ bool InsertExecutor::DExecute() {
     }
 
     // Carry out insertion
-    ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
+    peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
     if (location.block == INVALID_OID) {
-      transaction_->SetResult(Result::RESULT_FAILURE);
+      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordInsert(location);
