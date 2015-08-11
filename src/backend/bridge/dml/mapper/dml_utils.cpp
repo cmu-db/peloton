@@ -51,17 +51,26 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
       child_planstate = PrepareModifyTableState(
           reinterpret_cast<ModifyTableState *>(planstate));
       break;
-
     case T_SeqScanState:
       child_planstate = PrepareSeqScanState(
           reinterpret_cast<SeqScanState *>(planstate));
       break;
-
+    case T_IndexScanState:
+      child_planstate = PrepareIndexScanState(
+          reinterpret_cast<IndexScanState *>(planstate));
+      break;
+    case T_IndexOnlyScanState:
+      child_planstate = PrepareIndexOnlyScanState(
+          reinterpret_cast<IndexOnlyScanState *>(planstate));
+      break;
+    case T_BitmapHeapScanState:
+      child_planstate = PrepareBitmapHeapScanState(
+          reinterpret_cast<BitmapHeapScanState *>(planstate));
+      break;
     case T_LockRowsState:
       child_planstate = PrepareLockRowsState(
           reinterpret_cast<LockRowsState *>(planstate));
       break;
-
     case T_LimitState:
       child_planstate = PrepareLimitState(
           reinterpret_cast<LimitState *>(planstate));
@@ -422,6 +431,7 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
 MaterialPlanState *
 DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
   MaterialPlanState *info = (MaterialPlanState*) palloc(sizeof(MaterialPlanState));
+  info->type = material_plan_state->ss.ps.type;
 
   PlanState *outer_plan_state = outerPlanState(material_plan_state);
   AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
@@ -429,6 +439,34 @@ DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
 
   return info;
 }
+
+IndexScanPlanState *
+DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
+  IndexScanPlanState *info = (IndexScanPlanState*) palloc(sizeof(IndexScanPlanState));
+  info->type = iss_plan_state->ss.ps.type;
+
+
+  return info;
+}
+
+IndexOnlyScanPlanState *
+DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
+  IndexOnlyScanPlanState *info = (IndexOnlyScanPlanState*) palloc(sizeof(IndexOnlyScanPlanState));
+  info->type = ioss_plan_state->ss.ps.type;
+
+
+  return info;
+}
+
+BitmapHeapScanPlanState *
+DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
+  BitmapHeapScanPlanState *info = (BitmapHeapScanPlanState*) palloc(sizeof(BitmapHeapScanPlanState));
+  info->type = bhss_plan_state->ss.ps.type;
+
+
+  return info;
+}
+
 
 /**
  * @brief preparing data
