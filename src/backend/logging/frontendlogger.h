@@ -57,12 +57,12 @@ class FrontendLogger : public Logger{
     /**
      * Flush collected LogRecord to stdout or file or nvram
      */
-    virtual void Flush(void) const = 0;
+    virtual void Flush(void) = 0;
 
     /**
      * Restore database
      */
-    virtual void Restore(void) const = 0;
+    virtual void Restore(void) = 0;
 
     /**
      * Redo
