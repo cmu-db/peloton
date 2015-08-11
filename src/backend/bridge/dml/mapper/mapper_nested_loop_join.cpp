@@ -56,9 +56,9 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   /* TODO: do we need to consider target list here? */
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
-  project_info.reset(
-      BuildProjectInfo(js->ps.ps_ProjInfo,
-                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+  //project_info.reset(
+  //   BuildProjectInfo(js->ps.ps_ProjInfo,
+  //                     js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
