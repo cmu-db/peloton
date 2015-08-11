@@ -16,7 +16,7 @@ namespace peloton {
 namespace logging {
 
 /**
- * @brief Return the global unique instance for log manager
+ * @brief Return the log manager instance
  */
 LogManager& LogManager::GetInstance(){
   static LogManager logManager;
@@ -29,7 +29,7 @@ LogManager& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StandbyLogging(LoggingType logging_type){
-  isPelotonReadyToRestore = false;
+  isPelotonReadyToRecovery = false;
 
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
@@ -62,14 +62,14 @@ void LogManager::StandbyLogging(LoggingType logging_type){
  * @brief whenever Peloton is ready, start logging 
  */
 void LogManager::StartLogging(){
-  isPelotonReadyToRestore = true;
+  isPelotonReadyToRecovery = true;
 }
 
 /**
  * @brief mark Peloton is ready, so that frontend logger can start logging
  */
-bool LogManager::IsPelotonReadyToRestore(){
-  return isPelotonReadyToRestore;
+bool LogManager::IsPelotonReadyToRecovery(){
+  return isPelotonReadyToRecovery;
 }
 
 /**
