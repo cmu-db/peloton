@@ -29,7 +29,7 @@ void StdoutBackendLogger::Insert(LogRecord afterRecord){
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     stdout_local_queue.push_back(afterRecord);
   }
-  //FIXME :: Commit everytime for testing
+  //Commit everytime for testing
   Commit();
 }
 
@@ -42,7 +42,7 @@ void StdoutBackendLogger::Delete(LogRecord beforeRecord){
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     stdout_local_queue.push_back(beforeRecord);
   }
-  //FIXME :: Commit everytime for testing
+  //Commit everytime for testing
   Commit();
 }
 
@@ -57,7 +57,7 @@ void StdoutBackendLogger::Update(LogRecord beforeRecord,
     stdout_local_queue.push_back(beforeRecord);
     stdout_local_queue.push_back(afterRecord);
   }
-  //FIXME :: Commit everytime for testing
+  //Commit everytime for testing
   Commit();
 }
 

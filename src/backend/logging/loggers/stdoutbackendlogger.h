@@ -43,7 +43,6 @@ class StdoutBackendLogger : public BackendLogger{
 
     StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
-    // TODO change vector to list
     std::vector<LogRecord> stdout_local_queue;
 
     std::mutex stdout_local_queue_mutex;
