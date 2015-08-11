@@ -786,7 +786,9 @@ static const unit_conversion time_unit_conversion_table[] =
 
 /******** option records follow ********/
 
-static struct config_bool ConfigureNamesBool[] =
+// TODO: Peloton Changes
+// made it non-static
+struct config_bool ConfigureNamesBool[] =
 {
 	{
 		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,

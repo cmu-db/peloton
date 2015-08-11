@@ -25,6 +25,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/scheduler/tbb_scheduler.h"
+#include "backend/bridge/ddl/config.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
@@ -42,7 +43,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
-#include "utils/guc.h"
+#include "utils/guc_tables.h"
 #include "utils/errcodes.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
@@ -56,6 +57,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+
 
 /* ----------
  * Local data
@@ -156,25 +158,28 @@ NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
 
 // TODO: Peloton mode ====================================================
-  puts("Before SetConfigOption...");
+
   elog(LOG, "Before SetConfigOption...");
   puts(GetConfigOption("peloton_mode", false, false));
 
   SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
   puts("\n");
 
-  puts("After SetConfigOption...");
   elog(LOG, "After SetConfigOption...");
   puts(GetConfigOption("peloton_mode", false, false));
-// TODO: Peloton mode ====================================================
 
-
-// TODO: Peloton mode ====================================================
-  puts("\n");
   puts("Printing Log Duration...");
   puts(GetConfigOption("log_duration", false, false));
-// TODO: Peloton mode ====================================================
 
+
+  char sizeof_config_bool[10];
+  sprintf(sizeof_config_bool, "%lu", sizeof(config_bool));
+  puts("size of config_bool");
+  puts(sizeof_config_bool);
+
+  peloton::bridge::ConstructConfigMap();
+
+// TODO: Peloton mode ====================================================
 
   sigjmp_buf  local_sigjmp_buf;
 
