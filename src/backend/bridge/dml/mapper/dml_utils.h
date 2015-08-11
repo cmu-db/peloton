@@ -65,6 +65,15 @@ class DMLUtils {
   static SeqScanPlanState *PrepareSeqScanState(
       SeqScanState *ss_plan_state);
 
+  static IndexScanPlanState *PrepareIndexScanState(
+      IndexScanState *iss_plan_state);
+
+  static IndexOnlyScanPlanState *PrepareIndexOnlyScanState(
+      IndexOnlyScanState *ioss_plan_state);
+
+  static BitmapHeapScanPlanState *PrepareBitmapHeapScanState(
+      BitmapHeapScanState *bhss_plan_state);
+
   static LockRowsPlanState *PrepareLockRowsState(
       LockRowsState *lr_plans_tate);
 
