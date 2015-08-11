@@ -15,7 +15,6 @@
 #include "backend/planner/abstract_plan_node.h"
 #include "backend/common/types.h"
 
-#include <map>
 
 namespace peloton {
 namespace planner {
@@ -39,7 +38,6 @@ class AggregateV2Node : public AbstractPlanNode {
         groupby_col_ids_(groupby_col_ids) {
 
   }
-
 
   const std::vector<oid_t>& GetGroupbyColIds() const {
     return groupby_col_ids_;
