@@ -25,11 +25,13 @@ std::shared_ptr<LogManager>& LogManager::GetInstance(){
 }
 
 /**
- * @brief Start logging based on logging type
+ * @brief Standty logging based on logging type
  *  and store it into the vector
  * @param logging type can be stdout(debug), aries, peloton
  */
-void LogManager::StartLogging(LoggingType logging_type){
+void LogManager::StandbyLogging(LoggingType logging_type){
+  isPelotonReadyToRestore = false;
+
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
 
@@ -55,6 +57,20 @@ void LogManager::StartLogging(LoggingType logging_type){
   }else{
       frontend_logger->MainLoop();
   }
+}
+
+/**
+ * @brief whenever Peloton is ready, start logging 
+ */
+void LogManager::StartLogging(){
+  isPelotonReadyToRestore = true;
+}
+
+/**
+ * @brief mark Peloton is ready, so that frontend logger can start logging
+ */
+bool LogManager::IsPelotonReadyToRestore(){
+  return isPelotonReadyToRestore;
 }
 
 /**
@@ -85,23 +101,6 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
     LOG_ERROR("%s frontend logger doesn't exist!!\n",LoggingTypeToString(logging_type).c_str());
   }
   return backend_logger;
-}
-
-/**
- * @brief Restore database based on logging type
- * @param logging type can be stdout(debug), aries, peloton
- */
-void LogManager::Restore(LoggingType logging_type){
-  FrontendLogger* frontend_logger = nullptr;
-  {
-    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-    frontend_logger = GetFrontendLogger(logging_type);
-  }
-  if( frontend_logger == nullptr || logging_type == LOGGING_TYPE_STDOUT ){
-    LOG_ERROR("Restore is failed, LoggingType is %s",LoggingTypeToString(logging_type).c_str());
-  }else{
-    frontend_logger->Restore();
-  }
 }
 
 /**
