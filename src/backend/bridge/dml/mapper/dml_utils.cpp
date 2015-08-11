@@ -101,6 +101,35 @@ DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
   info->table_oid = table_oid;
   info->table_nattrs = table_nattrs;
 
+  switch (info->operation) {
+    case CMD_INSERT:
+      LOG_INFO("CMD_INSERT");
+      PrepareInsertState(info, mt_plan_state);
+      break;
+
+    case CMD_UPDATE:
+      LOG_INFO("CMD_UPDATE");
+      PrepareUpdateState(info, mt_plan_state);
+      break;
+
+    case CMD_DELETE:
+      LOG_INFO("CMD_DELETE");
+      PrepareDeleteState(info, mt_plan_state);
+      break;
+
+    default:
+      LOG_ERROR("Unrecognized operation type : %u", info->operation);
+      return nullptr;
+      break;
+  }
+
+  return info;
+}
+
+void
+DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
+                             ModifyTableState *mt_plan_state) {
+
   // Should be only one sub plan which is a Result
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
@@ -120,7 +149,8 @@ DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
     assert(outerPlanState(result_ps) == nullptr);
 
     auto child_planstate = PrepareResultState(reinterpret_cast<ResultState *>(sub_planstate));
-    child_planstate->proj = BuildProjectInfo(result_ps->ps.ps_ProjInfo, table_nattrs);
+    child_planstate->proj = BuildProjectInfo(result_ps->ps.ps_ProjInfo,
+                                             info->table_nattrs);
 
     info->mt_plans[0] = child_planstate;
   }
@@ -129,8 +159,34 @@ DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
               nodeTag(sub_planstate->plan));
   }
 
-  return info;
 }
+
+void
+DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
+                             ModifyTableState *mt_plan_state) {
+}
+
+void
+DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
+                             ModifyTableState *mt_plan_state) {
+
+  // Grab Database ID and Table ID
+  // Input must come from a subplan
+  assert(mt_plan_state->resultRelInfo);
+  // Maybe relax later. I don't know when they can have >1 subplans.
+  assert(mt_plan_state->mt_nplans == 1);
+
+  info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
+                                                 mt_plan_state->mt_nplans);
+
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+
+  auto child_planstate = BuildPlanState(nullptr, sub_planstate, true);
+
+  info->mt_plans[0] = child_planstate;
+
+}
+
 
 ResultPlanState *
 DMLUtils::PrepareResultState(ResultState *result_plan_state) {
