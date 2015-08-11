@@ -64,11 +64,15 @@ struct AbstractScanPlanState : public AbstractPlanState {
   //ProjectionInfo *ps_ProjInfo;
   TupleDesc tts_tupleDescriptor;
 
-  List *qual;
+  List *qual; // expr states
 
 };
 
 struct SeqScanPlanState : public AbstractScanPlanState {
+
+  Oid database_oid;
+
+  int table_nattrs;
 
 };
 

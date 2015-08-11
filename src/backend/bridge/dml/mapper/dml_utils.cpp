@@ -48,6 +48,11 @@ DMLUtils::BuildPlanState(AbstractPlanState *root,
           reinterpret_cast<ModifyTableState *>(planstate));
       break;
 
+    case T_SeqScanState:
+      child_planstate = PrepareSeqScanState(
+          reinterpret_cast<SeqScanState *>(planstate));
+      break;
+
     default:
       elog(ERROR, "unrecognized node type: %d", planstate_type);
       break;
@@ -131,6 +136,54 @@ ResultPlanState *
 DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   ResultPlanState *info = (ResultPlanState*) palloc(sizeof(ResultPlanState));
   info->type = result_plan_state->ps.type;
+
+  return info;
+}
+
+void
+DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
+                                   ScanState *ss_state) {
+
+  // Resolve table
+  Relation ss_relation_desc = ss_state->ss_currentRelation;
+  ss_plan_state->table_oid = ss_relation_desc->rd_id;
+
+  // Copy expr states
+  auto qual_list = ss_state->ps.qual;
+  ListCell *qual_item;
+
+  ss_plan_state->qual = NIL;
+  foreach(qual_item, qual_list) {
+    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+
+    ExprState *expr_state_copy = CopyExprState(expr_state);
+    ss_plan_state->qual = lappend(ss_plan_state->qual, expr_state_copy);
+  }
+
+  // Copy tuple desc
+  auto tup_desc = ss_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+  ss_plan_state->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+
+}
+
+SeqScanPlanState *
+DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
+  SeqScanPlanState *info = (SeqScanPlanState*) palloc(sizeof(SeqScanPlanState));
+  info->type = ss_plan_state->ps.type;
+
+  // First, build the abstract scan state
+  PrepareAbstractScanState(info, ss_plan_state);
+
+  // Resolve table
+  Relation ss_relation_desc = ss_plan_state->ss_currentRelation;
+  oid_t table_nattrs = ss_relation_desc->rd_att->natts;
+
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  Oid table_oid = ss_relation_desc->rd_id;
+
+  info->database_oid = database_oid;
+  info->table_oid = table_oid;
+  info->table_nattrs = table_nattrs;
 
   return info;
 }

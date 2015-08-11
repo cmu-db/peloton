@@ -63,12 +63,13 @@ void PlanTransformer::GetGenericInfoFromScanState(
     planner::AbstractPlan *&parent,
     expression::AbstractExpression *&predicate,
     std::vector<oid_t> &out_col_list,
-    const ScanState *sstate,
+    const AbstractScanPlanState *sstate,
     bool use_projInfo) {
-  List *qual = sstate->ps.qual;
+
+  List *qual = sstate->qual;
   //const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
   oid_t out_column_count = static_cast<oid_t>(
-      sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
+      sstate->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;
@@ -101,7 +102,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
         "created. \n");
 
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+        sstate->tts_tupleDescriptor);
 
     parent = new planner::ProjectionPlan(project_info.release(), project_schema);
 

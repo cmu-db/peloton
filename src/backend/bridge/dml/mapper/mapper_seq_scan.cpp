@@ -27,14 +27,12 @@ namespace bridge {
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
 planner::AbstractPlan *PlanTransformer::TransformSeqScan(
-    const SeqScanState *ss_plan_state, const TransformOptions options) {
+    const SeqScanPlanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  auto relation = ss_plan_state->ss_currentRelation;
-  assert(relation); // Assert base table scan
-  Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
+  Oid database_oid = ss_plan_state->database_oid;
+  Oid table_oid = ss_plan_state->table_oid;
 
   /* Grab the target table */
    storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -55,7 +53,7 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
                               options.use_projInfo);
 
   if (column_ids.empty()) {
-    column_ids.resize(relation->rd_att->natts);
+    column_ids.resize(ss_plan_state->table_nattrs);
     std::iota(column_ids.begin(), column_ids.end(), 0);
   }
 
