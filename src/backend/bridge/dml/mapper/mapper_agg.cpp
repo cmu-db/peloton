@@ -13,6 +13,7 @@ namespace bridge {
 planner::AbstractPlanNode*
 PlanTransformer::TransformAgg(const AggState *plan_state) {
   const AggState* agg_state = plan_state;
+  auto  agg = reinterpret_cast<const Agg*>(agg_state->ss.ps.plan);
 
   auto num_aggs = agg_state->numaggs;  // number of unique aggregates
   auto num_phases = agg_state->numphases;
@@ -31,10 +32,13 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(agg_state->ss.ps.targetlist));
-//      BuildProjectInfo(agg_state->ss.ps.ps_ProjInfo,
-//                       output_schema->GetColumnCount()));
-
   LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
+
+  LOG_INFO("agg.numCols = %d", agg->numCols);
+  for(int i=0; i < agg->numCols; i++){
+    LOG_INFO("agg.grpColIdx[%d] = %d \n", i, agg->grpColIdx[i]);
+  }
+
 
   return nullptr;
 }
