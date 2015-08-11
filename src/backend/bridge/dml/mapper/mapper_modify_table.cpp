@@ -30,7 +30,8 @@ namespace bridge {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlan *PlanTransformer::TransformModifyTable(
-    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state,
+    const TransformOptions options) {
 
   auto operation = mt_plan_state->operation;
 
@@ -70,33 +71,34 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   Oid table_oid = mt_plan_state->table_oid;
 
   /* Get the target table */
-   storage::DataTable *target_table = static_cast<storage::DataTable *>(
-       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-   if (target_table == nullptr) {
-     LOG_ERROR("Target table is not found : database oid %u table oid %u",
-               database_oid, table_oid);
-     return nullptr;
-   }
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
+    return nullptr;
+  }
 
-   LOG_INFO("Insert into: database oid %u table oid %u", database_oid,
-             table_oid);
+  LOG_INFO("Insert into: database oid %u table oid %u", database_oid,
+           table_oid);
 
-   AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
-   ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
+  AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
+  ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
 
-   auto project_info =
-       BuildProjectInfo(result_planstate->proj,
-                        mt_plan_state->table_nattrs);
+  auto project_info =
+      BuildProjectInfo(result_planstate->proj,
+                       mt_plan_state->table_nattrs);
 
-   plan_node = new planner::InsertPlan(target_table, project_info);
+  plan_node = new planner::InsertPlan(target_table, project_info);
 
 
   return plan_node;
 }
 
 planner::AbstractPlan *PlanTransformer::TransformUpdate(
-    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state,
+    const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -164,7 +166,7 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
   }
 
   return plan_node;
-  */
+   */
   return nullptr;
 }
 
@@ -179,33 +181,40 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlan *PlanTransformer::TransformDelete(
-    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
-  /*
+    const ModifyTablePlanState *mt_plan_state,
+    const TransformOptions options) {
   // Grab Database ID and Table ID
-  assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
-  assert(mt_plan_state->mt_nplans ==
-         1);  // Maybe relax later. I don't know when they can have >1 subplans.
 
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
+  Oid database_oid = mt_plan_state->database_oid;
+  Oid table_oid = mt_plan_state->table_oid;
 
-  // Grab the subplan -> child plan node
-  assert(mt_plan_state->mt_nplans == 1);
-  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+  /* Get the target table */
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  bool truncate = false;
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
+    return nullptr;
+  }
+
+  LOG_INFO("Delete :: database oid %u table oid %u", database_oid,
+           table_oid);
 
   // Create the peloton plan node
-  auto plan_node = new planner::DeletePlan(database_oid, table_oid, truncate);
+  bool truncate = false;
+  auto plan_node = new planner::DeletePlan(target_table, truncate);
 
   // Add child plan node(s)
   TransformOptions new_options = options;
   new_options.use_projInfo = false;
-  plan_node->AddChild(TransformPlan(sub_planstate, new_options));
+
+  auto sub_planstate = mt_plan_state->mt_plans[0];
+  auto child_plan_node = TransformPlan(sub_planstate, new_options);
+
+  plan_node->AddChild(child_plan_node);
 
   return plan_node;
-  */
-  return nullptr;
 }
 
 }  // namespace bridge
