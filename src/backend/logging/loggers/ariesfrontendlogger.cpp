@@ -12,11 +12,18 @@
 
 #include "backend/logging/loggers/ariesfrontendlogger.h"
 #include "backend/logging/loggers/ariesbackendlogger.h"
+#include "backend/logging/logmanager.h"
 
 #include <sys/stat.h>
 #include <sys/mman.h>
 
 #include "backend/storage/backend_vm.h"
+#include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/storage/database.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 namespace logging {
@@ -24,12 +31,6 @@ namespace logging {
 AriesFrontendLogger::AriesFrontendLogger(){
 
   logging_type = LOGGING_TYPE_ARIES;
-
-  // if log file already exists, do Restore  
-  if(LogFileSize() > 0){
-    Restore();
-  }
-
   // open log file and file descriptor
   logFile = fopen( filename.c_str(),"ab+");
   if(logFile == NULL){
@@ -58,6 +59,16 @@ AriesFrontendLogger::~AriesFrontendLogger(){
  */
 //FIXME :: Performance issue remains
 void AriesFrontendLogger::MainLoop(void) {
+
+  //FIXME :: find better way..
+  auto logManager = LogManager::GetInstance();
+
+  while( !logManager->IsPelotonReadyToRestore() ){
+    sleep(2);
+  }
+
+  Restore();
+
   for(int i=0;;i++){
     sleep(1);
 
@@ -108,64 +119,90 @@ void AriesFrontendLogger::Flush(void) {
 
   int ret = fflush(logFile);
   if( ret != 0 ){
-    LOG_ERROR("Error occured in fflush ");
+    LOG_ERROR("Error occured in fflush(%d)", ret);
   }
   ret = fsync(logFileFd);
   if( ret != 0 ){
-    LOG_ERROR("Error occured in fsync");
+    LOG_ERROR("Error occured in fsync(%d)", ret);
   }
   aries_global_queue.clear();
 }
 
 void AriesFrontendLogger::Restore() {
 
-  logFile = fopen( filename.c_str(),"rb");
-  if(logFile == NULL){
-    LOG_ERROR("LogFile is NULL");
-  }
+  // if log file has log records, do restore
+  if(LogFileSize() > 0){
 
-  oid_t db_oid;
-  oid_t table_oid;
-  txn_id_t txn_id;
-  LogRecordType log_record_type;
+    while(true){
+      // header and body size of LogRecord
+      size_t header_size = LogRecord::GetSerializedLogRecordHeaderSize()+sizeof(int32_t);
+      size_t body_size;
 
-  char buffer[100];
-  size_t n = fread(buffer, 1, sizeof(buffer), logFile);
-  if( n <= 0 ){
-    LOG_ERROR("!!\n");
-  }
+      oid_t db_oid;
+      oid_t table_oid;
+      txn_id_t txn_id;
+      LogRecordType log_record_type;
 
-  CopySerializeInput input(buffer,100);
-  log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
-  db_oid = (input.ReadShort());
-  table_oid = (input.ReadShort());
-  txn_id = (input.ReadLong());
+      // Read header 
+      char header[header_size];
+      size_t ret = fread(header, 1, sizeof(header), logFile);
+      if( ret <= 0 ){
+        break;
+      }
+      //TODO :: Make this as a function
 
-  std::cout << "log type  : " << LogRecordTypeToString(log_record_type) << std::endl;
-  std::cout << "db oid : " << db_oid << std::endl;
-  std::cout << "table oid : " << table_oid << std::endl;
-  std::cout << "txn id : " << txn_id << std::endl;
+      CopySerializeInput logHeader(header,header_size );
+      log_record_type = (LogRecordType)(logHeader.ReadEnumInSingleByte());
+      db_oid = (logHeader.ReadShort());
+      table_oid = (logHeader.ReadShort());
+      txn_id = (logHeader.ReadLong());
+      body_size = (logHeader.ReadInt())+sizeof(int32_t);;
 
+      //debugging
+      std::cout << "log type  : " << LogRecordTypeToString(log_record_type) << std::endl;
+      std::cout << "db oid : " << db_oid << std::endl;
+      std::cout << "table oid : " << table_oid << std::endl;
+      std::cout << "txn id : " << txn_id << std::endl;
+      std::cout << "body size : " << body_size << std::endl;
 
-  // read serialized data from file
-  /*
-  //open table
-  storage::DataTable *table = db->GetTableWithOid(table_oid);
-  table->InsertTuple(txn, &tuple)
+      /* go back 4 bytes */
+      ret = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
+      if(ret == -1){
+        LOG_ERROR("Error occured in fseek ");
+      }
 
-  CopySerializeInput input(output.Data(), output.Size());
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
-  // make a tuple here with serialize data and then insert to table 
-  tuple->DeserializeFrom(input, pool);
-  std::cout << "input : ";
-  std::cout << input.ReadInt() << std::endl;
-  */
+      // Read Body 
+      char body[body_size];
+      ret = fread(body, 1, sizeof(body), logFile);
+      if( ret <= 0 ){
+        LOG_ERROR("Error occured in fread ");
+      }
 
+      //TODO :: Make this as a function
+      CopySerializeInput logBody(body, body_size);
 
-  int ret = fclose(logFile);
-  if( ret != 0 ){
-    LOG_ERROR("Error occured while closing LogFile");
+      // Get db, table, schema to insert tuple
+      auto &manager = catalog::Manager::GetInstance();
+      storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+      auto table = db->GetTableWithOid(table_oid);
+      auto schema = table->GetSchema();
+
+      storage::Tuple *tuple = new storage::Tuple(schema, true);
+      storage::AbstractBackend *backend = new storage::VMBackend();
+      Pool *pool = new Pool(backend);
+
+      tuple->DeserializeFrom(logBody, pool);
+
+      std::cout << *tuple << std::endl;
+
+      auto &txn_manager = concurrency::TransactionManager::GetInstance();
+      auto txn = txn_manager.BeginTransaction();
+
+      table->InsertTuple(txn, tuple);
+      txn_manager.CommitTransaction(txn);
+
+      std::cout << *table << std::endl;
+    }
   }
 }
 
@@ -180,9 +217,7 @@ size_t AriesFrontendLogger::GetLogRecordCount() const{
 size_t AriesFrontendLogger::LogFileSize(){
   struct stat logStats;   
   if(stat(filename.c_str(), &logStats) == 0){
-    logFileFd = open(filename.c_str(), O_RDONLY, mode);
     fstat(logFileFd, &logStats);
-    close(logFileFd);
     return logStats.st_size;
   }else{
     return 0;
