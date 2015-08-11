@@ -54,7 +54,7 @@ void ExprTransformer::PrintPostgressExprTree(const ExprState *expr_state,
 expression::AbstractExpression *ExprTransformer::TransformExpr(
     const ExprState *expr_state) {
   if (nullptr == expr_state) {
-    LOG_TRACE("Null expression");
+    LOG_INFO("Null expression");
     return nullptr;
   }
 
@@ -125,7 +125,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_INFO("Probably handing a string constant \n");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
@@ -144,7 +144,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
 
 expression::AbstractExpression *ExprTransformer::TransformOp(
     const ExprState *es) {
-  LOG_TRACE("Transform Op \n");
+  LOG_INFO("Transform Op \n");
 
   auto op_expr = reinterpret_cast<const OpExpr *>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState *>(es);
@@ -199,7 +199,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_INFO("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -224,17 +224,17 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
 
   switch (bool_op) {
     case AND_EXPR:
-      LOG_TRACE("Bool AND list \n");
+      LOG_INFO("Bool AND list \n");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
-      LOG_TRACE("Bool OR list \n");
+      LOG_INFO("Bool OR list \n");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR: {
-      LOG_TRACE("Bool NOT \n");
+      LOG_INFO("Bool NOT \n");
       auto child_es =
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
@@ -255,7 +255,7 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
-      LOG_TRACE("Handle EXTREN PARAM");
+      LOG_INFO("Handle EXTREN PARAM");
       return expression::ParameterValueFactory(param_expr->paramid -
                                                1);  // 1 indexed
       break;
@@ -275,7 +275,7 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
 
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
-  LOG_TRACE("Handle relabel as %d", expr->resulttype);
+  LOG_INFO("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child =
       ExprTransformer::TransformExpr(child_state);
 
@@ -292,11 +292,11 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
   assert(expr->xpr.type == T_FuncExpr);
 
-  LOG_TRACE("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype,
+  LOG_INFO("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype,
             expr->funcretset, expr->funcformat);
   // expression::AbstractExpression *args =
   // ExprTransformer::TransformExpr(expr_args);
-  // LOG_TRACE("args : %s", args->DebugInfo(" ").c_str());
+  // LOG_INFO("args : %s", args->DebugInfo(" ").c_str());
 
   // TODO: not implemented yet
 
@@ -312,7 +312,7 @@ expression::AbstractExpression *ExprTransformer::TransformList(
   ListCell *l;
   int length = list_length(list);
   assert(length > 0);
-  LOG_TRACE("Expression List of length %d", length);
+  LOG_INFO("Expression List of length %d", length);
   std::list<expression::AbstractExpression *>
       exprs;  // a list of AND'ed expressions
 

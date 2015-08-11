@@ -43,7 +43,14 @@ class DMLUtils {
 
  private:
 
-  static ModifyTablePlanState *PrepareModifyTableState(ModifyTableState *planstate);
+  static ModifyTablePlanState *PrepareModifyTableState(
+      ModifyTableState *planstate);
+
+  static ResultPlanState *PrepareResultState(
+      ResultState *planstate);
+
+  static PelotonProjectionInfo *BuildProjectInfo(
+      ProjectionInfo *proj_info, int column_count);
 
 };
 

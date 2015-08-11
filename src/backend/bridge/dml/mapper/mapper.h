@@ -157,7 +157,7 @@ class PlanTransformer {
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
-      const ProjectionInfo *pg_proj_info, oid_t column_count);
+      const PelotonProjectionInfo *pi, oid_t column_count);
 
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 

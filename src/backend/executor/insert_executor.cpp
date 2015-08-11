@@ -12,7 +12,7 @@
 
 #include "backend/executor/insert_executor.h"
 
-#include "../planner/insert_plan.h"
+#include "backend/planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
@@ -52,12 +52,6 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table_ = node.GetTable();
-  if(target_table_ == nullptr) {
-    auto database_oid = node.GetDatabaseOid();
-    auto table_oid = node.GetTableOid();
-    target_table_ = static_cast<storage::DataTable *>
-    (catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-  }
   assert(target_table_);
 
   auto transaction_ = executor_context_->GetTransaction();

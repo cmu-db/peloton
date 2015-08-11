@@ -27,22 +27,11 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(InsertPlan &&) = delete;
   InsertPlan &operator=(InsertPlan &&) = delete;
 
-  explicit InsertPlan(oid_t database_oid,
-                      oid_t table_oid,
-                      const planner::ProjectInfo *project_info)
-      : database_oid_(database_oid),
-        table_oid_(table_oid),
-        project_info_(project_info) {}
-
   explicit InsertPlan(storage::DataTable *table,
                       const planner::ProjectInfo *project_info)
       : target_table_(table), project_info_(project_info) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
-
-  oid_t GetDatabaseOid() const { return database_oid_; }
-
-  oid_t GetTableOid() const { return table_oid_; }
 
   storage::DataTable *GetTable() const {
     return target_table_;
@@ -55,9 +44,6 @@ class InsertPlan : public AbstractPlan {
   std::string GetInfo() const { return target_table_->GetName(); }
 
  private:
-  /** @brief Database and table Oid **/
-  oid_t database_oid_ = INVALID_OID;
-  oid_t table_oid_ = INVALID_OID;
 
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;

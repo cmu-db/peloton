@@ -93,12 +93,6 @@ bool SeqScanExecutor::DExecute() {
 
     const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
     target_table_ = node.GetTable();
-    if(target_table_ == nullptr) {
-      auto database_oid = node.GetDatabaseOid();
-      auto table_oid = node.GetTableOid();
-      target_table_ = static_cast<storage::DataTable *>
-      (catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-    }
     assert(target_table_ != nullptr);
 
     table_tile_group_count_ = target_table_->GetTileGroupCount();
