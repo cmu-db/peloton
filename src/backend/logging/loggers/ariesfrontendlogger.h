@@ -14,7 +14,7 @@
 
 #include "backend/logging/frontendlogger.h"
 
-#include <sstream>
+#include <fcntl.h>
 
 namespace peloton {
 namespace logging {
@@ -31,23 +31,36 @@ class AriesFrontendLogger : public FrontendLogger{
 
     AriesFrontendLogger(void);
 
+   ~AriesFrontendLogger(void);
+
     void MainLoop(void);
 
     void CollectLogRecord(void);
 
-    void Flush(void) const;
+    void Flush(void);
+
+    void Restore(void) ;
 
   private:
 
     size_t GetLogRecordCount(void) const;
 
-    // FIXME :: Hard coded based dir
-    std::string baseDirectory = "/home/parallels/git/peloton/build/";
+    size_t LogFileSize(void);
+
+    // FIXME :: Hard coded file name
+    std::string filename = "/home/parallels/git/peloton/build/aries_log.txt";
 
     // FIXME :: Hard coded global_queue size
-    oid_t aries_global_queue_size = 3;
+    oid_t aries_global_queue_size = 1;
 
-    int fd;
+    // File pointer and descriptor
+    FILE* logFile;
+
+    int logFileFd;
+
+    // permit reading and writing by the owner, and to permit reading
+    // only by group members and others.
+    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 };
 
