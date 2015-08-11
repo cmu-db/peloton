@@ -47,6 +47,8 @@ bool LogRecord::SerializeLogRecord(){
   serialized_log_record = (char*)malloc(serialized_log_record_size);
   memcpy( serialized_log_record, output.Data(), serialized_log_record_size);
 
+  CopySerializeInput logBody(output.Data(), output.Size());
+
   return status;
 }
 
