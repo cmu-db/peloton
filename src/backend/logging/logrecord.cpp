@@ -19,6 +19,10 @@
 namespace peloton {
 namespace logging {
 
+size_t LogRecord::GetSerializedLogRecordHeaderSize() {
+  return sizeof(char)+sizeof(int16_t)+sizeof(int16_t)+sizeof(int64_t);;
+}
+
 /**
  * @brief Serialize LogRecordHeader
  * @param output  
@@ -40,7 +44,6 @@ bool LogRecord::SerializeLogRecord(const void* data){
 
   CopySerializeOutput output;
   SerializeLogRecordHeader(output);
-  serialized_log_record_header_size = output.Size();
 
   switch(log_record_type){
     case LOGRECORD_TYPE_INSERT_TUPLE:{
@@ -118,10 +121,6 @@ char* LogRecord::GetSerializedLogRecord() const{
 
 size_t LogRecord::GetSerializedLogRecordSize() const{
   return serialized_log_record_size;
-}
-
-size_t LogRecord::GetSerializedLogRecordHeaderSize() const{
-  return serialized_log_record_header_size;
 }
 
 LogRecordType LogRecord::GetType() const{
