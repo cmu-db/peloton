@@ -55,9 +55,7 @@ class ProjectInfo {
 
   /**
    * @brief Generic specification of a direct map:
-   *        < NEW_col_id ,
-   *          <tuple_index (left or right tuple), OLD_col_id>
-   *        >
+   *        < NEW_col_id , <tuple_index (left or right tuple), OLD_col_id>    >
    */
   typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
