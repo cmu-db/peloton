@@ -58,7 +58,7 @@ void StdoutFrontendLogger::CollectLogRecord(void) {
 /**
  * @brief flush all record, for now it's just printing out
  */
-void StdoutFrontendLogger::Flush(void) const {
+void StdoutFrontendLogger::Flush(void) {
 
   std::cout << "\n::StartFlush::\n";
 
