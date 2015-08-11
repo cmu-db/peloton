@@ -75,11 +75,11 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_LockRowsState:
       peloton_plan = PlanTransformer::TransformLockRows(
-          reinterpret_cast<const LockRowsState *>(planstate));
+          reinterpret_cast<const LockRowsPlanState *>(planstate));
       break;
     case T_LimitState:
       peloton_plan = PlanTransformer::TransformLimit(
-          reinterpret_cast<const LimitState *>(planstate));
+          reinterpret_cast<const LimitPlanState *>(planstate));
       break;
     case T_MergeJoinState:
     case T_HashJoinState:
@@ -92,7 +92,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_MaterialState:
       peloton_plan = PlanTransformer::TransformMaterialization(
-          reinterpret_cast<const MaterialState *>(planstate));
+          reinterpret_cast<const MaterialPlanState *>(planstate));
       break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan  Tag: %u ",
