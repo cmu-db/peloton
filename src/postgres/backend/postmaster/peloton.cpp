@@ -381,8 +381,9 @@ peloton_MainLoop(void) {
 
   // Launching a thread and wait until Bootstrapping is done
   printf("Launch a logging thread \n");
+  auto& logManager = peloton::logging::LogManager::GetInstance();
   std::thread thread(&peloton::logging::LogManager::StandbyLogging,
-                     peloton::logging::LogManager::GetInstance(),
+                     &logManager,
                      peloton::LOGGING_TYPE_ARIES);
 
   /*
@@ -1088,9 +1089,9 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
                                                    msg->m_status);
 
       // NOTE:: start logging since bootstrapPeloton is done
-      auto logManager = peloton::logging::LogManager::GetInstance();
-      if(logManager->IsPelotonReadyToRestore() == false){
-        logManager->StartLogging();
+      auto& logManager = peloton::logging::LogManager::GetInstance();
+      if(logManager.IsPelotonReadyToRestore() == false){
+        logManager.StartLogging();
       }
     }
     catch(const std::exception &exception) {
