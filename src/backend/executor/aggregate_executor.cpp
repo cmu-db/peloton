@@ -14,12 +14,14 @@
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/aggregate_node.h"
-#include "backend/storage/table_factory.h"
 #include "backend/expression/container_tuple.h"
+#include "backend/planner/aggregateV2_node.h"
+#include "backend/storage/table_factory.h"
+
 
 #include <utility>
 #include <vector>
+
 
 namespace peloton {
 namespace executor {
@@ -47,10 +49,10 @@ bool AggregateExecutor::DInit() {
   LOG_TRACE("Aggregate Scan executor :: 1 child \n");
 
   // Grab info from plan node and check it
-  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
+  const planner::AggregateV2Node &node = GetPlanNode<planner::AggregateV2Node>();
 
   // Construct the output table
-  auto output_table_schema = node.GetOutputTableSchema();
+  auto output_table_schema = const_cast<catalog::Schema*>(node.GetOutputSchema());
   size_t column_count = output_table_schema->GetColumnCount();
   assert(column_count >= 1);
 
@@ -80,12 +82,11 @@ bool AggregateExecutor::DExecute() {
   }
 
   // Grab info from plan node
-  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
-  auto transaction_ = executor_context_->GetTransaction();
+  const planner::AggregateV2Node &node = GetPlanNode<planner::AggregateV2Node>();
 
   // Get an aggregator
   Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
-      &node, output_table, transaction_);
+      &node, output_table, executor_context_);
 
   // Get input tiles and aggregate them
   while (children_[0]->Execute() == true) {
