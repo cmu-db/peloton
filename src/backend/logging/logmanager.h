@@ -53,7 +53,10 @@ class LogManager{
     BackendLogger* GetBackendLogger(LoggingType logging_type);
 
   private:
-     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+
+    LogManager(){};
+
+    FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
     // frontend_logger is only one for each logging(stdoud, aries, peloton)
     // so that we can identify frontend_logger using logger_type
