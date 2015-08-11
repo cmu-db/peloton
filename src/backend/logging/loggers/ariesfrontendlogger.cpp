@@ -61,9 +61,9 @@ AriesFrontendLogger::~AriesFrontendLogger(){
 void AriesFrontendLogger::MainLoop(void) {
 
   //FIXME :: find better way..
-  auto logManager = LogManager::GetInstance();
+  auto& logManager = LogManager::GetInstance();
 
-  while( !logManager->IsPelotonReadyToRestore() ){
+  while( !logManager.IsPelotonReadyToRestore() ){
     sleep(2);
   }
 
@@ -128,10 +128,13 @@ void AriesFrontendLogger::Flush(void) {
   aries_global_queue.clear();
 }
 
-void AriesFrontendLogger::Restore() {
+void AriesFrontendLogger::Recovery() {
 
   // if log file has log records, do restore
   if(LogFileSize() > 0){
+
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
 
     while(true){
       // header and body size of LogRecord
@@ -195,14 +198,16 @@ void AriesFrontendLogger::Restore() {
 
       std::cout << *tuple << std::endl;
 
-      auto &txn_manager = concurrency::TransactionManager::GetInstance();
-      auto txn = txn_manager.BeginTransaction();
+      ItemPointer location = table->InsertTuple(txn, tuple);
 
-      table->InsertTuple(txn, tuple);
-      txn_manager.CommitTransaction(txn);
+      if (location.block == INVALID_OID) { LOG_ERROR("!");}
+      txn->RecordInsert(location);
+
 
       std::cout << *table << std::endl;
+      delete tuple;
     }
+    txn_manager.CommitTransaction(txn);
   }
 }
 
