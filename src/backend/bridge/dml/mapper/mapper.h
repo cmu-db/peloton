@@ -132,16 +132,13 @@ class PlanTransformer {
   //===--------------------------------------------------------------------===//
 
   static planner::AbstractPlan *TransformLockRows(
-      const LockRowsState *planstate);
+      const LockRowsPlanState *planstate);
 
   static planner::AbstractPlan *TransformMaterialization(
-      const MaterialState *planstate);
+      const MaterialPlanState *planstate);
 
   static planner::AbstractPlan *TransformLimit(
-      const LimitState *planstate);
-
-  static planner::AbstractPlan *TransformResult(
-      const ResultState *planstate);
+      const LimitPlanState *planstate);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 

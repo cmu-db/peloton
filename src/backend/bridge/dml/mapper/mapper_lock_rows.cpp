@@ -29,19 +29,18 @@ namespace bridge {
  *
  */
 planner::AbstractPlan *PlanTransformer::TransformLockRows(
-    const LockRowsState *lr_plan_state) {
-  assert(nodeTag(lr_plan_state) == T_LockRowsState);
+    const LockRowsPlanState *lr_plan_state) {
 
   LOG_INFO("Handle LockRows");
 
-  /* get the underlying plan */
-  //PlanState *outer_plan_state = outerPlanState(lr_plan_state);
+  // get the underlying plan
+  AbstractPlanState *outer_plan_state = outerAbstractPlanState(lr_plan_state);
 
-  //TransformOptions options = kDefaultOptions;
-  //options.use_projInfo = false;
+  TransformOptions options = kDefaultOptions;
+  options.use_projInfo = false;
+  planner::AbstractPlan *child = TransformPlan(outer_plan_state, options);
 
-  //return PlanTransformer::TransformPlan(outer_plan_state, options);
-  return nullptr;
+  return child;
 }
 
 }  // namespace bridge

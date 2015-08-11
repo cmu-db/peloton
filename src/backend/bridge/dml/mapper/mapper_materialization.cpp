@@ -25,15 +25,16 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformMaterialization(
-    const MaterialState *plan_state) {
-  //PlanState *outer_plan_state = outerPlanState(plan_state);
-  //planner::AbstractPlan *child = TransformPlan(outer_plan_state);
-  bool physify_flag =
-      false;  // current, we just pass the underlying plan node for this case
+    const MaterialPlanState *plan_state) {
 
-  planner::AbstractPlan *plan_node =
-      new planner::MaterializationPlan(physify_flag);
-  //plan_node->AddChild(child);
+  // Currently, we just pass the underlying plan node for this case
+  AbstractPlanState *outer_plan_state = plan_state->left_tree;
+  planner::AbstractPlan *child = TransformPlan(outer_plan_state);
+
+  bool physify_flag = false;
+  planner::AbstractPlan *plan_node = new planner::MaterializationPlan(physify_flag);
+
+  plan_node->AddChild(child);
 
   return plan_node;
 }

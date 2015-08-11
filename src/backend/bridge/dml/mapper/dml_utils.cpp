@@ -22,6 +22,10 @@
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
 
+extern Datum ExecEvalExprSwitchContext(ExprState *expression,
+                                       ExprContext *econtext, bool *isNull,
+                                       ExprDoneCond *isDone);
+
 namespace peloton {
 namespace bridge {
 
@@ -33,8 +37,8 @@ ExprState *CopyExprState(ExprState *expr_state);
 
 AbstractPlanState *
 DMLUtils::PreparePlanState(AbstractPlanState *root,
-                         PlanState *planstate,
-                         bool left_child){
+                           PlanState *planstate,
+                           bool left_child){
   // Base case
   if (planstate == nullptr) return root;
 
@@ -53,6 +57,21 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
           reinterpret_cast<SeqScanState *>(planstate));
       break;
 
+    case T_LockRowsState:
+      child_planstate = PrepareLockRowsState(
+          reinterpret_cast<LockRowsState *>(planstate));
+      break;
+
+    case T_LimitState:
+      child_planstate = PrepareLimitState(
+          reinterpret_cast<LimitState *>(planstate));
+      break;
+
+    case T_MaterialState:
+      child_planstate = PrepareMaterialState(
+          reinterpret_cast<MaterialState *>(planstate));
+      break;
+
     default:
       elog(ERROR, "unrecognized node type: %d", planstate_type);
       break;
@@ -62,9 +81,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
   if (child_planstate != nullptr) {
     if (root != nullptr) {
       if(left_child)
-        root->left_tree = child_planstate;
+        outerAbstractPlanState(root) = child_planstate;
       else
-        root->right_tree = child_planstate;
+        innerAbstractPlanState(root) = child_planstate;
     }
     else
       root = child_planstate;
@@ -184,7 +203,7 @@ DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
     auto scan_state = reinterpret_cast<ScanState *>(sub_planstate);
 
     auto child_planstate = (AbstractScanPlanState *)
-        PreparePlanState(nullptr, sub_planstate, true);
+            PreparePlanState(nullptr, sub_planstate, true);
 
     child_planstate->proj = BuildProjectInfo(scan_state->ps.ps_ProjInfo,
                                              info->table_nattrs);
@@ -225,6 +244,82 @@ ResultPlanState *
 DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   ResultPlanState *info = (ResultPlanState*) palloc(sizeof(ResultPlanState));
   info->type = result_plan_state->ps.type;
+
+  return info;
+}
+
+LockRowsPlanState *
+DMLUtils::PrepareLockRowsState(LockRowsState *lr_plan_state) {
+  LockRowsPlanState *info = (LockRowsPlanState*) palloc(sizeof(LockRowsPlanState));
+  info->type = lr_plan_state->ps.type;
+
+  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  outerAbstractPlanState(info) = child_plan_state;
+
+  return info;
+}
+
+LimitPlanState *
+DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
+  LimitPlanState *info = (LimitPlanState*) palloc(sizeof(LimitPlanState));
+  info->type = limit_plan_state->ps.type;
+
+  ExprContext *econtext = limit_plan_state->ps.ps_ExprContext;
+  Datum val;
+  bool isNull;
+  int64 limit;
+  int64 offset;
+  bool noLimit;
+  bool noOffset;
+
+  /* Resolve limit and offset */
+  if (limit_plan_state->limitOffset) {
+    val = ExecEvalExprSwitchContext(limit_plan_state->limitOffset,
+                                    econtext, &isNull, NULL);
+    /* Interpret NULL offset as no offset */
+    if (isNull)
+      offset = 0;
+    else {
+      offset = DatumGetInt64(val);
+      if (offset < 0) {
+        LOG_ERROR("OFFSET must not be negative, offset = %ld", offset);
+      }
+      noOffset = false;
+    }
+  } else {
+    /* No OFFSET supplied */
+    offset = 0;
+  }
+
+  if (limit_plan_state->limitCount) {
+    val = ExecEvalExprSwitchContext(limit_plan_state->limitCount,
+                                    econtext, &isNull, NULL);
+    /* Interpret NULL count as no limit (LIMIT ALL) */
+    if (isNull) {
+      limit = 0;
+      noLimit = true;
+    } else {
+      limit = DatumGetInt64(val);
+      if (limit < 0) {
+        LOG_ERROR("LIMIT must not be negative, limit = %ld", limit);
+      }
+      noLimit = false;
+    }
+  } else {
+    /* No LIMIT supplied */
+    limit = 0;
+    noLimit = true;
+  }
+
+  info->limit = limit;
+  info->offset = offset;
+  info->noLimit = noLimit;
+  info->noOffset = noOffset;
+
+  PlanState *outer_plan_state = outerPlanState(limit_plan_state);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  outerAbstractPlanState(info) = child_plan_state;
 
   return info;
 }
@@ -273,6 +368,18 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
   info->database_oid = database_oid;
   info->table_oid = table_oid;
   info->table_nattrs = table_nattrs;
+
+  return info;
+}
+
+
+MaterialPlanState *
+DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
+  MaterialPlanState *info = (MaterialPlanState*) palloc(sizeof(MaterialPlanState));
+
+  PlanState *outer_plan_state = outerPlanState(material_plan_state);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  outerAbstractPlanState(info) = child_plan_state;
 
   return info;
 }
