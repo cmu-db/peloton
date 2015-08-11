@@ -30,6 +30,17 @@ struct AbstractPlanState {
   AbstractPlanState *right_tree;
 };
 
+struct PelotonProjectionInfo {
+
+  List *expr_states;
+  List *expr_col_ids;
+
+  List *out_col_ids;
+  List *tuple_idxs;
+  List *in_col_ids;
+
+};
+
 struct ModifyTablePlanState : public AbstractPlanState {
 
   CmdType operation;
@@ -97,6 +108,8 @@ struct LimitPlanState : public AbstractPlanState {
 
 struct ResultPlanState : public AbstractPlanState {
 
+  PelotonProjectionInfo* proj;
+
 };
 
 struct AbstractJoinPlanState : public AbstractPlanState {
@@ -112,4 +125,5 @@ struct AbstractJoinPlanState : public AbstractPlanState {
 struct NestLoopPlanState : public AbstractJoinPlanState {
 
 };
+
 

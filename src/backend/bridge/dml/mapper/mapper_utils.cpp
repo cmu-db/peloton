@@ -66,7 +66,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     const ScanState *sstate,
     bool use_projInfo) {
   List *qual = sstate->ps.qual;
-  const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
+  //const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
   oid_t out_column_count = static_cast<oid_t>(
       sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
 
@@ -80,7 +80,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   if (use_projInfo) {
-    project_info.reset(BuildProjectInfo(pg_proj_info, out_column_count));
+    // TODO:
+    //project_info.reset(BuildProjectInfo(pg_proj_info, out_column_count));
   }
 
   /*
@@ -134,99 +135,76 @@ void PlanTransformer::GetGenericInfoFromScanState(
  * For example, the "row" projection
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
-    const ProjectionInfo *pg_pi, oid_t column_count) {
+    const PelotonProjectionInfo *pg_pi, oid_t column_count) {
+
   if (pg_pi == nullptr) {
     LOG_TRACE("pg proj info is null, no projection");
     return nullptr;
   }
 
-  /*
-   * (A) Transform non-trivial target list
-   */
+  // (A) Construct target list
   planner::ProjectInfo::TargetList target_list;
+  ListCell *item;
+  std::vector<oid_t> expr_col_ids;
 
-  ListCell *tl;
+  foreach (item, pg_pi->expr_col_ids) {
+    oid_t expr_col_id = lfirst_int(item);
+    expr_col_ids.push_back(expr_col_id);
+  }
 
-  foreach (tl, pg_pi->pi_targetlist) {
-    GenericExprState *gstate = (GenericExprState *)lfirst(tl);
-    TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
-    AttrNumber resind = tle->resno - 1;
+  oid_t list_itr = 0;
+  foreach (item, pg_pi->expr_states) {
+    ExprState *expr_state = (ExprState *) lfirst(item);
 
-    if (!(resind < column_count && AttributeNumberIsValid(tle->resno) &&
-          AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
-      LOG_TRACE("Invalid / Junk attribute. Skipped.");
-      continue;  // skip junk attributes
-    }
-
-    oid_t col_id = static_cast<oid_t>(resind);
-
-    auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+    auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
+    auto expr_col_id = expr_col_ids[list_itr];
 
     if (peloton_expr == nullptr) {
-      LOG_TRACE("Seems to be a row value expression. Skipped.");
+      LOG_INFO("Seems to be a row value expression. Skipped.");
       continue;
     }
 
-    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
+    LOG_INFO("Target : column id %u, Expression : \n%s", expr_col_id,
               peloton_expr->DebugInfo().c_str());
 
-    target_list.emplace_back(col_id, peloton_expr);
+    target_list.emplace_back(expr_col_id, peloton_expr);
+    list_itr++;
   }
 
-  /*
-   * (B) Transform direct map list
-   * Special case:
-   * a null constant may be specified in SimpleVars by PG,
-   * in case of that, we add a Target to target_list we created above.
-   */
+  // (B) Construct direct map list
   planner::ProjectInfo::DirectMapList direct_map_list;
+  std::vector<oid_t> out_col_ids, tuple_idxs, in_col_ids;
 
-  if (pg_pi->pi_numSimpleVars > 0) {
-    int numSimpleVars = pg_pi->pi_numSimpleVars;
-    int *varSlotOffsets = pg_pi->pi_varSlotOffsets;
-    int *varNumbers = pg_pi->pi_varNumbers;
+  size_t col_count;
+  foreach (item, pg_pi->out_col_ids) {
+    oid_t out_col_id = lfirst_int(item);
+    out_col_ids.push_back(out_col_id);
+  }
+  col_count = out_col_ids.size();
+  LOG_INFO("Direct Map :: COL COUNT :: %lu \n", out_col_ids.size());
 
-    if (pg_pi->pi_directMap)  // Sequential direct map
-    {
-      /* especially simple case where vars go to output in order */
-      for (int i = 0; i < numSimpleVars && i < column_count; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                                                                         : 0);
-        int varNumber = varNumbers[i] - 1;
-        oid_t in_col_id = static_cast<oid_t>(varNumber);
-        oid_t out_col_id = static_cast<oid_t>(i);
+  foreach (item, pg_pi->tuple_idxs) {
+    oid_t tuple_idx = lfirst_int(item);
+    tuple_idxs.push_back(tuple_idx);
+  }
+  assert(col_count == tuple_idxs.size());
+  foreach (item, pg_pi->in_col_ids) {
+    oid_t in_col_id = lfirst_int(item);
+    in_col_ids.push_back(in_col_id);
+  }
+  assert(col_count == in_col_ids.size());
 
-        direct_map_list.emplace_back(out_col_id,
-                                     std::make_pair(tuple_idx, in_col_id));
+  for(oid_t col_itr = 0 ; col_itr < col_count ; col_itr++){
+    auto out_col_id = out_col_ids[col_itr];
+    auto tuple_idx = tuple_idxs[col_itr];
+    auto in_col_id = in_col_ids[col_itr];
 
-        LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
-                  out_col_id);
-      }
-    } else  // Non-sequential direct map
-    {
-      /* we have to pay attention to varOutputCols[] */
-      int *varOutputCols = pg_pi->pi_varOutputCols;
-
-      for (int i = 0; i < numSimpleVars; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                                                                         : 0);
-        int varNumber = varNumbers[i] - 1;
-        int varOutputCol = varOutputCols[i] - 1;
-        oid_t in_col_id = static_cast<oid_t>(varNumber);
-        oid_t out_col_id = static_cast<oid_t>(varOutputCol);
-
-        direct_map_list.emplace_back(out_col_id,
-                                     std::make_pair(tuple_idx, in_col_id));
-
-        LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
-                  out_col_id);
-      }
-    }
+    direct_map_list.emplace_back(out_col_id,
+                                 std::make_pair(tuple_idx, in_col_id));
   }
 
-  if (target_list.empty() && direct_map_list.empty()) return nullptr;
+  if (target_list.empty() && direct_map_list.empty())
+    return nullptr;
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
