@@ -125,7 +125,7 @@ class PlanTransformer {
   //===--------------------------------------------------------------------===//
 
   static planner::AbstractPlan *TransformNestLoop(
-      const NestLoopState *planstate);
+      const NestLoopPlanState *planstate);
 
   //===--------------------------------------------------------------------===//
   // OTHERS

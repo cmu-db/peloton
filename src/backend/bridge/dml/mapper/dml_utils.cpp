@@ -72,6 +72,13 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
           reinterpret_cast<MaterialState *>(planstate));
       break;
 
+    case T_MergeJoinState:
+    case T_HashJoinState:
+    case T_NestLoopState:
+      child_planstate = PrepareNestLoopState(
+          reinterpret_cast<NestLoopState *>(planstate));
+      break;
+
     default:
       elog(ERROR, "unrecognized node type: %d", planstate_type);
       break;
@@ -323,6 +330,45 @@ DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
 
   return info;
 }
+
+NestLoopPlanState *
+DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
+  NestLoopPlanState *info = (NestLoopPlanState*) palloc(sizeof(NestLoopPlanState));
+  info->type = nl_plan_state->js.ps.type;
+
+  const JoinState *js = &(nl_plan_state->js);
+  info->jointype = js->jointype;
+
+  // Copy join qual expr states
+  auto qual_list = js->joinqual;
+  ListCell *qual_item;
+  info->joinqual = NIL;
+  foreach(qual_item, qual_list) {
+    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+    ExprState *expr_state_copy = CopyExprState(expr_state);
+    info->joinqual = lappend(info->joinqual, expr_state_copy);
+  }
+
+  // Copy ps qual expr states
+  auto ps_qual_list = js->ps.qual;
+  info->qual = NIL;
+  foreach(qual_item, ps_qual_list) {
+    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+    ExprState *expr_state_copy = CopyExprState(expr_state);
+    info->qual = lappend(info->qual, expr_state_copy);
+  }
+
+  // Copy tuple desc
+  auto tup_desc = js->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+
+  // Construct projection info
+  info->ps_ProjInfo = BuildProjectInfo(js->ps.ps_ProjInfo,
+                                       tup_desc->natts);
+
+  return info;
+}
+
 
 void
 DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
