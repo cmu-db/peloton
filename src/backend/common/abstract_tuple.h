@@ -31,6 +31,7 @@ class AbstractTuple {
   /** @brief Get the raw location of the tuple's contents i.e. tuple.value_data.
    */
   virtual char *GetData() const = 0;
+
 };
 
 }  // namespace peloton
