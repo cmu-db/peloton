@@ -168,6 +168,14 @@ PelotonMain(int argc, char *argv[]) {
   puts(GetConfigOption("peloton_mode", false, false));
 // TODO: Peloton mode ====================================================
 
+
+// TODO: Peloton mode ====================================================
+  puts("\n");
+  puts("Printing Log Duration...");
+  puts(GetConfigOption("log_duration", false, false));
+// TODO: Peloton mode ====================================================
+
+
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
