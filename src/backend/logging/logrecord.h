@@ -58,6 +58,8 @@ public:
 
   size_t GetSerializedLogRecordSize() const;
 
+  size_t GetSerializedLogRecordHeaderSize() const;
+
   LogRecordType GetType() const;
 
   oid_t GetDbId() const;
@@ -97,6 +99,8 @@ private:
   char* serialized_log_record;
 
   size_t serialized_log_record_size;
+
+  size_t serialized_log_record_header_size;
 
 };
 

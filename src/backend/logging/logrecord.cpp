@@ -40,6 +40,7 @@ bool LogRecord::SerializeLogRecord(const void* data){
 
   CopySerializeOutput output;
   SerializeLogRecordHeader(output);
+  serialized_log_record_header_size = output.Size();
 
   switch(log_record_type){
     case LOGRECORD_TYPE_INSERT_TUPLE:{
@@ -117,6 +118,10 @@ char* LogRecord::GetSerializedLogRecord() const{
 
 size_t LogRecord::GetSerializedLogRecordSize() const{
   return serialized_log_record_size;
+}
+
+size_t LogRecord::GetSerializedLogRecordHeaderSize() const{
+  return serialized_log_record_header_size;
 }
 
 LogRecordType LogRecord::GetType() const{
