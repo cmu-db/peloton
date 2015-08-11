@@ -110,17 +110,9 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
    * So, we peek and steal the projection info from our child,
    * but leave it to process the WHERE clause.
    */
-  /*
-  // Should be only one sub plan which is a SeqScan
-  assert(mt_plan_state->mt_nplans == 1);
-  assert(mt_plan_state->mt_plans != nullptr);
 
-  // Resolve result table
-  ResultRelInfo result_rel_info = mt_plan_state->resultRelInfo[0];
-  Relation result_relation_desc = result_rel_info.ri_RelationDesc;
-
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = result_relation_desc->rd_id;
+  Oid database_oid = mt_plan_state->database_oid;
+  Oid table_oid = mt_plan_state->table_oid;
 
   // Get the target table
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -132,42 +124,24 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
     return nullptr;
   }
 
-  LOG_TRACE("Update table : database oid %u table oid %u", database_oid,
+  LOG_INFO("Update table : database oid %u table oid %u", database_oid,
             table_oid);
 
-  // Get the first sub plan state
-  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
-  assert(sub_planstate);
+  // Child must be a scan node
+  auto sub_planstate = (AbstractScanPlanState*) mt_plan_state->mt_plans[0];
 
-  // Get the tuple schema
-  auto schema = target_table->GetSchema();
+  auto project_info = BuildProjectInfo(sub_planstate->proj,
+                                       mt_plan_state->table_nattrs);
 
   planner::AbstractPlan *plan_node = nullptr;
+  plan_node = new planner::UpdatePlan(target_table, project_info);
 
-  auto child_tag = nodeTag(sub_planstate->plan);
+  TransformOptions new_options = options;
+  new_options.use_projInfo = false;
 
-  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
-      child_tag == T_IndexOnlyScan ||
-      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
-
-    LOG_TRACE("Child of Update is %u \n", child_tag);
-    // Extract the projection info from the underlying scan
-    // and put it in our update node
-    auto scan_state = reinterpret_cast<ScanState *>(sub_planstate);
-    auto project_info =
-        BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
-
-    plan_node = new planner::UpdatePlan(target_table, project_info);
-    TransformOptions new_options = options;
-    new_options.use_projInfo = false;
-    plan_node->AddChild(TransformPlan(sub_planstate, new_options));
-  } else {
-    LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
-  }
+  plan_node->AddChild(TransformPlan(sub_planstate, new_options));
 
   return plan_node;
-   */
-  return nullptr;
 }
 
 /**
