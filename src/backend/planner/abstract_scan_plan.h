@@ -18,7 +18,6 @@
 
 #include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/common/shm_allocator.h"
 #include "backend/expression/abstract_expression.h"
 
 namespace peloton {
@@ -38,18 +37,15 @@ class AbstractScan : public AbstractPlan {
 
   AbstractScan(expression::AbstractExpression *predicate,
                    const std::vector<oid_t> &column_ids)
-      : predicate_(predicate) {
-
-      for(auto column_id : column_ids)
-        column_ids_.push_back(column_id);
-
+      : predicate_(predicate),
+        column_ids_(column_ids){
   }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  const std::vector<oid_t, peloton::SHMAllocator<oid_t> > &GetColumnIds() const { return column_ids_; }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_ABSTRACT_SCAN;
@@ -62,7 +58,7 @@ class AbstractScan : public AbstractPlan {
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 
   /** @brief Columns from tile group to be added to logical tile output. */
-  std::vector<oid_t, peloton::SHMAllocator<oid_t> > column_ids_;
+  std::vector<oid_t> column_ids_;
 };
 
 }  // namespace planner

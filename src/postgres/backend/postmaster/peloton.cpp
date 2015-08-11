@@ -852,9 +852,11 @@ peloton_send_dml(Peloton_Status  *status,
 
   // Prepare the plan
   oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+
+  // Create the raw planstate info
   MemoryContextSwitchTo(oldcxt);
-  msg.m_plan = plan;
+  auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  msg.m_plan_state = plan_state;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -912,7 +914,7 @@ peloton_send_bootstrap(Peloton_Status  *status){
 
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   // construct raw database for bootstrap
-  peloton::bridge::raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
+  raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
   MemoryContextSwitchTo(oldcxt);
 
   // Set header
@@ -972,10 +974,13 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   assert(msg);
 
   /* Get the planstate */
-  auto plan = msg->m_plan;
+ // auto planstate = msg->m_plan_state;
+  peloton::planner::AbstractPlan *plan = nullptr;
+
+  //auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
   /* Ignore empty plans */
-  if(plan == NULL) {
+  if(plan == nullptr) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
@@ -1060,7 +1065,7 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   assert(msg);
 
   /* Get the raw databases */
-  peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
+  raw_database_info* raw_database = msg->m_raw_database;
 
   /* Ignore invalid parsetrees */
   if(raw_database == NULL) {

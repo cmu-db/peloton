@@ -17,6 +17,7 @@
 #include "backend/common/message_queue.h"
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/planner/abstract_plan.h"
+#include "backend/bridge/dml/mapper/dml_utils.h"
 
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
@@ -110,7 +111,7 @@ typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  peloton::planner::AbstractPlan *m_plan;
+  AbstractPlanState *m_plan_state;
   ParamListInfo m_param_list;
   TupleDesc m_tuple_desc;
 } Peloton_MsgDML;
@@ -134,7 +135,7 @@ typedef struct Peloton_MsgBootstrap
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  peloton::bridge::raw_database_info *m_raw_database;
+  raw_database_info *m_raw_database;
 } Peloton_MsgBootstrap;
 
 /* ----------
