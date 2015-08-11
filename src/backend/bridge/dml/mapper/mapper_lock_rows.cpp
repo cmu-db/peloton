@@ -35,12 +35,13 @@ planner::AbstractPlan *PlanTransformer::TransformLockRows(
   LOG_INFO("Handle LockRows");
 
   /* get the underlying plan */
-  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
+  //PlanState *outer_plan_state = outerPlanState(lr_plan_state);
 
-  TransformOptions options = kDefaultOptions;
-  options.use_projInfo = false;
+  //TransformOptions options = kDefaultOptions;
+  //options.use_projInfo = false;
 
-  return PlanTransformer::TransformPlan(outer_plan_state, options);
+  //return PlanTransformer::TransformPlan(outer_plan_state, options);
+  return nullptr;
 }
 
 }  // namespace bridge

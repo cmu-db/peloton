@@ -16,6 +16,7 @@
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/dml/expr/expr_transformer.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "backend/bridge/dml/mapper/dml_raw_structures.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/common/value_vector.h"
@@ -45,7 +46,7 @@ class PlanTransformer {
 
   static void PrintPlan(const Plan *plan);
 
-  static planner::AbstractPlan *TransformPlan(PlanState *planstate) {
+  static planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate) {
     return TransformPlan(planstate, kDefaultOptions);
   }
 
@@ -69,7 +70,7 @@ class PlanTransformer {
   static const TransformOptions kDefaultOptions;
 
   static planner::AbstractPlan *TransformPlan(
-      PlanState *planstate,
+      AbstractPlanState *planstate,
       const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
@@ -77,17 +78,17 @@ class PlanTransformer {
   //===--------------------------------------------------------------------===//
 
   static planner::AbstractPlan *TransformModifyTable(
-      const ModifyTableState *planstate,
+      const ModifyTablePlanState *planstate,
       const TransformOptions options);
 
   static planner::AbstractPlan *TransformInsert(
-      const ModifyTableState *planstate,
+      const ModifyTablePlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformUpdate(
-      const ModifyTableState *planstate,
+      const ModifyTablePlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformDelete(
-      const ModifyTableState *planstate,
+      const ModifyTablePlanState *planstate,
       const TransformOptions options);
 
   //===--------------------------------------------------------------------===//

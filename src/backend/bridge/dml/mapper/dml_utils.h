@@ -41,6 +41,10 @@ class DMLUtils {
   static AbstractPlanState *peloton_prepare_data(
       PlanState *planstate);
 
+ private:
+
+  static ModifyTablePlanState *PrepareModifyTableState(ModifyTableState *planstate);
+
 };
 
 }  // namespace bridge

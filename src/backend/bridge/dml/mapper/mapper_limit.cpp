@@ -89,7 +89,7 @@ planner::AbstractPlan *PlanTransformer::TransformLimit(
   /* Resolve child plan */
   PlanState *subplan_state = outerPlanState(node);
   assert(subplan_state != nullptr);
-  plan_node->AddChild(PlanTransformer::TransformPlan(subplan_state));
+  //plan_node->AddChild(PlanTransformer::TransformPlan(subplan_state));
   return plan_node;
 }
 

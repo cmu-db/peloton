@@ -30,10 +30,11 @@ namespace bridge {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlan *PlanTransformer::TransformModifyTable(
-    const ModifyTableState *mt_plan_state, const TransformOptions options) {
-  ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
 
-  switch (plan->operation) {
+  auto operation = mt_plan_state->operation;
+
+  switch (operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
       return PlanTransformer::TransformInsert(mt_plan_state, options);
@@ -50,7 +51,7 @@ planner::AbstractPlan *PlanTransformer::TransformModifyTable(
       break;
 
     default:
-      LOG_ERROR("Unrecognized operation type : %u", plan->operation);
+      LOG_ERROR("Unrecognized operation type : %u", operation);
       break;
   }
 
@@ -62,46 +63,19 @@ planner::AbstractPlan *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   planner::AbstractPlan *plan_node = nullptr;
 
-  /* Resolve result table */
-  ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
-  Relation result_relation_desc = result_rel_info->ri_RelationDesc;
-  oid_t table_nattrs = result_relation_desc->rd_att->natts;
+  Oid database_oid = mt_plan_state->database_oid;
+  Oid table_oid = mt_plan_state->table_oid;
 
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = result_relation_desc->rd_id;
-
-  /* Should be only one sub plan which is a Result  */
-  assert(mt_plan_state->mt_nplans == 1);
-  assert(mt_plan_state->mt_plans != nullptr);
-
-  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
-
-  if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
-    LOG_TRACE("Child of Insert is Result");
-    auto result_ps = reinterpret_cast<ResultState *>(sub_planstate);
-
-    assert(outerPlanState(result_ps) ==
-           nullptr); /* We only handle single-constant-tuple for now,
-                 i.e., ResultState should have no children/sub plans */
-
-    auto project_info =
-        BuildProjectInfo(result_ps->ps.ps_ProjInfo, table_nattrs);
-
-    plan_node = new planner::InsertPlan(database_oid, table_oid, project_info);
-
-  } else {
-    LOG_ERROR("Unsupported child type of Insert: %u",
-              nodeTag(sub_planstate->plan));
-  }
+  LOG_INFO("Database OID :: %u Table OID : %u ", database_oid, table_oid);
 
   return plan_node;
 }
 
 planner::AbstractPlan *PlanTransformer::TransformUpdate(
-    const ModifyTableState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -113,19 +87,19 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
    * So, we peek and steal the projection info from our child,
    * but leave it to process the WHERE clause.
    */
-
-  /* Should be only one sub plan which is a SeqScan */
+  /*
+  // Should be only one sub plan which is a SeqScan
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
 
-  /* Resolve result table */
+  // Resolve result table
   ResultRelInfo result_rel_info = mt_plan_state->resultRelInfo[0];
   Relation result_relation_desc = result_rel_info.ri_RelationDesc;
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
-  /* Get the target table */
+  // Get the target table
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
@@ -138,11 +112,11 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
   LOG_TRACE("Update table : database oid %u table oid %u", database_oid,
             table_oid);
 
-  /* Get the first sub plan state */
+  // Get the first sub plan state
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
   assert(sub_planstate);
 
-  /* Get the tuple schema */
+  // Get the tuple schema
   auto schema = target_table->GetSchema();
 
   planner::AbstractPlan *plan_node = nullptr;
@@ -169,6 +143,8 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
   }
 
   return plan_node;
+  */
+  return nullptr;
 }
 
 /**
@@ -182,7 +158,8 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlan *PlanTransformer::TransformDelete(
-    const ModifyTableState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
+  /*
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans ==
@@ -191,7 +168,7 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
-  /* Grab the subplan -> child plan node */
+  // Grab the subplan -> child plan node
   assert(mt_plan_state->mt_nplans == 1);
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
@@ -206,6 +183,8 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
   plan_node->AddChild(TransformPlan(sub_planstate, new_options));
 
   return plan_node;
+  */
+  return nullptr;
 }
 
 }  // namespace bridge
