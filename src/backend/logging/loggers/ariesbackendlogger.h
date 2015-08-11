@@ -25,6 +25,10 @@ namespace logging {
 class AriesBackendLogger : public BackendLogger{
 
   public:
+    AriesBackendLogger(const AriesBackendLogger &) = delete;
+    AriesBackendLogger &operator=(const AriesBackendLogger &) = delete;
+    AriesBackendLogger(AriesBackendLogger &&) = delete;
+    AriesBackendLogger &operator=(AriesBackendLogger &&) = delete;
 
     static AriesBackendLogger* GetInstance(void);
 

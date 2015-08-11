@@ -36,9 +36,13 @@ static std::mutex frontend_logger_mutex;
 class LogManager{
 
   public:
+    LogManager(const LogManager &) = delete;
+    LogManager &operator=(const LogManager &) = delete;
+    LogManager(LogManager &&) = delete;
+    LogManager &operator=(LogManager &&) = delete;
 
     // global singleton
-    static std::shared_ptr<LogManager>& GetInstance(void);
+    static LogManager& GetInstance(void);
 
     void StandbyLogging(LoggingType logging_type);
 

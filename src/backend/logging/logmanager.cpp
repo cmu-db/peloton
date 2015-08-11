@@ -18,9 +18,8 @@ namespace logging {
 /**
  * @brief Return the global unique instance for log manager
  */
-std::shared_ptr<LogManager>& LogManager::GetInstance(){
-  std::lock_guard<std::mutex> lock(logManager_mutex);
-  static std::shared_ptr<LogManager> logManager(new LogManager());
+LogManager& LogManager::GetInstance(){
+  static LogManager logManager;
   return logManager;
 }
 
