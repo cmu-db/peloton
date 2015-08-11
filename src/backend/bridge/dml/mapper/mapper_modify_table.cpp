@@ -69,7 +69,28 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   Oid database_oid = mt_plan_state->database_oid;
   Oid table_oid = mt_plan_state->table_oid;
 
-  LOG_INFO("Database OID :: %u Table OID : %u ", database_oid, table_oid);
+  /* Get the target table */
+   storage::DataTable *target_table = static_cast<storage::DataTable *>(
+       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+
+   if (target_table == nullptr) {
+     LOG_ERROR("Target table is not found : database oid %u table oid %u",
+               database_oid, table_oid);
+     return nullptr;
+   }
+
+   LOG_INFO("Insert into: database oid %u table oid %u", database_oid,
+             table_oid);
+
+   AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
+   ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
+
+   auto project_info =
+       BuildProjectInfo(result_planstate->proj,
+                        mt_plan_state->table_nattrs);
+
+   plan_node = new planner::InsertPlan(target_table, project_info);
+
 
   return plan_node;
 }

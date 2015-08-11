@@ -27,11 +27,6 @@ class DeletePlan : public AbstractPlan {
   DeletePlan(DeletePlan &&) = delete;
   DeletePlan &operator=(DeletePlan &&) = delete;
 
-  explicit DeletePlan(oid_t database_oid, oid_t table_oid, bool truncate)
-      : database_oid_(database_oid),
-        table_oid_(table_oid),
-        truncate(truncate) {}
-
   explicit DeletePlan(storage::DataTable *table, bool truncate)
       : target_table_(table), truncate(truncate) {}
 
@@ -41,19 +36,11 @@ class DeletePlan : public AbstractPlan {
     return target_table_;
   }
 
-  oid_t GetDatabaseOid() const { return database_oid_; }
-
-  oid_t GetTableOid() const { return table_oid_; }
-
   std::string GetInfo() const { return target_table_->GetName(); }
 
   bool GetTruncate() const { return truncate; }
 
  private:
-  /** @brief Database and table Oid **/
-  oid_t database_oid_ = INVALID_OID;
-  oid_t table_oid_ = INVALID_OID;
-
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 
