@@ -83,12 +83,9 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_MergeJoinState:
     case T_HashJoinState:
-    // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
-    // need this case to operate AlterTable
-    // Also - Added special case in peloton_process_dml
     case T_NestLoopState:
       peloton_plan = PlanTransformer::TransformNestLoop(
-          reinterpret_cast<const NestLoopState *>(planstate));
+          reinterpret_cast<const NestLoopPlanState *>(planstate));
       break;
     case T_MaterialState:
       peloton_plan = PlanTransformer::TransformMaterialization(
