@@ -66,6 +66,7 @@ struct AbstractScanPlanState : public AbstractPlanState {
 
   List *qual; // expr states
 
+  PelotonProjectionInfo* proj;
 };
 
 struct SeqScanPlanState : public AbstractScanPlanState {
