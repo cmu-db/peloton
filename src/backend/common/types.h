@@ -277,6 +277,8 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_SETOP = 58,   // set operation
   PLAN_NODE_TYPE_APPEND = 59,  // append
 
+  PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
+
   // Utility
   PLAN_NODE_TYPE_RESULT = 70
 };
