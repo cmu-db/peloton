@@ -186,7 +186,7 @@ void BootstrapUtils::PrintRawColumn(raw_column_info *raw_column) {
   printf("    column name %s \n", raw_column->column_name);
   printf("    column type %s \n",
          ValueTypeToString(raw_column->column_type).c_str());
-  printf("    column length %u \n", raw_column->column_length);
+  printf("    column length %lu \n", raw_column->column_length);
   printf("    column inlined %d \n", (int)raw_column->is_inlined);
   PrintRawConstraints(raw_column->raw_constraints,
                       raw_column->constraint_count);

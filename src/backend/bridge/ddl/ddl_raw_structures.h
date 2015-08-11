@@ -14,9 +14,6 @@
 
 #include "backend/common/types.h"
 
-namespace peloton {
-namespace bridge {
-
 //===--------------------------------------------------------------------===//
 // DDL raw data structures
 //===--------------------------------------------------------------------===//
@@ -29,51 +26,51 @@ struct raw_column_info;
 struct raw_constraint_info;
 
 struct raw_database_info {
-  oid_t database_oid;
+  Oid database_oid;
   char *database_name;
 
   raw_table_info **raw_tables;
   raw_index_info **raw_indexes;
   raw_foreign_key_info **raw_foreignkeys;
 
-  oid_t table_count;
-  oid_t index_count;
-  oid_t foreignkey_count;
+  int table_count;
+  int index_count;
+  int foreignkey_count;
 };
 
 struct raw_table_info {
-  oid_t table_oid;
+  Oid table_oid;
   char *table_name;
 
   // Column information
   raw_column_info **raw_columns;
-  oid_t column_count;
+  int column_count;
 };
 
 struct raw_index_info {
   char *index_name;
-  oid_t index_oid;
+  Oid index_oid;
 
   char *table_name;
 
-  IndexType method_type;
-  IndexConstraintType constraint_type;
+  peloton::IndexType method_type;
+  peloton::IndexConstraintType constraint_type;
 
   bool unique_keys;
 
   char **key_column_names;
-  oid_t key_column_count;
+  int key_column_count;
 };
 
 struct raw_foreign_key_info {
-  oid_t source_table_id;  // a table that has a reference key
-  oid_t sink_table_id;    // a table that has a primary key
+  Oid source_table_id;  // a table that has a reference key
+  Oid sink_table_id;    // a table that has a primary key
 
   int *source_column_offsets;
-  oid_t source_column_count;
+  int source_column_count;
 
   int *sink_column_offsets;
-  oid_t sink_column_count;
+  int sink_column_count;
 
   // Refer:: http://www.postgresql.org/docs/9.4/static/catalog-pg-constraint.html
   // foreign key action
@@ -85,26 +82,23 @@ struct raw_foreign_key_info {
 
 
 struct raw_column_info {
-  ValueType column_type;
+  peloton::ValueType column_type;
 
-  oid_t column_length;
+  size_t column_length;
   char *column_name;
 
   bool is_inlined;
 
   // Constraint information
   raw_constraint_info **raw_constraints;
-  oid_t constraint_count;
+  int constraint_count;
 };
 
 struct raw_constraint_info {
-  ConstraintType constraint_type;
+  peloton::ConstraintType constraint_type;
   char *constraint_name;
 
   // Cooked/transformed constraint expression
   Node *expr;
 };
 
-
-}  // namespace bridge
-}  // namespace peloton
