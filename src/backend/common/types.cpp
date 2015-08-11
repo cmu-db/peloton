@@ -503,6 +503,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_RESULT: {
       return "RESULT";
     }
+    case PLAN_NODE_TYPE_AGGREGATE_V2: {
+      return "AGGREGATE_V2";
+    }
   }
   return "INVALID";
 }
