@@ -46,6 +46,15 @@ class DMLUtils {
   static ModifyTablePlanState *PrepareModifyTableState(
       ModifyTableState *mt_planstate);
 
+  static void PrepareInsertState(ModifyTablePlanState *info,
+                                 ModifyTableState *mt_plan_state);
+
+  static void PrepareUpdateState(ModifyTablePlanState *info,
+                                 ModifyTableState *mt_plan_state);
+
+  static void PrepareDeleteState(ModifyTablePlanState *info,
+                                 ModifyTableState *mt_plan_state);
+
   static ResultPlanState *PrepareResultState(
       ResultState *result_planstate);
 

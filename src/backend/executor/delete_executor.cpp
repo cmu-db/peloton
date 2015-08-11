@@ -85,14 +85,14 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
-    ItemPointer delete_location(tile_group_id, physical_tuple_id);
+    peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
 
     if (status == false) {
-      transaction_->SetResult(Result::RESULT_FAILURE);
+      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordDelete(delete_location);
