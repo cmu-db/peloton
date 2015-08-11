@@ -33,7 +33,7 @@ class DMLUtils {
   DMLUtils(DMLUtils &&) = delete;
   DMLUtils &operator=(DMLUtils &&) = delete;
 
-  static AbstractPlanState *BuildPlanState(
+  static AbstractPlanState *PreparePlanState(
       AbstractPlanState *root,
       PlanState *planstate,
       bool left_child);

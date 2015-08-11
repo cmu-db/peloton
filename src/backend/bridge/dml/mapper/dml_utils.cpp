@@ -32,7 +32,7 @@ namespace bridge {
 ExprState *CopyExprState(ExprState *expr_state);
 
 AbstractPlanState *
-DMLUtils::BuildPlanState(AbstractPlanState *root,
+DMLUtils::PreparePlanState(AbstractPlanState *root,
                          PlanState *planstate,
                          bool left_child){
   // Base case
@@ -75,9 +75,9 @@ DMLUtils::BuildPlanState(AbstractPlanState *root,
   auto right_tree = innerPlanState(planstate);
 
   if(left_tree)
-    BuildPlanState(child_planstate, left_tree, true);
+    PreparePlanState(child_planstate, left_tree, true);
   if(right_tree)
-    BuildPlanState(child_planstate, right_tree, false);
+    PreparePlanState(child_planstate, right_tree, false);
 
   return root;
 }
@@ -134,9 +134,6 @@ DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
 
-  info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
-                                                 mt_plan_state->mt_nplans);
-
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
   // Child is a result node
@@ -152,6 +149,8 @@ DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
     child_planstate->proj = BuildProjectInfo(result_ps->ps.ps_ProjInfo,
                                              info->table_nattrs);
 
+    info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
+                                                   mt_plan_state->mt_nplans);
     info->mt_plans[0] = child_planstate;
   }
   else {
@@ -164,6 +163,41 @@ DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
 void
 DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
                              ModifyTableState *mt_plan_state) {
+  // Should be only one sub plan which is a SeqScan
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
+
+  // Get the first sub plan state
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+  assert(sub_planstate);
+
+  auto child_tag = nodeTag(sub_planstate->plan);
+
+  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
+      child_tag == T_IndexOnlyScan ||
+      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
+
+    LOG_TRACE("Child of Update is %u \n", child_tag);
+
+    // Extract the projection info from the underlying scan
+    // and put it in our update node
+    auto scan_state = reinterpret_cast<ScanState *>(sub_planstate);
+
+    auto child_planstate = (AbstractScanPlanState *)
+        PreparePlanState(nullptr, sub_planstate, true);
+
+    child_planstate->proj = BuildProjectInfo(scan_state->ps.ps_ProjInfo,
+                                             info->table_nattrs);
+
+    info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
+                                                   mt_plan_state->mt_nplans);
+    info->mt_plans[0] = child_planstate;
+
+  } else {
+    LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
+  }
+
+
 }
 
 void
@@ -176,13 +210,12 @@ DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
   // Maybe relax later. I don't know when they can have >1 subplans.
   assert(mt_plan_state->mt_nplans == 1);
 
-  info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
-                                                 mt_plan_state->mt_nplans);
-
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
-  auto child_planstate = BuildPlanState(nullptr, sub_planstate, true);
+  auto child_planstate = PreparePlanState(nullptr, sub_planstate, true);
 
+  info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
+                                                 mt_plan_state->mt_nplans);
   info->mt_plans[0] = child_planstate;
 
 }
@@ -251,7 +284,7 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
 AbstractPlanState *
 DMLUtils::peloton_prepare_data(PlanState *planstate) {
 
-  auto peloton_planstate = BuildPlanState(nullptr, planstate, false);
+  auto peloton_planstate = PreparePlanState(nullptr, planstate, false);
 
   return peloton_planstate;
 }
