@@ -74,6 +74,9 @@ class DMLUtils {
   static MaterialPlanState *PrepareMaterialState(
       MaterialState *material_plan_state);
 
+  static NestLoopPlanState *PrepareNestLoopState(
+      NestLoopState *nl_plan_state);
+
   static PelotonProjectionInfo *BuildProjectInfo(
       ProjectionInfo *proj_info,
       int column_count);

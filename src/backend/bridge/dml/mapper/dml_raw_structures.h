@@ -131,12 +131,13 @@ struct ResultPlanState : public AbstractPlanState {
 
 struct AbstractJoinPlanState : public AbstractPlanState {
 
-  //ProjectionInfo *ps_ProjInfo;
+  PelotonProjectionInfo *ps_ProjInfo;
   TupleDesc tts_tupleDescriptor;
 
   JoinType jointype;
   List *joinqual;
   List *qual;
+
 };
 
 struct NestLoopPlanState : public AbstractJoinPlanState {
