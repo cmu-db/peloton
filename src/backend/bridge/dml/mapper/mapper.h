@@ -108,7 +108,7 @@ class PlanTransformer {
    * generate a projection plan node and put it on top of the scan node.
    */
   static planner::AbstractPlan *TransformSeqScan(
-      const SeqScanState *planstate,
+      const SeqScanPlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexScan(
       const IndexScanState *planstate,
@@ -153,7 +153,7 @@ class PlanTransformer {
       planner::AbstractPlan *&parent,
       expression::AbstractExpression *&predicate,
       std::vector<oid_t> &out_col_list,
-      const ScanState *sstate,
+      const AbstractScanPlanState *sstate,
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(

@@ -55,7 +55,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_SeqScanState:
       peloton_plan = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState *>(planstate),
+          reinterpret_cast<const SeqScanPlanState *>(planstate),
           options);
       break;
     case T_IndexScanState:
