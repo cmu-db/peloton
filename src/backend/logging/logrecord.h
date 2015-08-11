@@ -54,21 +54,21 @@ public:
   // Accessor
   //===--------------------------------------------------------------------===//
 
-  char* GetSerializedLogRecord() const;
+  static size_t GetSerializedLogRecordHeaderSize(void);
 
-  size_t GetSerializedLogRecordSize() const;
+  char* GetSerializedLogRecord(void) const;
 
-  size_t GetSerializedLogRecordHeaderSize() const;
+  size_t GetSerializedLogRecordSize(void) const;
 
-  LogRecordType GetType() const;
+  LogRecordType GetType(void) const;
 
-  oid_t GetDbId() const;
+  oid_t GetDbId(void) const;
   
-  oid_t GetTableId() const;
+  oid_t GetTableId(void) const;
 
-  txn_id_t GetTxnId() const;
+  txn_id_t GetTxnId(void) const;
 
-  ItemPointer GetItemPointer() const;
+  ItemPointer GetItemPointer(void) const;
 
   friend std::ostream &operator<<(std::ostream &os, const LogRecord& record);
 
@@ -99,8 +99,6 @@ private:
   char* serialized_log_record;
 
   size_t serialized_log_record_size;
-
-  size_t serialized_log_record_header_size;
 
 };
 
