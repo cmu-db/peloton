@@ -39,7 +39,7 @@ void PlanTransformer::PrintPlan(const Plan *plan) {
  * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlan *PlanTransformer::TransformPlan(
-    PlanState *planstate,
+    AbstractPlanState *planstate,
     const TransformOptions options) {
 
   // Ignore empty plans
@@ -50,7 +50,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
   switch (nodeTag(planstate)) {
     case T_ModifyTableState:
       peloton_plan = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(planstate),
+          reinterpret_cast<const ModifyTablePlanState *>(planstate),
           options);
       break;
     case T_SeqScanState:

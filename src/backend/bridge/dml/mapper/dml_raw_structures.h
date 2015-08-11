@@ -33,11 +33,12 @@ struct AbstractPlanState {
 struct ModifyTablePlanState : public AbstractPlanState {
 
   CmdType operation;
+  Oid database_oid;
   Oid table_oid;
 
+  int table_nattrs;
+
   AbstractPlanState **mt_plans;   /* subplans (one per target rel) */
-  int     mt_nplans;    /* number of plans in the array */
-  int     mt_whichplan; /* which one is being executed (0..n-1) */
 
 };
 

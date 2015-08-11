@@ -14,9 +14,13 @@
 #include <iostream>
 
 #include "backend/bridge/dml/mapper/dml_utils.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
 
+#include "postgres.h"
 #include "nodes/execnodes.h"
+#include "common/fe_memutils.h"
+#include "utils/rel.h"
 
 namespace peloton {
 namespace bridge {
@@ -38,6 +42,8 @@ DMLUtils::BuildPlanState(AbstractPlanState *root,
   switch (planstate_type) {
 
     case T_ModifyTableState:
+      child_planstate = PrepareModifyTableState(
+          reinterpret_cast<ModifyTableState *>(planstate));
       break;
 
     default:
@@ -67,6 +73,50 @@ DMLUtils::BuildPlanState(AbstractPlanState *root,
     BuildPlanState(child_planstate, right_tree, false);
 
   return root;
+}
+
+ModifyTablePlanState *
+DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
+
+  ModifyTablePlanState *info = (ModifyTablePlanState*) palloc(sizeof(ModifyTablePlanState));
+  info->type = mt_plan_state->ps.type;
+
+  // Resolve result table
+  ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
+  Relation result_relation_desc = result_rel_info->ri_RelationDesc;
+  oid_t table_nattrs = result_relation_desc->rd_att->natts;
+
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  Oid table_oid = result_relation_desc->rd_id;
+
+  info->operation = mt_plan_state->operation;
+  info->database_oid = database_oid;
+  info->table_oid = table_oid;
+  info->table_nattrs = table_nattrs;
+
+  // Should be only one sub plan which is a Result
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
+
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+
+  // Child is a result node
+  if (nodeTag(sub_planstate->plan) == T_Result) {
+    LOG_TRACE("Child of Insert is Result");
+    auto result_ps = reinterpret_cast<ResultState *>(sub_planstate);
+
+    // We only handle single-constant-tuple for now,
+    // i.e., ResultState should have no children/sub plans
+    assert(outerPlanState(result_ps) == nullptr);
+
+    //auto project_info = BuildProjectInfo(result_ps->ps.ps_ProjInfo, table_nattrs);
+  }
+  else {
+    LOG_ERROR("Unsupported child type of Insert: %u",
+              nodeTag(sub_planstate->plan));
+  }
+
+  return info;
 }
 
 /**

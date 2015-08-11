@@ -850,12 +850,10 @@ peloton_send_dml(Peloton_Status  *status,
   auto shm_param_list = peloton_copy_paramlist(param_list);
   msg.m_param_list = shm_param_list;
 
-  // Prepare the plan
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-
   // Create the raw planstate info
-  MemoryContextSwitchTo(oldcxt);
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  MemoryContextSwitchTo(oldcxt);
   msg.m_plan_state = plan_state;
 
   peloton_send(&msg, sizeof(msg));
@@ -974,10 +972,9 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   assert(msg);
 
   /* Get the planstate */
- // auto planstate = msg->m_plan_state;
-  peloton::planner::AbstractPlan *plan = nullptr;
+  auto planstate = msg->m_plan_state;
 
-  //auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+  auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
   /* Ignore empty plans */
   if(plan == nullptr) {
@@ -991,6 +988,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   TupleDesc tuple_desc = msg->m_tuple_desc;
 
   elog(LOG, "ParamList :: %p", param_list);
+  elog(LOG, "Plan :: %p", plan);
 
   try {
     // Execute the plantree

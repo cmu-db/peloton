@@ -26,14 +26,14 @@ namespace bridge {
  */
 planner::AbstractPlan *PlanTransformer::TransformMaterialization(
     const MaterialState *plan_state) {
-  PlanState *outer_plan_state = outerPlanState(plan_state);
-  planner::AbstractPlan *child = TransformPlan(outer_plan_state);
+  //PlanState *outer_plan_state = outerPlanState(plan_state);
+  //planner::AbstractPlan *child = TransformPlan(outer_plan_state);
   bool physify_flag =
       false;  // current, we just pass the underlying plan node for this case
 
   planner::AbstractPlan *plan_node =
       new planner::MaterializationPlan(physify_flag);
-  plan_node->AddChild(child);
+  //plan_node->AddChild(child);
 
   return plan_node;
 }
