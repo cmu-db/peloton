@@ -78,6 +78,8 @@
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
+#include "backend/logging/logmanager.h"
+
 /* ----------------
  *		global variables
  * ----------------
