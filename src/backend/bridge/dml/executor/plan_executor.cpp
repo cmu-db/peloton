@@ -130,7 +130,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     default:
-      LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
+      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
       break;
   }
 
