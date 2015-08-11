@@ -21,10 +21,6 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
 
   assert(1 == num_phases);  // When we'll have >1 phases?
 
-  std::unique_ptr<catalog::Schema> output_schema(
-      SchemaTransformer::GetSchemaFromTupleDesc(
-          agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor));
-
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(agg_state->ss.ps.targetlist));
@@ -73,13 +69,18 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
     if (AttributeNumberIsValid(attrno) && AttrNumberIsForUserDefinedAttr(attrno)) {
       groupby_col_ids.emplace_back(AttrNumberGetAttrOffset(attrno));
     }
-
   }
+
+  /* Get output schema */
+  std::unique_ptr<catalog::Schema> output_schema(
+      SchemaTransformer::GetSchemaFromTupleDesc(
+          agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor));
 
   auto retval = new planner::AggregateV2Node(proj_info.release(),
                                              predicate.release(),
                                              std::move(unique_agg_terms),
-                                             std::move(groupby_col_ids));
+                                             std::move(groupby_col_ids),
+                                             output_schema.get());
 
   // Find children
   auto lchild = TransformPlan(outerPlanState(agg_state));
