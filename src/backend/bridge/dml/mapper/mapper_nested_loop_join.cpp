@@ -78,15 +78,15 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     result = plan_node;
   }
 
-  planner::AbstractPlan *outer =
-      PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlan *inner =
-      PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+  //planner::AbstractPlan *outer =
+  //    PlanTransformer::TransformPlan(outerPlanState(nl_plan_state), true);
+  //planner::AbstractPlan *inner =
+  //    PlanTransformer::TransformPlan(innerPlanState(nl_plan_state), false);
 
   /* Add the children nodes */
   plan_node->SetJoinType(join_type);
-  plan_node->AddChild(outer);
-  plan_node->AddChild(inner);
+  //plan_node->AddChild(outer);
+  //plan_node->AddChild(inner);
 
   LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
   return result;

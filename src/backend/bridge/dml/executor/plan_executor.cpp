@@ -199,7 +199,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
                                TransactionId txn_id) {
-  assert(plan);
+  if(plan == nullptr)
+    return;
 
   LOG_INFO("PlanExecutor Start \n");
 
