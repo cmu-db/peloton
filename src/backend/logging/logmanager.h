@@ -40,11 +40,13 @@ class LogManager{
     // global singleton
     static std::shared_ptr<LogManager>& GetInstance(void);
 
-    void StartLogging(LoggingType logging_type);
+    void StandbyLogging(LoggingType logging_type);
+
+    void StartLogging(void);
+
+    bool IsPelotonReadyToRestore(void);
 
     BackendLogger* GetBackendLogger(LoggingType logging_type);
-
-    void Restore(LoggingType logging_type);
 
   private:
      FrontendLogger* GetFrontendLogger(LoggingType logging_type);
@@ -52,6 +54,8 @@ class LogManager{
     // frontend_logger is only one for each logging(stdoud, aries, peloton)
     // so that we can identify frontend_logger using logger_type
     std::vector<FrontendLogger*> frontend_loggers;
+
+    bool isPelotonReadyToRestore;
 
 };
 

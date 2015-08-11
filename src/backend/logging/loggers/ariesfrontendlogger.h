@@ -39,7 +39,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void Flush(void);
 
-    void Restore(void) ;
+    void Restore(void);
 
   private:
 

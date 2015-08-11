@@ -266,9 +266,6 @@ PelotonMain(int argc, char *argv[]) {
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
-  /* Init Peloton */
-  //peloton::bridge::Bootstrap::BootstrapPeloton();
-
   /*
    * Create a resource owner to keep track of our resources (not clear that
    * we need this, but may as well have one).
@@ -382,13 +379,11 @@ peloton_MainLoop(void) {
     return;
   }
 
-  // Launching a thread
-
-  // Launching a thread for stdout logging(debuging)
-  std::thread thread(&peloton::logging::LogManager::StartLogging,
+  // Launching a thread and wait until Bootstrapping is done
+  printf("Launch a logging thread \n");
+  std::thread thread(&peloton::logging::LogManager::StandbyLogging,
                      peloton::logging::LogManager::GetInstance(),
                      peloton::LOGGING_TYPE_ARIES);
-//                   peloton::LOGGING_TYPE_STDOUT);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -1091,6 +1086,12 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       /* Process the utility statement */
       peloton::bridge::Bootstrap::BootstrapPeloton(raw_database,
                                                    msg->m_status);
+
+      // NOTE:: start logging since bootstrapPeloton is done
+      auto logManager = peloton::logging::LogManager::GetInstance();
+      if(logManager->IsPelotonReadyToRestore() == false){
+        logManager->StartLogging();
+      }
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());

@@ -40,15 +40,24 @@ public:
   : log_record_type(log_record_type),
     txn_id(txn_id), 
     table_oid(table_oid), 
-    itemPointer(itemPointer)
+    itemPointer(itemPointer),
+    data(data)
   {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
     db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     assert(db_oid);
     assert(table_oid);
     assert(txn_id != INVALID_TXN_ID );
-    assert(SerializeLogRecord(data));
+    assert(data);
   }
+
+  //===--------------------------------------------------------------------===//
+  // Serialization 
+  //===--------------------------------------------------------------------===//
+
+  bool SerializeLogRecord();
+
+  void SerializeLogRecordHeader(CopySerializeOutput& output);
 
   //===--------------------------------------------------------------------===//
   // Accessor
@@ -74,14 +83,6 @@ public:
 
 private:
 
-  void SerializeLogRecordHeader(CopySerializeOutput& output);
-
-  bool SerializeLogRecord(const void* data);
-
-  void DeserializeLogRecordHeader(CopySerializeInput& input);
-
-  bool DeserializeLogRecord(const void* data, size_t data_size);
-
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
@@ -95,6 +96,8 @@ private:
   ItemPointer itemPointer;
 
   oid_t db_oid;
+
+  const void* data;
 
   char* serialized_log_record;
 

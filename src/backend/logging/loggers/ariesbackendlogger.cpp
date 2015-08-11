@@ -27,6 +27,7 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
 void AriesBackendLogger::Insert(LogRecord afterRecord){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    afterRecord.SerializeLogRecord();
     aries_local_queue.push_back(afterRecord);
   }
   //FIXME :: Commit everytime for testing
@@ -40,6 +41,7 @@ void AriesBackendLogger::Insert(LogRecord afterRecord){
 void AriesBackendLogger::Delete(LogRecord beforeRecord){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    beforeRecord.SerializeLogRecord();
     aries_local_queue.push_back(beforeRecord);
   }
   //FIXME :: Commit everytime for testing
@@ -54,6 +56,8 @@ void AriesBackendLogger::Update(LogRecord beforeRecord,
                                 LogRecord afterRecord){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    beforeRecord.SerializeLogRecord();
+    afterRecord.SerializeLogRecord();
     aries_local_queue.push_back(beforeRecord);
     aries_local_queue.push_back(afterRecord);
   }
