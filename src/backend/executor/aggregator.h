@@ -17,7 +17,7 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
-#include "backend/planner/aggregate_node.h"
+#include "backend/planner/aggregateV2_node.h"
 
 #include <unordered_map>
 
@@ -244,9 +244,9 @@ typedef std::unordered_map<storage::Tuple, AggregateList *,
 template <PlanNodeType aggregate_type>
 class Aggregator {
  public:
-  Aggregator(const planner::AggregateNode *node,
+  Aggregator(const planner::AggregateV2Node *node,
              storage::DataTable *output_table,
-             const concurrency::Transaction *transaction_id);
+             executor::ExecutorContext* econtext);
 
   bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple);
 
@@ -256,13 +256,13 @@ class Aggregator {
 
  private:
   /** @brief Plan node */
-  const planner::AggregateNode *node;
+  const planner::AggregateV2Node *node;
 
   /** @brief Output table */
   storage::DataTable *output_table;
 
-  /** @brief Transaction id for mutating table */
-  const concurrency::Transaction *transaction;
+  /** @brief Executor Context */
+  executor::ExecutorContext* executor_context = nullptr;
 
   /** @brief Aggregates */
   Agg **aggregates = nullptr;
@@ -270,11 +270,8 @@ class Aggregator {
   /** @brief Group by columns */
   std::vector<oid_t> group_by_columns;
 
-  /** @brief Aggregate columns */
-  std::vector<oid_t> aggregate_columns;
-
-  /** @brief Aggregate types */
-  std::vector<ExpressionType> aggregate_types;
+  /** @brief Group-By terms */
+  std::vector<planner::AggregateV2Node::AggTerm> aggregate_terms;
 
   //===--------------------------------------------------------------------===//
   // Used only for hash aggregation

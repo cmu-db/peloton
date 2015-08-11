@@ -13,7 +13,9 @@
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/project_info.h"
 #include "backend/common/types.h"
+#include "backend/expression/abstract_expression.h"
 
 
 namespace peloton {
@@ -31,11 +33,13 @@ class AggregateV2Node : public AbstractPlanNode {
   AggregateV2Node(const planner::ProjectInfo* project_info,
                   const expression::AbstractExpression* predicate,
                   const std::vector<AggTerm>&& unique_agg_terms,
-                  const std::vector<oid_t>&& groupby_col_ids)
+                  const std::vector<oid_t>&& groupby_col_ids,
+                  const catalog::Schema* output_schema)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
-        groupby_col_ids_(groupby_col_ids) {
+        groupby_col_ids_(groupby_col_ids),
+        output_schema_(output_schema){
 
   }
 
@@ -55,7 +59,11 @@ class AggregateV2Node : public AbstractPlanNode {
     return unique_agg_terms_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  const catalog::Schema* GetOutputSchema() const {
+    return output_schema_;
+  }
+
+inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
   }
 
@@ -65,8 +73,7 @@ class AggregateV2Node : public AbstractPlanNode {
     }
   }
 
-
- private:
+   private:
 
   /* For projection */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
@@ -79,6 +86,9 @@ class AggregateV2Node : public AbstractPlanNode {
 
   /* Group-by Keys */
   const std::vector<oid_t> groupby_col_ids_;
+
+  /* Output schema */
+  const catalog::Schema* output_schema_;
 
 };
 
