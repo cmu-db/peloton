@@ -988,10 +988,11 @@ peloton_send_ddl(Node *parsetree) {
   status = peloton_create_status();
   msg.m_status = status;
 
-  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
+  auto ddl_info = peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
 
   auto parsetree_copy = peloton_copy_parsetree(parsetree);
   msg.m_parsetree = parsetree_copy;
+  msg.m_ddl_info = ddl_info;
 
   // Switch back to old context
   MemoryContextSwitchTo(oldcxt);
@@ -1168,6 +1169,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 
   /* Get the parsetree */
   parsetree = msg->m_parsetree;
+  auto ddl_info = msg->m_ddl_info;
 
   /* Ignore invalid parsetrees */
   if(parsetree == NULL || nodeTag(parsetree) == T_Invalid) {
@@ -1182,6 +1184,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   try {
     /* Process the utility statement */
     peloton::bridge::DDL::ProcessUtility(parsetree,
+                                         ddl_info,
                                          msg->m_status,
                                          txn_id);
   }
