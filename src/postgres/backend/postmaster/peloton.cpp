@@ -841,8 +841,6 @@ peloton_begin_query() {
                                              ALLOCSET_DEFAULT_MAXSIZE,
                                              SHM_DEFAULT_SEGMENT);
 
-  elog(INFO, "BEGIN :: SHMQueryContext :: %p pid :: %d", SHMQueryContext, getpid());
-
 }
 
 /* ----------
@@ -985,7 +983,7 @@ peloton_send_ddl(Node *parsetree) {
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
@@ -1006,7 +1004,7 @@ peloton_send_ddl(Node *parsetree) {
   peloton_destroy_status(status);
 
   // Do final cleanup
-  // peloton_finish_query();
+  peloton_finish_query();
 
 }
 
@@ -1068,8 +1066,6 @@ peloton_send_bootstrap(){
 static void
 peloton_finish_query() {
 
-  elog(INFO, "FINISH :: SHMQueryContext :: %p pid :: %d", SHMQueryContext, getpid());
-
   // First, clean up the query context
   if(SHMQueryContext != NULL)
     SHMContextDelete(SHMQueryContext);
@@ -1085,6 +1081,7 @@ peloton_finish_query() {
  */
 static void
 peloton_reply_to_backend(mqd_t backend_id) {
+  /*
   mqd_t mqd = -1;
 
   // Access queue map
@@ -1104,7 +1101,7 @@ peloton_reply_to_backend(mqd_t backend_id) {
 
   // Send some message
   peloton::send_message(mqd, "test_msg");
-
+  */
 }
 
 /* ----------
@@ -1265,8 +1262,24 @@ peloton_create_status() {
 void
 peloton_process_status(Peloton_Status *status) {
   int code;
+  struct timespec duration = {0, 100}; // 100 us
+  int rc;
 
-  peloton::wait_for_message(&MyBackendQueue);
+  assert(status);
+
+  // Busy wait till we get a valid result
+  while(status->m_result == peloton::RESULT_INVALID) {
+    rc = nanosleep(&duration, NULL);
+    if(rc < 0) {
+      break;
+    }
+
+    /* additive increase */
+    duration.tv_nsec += 100;
+    //elog(DEBUG2, "Busy waiting");
+  }
+
+  //peloton::wait_for_message(&MyBackendQueue);
 
   // Process the status code
   code = status->m_result;
