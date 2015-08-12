@@ -43,14 +43,17 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexScan(
-    const IndexScanState *iss_plan_state, const TransformOptions options) {
+    const IndexScanPlanState *iss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
+
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
+
   /* Resolve target relation */
-  Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan =
-      reinterpret_cast<IndexScan *>(iss_plan_state->ss.ps.plan);
+  Oid table_oid = iss_plan_state->table_oid;
+  Oid database_oid = iss_plan_state->database_oid;
+
+  const IndexScan *iss_plan = iss_plan_state->iss_plan;
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -69,7 +72,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", iss_plan_state->iss_NumScanKeys);
-  BuildScanKey(iss_plan_state->iss_ScanKeys, iss_plan_state->iss_NumScanKeys,
+
+  BuildScanKey(iss_plan_state->iss_ScanKeys,
+               iss_plan_state->iss_NumScanKeys,
                index_scan_desc);
 
   /* handle simple cases */
@@ -80,8 +85,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  //GetGenericInfoFromScanState(parent, predicate, column_ids,
-  //                            &(iss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              iss_plan_state,
+                              options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -114,27 +120,22 @@ static void BuildScanKey(
   ScanKey scan_key = scan_keys;
   assert(num_keys > 0);
 
-  for (int i = 0; i < num_keys; i++, scan_key++) {
-    assert(!(scan_key->sk_flags &
-             SK_ISNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ORDER_BY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_UNARY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_HEADER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_MEMBER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_END));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_SEARCHNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_SEARCHNOTNULL));  // currently, only support simple case
+  for (int key_itr = 0; key_itr < num_keys; key_itr++, scan_key++) {
+    // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_ISNULL));
+    assert(!(scan_key->sk_flags & SK_ORDER_BY));
+    assert(!(scan_key->sk_flags & SK_UNARY));
+    assert(!(scan_key->sk_flags & SK_ROW_HEADER));
+    assert(!(scan_key->sk_flags & SK_ROW_MEMBER));
+    assert(!(scan_key->sk_flags & SK_ROW_END));
+    assert(!(scan_key->sk_flags & SK_SEARCHNULL));
+    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
+
     Value value =
         TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
-    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno -
-                                             1);  // 1 indexed
+
+    // 1 indexed
+    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);
 
     index_scan_desc.values.push_back(value);
     std::ostringstream oss;

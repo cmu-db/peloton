@@ -21,6 +21,7 @@
 #include "nodes/execnodes.h"
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
+#include "utils/datum.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,
@@ -34,6 +35,9 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 ExprState *CopyExprState(ExprState *expr_state);
+
+ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
+                         TupleDesc relation_tup_desc);
 
 AbstractPlanState *
 DMLUtils::PreparePlanState(AbstractPlanState *root,
@@ -381,14 +385,14 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
 
 void
 DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
-                                   ScanState *ss_state) {
+                                   const ScanState& ss_state) {
 
   // Resolve table
-  Relation ss_relation_desc = ss_state->ss_currentRelation;
+  Relation ss_relation_desc = ss_state.ss_currentRelation;
   ss_plan_state->table_oid = ss_relation_desc->rd_id;
 
   // Copy expr states
-  auto qual_list = ss_state->ps.qual;
+  auto qual_list = ss_state.ps.qual;
   ListCell *qual_item;
 
   ss_plan_state->qual = NIL;
@@ -400,7 +404,7 @@ DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
   }
 
   // Copy tuple desc
-  auto tup_desc = ss_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+  auto tup_desc = ss_state.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
   ss_plan_state->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
 
 }
@@ -411,7 +415,7 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
   info->type = ss_plan_state->ps.type;
 
   // First, build the abstract scan state
-  PrepareAbstractScanState(info, ss_plan_state);
+  PrepareAbstractScanState(info, *ss_plan_state);
 
   // Resolve table
   Relation ss_relation_desc = ss_plan_state->ss_currentRelation;
@@ -428,6 +432,50 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
 }
 
 
+IndexScanPlanState *
+DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
+  IndexScanPlanState *info = (IndexScanPlanState*) palloc(sizeof(IndexScanPlanState));
+  info->type = iss_plan_state->ss.ps.type;
+
+  // First, build the abstract scan state
+  PrepareAbstractScanState(info, iss_plan_state->ss);
+
+  // Copy the index scan node
+  info->iss_plan = (IndexScan *) copyObject(iss_plan_state->ss.ps.plan);
+
+  // Copy scan keys
+  info->iss_NumScanKeys = iss_plan_state->iss_NumScanKeys;
+  Relation iss_relation_desc = iss_plan_state->iss_RelationDesc;
+  info->iss_ScanKeys = CopyScanKey(iss_plan_state->iss_ScanKeys,
+                                   iss_plan_state->iss_NumScanKeys,
+                                   iss_relation_desc->rd_att);
+
+  return info;
+}
+
+IndexOnlyScanPlanState *
+DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
+  IndexOnlyScanPlanState *info = (IndexOnlyScanPlanState*) palloc(sizeof(IndexOnlyScanPlanState));
+  info->type = ioss_plan_state->ss.ps.type;
+
+  // First, build the abstract scan state
+  PrepareAbstractScanState(info, ioss_plan_state->ss);
+
+  return info;
+}
+
+BitmapHeapScanPlanState *
+DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
+  BitmapHeapScanPlanState *info = (BitmapHeapScanPlanState*) palloc(sizeof(BitmapHeapScanPlanState));
+  info->type = bhss_plan_state->ss.ps.type;
+
+  // First, build the abstract scan state
+  PrepareAbstractScanState(info, bhss_plan_state->ss);
+
+
+  return info;
+}
+
 MaterialPlanState *
 DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
   MaterialPlanState *info = (MaterialPlanState*) palloc(sizeof(MaterialPlanState));
@@ -439,34 +487,6 @@ DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
 
   return info;
 }
-
-IndexScanPlanState *
-DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
-  IndexScanPlanState *info = (IndexScanPlanState*) palloc(sizeof(IndexScanPlanState));
-  info->type = iss_plan_state->ss.ps.type;
-
-
-  return info;
-}
-
-IndexOnlyScanPlanState *
-DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
-  IndexOnlyScanPlanState *info = (IndexOnlyScanPlanState*) palloc(sizeof(IndexOnlyScanPlanState));
-  info->type = ioss_plan_state->ss.ps.type;
-
-
-  return info;
-}
-
-BitmapHeapScanPlanState *
-DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
-  BitmapHeapScanPlanState *info = (BitmapHeapScanPlanState*) palloc(sizeof(BitmapHeapScanPlanState));
-  info->type = bhss_plan_state->ss.ps.type;
-
-
-  return info;
-}
-
 
 /**
  * @brief preparing data
@@ -620,6 +640,33 @@ ExprState *CopyExprState(ExprState *expr_state){
   return expr_state_copy;
 }
 
+ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
+                         TupleDesc relation_tup_desc){
+
+  ScanKeyData *scan_key_copy = nullptr;
+  scan_key_copy = (ScanKeyData *) palloc(sizeof(ScanKeyData) * num_keys);
+
+  for (int key_itr = 0; key_itr < num_keys; key_itr++) {
+    auto orig_key = scan_key[key_itr];
+
+    scan_key_copy[key_itr].sk_attno = orig_key.sk_attno;
+    scan_key_copy[key_itr].sk_flags = orig_key.sk_flags;
+
+    scan_key_copy[key_itr].sk_strategy = orig_key.sk_strategy;
+    scan_key_copy[key_itr].sk_subtype = orig_key.sk_subtype;
+
+    // Deep copy the datum
+    // 1 -indexed
+    assert(orig_key.sk_attno <= relation_tup_desc->natts);
+    auto attr = relation_tup_desc->attrs[orig_key.sk_attno - 1];
+    scan_key_copy[key_itr].sk_argument = datumCopy(orig_key.sk_argument,
+                                                   attr->attlen,
+                                                   attr->attbyval);
+
+  }
+
+  return scan_key_copy;
+}
 
 }  // namespace bridge
 }  // namespace peloton
