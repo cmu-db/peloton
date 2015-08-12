@@ -22,6 +22,7 @@
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
 #include "utils/memutils.h"
+#include "tcop/dest.h"
 
 /* ----------
  * The types of backend -> peloton messages
@@ -53,6 +54,7 @@ typedef struct Peloton_MsgHdr
   BackendId m_backend_id;
   Oid   m_dbid;
   TransactionId m_txn_id;
+  MemoryContext m_query_context;
 } Peloton_MsgHdr;
 
 /* ----------
@@ -168,20 +170,14 @@ extern int  peloton_start(void);
  * ----------
  */
 
-extern void peloton_send_dml(Peloton_Status  *status,
-                             PlanState *planstate,
+extern void peloton_send_dml(PlanState *planstate,
+                             bool sendTuples,
+                             DestReceiver *dest,
                              TupleDesc tuple_desc);
 
-extern void peloton_send_ddl(Peloton_Status  *status,
-                             Node *parsetree);
+extern void peloton_send_ddl(Node *parsetree);
 
-extern void peloton_send_bootstrap(Peloton_Status *status);
-
-extern Peloton_Status *peloton_create_status();
-
-extern void peloton_process_status(Peloton_Status *status);
-
-extern void peloton_destroy_status(Peloton_Status *status);
+extern void peloton_send_bootstrap();
 
 #endif   /* PELOTON_H */
 
