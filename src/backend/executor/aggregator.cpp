@@ -63,7 +63,7 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  * FIXME: need to examine Value's uninlined data problem later.
  */
 bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
-            storage::DataTable *output_table, AbstractTuple *prev_tuple,
+            storage::DataTable *output_table, const AbstractTuple *prev_tuple,
             executor::ExecutorContext* econtext) {
   // Ignore null tuples
   if (prev_tuple == nullptr)
@@ -123,102 +123,102 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 // table to be sorted on the group by key.
 //===--------------------------------------------------------------------===//
 
-/*
- template<>
- Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
- const planner::AggregateV2Node *node, storage::DataTable *output_table,
- executor::ExecutorContext* econtext)
- : node(node),
- output_table(output_table),
- executor_context(econtext) {
- group_by_columns = node->GetGroupByColumns();
- group_by_key_schema = node->GetGroupByKeySchema();
- assert(group_by_key_schema != nullptr);
+template<>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
+    const planner::AggregateV2Node *node, storage::DataTable *output_table,
+    executor::ExecutorContext* econtext)
+    : node(node),
+      output_table(output_table),
+      executor_context(econtext) {
 
- // Allocate a group by key tuple
- group_by_key_tuple = new storage::Tuple(group_by_key_schema, true);
+  group_by_key_values.resize(node->GetGroupbyColIds().size(),
+                             ValueFactory::GetNullValue());
 
- aggregate_types = node->GetAggregateTypes();
- aggregate_columns = node->GetAggregateColumns();
- }
+}
 
- template<>
- Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::~Aggregator() {
- // Clean up group by key tuple
- group_by_key_tuple->FreeUninlinedData();
- delete group_by_key_tuple;
- }
+template<>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::~Aggregator() {
 
- template<>
- bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Advance(
- AbstractTuple *cur_tuple,
- AbstractTuple *prev_tuple __attribute__((unused))) {
- AggregateList *aggregate_list;
+}
 
- // Configure a tuple and search for the required group.
- for (oid_t column_itr = 0; column_itr < group_by_columns.size();
- column_itr++) {
- Value cur_tuple_val = cur_tuple->GetValue(group_by_columns[column_itr]);
- group_by_key_tuple->SetValue(column_itr, cur_tuple_val);
- }
+template<>
+bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Advance(
+    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple __attribute__((unused)),
+    size_t num_columns) {
 
- auto map_itr = aggregates_map.find(*group_by_key_tuple);
+  AggregateList *aggregate_list;
 
- // Group not found. Make a new entry in the hash for this new group.
- if (map_itr == aggregates_map.end()) {
- // Allocate new aggregate list
- aggregate_list = new AggregateList();
- aggregate_list->aggregates = new Agg *[aggregate_columns.size()];
- aggregate_list->group_tuple = cur_tuple;
+  // Configure a group-by-key and search for the required group.
+  for (oid_t column_itr = 0; column_itr < node->GetGroupbyColIds().size();
+      column_itr++) {
+    Value cur_tuple_val = cur_tuple->GetValue(
+        node->GetGroupbyColIds()[column_itr]);
+    group_by_key_values[column_itr] = cur_tuple_val;
+  }
 
- for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
- column_itr++) {
- aggregate_list->aggregates[column_itr] = GetAggInstance(
- aggregate_types[column_itr]);
- }
+  auto map_itr = aggregates_map.find(group_by_key_values);
 
- aggregates_map.insert(
- HashAggregateMapType::value_type(*group_by_key_tuple, aggregate_list));
- }
- // Otherwise, the list is the second item of the pair.
- else {
- aggregate_list = map_itr->second;
- }
+// Group not found. Make a new entry in the hash for this new group.
+  if (map_itr == aggregates_map.end()) {
+    LOG_INFO("Group-by key not found. Start a new group.");
+    // Allocate new aggregate list
+    aggregate_list = new AggregateList();
+    aggregate_list->aggregates = new Agg *[node->GetUniqueAggTerms().size()];
+    // Make a deep copy of the first tuple we meet
+    for (size_t col_id = 0; col_id < num_columns; col_id++) {
+      aggregate_list->first_tuple_values.push_back(
+          ValueFactory::Clone(cur_tuple->GetValue(col_id)));
+    };
 
- // Update the aggregation calculation
- for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
- column_itr++) {
- const oid_t column_index = aggregate_columns[column_itr];
- Value value = cur_tuple->GetValue(column_index);
- aggregate_list->aggregates[column_itr]->Advance(value);
- }
+    for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
+        column_itr++) {
+      aggregate_list->aggregates[column_itr] = GetAggInstance(
+          node->GetUniqueAggTerms()[column_itr].first);
+    }
 
- return true;
- }
+    aggregates_map.insert(
+        HashAggregateMapType::value_type(group_by_key_values, aggregate_list));
+  }
+// Otherwise, the list is the second item of the pair.
+  else {
+    aggregate_list = map_itr->second;
+  }
 
- template<>
- bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
- AbstractTuple *prev_tuple __attribute__((unused))) {
- for (auto entry : aggregates_map) {
- if (Helper(node, entry.second->aggregates, output_table,
- entry.second->group_tuple, transaction) == false) {
- return false;
- }
+// Update the aggregation calculation
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    Value value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
+        cur_tuple, nullptr, this->executor_context);
+    aggregate_list->aggregates[aggno]->Advance(value);
+  }
 
- // Clean up allocated storage
- delete entry.second->aggregates;
- delete entry.second->group_tuple;
- }
+  return true;
+}
 
- // TODO: if no record exists in input_table, we have to output a null record
- // only when it doesn't have GROUP BY. See difference of these cases:
- //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
- //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
+template<>
+bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
+    AbstractTuple *prev_tuple __attribute__((unused))) {
+  for (auto entry : aggregates_map) {
+    // Construct a container for the first tuple
+    expression::ContainerTuple<std::vector<Value>> first_tuple(&entry.second->first_tuple_values);
+    if (Helper(node, entry.second->aggregates, output_table,
+               &first_tuple, this->executor_context) == false) {
+      return false;
+    }
 
- return true;
- }
+    // Clean up allocated storage
+    delete[] entry.second->aggregates;
+    for(auto &v : entry.second->first_tuple_values){
+      v.FreeUninlinedData();
+    }
+  }
 
- */
+// TODO: if no record exists in input_table, we have to output a null record
+// only when it doesn't have GROUP BY. See difference of these cases:
+//   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
+//   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
+
+  return true;
+}
 
 //===--------------------------------------------------------------------===//
 // Specialization of an aggregator that expects the input table to be
@@ -234,7 +234,7 @@ Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
 
   group_by_columns = node->GetGroupbyColIds();
 
-  // Create aggregators and initialize
+// Create aggregators and initialize
   aggregate_terms = node->GetUniqueAggTerms();
   aggregates = new Agg *[aggregate_terms.size()];
   ::memset(aggregates, 0, sizeof(Agg *) * aggregate_terms.size());
@@ -242,7 +242,7 @@ Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
 
 template<>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
-  // Clean up aggregators
+// Clean up aggregators
   for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
       column_itr++) {
     delete aggregates[column_itr];
@@ -252,10 +252,11 @@ Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
 
 template<>
 bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
-    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple) {
+    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple,
+    size_t __attribute__((unused))) {
   bool start_new_agg = false;
 
-  // Check if we are starting a new aggregate tuple
+// Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
     LOG_INFO("Prev tuple is nullptr!");
     start_new_agg = true;
@@ -275,7 +276,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
     }
   }
 
-  // If we have started a new aggregate tuple
+// If we have started a new aggregate tuple
   if (start_new_agg) {
     LOG_INFO("Started a new group!");
 
@@ -295,12 +296,11 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
     }
   }
 
-  // Update the aggregation calculation
+// Update the aggregation calculation
   for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
       column_itr++) {
-    Value value = aggregate_terms[column_itr].second->Evaluate(cur_tuple,
-                                                               nullptr,
-                                                               nullptr);
+    Value value = aggregate_terms[column_itr].second->Evaluate(
+        cur_tuple, nullptr, this->executor_context);
     aggregates[column_itr]->Advance(value);
   }
 
@@ -316,10 +316,10 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
     return false;
   }
 
-  // TODO: if no record exists in input_table, we have to output a null record
-  // only when it doesn't have GROUP BY. See difference of these cases:
-  //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
-  //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
+// TODO: if no record exists in input_table, we have to output a null record
+// only when it doesn't have GROUP BY. See difference of these cases:
+//   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
+//   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
 }
