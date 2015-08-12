@@ -112,7 +112,7 @@ static Peloton_Status *peloton_create_status();
 static void peloton_process_status(Peloton_Status *status);
 static void peloton_destroy_status(Peloton_Status *status);
 
-static void peloton_update_stats(Peloton_Status *status);
+static void __attribute__((unused)) peloton_update_stats(Peloton_Status *status);
 static void peloton_reply_to_backend(mqd_t backend_id);
 
 static void peloton_send_output(Peloton_Status  *status,
@@ -921,7 +921,7 @@ peloton_send_dml(PlanState *planstate,
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
@@ -955,7 +955,7 @@ peloton_send_dml(PlanState *planstate,
   peloton_destroy_status(status);
 
   // Do final cleanup
-  //peloton_finish_query();
+  peloton_finish_query();
 
 }
 
@@ -1036,7 +1036,7 @@ peloton_send_bootstrap(){
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
@@ -1055,7 +1055,7 @@ peloton_send_bootstrap(){
   peloton_destroy_status(status);
 
   // Do final cleanup
-  // peloton_finish_query();
+  peloton_finish_query();
 
 }
 
@@ -1135,9 +1135,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   ParamListInfo param_list = msg->m_param_list;
   TupleDesc tuple_desc = msg->m_tuple_desc;
 
-  elog(LOG, "ParamList :: %p", param_list);
-  elog(LOG, "Plan :: %p", plan);
-
   try {
     // Execute the plantree
     peloton::bridge::PlanExecutor::ExecutePlan(plan,
@@ -1172,8 +1169,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   Node* parsetree;
   assert(msg);
 
-  elog(INFO, "Process DDL");
-
   /* Get the parsetree */
   parsetree = msg->m_parsetree;
 
@@ -1187,8 +1182,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   TransactionId txn_id = msg->m_hdr.m_txn_id;
   SHMQueryContext = msg->m_hdr.m_query_context;
 
-  elog(INFO, "Going to process utility");
-
   try {
     /* Process the utility statement */
     peloton::bridge::DDL::ProcessUtility(parsetree,
@@ -1199,8 +1192,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
     // Nothing to do here !
   }
-
-  elog(INFO, "Done");
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
@@ -1275,11 +1266,7 @@ void
 peloton_process_status(Peloton_Status *status) {
   int code;
 
-  elog(INFO, "Process Status :: Wait");
-
   peloton::wait_for_message(&MyBackendQueue);
-
-  elog(INFO, "Process Status :: Woke up");
 
   // Process the status code
   code = status->m_result;
@@ -1287,7 +1274,7 @@ peloton_process_status(Peloton_Status *status) {
     case peloton::RESULT_SUCCESS: {
       // check dirty bit to see if we need to update stats
       if(status->m_dirty_count){
-        peloton_update_stats(status);
+        //peloton_update_stats(status);
       }
     }
     break;
@@ -1300,8 +1287,6 @@ peloton_process_status(Peloton_Status *status) {
     }
     break;
   }
-
-  elog(INFO, "Process Status :: Done");
 
 }
 
@@ -1372,26 +1357,15 @@ peloton_update_stats(Peloton_Status *status) {
 
 static
 Node *peloton_copy_parsetree(Node *parsetree) {
-
   // Copy the parsetree
   Node     *shm_parsetree = (Node *) copyObject(parsetree);
-
-  elog(INFO, "Copied parsetree : %p", shm_parsetree);
-
   return shm_parsetree;
 }
 
 static
 ParamListInfo peloton_copy_paramlist(ParamListInfo param_list) {
-
   // Copy the parsetree
   auto shm_param_list = copyParamList(param_list);
-
-  elog(INFO, "Copied param list : %p", shm_param_list);
-
-  if(shm_param_list)
-    elog(LOG, "Param Count :: %d", shm_param_list->numParams);
-
   return shm_param_list;
 }
 
