@@ -49,9 +49,7 @@ TEST(AggregateTests, DistinctTest) {
   // Create a table and wrap it in logical tiles
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  false,
-                                   true);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), 2*tuple_count, false, false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -113,11 +111,8 @@ TEST(AggregateTests, DistinctTest) {
   EXPECT_TRUE(executor.Init());
 
   EXPECT_TRUE(executor.Execute());
-
   txn_manager.CommitTransaction(txn);
 }
-
-
 
 TEST(AggregateTests, SumGroupByTest) {
   /*
@@ -128,7 +123,7 @@ TEST(AggregateTests, SumGroupByTest) {
   // Create a table and wrap it in logical tiles
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), 2*tuple_count, false,
   false,
                                    true);
 
@@ -161,7 +156,90 @@ TEST(AggregateTests, SumGroupByTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1};
+  std::vector<oid_t> set = { 0, 1 };
+  std::vector<catalog::Column> columns;
+  for (auto column_index : set) {
+    columns.push_back(data_table_schema->GetColumn(column_index));
+  }
+  auto output_table_schema = new catalog::Schema(columns);
+
+  // OK) Create the plan node
+  planner::AggregateV2Node node(proj_info, predicate, std::move(agg_terms),
+                                std::move(group_by_columns),
+                                output_table_schema);
+
+  // Create and set up executor
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  executor::AggregateExecutor executor(&node, context.get());
+  MockExecutor child_executor;
+  executor.AddChild(&child_executor);
+
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
+
+  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
+      Return(true)).WillOnce(Return(false));
+
+  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
+      Return(source_logical_tile1.release())).WillOnce(
+      Return(source_logical_tile2.release()));
+
+  EXPECT_TRUE(executor.Init());
+
+  EXPECT_TRUE(executor.Execute());
+
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST(AggregateTests, SumMaxGroupByTest) {
+  /*
+   * SELECT a, SUM(b), MAX(c) from table GROUP BY a;
+   */
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+
+  // Create a table and wrap it in logical tiles
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tuple_count, false));
+  ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
+  false,
+                                   true);
+
+  std::unique_ptr<executor::LogicalTile> source_logical_tile1(
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+
+  std::unique_ptr<executor::LogicalTile> source_logical_tile2(
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+
+  // (1-5) Setup plan node
+
+  // 1) Set up group-by columns
+  std::vector<oid_t> group_by_columns = { 0 };
+
+  // 2) Set up project info
+  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 0 } }, { 1,
+      { 1, 0 } }, { 2, { 1, 1 } } };
+
+  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                                            std::move(direct_map_list));
+
+  // 3) Set up unique aggregates
+  std::vector<planner::AggregateV2Node::AggTerm> agg_terms;
+  planner::AggregateV2Node::AggTerm sumb = std::make_pair(
+      EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 1));
+  planner::AggregateV2Node::AggTerm maxc = std::make_pair(
+      EXPRESSION_TYPE_AGGREGATE_MAX, expression::TupleValueFactory(0, 2));
+  agg_terms.push_back(sumb);
+  agg_terms.push_back(maxc);
+
+  // 4) Set up predicate (empty)
+  expression::AbstractExpression* predicate = nullptr;
+
+  // 5) Create output table schema
+  auto data_table_schema = data_table.get()->GetSchema();
+  std::vector<oid_t> set = { 0, 1, 2 };
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));

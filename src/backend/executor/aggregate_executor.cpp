@@ -117,11 +117,12 @@ bool AggregateExecutor::DExecute() {
     prev_tile.reset(tile.release());
     LOG_TRACE("Finished processing logical tile");
   }
-  prev_tile.release();
 
   LOG_INFO("Finalizing..");
   if (!aggregator.Finalize(prev_tuple.get()))
     return false;
+
+  prev_tile.reset(nullptr);
 
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();

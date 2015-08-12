@@ -257,7 +257,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
 
   // Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
-    LOG_INFO("Prev tuple is nullprt!");
+    LOG_INFO("Prev tuple is nullptr!");
     start_new_agg = true;
   } else {
     // Compare group by columns
