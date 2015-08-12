@@ -655,6 +655,18 @@ ExprState *CopyExprState(ExprState *expr_state){
     }
     break;
 
+    case T_GenericExprState:
+    {
+      expr_state_copy = (ExprState *) makeNode(GenericExprState);
+      GenericExprState *generic_expr_state_copy = (GenericExprState *) expr_state_copy;
+      GenericExprState *generic_expr_state =  (GenericExprState *) expr_state;
+
+      ExprState  *expr_state = generic_expr_state->arg;
+      auto child_expr_state = CopyExprState(expr_state);
+      generic_expr_state_copy->arg = child_expr_state;
+    }
+    break;
+
     default:
     {
       expr_state_copy = (ExprState *) makeNode(ExprState);
