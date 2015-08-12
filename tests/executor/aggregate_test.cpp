@@ -493,6 +493,8 @@ TEST(AggregateTests, HashSumGroupByTest) {
 
   std::cout << *result_tile;
 
+  delete output_table_schema;
+
 }
 
 }  // namespace test

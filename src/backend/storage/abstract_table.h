@@ -31,22 +31,32 @@ class AbstractTable {
  protected:
   // Table constructor
   AbstractTable(oid_t table_oid, std::string table_name,
-                catalog::Schema *schema);
+                catalog::Schema *schema, bool own_schema);
 
  public:
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  std::string GetName() const { return table_name; }
+  std::string GetName() const {
+    return table_name;
+  }
 
-  oid_t GetOid() const { return table_oid; }
+  oid_t GetOid() const {
+    return table_oid;
+  }
 
-  void SetSchema(catalog::Schema *given_schema) { schema = given_schema; }
+  void SetSchema(catalog::Schema *given_schema) {
+    schema = given_schema;
+  }
 
-  const catalog::Schema *GetSchema() const { return schema; }
+  const catalog::Schema *GetSchema() const {
+    return schema;
+  }
 
-  catalog::Schema *GetSchema() { return schema; }
+  catalog::Schema *GetSchema() {
+    return schema;
+  }
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const AbstractTable &table);
@@ -65,6 +75,14 @@ class AbstractTable {
 
   // table schema
   catalog::Schema *schema;
+
+  /**
+   * @brief Should this table own the schema?
+   * Usually true.
+   * Will be false if the table is for intermediate results within a query,
+   * where the scheme may live longer.
+   */
+  bool own_schema_;
 };
 
 }  // End storage namespace

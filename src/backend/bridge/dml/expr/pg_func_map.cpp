@@ -88,15 +88,16 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     //====--------------------------------
     { 768, { EXPRESSION_TYPE_AGGREGATE_MAX, 1} },
     { 770, { EXPRESSION_TYPE_AGGREGATE_MAX, 1} },
+    { 223, { EXPRESSION_TYPE_AGGREGATE_MAX, 1} },
 
     { 769, { EXPRESSION_TYPE_AGGREGATE_MIN, 1} },
     { 771, { EXPRESSION_TYPE_AGGREGATE_MIN, 1} },
-
+    { 224, { EXPRESSION_TYPE_AGGREGATE_MIN, 1} },
 
     { 1840, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
     { 1841, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
     { 1842, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
-    { 218, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },  // float
+    { 218,  { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },  // float
 
 });
 
