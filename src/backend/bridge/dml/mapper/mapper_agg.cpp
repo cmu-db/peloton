@@ -80,7 +80,8 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
                                              predicate.release(),
                                              std::move(unique_agg_terms),
                                              std::move(groupby_col_ids),
-                                             output_schema.get());
+                                             output_schema.release(),
+                                             AGGREGATE_TYPE_HASH);
 
   // Find children
   auto lchild = TransformPlan(outerPlanState(agg_state));
