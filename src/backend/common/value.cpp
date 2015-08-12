@@ -1346,8 +1346,8 @@ Value Value::OpSubtractDecimals(const Value lhs, const Value rhs) const {
  * pointer to the object will be copied into the storage area. No
  * allocations are performed.
  */
-void Value::Serialize(void *storage, const bool is_inlined,
-                      const int32_t max_length) const {
+void Value::Serialize(void *storage, const bool return_is_inlined,
+                             const int32_t max_length) const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TIMESTAMP:
@@ -1374,11 +1374,11 @@ void Value::Serialize(void *storage, const bool is_inlined,
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
       // Potentially non-inlined type requires special handling
-      if (is_inlined) {
+      if (return_is_inlined) {
         InlineCopyObject(storage, max_length);
       } else {
         if (IsNull() || GetObjectLength() <= max_length) {
-          if (is_inlined && !is_inlined) {
+          if (is_inlined && !return_is_inlined) {
             throw Exception(
                 "Cannot serialize an inlined string to non-inlined tuple "
                 "storage in serializeToTupleStorage()");
@@ -1625,7 +1625,7 @@ const Value Value::Deserialize(const void *storage, const ValueType type,
         *reinterpret_cast<void **>(retval.value_data) =
             const_cast<void *>(storage);
         data = *reinterpret_cast<char **>(retval.value_data);
-        retval.IsInlined(true);
+        retval.SetSourceInlined(true);
       } else {
         // If it isn't inlined the storage area contains a pointer to the
         // StringRef object containing the string's memory

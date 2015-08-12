@@ -39,6 +39,9 @@ FormatTransformer::TransformValueFormat(PostgresValueFormat postgresValueFormat)
     case VALUE_TYPE_INTEGER:
       peloton_column_length = 4;
       break;
+    case VALUE_TYPE_VARCHAR:
+      peloton_column_length = 65535;
+      break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_DOUBLE:
     case VALUE_TYPE_TIMESTAMP:

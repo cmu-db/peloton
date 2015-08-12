@@ -191,6 +191,28 @@ class BtreeMultiIndex : public Index {
     return result;
   }
 
+  std::vector<ItemPointer> Scan() {
+    std::vector<ItemPointer> result;
+
+    {
+      index_lock.ReadLock();
+
+      auto itr = container.begin();
+
+      // scan all entries
+      while (itr != container.end()) {
+        ItemPointer location = itr->second;
+        result.push_back(location);
+        itr++;
+      }
+
+      index_lock.Unlock();
+    }
+
+    return result;
+  }
+
+
   std::string GetTypeName() const { return "BtreeMulti"; }
 
  protected:

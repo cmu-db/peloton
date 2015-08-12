@@ -45,7 +45,6 @@ bool AbstractJoinExecutor::DInit() {
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
-  left_scan_start = true;
   proj_info_ = node.GetProjInfo();
 
   return true;

@@ -111,6 +111,9 @@ class PlanTransformer {
   //======---------------------------------------
   static planner::AbstractPlanNode *TransformNestLoop(
       const NestLoopState *plan_state);
+  static planner::AbstractPlanNode *TransformMergeJoin(
+      const MergeJoinState *plan_state);
+
 
   //======---------------------------------------
   // OTHERS
@@ -132,7 +135,7 @@ class PlanTransformer {
   static PelotonJoinType TransformJoinType(const JoinType type);
 
   //========-----------------------------------------
-  // Common utility functions for Scan's
+  // Common utility functions
   //========-----------------------------------------
   static void GetGenericInfoFromScanState(
       planner::AbstractPlanNode *&parent,
@@ -143,10 +146,15 @@ class PlanTransformer {
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
+  static const planner::ProjectInfo::TargetList BuildTargetList(
+      const List* targetList, oid_t column_count);
+
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
 };
 
 }  // namespace bridge

@@ -137,6 +137,9 @@ class Index {
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs) = 0;
 
+  // scan all keys in the index, working like a sort
+  virtual std::vector<ItemPointer> Scan() = 0;
+
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//

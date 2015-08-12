@@ -37,7 +37,7 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   AbstractJoinPlanNode &operator=(AbstractJoinPlanNode &&) = delete;
 
   AbstractJoinPlanNode(PelotonJoinType joinType,
-                       expression::AbstractExpression *predicate,
+                       const expression::AbstractExpression *predicate,
                        const ProjectInfo *proj_info)
       : AbstractPlanNode(),
         joinType_(joinType),
@@ -67,7 +67,7 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   PelotonJoinType joinType_;
 
   /** @brief Join predicate. */
-  const std::unique_ptr<expression::AbstractExpression> predicate_;
+  const std::unique_ptr<const expression::AbstractExpression> predicate_;
 
   /** @brief Projection info */
   std::unique_ptr<const ProjectInfo> proj_info_;
