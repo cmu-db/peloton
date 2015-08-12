@@ -3254,9 +3254,6 @@ typedef struct DropdbStmt {
 
 	char	   *dbname;			/* database to drop */
 	bool		missing_ok;		/* skip error if db is missing? */
-
-	// TODO: Peloton Changes
-	Oid      database_id;   /* cache the database id for DDL */
 } DropdbStmt;
 
 /* ----------------------
