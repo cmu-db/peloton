@@ -26,14 +26,15 @@ namespace storage {
 DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
                                       catalog::Schema *schema,
                                       std::string table_name,
-                                      size_t tuples_per_tilegroup_count) {
+                                      size_t tuples_per_tilegroup_count,
+                                      bool own_schema) {
   // create a new backend
   // FIXME: We need a better way of managing these. Why not just embed it in
   //        directly inside of the table object?
   AbstractBackend *backend = new VMBackend();
 
   DataTable *table = new DataTable(schema, backend, table_name, relation_id,
-                                   tuples_per_tilegroup_count);
+                                   tuples_per_tilegroup_count, own_schema);
   table->database_oid = database_id;
 
   return table;
