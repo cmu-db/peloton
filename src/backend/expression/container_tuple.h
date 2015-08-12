@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include <functional>
+#include <vector>
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
@@ -122,6 +123,48 @@ class ContainerTupleComparator {
     return lhs.EqualsNoSchemaCheck(rhs);
   }
 };
+
+//===--------------------------------------------------------------------===//
+// Specialization for vector<Value>
+//===--------------------------------------------------------------------===//
+/**
+ * @brief Used to interpret a vector of values as an ad-hoc tuple.
+ * The purpose of this class is to eliminate the need to construct a schema.
+ * The caller should make sure there's no out-of-bound calls.
+ */
+template<>
+class ContainerTuple< std::vector<Value> > : public AbstractTuple {
+ public:
+  ContainerTuple(const ContainerTuple &) = default;
+  ContainerTuple &operator=(const ContainerTuple &) = default;
+  ContainerTuple(ContainerTuple &&) = default;
+  ContainerTuple &operator=(ContainerTuple &&) = default;
+
+  ContainerTuple(std::vector<Value>* container)
+    : container_(container){
+  }
+
+  /** @brief Get the value at the given column id. */
+  const Value GetValue(oid_t column_id) const override {
+    assert(container_ != nullptr);
+    assert(column_id < container_->size());
+
+    return (*container_)[column_id];
+  }
+
+  /** @brief Get the raw location of the tuple's contents. */
+  inline char *GetData() const override {
+    // NOTE: We can't get a table tuple from a tilegroup or logical tile
+    // without materializing it. So, this must not be used.
+    throw NotImplementedException(
+        "GetData() not supported for container tuples.");
+    return nullptr;
+  }
+
+ private:
+  std::vector<Value>* container_;
+};
+
 
 }  // namespace expression
 }  // namespace peloton
