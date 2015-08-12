@@ -45,7 +45,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 
   prefix += "  ";
 
-  LOG_INFO("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
+  LOG_TRACE("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
 
   auto children = plan->GetChildren();
 
@@ -120,7 +120,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     default:
-      LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
+      LOG_TRACE("Unsupported plan node type : %d ", plan_node_type);
       break;
   }
 
@@ -180,7 +180,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr, nullptr);
       new_root->AddChild(root);
-      LOG_INFO("Added materialization, the original root executor type is %d",
+      LOG_TRACE("Added materialization, the original root executor type is %d",
                type);
       break;
     default:
@@ -202,7 +202,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   if(plan == nullptr)
     return;
 
-  LOG_INFO("PlanExecutor Start \n");
+  LOG_TRACE("PlanExecutor Start \n");
 
   bool status;
   bool init_failure = false;
@@ -219,8 +219,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   }
   assert(txn);
 
-  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_INFO("Building the executor tree");
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
   executor::AbstractExecutor *executor_tree =
@@ -229,7 +229,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
-  LOG_INFO("Initializing the executor tree");
+  LOG_TRACE("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -241,7 +241,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_INFO("Running the executor tree");
+  LOG_TRACE("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
@@ -266,7 +266,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     storage::Tuple tuple(base_tile->GetSchema());
 
     // Switch to query context to construct list and slots
-    oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
+    oldContext = MemoryContextSwitchTo(SHMQueryContext);
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
@@ -292,7 +292,7 @@ cleanup:
     auto status = txn->GetResult();
     switch (status) {
       case Result::RESULT_SUCCESS:
-        LOG_INFO("Committing txn_id : %lu , cid : %lu\n",
+        LOG_TRACE("Committing txn_id : %lu , cid : %lu\n",
                  txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
@@ -301,7 +301,7 @@ cleanup:
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
+        LOG_TRACE("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
                  txn->GetCommitId());
         // Abort
         txn_manager.AbortTransaction(txn);
