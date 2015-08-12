@@ -41,6 +41,10 @@ TEST(ContainerTupleTest, VectorValue) {
     EXPECT_TRUE(values[i].OpEquals(ctuple.GetValue(i)).IsTrue());
   }
 
+  for(auto v : values){
+    v.FreeUninlinedData();
+  }
+
 
 }
 
