@@ -3719,12 +3719,7 @@ PostgresMain(int argc, char *argv[],
 
   if(IsPostmasterEnvironment == true){
     StartTransactionCommand();
-    Peloton_Status *status = peloton_create_status();
-
-    peloton_send_bootstrap(status);
-    peloton_process_status(status);
-
-    peloton_destroy_status(status);
+    peloton_send_bootstrap();
     CommitTransactionCommand();
   }
 
@@ -3946,7 +3941,7 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
-    //MemoryContextStats(TopSharedMemoryContext);
+    MemoryContextStats(TopSharedMemoryContext);
     //MemoryContextStats(TopMemoryContext);
 
     initStringInfo(&input_message);

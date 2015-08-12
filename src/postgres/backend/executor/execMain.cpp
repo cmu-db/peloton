@@ -1645,50 +1645,12 @@ peloton_ExecutePlan(EState *estate,
       DestReceiver *dest,
       TupleDesc tupDesc)
 {
-  TupleTableSlot *slot;
-  Peloton_Status *status;
 
-  status = peloton_create_status();
+  peloton_send_dml(planstate,
+                   sendTuples,
+                   dest,
+                   tupDesc);
 
-  peloton_send_dml(status, planstate, tupDesc);
-
-  peloton_process_status(status);
-
-  // Go over any result slots
-  if(status->m_result_slots != NULL)
-  {
-    ListCell   *lc;
-
-    foreach(lc, status->m_result_slots)
-    {
-      slot = (TupleTableSlot *) lfirst(lc);
-
-      /*
-       * if the tuple is null, then we assume there is nothing more to
-       * process so we just end the loop...
-       */
-      if (TupIsNull(slot))
-        break;
-
-      /*
-       * If we are supposed to send the tuple somewhere, do so. (In
-       * practice, this is probably always the case at this point.)
-       */
-      if (sendTuples)
-        (*dest->receiveSlot) (slot, dest);
-
-      /*
-       * Free the underlying heap_tuple
-       * and the TupleTableSlot itself.
-       */
-      ExecDropSingleTupleTableSlot(slot);
-    }
-
-    // Clean up list
-    list_free(status->m_result_slots);
-  }
-
-  peloton_destroy_status(status);
 }
 
 /*
