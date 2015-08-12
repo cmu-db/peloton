@@ -22,7 +22,6 @@
 
 struct DDL_Info {
   NodeTag type;
-  DDL_Info* ddl_info;
 };
 
 // Used by CreateDb, DropDb
