@@ -47,8 +47,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
 
   Plan *plan = plan_state->plan;
   // Ignore empty plans
-  if (plan == nullptr)
+  if (plan == nullptr){
+    LOG_ERROR("Plan of PlanState is NULL. Tag of plan_state : %u \n", nodeTag(plan_state));
     return nullptr;
+  }
 
   planner::AbstractPlanNode *plan_node = nullptr;
 
@@ -82,6 +84,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
           reinterpret_cast<const LimitState *>(plan_state));
       break;
     case T_MergeJoin:
+      plan_node = PlanTransformer::TransformMergeJoin(
+          reinterpret_cast<const MergeJoinState *>(plan_state));
+      break;
     case T_HashJoin:
     // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
     // need this

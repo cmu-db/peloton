@@ -369,7 +369,7 @@ class Value {
    */
   void SetValueType(ValueType type) { value_type = type; }
 
-  void IsInlined(bool sourceInlined) { is_inlined = sourceInlined; }
+  void SetSourceInlined(bool sourceInlined) { is_inlined = sourceInlined; }
 
   /**
    * An Object is something like a String that has a variable length
@@ -1143,5 +1143,4 @@ inline int Value::Compare(const Value rhs) const {
     }
   }
 }
-
 }  // End peloton namespace
