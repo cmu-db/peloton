@@ -25,6 +25,7 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper.cpp \
 			   backend/bridge/dml/mapper/mapper_modify_table.cpp \
 			   backend/bridge/dml/mapper/mapper_nested_loop_join.cpp \
+			   backend/bridge/dml/mapper/mapper_merge_join.cpp \
 			   backend/bridge/dml/mapper/mapper_seq_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_index_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \
@@ -34,7 +35,8 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
 			   backend/bridge/dml/tuple/tuple_transformer.cpp \
 			   backend/bridge/dml/executor/plan_executor.cpp \
-			   backend/bridge/dml/expr/expr_transformer.cpp
+			   backend/bridge/dml/expr/expr_transformer.cpp \
+			   backend/bridge/dml/expr/pg_func_map.cpp
 
 bridge_INCLUDES = \
                   -I$(srcdir)/backend/bridge

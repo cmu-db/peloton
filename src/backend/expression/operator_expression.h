@@ -36,7 +36,8 @@ class OperatorUnaryNotExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT) {
     m_left = left;
     left_expr = left;
-  };
+  }
+  ;
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *ec) const {
@@ -60,13 +61,14 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
     m_left = left;
     left_expr = left;
-  };
+  }
+  ;
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *ec) const {
     assert(m_left);
-    return m_left->Evaluate(tuple1, tuple2, ec)
-        .OpMultiply(ValueFactory::GetTinyIntValue(-1));
+    return m_left->Evaluate(tuple1, tuple2, ec).OpMultiply(
+        ValueFactory::GetTinyIntValue(-1));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -80,7 +82,9 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
 
 class OpPlus {
  public:
-  inline Value op(Value left, Value right) const { return left.OpAdd(right); }
+  inline Value op(Value left, Value right) const {
+    return left.OpAdd(right);
+  }
 };
 
 class OpMinus {
@@ -106,12 +110,13 @@ class OpDivide {
 
 // Expressions templated on binary operator types
 
-template <typename OPER>
+template<typename OPER>
 class OperatorExpression : public AbstractExpression {
  public:
   OperatorExpression(ExpressionType type, AbstractExpression *left,
                      AbstractExpression *right)
-      : AbstractExpression(type, left, right) {}
+      : AbstractExpression(type, left, right) {
+  }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *ec) const {
@@ -122,7 +127,10 @@ class OperatorExpression : public AbstractExpression {
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "OptimizedOperatorExpression");
+    return (spacer + "OptimizedOperatorExpression : "
+        + ExpressionTypeToString(this->expr_type) + "\n"
+        + left_expr->DebugInfo(" " + spacer))
+        + right_expr->DebugInfo(" " + spacer);
   }
 
  private:

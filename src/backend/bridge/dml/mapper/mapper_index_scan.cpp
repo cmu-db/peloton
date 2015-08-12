@@ -112,7 +112,7 @@ static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
     planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
   ScanKey scan_key = scan_keys;
-  assert(num_keys > 0);
+  //assert(num_keys > 0);
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
     assert(!(scan_key->sk_flags &

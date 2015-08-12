@@ -55,6 +55,12 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       value = ValueFactory::GetBigIntValue(bigint);
     } break;
 
+    case POSTGRES_VALUE_TYPE_DOUBLE: {
+      double fpnum = DatumGetFloat8(datum);
+      LOG_TRACE("%f\n", fpnum);
+      value = ValueFactory::GetDoubleValue(fpnum);
+    } break;
+
     /*
      * In PG, BPCHAR and VARCHAR and TEXT are represented using
      * 'struct varlena',

@@ -1671,6 +1671,30 @@ typedef struct NestLoopState
  *		InnerEContext	   workspace for computing inner tuple's join values
  * ----------------
  */
+
+typedef struct MergeJoinClauseData
+{
+	/* Executable expression trees */
+	ExprState  *lexpr;			/* left-hand (outer) input expression */
+	ExprState  *rexpr;			/* right-hand (inner) input expression */
+
+	/*
+	 * If we have a current left or right input tuple, the values of the
+	 * expressions are loaded into these fields:
+	 */
+	Datum		ldatum;			/* current left-hand value */
+	Datum		rdatum;			/* current right-hand value */
+	bool		lisnull;		/* and their isnull flags */
+	bool		risnull;
+
+	/*
+	 * Everything we need to know to compare the left and right values is
+	 * stored here.
+	 */
+	SortSupportData ssup;
+}	MergeJoinClauseData;
+
+
 /* private___ in nodeMergejoin.c: */
 typedef struct MergeJoinClauseData *MergeJoinClause;
 
