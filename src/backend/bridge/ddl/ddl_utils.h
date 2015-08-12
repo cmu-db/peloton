@@ -38,7 +38,9 @@ class DDLUtils {
 
   static DDL_Info* peloton_prepare_data(Node *parsetree);
 
-  static Database_Info* PrepareDatabaseInfo(Database_Info* parsetree);
+  static Database_Info* PrepareCreatedbStmt(Database_Info* parsetree);
+
+  static Database_Info* PrepareDropdbStmt(Database_Info* parsetree);
 
   static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
