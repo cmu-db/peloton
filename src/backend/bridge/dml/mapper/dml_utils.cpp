@@ -533,6 +533,8 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
   PelotonProjectionInfo *info = (PelotonProjectionInfo*) palloc(sizeof(PelotonProjectionInfo));
 
   info->expr_states = NIL;
+  info->expr_col_ids = NIL;
+
   // (A) Transform non-trivial target list
   ListCell *tl;
   foreach (tl, pg_pi->pi_targetlist) {

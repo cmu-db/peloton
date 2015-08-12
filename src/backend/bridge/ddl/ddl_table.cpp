@@ -228,7 +228,7 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
     }
   }
 
-  LOG_INFO("Alter the table (%u)\n", relation_oid);
+  LOG_INFO("Altered the table (%u)\n", relation_oid);
   return true;
 }
 

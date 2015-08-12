@@ -161,11 +161,11 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     auto expr_col_id = expr_col_ids[list_itr];
 
     if (peloton_expr == nullptr) {
-      LOG_INFO("Seems to be a row value expression. Skipped.");
+      LOG_TRACE("Seems to be a row value expression. Skipped.");
       continue;
     }
 
-    LOG_INFO("Target : column id %u, Expression : \n%s", expr_col_id,
+    LOG_TRACE("Target : column id %u, Expression : \n%s", expr_col_id,
               peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(expr_col_id, peloton_expr);
@@ -182,7 +182,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     out_col_ids.push_back(out_col_id);
   }
   col_count = out_col_ids.size();
-  LOG_INFO("Direct Map :: COL COUNT :: %lu \n", out_col_ids.size());
+  LOG_TRACE("Direct Map :: COL COUNT :: %lu \n", out_col_ids.size());
 
   foreach (item, pg_pi->tuple_idxs) {
     oid_t tuple_idx = lfirst_int(item);

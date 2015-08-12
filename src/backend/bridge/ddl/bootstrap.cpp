@@ -502,10 +502,8 @@ void Bootstrap::CreateTables(raw_table_info **raw_tables, oid_t table_count) {
 
     bool status = DDLTable::CreateTable(raw_table->table_oid,
                                         raw_table->table_name, columns);
-    if (status == true) {
-      elog(LOG, "Create Table \"%s\" in Peloton", raw_table->table_name);
-    } else {
-      elog(ERROR, "Create Table \"%s\" in Peloton", raw_table->table_name);
+    if (status == false) {
+      elog(ERROR, "Could not create table \"%s\" in Peloton", raw_table->table_name);
     }
   }
 }
@@ -523,10 +521,8 @@ void Bootstrap::CreateIndexes(raw_index_info **raw_indexes, oid_t index_count) {
 
     bool status = DDLIndex::CreateIndex(index_info);
 
-    if (status == true) {
-      elog(LOG, "Create Index \"%s\" in Peloton", raw_index->index_name);
-    } else {
-      elog(ERROR, "Create Index \"%s\" in Peloton", raw_index->index_name);
+    if (status == false) {
+      elog(ERROR, "Could not create index \"%s\" in Peloton", raw_index->index_name);
     }
   }
 }
