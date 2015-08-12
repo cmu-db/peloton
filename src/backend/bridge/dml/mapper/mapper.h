@@ -111,7 +111,7 @@ class PlanTransformer {
       const SeqScanPlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexScan(
-      const IndexScanState *planstate,
+      const IndexScanPlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexOnlyScan(
       const IndexOnlyScanState *planstate,

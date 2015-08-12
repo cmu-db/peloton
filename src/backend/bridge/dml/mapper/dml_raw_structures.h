@@ -18,6 +18,7 @@
 #include "postgres.h"
 #include "c.h"
 #include "nodes/execnodes.h"
+#include "access/skey.h"
 
 //===--------------------------------------------------------------------===//
 // DDL raw data structures
@@ -70,8 +71,8 @@ struct LockRowsPlanState : public AbstractPlanState {
 struct AbstractScanPlanState : public AbstractPlanState {
 
   Oid table_oid;
+  Oid database_oid;
 
-  //ProjectionInfo *ps_ProjInfo;
   TupleDesc tts_tupleDescriptor;
 
   List *qual; // expr states
@@ -81,19 +82,16 @@ struct AbstractScanPlanState : public AbstractPlanState {
 
 struct SeqScanPlanState : public AbstractScanPlanState {
 
-  Oid database_oid;
-
   int table_nattrs;
 
 };
 
 struct IndexScanPlanState : public AbstractScanPlanState {
 
-  int iss_NumScanKeys;
-  //ScanKey   iss_ScanKeys;
+  IndexScan *iss_plan;
 
-  Oid indexid;
-  //ScanDirection indexorderdir;
+  ScanKey   iss_ScanKeys;
+  int iss_NumScanKeys;
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {
@@ -102,12 +100,10 @@ struct BitmapHeapScanPlanState : public AbstractScanPlanState {
 
 struct IndexOnlyScanPlanState : public AbstractScanPlanState {
 
+  IndexOnlyScan *ioss_plan;
+
+  ScanKey  ioss_ScanKeys;
   int ioss_NumScanKeys;
-  //ScanKey  ioss_ScanKeys;
-
-  Oid indexid;
-  //ScanDirection indexorderdir;
-
 };
 
 struct MaterialPlanState : public AbstractPlanState {

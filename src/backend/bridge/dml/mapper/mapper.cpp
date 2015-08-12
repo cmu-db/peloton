@@ -60,7 +60,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_IndexScanState:
       peloton_plan = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState *>(planstate),
+          reinterpret_cast<const IndexScanPlanState *>(planstate),
           options);
       break;
     case T_IndexOnlyScanState:

@@ -60,7 +60,7 @@ class DMLUtils {
 
   static void PrepareAbstractScanState(
       AbstractScanPlanState* ss_plan_state,
-      ScanState *ss_state);
+      const ScanState& ss_state);
 
   static SeqScanPlanState *PrepareSeqScanState(
       SeqScanState *ss_plan_state);
