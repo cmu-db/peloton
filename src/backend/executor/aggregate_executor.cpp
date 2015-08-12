@@ -54,8 +54,8 @@ bool AggregateExecutor::DInit() {
   // Construct the output table
   auto output_table_schema =
       const_cast<catalog::Schema*>(node.GetOutputSchema());
-  size_t column_count = output_table_schema->GetColumnCount();
-  assert(column_count >= 1);
+
+  assert(output_table_schema->GetColumnCount() >= 1);
 
   result_itr = START_OID;
 
@@ -99,7 +99,19 @@ bool AggregateExecutor::DExecute() {
 
     if(nullptr == aggregator.get()){
       // Initialize the aggregator
-      aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+      switch(node.GetAggregateStrategy()){
+        case AGGREGATE_TYPE_HASH:
+          LOG_INFO("Use HashAggregator\n");
+          aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+          break;
+        case AGGREGATE_TYPE_SORT:
+          LOG_INFO("Use SortAggregator\n");
+          aggregator.reset(new SortAggregator(&node, output_table, executor_context_));
+          break;
+        default:
+          LOG_ERROR("Invalid aggregate type. Return.\n");
+          return false;
+      }
     }
 
     LOG_TRACE("Looping over tile..");

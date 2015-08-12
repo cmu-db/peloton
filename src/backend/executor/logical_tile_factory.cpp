@@ -49,7 +49,9 @@ std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
  *
  * @return Pointer to empty logical tile.
  */
-LogicalTile *LogicalTileFactory::GetTile() { return new LogicalTile(); }
+LogicalTile *LogicalTileFactory::GetTile() {
+  return new LogicalTile();
+}
 
 /**
  * @brief Convenience method to construct a logical tile wrapping base tiles.
@@ -94,6 +96,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   const int position_list_idx = 0;
   // TODO Don't use allocated tuple count. Use active tuple count.
   new_tile->AddPositionList(
+//      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
       CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
   // Construct schema.
