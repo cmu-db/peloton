@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/logging/frontendlogger.h"
+#include "backend/concurrency/transaction.h"
 
 #include <fcntl.h>
 
@@ -43,7 +44,10 @@ class AriesFrontendLogger : public FrontendLogger{
 
   private:
 
-    bool SetLogRecordHeader(LogRecordHeader& log_record_header);
+    bool ReadLogRecordHeader(LogRecordHeader& log_record_header);
+
+   void ReadLogRecordBody(const LogRecordHeader log_record_header,
+                          concurrency::Transaction* txn);
 
     size_t BodySizeCheck();
 
