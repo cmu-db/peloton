@@ -63,10 +63,10 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  * FIXME: need to examine Value's uninlined data problem later.
  */
 bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
-            storage::DataTable *output_table, const AbstractTuple *prev_tuple,
+            storage::DataTable *output_table, const AbstractTuple *template_tuple,
             executor::ExecutorContext* econtext) {
   // Ignore null tuples
-  if (prev_tuple == nullptr)
+  if (template_tuple == nullptr)
     return true;
 
   auto schema = output_table->GetSchema();
@@ -94,14 +94,14 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate
-      && predicate->Evaluate(prev_tuple, aggref_tuple.get(), econtext).IsFalse()) {
+      && predicate->Evaluate(template_tuple, aggref_tuple.get(), econtext).IsFalse()) {
     return true;  // Qual fails, do nothing
   }
 
   /*
    * 3) Construct the tuple to insert using projectInfo
    */
-  node->GetProjectInfo()->Evaluate(tuple.get(), prev_tuple, aggref_tuple.get(),
+  node->GetProjectInfo()->Evaluate(tuple.get(), template_tuple, aggref_tuple.get(),
                                    econtext);
 
   LOG_INFO("Tuple to Output :");
@@ -122,8 +122,11 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 //===--------------------------------------------------------------------===//
 HashAggregator::HashAggregator(const planner::AggregateV2Node *node,
                                storage::DataTable *output_table,
-                               executor::ExecutorContext* econtext)
-    : AbstractAggregator(node, output_table, econtext) {
+                               executor::ExecutorContext* econtext,
+                               size_t num_input_columns)
+    : AbstractAggregator(node, output_table, econtext),
+      num_input_columns(num_input_columns){
+
 
   group_by_key_values.resize(node->GetGroupbyColIds().size(),
                              ValueFactory::GetNullValue());
@@ -146,9 +149,7 @@ HashAggregator::~HashAggregator() {
   }
 }
 
-bool HashAggregator::Advance(AbstractTuple *cur_tuple,
-                             AbstractTuple *prev_tuple __attribute__((unused)),
-                             size_t num_columns) {
+bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 
   AggregateList *aggregate_list;
 
@@ -169,7 +170,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple,
     aggregate_list = new AggregateList();
     aggregate_list->aggregates = new Agg *[node->GetUniqueAggTerms().size()];
     // Make a deep copy of the first tuple we meet
-    for (size_t col_id = 0; col_id < num_columns; col_id++) {
+    for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
       aggregate_list->first_tuple_values.push_back(
           ValueFactory::Clone(cur_tuple->GetValue(col_id)));
     };
@@ -198,8 +199,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple,
   return true;
 }
 
-bool HashAggregator::Finalize(
-    AbstractTuple *prev_tuple __attribute__((unused))) {
+bool HashAggregator::Finalize() {
   for (auto entry : aggregates_map) {
     // Construct a container for the first tuple
     expression::ContainerTuple<std::vector<Value>> first_tuple(
@@ -239,9 +239,7 @@ SortAggregator::~SortAggregator() {
   delete[] aggregates;
 }
 
-bool SortAggregator::Advance(AbstractTuple *cur_tuple,
-                             AbstractTuple *prev_tuple,
-                             size_t __attribute__((unused))) {
+bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
   bool start_new_agg = false;
 
 // Check if we are starting a new aggregate tuple
@@ -292,10 +290,12 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple,
     aggregates[aggno]->Advance(value);
   }
 
+  prev_tuple = cur_tuple;
+
   return true;
 }
 
-bool SortAggregator::Finalize(AbstractTuple *prev_tuple) {
+bool SortAggregator::Finalize() {
   if (Helper(node, aggregates, output_table, prev_tuple,
              this->executor_context) ==
              false) {

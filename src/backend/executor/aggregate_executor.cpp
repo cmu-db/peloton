@@ -88,14 +88,19 @@ bool AggregateExecutor::DExecute() {
       GetPlanNode<planner::AggregateV2Node>();
 
   // Get an aggregator
-  HashAggregator aggregator(
-      &node, output_table, executor_context_);
+  std::unique_ptr<AbstractAggregator> aggregator(nullptr);
 
   // Get input tiles and aggregate them
   std::unique_ptr<expression::ContainerTuple<LogicalTile>> prev_tuple(nullptr);
   std::unique_ptr<LogicalTile> prev_tile(nullptr);
   while (children_[0]->Execute() == true) {
+
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+
+    if(nullptr == aggregator.get()){
+      // Initialize the aggregator
+      aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+    }
 
     LOG_TRACE("Looping over tile..");
 
@@ -103,23 +108,23 @@ bool AggregateExecutor::DExecute() {
       auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
                                                                    tuple_id);
 
-      if (aggregator.Advance(cur_tuple, prev_tuple.get(), tile->GetColumnCount()) == false) {
+      if (aggregator->Advance(cur_tuple) == false) {
         return false;
       }
       prev_tuple.reset(cur_tuple);
     }
 
     /*
-     * This is critical. We must not release the tile immediately because
-     * the prev_tuple of next round still points into this tile.
-     * As a result, we always keep two tiles alive --- hopefully not expensive.
+     * This is critical: We must not release the tile immediately because
+     * the prev_tuple may still be referenced in next iteration by some aggregators.
+     * To solve this, we always keep two tiles alive --- hopefully not expensive.
      */
     prev_tile.reset(tile.release());
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator.Finalize(prev_tuple.get()))
+  if (!aggregator->Finalize())
     return false;
 
   prev_tile.reset(nullptr);
