@@ -24,10 +24,10 @@ StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
  * @brief Insert LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Insert(LogRecord afterRecord){
+void StdoutBackendLogger::Insert(LogRecord record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(afterRecord);
+    stdout_local_queue.push_back(record);
   }
   //Commit everytime for testing
   Commit();
@@ -37,10 +37,10 @@ void StdoutBackendLogger::Insert(LogRecord afterRecord){
  * @brief Delete LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Delete(LogRecord beforeRecord){
+void StdoutBackendLogger::Delete(LogRecord record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(beforeRecord);
+    stdout_local_queue.push_back(record);
   }
   //Commit everytime for testing
   Commit();
@@ -50,12 +50,10 @@ void StdoutBackendLogger::Delete(LogRecord beforeRecord){
  * @brief Delete LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Update(LogRecord beforeRecord, 
-                                LogRecord afterRecord){
+void StdoutBackendLogger::Update(LogRecord record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(beforeRecord);
-    stdout_local_queue.push_back(afterRecord);
+    stdout_local_queue.push_back(record);
   }
   //Commit everytime for testing
   Commit();

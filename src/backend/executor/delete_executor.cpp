@@ -90,7 +90,6 @@ bool DeleteExecutor::DExecute() {
 
     // Logging 
     {
-      auto old_tuple = tile->GetTuple(physical_tuple_id);
       // get tuple here 
       auto& logManager = logging::LogManager::GetInstance();
       auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
@@ -98,7 +97,7 @@ bool DeleteExecutor::DExecute() {
                                       transaction_->GetTransactionId(), 
                                       target_table_->GetOid(),
                                       delete_location);
-      logging::LogRecord record(header, old_tuple);
+      logging::LogRecord record(header);
       logger->Delete(record);
     }
 
