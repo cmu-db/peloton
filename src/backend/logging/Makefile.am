@@ -13,6 +13,7 @@ logging_FILES = \
 			   backend/logging/loggers/stdoutbackendlogger.cpp \
 			   backend/logging/loggers/ariesfrontendlogger.cpp \
 			   backend/logging/loggers/ariesbackendlogger.cpp \
+			   backend/logging/logrecordheader.cpp \
 			   backend/logging/logrecord.cpp 
 
 logging_INCLUDES = \

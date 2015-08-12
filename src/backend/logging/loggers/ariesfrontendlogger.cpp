@@ -109,10 +109,7 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 void AriesFrontendLogger::Flush(void) {
 
   for( auto record : aries_global_queue ){
-    fwrite( record.GetSerializedLogRecord(),
-            sizeof(char),
-            record.GetSerializedLogRecordSize(),
-            logFile);
+    fwrite( record.GetSerializedLogRecord(), sizeof(char), record.GetSerializedLogRecordSize(), logFile);
   }
 
   int ret = fflush(logFile);
@@ -128,28 +125,27 @@ void AriesFrontendLogger::Flush(void) {
   aries_global_queue.clear();
 }
 
-bool AriesFrontendLogger::SetLogRecordHeader(LogRecord& log_record){
+bool AriesFrontendLogger::SetLogRecordHeader(LogRecordHeader& log_record_header){
 
   // header and body size of LogRecord
-  size_t header_size = LogRecord::GetLogRecordHeaderSize();
+  size_t header_size = log_record_header.GetSerializedHeaderSize(logFile);
+  if( header_size == 0 ) return false;
+  std::cout << "header size : " << header_size << std::endl;
 
   // Read header 
   char header[header_size];
   size_t ret = fread(header, 1, sizeof(header), logFile);
   if( ret <= 0 ){
-    return false;
+    LOG_ERROR("Error occured in fread ");
   }
 
   CopySerializeInput logHeader(header,header_size);
   // Read and store log header information 
-  log_record.DeserializeLogRecordHeader(logHeader);
+  log_record_header.DeserializeLogRecordHeader(logHeader);
 
   //debugging
   LOG_INFO("LogRecordHeader Info");
-  LOG_INFO("LogRecord Type  : %s", LogRecordTypeToString(log_record.GetType()).c_str());
-  LOG_INFO("Database id : %u" , log_record.GetDbId());
-  LOG_INFO("Table oid : %u" , log_record.GetTableId());
-  LOG_INFO("Txn id :  %li" , log_record.GetTxnId());
+  std::cout << log_record_header << std::endl;
 
   return true;
 }
@@ -185,11 +181,12 @@ void AriesFrontendLogger::Recovery() {
 
     while(true){
 
-      LogRecord log_record;
-      if( SetLogRecordHeader(log_record) == false ) break;
+      LogRecordHeader log_record_header;
+      if( SetLogRecordHeader(log_record_header) == false ) break;
 
-
+      // Measure the body size of log entry
       size_t body_size = BodySizeCheck();
+
       // Read Body 
       char body[body_size];
       int ret = fread(body, 1, sizeof(body), logFile);
@@ -202,8 +199,8 @@ void AriesFrontendLogger::Recovery() {
 
       // Get db, table, schema to insert tuple
       auto &manager = catalog::Manager::GetInstance();
-      storage::Database *db = manager.GetDatabaseWithOid(log_record.GetDbId());
-      auto table = db->GetTableWithOid(log_record.GetTableId());
+      storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
+      auto table = db->GetTableWithOid(log_record_header.GetTableId());
       auto schema = table->GetSchema();
 
       storage::Tuple *tuple = new storage::Tuple(schema, true);
@@ -219,10 +216,8 @@ void AriesFrontendLogger::Recovery() {
       if (location.block == INVALID_OID) { LOG_ERROR("!");}
       txn->RecordInsert(location);
 
-
       std::cout << *table << std::endl;
       delete tuple;
-      //delete log_record;
     }
     txn_manager.CommitTransaction(txn);
   }
