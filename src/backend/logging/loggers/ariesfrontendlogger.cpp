@@ -168,59 +168,93 @@ size_t AriesFrontendLogger::BodySizeCheck(){
   return body_size;
 }
 
-void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_header,
-                                            concurrency::Transaction* txn) {
-  // Measure the body size of LogRecord
-  size_t body_size = BodySizeCheck();
 
-  // Read Body 
-  char body[body_size];
-  int ret = fread(body, 1, sizeof(body), logFile);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
+storage::Tuple* AriesFrontendLogger::ReadTuple(catalog::Schema* schema){
+      // Measure the body size of LogRecord
+      size_t body_size = BodySizeCheck();
 
-  //TODO :: Make this as a function
-  CopySerializeInput logBody(body, body_size);
-  // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
-  auto table = db->GetTableWithOid(log_record_header.GetTableId());
-  auto schema = table->GetSchema();
+      // Read Body 
+      char body[body_size];
+      int ret = fread(body, 1, sizeof(body), logFile);
+      if( ret <= 0 ){
+        LOG_ERROR("Error occured in fread ");
+      }
 
-  switch(log_record_header.GetType()){
+      //TODO :: Make this as a function
+      CopySerializeInput logBody(body, body_size);
 
-    case LOGRECORD_TYPE_INSERT_TUPLE:{
       storage::Tuple *tuple = new storage::Tuple(schema, true);
       storage::AbstractBackend *backend = new storage::VMBackend();
       Pool *pool = new Pool(backend);
     
       tuple->DeserializeFrom(logBody, pool);
-      ItemPointer location = table->InsertTuple(txn, tuple);
-      if (location.block == INVALID_OID) {
-        LOG_ERROR("Error !! InsertTuple in Recovery Mode");
-      }
-      txn->RecordInsert(location);
-      std::cout << *table << std::endl;
-      delete tuple;
+      return tuple;
+}
+
+storage::DataTable* AriesFrontendLogger::GetTable(LogRecordHeader log_record_header){
+  // Get db, table, schema to insert tuple
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
+  auto table = db->GetTableWithOid(log_record_header.GetTableId());
+  return table;
+}
+
+void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
+  auto table = GetTable(log_record_header);
+  auto tuple = ReadTuple(table->GetSchema());
+
+  ItemPointer location = table->InsertTuple(txn, tuple);
+  if (location.block == INVALID_OID) {
+    LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+  }
+  txn->RecordInsert(location);
+  std::cout << *table << std::endl;
+  delete tuple;
+}
+
+void AriesFrontendLogger::DeleteTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
+  auto table = GetTable(log_record_header);
+  ItemPointer delete_location = log_record_header.GetItemPointer();
+  bool status = table->DeleteTuple(txn, delete_location);
+  if( status == false){
+    LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
+  }
+  txn->RecordDelete(delete_location);
+}
+
+void AriesFrontendLogger::UpdateTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
+  auto table = GetTable(log_record_header);
+  auto tuple = ReadTuple(table->GetSchema());
+
+  ItemPointer delete_location = log_record_header.GetItemPointer();
+  ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
+  if (location.block == INVALID_OID) {
+    LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+  }
+  txn->RecordDelete(delete_location);
+  txn->RecordInsert(location);
+}
+
+void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_header,
+                                            concurrency::Transaction* txn) {
+  switch(log_record_header.GetType()){
+
+    case LOGRECORD_TYPE_INSERT_TUPLE:{
+      InsertTuple(log_record_header, txn);
     }break;
 
     case LOGRECORD_TYPE_DELETE_TUPLE:{
-      ItemPointer delete_location = log_record_header.GetItemPointer();
-      bool status = table->DeleteTuple(txn, delete_location);
-      if( status == false){
-        LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
-      }
-      txn->RecordDelete(delete_location);
-    }
-    break;
+      DeleteTuple(log_record_header, txn);
+    }break;
+
+    case LOGRECORD_TYPE_UPDATE_TUPLE:{
+      UpdateTuple(log_record_header, txn);
+    }break;
 
     default:
     LOG_WARN("Unsupported LOG TYPE\n");
     break;
   }
-
-
 }
 
 void AriesFrontendLogger::Recovery() {
@@ -229,9 +263,10 @@ void AriesFrontendLogger::Recovery() {
   if(LogFileSize() > 0){
 
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
 
     while(true){
+      auto txn = txn_manager.BeginTransaction();
+
       // Read and Setting the LogRecordHeader
       LogRecordHeader log_record_header;
 
@@ -241,8 +276,8 @@ void AriesFrontendLogger::Recovery() {
 
       // Read and Setting the LogRecordBody
       ReadLogRecordBody(log_record_header, txn);
+      txn_manager.CommitTransaction(txn);
    }
-    txn_manager.CommitTransaction(txn);
   }
 }
 

@@ -111,26 +111,17 @@ bool UpdateExecutor::DExecute() {
     transaction_->RecordInsert(location);
 
     // Logging 
-//    {
-//      auto old_tuple = tile->GetTuple(physical_tuple_id);
-//
-//      auto& logManager = logging::LogManager::GetInstance();
-//      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-//  
-//      logging::LogRecord beforeRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
-//                                      transaction_->GetTransactionId(), 
-//                                      target_table_->GetOid(),
-//                                      delete_location,
-//                                      old_tuple);
-//  
-//      logging::LogRecord afterRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
-//                                      transaction_->GetTransactionId(), 
-//                                      target_table_->GetOid(),
-//                                      location,
-//                                      new_tuple);
-//  
-//      logger->Update(beforeRecord, afterRecord);
-//    }
+    {
+      auto& logManager = logging::LogManager::GetInstance();
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+
+      logging::LogRecordHeader header(LOGRECORD_TYPE_UPDATE_TUPLE, 
+                                      transaction_->GetTransactionId(), 
+                                      target_table_->GetOid(),
+                                      delete_location);
+      logging::LogRecord record(header, new_tuple);
+      logger->Update(record);
+    }
 
     delete new_tuple;
   }

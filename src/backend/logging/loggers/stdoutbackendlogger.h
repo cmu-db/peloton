@@ -27,11 +27,11 @@ class StdoutBackendLogger : public BackendLogger{
 
     static StdoutBackendLogger* GetInstance(void);
 
-    void Insert(LogRecord afterRecord);
+    void Insert(LogRecord record);
 
-    void Delete(LogRecord beforeRecord);
+    void Delete(LogRecord record);
 
-    void Update(LogRecord beforeRecord, LogRecord afterRecord);
+    void Update(LogRecord record);
 
     void Commit(void);
 
