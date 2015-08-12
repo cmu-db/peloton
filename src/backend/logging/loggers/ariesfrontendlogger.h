@@ -43,6 +43,8 @@ class AriesFrontendLogger : public FrontendLogger{
 
   private:
 
+    bool SetLogRecordHeader(LogRecord& log_record);
+
     size_t GetLogRecordCount(void) const;
 
     size_t LogFileSize(void);
