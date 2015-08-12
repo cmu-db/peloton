@@ -47,9 +47,10 @@ Varlen::Varlen(size_t size) {
 }
 
 Varlen::Varlen(std::size_t size, Pool *dataPool) {
+  varlen_size = size + sizeof(Varlen *);
   varlen_temp_pool = true;
   varlen_string_ptr =
-      reinterpret_cast<char *>(dataPool->Allocate(size + sizeof(Varlen *)));
+      reinterpret_cast<char *>(dataPool->Allocate(varlen_size));
   SetBackPtr();
 }
 

@@ -88,7 +88,7 @@ bool AggregateExecutor::DExecute() {
       GetPlanNode<planner::AggregateV2Node>();
 
   // Get an aggregator
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
+  Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE> aggregator(
       &node, output_table, executor_context_);
 
   // Get input tiles and aggregate them
@@ -103,7 +103,7 @@ bool AggregateExecutor::DExecute() {
       auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
                                                                    tuple_id);
 
-      if (aggregator.Advance(cur_tuple, prev_tuple.get()) == false) {
+      if (aggregator.Advance(cur_tuple, prev_tuple.get(), tile->GetColumnCount()) == false) {
         return false;
       }
       prev_tuple.reset(cur_tuple);
