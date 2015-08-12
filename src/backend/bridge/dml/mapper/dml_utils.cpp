@@ -93,7 +93,7 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     default:
-      elog(ERROR, "unrecognized node type: %d", planstate_type);
+      elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d", planstate_type);
       break;
   }
 
@@ -390,6 +390,7 @@ DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
   // Resolve table
   Relation ss_relation_desc = ss_state.ss_currentRelation;
   ss_plan_state->table_oid = ss_relation_desc->rd_id;
+  ss_plan_state->database_oid = Bridge::GetCurrentDatabaseOid();
 
   // Copy expr states
   auto qual_list = ss_state.ps.qual;
@@ -421,11 +422,6 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
   Relation ss_relation_desc = ss_plan_state->ss_currentRelation;
   oid_t table_nattrs = ss_relation_desc->rd_att->natts;
 
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  Oid table_oid = ss_relation_desc->rd_id;
-
-  info->database_oid = database_oid;
-  info->table_oid = table_oid;
   info->table_nattrs = table_nattrs;
 
   return info;
@@ -461,6 +457,16 @@ DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
   // First, build the abstract scan state
   PrepareAbstractScanState(info, ioss_plan_state->ss);
 
+  // Copy the index scan node
+  info->ioss_plan = (IndexOnlyScan *) copyObject(ioss_plan_state->ss.ps.plan);
+
+  // Copy scan keys
+  info->ioss_NumScanKeys = ioss_plan_state->ioss_NumScanKeys;
+  Relation ioss_relation_desc = ioss_plan_state->ioss_RelationDesc;
+  info->ioss_ScanKeys = CopyScanKey(ioss_plan_state->ioss_ScanKeys,
+                                    ioss_plan_state->ioss_NumScanKeys,
+                                    ioss_relation_desc->rd_att);
+
   return info;
 }
 
@@ -472,6 +478,28 @@ DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
   // First, build the abstract scan state
   PrepareAbstractScanState(info, bhss_plan_state->ss);
 
+  // only support a bitmap index scan at lower level
+  assert(nodeTag(outerPlanState(bhss_plan_state)) ==
+      T_BitmapIndexScanState);
+
+  // Construct the child node which must be a BitmapIndexScan
+  BitmapIndexScanState *biss_plan_state = (BitmapIndexScanState *) outerPlanState(bhss_plan_state);
+
+  BitmapIndexScanPlanState *child_info =
+      (BitmapIndexScanPlanState*) palloc(sizeof(BitmapIndexScanPlanState));
+
+  // Copy scan keys
+  child_info->biss_NumScanKeys = biss_plan_state->biss_NumScanKeys;
+  Relation biss_relation_desc = biss_plan_state->biss_RelationDesc;
+  child_info->biss_ScanKeys = CopyScanKey(biss_plan_state->biss_ScanKeys,
+                                          biss_plan_state->biss_NumScanKeys,
+                                          biss_relation_desc->rd_att);
+
+  // Copy underlying biss scan node
+  child_info->biss_plan = (BitmapIndexScan *) copyObject(biss_plan_state->ss.ps.plan);
+
+  // Add child
+  outerAbstractPlanState(info) = child_info;
 
   return info;
 }

@@ -114,10 +114,10 @@ class PlanTransformer {
       const IndexScanPlanState *planstate,
       const TransformOptions options);
   static planner::AbstractPlan *TransformIndexOnlyScan(
-      const IndexOnlyScanState *planstate,
+      const IndexOnlyScanPlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformBitmapScan(
-      const BitmapHeapScanState *planstate,
+  static planner::AbstractPlan *TransformBitmapHeapScan(
+      const BitmapHeapScanPlanState *planstate,
       const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
