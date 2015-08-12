@@ -20,4 +20,5 @@ select a, b, sum(c) from fooagg group by a, b;
 select b, max(a) from fooagg group by b;
 select b, max(a) from fooagg group by b having max(a) > 4;
 
--- select b, max(c) from fooagg group by b having max(c) > 2;
+select b, max(c) from fooagg group by b;
+select b, max(c) from fooagg group by b having max(c) > 2;
