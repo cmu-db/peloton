@@ -33,15 +33,24 @@ namespace bridge {
 // DDL Utils
 //===--------------------------------------------------------------------===//
 
+Database_Info* DDLUtils::PrepareDatabaseInfo(Database_Info* parsetree){
+  DropdbStmt *stmt = (DropdbStmt *)parsetree;
+  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
+  db_info->type = nodeTag(parsetree);
+  db_info->database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  return db_info;
+}
+
 /**
  * @brief preparing data
  * @param parsetree
  */
-void DDLUtils::peloton_prepare_data(Node *parsetree) {
+DDL_Info* DDLUtils::peloton_prepare_data(Node *parsetree) {
+  DDL_Info* ddl_info = nullptr;
   switch (nodeTag(parsetree)) {
     case T_DropdbStmt: {
-      DropdbStmt *stmt = (DropdbStmt *)parsetree;
-      stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+      ddl_info = PrepareDatabaseInfo(
+                 reinterpret_cast<Database_Info*>(parsetree));
       break;
     }
     case T_CreateStmt:
@@ -97,6 +106,7 @@ void DDLUtils::peloton_prepare_data(Node *parsetree) {
       break;
       break;
   }
+  return ddl_info;
 }
 
 /**
