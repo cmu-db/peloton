@@ -47,9 +47,6 @@ bool SeqScanExecutor::DInit() {
 
   if (!status) return false;
 
-  // Grab data from plan node.
-  const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
-
   current_tile_group_offset_ = START_OID;
 
   return true;

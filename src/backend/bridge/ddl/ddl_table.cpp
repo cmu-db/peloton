@@ -89,6 +89,7 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
   //===--------------------------------------------------------------------===//
   for (auto parsetree : parsetree_stack) {
     DDL::ProcessUtility(parsetree, status, txn_id);
+    pfree(parsetree);
   }
   parsetree_stack.clear();
 
