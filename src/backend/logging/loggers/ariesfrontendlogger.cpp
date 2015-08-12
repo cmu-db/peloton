@@ -20,7 +20,6 @@
 #include "backend/storage/backend_vm.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/concurrency/transaction.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
@@ -125,12 +124,11 @@ void AriesFrontendLogger::Flush(void) {
   aries_global_queue.clear();
 }
 
-bool AriesFrontendLogger::SetLogRecordHeader(LogRecordHeader& log_record_header){
+bool AriesFrontendLogger::ReadLogRecordHeader(LogRecordHeader& log_record_header){
 
   // header and body size of LogRecord
   size_t header_size = log_record_header.GetSerializedHeaderSize(logFile);
   if( header_size == 0 ) return false;
-  std::cout << "header size : " << header_size << std::endl;
 
   // Read header 
   char header[header_size];
@@ -170,6 +168,43 @@ size_t AriesFrontendLogger::BodySizeCheck(){
   return body_size;
 }
 
+void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_header,
+                                            concurrency::Transaction* txn) {
+  // Measure the body size of LogRecord
+  size_t body_size = BodySizeCheck();
+
+  // Read Body 
+  char body[body_size];
+  int ret = fread(body, 1, sizeof(body), logFile);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  //TODO :: Make this as a function
+  CopySerializeInput logBody(body, body_size);
+  // Get db, table, schema to insert tuple
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
+  auto table = db->GetTableWithOid(log_record_header.GetTableId());
+  auto schema = table->GetSchema();
+
+  storage::Tuple *tuple = new storage::Tuple(schema, true);
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  Pool *pool = new Pool(backend);
+
+  tuple->DeserializeFrom(logBody, pool);
+
+  std::cout << *tuple << std::endl;
+
+  ItemPointer location = table->InsertTuple(txn, tuple);
+
+  if (location.block == INVALID_OID) { LOG_ERROR("!");}
+  txn->RecordInsert(location);
+
+  std::cout << *table << std::endl;
+  delete tuple;
+
+}
 
 void AriesFrontendLogger::Recovery() {
 
@@ -180,45 +215,16 @@ void AriesFrontendLogger::Recovery() {
     auto txn = txn_manager.BeginTransaction();
 
     while(true){
-
+      // Read and Setting the LogRecordHeader
       LogRecordHeader log_record_header;
-      if( SetLogRecordHeader(log_record_header) == false ) break;
 
-      // Measure the body size of log entry
-      size_t body_size = BodySizeCheck();
-
-      // Read Body 
-      char body[body_size];
-      int ret = fread(body, 1, sizeof(body), logFile);
-      if( ret <= 0 ){
-        LOG_ERROR("Error occured in fread ");
+      if( ReadLogRecordHeader(log_record_header) == false ){
+        break;
       }
 
-      //TODO :: Make this as a function
-      CopySerializeInput logBody(body, body_size);
-
-      // Get db, table, schema to insert tuple
-      auto &manager = catalog::Manager::GetInstance();
-      storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
-      auto table = db->GetTableWithOid(log_record_header.GetTableId());
-      auto schema = table->GetSchema();
-
-      storage::Tuple *tuple = new storage::Tuple(schema, true);
-      storage::AbstractBackend *backend = new storage::VMBackend();
-      Pool *pool = new Pool(backend);
-
-      tuple->DeserializeFrom(logBody, pool);
-
-      std::cout << *tuple << std::endl;
-
-      ItemPointer location = table->InsertTuple(txn, tuple);
-
-      if (location.block == INVALID_OID) { LOG_ERROR("!");}
-      txn->RecordInsert(location);
-
-      std::cout << *table << std::endl;
-      delete tuple;
-    }
+      // Read and Setting the LogRecordBody
+      ReadLogRecordBody(log_record_header, txn);
+   }
     txn_manager.CommitTransaction(txn);
   }
 }
