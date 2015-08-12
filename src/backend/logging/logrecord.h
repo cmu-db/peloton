@@ -30,7 +30,7 @@ class LogRecord{
 
 public:
 
-  LogRecord() = delete;
+  LogRecord(){}
 
   LogRecord(LogRecordType log_record_type,
             const txn_id_t txn_id,
@@ -59,11 +59,13 @@ public:
 
   void SerializeLogRecordHeader(CopySerializeOutput& output);
 
+  void DeserializeLogRecordHeader(CopySerializeInput& input);
+
   //===--------------------------------------------------------------------===//
   // Accessor
   //===--------------------------------------------------------------------===//
 
-  static size_t GetSerializedLogRecordHeaderSize(void);
+  static size_t GetLogRecordHeaderSize(void);
 
   char* GetSerializedLogRecord(void) const;
 
