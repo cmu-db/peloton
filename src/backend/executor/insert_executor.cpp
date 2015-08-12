@@ -122,13 +122,16 @@ bool InsertExecutor::DExecute() {
     transaction_->RecordInsert(location);
 
     // Logging 
-    auto logManager = logging::LogManager::GetInstance();
-    auto logger = logManager->GetBackendLogger(LOGGING_TYPE_ARIES);
-    logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
-                             transaction_->GetTransactionId(), 
-                             location);
-    logger->Insert(record);
-
+    {
+      auto& logManager = logging::LogManager::GetInstance();
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      logging::LogRecord record(LOGRECORD_TYPE_INSERT_TUPLE, 
+                               transaction_->GetTransactionId(), 
+                               target_table->GetOid(),
+                               location,
+                               tuple.get());
+      logger->Insert(record);
+    }
 
     done_ = true;
     return true;
