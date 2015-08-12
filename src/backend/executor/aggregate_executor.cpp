@@ -88,7 +88,7 @@ bool AggregateExecutor::DExecute() {
       GetPlanNode<planner::AggregateV2Node>();
 
   // Get an aggregator
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE> aggregator(
+  HashAggregator aggregator(
       &node, output_table, executor_context_);
 
   // Get input tiles and aggregate them
