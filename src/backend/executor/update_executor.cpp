@@ -101,27 +101,36 @@ bool UpdateExecutor::DExecute() {
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // (C) finally insert updated tuple into the table
-    ItemPointer location =
-        target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
+    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
+
     transaction_->RecordInsert(location);
 
     // Logging 
-    auto logManager = logging::LogManager::GetInstance();
-    auto logger = logManager->GetBackendLogger(LOGGING_TYPE_ARIES);
+    {
+      auto old_tuple = tile->GetTuple(physical_tuple_id);
 
-    logging::LogRecord beforeRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
-                                    transaction_->GetTransactionId(), 
-                                    delete_location);
-    logging::LogRecord afterRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
-                                   transaction_->GetTransactionId(), 
-                                   location);
-
-    logger->Update(beforeRecord, afterRecord);
+      auto& logManager = logging::LogManager::GetInstance();
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+  
+      logging::LogRecord beforeRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
+                                      transaction_->GetTransactionId(), 
+                                      target_table_->GetOid(),
+                                      delete_location,
+                                      old_tuple);
+  
+      logging::LogRecord afterRecord(LOGRECORD_TYPE_UPDATE_TUPLE, 
+                                      transaction_->GetTransactionId(), 
+                                      target_table_->GetOid(),
+                                      location,
+                                      new_tuple);
+  
+      logger->Update(beforeRecord, afterRecord);
+    }
 
     delete new_tuple;
   }
