@@ -351,8 +351,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  elog(LOG, "PelotonQuery :: %d", queryDesc->plannedstmt->pelotonQuery);
-
 	  // PG Query
 	  if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {

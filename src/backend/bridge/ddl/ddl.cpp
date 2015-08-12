@@ -45,8 +45,6 @@ void DDL::ProcessUtility(Node *parsetree,
 
   LOG_INFO("Process Utility");
 
-  sleep(2);
-
   static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
