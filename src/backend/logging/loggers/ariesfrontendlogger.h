@@ -46,8 +46,8 @@ class AriesFrontendLogger : public FrontendLogger{
 
     bool ReadLogRecordHeader(LogRecordHeader& log_record_header);
 
-   void ReadLogRecordBody(const LogRecordHeader log_record_header,
-                          concurrency::Transaction* txn);
+    void ReadLogRecordBody(const LogRecordHeader log_record_header,
+                           concurrency::Transaction* txn);
 
     size_t BodySizeCheck();
 
