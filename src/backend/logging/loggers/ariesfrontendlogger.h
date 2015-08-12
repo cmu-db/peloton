@@ -44,10 +44,22 @@ class AriesFrontendLogger : public FrontendLogger{
 
   private:
 
+    // TODO :: Reorganizing
+
     bool ReadLogRecordHeader(LogRecordHeader& log_record_header);
 
     void ReadLogRecordBody(const LogRecordHeader log_record_header,
                            concurrency::Transaction* txn);
+
+    storage::Tuple* ReadTuple(catalog::Schema* schema);
+
+    storage::DataTable* GetTable(LogRecordHeader log_record_header);
+
+    void InsertTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
+
+    void DeleteTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
+    
+    void UpdateTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
 
     size_t BodySizeCheck();
 

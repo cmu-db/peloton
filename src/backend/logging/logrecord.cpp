@@ -29,29 +29,28 @@ bool LogRecord::SerializeLogRecord(){
   bool status = true;
 
   // Serialize the header of LogRecord
-  std::cout << "H : " << log_record_header << std::endl;
   log_record_header.SerializeLogRecordHeader(output);
 
   switch(log_record_header.GetType()){
 
     case LOGRECORD_TYPE_INSERT_TUPLE:
-    case LOGRECORD_TYPE_DELETE_TUPLE:
     case LOGRECORD_TYPE_UPDATE_TUPLE:{
      storage::Tuple* tuple = (storage::Tuple*)data;
      tuple->SerializeTo(output);
-    } break;
+    }break;
+
+    case LOGRECORD_TYPE_DELETE_TUPLE:{
+    }break;
 
     default:{
       LOG_WARN("Unsupported LOG TYPE\n");
       status = false;
-    } break;
+    }break;
   }
 
   serialized_log_record_size = output.Size();
   serialized_log_record = (char*)malloc(serialized_log_record_size);
   memcpy( serialized_log_record, output.Data(), serialized_log_record_size);
-
-  CopySerializeInput logBody(output.Data(), output.Size());
 
   return status;
 }

@@ -30,13 +30,13 @@ class LogRecord{
 
 public:
 
-  LogRecord(LogRecordHeader log_record_header,
-            const void* data) 
-  : log_record_header(log_record_header),
-    data(data)
-  {
-    assert(data);
-  }
+  // INSERT/UPDATE TUPLE
+  LogRecord(LogRecordHeader log_record_header, const void* data) 
+  : log_record_header(log_record_header), data(data) { }
+
+  // DELETE_TUPLE
+  LogRecord(LogRecordHeader log_record_header) 
+  : log_record_header(log_record_header){data = nullptr;}
 
   //===--------------------------------------------------------------------===//
   // Serialization 
