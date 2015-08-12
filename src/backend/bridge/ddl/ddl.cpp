@@ -43,6 +43,10 @@ void DDL::ProcessUtility(Node *parsetree,
                          Peloton_Status *status, TransactionId txn_id) {
   assert(parsetree != nullptr);
 
+  LOG_INFO("Process Utility");
+
+  sleep(2);
+
   static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
@@ -100,12 +104,6 @@ void DDL::ProcessUtility(Node *parsetree,
     } break;
   }
 
-  /*
-    auto& manager = catalog::Manager::GetInstance();
-    storage::Database* db =
-    manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-    std::cout << "Print db :: \n"<<*db << std::endl;
-    */
 }
 
 }  // namespace bridge

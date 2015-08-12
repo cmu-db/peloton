@@ -99,7 +99,8 @@ static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
                               BackendId m_backend_id,
                               Oid MyDatabaseId,
-                              TransactionId txn_id);
+                              TransactionId txn_id,
+                              MemoryContext query_context);
 
 static void peloton_send(void *msg, int len);
 
@@ -107,11 +108,22 @@ static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
 static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
+static Peloton_Status *peloton_create_status();
+static void peloton_process_status(Peloton_Status *status);
+static void peloton_destroy_status(Peloton_Status *status);
+
 static void peloton_update_stats(Peloton_Status *status);
 static void peloton_reply_to_backend(mqd_t backend_id);
 
+static void peloton_send_output(Peloton_Status  *status,
+                                bool sendTuples,
+                                DestReceiver *dest);
+
 static Node *peloton_copy_parsetree(Node *parsetree);
 static ParamListInfo peloton_copy_paramlist(ParamListInfo param_list);
+
+static void peloton_begin_query();
+static void __attribute__((unused)) peloton_finish_query();
 
 bool
 IsPelotonProcess(void) {
@@ -774,11 +786,13 @@ peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
                   BackendId m_backend_id,
                   Oid MyDatabaseId,
-                  TransactionId txn_id) {
+                  TransactionId txn_id,
+                  MemoryContext query_context) {
   hdr->m_type = mtype;
   hdr->m_backend_id = m_backend_id;
   hdr->m_dbid = MyDatabaseId;
   hdr->m_txn_id = txn_id;
+  hdr->m_query_context = SHMQueryContext;
 }
 
 
@@ -810,20 +824,89 @@ peloton_send(void *msg, int len) {
 }
 
 /* ----------
+ * peloton_switch_query_context() -
+ *
+ *  Create and switch to query context.
+ * ----------
+ */
+
+void
+peloton_begin_query() {
+
+  // First, create a new query subcontext
+  SHMQueryContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                             "SHM Query Subcontext",
+                                             ALLOCSET_DEFAULT_MINSIZE,
+                                             ALLOCSET_DEFAULT_INITSIZE,
+                                             ALLOCSET_DEFAULT_MAXSIZE,
+                                             SHM_DEFAULT_SEGMENT);
+
+  elog(INFO, "BEGIN :: SHMQueryContext :: %p pid :: %d", SHMQueryContext, getpid());
+
+}
+
+/* ----------
+ * peloton_send_output() -
+ *
+ *  Send the output to the receiver.
+ * ----------
+ */
+void
+peloton_send_output(Peloton_Status  *status,
+                    bool sendTuples,
+                    DestReceiver *dest) {
+  TupleTableSlot *slot;
+
+  // Go over any result slots
+  if(status->m_result_slots != NULL)  {
+    ListCell   *lc;
+
+    foreach(lc, status->m_result_slots)
+    {
+      slot = (TupleTableSlot *) lfirst(lc);
+
+      /*
+       * if the tuple is null, then we assume there is nothing more to
+       * process so we just end the loop...
+       */
+      if (TupIsNull(slot))
+        break;
+
+      /*
+       * If we are supposed to send the tuple somewhere, do so. (In
+       * practice, this is probably always the case at this point.)
+       */
+      if (sendTuples)
+        (*dest->receiveSlot) (slot, dest);
+
+      /*
+       * Free the underlying heap_tuple
+       * and the TupleTableSlot itself.
+       */
+      ExecDropSingleTupleTableSlot(slot);
+    }
+
+    // Clean up list
+    list_free(status->m_result_slots);
+  }
+
+}
+
+/* ----------
  * peloton_send_dml() -
  *
  *  Execute the given node to return a(nother) tuple.
  * ----------
  */
 void
-peloton_send_dml(Peloton_Status  *status,
-                 PlanState *planstate,
+peloton_send_dml(PlanState *planstate,
+                 bool sendTuples,
+                 DestReceiver *dest,
                  TupleDesc tuple_desc) {
+  Peloton_Status  *status;
   Peloton_MsgDML msg;
   MemoryContext oldcxt;
-
-  if (pelotonSock == PGINVALID_SOCKET)
-    return;
+  assert(pelotonSock != PGINVALID_SOCKET);
 
   // Set header
   auto transaction_id = GetTopTransactionId();
@@ -832,31 +915,48 @@ peloton_send_dml(Peloton_Status  *status,
                     PELOTON_MTYPE_DML,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id);
+                    transaction_id,
+                    SHMQueryContext);
 
-  // Set msg-specific information
+  // Create and switch to the query context
+  peloton_begin_query();
+
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+
+  status = peloton_create_status();
   msg.m_status = status;
 
   // Copy the tuple desc
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   msg.m_tuple_desc = CreateTupleDescCopy(tuple_desc);
-  MemoryContextSwitchTo(oldcxt);
   elog(INFO, "Copied tuple desc : %p", msg.m_tuple_desc);
 
   // Copy the param list
   assert(planstate != NULL);
   assert(planstate->state != NULL);
+
   auto param_list = planstate->state->es_param_list_info;
   auto shm_param_list = peloton_copy_paramlist(param_list);
   msg.m_param_list = shm_param_list;
 
   // Create the raw planstate info
-  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
-  MemoryContextSwitchTo(oldcxt);
   msg.m_plan_state = plan_state;
 
+  MemoryContextSwitchTo(oldcxt);
+
   peloton_send(&msg, sizeof(msg));
+
+  // Wait for the response and process it
+  peloton_process_status(status);
+
+  // Send output to dest
+  peloton_send_output(status, sendTuples, dest);
+
+  peloton_destroy_status(status);
+
+  // Do final cleanup
+  //peloton_finish_query();
+
 }
 
 /* ----------
@@ -866,17 +966,11 @@ peloton_send_dml(Peloton_Status  *status,
  * ----------
  */
 void
-peloton_send_ddl(Peloton_Status  *status,
-                 Node *parsetree) {
+peloton_send_ddl(Node *parsetree) {
+  Peloton_Status  *status;
   Peloton_MsgDDL msg;
-
-  if (pelotonSock == PGINVALID_SOCKET)
-    return;
-
-  // Prepare data required by peloton for DDL requests
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
-  MemoryContextSwitchTo(oldcxt);
+  MemoryContext oldcxt;
+  assert(pelotonSock != PGINVALID_SOCKET);
 
   // Set header
   auto transaction_id = GetTopTransactionId();
@@ -885,16 +979,35 @@ peloton_send_ddl(Peloton_Status  *status,
                     PELOTON_MTYPE_DDL,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id);
+                    transaction_id,
+                    SHMQueryContext);
 
-  // Set msg-specific information
+  // Create and switch to the query context
+  peloton_begin_query();
+
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+
+  status = peloton_create_status();
   msg.m_status = status;
 
-  // Copy the parsetree
-  auto shm_parsetree = peloton_copy_parsetree(parsetree);
-  msg.m_parsetree = shm_parsetree;
+  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
+
+  auto parsetree_copy = peloton_copy_parsetree(parsetree);
+  msg.m_parsetree = parsetree_copy;
+
+  // Switch back to old context
+  MemoryContextSwitchTo(oldcxt);
 
   peloton_send(&msg, sizeof(msg));
+
+  // Wait for the response and process it
+  peloton_process_status(status);
+
+  peloton_destroy_status(status);
+
+  // Do final cleanup
+  // peloton_finish_query();
+
 }
 
 /* ----------
@@ -904,16 +1017,11 @@ peloton_send_ddl(Peloton_Status  *status,
  * ----------
  */
 void
-peloton_send_bootstrap(Peloton_Status  *status){
+peloton_send_bootstrap(){
+  Peloton_Status  *status;
   Peloton_MsgBootstrap msg;
-
-  if (pelotonSock == PGINVALID_SOCKET)
-    return;
-
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  // construct raw database for bootstrap
-  raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
-  MemoryContextSwitchTo(oldcxt);
+  MemoryContext oldcxt;
+  assert(pelotonSock != PGINVALID_SOCKET);
 
   // Set header
   auto transaction_id = GetTopTransactionId();
@@ -922,14 +1030,52 @@ peloton_send_bootstrap(Peloton_Status  *status){
                     PELOTON_MTYPE_BOOTSTRAP,
                     MyBackendId,
                     MyDatabaseId,
-                    transaction_id);
+                    transaction_id,
+                    SHMQueryContext);
 
-  // Set msg-specific information
+  // Create and switch to the query context
+  peloton_begin_query();
+
+  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+
+  status = peloton_create_status();
   msg.m_status = status;
+
+  // Construct raw database for bootstrap
+  raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
   msg.m_raw_database = raw_database;
 
+  MemoryContextSwitchTo(oldcxt);
+
   peloton_send(&msg, sizeof(msg));
+
+  // Wait for the response and process it
+  peloton_process_status(status);
+
+  peloton_destroy_status(status);
+
+  // Do final cleanup
+  // peloton_finish_query();
+
 }
+
+/* ----------
+ * peloton_finish_query -
+ *
+ *  Cleanup
+ * ----------
+ */
+static void
+peloton_finish_query() {
+
+  elog(INFO, "FINISH :: SHMQueryContext :: %p pid :: %d", SHMQueryContext, getpid());
+
+  // First, clean up the query context
+  if(SHMQueryContext != NULL)
+    SHMContextDelete(SHMQueryContext);
+
+}
+
 
 /* ----------
  * peloton_reply_to_backend -
@@ -984,6 +1130,8 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   MyDatabaseId = msg->m_hdr.m_dbid;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
+  SHMQueryContext = msg->m_hdr.m_query_context;
+
   ParamListInfo param_list = msg->m_param_list;
   TupleDesc tuple_desc = msg->m_tuple_desc;
 
@@ -1024,6 +1172,8 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   Node* parsetree;
   assert(msg);
 
+  elog(INFO, "Process DDL");
+
   /* Get the parsetree */
   parsetree = msg->m_parsetree;
 
@@ -1035,17 +1185,22 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 
   MyDatabaseId = msg->m_hdr.m_dbid;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
+  SHMQueryContext = msg->m_hdr.m_query_context;
 
-    try {
-      /* Process the utility statement */
-      peloton::bridge::DDL::ProcessUtility(parsetree,
-                                           msg->m_status,
-                                           txn_id);
-    }
-    catch(const std::exception &exception) {
-      elog(ERROR, "Peloton exception :: %s", exception.what());
-      // Nothing to do here !
-    }
+  elog(INFO, "Going to process utility");
+
+  try {
+    /* Process the utility statement */
+    peloton::bridge::DDL::ProcessUtility(parsetree,
+                                         msg->m_status,
+                                         txn_id);
+  }
+  catch(const std::exception &exception) {
+    elog(ERROR, "Peloton exception :: %s", exception.what());
+    // Nothing to do here !
+  }
+
+  elog(INFO, "Done");
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
@@ -1071,8 +1226,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
-  // This is required
   MyDatabaseId = msg->m_hdr.m_dbid;
+  SHMQueryContext = msg->m_hdr.m_query_context;
 
   if(raw_database != NULL) {
     try {
@@ -1099,8 +1254,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
  */
 Peloton_Status *
 peloton_create_status() {
-  Peloton_Status *status =
-      static_cast<Peloton_Status *>(SHMAlloc(sizeof(Peloton_Status)));
+  Peloton_Status *status = (Peloton_Status *) palloc(sizeof(Peloton_Status));
+  assert(status != NULL);
 
   status->m_result = peloton::RESULT_INVALID;
   status->m_result_slots = NULL;
@@ -1120,7 +1275,11 @@ void
 peloton_process_status(Peloton_Status *status) {
   int code;
 
+  elog(INFO, "Process Status :: Wait");
+
   peloton::wait_for_message(&MyBackendQueue);
+
+  elog(INFO, "Process Status :: Woke up");
 
   // Process the status code
   code = status->m_result;
@@ -1141,6 +1300,8 @@ peloton_process_status(Peloton_Status *status) {
     }
     break;
   }
+
+  elog(INFO, "Process Status :: Done");
 
 }
 
@@ -1213,9 +1374,7 @@ static
 Node *peloton_copy_parsetree(Node *parsetree) {
 
   // Copy the parsetree
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   Node     *shm_parsetree = (Node *) copyObject(parsetree);
-  MemoryContextSwitchTo(oldcxt);
 
   elog(INFO, "Copied parsetree : %p", shm_parsetree);
 
@@ -1226,9 +1385,7 @@ static
 ParamListInfo peloton_copy_paramlist(ParamListInfo param_list) {
 
   // Copy the parsetree
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   auto shm_param_list = copyParamList(param_list);
-  MemoryContextSwitchTo(oldcxt);
 
   elog(INFO, "Copied param list : %p", shm_param_list);
 

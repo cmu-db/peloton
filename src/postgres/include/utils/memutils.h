@@ -78,11 +78,11 @@ extern PGDLLIMPORT MemoryContext ErrorContext;
 extern PGDLLIMPORT MemoryContext PostmasterContext;
 extern PGDLLIMPORT MemoryContext CacheMemoryContext;
 extern PGDLLIMPORT MemoryContext MessageContext;
-extern PGDLLIMPORT thread_local MemoryContext TopTransactionContext;
-extern PGDLLIMPORT thread_local MemoryContext CurTransactionContext;
+extern PGDLLIMPORT MemoryContext TopTransactionContext;
+extern PGDLLIMPORT MemoryContext CurTransactionContext;
 
 extern PGDLLIMPORT MemoryContext TopSharedMemoryContext;
-extern PGDLLIMPORT MemoryContext shmQueryContext;
+extern PGDLLIMPORT thread_local MemoryContext SHMQueryContext;
 
 /* This is a transient link to the active portal's memory context: */
 extern PGDLLIMPORT MemoryContext PortalContext;
@@ -191,7 +191,5 @@ struct SHMcxtstate
 MM   *SHMFindMMContext(MemoryContext ac);
 
 #define SHMPointerIsValid(pointer) ((void*)(pointer) != NULL)
-
-extern void *SHMAlloc(Size size);
 
 #endif   /* MEMUTILS_H */
