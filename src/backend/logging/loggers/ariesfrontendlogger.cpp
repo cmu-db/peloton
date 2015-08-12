@@ -188,21 +188,38 @@ void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_hea
   auto table = db->GetTableWithOid(log_record_header.GetTableId());
   auto schema = table->GetSchema();
 
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  switch(log_record_header.GetType()){
 
-  tuple->DeserializeFrom(logBody, pool);
+    case LOGRECORD_TYPE_INSERT_TUPLE:{
+      storage::Tuple *tuple = new storage::Tuple(schema, true);
+      storage::AbstractBackend *backend = new storage::VMBackend();
+      Pool *pool = new Pool(backend);
+    
+      tuple->DeserializeFrom(logBody, pool);
+      ItemPointer location = table->InsertTuple(txn, tuple);
+      if (location.block == INVALID_OID) {
+        LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+      }
+      txn->RecordInsert(location);
+      std::cout << *table << std::endl;
+      delete tuple;
+    }break;
 
-  std::cout << *tuple << std::endl;
+    case LOGRECORD_TYPE_DELETE_TUPLE:{
+      ItemPointer delete_location = log_record_header.GetItemPointer();
+      bool status = table->DeleteTuple(txn, delete_location);
+      if( status == false){
+        LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
+      }
+      txn->RecordDelete(delete_location);
+    }
+    break;
 
-  ItemPointer location = table->InsertTuple(txn, tuple);
+    default:
+    LOG_WARN("Unsupported LOG TYPE\n");
+    break;
+  }
 
-  if (location.block == INVALID_OID) { LOG_ERROR("!");}
-  txn->RecordInsert(location);
-
-  std::cout << *table << std::endl;
-  delete tuple;
 
 }
 
