@@ -255,10 +255,9 @@ class AbstractAggregator {
 
   }
 
-  virtual bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
-                       size_t num_columns) = 0;
+  virtual bool Advance(AbstractTuple *next_tuple) = 0;
 
-  virtual bool Finalize(AbstractTuple *prev_tuple) = 0;
+  virtual bool Finalize() = 0;
 
   virtual ~AbstractAggregator() {
   }
@@ -284,14 +283,14 @@ class SortAggregator : public AbstractAggregator {
                  storage::DataTable *output_table,
                  executor::ExecutorContext* econtext);
 
-  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
-               size_t num_columns) override;
+  bool Advance(AbstractTuple *next_tuple) override;
 
-  bool Finalize(AbstractTuple *prev_tuple) override;
+  bool Finalize() override;
 
   ~SortAggregator();
 
  private:
+  AbstractTuple *prev_tuple = nullptr;
   Agg** aggregates;
 
 };
@@ -304,16 +303,17 @@ class HashAggregator : public AbstractAggregator {
  public:
   HashAggregator(const planner::AggregateV2Node *node,
                  storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext);
+                 executor::ExecutorContext* econtext,
+                 size_t num_input_columns);
 
-  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
-               size_t num_columns) override;
+  bool Advance(AbstractTuple *next_tuple) override;
 
-  bool Finalize(AbstractTuple *prev_tuple) override;
+  bool Finalize() override;
 
   ~HashAggregator();
 
  private:
+  const size_t num_input_columns;
 
   /** List of aggregates for a specific group. */
   struct AggregateList {
