@@ -98,6 +98,14 @@ struct BitmapHeapScanPlanState : public AbstractScanPlanState {
 
 };
 
+struct BitmapIndexScanPlanState : public AbstractScanPlanState {
+
+  BitmapIndexScan *biss_plan;
+
+  ScanKey  biss_ScanKeys;
+  int biss_NumScanKeys;
+};
+
 struct IndexOnlyScanPlanState : public AbstractScanPlanState {
 
   IndexOnlyScan *ioss_plan;

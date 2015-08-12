@@ -65,12 +65,12 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_IndexOnlyScanState:
       peloton_plan = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState *>(planstate),
+          reinterpret_cast<const IndexOnlyScanPlanState *>(planstate),
           options);
       break;
     case T_BitmapHeapScanState:
-      peloton_plan = PlanTransformer::TransformBitmapScan(
-          reinterpret_cast<const BitmapHeapScanState *>(planstate),
+      peloton_plan = PlanTransformer::TransformBitmapHeapScan(
+          reinterpret_cast<const BitmapHeapScanPlanState *>(planstate),
           options);
       break;
     case T_LockRowsState:
@@ -92,7 +92,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
           reinterpret_cast<const MaterialPlanState *>(planstate));
       break;
     default: {
-      LOG_ERROR("Unsupported Postgres Plan  Tag: %u ",
+      LOG_ERROR("PlanTransformer :: Unsupported Postgres Plan Tag: %u ",
                 nodeTag(planstate));
       elog(INFO, "Query: ");
       break;
