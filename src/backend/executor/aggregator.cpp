@@ -206,10 +206,15 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
     }
 
     // Clean up allocated storage
-    delete[] entry.second->aggregates;
+    for(size_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++){
+      delete entry.second->aggregates[aggno];
+    }
+    delete [] entry.second->aggregates;
+
     for(auto &v : entry.second->first_tuple_values){
       v.FreeUninlinedData();
     }
+    delete entry.second;
   }
 
 // TODO: if no record exists in input_table, we have to output a null record
