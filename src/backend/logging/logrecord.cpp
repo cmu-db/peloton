@@ -29,6 +29,7 @@ bool LogRecord::SerializeLogRecord(){
   bool status = true;
 
   // Serialize the header of LogRecord
+  std::cout << "H : " << log_record_header << std::endl;
   log_record_header.SerializeLogRecordHeader(output);
 
   switch(log_record_header.GetType()){

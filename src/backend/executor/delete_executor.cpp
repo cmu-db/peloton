@@ -89,18 +89,18 @@ bool DeleteExecutor::DExecute() {
     ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
     // Logging 
-//    {
-//      auto old_tuple = tile->GetTuple(physical_tuple_id);
-//      // get tuple here 
-//      auto& logManager = logging::LogManager::GetInstance();
-//      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-//      logging::LogRecord record(LOGRECORD_TYPE_DELETE_TUPLE, 
-//                               transaction_->GetTransactionId(), 
-//                               target_table_->GetOid(),
-//                               delete_location,
-//                               old_tuple);
-//      logger->Delete(record);
-//    }
+    {
+      auto old_tuple = tile->GetTuple(physical_tuple_id);
+      // get tuple here 
+      auto& logManager = logging::LogManager::GetInstance();
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      logging::LogRecordHeader header(LOGRECORD_TYPE_DELETE_TUPLE, 
+                                      transaction_->GetTransactionId(), 
+                                      target_table_->GetOid(),
+                                      delete_location);
+      logging::LogRecord record(header, old_tuple);
+      logger->Delete(record);
+    }
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
