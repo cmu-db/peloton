@@ -25,7 +25,7 @@
 namespace peloton {
 namespace bridge {
 
-const PlanTransformer::TransformOptions PlanTransformer::kDefaultOptions;
+const PlanTransformer::TransformOptions PlanTransformer::DefaultOptions;
 
 /**
  * @brief Pretty print the plan  tree.

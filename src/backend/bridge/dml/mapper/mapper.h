@@ -47,7 +47,7 @@ class PlanTransformer {
   static void PrintPlan(const Plan *plan);
 
   static planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate) {
-    return TransformPlan(planstate, kDefaultOptions);
+    return TransformPlan(planstate, DefaultOptions);
   }
 
   static bool CleanPlan(planner::AbstractPlan *root);
@@ -67,7 +67,7 @@ class PlanTransformer {
     TransformOptions(bool pi) : use_projInfo(pi) {}
   };
 
-  static const TransformOptions kDefaultOptions;
+  static const TransformOptions DefaultOptions;
 
   static planner::AbstractPlan *TransformPlan(
       AbstractPlanState *planstate,
