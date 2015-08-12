@@ -17,7 +17,6 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 
-
 namespace peloton {
 namespace planner {
 
@@ -30,16 +29,19 @@ class AggregateV2Node : public AbstractPlanNode {
 
   typedef std::pair<ExpressionType, const expression::AbstractExpression*> AggTerm;
 
-  AggregateV2Node(const planner::ProjectInfo* project_info,
-                  const expression::AbstractExpression* predicate,
-                  const std::vector<AggTerm>&& unique_agg_terms,
-                  const std::vector<oid_t>&& groupby_col_ids,
-                  const catalog::Schema* output_schema)
+  AggregateV2Node(
+      const planner::ProjectInfo* project_info,
+      const expression::AbstractExpression* predicate,
+      const std::vector<AggTerm>&& unique_agg_terms,
+      const std::vector<oid_t>&& groupby_col_ids,
+      const catalog::Schema* output_schema, PlanNodeType aggregate_strategy =
+          PLAN_NODE_TYPE_HASHAGGREGATE)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
-        output_schema_(output_schema){
+        output_schema_(output_schema),
+        aggregate_strategy_(aggregate_strategy) {
 
   }
 
@@ -63,17 +65,21 @@ class AggregateV2Node : public AbstractPlanNode {
     return output_schema_;
   }
 
-inline PlanNodeType GetPlanNodeType() const {
+  PlanNodeType GetAggregateStrategy() const {
+    return aggregate_strategy_;
+  }
+
+  inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
   }
 
-  ~AggregateV2Node(){
-    for(auto term : unique_agg_terms_){
+  ~AggregateV2Node() {
+    for (auto term : unique_agg_terms_) {
       delete term.second;
     }
   }
 
-   private:
+ private:
 
   /* For projection */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
@@ -89,6 +95,9 @@ inline PlanNodeType GetPlanNodeType() const {
 
   /* Output schema */
   const catalog::Schema* output_schema_;
+
+  /* Aggregate Strategy */
+  const PlanNodeType aggregate_strategy_;
 
 };
 
