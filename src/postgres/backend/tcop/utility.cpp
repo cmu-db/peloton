@@ -671,7 +671,6 @@ standard_ProcessUtility(Node *parsetree,
       {
         // TODO :: Peloton Changes
         // Disabled Vacuumming in Postgres
-        peloton::LOG_INFO("Postgres Vacuumming is disabled now\n");
         if(false){
           VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
