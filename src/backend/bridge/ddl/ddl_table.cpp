@@ -112,7 +112,13 @@ bool DDLTable::ExecAlterTableStmt(Node *parsetree,
   storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithOid(relation_oid)) {
-    parsetree_stack.push_back(parsetree);
+
+    // Make a copy for local storage
+    MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+    auto parse_tree_copy = (Node *) copyObject(parsetree);
+    MemoryContextSwitchTo(oldcxt);
+
+    parsetree_stack.push_back(parse_tree_copy);
     return true;
   }
 

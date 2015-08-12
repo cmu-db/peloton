@@ -43,9 +43,9 @@ void DDL::ProcessUtility(Node *parsetree,
                          Peloton_Status *status, TransactionId txn_id) {
   assert(parsetree != nullptr);
 
-  LOG_INFO("Process Utility");
+  LOG_TRACE("Process Utility");
 
-  static std::vector<Node *> parsetree_stack;
+  static thread_local std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
