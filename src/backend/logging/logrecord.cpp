@@ -37,7 +37,6 @@ bool LogRecord::SerializeLogRecord(){
     case LOGRECORD_TYPE_DELETE_TUPLE:
     case LOGRECORD_TYPE_UPDATE_TUPLE:{
      storage::Tuple* tuple = (storage::Tuple*)data;
-     std::cout << *tuple << std::endl;
      tuple->SerializeTo(output);
     } break;
 
