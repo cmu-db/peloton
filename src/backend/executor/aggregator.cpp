@@ -104,7 +104,7 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
   node->GetProjectInfo()->Evaluate(tuple.get(), prev_tuple, aggref_tuple.get(),
                                    econtext);
 
-  LOG_INFO("Tuple to Output : \n");
+  LOG_INFO("Tuple to Output :");
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
   auto location = output_table->InsertTuple(econtext->GetTransaction(),
@@ -257,7 +257,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
 
   // Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
-    LOG_TRACE("Prev tuple is nullprt!");
+    LOG_INFO("Prev tuple is nullptr!");
     start_new_agg = true;
   } else {
     // Compare group by columns
@@ -268,6 +268,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal) {
+        LOG_INFO("Group-by columns changed.");
         start_new_agg = true;
         break;
       }
@@ -276,7 +277,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
 
   // If we have started a new aggregate tuple
   if (start_new_agg) {
-    LOG_TRACE("Started a new group!");
+    LOG_INFO("Started a new group!");
 
     if (Helper(node, aggregates, output_table, prev_tuple,
                this->executor_context) ==
