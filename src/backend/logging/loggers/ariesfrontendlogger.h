@@ -43,7 +43,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
   private:
 
-    bool SetLogRecordHeader(LogRecord& log_record);
+    bool SetLogRecordHeader(LogRecordHeader& log_record_header);
 
     size_t BodySizeCheck();
 
