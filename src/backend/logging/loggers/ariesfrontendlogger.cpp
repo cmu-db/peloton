@@ -64,7 +64,7 @@ void AriesFrontendLogger::MainLoop(void) {
   auto& logManager = LogManager::GetInstance();
 
   while( !logManager.IsPelotonReadyToRecovery() ){
-    sleep(2);
+    sleep(1);
   }
 
   Recovery();
@@ -115,16 +115,16 @@ void AriesFrontendLogger::Flush(void) {
             logFile);
   }
 
-  // TODO :: What if db crashed during the flush ..?
-
   int ret = fflush(logFile);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
   }
+
   ret = fsync(logFileFd);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
+
   aries_global_queue.clear();
 }
 
