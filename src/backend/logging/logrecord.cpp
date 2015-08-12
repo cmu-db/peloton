@@ -67,7 +67,18 @@ void LogRecord::SerializeLogRecordHeader(CopySerializeOutput& output){
   output.WriteLong(txn_id);
 }
 
-size_t LogRecord::GetSerializedLogRecordHeaderSize() {
+/**
+ * @brief Deserialize LogRecordHeader
+ * @param input  
+ */
+void LogRecord::DeserializeLogRecordHeader(CopySerializeInput& input){
+  log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+  db_oid = (oid_t)(input.ReadShort());
+  table_oid = (oid_t)(input.ReadShort());
+  txn_id = (txn_id_t)(input.ReadLong());
+}
+
+size_t LogRecord::GetLogRecordHeaderSize() {
   // enum + oid_t + oid_t + long
   return sizeof(char)+sizeof(int16_t)+sizeof(int16_t)+sizeof(int64_t);
 }
