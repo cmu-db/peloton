@@ -145,13 +145,35 @@ bool AriesFrontendLogger::SetLogRecordHeader(LogRecord& log_record){
   log_record.DeserializeLogRecordHeader(logHeader);
 
   //debugging
-  std::cout << "log type  : " << LogRecordTypeToString(log_record.GetType()) << std::endl;
-  std::cout << "db oid : " << log_record.GetDbId() << std::endl;
-  std::cout << "table oid : " << log_record.GetTableId() << std::endl;
-  std::cout << "txn id : " << log_record.GetTxnId() << std::endl;
+  LOG_INFO("LogRecordHeader Info");
+  LOG_INFO("LogRecord Type  : %s", LogRecordTypeToString(log_record.GetType()).c_str());
+  LOG_INFO("Database id : %u" , log_record.GetDbId());
+  LOG_INFO("Table oid : %u" , log_record.GetTableId());
+  LOG_INFO("Txn id :  %li" , log_record.GetTxnId());
 
   return true;
 }
+
+size_t AriesFrontendLogger::BodySizeCheck(){
+  size_t body_size;
+  char body_check[sizeof(int32_t)];
+  size_t ret = fread(body_check, 1, sizeof(body_check), logFile);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInput log_body_check(body_check, sizeof(int32_t));
+  body_size = (log_body_check.ReadInt())+sizeof(int32_t);;
+  LOG_INFO("LogRecord Body Size : %zu",body_size);
+
+  /* go back 4 bytes */
+  ret = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
+  if(ret == -1){
+    LOG_ERROR("Error occured in fseek ");
+  }
+  return body_size;
+}
+
 
 void AriesFrontendLogger::Recovery() {
 
@@ -162,31 +184,15 @@ void AriesFrontendLogger::Recovery() {
     auto txn = txn_manager.BeginTransaction();
 
     while(true){
+
       LogRecord log_record;
       if( SetLogRecordHeader(log_record) == false ) break;
 
-      std::cout << "db id : " << log_record.GetDbId() << std::endl;
 
-      size_t body_size;
-      char body_check[sizeof(int32_t)];
-      size_t ret = fread(body_check, 1, sizeof(body_check), logFile);
-      if( ret <= 0 ){
-        break;
-      }
-
-      CopySerializeInput log_body_check(body_check, sizeof(int32_t));
-      body_size = (log_body_check.ReadInt())+sizeof(int32_t);;
-      std::cout << "body size : " << body_size << std::endl;
-
-      /* go back 4 bytes */
-      ret = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
-      if(ret == -1){
-        LOG_ERROR("Error occured in fseek ");
-      }
-
+      size_t body_size = BodySizeCheck();
       // Read Body 
       char body[body_size];
-      ret = fread(body, 1, sizeof(body), logFile);
+      int ret = fread(body, 1, sizeof(body), logFile);
       if( ret <= 0 ){
         LOG_ERROR("Error occured in fread ");
       }
