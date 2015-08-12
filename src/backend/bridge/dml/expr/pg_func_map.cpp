@@ -4,6 +4,13 @@
 namespace peloton {
 namespace bridge {
 
+/*
+ * TODO: May have to create separate maps for different purpose.
+ * For example, PG Func ID 218 (float8pl) is not only the function of (float + float)
+ * but also the transit function of SUM(float).
+ * But in Peloton, we need to distinguish it.
+ */
+
 /**
  * @brief Mapping PG Function Id to Peloton Function Meta Info.
  */
@@ -85,9 +92,11 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     { 769, { EXPRESSION_TYPE_AGGREGATE_MIN, 1} },
     { 771, { EXPRESSION_TYPE_AGGREGATE_MIN, 1} },
 
+
     { 1840, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
     { 1841, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
     { 1842, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },
+    { 218, { EXPRESSION_TYPE_AGGREGATE_SUM, 1} },  // float
 
 });
 

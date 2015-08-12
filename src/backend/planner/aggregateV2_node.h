@@ -29,13 +29,12 @@ class AggregateV2Node : public AbstractPlanNode {
 
   typedef std::pair<ExpressionType, const expression::AbstractExpression*> AggTerm;
 
-  AggregateV2Node(
-      const planner::ProjectInfo* project_info,
-      const expression::AbstractExpression* predicate,
-      const std::vector<AggTerm>&& unique_agg_terms,
-      const std::vector<oid_t>&& groupby_col_ids,
-      const catalog::Schema* output_schema, PlanNodeType aggregate_strategy =
-          PLAN_NODE_TYPE_HASHAGGREGATE)
+  AggregateV2Node(const planner::ProjectInfo* project_info,
+                  const expression::AbstractExpression* predicate,
+                  const std::vector<AggTerm>&& unique_agg_terms,
+                  const std::vector<oid_t>&& groupby_col_ids,
+                  const catalog::Schema* output_schema,
+                  PelotonAggregateType aggregate_strategy = AGGREGATE_TYPE_HASH)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
@@ -62,10 +61,10 @@ class AggregateV2Node : public AbstractPlanNode {
   }
 
   const catalog::Schema* GetOutputSchema() const {
-    return output_schema_;
+    return output_schema_.get();
   }
 
-  PlanNodeType GetAggregateStrategy() const {
+  PelotonAggregateType GetAggregateStrategy() const {
     return aggregate_strategy_;
   }
 
@@ -94,10 +93,10 @@ class AggregateV2Node : public AbstractPlanNode {
   const std::vector<oid_t> groupby_col_ids_;
 
   /* Output schema */
-  const catalog::Schema* output_schema_;
+  std::unique_ptr<const catalog::Schema> output_schema_;
 
   /* Aggregate Strategy */
-  const PlanNodeType aggregate_strategy_;
+  const PelotonAggregateType aggregate_strategy_;
 
 };
 
