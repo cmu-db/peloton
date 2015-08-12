@@ -266,7 +266,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     storage::Tuple tuple(base_tile->GetSchema());
 
     // Switch to query context to construct list and slots
-    oldContext = MemoryContextSwitchTo(SHMQueryContext);
+    oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {

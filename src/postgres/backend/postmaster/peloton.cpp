@@ -921,7 +921,7 @@ peloton_send_dml(PlanState *planstate,
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
@@ -985,7 +985,7 @@ peloton_send_ddl(Node *parsetree) {
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
@@ -1036,7 +1036,7 @@ peloton_send_bootstrap(){
   // Create and switch to the query context
   peloton_begin_query();
 
-  oldcxt = MemoryContextSwitchTo(SHMQueryContext);
+  oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
   status = peloton_create_status();
   msg.m_status = status;
