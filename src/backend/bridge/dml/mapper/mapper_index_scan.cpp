@@ -192,35 +192,39 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState *ioss_plan_state, const TransformOptions options) {
+    const IndexOnlyScanPlanState *ioss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* Resolve target relation */
-  Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan *iss_plan =
-      reinterpret_cast<IndexScan *>(ioss_plan_state->ss.ps.plan);
+  Oid table_oid = ioss_plan_state->table_oid;
+  Oid database_oid = ioss_plan_state->database_oid;
+
+  LOG_INFO("Index Only Scan :: DB OID :: %u Table OID :: %u",
+           database_oid, table_oid);
+
+  const IndexOnlyScan *ioss_plan = ioss_plan_state->ioss_plan;
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+  index_scan_desc.index = table->GetIndexWithOid(ioss_plan->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", ioss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  LOG_INFO("Scan order: %d", ioss_plan->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", ioss_plan_state->ioss_NumScanKeys);
   BuildScanKey(ioss_plan_state->ioss_ScanKeys,
-               ioss_plan_state->ioss_NumScanKeys, index_scan_desc);
+               ioss_plan_state->ioss_NumScanKeys,
+               index_scan_desc);
 
   /* handle simple cases */
   /* ORDER BY, not support */
@@ -230,8 +234,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  //GetGenericInfoFromScanState(parent, predicate, column_ids,
-  //                            &(ioss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              ioss_plan_state,
+                              options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
@@ -255,24 +260,20 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
  *
  * @return Pointer to the constructed AbstractPlan
  */
-planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
-    const BitmapHeapScanState *bhss_plan_state,
+planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
+    const BitmapHeapScanPlanState *bhss_plan_state,
     const TransformOptions options) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
-  Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
+  Oid table_oid = bhss_plan_state->table_oid;
+  Oid database_oid =  bhss_plan_state->database_oid;
 
-  assert(nodeTag(outerPlanState(bhss_plan_state)) ==
-         T_BitmapIndexScanState);  // only support a bitmap index scan at lower
-                                   // level
-
-  const BitmapIndexScanState *biss_state =
-      reinterpret_cast<const BitmapIndexScanState *>(
-          outerPlanState(bhss_plan_state));
+  const BitmapIndexScanPlanState *biss_state =
+      reinterpret_cast<const BitmapIndexScanPlanState *>(
+          outerAbstractPlanState(bhss_plan_state));
   const BitmapIndexScan *biss_plan =
-      reinterpret_cast<const BitmapIndexScan *>(biss_state->ss.ps.plan);
+      reinterpret_cast<const BitmapIndexScan *>(biss_state->biss_plan);
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
@@ -296,7 +297,9 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", biss_state->biss_NumScanKeys);
-  BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys,
+
+  BuildScanKey(biss_state->biss_ScanKeys,
+               biss_state->biss_NumScanKeys,
                index_scan_desc);
 
   /* handle simple cases */
@@ -308,8 +311,9 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapScan(
   expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  //GetGenericInfoFromScanState(parent, predicate, column_ids,
-  //                           &(bhss_plan_state->ss), options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids,
+                              bhss_plan_state,
+                              options.use_projInfo);
 
   auto scan_node =
       new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);

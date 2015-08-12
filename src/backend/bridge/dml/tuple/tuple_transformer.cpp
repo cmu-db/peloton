@@ -226,6 +226,9 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
     Value value = tuple->GetValue(att_itr);
     Datum datum = GetDatum(value);
 
+    LOG_INFO("ByVal :: %d ", tuple_desc->attrs[att_itr]->attbyval);
+    LOG_INFO("Type :: %d ", value.GetValueType());
+
     assert(tuple_desc->attrs[att_itr]->attbyval == true ||
            value.GetValueType() == VALUE_TYPE_VARCHAR ||
            value.GetValueType() == VALUE_TYPE_VARBINARY);
