@@ -238,37 +238,32 @@ class MinAgg : public Agg {
 /** brief Create an instance of an aggregator for the specified aggregate */
 Agg *GetAggInstance(ExpressionType agg_type);
 
-/**
- * List of aggregates for a specific group.
- */
-struct AggregateList {
-  // Keep a deep copy of the first tuple we met of this group
-  std::vector<Value> first_tuple_values;
-
-  // The aggregates for each column for this group
-  Agg **aggregates;
-};
-
 /*
  * Interface for an aggregator (not an an individual aggregate)
  *
  * This will aggregate some number of tuples and produce the results in the
  * provided output .
  */
-template<PlanNodeType aggregate_type>
-class Aggregator {
+class AbstractAggregator {
  public:
-  Aggregator(const planner::AggregateV2Node *node,
-             storage::DataTable *output_table,
-             executor::ExecutorContext* econtext);
+  AbstractAggregator(const planner::AggregateV2Node *_node,
+                     storage::DataTable *_output_table,
+                     executor::ExecutorContext* _econtext)
+      : node(_node),
+        output_table(_output_table),
+        executor_context(_econtext) {
 
-  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple, size_t num_columns);
+  }
 
-  bool Finalize(AbstractTuple *prev_tuple);
+  virtual bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
+                       size_t num_columns) = 0;
 
-  ~Aggregator();
+  virtual bool Finalize(AbstractTuple *prev_tuple) = 0;
 
- private:
+  virtual ~AbstractAggregator() {
+  }
+
+ protected:
   /** @brief Plan node */
   const planner::AggregateV2Node *node;
 
@@ -278,21 +273,58 @@ class Aggregator {
   /** @brief Executor Context */
   executor::ExecutorContext* executor_context = nullptr;
 
-  /** @brief Aggregates */
-  Agg **aggregates = nullptr;
+};
 
-  /** @brief Group by columns */
-  std::vector<oid_t> group_by_columns;
+/**
+ * @brief Used when input is sorted on group-by keys.
+ */
+class SortAggregator : public AbstractAggregator {
+ public:
+  SortAggregator(const planner::AggregateV2Node *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
 
-  /** @brief Group-By terms */
-  std::vector<planner::AggregateV2Node::AggTerm> aggregate_terms;
+  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
+               size_t num_columns) override;
 
-  //===--------------------------------------------------------------------===//
-  // Used only for hash aggregation
-  //===--------------------------------------------------------------------===//
-  /*
-   * Type of the hash table used to store aggregates for each group.
-   */
+  bool Finalize(AbstractTuple *prev_tuple) override;
+
+  ~SortAggregator();
+
+ private:
+  Agg** aggregates;
+
+};
+
+/**
+ * @brief Used when input is NOT sorted.
+ * Will maintain an internal hash table.
+ */
+class HashAggregator : public AbstractAggregator {
+ public:
+  HashAggregator(const planner::AggregateV2Node *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
+
+  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple,
+               size_t num_columns) override;
+
+  bool Finalize(AbstractTuple *prev_tuple) override;
+
+  ~HashAggregator();
+
+ private:
+
+  /** List of aggregates for a specific group. */
+  struct AggregateList {
+    // Keep a deep copy of the first tuple we met of this group
+    std::vector<Value> first_tuple_values;
+
+    // The aggregates for each column for this group
+    Agg **aggregates;
+  };
+
+  /** Hash function of internal hash table */
   struct ValueVectorHasher :
       std::unary_function<std::vector<Value>, std::size_t> {
     // Generate a 64-bit number for the a vector of value
