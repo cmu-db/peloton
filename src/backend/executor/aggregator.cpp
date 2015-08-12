@@ -118,33 +118,37 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 }
 
 //===--------------------------------------------------------------------===//
-// Specialization of an Aggregator that uses a hash map to aggregate
-// tuples from the input table, i.e. it does not expect the input
-// table to be sorted on the group by key.
+// Hash Aggregator
 //===--------------------------------------------------------------------===//
-
-template<>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
-    const planner::AggregateV2Node *node, storage::DataTable *output_table,
-    executor::ExecutorContext* econtext)
-    : node(node),
-      output_table(output_table),
-      executor_context(econtext) {
+HashAggregator::HashAggregator(const planner::AggregateV2Node *node,
+                               storage::DataTable *output_table,
+                               executor::ExecutorContext* econtext)
+    : AbstractAggregator(node, output_table, econtext) {
 
   group_by_key_values.resize(node->GetGroupbyColIds().size(),
                              ValueFactory::GetNullValue());
 
 }
 
-template<>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::~Aggregator() {
+HashAggregator::~HashAggregator() {
 
+  for (auto entry : aggregates_map) {
+    // Clean up allocated storage
+    for (size_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+      delete entry.second->aggregates[aggno];
+    }
+    delete[] entry.second->aggregates;
+
+    for (auto &v : entry.second->first_tuple_values) {
+      v.FreeUninlinedData();
+    }
+    delete entry.second;
+  }
 }
 
-template<>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Advance(
-    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple __attribute__((unused)),
-    size_t num_columns) {
+bool HashAggregator::Advance(AbstractTuple *cur_tuple,
+                             AbstractTuple *prev_tuple __attribute__((unused)),
+                             size_t num_columns) {
 
   AggregateList *aggregate_list;
 
@@ -194,27 +198,16 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Advance(
   return true;
 }
 
-template<>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
+bool HashAggregator::Finalize(
     AbstractTuple *prev_tuple __attribute__((unused))) {
   for (auto entry : aggregates_map) {
     // Construct a container for the first tuple
-    expression::ContainerTuple<std::vector<Value>> first_tuple(&entry.second->first_tuple_values);
-    if (Helper(node, entry.second->aggregates, output_table,
-               &first_tuple, this->executor_context) == false) {
+    expression::ContainerTuple<std::vector<Value>> first_tuple(
+        &entry.second->first_tuple_values);
+    if (Helper(node, entry.second->aggregates, output_table, &first_tuple,
+               this->executor_context) == false) {
       return false;
     }
-
-    // Clean up allocated storage
-    for(size_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++){
-      delete entry.second->aggregates[aggno];
-    }
-    delete [] entry.second->aggregates;
-
-    for(auto &v : entry.second->first_tuple_values){
-      v.FreeUninlinedData();
-    }
-    delete entry.second;
   }
 
 // TODO: if no record exists in input_table, we have to output a null record
@@ -226,39 +219,29 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
 }
 
 //===--------------------------------------------------------------------===//
-// Specialization of an aggregator that expects the input table to be
-// sorted on the group by key.
+// Sort Aggregator
 //===--------------------------------------------------------------------===//
-template<>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
-    const planner::AggregateV2Node *node, storage::DataTable *output_table,
-    executor::ExecutorContext* econtext)
-    : node(node),
-      output_table(output_table),
-      executor_context(econtext) {
+SortAggregator::SortAggregator(const planner::AggregateV2Node *node,
+                               storage::DataTable *output_table,
+                               executor::ExecutorContext* econtext)
+    : AbstractAggregator(node, output_table, econtext) {
 
-  group_by_columns = node->GetGroupbyColIds();
-
-// Create aggregators and initialize
-  aggregate_terms = node->GetUniqueAggTerms();
-  aggregates = new Agg *[aggregate_terms.size()];
-  ::memset(aggregates, 0, sizeof(Agg *) * aggregate_terms.size());
+  aggregates = new Agg*[node->GetUniqueAggTerms().size()];
+  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
 }
 
-template<>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
+SortAggregator::~SortAggregator() {
 // Clean up aggregators
-  for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
+  for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
       column_itr++) {
     delete aggregates[column_itr];
   }
   delete[] aggregates;
 }
 
-template<>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
-    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple,
-    size_t __attribute__((unused))) {
+bool SortAggregator::Advance(AbstractTuple *cur_tuple,
+                             AbstractTuple *prev_tuple,
+                             size_t __attribute__((unused))) {
   bool start_new_agg = false;
 
 // Check if we are starting a new aggregate tuple
@@ -267,10 +250,10 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
     start_new_agg = true;
   } else {
     // Compare group by columns
-    for (oid_t column_itr = 0; column_itr < group_by_columns.size();
-        column_itr++) {
-      Value lval = cur_tuple->GetValue(group_by_columns[column_itr]);
-      Value rval = prev_tuple->GetValue(group_by_columns[column_itr]);
+    for (oid_t grpby_colno = 0; grpby_colno < node->GetGroupbyColIds().size();
+        grpby_colno++) {
+      Value lval = cur_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
+      Value rval = prev_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal) {
@@ -292,29 +275,27 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
     }
 
     // Create aggregate
-    for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
-        column_itr++) {
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
+        aggno++) {
       // Clean up previous aggregate
-      delete aggregates[column_itr];
-      aggregates[column_itr] = GetAggInstance(
-          aggregate_terms[column_itr].first);
+      delete aggregates[aggno];
+      aggregates[aggno] = GetAggInstance(
+          node->GetUniqueAggTerms()[aggno].first);
     }
   }
 
 // Update the aggregation calculation
-  for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
-      column_itr++) {
-    Value value = aggregate_terms[column_itr].second->Evaluate(
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
+      aggno++) {
+    Value value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
         cur_tuple, nullptr, this->executor_context);
-    aggregates[column_itr]->Advance(value);
+    aggregates[aggno]->Advance(value);
   }
 
   return true;
 }
 
-template<>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
-    AbstractTuple *prev_tuple) {
+bool SortAggregator::Finalize(AbstractTuple *prev_tuple) {
   if (Helper(node, aggregates, output_table, prev_tuple,
              this->executor_context) ==
              false) {
