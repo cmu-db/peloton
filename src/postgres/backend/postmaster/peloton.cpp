@@ -400,13 +400,6 @@ peloton_MainLoop(void) {
   Peloton_Msg  msg;
   int     wr;
 
-  /* Start our scheduler */
-  std::unique_ptr<peloton::scheduler::TBBScheduler> scheduler(new peloton::scheduler::TBBScheduler());
-  if(scheduler.get() == NULL) {
-    elog(ERROR, "Could not create peloton scheduler \n");
-    return;
-  }
-
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
    * death of our parent postmaster.
@@ -480,20 +473,17 @@ peloton_MainLoop(void) {
           break;
 
         case PELOTON_MTYPE_DDL: {
-          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
-                               reinterpret_cast<Peloton_MsgDDL*>(&msg));
+          std::thread(peloton_process_ddl, reinterpret_cast<Peloton_MsgDDL*>(&msg)).detach();
         }
         break;
 
         case PELOTON_MTYPE_DML: {
-          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
-                               reinterpret_cast<Peloton_MsgDML*>(&msg));
+          std::thread(peloton_process_dml, reinterpret_cast<Peloton_MsgDML*>(&msg)).detach();
         }
         break;
 
         case PELOTON_MTYPE_BOOTSTRAP: {
-          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_bootstrap),
-                               reinterpret_cast<Peloton_MsgBootstrap*>(&msg));
+          std::thread(peloton_process_bootstrap, reinterpret_cast<Peloton_MsgBootstrap*>(&msg)).detach();
         }
         break;
 
