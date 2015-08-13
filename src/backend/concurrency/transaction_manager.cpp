@@ -75,6 +75,7 @@ Transaction *TransactionManager::BeginTransaction() {
       txn_table.insert(std::make_pair(txn_id, next_txn));
     }
   }
+  // XXX LOG :: record begin entry
 
   return next_txn;
 }

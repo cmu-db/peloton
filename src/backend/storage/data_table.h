@@ -78,6 +78,9 @@ class DataTable : public AbstractTable {
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
 
+  // coerce into adding a new tile group with a tile group id
+  oid_t AddTileGroupWithId(oid_t tile_group_id);
+
   // add a customized tile group to table
   void AddTileGroup(TileGroup *tile_group);
 
