@@ -68,15 +68,11 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  *
  * FIXME: need to examine Value's uninlined data problem later.
  */
-<<<<<<< HEAD
-bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
-            storage::DataTable *output_table, AbstractTuple *prev_tuple,
-            const concurrency::Transaction *transaction) {
-=======
-bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
-            storage::DataTable *output_table, const AbstractTuple *delegate_tuple,
+bool Helper(const planner::AggregatePlan *node,
+            Agg **aggregates,
+            storage::DataTable *output_table,
+            const AbstractTuple *delegate_tuple,
             executor::ExecutorContext* econtext) {
->>>>>>> bridge
   // Ignore null tuples
   if (delegate_tuple == nullptr)
     return true;
@@ -132,24 +128,12 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 //===--------------------------------------------------------------------===//
 // Hash Aggregator
 //===--------------------------------------------------------------------===//
-HashAggregator::HashAggregator(const planner::AggregateV2Node *node,
+HashAggregator::HashAggregator(const planner::AggregatePlan *node,
                                storage::DataTable *output_table,
                                executor::ExecutorContext* econtext,
                                size_t num_input_columns)
     : AbstractAggregator(node, output_table, econtext),
       num_input_columns(num_input_columns){
-
-<<<<<<< HEAD
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
-    const planner::AggregatePlan *node, storage::DataTable *output_table,
-    const concurrency::Transaction *transaction)
-    : node(node), output_table(output_table), transaction(transaction) {
-  group_by_columns = node->GetGroupByColumns();
-  group_by_key_schema = node->GetGroupByKeySchema();
-  assert(group_by_key_schema != nullptr);
-=======
->>>>>>> bridge
 
   group_by_key_values.resize(node->GetGroupbyColIds().size(),
                              ValueFactory::GetNullValue());
@@ -248,28 +232,15 @@ bool HashAggregator::Finalize() {
 //===--------------------------------------------------------------------===//
 // Sort Aggregator
 //===--------------------------------------------------------------------===//
-SortAggregator::SortAggregator(const planner::AggregateV2Node *node,
+
+SortAggregator::SortAggregator(const planner::AggregatePlan *node,
                                storage::DataTable *output_table,
                                executor::ExecutorContext* econtext)
     : AbstractAggregator(node, output_table, econtext) {
 
-<<<<<<< HEAD
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
-    const planner::AggregatePlan *node, storage::DataTable *output_table,
-    const concurrency::Transaction *transaction)
-    : node(node), output_table(output_table), transaction(transaction) {
-  group_by_columns = node->GetGroupByColumns();
-
-  // Create aggregators and initialize
-  aggregate_types = node->GetAggregateTypes();
-  aggregate_columns = node->GetAggregateColumns();
-  aggregates = new Agg *[aggregate_columns.size()];
-  ::memset(aggregates, 0, sizeof(void *) * aggregate_columns.size());
-=======
   aggregates = new Agg*[node->GetUniqueAggTerms().size()];
   ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
->>>>>>> bridge
+
 }
 
 SortAggregator::~SortAggregator() {

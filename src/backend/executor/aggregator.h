@@ -12,18 +12,14 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
-<<<<<<< HEAD
-=======
-#include "../planner/aggregate_plan.h"
-
->>>>>>> bridge
-#include <unordered_map>
-#include "../planner/aggregate_plan.h"
+#include "backend/planner/aggregate_plan.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -250,19 +246,12 @@ Agg *GetAggInstance(ExpressionType agg_type);
  */
 class AbstractAggregator {
  public:
-<<<<<<< HEAD
-  Aggregator(const planner::AggregatePlan *node,
-             storage::DataTable *output_table,
-             const concurrency::Transaction *transaction_id);
-=======
-  AbstractAggregator(const planner::AggregateV2Node *_node,
-                     storage::DataTable *_output_table,
-                     executor::ExecutorContext* _econtext)
-      : node(_node),
-        output_table(_output_table),
-        executor_context(_econtext) {
->>>>>>> bridge
-
+  AbstractAggregator(const planner::AggregatePlan *node,
+                     storage::DataTable *output_table,
+                     executor::ExecutorContext* econtext)
+      : node(node),
+        output_table(output_table),
+        executor_context(econtext) {
   }
 
   virtual bool Advance(AbstractTuple *next_tuple) = 0;
@@ -274,11 +263,7 @@ class AbstractAggregator {
 
  protected:
   /** @brief Plan node */
-<<<<<<< HEAD
   const planner::AggregatePlan *node;
-=======
-  const planner::AggregateV2Node *node;
->>>>>>> bridge
 
   /** @brief Output table */
   storage::DataTable *output_table;
@@ -293,7 +278,7 @@ class AbstractAggregator {
  */
 class SortAggregator : public AbstractAggregator {
  public:
-  SortAggregator(const planner::AggregateV2Node *node,
+  SortAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
                  executor::ExecutorContext* econtext);
 
@@ -315,7 +300,7 @@ class SortAggregator : public AbstractAggregator {
  */
 class HashAggregator : public AbstractAggregator {
  public:
-  HashAggregator(const planner::AggregateV2Node *node,
+  HashAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
                  executor::ExecutorContext* econtext,
                  size_t num_input_columns);
