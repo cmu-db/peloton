@@ -41,7 +41,9 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer(){};
+  PlanTransformer() {
+  }
+  ;
 
   static void PrintPlanState(const PlanState *plan_state);
 
@@ -61,7 +63,9 @@ class PlanTransformer {
    public:
     bool use_projInfo = true;  // Use PlanState.projInfo or not
     TransformOptions() = default;
-    TransformOptions(bool pi) : use_projInfo(pi) {}
+    TransformOptions(bool pi)
+        : use_projInfo(pi) {
+    }
   };
 
   static const TransformOptions kDefaultOptions;
@@ -114,7 +118,6 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformMergeJoin(
       const MergeJoinState *plan_state);
 
-
   //======---------------------------------------
   // OTHERS
   //======---------------------------------------
@@ -131,6 +134,8 @@ class PlanTransformer {
       const ResultState *plan_state);
 
   static planner::AbstractPlanNode *TransformAgg(const AggState *plan_state);
+
+  static planner::AbstractPlanNode *TransformSort(const SortState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
@@ -154,7 +159,8 @@ class PlanTransformer {
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
 
-  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
+      List *targetLis);
 };
 
 }  // namespace bridge

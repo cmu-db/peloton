@@ -110,8 +110,8 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
   node->GetProjectInfo()->Evaluate(tuple.get(), delegate_tuple, aggref_tuple.get(),
                                    econtext);
 
-  LOG_INFO("Tuple to Output :");
-  std::cout << "GROUP TUPLE :: " << *(tuple.get());
+  LOG_TRACE("Tuple to Output :");
+//  std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
   auto location = output_table->InsertTuple(econtext->GetTransaction(),
                                             tuple.get());
@@ -171,7 +171,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 
 // Group not found. Make a new entry in the hash for this new group.
   if (map_itr == aggregates_map.end()) {
-    LOG_INFO("Group-by key not found. Start a new group.");
+    LOG_TRACE("Group-by key not found. Start a new group.");
     // Allocate new aggregate list
     aggregate_list = new AggregateList();
     aggregate_list->aggregates = new Agg *[node->GetUniqueAggTerms().size()];
@@ -254,7 +254,7 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
 
 // Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
-    LOG_INFO("Prev tuple is nullptr!");
+    LOG_TRACE("Prev tuple is nullptr!");
     start_new_agg = true;
   } else {
     // Compare group by columns
@@ -265,7 +265,7 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal) {
-        LOG_INFO("Group-by columns changed.");
+        LOG_TRACE("Group-by columns changed.");
         start_new_agg = true;
         break;
       }
@@ -274,7 +274,7 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
 
 // If we have started a new aggregate tuple
   if (start_new_agg) {
-    LOG_INFO("Started a new group!");
+    LOG_TRACE("Started a new group!");
 
     if (Helper(node, aggregates, output_table, prev_tuple,
                this->executor_context) ==
