@@ -24,10 +24,10 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
  * @brief Insert LogRecord
  * @param log record 
  */
-void AriesBackendLogger::Insert(LogRecord record){
+void AriesBackendLogger::Insert(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
-    record.SerializeLogRecord();
+    record->Serialize();
     aries_local_queue.push_back(record);
   }
   //FIXME :: Commit everytime for testing
@@ -38,10 +38,10 @@ void AriesBackendLogger::Insert(LogRecord record){
  * @brief Delete LogRecord
  * @param log record 
  */
-void AriesBackendLogger::Delete(LogRecord record){
+void AriesBackendLogger::Delete(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
-    record.SerializeLogRecord();
+    record->Serialize();
     aries_local_queue.push_back(record);
   }
   //FIXME :: Commit everytime for testing
@@ -52,10 +52,10 @@ void AriesBackendLogger::Delete(LogRecord record){
  * @brief Delete LogRecord
  * @param log record 
  */
-void AriesBackendLogger::Update(LogRecord record){
+void AriesBackendLogger::Update(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
-    record.SerializeLogRecord();
+    record->Serialize();
     aries_local_queue.push_back(record);
   }
   //FIXME :: Commit everytime for testing
@@ -96,7 +96,7 @@ void AriesBackendLogger::Truncate(oid_t offset){
  * @brief Get the LogRecord with offset
  * @param offset
  */
-LogRecord AriesBackendLogger::GetLogRecord(oid_t offset){
+LogRecord* AriesBackendLogger::GetLogRecord(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
     assert(offset < aries_local_queue.size());

@@ -18,6 +18,7 @@
 #include "backend/planner/insert_node.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/logging/logmanager.h"
+#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -122,15 +123,16 @@ bool InsertExecutor::DExecute() {
     }
     transaction_->RecordInsert(location);
 
-    // Logging 
+   // Logging 
    {
       auto& logManager = logging::LogManager::GetInstance();
       auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-      logging::LogRecordHeader header(LOGRECORD_TYPE_INSERT_TUPLE, 
-                                      transaction_->GetTransactionId(), 
-                                      target_table->GetOid(),
-                                      location);
-      logging::LogRecord record(header, tuple.get());
+
+      auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
+                                             transaction_->GetTransactionId(), 
+                                             target_table->GetOid(),
+                                             location,
+                                             tuple.get());
       logger->Insert(record);
     }
 

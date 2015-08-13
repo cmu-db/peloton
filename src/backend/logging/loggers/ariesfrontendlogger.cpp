@@ -108,8 +108,8 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 void AriesFrontendLogger::Flush(void) {
 
   for( auto record : aries_global_queue ){
-    fwrite( record.GetSerializedLogRecord(), sizeof(char), record.GetSerializedLogRecordSize(), logFile);
-    //TODO :: Write LSN as well?
+    fwrite( record->GetSerializedData(), sizeof(char), record->GetSerializedDataSize(), logFile);
+    //TODO :: record LSN here
   }
 
   int ret = fflush(logFile);
@@ -125,54 +125,48 @@ void AriesFrontendLogger::Flush(void) {
   aries_global_queue.clear();
 }
 
-bool AriesFrontendLogger::ReadLogRecordHeader(LogRecordHeader& log_record_header){
 
-  // header and body size of LogRecord
-  size_t header_size = log_record_header.GetSerializedHeaderSize(logFile);
-  if( header_size == 0 ) return false;
-
-  // Read header 
-  char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), logFile);
+/**
+ * @brief Read single byte so that we can distinguish the log record type
+ * @return LogRecordType otherwise return invalid log record type if there is no more log in the log file
+ */
+LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
+  char buffer;
+  int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
   if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
+    return LOGRECORD_TYPE_INVALID;
   }
-
-  CopySerializeInput logHeader(header,header_size);
-  // Read and store log header information 
-  log_record_header.DeserializeLogRecordHeader(logHeader);
-
-  //debugging
-  LOG_INFO("LogRecordHeader Info");
-  std::cout << log_record_header << std::endl;
-
-  return true;
+  CopySerializeInput input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+  return log_record_type;
 }
 
-size_t AriesFrontendLogger::BodySizeCheck(){
-  size_t body_size;
-  char body_check[sizeof(int32_t)];
-  size_t ret = fread(body_check, 1, sizeof(body_check), logFile);
+// TupleRecord consiss of two frame ( header and Body)
+// Transaction Record has a single frame
+size_t AriesFrontendLogger::GetNextFrameSize(){
+  size_t frame_size;
+  char buffer[sizeof(int32_t)];
+  size_t ret = fread(buffer, 1, sizeof(buffer), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput log_body_check(body_check, sizeof(int32_t));
-  body_size = (log_body_check.ReadInt())+sizeof(int32_t);;
-  LOG_INFO("LogRecord Body Size : %zu",body_size);
+  // Read next 4 bytes as an integer
+  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
+  frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
+  LOG_INFO("Frame: %zu",frame_size);
 
   /* go back 4 bytes */
   ret = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
   if(ret == -1){
     LOG_ERROR("Error occured in fseek ");
   }
-  return body_size;
+  return frame_size;
 }
 
-
-storage::Tuple* AriesFrontendLogger::ReadTuple(catalog::Schema* schema){
+storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema){
       // Measure the body size of LogRecord
-      size_t body_size = BodySizeCheck();
+      size_t body_size = GetNextFrameSize();
 
       // Read Body 
       char body[body_size];
@@ -192,24 +186,51 @@ storage::Tuple* AriesFrontendLogger::ReadTuple(catalog::Schema* schema){
       return tuple;
 }
 
-storage::DataTable* AriesFrontendLogger::GetTable(LogRecordHeader log_record_header){
+bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
+
+  auto header_size = GetNextFrameSize();
+
+  // Read header 
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), logFile);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInput logHeader(header,header_size);
+  tupleRecord.DeserializeHeader(logHeader);
+
+  return true;
+}
+
+
+storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(log_record_header.GetDbId());
-  auto table = db->GetTableWithOid(log_record_header.GetTableId());
+  storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDbId());
+  auto table = db->GetTableWithOid(tupleRecord.GetTableId());
   return table;
 }
 
-void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
-                                      concurrency::Transaction* txn){
-  auto table = GetTable(log_record_header);
-  auto tuple = ReadTuple(table->GetSchema());
-
-  auto tile_group_id = log_record_header.GetItemPointer().block;
-  auto tuple_slot = log_record_header.GetItemPointer().offset;
-
+storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
+  return tile_group;
+}
+
+void AriesFrontendLogger::InsertTuple(concurrency::Transaction* txn){
+
+  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
+
+  ReadTupleRecordHeader(tupleRecord);
+
+  auto table = GetTable(tupleRecord);
+  auto tuple = ReadTupleRecordBody(table->GetSchema());
+
+  auto tile_group_id = tupleRecord.GetItemPointer().block;
+  auto tuple_slot = tupleRecord.GetItemPointer().offset;
+
+  auto tile_group =  GetTileGroup(tile_group_id);
 
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
@@ -225,88 +246,126 @@ void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
     }
     txn->RecordInsert(location);
   }
-  std::cout << *table << std::endl;
   delete tuple;
 }
 
-void AriesFrontendLogger::DeleteTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
-  auto table = GetTable(log_record_header);
-  ItemPointer delete_location = log_record_header.GetItemPointer();
+void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* txn){
+
+  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_DELETE);
+
+  ReadTupleRecordHeader(tupleRecord);
+
+  auto table = GetTable(tupleRecord);
+
+  ItemPointer delete_location = tupleRecord.GetItemPointer();
+
   bool status = table->DeleteTuple(txn, delete_location);
+
   if( status == false){
     LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
   }
   txn->RecordDelete(delete_location);
 }
 
-void AriesFrontendLogger::UpdateTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
-  auto table = GetTable(log_record_header);
-  auto tuple = ReadTuple(table->GetSchema());
+void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* txn){
 
-  ItemPointer delete_location = log_record_header.GetItemPointer();
+  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE);
+
+  ReadTupleRecordHeader(tupleRecord);
+
+  auto table = GetTable(tupleRecord);
+
+  auto tuple = ReadTupleRecordBody(table->GetSchema());
+
+  ItemPointer delete_location = tupleRecord.GetItemPointer();
+
   ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
+
   if (location.block == INVALID_OID) {
     LOG_ERROR("Error !! InsertTuple in Recovery Mode");
   }
+
   txn->RecordDelete(delete_location);
+
   txn->RecordInsert(location);
 }
 
-void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_header,
-                                            concurrency::Transaction* txn) {
-  switch(log_record_header.GetType()){
+void AriesFrontendLogger::RedoInsert(concurrency::Transaction* txn){
+  InsertTuple(txn);
+}
 
-    case LOGRECORD_TYPE_INSERT_TUPLE:{
-      InsertTuple(log_record_header, txn);
-    }break;
+void AriesFrontendLogger::RedoDelete(concurrency::Transaction* txn){
+  DeleteTuple(txn);
+}
 
-    case LOGRECORD_TYPE_DELETE_TUPLE:{
-      DeleteTuple(log_record_header, txn);
-    }break;
-
-    case LOGRECORD_TYPE_UPDATE_TUPLE:{
-      UpdateTuple(log_record_header, txn);
-    }break;
-
-    default:
-    LOG_WARN("Unsupported LOG TYPE\n");
-    break;
-  }
+void AriesFrontendLogger::RedoUpdate(concurrency::Transaction* txn){
+  UpdateTuple(txn);
 }
 
 void AriesFrontendLogger::Recovery() {
 
+  // TODO :: print for debugging
   storage::DataTable* table;
-  // if log file has log records, do restore
+
   if(LogFileSize() > 0){
+    bool EOF_OF_LOG_FILE = false;
 
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    while(true){
-      // Read and Setting the LogRecordHeader
-      LogRecordHeader log_record_header;
 
-      if( ReadLogRecordHeader(log_record_header) == false ){
+    while(!EOF_OF_LOG_FILE){
+
+      // Read the first sing bite so that we can distinguish log record type
+      switch(GetNextLogRecordType()){
+
+        // If record is txn,
+        // store it in recovery txn table
+        case LOGRECORD_TYPE_TRANSACTION_BEGIN:
         break;
-      }
 
-      // Read and Setting the LogRecordBody
-      ReadLogRecordBody(log_record_header, txn);
-      table = GetTable(log_record_header);
+        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+        break;
+
+        case LOGRECORD_TYPE_TUPLE_INSERT:
+          RedoInsert(txn);
+          break;
+
+        case LOGRECORD_TYPE_TUPLE_DELETE:
+          RedoDelete(txn);
+          break;
+
+        case LOGRECORD_TYPE_TUPLE_UPDATE:
+          RedoUpdate(txn);
+          break;
+
+        default:
+          EOF_OF_LOG_FILE = true;
+          break;
+      }
     }
+
+    // Read txn table and undo unfinished txn here
+
     txn_manager.CommitTransaction(txn);
     std::cout << *table << std::endl;
   }
+
+  //TODO::After finishing recovery, set the next oid with maximum oid
+  //void SetNextOid(oid_t next_oid) { oid = next_oid; }
 }
 
 /**
  * @brief Get global_queue size
- * @return return the size of global_queue
+ * @return the size of global_queue
  */
 size_t AriesFrontendLogger::GetLogRecordCount() const{
   return aries_global_queue.size();
 }
 
+/**
+ * @brief Measure the size of log file
+ * @return the size if a file exists otherwise 0
+ */
 size_t AriesFrontendLogger::LogFileSize(){
   struct stat logStats;   
   if(stat(filename.c_str(), &logStats) == 0){
@@ -315,9 +374,6 @@ size_t AriesFrontendLogger::LogFileSize(){
   }else{
     return 0;
   }
-
-  //TODO::After finishing recovery, set the next oid with maximum oid
-  //void SetNextOid(oid_t next_oid) { oid = next_oid; }
 }
 
 }  // namespace logging

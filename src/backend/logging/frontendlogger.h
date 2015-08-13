@@ -17,6 +17,8 @@
 #include "backend/logging/backendlogger.h"
 
 #include <iostream>
+#include <mutex>
+#include <vector>
 #include <unistd.h>
 
 namespace peloton {
