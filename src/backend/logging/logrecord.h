@@ -10,6 +10,60 @@
  *-------------------------------------------------------------------------
  */
 
+/*
+ * LogRecord Format:
+ *
+ * Every entry has the structure LogRecordHeader [+ serialized_data]
+ *
+ * The following entry types are distinguished:
+ *
+ * Possible Log Entries:
+ *     Transaction Entries:
+ *       - LogRecordHeader      : LogRecordType, database_oid, txn_id, table_id, (value)
+ *       - length(value)        : sizeof(int)
+ *       - value_id             : sizeof(value_id_t)
+ *       - field_id             : sizeof(field_id_t)
+ *       - table_name           : table_name.size()
+ *       - table_name.size()    : sizeof(char)
+ *       - type ("D")           : sizeof(char)
+ *
+ *     Tuple Entries:
+ *       - list of value_ids    : store->columnCount()
+ *       - row_id               : sizeof(pos_t)
+ *       - table_name           : table_name.size()
+ *       - table_name.size()    : sizeof(char)
+ *       - transaction_id       : sizeof(transaction_id_t)
+ *       - type ("V")           : sizeof(char)
+ *
+ *     Invalidation Entries:
+ *       - invalidated_row_id   : sizeof(pos_t)
+ *       - table_name           : table_name.size()
+ *       - table_name.size()    : sizeof(char)
+ *       - transaction_id       : sizeof(transaction_id_t)
+ *       - type ("I")           : sizeof(char)
+ *
+ *     Commit Entries:
+ *       - transaction_id       : sizeof(transaction_id_t)
+ *       - type ("C")           : sizeof(char)
+ *
+ *     Rollback Entries:
+ *       - transaction_id       : sizeof(transaction_id_t)
+ *       - type ("R")           : sizeof(char)
+ *
+ *     Skip Entries:
+ *       - padding              : bytes filled with 255. Used to align log to BLOCKSIZE (alignment from beginning of
+ *file)
+ *       - type (255)           : sizeof(char)
+ *
+ *     Checkpoint Start
+ *       - checkpoint id        : sizeof(int)
+ *       - type ("X")           : sizeof(char)
+ *
+ *     Checkpoint End
+ *       - checkpoint id        : sizeof(int)
+ *       - type ("Y")           : sizeof(char)
+ */
+
 #pragma once
 
 #include "backend/common/types.h"

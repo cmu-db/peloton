@@ -75,7 +75,8 @@ Transaction *TransactionManager::BeginTransaction() {
       txn_table.insert(std::make_pair(txn_id, next_txn));
     }
   }
-  // XXX LOG :: record begin entry
+
+  // XXX LOG :: record begin(next txn) entry
 
   return next_txn;
 }
@@ -97,7 +98,7 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
 
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
-  // XXX LOG :: record commit entry
+  // XXX LOG :: record txn end entry
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
     // erase entry in transaction table
@@ -279,6 +280,7 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
+  // we already record commit entry in CommitModifications, isn't it?
 }
 
 //===--------------------------------------------------------------------===//
