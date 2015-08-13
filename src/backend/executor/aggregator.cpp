@@ -60,13 +60,19 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  * Helper method responsible for inserting the results of the aggregation
  * into a new tuple in the output tile group as well as passing through any
  * additional columns from the input tile group.
+ *
+ * Output tuple is projected from two tuples:
+ * Left is the 'delegate' tuple, which is usually the first tuple in the group,
+ * used to retrieve pass-through values;
+ * Right is the tuple holding all aggregated values.
+ *
  * FIXME: need to examine Value's uninlined data problem later.
  */
 bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
-            storage::DataTable *output_table, const AbstractTuple *template_tuple,
+            storage::DataTable *output_table, const AbstractTuple *delegate_tuple,
             executor::ExecutorContext* econtext) {
   // Ignore null tuples
-  if (template_tuple == nullptr)
+  if (delegate_tuple == nullptr)
     return true;
 
   auto schema = output_table->GetSchema();
@@ -94,14 +100,14 @@ bool Helper(const planner::AggregateV2Node *node, Agg **aggregates,
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate
-      && predicate->Evaluate(template_tuple, aggref_tuple.get(), econtext).IsFalse()) {
+      && predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext).IsFalse()) {
     return true;  // Qual fails, do nothing
   }
 
   /*
    * 3) Construct the tuple to insert using projectInfo
    */
-  node->GetProjectInfo()->Evaluate(tuple.get(), template_tuple, aggref_tuple.get(),
+  node->GetProjectInfo()->Evaluate(tuple.get(), delegate_tuple, aggref_tuple.get(),
                                    econtext);
 
   LOG_INFO("Tuple to Output :");
@@ -191,8 +197,12 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 
 // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
-    Value value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
-        cur_tuple, nullptr, this->executor_context);
+    auto predicate = node->GetUniqueAggTerms()[aggno].second;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if(predicate){
+      value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
+          cur_tuple, nullptr, this->executor_context);
+    }
     aggregate_list->aggregates[aggno]->Advance(value);
   }
 
@@ -285,8 +295,12 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
 // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
       aggno++) {
-    Value value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
-        cur_tuple, nullptr, this->executor_context);
+    auto predicate = node->GetUniqueAggTerms()[aggno].second;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if(predicate){
+      value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
+          cur_tuple, nullptr, this->executor_context);
+    }
     aggregates[aggno]->Advance(value);
   }
 
