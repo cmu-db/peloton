@@ -15,6 +15,9 @@
 #include "backend/logging/logrecord.h"
 #include "backend/logging/logger.h"
 
+#include <vector>
+#include <mutex>
+
 namespace peloton {
 namespace logging {
 
@@ -39,11 +42,11 @@ class BackendLogger : public Logger{
     /**
      * Record log
      */
-    virtual void Insert(LogRecord record) = 0;
+    virtual void Insert(LogRecord* record) = 0;
 
-    virtual void Delete(LogRecord record) = 0;
+    virtual void Delete(LogRecord* record) = 0;
 
-    virtual void Update(LogRecord record) = 0;
+    virtual void Update(LogRecord* record) = 0;
 
     /**
      * Commit locally so that FrontendLogger can collect LogRecord from here
@@ -58,7 +61,7 @@ class BackendLogger : public Logger{
     /**
      * Return LogRecord with offset
      */
-    virtual LogRecord GetLogRecord(oid_t offset) = 0;
+    virtual LogRecord* GetLogRecord(oid_t offset) = 0;
 
   protected:
 

@@ -17,6 +17,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/delete_node.h"
 #include "backend/logging/logmanager.h"
+#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -88,16 +89,16 @@ bool DeleteExecutor::DExecute() {
 
     ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
-    // Logging 
-    {
-      // get tuple here 
+   // Logging 
+   {
       auto& logManager = logging::LogManager::GetInstance();
       auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-      logging::LogRecordHeader header(LOGRECORD_TYPE_DELETE_TUPLE, 
-                                      transaction_->GetTransactionId(), 
-                                      target_table_->GetOid(),
-                                      delete_location);
-      logging::LogRecord record(header);
+
+      auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, 
+                                            transaction_->GetTransactionId(), 
+                                            target_table_->GetOid(),
+                                            delete_location,
+                                            nullptr);
       logger->Delete(record);
     }
 
