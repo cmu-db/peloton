@@ -380,7 +380,6 @@ peloton_MainLoop(void) {
   }
 
   // Launching a thread and wait until Bootstrapping is done
-  printf("Launch a logging thread \n");
   auto& logManager = peloton::logging::LogManager::GetInstance();
   std::thread thread(&peloton::logging::LogManager::StandbyLogging,
                      &logManager,

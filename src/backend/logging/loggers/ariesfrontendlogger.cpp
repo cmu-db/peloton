@@ -199,15 +199,33 @@ storage::DataTable* AriesFrontendLogger::GetTable(LogRecordHeader log_record_hea
   return table;
 }
 
-void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn){
+void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
+                                      concurrency::Transaction* txn){
   auto table = GetTable(log_record_header);
   auto tuple = ReadTuple(table->GetSchema());
 
-  ItemPointer location = table->InsertTuple(txn, tuple);
-  if (location.block == INVALID_OID) {
-    LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+  auto tile_group_id = log_record_header.GetItemPointer().block;
+  auto tuple_slot = log_record_header.GetItemPointer().offset;
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+
+  // Create another tile group if table doesn't have tile group id that recored in the log
+  if( tile_group == nullptr){
+    table->AddTileGroupWithId(tile_group_id);
+    auto tile_group = table->GetTileGroupById(tile_group_id);
+    tile_group->InsertTuple(tuple_slot/*XXX:CHECK*/, tuple);
+    ItemPointer location(tile_group_id, tuple_slot);
+    std::cout <<"record insert 1\n";
+    txn->RecordInsert(location);
+  }else{
+    ItemPointer location = table->InsertTuple(txn, tuple);
+    if (location.block == INVALID_OID) {
+      LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+    }
+    txn->RecordInsert(location);
+    std::cout <<"record insert 2\n";
   }
-  txn->RecordInsert(location);
   std::cout << *table << std::endl;
   delete tuple;
 }
@@ -263,10 +281,8 @@ void AriesFrontendLogger::Recovery() {
   if(LogFileSize() > 0){
 
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
+    auto txn = txn_manager.BeginTransaction();
     while(true){
-      auto txn = txn_manager.BeginTransaction();
-
       // Read and Setting the LogRecordHeader
       LogRecordHeader log_record_header;
 
@@ -276,8 +292,8 @@ void AriesFrontendLogger::Recovery() {
 
       // Read and Setting the LogRecordBody
       ReadLogRecordBody(log_record_header, txn);
-      txn_manager.CommitTransaction(txn);
-   }
+    }
+    txn_manager.CommitTransaction(txn);
   }
 }
 
