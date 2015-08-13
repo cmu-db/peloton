@@ -17,6 +17,11 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
+<<<<<<< HEAD
+=======
+#include "backend/planner/aggregateV2_node.h"
+
+>>>>>>> bridge
 #include <unordered_map>
 #include "../planner/aggregate_plan.h"
 
@@ -33,14 +38,16 @@ namespace executor {
  */
 class Agg {
  public:
-  virtual ~Agg() {}
+  virtual ~Agg() {
+  }
   virtual void Advance(const Value val) = 0;
   virtual Value Finalize() = 0;
 };
 
 class SumAgg : public Agg {
  public:
-  SumAgg() : have_advanced(false) {
+  SumAgg()
+      : have_advanced(false) {
     // aggregate initialized on first advance
   }
 
@@ -71,11 +78,15 @@ class SumAgg : public Agg {
 
 class AvgAgg : public Agg {
  public:
-  AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
+  AvgAgg(bool is_weighted)
+      : is_weighted(is_weighted),
+        count(0) {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
 
-  void Advance(const Value val) { this->Advance(val, default_delta); }
+  void Advance(const Value val) {
+    this->Advance(val, default_delta);
+  }
 
   void Advance(const Value val, const Value delta) {
     if (val.IsNull()) {
@@ -126,7 +137,9 @@ class AvgAgg : public Agg {
 // count always holds integer
 class CountAgg : public Agg {
  public:
-  CountAgg() : count(0) {}
+  CountAgg()
+      : count(0) {
+  }
 
   void Advance(const Value val) {
     if (val.IsNull()) {
@@ -135,7 +148,9 @@ class CountAgg : public Agg {
     count++;
   }
 
-  Value Finalize() { return ValueFactory::GetBigIntValue(count); }
+  Value Finalize() {
+    return ValueFactory::GetBigIntValue(count);
+  }
 
  private:
   int64_t count;
@@ -143,11 +158,17 @@ class CountAgg : public Agg {
 
 class CountStarAgg : public Agg {
  public:
-  CountStarAgg() : count(0) {}
+  CountStarAgg()
+      : count(0) {
+  }
 
-  void Advance(const Value val __attribute__((unused))) { ++count; }
+  void Advance(const Value val __attribute__((unused))) {
+    ++count;
+  }
 
-  Value Finalize() { return ValueFactory::GetBigIntValue(count); }
+  Value Finalize() {
+    return ValueFactory::GetBigIntValue(count);
+  }
 
  private:
   int64_t count;
@@ -155,7 +176,10 @@ class CountStarAgg : public Agg {
 
 class MaxAgg : public Agg {
  public:
-  MaxAgg() : have_advanced(false) { aggregate.SetNull(); }
+  MaxAgg()
+      : have_advanced(false) {
+    aggregate.SetNull();
+  }
 
   void Advance(const Value val) {
     if (val.IsNull()) {
@@ -184,7 +208,10 @@ class MaxAgg : public Agg {
 
 class MinAgg : public Agg {
  public:
-  MinAgg() : have_advanced(false) { aggregate.SetNull(); }
+  MinAgg()
+      : have_advanced(false) {
+    aggregate.SetNull();
+  }
 
   void Advance(const Value val) {
     if (val.IsNull()) {
@@ -215,79 +242,127 @@ class MinAgg : public Agg {
 /** brief Create an instance of an aggregator for the specified aggregate */
 Agg *GetAggInstance(ExpressionType agg_type);
 
-/**
- * List of aggregates for a specific group.
- */
-struct AggregateList {
-  // A tuple from the group of tuples being aggregated.
-  // Source of pass through columns.
-  AbstractTuple *group_tuple;
-
-  // The aggregates for each column for this group
-  Agg **aggregates;
-};
-
-/*
- * Type of the hash table used to store aggregates for each group.
- */
-typedef std::unordered_map<storage::Tuple, AggregateList *,
-                           storage::TupleHasher,
-                           storage::TupleComparator> HashAggregateMapType;
-
 /*
  * Interface for an aggregator (not an an individual aggregate)
  *
  * This will aggregate some number of tuples and produce the results in the
  * provided output .
  */
-template <PlanNodeType aggregate_type>
-class Aggregator {
+class AbstractAggregator {
  public:
+<<<<<<< HEAD
   Aggregator(const planner::AggregatePlan *node,
              storage::DataTable *output_table,
              const concurrency::Transaction *transaction_id);
+=======
+  AbstractAggregator(const planner::AggregateV2Node *_node,
+                     storage::DataTable *_output_table,
+                     executor::ExecutorContext* _econtext)
+      : node(_node),
+        output_table(_output_table),
+        executor_context(_econtext) {
+>>>>>>> bridge
 
-  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple);
+  }
 
-  bool Finalize(AbstractTuple *prev_tuple);
+  virtual bool Advance(AbstractTuple *next_tuple) = 0;
 
-  ~Aggregator();
+  virtual bool Finalize() = 0;
 
- private:
+  virtual ~AbstractAggregator() {
+  }
+
+ protected:
   /** @brief Plan node */
+<<<<<<< HEAD
   const planner::AggregatePlan *node;
+=======
+  const planner::AggregateV2Node *node;
+>>>>>>> bridge
 
   /** @brief Output table */
   storage::DataTable *output_table;
 
-  /** @brief Transaction id for mutating table */
-  const concurrency::Transaction *transaction;
+  /** @brief Executor Context */
+  executor::ExecutorContext* executor_context = nullptr;
 
-  /** @brief Aggregates */
-  Agg **aggregates = nullptr;
+};
 
-  /** @brief Group by columns */
-  std::vector<oid_t> group_by_columns;
+/**
+ * @brief Used when input is sorted on group-by keys.
+ */
+class SortAggregator : public AbstractAggregator {
+ public:
+  SortAggregator(const planner::AggregateV2Node *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
 
-  /** @brief Aggregate columns */
-  std::vector<oid_t> aggregate_columns;
+  bool Advance(AbstractTuple *next_tuple) override;
 
-  /** @brief Aggregate types */
-  std::vector<ExpressionType> aggregate_types;
+  bool Finalize() override;
 
-  //===--------------------------------------------------------------------===//
-  // Used only for hash aggregation
-  //===--------------------------------------------------------------------===//
+  ~SortAggregator();
 
-  /** @brief Group by key tuple used */
-  storage::Tuple *group_by_key_tuple = nullptr;
+ private:
+  AbstractTuple *prev_tuple = nullptr;
+  Agg** aggregates;
+
+};
+
+/**
+ * @brief Used when input is NOT sorted.
+ * Will maintain an internal hash table.
+ */
+class HashAggregator : public AbstractAggregator {
+ public:
+  HashAggregator(const planner::AggregateV2Node *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext,
+                 size_t num_input_columns);
+
+  bool Advance(AbstractTuple *next_tuple) override;
+
+  bool Finalize() override;
+
+  ~HashAggregator();
+
+ private:
+  const size_t num_input_columns;
+
+  /** List of aggregates for a specific group. */
+  struct AggregateList {
+    // Keep a deep copy of the first tuple we met of this group
+    std::vector<Value> first_tuple_values;
+
+    // The aggregates for each column for this group
+    Agg **aggregates;
+  };
+
+  /** Hash function of internal hash table */
+  struct ValueVectorHasher :
+      std::unary_function<std::vector<Value>, std::size_t> {
+    // Generate a 64-bit number for the a vector of value
+    size_t operator()(const std::vector<Value>& values) const {
+      size_t seed = 0;
+      for (auto &v : values) {
+        v.HashCombine(seed);
+      }
+      return seed;
+    }
+  };
+
+  // Default equal_to should works well
+  typedef std::unordered_map<std::vector<Value>, AggregateList *,
+      ValueVectorHasher> HashAggregateMapType;
+
+  /** @brief Group by key values used */
+  std::vector<Value> group_by_key_values;
 
   /** @brief Hash table */
   HashAggregateMapType aggregates_map;
 
-  /** @brief Group by key tuple used */
-  const catalog::Schema *group_by_key_schema = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+}
+// namespace executor
+}// namespace peloton

@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "backend/bridge/ddl/ddl_utils.h"
+#include "backend/bridge/ddl/format_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
@@ -144,9 +145,14 @@ void DDLUtils::ParsingCreateStmt(
     Oid typeoid = coldef->typeName->type_oid;
     int typelen = coldef->typeName->type_len;
 
-    ValueType column_valueType =
-        PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
-    int column_length = typelen;
+
+    PostgresValueFormat postgresValueFormat( typeoid, typelen, typelen);
+    PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+
+    ValueType column_valueType = pelotonValueFormat.GetType();
+    int column_length = pelotonValueFormat.GetLength();
+    bool is_inlined = pelotonValueFormat.IsInlined();
+
     std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
@@ -208,7 +214,7 @@ void DDLUtils::ParsingCreateStmt(
     }  // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
-                                false);
+                                is_inlined);
 
     for (auto constraint : column_constraints)
       column_info.AddConstraint(constraint);

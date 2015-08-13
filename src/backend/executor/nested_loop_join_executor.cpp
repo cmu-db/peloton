@@ -31,6 +31,22 @@ NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     : AbstractJoinExecutor(node, executor_context) {}
 
 /**
+ * @brief Do some basic checks and create the schema for the output logical
+ * tiles.
+ * @return true on success, false otherwise.
+ */
+bool NestedLoopJoinExecutor::DInit() {
+  auto status = AbstractJoinExecutor::DInit();
+  if (status == false) {
+    return status;
+  }
+
+  left_scan_start = true;
+  return true;
+}
+
+
+/**
  * @brief Creates logical tiles from the two input logical tiles after applying
  * join predicate.
  * @return true on success, false otherwise.
@@ -78,26 +94,29 @@ bool NestedLoopJoinExecutor::DExecute() {
   // Construct output logical tile.
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
 
-  auto left_tile_schema = left_tile.get()->GetSchema();
-  auto right_tile_schema = right_tile.get()->GetSchema();
+  auto left_tile_schema = left_tile->GetSchema();
+  auto right_tile_schema = right_tile->GetSchema();
 
   for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile.get()->GetPositionLists().size();
+    col.position_list_idx += left_tile->GetPositionLists().size();
   }
 
   /* build the schema given the projection */
   auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
 
-  // Set the output logical tile schema
-  output_tile.get()->SetSchema(std::move(output_tile_schema));
+  // Transfer the base tile ownership
+  left_tile->TransferOwnershipTo(output_tile.get());
+  right_tile->TransferOwnershipTo(output_tile.get());
 
+  // Set the output logical tile schema
+  output_tile->SetSchema(std::move(output_tile_schema));
   // Now, let's compute the position lists for the output tile
 
   // Cartesian product
 
   // Add everything from two logical tiles
-  auto left_tile_position_lists = left_tile.get()->GetPositionLists();
-  auto right_tile_position_lists = right_tile.get()->GetPositionLists();
+  auto left_tile_position_lists = left_tile->GetPositionLists();
+  auto right_tile_position_lists = right_tile->GetPositionLists();
 
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
@@ -121,8 +140,8 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count,
             right_tile_column_count);
   LOG_TRACE("left col count: %lu, right col count: %lu",
-            left_tile.get()->GetColumnCount(),
-            right_tile.get()->GetColumnCount());
+            left_tile->GetColumnCount(),
+            right_tile->GetColumnCount());
   LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
             right_tile_row_count);
 
@@ -182,7 +201,7 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
-    output_tile.get()->SetPositionListsAndVisibility(std::move(position_lists));
+    output_tile->SetPositionListsAndVisibility(std::move(position_lists));
     SetOutput(output_tile.release());
     return true;
   }

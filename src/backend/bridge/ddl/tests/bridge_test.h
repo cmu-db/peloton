@@ -17,6 +17,7 @@
 #include <iostream>
 
 #include <backend/common/types.h>
+#include <backend/common/logger.h>
 
 namespace peloton {
 

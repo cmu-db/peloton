@@ -1434,6 +1434,8 @@ void Value::CreateDecimalFromString(const std::string &txt) {
     whole.SetSign();
   }
 
+  assert(sizeof(TTInt) == sizeof(value_data));
+
   GetDecimal() = whole;
 }
 

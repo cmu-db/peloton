@@ -118,7 +118,7 @@ static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
     planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
   ScanKey scan_key = scan_keys;
-  assert(num_keys > 0);
+  //assert(num_keys > 0);
 
   for (int key_itr = 0; key_itr < num_keys; key_itr++, scan_key++) {
     // currently, only support simple case
