@@ -18,7 +18,7 @@
 namespace peloton {
 namespace logging {
 
-static std::vector<LogRecord> stdout_global_queue;
+static std::vector<LogRecord*> stdout_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Stdout Frontend Logger 

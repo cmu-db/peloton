@@ -33,13 +33,13 @@ bool LogRecord::SerializeLogRecord(){
 
   switch(log_record_header.GetType()){
 
-    case LOGRECORD_TYPE_INSERT_TUPLE:
-    case LOGRECORD_TYPE_UPDATE_TUPLE:{
+    case LOGRECORD_TYPE_TUPLE_INSERT:
+    case LOGRECORD_TYPE_TUPLE_UPDATE:{
      storage::Tuple* tuple = (storage::Tuple*)data;
      tuple->SerializeTo(output);
     }break;
 
-    case LOGRECORD_TYPE_DELETE_TUPLE:{
+    case LOGRECORD_TYPE_TUPLE_DELETE:{
     }break;
 
     default:{

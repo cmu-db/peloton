@@ -27,23 +27,23 @@ class StdoutBackendLogger : public BackendLogger{
 
     static StdoutBackendLogger* GetInstance(void);
 
-    void Insert(LogRecord record);
+    void Insert(LogRecord* record);
 
-    void Delete(LogRecord record);
+    void Delete(LogRecord* record);
 
-    void Update(LogRecord record);
+    void Update(LogRecord* record);
 
     void Commit(void);
 
     void Truncate(oid_t offset);
 
-    LogRecord GetLogRecord(oid_t offset);
+    LogRecord* GetLogRecord(oid_t offset);
 
   private:
 
     StdoutBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
 
-    std::vector<LogRecord> stdout_local_queue;
+    std::vector<LogRecord*> stdout_local_queue;
 
     std::mutex stdout_local_queue_mutex;
 

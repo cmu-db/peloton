@@ -62,9 +62,10 @@ void StdoutFrontendLogger::Flush(void) {
 
   std::cout << "\n::StartFlush::\n";
 
-  for( auto record : stdout_global_queue ){
-    std::cout << record;
-  }
+  //for( auto record : stdout_global_queue ){
+    //FIXME
+    //std::cout << record;
+  //}
   std::cout << "::EndFlush::" << std::endl;
   stdout_global_queue.clear();
 }
