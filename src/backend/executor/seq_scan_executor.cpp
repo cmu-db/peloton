@@ -109,6 +109,8 @@ bool SeqScanExecutor::DExecute() {
     if (current_tile_group_offset_ == table_tile_group_count_) {
       return false;
     }
+    std::cout << "current tile group offset : " << current_tile_group_offset_ <<  " "  <<
+                 "table tile group count : " << table_tile_group_count_ << std::endl;
 
     storage::TileGroup *tile_group =
         table_->GetTileGroup(current_tile_group_offset_++);

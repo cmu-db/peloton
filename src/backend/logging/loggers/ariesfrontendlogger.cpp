@@ -211,12 +211,11 @@ void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
   auto tile_group = manager.GetTileGroup(tile_group_id);
 
   // Create another tile group if table doesn't have tile group id that recored in the log
-  if( tile_group == nullptr){
+  if(tile_group == nullptr){
     table->AddTileGroupWithId(tile_group_id);
     auto tile_group = table->GetTileGroupById(tile_group_id);
     tile_group->InsertTuple(tuple_slot/*XXX:CHECK*/, tuple);
     ItemPointer location(tile_group_id, tuple_slot);
-    std::cout <<"record insert 1\n";
     txn->RecordInsert(location);
   }else{
     ItemPointer location = table->InsertTuple(txn, tuple);
@@ -224,7 +223,6 @@ void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
       LOG_ERROR("Error !! InsertTuple in Recovery Mode");
     }
     txn->RecordInsert(location);
-    std::cout <<"record insert 2\n";
   }
   std::cout << *table << std::endl;
   delete tuple;
@@ -277,6 +275,7 @@ void AriesFrontendLogger::ReadLogRecordBody(const LogRecordHeader log_record_hea
 
 void AriesFrontendLogger::Recovery() {
 
+  storage::DataTable* table;
   // if log file has log records, do restore
   if(LogFileSize() > 0){
 
@@ -292,8 +291,10 @@ void AriesFrontendLogger::Recovery() {
 
       // Read and Setting the LogRecordBody
       ReadLogRecordBody(log_record_header, txn);
+      table = GetTable(log_record_header);
     }
     txn_manager.CommitTransaction(txn);
+    std::cout << *table << std::endl;
   }
 }
 
@@ -313,6 +314,9 @@ size_t AriesFrontendLogger::LogFileSize(){
   }else{
     return 0;
   }
+
+  //TODO::After finishing recovery, set the next oid with maximum oid
+  //void SetNextOid(oid_t next_oid) { oid = next_oid; }
 }
 
 }  // namespace logging
