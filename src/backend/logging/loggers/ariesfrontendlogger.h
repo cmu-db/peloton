@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/logging/frontendlogger.h"
+#include "backend/logging/records/tuplerecord.h"
 #include "backend/concurrency/transaction.h"
 
 #include <fcntl.h>
@@ -20,7 +21,7 @@
 namespace peloton {
 namespace logging {
 
-static std::vector<LogRecord> aries_global_queue;
+static std::vector<LogRecord*> aries_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Aries Frontend Logger 
@@ -40,32 +41,47 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void Flush(void);
 
+    //===--------------------------------------------------------------------===//
+    // Recovery 
+    //===--------------------------------------------------------------------===//
+
     void Recovery(void);
 
   private:
 
     // TODO :: Reorganizing
 
-    bool ReadLogRecordHeader(LogRecordHeader& log_record_header);
+    LogRecordType GetNextLogRecordType();
 
-    void ReadLogRecordBody(const LogRecordHeader log_record_header,
-                           concurrency::Transaction* txn);
+    size_t GetNextFrameSize();
 
-    storage::Tuple* ReadTuple(catalog::Schema* schema);
+    storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema);
 
-    storage::DataTable* GetTable(LogRecordHeader log_record_header);
+    bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
 
-    void InsertTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
+    storage::DataTable* GetTable(TupleRecord tupleRecord);
 
-    void DeleteTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
-    
-    void UpdateTuple(LogRecordHeader log_record_header, concurrency::Transaction* txn);
+    storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
-    size_t BodySizeCheck();
+    void InsertTuple(concurrency::Transaction* txn);
 
-    size_t GetLogRecordCount(void) const;
+    void DeleteTuple(concurrency::Transaction* txn);
 
-    size_t LogFileSize(void);
+    void UpdateTuple(concurrency::Transaction* txn);
+
+    void RedoInsert(concurrency::Transaction* txn);
+
+    void RedoDelete(concurrency::Transaction* txn);
+
+    void RedoUpdate(concurrency::Transaction* txn);
+
+    size_t GetLogRecordCount() const;
+
+    size_t LogFileSize();
+
+    //===--------------------------------------------------------------------===//
+    // Member Variables
+    //===--------------------------------------------------------------------===//
 
     // FIXME :: Hard coded file name
     std::string filename = "/home/parallels/git/peloton/build/aries_log.txt";

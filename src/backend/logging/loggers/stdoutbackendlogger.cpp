@@ -24,7 +24,7 @@ StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
  * @brief Insert LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Insert(LogRecord record){
+void StdoutBackendLogger::Insert(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     stdout_local_queue.push_back(record);
@@ -37,7 +37,7 @@ void StdoutBackendLogger::Insert(LogRecord record){
  * @brief Delete LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Delete(LogRecord record){
+void StdoutBackendLogger::Delete(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     stdout_local_queue.push_back(record);
@@ -50,7 +50,7 @@ void StdoutBackendLogger::Delete(LogRecord record){
  * @brief Delete LogRecord
  * @param log record 
  */
-void StdoutBackendLogger::Update(LogRecord record){
+void StdoutBackendLogger::Update(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     stdout_local_queue.push_back(record);
@@ -78,8 +78,12 @@ void StdoutBackendLogger::Truncate(oid_t offset){
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
 
     if(commit_offset == offset){
+      for(auto record : stdout_local_queue)
+        delete record;
       stdout_local_queue.clear();
     }else{
+      auto record = stdout_local_queue[offset];
+      delete record;
       stdout_local_queue.erase(stdout_local_queue.begin(), stdout_local_queue.begin()+offset);
     }
 
@@ -93,7 +97,7 @@ void StdoutBackendLogger::Truncate(oid_t offset){
  * @brief Get the LogRecord with offset
  * @param offset
  */
-LogRecord StdoutBackendLogger::GetLogRecord(oid_t offset){
+LogRecord* StdoutBackendLogger::GetLogRecord(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
     assert(offset < stdout_local_queue.size());

@@ -494,6 +494,8 @@ peloton_MainLoop(void) {
       break;
   }             /* end of outer loop */
 
+  //TODO:: Must call join or terminate for thread
+
   /* Normal exit from peloton is here */
   ereport(LOG,
           (errmsg("peloton shutting down")));

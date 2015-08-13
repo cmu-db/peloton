@@ -472,9 +472,12 @@ enum LoggerType{
 enum LogRecordType{
   LOGRECORD_TYPE_INVALID = 0, 
 
-  LOGRECORD_TYPE_INSERT_TUPLE  = 1,
-  LOGRECORD_TYPE_DELETE_TUPLE  = 2,
-  LOGRECORD_TYPE_UPDATE_TUPLE  = 3
+  LOGRECORD_TYPE_TRANSACTION_BEGIN   = 1,
+  LOGRECORD_TYPE_TRANSACTION_COMMIT  = 2,
+
+  LOGRECORD_TYPE_TUPLE_INSERT        = 3,
+  LOGRECORD_TYPE_TUPLE_DELETE        = 4,
+  LOGRECORD_TYPE_TUPLE_UPDATE        = 5
 };
 
 //===--------------------------------------------------------------------===//

@@ -16,7 +16,6 @@
 #include "backend/logging/frontendlogger.h"
 #include "backend/logging/backendlogger.h"
 
-#include <memory>
 #include <mutex>
 #include <vector>
 

@@ -57,6 +57,7 @@ std::size_t GetTypeSize(ValueType type) {
 //===--------------------------------------------------------------------===//
 // BackendType <--> String Utilities
 //===--------------------------------------------------------------------===//
+
 std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
@@ -656,14 +657,20 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_INVALID: {
       return "INVALID";
     }
-    case LOGRECORD_TYPE_INSERT_TUPLE: {
-      return "LOGRECORD_TYPE_INSERT_TUPLE";
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
+      return "LOGRECORD_TYPE_TRANSACTION_BEGIN";
     }
-    case LOGRECORD_TYPE_DELETE_TUPLE: {
-      return "LOGRECORD_TYPE_DELETE_TUPLE";
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+      return "LOGRECORD_TYPE_TRANSACTION_COMMIT";
     }
-    case LOGRECORD_TYPE_UPDATE_TUPLE: {
-      return "LOGRECORD_TYPE_UPDATE_TUPLE";
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_TUPLE_INSERT";
+    }
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_TUPLE_DELETE";
+    }
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_TUPLE_UPDATE";
     }
   }
   return "INVALID";

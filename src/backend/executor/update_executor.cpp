@@ -20,6 +20,7 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/logging/logmanager.h"
+#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -110,16 +111,16 @@ bool UpdateExecutor::DExecute() {
 
     transaction_->RecordInsert(location);
 
-    // Logging 
-    {
+   // Logging 
+   {
       auto& logManager = logging::LogManager::GetInstance();
       auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
 
-      logging::LogRecordHeader header(LOGRECORD_TYPE_UPDATE_TUPLE, 
-                                      transaction_->GetTransactionId(), 
-                                      target_table_->GetOid(),
-                                      delete_location);
-      logging::LogRecord record(header, new_tuple);
+      auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
+                                              transaction_->GetTransactionId(), 
+                                              target_table_->GetOid(),
+                                              delete_location,
+                                              new_tuple);
       logger->Update(record);
     }
 
