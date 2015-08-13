@@ -148,4 +148,18 @@ struct NestLoopPlanState : public AbstractJoinPlanState {
 
 };
 
+struct MergeJoinPlanState : public AbstractJoinPlanState {
+
+};
+
+
+struct AggPlanState : public AbstractPlanState {
+
+};
+
+struct SortPlanState : public AbstractPlanState {
+
+};
+
+
 
