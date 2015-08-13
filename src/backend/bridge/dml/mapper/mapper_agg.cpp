@@ -1,4 +1,4 @@
-#include "../../../planner/aggregate_plan.h"
+#include "backend/planner/aggregate_plan.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
@@ -7,9 +7,12 @@
 namespace peloton {
 namespace bridge {
 
-planner::AbstractPlanNode*
-PlanTransformer::TransformAgg(const AggState *plan_state) {
-  const AggState* agg_state = plan_state;
+planner::AbstractPlan*
+PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
+
+  // TODO: TEMP HACK
+  AggState* agg_state = nullptr;
+
   auto agg = reinterpret_cast<const Agg*>(agg_state->ss.ps.plan);
 
   auto num_phases = agg_state->numphases;
@@ -27,7 +30,7 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
       BuildPredicateFromQual(agg_state->ss.ps.qual));
 
   /* Get Aggregate terms */
-  std::vector<planner::AggregateV2Node::AggTerm> unique_agg_terms;
+  std::vector<planner::AggregatePlan::AggTerm> unique_agg_terms;
 
   auto num_aggs = agg_state->numaggs;  // number of unique aggregates
   LOG_INFO("Number of (unique) Agg nodes: %d \n", num_aggs);
@@ -76,7 +79,7 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
       SchemaTransformer::GetSchemaFromTupleDesc(
           agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor));
 
-  auto retval = new planner::AggregateV2Node(proj_info.release(),
+  auto retval = new planner::AggregatePlan(proj_info.release(),
                                              predicate.release(),
                                              std::move(unique_agg_terms),
                                              std::move(groupby_col_ids),
@@ -84,7 +87,7 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
                                              AGGREGATE_TYPE_HASH);
 
   // Find children
-  auto lchild = TransformPlan(outerPlanState(agg_state));
+  auto lchild = TransformPlan(outerAbstractPlanState(agg_state));
   retval->AddChild(lchild);
 
   return retval;
