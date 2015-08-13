@@ -50,6 +50,9 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+// TODO: Peloton Changes
+#include "backend/common/logger.h"
+
 
 /*
  * GUC parameters

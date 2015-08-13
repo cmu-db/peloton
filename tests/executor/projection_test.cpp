@@ -89,7 +89,7 @@ TEST(ProjectionTests, BasicTest) {
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
-  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
   planner::ProjectionPlan node(project_info, schema);
 
@@ -150,7 +150,7 @@ TEST(ProjectionTests, TwoColumnTest) {
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
 
-  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
   planner::ProjectionPlan node(project_info, schema);
 
@@ -213,7 +213,7 @@ TEST(ProjectionTests, BasicTargetTest) {
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
   planner::ProjectionPlan node(project_info, schema);
 

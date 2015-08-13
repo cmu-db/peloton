@@ -121,7 +121,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
 
   std::vector<ItemPointer> tuple_locations;
 
-  tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
+  if (0 == key_column_ids_.size()) {
+    tuple_locations = index_->Scan();
+  } else {
+    tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
+  }
 
   LOG_INFO("Tuple locations : %lu", tuple_locations.size());
 

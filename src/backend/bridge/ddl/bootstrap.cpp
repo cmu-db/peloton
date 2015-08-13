@@ -20,8 +20,10 @@
 #include "backend/bridge/ddl/bootstrap_utils.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_table.h"
+#include "backend/bridge/ddl/format_transformer.h"
 #include "backend/storage/database.h"
 #include "backend/common/logger.h"
+
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -321,16 +323,12 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
           strcmp(NameStr(pg_attribute->attname), "tableoid")) {
         std::vector<raw_constraint_info *> raw_constraints;
 
-        PostgresValueType postgresValueType =
-            (PostgresValueType)pg_attribute->atttypid;
-        ValueType value_type =
-            PostgresValueTypeToPelotonValueType(postgresValueType);
-        int column_length = pg_attribute->attlen;
-        bool is_inlined = true;
-        if (pg_attribute->attlen == -1) {
-          column_length = pg_attribute->atttypmod;
-          is_inlined = false;
-        }
+        PostgresValueFormat postgresValueFormat( pg_attribute->atttypid, pg_attribute->atttypmod, pg_attribute->attlen); 
+        PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+
+        ValueType value_type = pelotonValueFormat.GetType();
+        int column_length = pelotonValueFormat.GetLength();
+        bool is_inlined = pelotonValueFormat.IsInlined();
 
         // NOT NULL constraint
         if (pg_attribute->attnotnull) {
