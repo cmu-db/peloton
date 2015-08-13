@@ -42,11 +42,7 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer() {
-  }
-  ;
-
-  static void PrintPlan(const Plan *plan);
+  PlanTransformer() {}
 
   static planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate) {
     return TransformPlan(planstate, DefaultOptions);
@@ -131,8 +127,8 @@ class PlanTransformer {
   static planner::AbstractPlan *TransformNestLoop(
       const NestLoopPlanState *planstate);
 
-  static planner::AbstractPlanNode *TransformMergeJoin(
-      const MergeJoinState *plan_state);
+  static planner::AbstractPlan *TransformMergeJoin(
+      const MergeJoinPlanState *plan_state);
 
   //===--------------------------------------------------------------------===//
   // OTHERS
@@ -147,11 +143,14 @@ class PlanTransformer {
   static planner::AbstractPlan *TransformLimit(
       const LimitPlanState *planstate);
 
-  static planner::AbstractPlanNode *TransformAgg(const AggState *plan_state);
+  static planner::AbstractPlan *TransformAgg(
+      const AggPlanState *plan_state);
 
-  static planner::AbstractPlanNode *TransformSort(const SortState *plan_state);
+  static planner::AbstractPlan *TransformSort(
+      const SortPlanState *plan_state);
 
-  static PelotonJoinType TransformJoinType(const JoinType type);
+  static PelotonJoinType TransformJoinType(
+      const JoinType type);
 
   //===--------------------------------------------------------------------===//
   // Common utility functions for Scans

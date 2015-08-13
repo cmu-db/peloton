@@ -19,7 +19,7 @@
 #include "backend/storage/data_table.h"
 <<<<<<< HEAD
 =======
-#include "backend/planner/aggregateV2_node.h"
+#include "../planner/aggregate_plan.h"
 
 >>>>>>> bridge
 #include <unordered_map>
