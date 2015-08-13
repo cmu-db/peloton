@@ -157,30 +157,6 @@ int peloton_start(void) {
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
 
-// TODO: Peloton mode ====================================================
-
-  elog(LOG, "Before SetConfigOption...");
-  puts(GetConfigOption("peloton_mode", false, false));
-
-  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
-  puts("\n");
-
-  elog(LOG, "After SetConfigOption...");
-  puts(GetConfigOption("peloton_mode", false, false));
-
-  puts("Printing Log Duration...");
-  puts(GetConfigOption("log_duration", false, false));
-
-
-  char sizeof_config_bool[10];
-  sprintf(sizeof_config_bool, "%lu", sizeof(config_bool));
-  puts("size of config_bool");
-  puts(sizeof_config_bool);
-
-  peloton::bridge::ConstructConfigMap();
-
-// TODO: Peloton mode ====================================================
-
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
@@ -1043,6 +1019,25 @@ peloton_process_dml(Peloton_MsgDML *msg) {
  */
 static void
 peloton_process_ddl(Peloton_MsgDDL *msg) {
+
+	// TODO: Peloton mode ====================================================
+/*
+	  elog(LOG, "Before SetConfigOption...");
+	  puts(GetConfigOption("peloton_mode", false, false));
+
+	  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
+	  puts("\n");
+
+	  elog(LOG, "After SetConfigOption...");
+	  puts(GetConfigOption("peloton_mode", false, false));
+
+	  puts("Printing Log Duration...");
+	  puts(GetConfigOption("log_duration", false, false));
+*/
+	  peloton::bridge::ConfigurationOptions::ConstructConfigurationMap();
+
+	// TODO: Peloton mode ====================================================
+
   Node* parsetree;
   const char *queryString;
   assert(msg);
