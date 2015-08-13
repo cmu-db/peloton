@@ -20,7 +20,7 @@ namespace peloton {
 namespace scheduler {
 
 TBBScheduler::TBBScheduler()
-    : init(1) {
+    : init(tbb::task_scheduler_init::default_num_threads()) {
   // set up state
   state = new TBBSchedulerState();
   LOG_TRACE("STATE : %p \n", state);
