@@ -106,6 +106,7 @@ bool InsertExecutor::DExecute() {
     auto project_info = node.GetProjectInfo();
 
     // There should be no direct maps
+    assert(project_info);
     assert(project_info->GetDirectMapList().size() == 0);
 
     for (auto target : project_info->GetTargetList()) {

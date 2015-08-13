@@ -12,6 +12,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 
 #include <sstream>
 #include <cstring>
@@ -502,6 +503,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_RESULT: {
       return "RESULT";
     }
+    case PLAN_NODE_TYPE_AGGREGATE_V2: {
+      return "AGGREGATE_V2";
+    }
   }
   return "INVALID";
 }
@@ -657,7 +661,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      printf("INVALID VALUE TYPE : %d \n", PostgresValType);
+      LOG_WARN("INVALID VALUE TYPE : %d \n", PostgresValType);
       valueType = VALUE_TYPE_INVALID;
       break;
   }

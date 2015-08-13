@@ -22,6 +22,9 @@
 #include "access/htup_details.h"
 #include "nodes/print.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
+#include "postgres_ext.h"
+
 
 namespace peloton {
 namespace bridge {
@@ -50,6 +53,12 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       int64_t bigint = DatumGetInt64(datum);
       LOG_TRACE("%ld\n", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
+    } break;
+
+    case POSTGRES_VALUE_TYPE_DOUBLE: {
+      double fpnum = DatumGetFloat8(datum);
+      LOG_TRACE("%f\n", fpnum);
+      value = ValueFactory::GetDoubleValue(fpnum);
     } break;
 
     /*
@@ -96,6 +105,25 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_TIMESTAMPS: {
       long int timestamp = DatumGetInt64(datum);
       value = ValueFactory::GetTimestampValue(timestamp);
+    } break;
+
+    case POSTGRES_VALUE_TYPE_DECIMAL:{
+      /*
+       * WARNING:
+       * Peloton has smaller allowed precision/scale than PG.
+       * If the passed in datum is longer than that,
+       * Peloton will fail to convert it.
+       */
+
+      // 1. Get string representation of the PG numeric (this is tricky)
+      char* cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
+
+      LOG_INFO("PG decimal = %s \n", cstr);
+
+      // 2. Construct Peloton Decimal from the string
+      value = ValueFactory::GetDecimalValueFromString(std::string(cstr));
+
+      pfree(cstr);
     } break;
 
     default:
@@ -152,6 +180,22 @@ Datum TupleTransformer::GetDatum(Value value) {
       long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
       LOG_TRACE("%s\n", DatumGetCString(timestamp));
+    } break;
+
+    case VALUE_TYPE_DECIMAL: {
+
+      auto precision = Value::max_decimal_precision;
+      auto scale = Value::max_decimal_scale;
+
+      std::string str = ValuePeeker::PeekDecimalString(value);
+
+      datum = DirectFunctionCall3(
+          numeric_in,
+          CStringGetDatum(str.c_str()),
+          ObjectIdGetDatum(InvalidOid),
+          Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
+
+
     } break;
 
     default:
@@ -226,9 +270,10 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
     Value value = tuple->GetValue(att_itr);
     Datum datum = GetDatum(value);
 
-    assert(tuple_desc->attrs[att_itr]->attbyval == true ||
-           value.GetValueType() == VALUE_TYPE_VARCHAR ||
-           value.GetValueType() == VALUE_TYPE_VARBINARY);
+    assert(tuple_desc->attrs[att_itr]->attbyval == true
+           || value.GetValueType() == VALUE_TYPE_VARCHAR
+           || value.GetValueType() == VALUE_TYPE_VARBINARY
+           || value.GetValueType() == VALUE_TYPE_DECIMAL);
 
     datums[att_itr] = datum;
     nulls[att_itr] = tuple->IsNull(att_itr) ? true : false;
