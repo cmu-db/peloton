@@ -109,6 +109,7 @@ void AriesFrontendLogger::Flush(void) {
 
   for( auto record : aries_global_queue ){
     fwrite( record.GetSerializedLogRecord(), sizeof(char), record.GetSerializedLogRecordSize(), logFile);
+    //TODO :: Write LSN as well?
   }
 
   int ret = fflush(logFile);
@@ -210,7 +211,7 @@ void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
 
-  // Create another tile group if table doesn't have tile group id that recored in the log
+  // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
     table->AddTileGroupWithId(tile_group_id);
     auto tile_group = table->GetTileGroupById(tile_group_id);
