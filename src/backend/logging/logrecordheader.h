@@ -29,6 +29,8 @@ public:
 
   LogRecordHeader(){}
 
+  // TODO :: make other constructors for txn logging
+
   LogRecordHeader(LogRecordType log_record_type,
                   const txn_id_t txn_id,
                   oid_t table_oid,
