@@ -24,10 +24,11 @@ namespace storage {
 
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t table_oid,
-                     size_t tuples_per_tilegroup)
-    : AbstractTable(table_oid, table_name, schema),
+                     size_t tuples_per_tilegroup,
+                     bool own_schema)
+    : AbstractTable(table_oid, table_name, schema, own_schema),
       backend(backend),
-      tuples_per_tilegroup(tuples_per_tilegroup) {
+      tuples_per_tilegroup(tuples_per_tilegroup){
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -455,7 +456,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-oid_t DataTable::AddTileGroupWithId(oid_t tile_group_id){
+oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
   assert(tile_group_id);
 
   std::vector<catalog::Schema> schemas;

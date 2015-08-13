@@ -267,7 +267,7 @@ enum PlanNodeType {
 
   // Algebra Nodes
   PLAN_NODE_TYPE_AGGREGATE = 50,
-  PLAN_NODE_TYPE_HASHAGGREGATE = 51,
+  PLAN_NODE_TYPE_HASHAGGREGATE = 51,  // TODO: Remove it.
   PLAN_NODE_TYPE_UNION = 52,
   PLAN_NODE_TYPE_ORDERBY = 53,
   PLAN_NODE_TYPE_PROJECTION = 54,
@@ -329,6 +329,15 @@ enum PelotonJoinType {
   JOIN_TYPE_RIGHT = 2,  // right
   JOIN_TYPE_INNER = 3,  // inner
   JOIN_TYPE_OUTER = 4   // outer
+};
+
+//===--------------------------------------------------------------------===//
+// Aggregate Types
+//===--------------------------------------------------------------------===//
+enum PelotonAggregateType {
+  AGGREGATE_TYPE_INVALID = 0,
+  AGGREGATE_TYPE_SORT = 1,
+  AGGREGATE_TYPE_HASH = 2
 };
 
 //===--------------------------------------------------------------------===//
