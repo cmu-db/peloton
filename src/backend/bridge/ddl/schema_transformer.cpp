@@ -68,7 +68,7 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
 
     LOG_TRACE("Column length: %d/%d, is inlined: %d", tupleDesc->attrs[column_itr]->attlen, column_length, is_inlined);
     catalog::Column column(value_type, column_length,
-                           NameStr(tupleDesc->attrs[column_itr]->attname),
+                           std::string(NameStr(tupleDesc->attrs[column_itr]->attname), NAMEDATALEN),
                            is_inlined);
 
     for (auto constraint : constraint_infos)
