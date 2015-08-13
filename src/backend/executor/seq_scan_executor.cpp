@@ -79,25 +79,31 @@ bool SeqScanExecutor::DExecute() {
     assert(table_ == nullptr);
     assert(column_ids_.size() == 0);
 
-    if (!children_[0]->Execute()) {
-      return false;
-    }
+    while (children_[0]->Execute()) {
 
-    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
-    if (predicate_ != nullptr) {
-      // Invalidate tuples that don't satisfy the predicate.
-      for (oid_t tuple_id : *tile) {
-        expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
-                .IsFalse()) {
-          tile->RemoveVisibility(tuple_id);
+      std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+
+      if (predicate_ != nullptr) {
+        // Invalidate tuples that don't satisfy the predicate.
+        for (oid_t tuple_id : *tile) {
+          expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
+          if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                  .IsFalse()) {
+            tile->RemoveVisibility(tuple_id);
+          }
         }
       }
+
+      if(0 == tile->GetTupleCount()){ // Avoid returning empty tiles
+        continue;
+      }
+
+      /* Hopefully we needn't do projections here */
+      SetOutput(tile.release());
+      return true;
     }
 
-    /* Hopefully we needn't do projections here */
-
-    SetOutput(tile.release());
+    return false;
   }
   // Scanning a table
   else if (children_.size() == 0) {
