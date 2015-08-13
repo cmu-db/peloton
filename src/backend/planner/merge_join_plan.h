@@ -26,18 +26,7 @@ namespace planner {
 
 class MergeJoinPlan : public AbstractJoinPlan {
  public:
-<<<<<<< HEAD:src/backend/planner/merge_join_plan.h
-  MergeJoinPlan(const MergeJoinPlan &) = delete;
-  MergeJoinPlan &operator=(const MergeJoinPlan &) = delete;
-  MergeJoinPlan(MergeJoinPlan &&) = delete;
-  MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
 
-  MergeJoinPlan(expression::AbstractExpression *predicate,
-                const ProjectInfo *proj_info)
-      : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate,
-                             proj_info) {  // FIXME
-    // Nothing to see here...
-=======
   struct JoinClause {
     JoinClause(const expression::AbstractExpression *left,
                const expression::AbstractExpression *right,
@@ -56,18 +45,17 @@ class MergeJoinPlan : public AbstractJoinPlan {
     bool reversed_;
   };
 
-  MergeJoinNode(const MergeJoinNode &) = delete;
-  MergeJoinNode &operator=(const MergeJoinNode &) = delete;
-  MergeJoinNode(MergeJoinNode &&) = delete;
-  MergeJoinNode &operator=(MergeJoinNode &&) = delete;
+  MergeJoinPlan(const MergeJoinPlan &) = delete;
+  MergeJoinPlan &operator=(const MergeJoinPlan &) = delete;
+  MergeJoinPlan(MergeJoinPlan &&) = delete;
+  MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
 
-  MergeJoinNode(const expression::AbstractExpression *predicate,
+  MergeJoinPlan(const expression::AbstractExpression *predicate,
                 const ProjectInfo *proj_info,
                 std::vector<JoinClause> &join_clauses)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info),
-        join_clauses_(std::move(join_clauses)) {  // FIXME
-   // Nothing to see here...
->>>>>>> bridge:src/backend/planner/merge_join_node.h
+  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info),
+    join_clauses_(std::move(join_clauses)) {
+    // Nothing to see here...
   }
 
   inline PlanNodeType GetPlanNodeType() const {
