@@ -494,7 +494,7 @@ peloton_MainLoop(void) {
       break;
   }             /* end of outer loop */
 
-  //TODO:: Must call join or terminate for thread
+  //FIXME:: Should we call join or terminate for logging thread?
 
   /* Normal exit from peloton is here */
   ereport(LOG,

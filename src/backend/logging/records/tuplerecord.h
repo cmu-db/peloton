@@ -82,7 +82,6 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const TupleRecord& tupleRecord);
 
 private:
-
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
