@@ -104,7 +104,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     case T_Agg:
       plan_node = PlanTransformer::TransformAgg(
           reinterpret_cast<const AggState*>(plan_state));
-          /* no break */
+      break;
 
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",

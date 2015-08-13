@@ -29,5 +29,7 @@ typedef struct {
 
 extern std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap;
 
+extern std::unordered_map<Oid, const PltFuncMetaInfo> kPgTransitFuncMap;
+
 }  // namespace bridge
 }  // namespace peloton

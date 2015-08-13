@@ -129,6 +129,11 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
           new executor::MaterializationExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_AGGREGATE_V2:
+      child_executor =
+          new executor::AggregateExecutor(plan, executor_context);
+      break;
+
     default:
       LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
       break;

@@ -38,7 +38,7 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
   for (int aggno = 0; aggno < num_aggs; aggno++) {
     auto transfn_oid = agg_state->peragg[aggno].transfn_oid;
 
-    auto itr = peloton::bridge::kPgFuncMap.find(transfn_oid);
+    auto itr = peloton::bridge::kPgTransitFuncMap.find(transfn_oid);
     if (kPgFuncMap.end() == itr) {
       LOG_ERROR("Unmapped Transit function Id : %u\n", transfn_oid);
       return nullptr;
@@ -80,7 +80,8 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
                                              predicate.release(),
                                              std::move(unique_agg_terms),
                                              std::move(groupby_col_ids),
-                                             output_schema.get());
+                                             output_schema.release(),
+                                             AGGREGATE_TYPE_HASH);
 
   // Find children
   auto lchild = TransformPlan(outerPlanState(agg_state));

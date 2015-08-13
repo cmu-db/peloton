@@ -51,7 +51,8 @@ class DataTable : public AbstractTable {
   // Table constructor
   DataTable(catalog::Schema *schema, AbstractBackend *backend,
             std::string table_name, oid_t table_oid,
-            size_t tuples_per_tilegroup);
+            size_t tuples_per_tilegroup,
+            bool own_schema);
 
   ~DataTable();
 
@@ -79,7 +80,7 @@ class DataTable : public AbstractTable {
   oid_t AddDefaultTileGroup();
 
   // coerce into adding a new tile group with a tile group id
-  oid_t AddTileGroupWithId(oid_t tile_group_id);
+  oid_t AddTileGroupWithOid(oid_t tile_group_id);
 
   // add a customized tile group to table
   void AddTileGroup(TileGroup *tile_group);

@@ -54,14 +54,17 @@ bool AggregateExecutor::DInit() {
   // Construct the output table
   auto output_table_schema =
       const_cast<catalog::Schema*>(node.GetOutputSchema());
-  size_t column_count = output_table_schema->GetColumnCount();
-  assert(column_count >= 1);
+
+  assert(output_table_schema->GetColumnCount() >= 1);
 
   result_itr = START_OID;
 
+  bool own_schema = false;
   output_table = storage::TableFactory::GetDataTable(INVALID_OID, INVALID_OID,
                                                      output_table_schema,
-                                                     "temp_table");
+                                                     "aggregate_temp_table",
+                                                     DEFAULT_TUPLES_PER_TILEGROUP,
+                                                     own_schema);
 
   return true;
 }
@@ -88,14 +91,31 @@ bool AggregateExecutor::DExecute() {
       GetPlanNode<planner::AggregateV2Node>();
 
   // Get an aggregator
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
-      &node, output_table, executor_context_);
+  std::unique_ptr<AbstractAggregator> aggregator(nullptr);
 
   // Get input tiles and aggregate them
   std::unique_ptr<expression::ContainerTuple<LogicalTile>> prev_tuple(nullptr);
   std::unique_ptr<LogicalTile> prev_tile(nullptr);
   while (children_[0]->Execute() == true) {
+
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+
+    if(nullptr == aggregator.get()){
+      // Initialize the aggregator
+      switch(node.GetAggregateStrategy()){
+        case AGGREGATE_TYPE_HASH:
+          LOG_INFO("Use HashAggregator\n");
+          aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+          break;
+        case AGGREGATE_TYPE_SORT:
+          LOG_INFO("Use SortAggregator\n");
+          aggregator.reset(new SortAggregator(&node, output_table, executor_context_));
+          break;
+        default:
+          LOG_ERROR("Invalid aggregate type. Return.\n");
+          return false;
+      }
+    }
 
     LOG_TRACE("Looping over tile..");
 
@@ -103,23 +123,23 @@ bool AggregateExecutor::DExecute() {
       auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
                                                                    tuple_id);
 
-      if (aggregator.Advance(cur_tuple, prev_tuple.get()) == false) {
+      if (aggregator->Advance(cur_tuple) == false) {
         return false;
       }
       prev_tuple.reset(cur_tuple);
     }
 
     /*
-     * This is critical. We must not release the tile immediately because
-     * the prev_tuple of next round still points into this tile.
-     * As a result, we always keep two tiles alive --- hopefully not expensive.
+     * This is critical: We must not release the tile immediately because
+     * the prev_tuple may still be referenced in next iteration by some aggregators.
+     * To solve this, we always keep two tiles alive --- hopefully not expensive.
      */
     prev_tile.reset(tile.release());
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator.Finalize(prev_tuple.get()))
+  if (!aggregator->Finalize())
     return false;
 
   prev_tile.reset(nullptr);
