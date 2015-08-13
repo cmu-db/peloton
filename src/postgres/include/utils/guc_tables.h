@@ -98,9 +98,8 @@ enum config_group
 	PRESET_OPTIONS,
 	CUSTOM_OPTIONS,
 	DEVELOPER_OPTIONS,
-// TODO: Peloton mode ====================================================
+	// TODO: Peloton Changes
 	PELOTON_MODE_OPTIONS
-// TODO: Peloton mode ====================================================
 };
 
 /*
