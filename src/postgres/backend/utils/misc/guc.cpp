@@ -392,7 +392,7 @@ static const struct config_enum_entry row_security_options[] = {
 	{NULL, 0, false}
 };
 
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 /*
  * Peloton Mode Options can take values 0,1,2
  * Range of values may be changed
@@ -404,7 +404,7 @@ static const struct config_enum_entry peloton_mode_options[] = {
 	{"peloton_mode_2", 2, false},
 	{NULL, 0, false}
 };
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 
 
 /*
@@ -466,9 +466,9 @@ int			tcp_keepalives_count;
 
 int			row_security;
 
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 int			peloton_mode = 0;
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
@@ -1642,7 +1642,9 @@ struct config_bool ConfigureNamesBool[] =
 };
 
 
-static struct config_int ConfigureNamesInt[] =
+// TODO: Peloton changes
+// made it non-static
+struct config_int ConfigureNamesInt[] =
 {
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
@@ -2697,7 +2699,9 @@ static struct config_int ConfigureNamesInt[] =
 };
 
 
-static struct config_real ConfigureNamesReal[] =
+// TODO: Peloton changes
+// made it non-static
+struct config_real ConfigureNamesReal[] =
 {
 	{
 		{"seq_page_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2838,7 +2842,9 @@ static struct config_real ConfigureNamesReal[] =
 };
 
 
-static struct config_string ConfigureNamesString[] =
+// TODO: Peloton changes
+// made it non-static
+struct config_string ConfigureNamesString[] =
 {
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
@@ -3420,7 +3426,9 @@ static struct config_string ConfigureNamesString[] =
 };
 
 
-static struct config_enum ConfigureNamesEnum[] =
+// TODO: Peloton changes
+// made it non-static
+struct config_enum ConfigureNamesEnum[] =
 {
 	{
 		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -3669,20 +3677,20 @@ static struct config_enum ConfigureNamesEnum[] =
 		NULL, NULL, NULL
 	},
 
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 	{
 		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
-		// TODO: Peloton mode: check guc_tables.h for PELOTON_MODE_OPTIONS declaration
+		// TODO: Peloton Changes: check guc_tables.h for PELOTON_MODE_OPTIONS declaration
 			gettext_noop("Change peloton mode"),
 			gettext_noop("System behavior will be modified depending on the specific peloton mode")
 		},
 		&peloton_mode,
 		0, peloton_mode_options,
-		// TODO: peloton mode: 0 can be replaced by enum and new class def may be required
-		// TODO: peloton mode: tally with previous entries to understand better
+		// TODO: Peloton Changes: 0 can be replaced by enum and new class def may be required
+		// TODO: Peloton Changes: tally with previous entries to understand better
 		NULL, NULL, NULL
 	},
-// TODO: Peloton mode ====================================================
+// TODO: Peloton Changes ====================================================
 
 	/* End-of-list marker */
 	{
