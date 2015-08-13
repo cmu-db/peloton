@@ -3,10 +3,7 @@
 #include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/planner/aggregateV2_node.h"
 
-#include "access/htup_details.h"
-#include "catalog/pg_aggregate.h"
 #include "executor/nodeAgg.h"
-#include "utils/syscache.h"
 
 namespace peloton {
 namespace bridge {
