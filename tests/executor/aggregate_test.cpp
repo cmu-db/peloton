@@ -29,7 +29,7 @@
 =======
 #include "backend/expression/expression_util.h"
 #include "backend/planner/abstract_plan_node.h"
-#include "backend/planner/aggregateV2_node.h"
+#include "../../src/backend/planner/aggregate_plan.h"
 >>>>>>> bridge
 #include "backend/storage/data_table.h"
 
