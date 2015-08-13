@@ -49,35 +49,29 @@ class AriesFrontendLogger : public FrontendLogger{
 
   private:
 
-    // TODO :: Reorganizing
+    LogRecordType GetNextLogRecordType(void);
 
-    LogRecordType GetNextLogRecordType();
+    size_t LogFileSize();
 
-    size_t GetNextFrameSize();
+    size_t GetNextFrameSize(void);
 
-    storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema);
+    size_t GetLogRecordCount() const;
 
     bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
+
+    storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema);
 
     storage::DataTable* GetTable(TupleRecord tupleRecord);
 
     storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
-    void InsertTuple(concurrency::Transaction* txn);
-
-    void DeleteTuple(concurrency::Transaction* txn);
-
-    void UpdateTuple(concurrency::Transaction* txn);
-
     void RedoInsert(concurrency::Transaction* txn);
-
     void RedoDelete(concurrency::Transaction* txn);
-
     void RedoUpdate(concurrency::Transaction* txn);
 
-    size_t GetLogRecordCount() const;
-
-    size_t LogFileSize();
+    void InsertTuple(concurrency::Transaction* txn);
+    void DeleteTuple(concurrency::Transaction* txn);
+    void UpdateTuple(concurrency::Transaction* txn);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
