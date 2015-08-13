@@ -31,7 +31,11 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
+<<<<<<< HEAD:src/backend/planner/nested_loop_join_plan.h
   NestedLoopJoinPlan(expression::AbstractExpression *predicate,
+=======
+  NestedLoopJoinNode(const expression::AbstractExpression *predicate,
+>>>>>>> bridge:src/backend/planner/nested_loop_join_node.h
                      const ProjectInfo *proj_info)
       : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate,
                              proj_info) {  // FIXME

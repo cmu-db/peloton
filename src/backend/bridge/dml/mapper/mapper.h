@@ -42,7 +42,9 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer(){};
+  PlanTransformer() {
+  }
+  ;
 
   static void PrintPlan(const Plan *plan);
 
@@ -64,7 +66,9 @@ class PlanTransformer {
    public:
     bool use_projInfo = true;  // Use Plan.projInfo or not
     TransformOptions() = default;
-    TransformOptions(bool pi) : use_projInfo(pi) {}
+    TransformOptions(bool pi)
+        : use_projInfo(pi) {
+    }
   };
 
   static const TransformOptions DefaultOptions;
@@ -127,6 +131,9 @@ class PlanTransformer {
   static planner::AbstractPlan *TransformNestLoop(
       const NestLoopPlanState *planstate);
 
+  static planner::AbstractPlanNode *TransformMergeJoin(
+      const MergeJoinState *plan_state);
+
   //===--------------------------------------------------------------------===//
   // OTHERS
   //===--------------------------------------------------------------------===//
@@ -139,6 +146,10 @@ class PlanTransformer {
 
   static planner::AbstractPlan *TransformLimit(
       const LimitPlanState *planstate);
+
+  static planner::AbstractPlanNode *TransformAgg(const AggState *plan_state);
+
+  static planner::AbstractPlanNode *TransformSort(const SortState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
@@ -156,10 +167,15 @@ class PlanTransformer {
   static const planner::ProjectInfo *BuildProjectInfo(
       const PelotonProjectionInfo *pi, oid_t column_count);
 
+  static const planner::ProjectInfo::TargetList BuildTargetList(
+      const List* targetList, oid_t column_count);
+
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
 
 };
 

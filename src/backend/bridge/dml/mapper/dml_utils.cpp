@@ -570,7 +570,8 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
     int *varSlotOffsets = pg_pi->pi_varSlotOffsets;
     int *varNumbers = pg_pi->pi_varNumbers;
 
-    if (pg_pi->pi_directMap)  // Sequential direct map
+    // Sequential direct map
+    if (pg_pi->pi_directMap)
     {
       /* especially simple case where vars go to output in order */
       for (int i = 0; i < numSimpleVars && i < column_count; i++) {
@@ -588,8 +589,9 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
         LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
                   out_col_id);
       }
-    } else  // Non-sequential direct map
-    {
+    }
+    // Non-sequential direct map
+    else {
       /* we have to pay attention to varOutputCols[] */
       int *varOutputCols = pg_pi->pi_varOutputCols;
 
