@@ -13,7 +13,7 @@ insert into fooagg values (5, 11, 1.3, '#5');
 select * from fooagg;
 
 -- simple
-select sum(c), b from fooagg group by b;
+select sum(c), avg(c), b from fooagg group by b;
 
 select a, b, sum(c) from fooagg group by a, b;
 
