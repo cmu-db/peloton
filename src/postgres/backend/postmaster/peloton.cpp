@@ -25,7 +25,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/scheduler/tbb_scheduler.h"
-#include "backend/bridge/ddl/config.h"
+#include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
@@ -100,6 +100,8 @@ static void peloton_send(void *msg, int len);
 static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
 static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
+
+static void __attribute__((unused)) peloton_test_config();
 
 bool
 IsPelotonProcess(void) {
@@ -1019,25 +1021,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
  */
 static void
 peloton_process_ddl(Peloton_MsgDDL *msg) {
-
-	// TODO: Peloton mode ====================================================
-/*
-	  elog(LOG, "Before SetConfigOption...");
-	  puts(GetConfigOption("peloton_mode", false, false));
-
-	  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
-	  puts("\n");
-
-	  elog(LOG, "After SetConfigOption...");
-	  puts(GetConfigOption("peloton_mode", false, false));
-
-	  puts("Printing Log Duration...");
-	  puts(GetConfigOption("log_duration", false, false));
-*/
-	  peloton::bridge::ConfigurationOptions::ConstructConfigurationMap();
-
-	// TODO: Peloton mode ====================================================
-
   Node* parsetree;
   const char *queryString;
   assert(msg);
@@ -1199,6 +1182,21 @@ peloton_process_status(Peloton_Status *status) {
 void
 peloton_destroy_status(Peloton_Status *status) {
   pfree(status);
+}
+
+static void
+peloton_test_config() {
+
+  auto val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "Before SetConfigOption : %s", val);
+
+  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
+
+  val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "After SetConfigOption : %s", val);
+
+  // Build the configuration map
+  peloton::bridge::ConfigManager::BuildConfigMap();
 }
 
 /* ----------

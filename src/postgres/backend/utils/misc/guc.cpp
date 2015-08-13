@@ -392,9 +392,9 @@ static const struct config_enum_entry row_security_options[] = {
 	{NULL, 0, false}
 };
 
-// TODO: Peloton Changes ====================================================
+// TODO: Peloton Changes
 /*
- * Peloton Mode Options can take values 0,1,2
+ * Peloton mode options can take values 0,1,2
  * Range of values may be changed
  * Values have to be defined as enum
  */
@@ -404,7 +404,6 @@ static const struct config_enum_entry peloton_mode_options[] = {
 	{"peloton_mode_2", 2, false},
 	{NULL, 0, false}
 };
-// TODO: Peloton Changes ====================================================
 
 
 /*
@@ -466,9 +465,9 @@ int			tcp_keepalives_count;
 
 int			row_security;
 
-// TODO: Peloton Changes ====================================================
+// TODO: Peloton Changes
 int			peloton_mode = 0;
-// TODO: Peloton Changes ====================================================
+
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
@@ -1642,8 +1641,6 @@ struct config_bool ConfigureNamesBool[] =
 };
 
 
-// TODO: Peloton changes
-// made it non-static
 struct config_int ConfigureNamesInt[] =
 {
 	{
@@ -2699,8 +2696,6 @@ struct config_int ConfigureNamesInt[] =
 };
 
 
-// TODO: Peloton changes
-// made it non-static
 struct config_real ConfigureNamesReal[] =
 {
 	{
@@ -2842,8 +2837,6 @@ struct config_real ConfigureNamesReal[] =
 };
 
 
-// TODO: Peloton changes
-// made it non-static
 struct config_string ConfigureNamesString[] =
 {
 	{
@@ -3426,8 +3419,6 @@ struct config_string ConfigureNamesString[] =
 };
 
 
-// TODO: Peloton changes
-// made it non-static
 struct config_enum ConfigureNamesEnum[] =
 {
 	{
@@ -3677,20 +3668,18 @@ struct config_enum ConfigureNamesEnum[] =
 		NULL, NULL, NULL
 	},
 
-// TODO: Peloton Changes ====================================================
+	// TODO: Peloton Changes
+  // Refer guc_tables.h for PELOTON_MODE_OPTIONS declaration
 	{
 		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
-		// TODO: Peloton Changes: check guc_tables.h for PELOTON_MODE_OPTIONS declaration
 			gettext_noop("Change peloton mode"),
 			gettext_noop("System behavior will be modified depending on the specific peloton mode")
 		},
 		&peloton_mode,
 		0, peloton_mode_options,
-		// TODO: Peloton Changes: 0 can be replaced by enum and new class def may be required
-		// TODO: Peloton Changes: tally with previous entries to understand better
+		// the constant 0 can be replaced by an enum
 		NULL, NULL, NULL
 	},
-// TODO: Peloton Changes ====================================================
 
 	/* End-of-list marker */
 	{

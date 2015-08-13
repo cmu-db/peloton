@@ -5,8 +5,8 @@
 ######################################################################
 
 bridge_FILES = \
+			   backend/bridge/ddl/configuration.cpp \
 			   backend/bridge/ddl/ddl_database.cpp \
-			   backend/bridge/ddl/config.cpp \
 			   backend/bridge/ddl/ddl_index.cpp \
 			   backend/bridge/ddl/ddl_table.cpp \
 			   backend/bridge/ddl/ddl_utils.cpp \
