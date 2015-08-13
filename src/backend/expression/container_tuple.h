@@ -125,11 +125,11 @@ class ContainerTupleComparator {
 };
 
 //===--------------------------------------------------------------------===//
-// Specialization for vector<Value>
+// Specialization for std::vector<Value>
 //===--------------------------------------------------------------------===//
 /**
- * @brief Used to interpret a vector of values as an ad-hoc tuple.
- * The purpose of this class is to eliminate the need to construct a schema.
+ * @brief A convenient wrapper to interpret a vector of values as an tuple.
+ * No need to construct a schema.
  * The caller should make sure there's no out-of-bound calls.
  */
 template<>
@@ -161,8 +161,33 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
     return nullptr;
   }
 
+  size_t HashCode(size_t seed = 0) const {
+
+    for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
+      const Value value = GetValue(column_itr);
+      value.HashCombine(seed);
+    }
+    return seed;
+  }
+
+  /** @brief Compare whether this tuple equals to other value-wise.
+   * Assume the schema of other tuple is the same as this. No check.
+   */
+  bool EqualsNoSchemaCheck(const ContainerTuple< std::vector<Value> > &other) const {
+    assert(container_->size() == other.container_->size());
+
+    for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
+      const Value lhs = GetValue(column_itr);
+      const Value rhs = other.GetValue(column_itr);
+      if (lhs.OpNotEquals(rhs).IsTrue()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
  private:
-  std::vector<Value>* container_;
+  const std::vector<Value>* container_ = nullptr;
 };
 
 

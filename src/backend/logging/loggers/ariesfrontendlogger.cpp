@@ -213,7 +213,7 @@ void AriesFrontendLogger::InsertTuple(LogRecordHeader log_record_header,
 
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
-    table->AddTileGroupWithId(tile_group_id);
+    table->AddTileGroupWithOid(tile_group_id);
     auto tile_group = table->GetTileGroupById(tile_group_id);
     tile_group->InsertTuple(tuple_slot/*XXX:CHECK*/, tuple);
     ItemPointer location(tile_group_id, tuple_slot);
