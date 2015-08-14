@@ -18,8 +18,12 @@
 #include "c.h"
 #include "nodes/nodes.h"
 
+#include <mutex>
+
 namespace peloton {
 namespace bridge {
+
+static std::mutex parsetree_stack_mutex;
 
 //===--------------------------------------------------------------------===//
 // DDL
