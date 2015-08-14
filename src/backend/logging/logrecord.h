@@ -36,13 +36,17 @@ public:
 
   virtual bool Serialize(void) = 0;
 
-  virtual char* GetSerializedData(void) const = 0;
+  char* GetSerializedData(void) const {return serialized_data;}
 
-  virtual size_t GetSerializedDataSize(void) const = 0;
+  size_t GetSerializedDataSize(void) const {return serialized_data_size;}
 
 protected:
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
+
+  char* serialized_data;
+
+  size_t serialized_data_size = 0;
 
 };
 
