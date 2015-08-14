@@ -12,9 +12,11 @@
 
 #include <memory>
 
-#include "backend/planner/nested_loop_join_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/nested_loop_join_plan.h"
+
 
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"

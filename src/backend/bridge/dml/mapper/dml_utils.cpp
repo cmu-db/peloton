@@ -557,10 +557,6 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
   }
 
   //  (B) Transform direct map list
-  // Special case:
-  // a null constant may be specified in SimpleVars by PG,
-  // in case of that, we add a Target to target_list we created above.
-
   info->out_col_ids = NIL;
   info->tuple_idxs = NIL;
   info->in_col_ids = NIL;
