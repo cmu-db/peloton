@@ -13,7 +13,8 @@
 #define _STARTUP_H
 
 extern void HandleStartupProcInterrupts(void);
-extern void StartupProcessMain(void) pg_attribute_noreturn();
+// TODO: Peloton Changes
+extern void StartupProcessMain(void);
 extern void PreRestoreCommand(void);
 extern void PostRestoreCommand(void);
 extern bool IsPromoteTriggered(void);
