@@ -15,9 +15,11 @@
 #include <string>
 #include <vector>
 
-#include "backend/planner/seq_scan_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/seq_scan_plan.h"
+
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
@@ -230,11 +232,10 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
   }
 }
 
-}  // namespace
 
 // Sequential scan of table with predicate.
 // The table being scanned has more than one tile group. i.e. the vertical
-// paritioning changes midway.
+// partitioning changes midway.
 TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   // Create table.
   std::unique_ptr<storage::DataTable> table(CreateTable());
@@ -308,5 +309,8 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+}
+
 }  // namespace test
 }  // namespace peloton
+
