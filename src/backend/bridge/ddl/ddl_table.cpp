@@ -13,6 +13,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <thread>
 
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_table.h"
@@ -87,11 +88,14 @@ bool DDLTable::ExecCreateStmt(Node *parsetree, DDL_Info* ddl_info,
   //===--------------------------------------------------------------------===//
   // Rerun query
   //===--------------------------------------------------------------------===//
-  for (auto parsetree : parsetree_stack) {
-    DDL::ProcessUtility(parsetree, ddl_info, status, txn_id);
-    pfree(parsetree);
+  {
+    std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
+    for (auto parsetree : parsetree_stack) {
+      DDL::ProcessUtility(parsetree, ddl_info, status, txn_id);
+      pfree(parsetree);
+    }
+    parsetree_stack.clear();
   }
-  parsetree_stack.clear();
 
   return true;
 }
@@ -118,8 +122,10 @@ bool DDLTable::ExecAlterTableStmt(Node *parsetree,
     MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
     auto parse_tree_copy = (Node *) copyObject(parsetree);
     MemoryContextSwitchTo(oldcxt);
-
-    parsetree_stack.push_back(parse_tree_copy);
+    {
+      std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
+      parsetree_stack.push_back(parse_tree_copy);
+    }
     return true;
   }
 

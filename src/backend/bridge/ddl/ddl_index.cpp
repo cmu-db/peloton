@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <vector>
+#include <thread>
 
+#include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_index.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/manager.h"
@@ -47,7 +49,10 @@ bool DDLIndex::ExecIndexStmt(Node *parsetree,
     auto parse_tree_copy = (Node *) copyObject(parsetree);
     MemoryContextSwitchTo(oldcxt);
 
-    parsetree_stack.push_back(parse_tree_copy);
+    {
+      std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
+      parsetree_stack.push_back(parse_tree_copy);
+    }
     return true;
   }
 
