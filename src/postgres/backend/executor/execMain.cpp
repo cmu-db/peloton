@@ -1592,8 +1592,6 @@ ExecutePlan(EState *estate,
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
 
-		print_slot(slot);
-
 		/*
 		 * check our tuple count.. if we've processed the proper number then
 		 * quit, else loop again and process more tuples.  Zero numberTuples

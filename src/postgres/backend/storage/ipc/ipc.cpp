@@ -32,6 +32,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 
+// TODO: Peloton Changes
 #include "backend/common/stack_trace.h"
 
 
@@ -143,7 +144,12 @@ proc_exit(int code)
 
 	elog(DEBUG3, "exit(%d)", code);
 
-	exit(code);
+  // TODO: Peloton Changes
+	elog(LOG, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d \n", getpid(), MyProcPid, PostmasterPid);
+
+  // Exit the process only if not postmaster
+	if(PostmasterPid != 0)
+	  exit(code);
 }
 
 /*
@@ -159,9 +165,6 @@ proc_exit_prepare(int code)
 	 * NOT send control back to the main loop, but right back here.
 	 */
 	proc_exit_inprogress = true;
-
-	// TODO: Peloton Changes
-	//peloton::GetStackTrace();
 
 	/*
 	 * Forget any pending cancel or die requests; we're doing our best to

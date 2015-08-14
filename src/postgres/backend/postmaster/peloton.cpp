@@ -86,7 +86,7 @@ std::mutex backend_queue_map_mutex;
  * Local function forward declarations
  * ----------
  */
-NON_EXEC_STATIC void PelotonMain(int argc, char *argv[]) pg_attribute_noreturn();
+NON_EXEC_STATIC void PelotonMain(int argc, char *argv[]);
 static void peloton_MainLoop(void);
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);

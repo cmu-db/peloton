@@ -222,7 +222,7 @@ PerformAuthentication(Port *port)
 	/*
 	 * Now perform authentication exchange.
 	 */
-	//ClientAuthentication(port); /* might not return, if failure */
+	ClientAuthentication(port); /* might not return, if failure */
 
 	/*
 	 * Done with authentication.  Disable the timeout, and log if needed.

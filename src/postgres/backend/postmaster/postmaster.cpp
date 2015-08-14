@@ -390,7 +390,8 @@ static void LogChildExit(int lev, const char *procname,
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
-static void ExitPostmaster(int status) pg_attribute_noreturn();
+// TODO: Peloton Changes
+static void ExitPostmaster(int status);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
