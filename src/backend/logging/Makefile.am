@@ -13,7 +13,8 @@ logging_FILES = \
 			   backend/logging/backendlogger.cpp \
 			   backend/logging/loggers/stdoutbackendlogger.cpp \
 			   backend/logging/loggers/ariesbackendlogger.cpp \
-			   backend/logging/records/tuplerecord.cpp 
+			   backend/logging/records/tuplerecord.cpp \
+			   backend/logging/records/transactionrecord.cpp 
 
 logging_INCLUDES = \
                   -I$(srcdir)/logging
