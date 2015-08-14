@@ -34,21 +34,15 @@ public:
 
   LogRecordType GetType() const{ return log_record_type; }
 
-  char* GetSerializedData(void) const {return serialized_data;}
-
-  size_t GetSerializedDataSize(void) const {return serialized_data_size;}
-
   virtual bool Serialize(void) = 0;
+
+  virtual char* GetSerializedData(void) const = 0;
+
+  virtual size_t GetSerializedDataSize(void) const = 0;
 
 protected:
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
-
-  const void* data;
-
-  char* serialized_data;
-
-  size_t serialized_data_size = 0;
 
 };
 
