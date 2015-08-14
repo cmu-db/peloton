@@ -76,8 +76,10 @@ struct AbstractScanPlanState : public AbstractPlanState {
   TupleDesc tts_tupleDescriptor;
 
   List *qual; // expr states
+  List *targetlist;
 
   PelotonProjectionInfo* proj;
+
 };
 
 struct SeqScanPlanState : public AbstractScanPlanState {
@@ -154,6 +156,17 @@ struct MergeJoinPlanState : public AbstractJoinPlanState {
 
 
 struct AggPlanState : public AbstractPlanState {
+  const Agg* agg_plan;
+
+  int numphases;
+
+  List* ps_targetlist;  // Built from TL
+  List* ps_qual;
+
+  int numaggs;
+  AggStatePerAgg peragg;
+
+  TupleDesc result_tupleDescriptor;
 
 };
 

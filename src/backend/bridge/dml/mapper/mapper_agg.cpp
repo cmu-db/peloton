@@ -10,32 +10,34 @@ namespace bridge {
 planner::AbstractPlan*
 PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
-  // TODO: TEMP HACK
-  AggState* agg_state = nullptr;
+  // Alias all I need
+  const Agg* agg = plan_state->agg_plan;
+  auto numphases = plan_state->numphases;
+  auto numaggs = plan_state->numaggs;
+  auto targetlist = plan_state->ps_targetlist;
+  auto qual = plan_state->ps_qual;
+  auto peragg = plan_state->peragg;
+  auto tupleDesc = plan_state->result_tupleDescriptor;
 
-  auto agg = reinterpret_cast<const Agg*>(agg_state->ss.ps.plan);
+  LOG_INFO("Number of Agg phases: %d \n", numphases);
 
-  auto num_phases = agg_state->numphases;
-  LOG_INFO("Number of Agg phases: %d \n", num_phases);
-
-  assert(1 == num_phases);  // When we'll have >1 phases?
+  assert(1 == numphases);  // When we'll have >1 phases?
 
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      BuildProjectInfoFromTLSkipJunk(agg_state->ss.ps.targetlist));
+      BuildProjectInfoFromTLSkipJunk(targetlist));
   LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
-      BuildPredicateFromQual(agg_state->ss.ps.qual));
+      BuildPredicateFromQual(qual));
 
   /* Get Aggregate terms */
   std::vector<planner::AggregatePlan::AggTerm> unique_agg_terms;
 
-  auto num_aggs = agg_state->numaggs;  // number of unique aggregates
-  LOG_INFO("Number of (unique) Agg nodes: %d \n", num_aggs);
-  for (int aggno = 0; aggno < num_aggs; aggno++) {
-    auto transfn_oid = agg_state->peragg[aggno].transfn_oid;
+  LOG_INFO("Number of (unique) Agg nodes: %d \n", numaggs);
+  for (int aggno = 0; aggno < numaggs; aggno++) {
+    auto transfn_oid = peragg[aggno].transfn_oid;
 
     auto itr = peloton::bridge::kPgTransitFuncMap.find(transfn_oid);
     if (kPgFuncMap.end() == itr) {
@@ -47,10 +49,11 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
     PltFuncMetaInfo fn_meta = itr->second;
     // We only take the first argument as input to aggregator
     // WARNING: there can be no arguments (e.g., COUNT(*))
-    auto arguments = agg_state->peragg[aggno].aggrefstate->args;
+    auto arguments = peragg[aggno].aggrefstate->args;
     expression::AbstractExpression* agg_expr = nullptr;
     if (arguments) {
-      GenericExprState *gstate = (GenericExprState *) lfirst(list_head(arguments));
+      GenericExprState *gstate = (GenericExprState *) lfirst(
+          list_head(arguments));
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
     }
 
@@ -76,18 +79,17 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   /* Get output schema */
   std::unique_ptr<catalog::Schema> output_schema(
-      SchemaTransformer::GetSchemaFromTupleDesc(
-          agg_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor));
+      SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   auto retval = new planner::AggregatePlan(proj_info.release(),
-                                             predicate.release(),
-                                             std::move(unique_agg_terms),
-                                             std::move(groupby_col_ids),
-                                             output_schema.release(),
-                                             AGGREGATE_TYPE_HASH);
+                                           predicate.release(),
+                                           std::move(unique_agg_terms),
+                                           std::move(groupby_col_ids),
+                                           output_schema.release(),
+                                           AGGREGATE_TYPE_HASH);
 
   // Find children
-  auto lchild = TransformPlan(outerAbstractPlanState(agg_state));
+  auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
   retval->AddChild(lchild);
 
   return retval;
