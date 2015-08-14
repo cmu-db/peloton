@@ -75,10 +75,6 @@ public:
 
   ItemPointer GetItemPointer(void) const {return itemPointer;}
 
-  char* GetSerializedData(void) const {return serialized_data;}
-
-  size_t GetSerializedDataSize(void) const {return serialized_data_size;}
-
   friend std::ostream& operator<<(std::ostream& os, const TupleRecord& tupleRecord);
 
 private:
@@ -95,10 +91,6 @@ private:
   ItemPointer itemPointer;
 
   const void* data;
-
-  char* serialized_data;
-
-  size_t serialized_data_size = 0;
 
 };
 
