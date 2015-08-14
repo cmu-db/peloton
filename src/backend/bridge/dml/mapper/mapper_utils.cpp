@@ -67,7 +67,6 @@ void PlanTransformer::GetGenericInfoFromScanState(
     bool use_projInfo) {
 
   List *qual = sstate->qual;
-  const PelotonProjectionInfo *pg_proj_info = sstate->proj;
   oid_t out_column_count = static_cast<oid_t>(
       sstate->tts_tupleDescriptor->natts);
 
@@ -81,8 +80,9 @@ void PlanTransformer::GetGenericInfoFromScanState(
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   if (use_projInfo) {
-    project_info.reset(BuildProjectInfo(pg_proj_info,
-                                        out_column_count));
+    project_info.reset(BuildProjectInfoFromTLSkipJunk(sstate->targetlist));
+//    project_info.reset(BuildProjectInfo(pg_proj_info,
+//                                        out_column_count));
   }
 
   /*

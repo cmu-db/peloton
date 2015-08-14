@@ -23,6 +23,8 @@
 #include "utils/rel.h"
 #include "utils/datum.h"
 
+#include "executor/nodeAgg.h"
+
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,
                                        ExprDoneCond *isDone);
@@ -35,16 +37,17 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 ExprState *CopyExprState(ExprState *expr_state);
+List* CopyExprStateList(List* from);
 
 ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
                          TupleDesc relation_tup_desc);
 
 AbstractPlanState *
-DMLUtils::PreparePlanState(AbstractPlanState *root,
-                           PlanState *planstate,
-                           bool left_child){
+DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
+                           bool left_child) {
   // Base case
-  if (planstate == nullptr) return root;
+  if (planstate == nullptr)
+    return root;
 
   AbstractPlanState *child_planstate = nullptr;
 
@@ -93,19 +96,19 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     default:
-      elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d", planstate_type);
+      elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d",
+           planstate_type);
       break;
   }
 
   // Base case
   if (child_planstate != nullptr) {
     if (root != nullptr) {
-      if(left_child)
+      if (left_child)
         outerAbstractPlanState(root) = child_planstate;
       else
         innerAbstractPlanState(root) = child_planstate;
-    }
-    else
+    } else
       root = child_planstate;
   }
 
@@ -113,9 +116,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
   auto left_tree = outerPlanState(planstate);
   auto right_tree = innerPlanState(planstate);
 
-  if(left_tree)
+  if (left_tree)
     PreparePlanState(child_planstate, left_tree, true);
-  if(right_tree)
+  if (right_tree)
     PreparePlanState(child_planstate, right_tree, false);
 
   return root;
@@ -124,7 +127,8 @@ DMLUtils::PreparePlanState(AbstractPlanState *root,
 ModifyTablePlanState *
 DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
 
-  ModifyTablePlanState *info = (ModifyTablePlanState*) palloc(sizeof(ModifyTablePlanState));
+  ModifyTablePlanState *info = (ModifyTablePlanState*) palloc(
+      sizeof(ModifyTablePlanState));
   info->type = mt_plan_state->ps.type;
 
   // Resolve result table
@@ -142,22 +146,26 @@ DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
 
   switch (info->operation) {
     case CMD_INSERT:
-      LOG_INFO("CMD_INSERT");
+      LOG_INFO("CMD_INSERT")
+      ;
       PrepareInsertState(info, mt_plan_state);
       break;
 
     case CMD_UPDATE:
-      LOG_INFO("CMD_UPDATE");
+      LOG_INFO("CMD_UPDATE")
+      ;
       PrepareUpdateState(info, mt_plan_state);
       break;
 
     case CMD_DELETE:
-      LOG_INFO("CMD_DELETE");
+      LOG_INFO("CMD_DELETE")
+      ;
       PrepareDeleteState(info, mt_plan_state);
       break;
 
     default:
-      LOG_ERROR("Unrecognized operation type : %u", info->operation);
+      LOG_ERROR("Unrecognized operation type : %u", info->operation)
+      ;
       return nullptr;
       break;
   }
@@ -165,9 +173,8 @@ DMLUtils::PrepareModifyTableState(ModifyTableState *mt_plan_state) {
   return info;
 }
 
-void
-DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
-                             ModifyTableState *mt_plan_state) {
+void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
+                                  ModifyTableState *mt_plan_state) {
 
   // Should be only one sub plan which is a Result
   assert(mt_plan_state->mt_nplans == 1);
@@ -184,24 +191,23 @@ DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
     // i.e., ResultState should have no children/sub plans
     assert(outerPlanState(result_ps) == nullptr);
 
-    auto child_planstate = PrepareResultState(reinterpret_cast<ResultState *>(sub_planstate));
+    auto child_planstate = PrepareResultState(
+        reinterpret_cast<ResultState *>(sub_planstate));
     child_planstate->proj = BuildProjectInfo(result_ps->ps.ps_ProjInfo,
                                              info->table_nattrs);
 
-    info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
-                                                   mt_plan_state->mt_nplans);
+    info->mt_plans = (AbstractPlanState **) palloc(
+        sizeof(AbstractPlanState *) * mt_plan_state->mt_nplans);
     info->mt_plans[0] = child_planstate;
-  }
-  else {
+  } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
               nodeTag(sub_planstate->plan));
   }
 
 }
 
-void
-DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
-                             ModifyTableState *mt_plan_state) {
+void DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
+                                  ModifyTableState *mt_plan_state) {
   // Should be only one sub plan which is a SeqScan
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
@@ -212,9 +218,8 @@ DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
 
   auto child_tag = nodeTag(sub_planstate->plan);
 
-  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
-      child_tag == T_IndexOnlyScan ||
-      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
+  if (child_tag == T_SeqScan || child_tag == T_IndexScan
+      || child_tag == T_IndexOnlyScan || child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
 
     LOG_TRACE("Child of Update is %u \n", child_tag);
 
@@ -222,26 +227,24 @@ DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
     // and put it in our update node
     auto scan_state = reinterpret_cast<ScanState *>(sub_planstate);
 
-    auto child_planstate = (AbstractScanPlanState *)
-            PreparePlanState(nullptr, sub_planstate, true);
+    auto child_planstate = (AbstractScanPlanState *) PreparePlanState(
+        nullptr, sub_planstate, true);
 
     child_planstate->proj = BuildProjectInfo(scan_state->ps.ps_ProjInfo,
                                              info->table_nattrs);
 
-    info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
-                                                   mt_plan_state->mt_nplans);
+    info->mt_plans = (AbstractPlanState **) palloc(
+        sizeof(AbstractPlanState *) * mt_plan_state->mt_nplans);
     info->mt_plans[0] = child_planstate;
 
   } else {
     LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
   }
 
-
 }
 
-void
-DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
-                             ModifyTableState *mt_plan_state) {
+void DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
+                                  ModifyTableState *mt_plan_state) {
 
   // Grab Database ID and Table ID
   // Input must come from a subplan
@@ -253,12 +256,11 @@ DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
 
   auto child_planstate = PreparePlanState(nullptr, sub_planstate, true);
 
-  info->mt_plans = (AbstractPlanState **) palloc(sizeof(AbstractPlanState *) *
-                                                 mt_plan_state->mt_nplans);
+  info->mt_plans = (AbstractPlanState **) palloc(
+      sizeof(AbstractPlanState *) * mt_plan_state->mt_nplans);
   info->mt_plans[0] = child_planstate;
 
 }
-
 
 ResultPlanState *
 DMLUtils::PrepareResultState(ResultState *result_plan_state) {
@@ -270,11 +272,14 @@ DMLUtils::PrepareResultState(ResultState *result_plan_state) {
 
 LockRowsPlanState *
 DMLUtils::PrepareLockRowsState(LockRowsState *lr_plan_state) {
-  LockRowsPlanState *info = (LockRowsPlanState*) palloc(sizeof(LockRowsPlanState));
+  LockRowsPlanState *info = (LockRowsPlanState*) palloc(
+      sizeof(LockRowsPlanState));
   info->type = lr_plan_state->ps.type;
 
   PlanState *outer_plan_state = outerPlanState(lr_plan_state);
-  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr,
+                                                         outer_plan_state,
+                                                         true);
   outerAbstractPlanState(info) = child_plan_state;
 
   return info;
@@ -295,8 +300,8 @@ DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
 
   /* Resolve limit and offset */
   if (limit_plan_state->limitOffset) {
-    val = ExecEvalExprSwitchContext(limit_plan_state->limitOffset,
-                                    econtext, &isNull, NULL);
+    val = ExecEvalExprSwitchContext(limit_plan_state->limitOffset, econtext,
+                                    &isNull, NULL);
     /* Interpret NULL offset as no offset */
     if (isNull)
       offset = 0;
@@ -313,8 +318,8 @@ DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
   }
 
   if (limit_plan_state->limitCount) {
-    val = ExecEvalExprSwitchContext(limit_plan_state->limitCount,
-                                    econtext, &isNull, NULL);
+    val = ExecEvalExprSwitchContext(limit_plan_state->limitCount, econtext,
+                                    &isNull, NULL);
     /* Interpret NULL count as no limit (LIMIT ALL) */
     if (isNull) {
       limit = 0;
@@ -338,15 +343,18 @@ DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
   info->noOffset = noOffset;
 
   PlanState *outer_plan_state = outerPlanState(limit_plan_state);
-  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr,
+                                                         outer_plan_state,
+                                                         true);
   outerAbstractPlanState(info) = child_plan_state;
 
   return info;
 }
 
 NestLoopPlanState *
-DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
-  NestLoopPlanState *info = (NestLoopPlanState*) palloc(sizeof(NestLoopPlanState));
+DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state) {
+  NestLoopPlanState *info = (NestLoopPlanState*) palloc(
+      sizeof(NestLoopPlanState));
   info->type = nl_plan_state->js.ps.type;
 
   const JoinState *js = &(nl_plan_state->js);
@@ -356,8 +364,9 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
   auto qual_list = js->joinqual;
   ListCell *qual_item;
   info->joinqual = NIL;
-  foreach(qual_item, qual_list) {
-    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+  foreach(qual_item, qual_list)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(qual_item);
     ExprState *expr_state_copy = CopyExprState(expr_state);
     info->joinqual = lappend(info->joinqual, expr_state_copy);
   }
@@ -365,8 +374,9 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
   // Copy ps qual expr states
   auto ps_qual_list = js->ps.qual;
   info->qual = NIL;
-  foreach(qual_item, ps_qual_list) {
-    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+  foreach(qual_item, ps_qual_list)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(qual_item);
     ExprState *expr_state_copy = CopyExprState(expr_state);
     info->qual = lappend(info->qual, expr_state_copy);
   }
@@ -376,16 +386,13 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state){
   info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
 
   // Construct projection info
-  info->ps_ProjInfo = BuildProjectInfo(js->ps.ps_ProjInfo,
-                                       tup_desc->natts);
+  info->ps_ProjInfo = BuildProjectInfo(js->ps.ps_ProjInfo, tup_desc->natts);
 
   return info;
 }
 
-
-void
-DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
-                                   const ScanState& ss_state) {
+void DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
+                                        const ScanState& ss_state) {
 
   // Resolve table
   Relation ss_relation_desc = ss_state.ss_currentRelation;
@@ -397,12 +404,16 @@ DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
   ListCell *qual_item;
 
   ss_plan_state->qual = NIL;
-  foreach(qual_item, qual_list) {
-    ExprState *expr_state = (ExprState *)lfirst(qual_item);
+  foreach(qual_item, qual_list)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(qual_item);
 
     ExprState *expr_state_copy = CopyExprState(expr_state);
     ss_plan_state->qual = lappend(ss_plan_state->qual, expr_state_copy);
   }
+
+  // Copy targetlist
+  ss_plan_state->targetlist = CopyExprStateList(ss_state.ps.targetlist);
 
   // Copy tuple desc
   auto tup_desc = ss_state.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
@@ -427,10 +438,10 @@ DMLUtils::PrepareSeqScanState(SeqScanState *ss_plan_state) {
   return info;
 }
 
-
 IndexScanPlanState *
 DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
-  IndexScanPlanState *info = (IndexScanPlanState*) palloc(sizeof(IndexScanPlanState));
+  IndexScanPlanState *info = (IndexScanPlanState*) palloc(
+      sizeof(IndexScanPlanState));
   info->type = iss_plan_state->ss.ps.type;
 
   // First, build the abstract scan state
@@ -451,7 +462,8 @@ DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
 
 IndexOnlyScanPlanState *
 DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
-  IndexOnlyScanPlanState *info = (IndexOnlyScanPlanState*) palloc(sizeof(IndexOnlyScanPlanState));
+  IndexOnlyScanPlanState *info = (IndexOnlyScanPlanState*) palloc(
+      sizeof(IndexOnlyScanPlanState));
   info->type = ioss_plan_state->ss.ps.type;
 
   // First, build the abstract scan state
@@ -472,21 +484,22 @@ DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
 
 BitmapHeapScanPlanState *
 DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
-  BitmapHeapScanPlanState *info = (BitmapHeapScanPlanState*) palloc(sizeof(BitmapHeapScanPlanState));
+  BitmapHeapScanPlanState *info = (BitmapHeapScanPlanState*) palloc(
+      sizeof(BitmapHeapScanPlanState));
   info->type = bhss_plan_state->ss.ps.type;
 
   // First, build the abstract scan state
   PrepareAbstractScanState(info, bhss_plan_state->ss);
 
   // only support a bitmap index scan at lower level
-  assert(nodeTag(outerPlanState(bhss_plan_state)) ==
-      T_BitmapIndexScanState);
+  assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
 
   // Construct the child node which must be a BitmapIndexScan
-  BitmapIndexScanState *biss_plan_state = (BitmapIndexScanState *) outerPlanState(bhss_plan_state);
+  BitmapIndexScanState *biss_plan_state =
+      (BitmapIndexScanState *) outerPlanState(bhss_plan_state);
 
-  BitmapIndexScanPlanState *child_info =
-      (BitmapIndexScanPlanState*) palloc(sizeof(BitmapIndexScanPlanState));
+  BitmapIndexScanPlanState *child_info = (BitmapIndexScanPlanState*) palloc(
+      sizeof(BitmapIndexScanPlanState));
 
   // Copy scan keys
   child_info->biss_NumScanKeys = biss_plan_state->biss_NumScanKeys;
@@ -496,7 +509,8 @@ DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
                                           biss_relation_desc->rd_att);
 
   // Copy underlying biss scan node
-  child_info->biss_plan = (BitmapIndexScan *) copyObject(biss_plan_state->ss.ps.plan);
+  child_info->biss_plan = (BitmapIndexScan *) copyObject(
+      biss_plan_state->ss.ps.plan);
 
   // Add child
   outerAbstractPlanState(info) = child_info;
@@ -506,12 +520,47 @@ DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
 
 MaterialPlanState *
 DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
-  MaterialPlanState *info = (MaterialPlanState*) palloc(sizeof(MaterialPlanState));
+  MaterialPlanState *info = (MaterialPlanState*) palloc(
+      sizeof(MaterialPlanState));
   info->type = material_plan_state->ss.ps.type;
 
   PlanState *outer_plan_state = outerPlanState(material_plan_state);
-  AbstractPlanState *child_plan_state = PreparePlanState(nullptr, outer_plan_state, true);
+  AbstractPlanState *child_plan_state = PreparePlanState(nullptr,
+                                                         outer_plan_state,
+                                                         true);
   outerAbstractPlanState(info) = child_plan_state;
+
+  return info;
+}
+
+AggPlanState*
+DMLUtils::PrepareAggPlanState(AggState* agg_plan_state) {
+  AggPlanState *info = (AggPlanState*) palloc(sizeof(AggPlanState));
+  info->type = agg_plan_state->ss.ps.type;
+
+  // Deep copy the plan
+  info->agg_plan = (const Agg*) copyObject(agg_plan_state->ss.ps.plan);
+
+  info->numphases = agg_plan_state->numphases;
+
+  /* Target list and qual */
+  info->ps_targetlist = CopyExprStateList(agg_plan_state->ss.ps.targetlist);
+  info->ps_qual = CopyExprStateList(agg_plan_state->ss.ps.qual);
+
+  /* Peraggs */
+  info->numaggs = agg_plan_state->numaggs;
+
+  info->peragg = (AggStatePerAgg) palloc(
+      sizeof(struct AggStatePerAggData) * info->numaggs);
+  for (int i = 0; i < info->numaggs; i++) {
+    info->peragg[i] = agg_plan_state->peragg[i];  // Shallow copy
+    info->peragg[i].aggrefstate = (AggrefExprState*) CopyExprState(
+        (ExprState*) (agg_plan_state->peragg[i].aggrefstate));
+  }
+
+  /* result tuple desc */
+  info->result_tupleDescriptor = CreateTupleDescCopy(
+      agg_plan_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
   return info;
 }
@@ -529,21 +578,23 @@ DMLUtils::peloton_prepare_data(PlanState *planstate) {
 }
 
 PelotonProjectionInfo *
-DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
-  PelotonProjectionInfo *info = (PelotonProjectionInfo*) palloc(sizeof(PelotonProjectionInfo));
+DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count) {
+  PelotonProjectionInfo *info = (PelotonProjectionInfo*) palloc(
+      sizeof(PelotonProjectionInfo));
 
   info->expr_states = NIL;
   info->expr_col_ids = NIL;
 
   // (A) Transform non-trivial target list
   ListCell *tl;
-  foreach (tl, pg_pi->pi_targetlist) {
-    GenericExprState *gstate = (GenericExprState *)lfirst(tl);
-    TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
+  foreach (tl, pg_pi->pi_targetlist)
+  {
+    GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+    TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
     AttrNumber resind = tle->resno - 1;
 
-    if (!(resind < column_count && AttributeNumberIsValid(tle->resno) &&
-        AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
+    if (!(resind < column_count && AttributeNumberIsValid(tle->resno)
+        && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
       LOG_TRACE("Invalid / Junk attribute. Skipped.");
       continue;  // skip junk attributes
     }
@@ -567,13 +618,11 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
     int *varNumbers = pg_pi->pi_varNumbers;
 
     // Sequential direct map
-    if (pg_pi->pi_directMap)
-    {
+    if (pg_pi->pi_directMap) {
       /* especially simple case where vars go to output in order */
       for (int i = 0; i < numSimpleVars && i < column_count; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                : 0);
+        oid_t tuple_idx = (
+            varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1 : 0);
         int varNumber = varNumbers[i] - 1;
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(i);
@@ -592,9 +641,8 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
       int *varOutputCols = pg_pi->pi_varOutputCols;
 
       for (int i = 0; i < numSimpleVars; i++) {
-        oid_t tuple_idx =
-            (varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1
-                : 0);
+        oid_t tuple_idx = (
+            varSlotOffsets[i] == offsetof(ExprContext, ecxt_innertuple) ? 1 : 0);
         int varNumber = varNumbers[i] - 1;
         int varOutputCol = varOutputCols[i] - 1;
         oid_t in_col_id = static_cast<oid_t>(varNumber);
@@ -613,65 +661,97 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count){
   return info;
 }
 
-ExprState *CopyExprState(ExprState *expr_state){
+List* CopyExprStateList(List* fromlist) {
+  List *copylist = NIL;
+  ListCell *item;
+
+  foreach(item, fromlist)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(item);
+    auto copy_expr_state = CopyExprState(expr_state);
+    copylist = lappend(copylist, copy_expr_state);
+  }
+  return copylist;
+}
+
+ExprState *CopyExprState(ExprState *expr_state) {
 
   ExprState *expr_state_copy = nullptr;
 
+  // We do a shallow copy first,
+  // and then deep copy things we need.
   // Copy children as well
-  switch(nodeTag(expr_state)){
-    case T_BoolExprState:
-    {
+  switch (nodeTag(expr_state)) {
+    case T_BoolExprState: {
       expr_state_copy = (ExprState *) makeNode(BoolExprState);
       BoolExprState *bool_expr_state_copy = (BoolExprState *) expr_state_copy;
-      BoolExprState *bool_expr_state =  (BoolExprState *) expr_state;
-      List       *items = bool_expr_state->args;
-      ListCell   *item;
+      BoolExprState *bool_expr_state = (BoolExprState *) expr_state;
+      *bool_expr_state_copy = *bool_expr_state;  // Shallow copy;
+
+      List *items = bool_expr_state->args;
+      ListCell *item;
 
       bool_expr_state_copy->args = NIL;
-      foreach(item, items) {
-        ExprState  *expr_state = (ExprState *) lfirst(item);
+      foreach(item, items)
+      {
+        ExprState *expr_state = (ExprState *) lfirst(item);
         auto child_expr_state = CopyExprState(expr_state);
         bool_expr_state_copy->args = lappend(bool_expr_state_copy->args,
                                              child_expr_state);
       }
     }
-    break;
+      break;
 
-    case T_FuncExprState:
-    {
+    case T_FuncExprState: {
       expr_state_copy = (ExprState *) makeNode(FuncExprState);
       FuncExprState *func_expr_state_copy = (FuncExprState *) expr_state_copy;
-      FuncExprState *func_expr_state =  (FuncExprState *) expr_state;
-      List       *items = func_expr_state->args;
-      ListCell   *item;
+      FuncExprState *func_expr_state = (FuncExprState *) expr_state;
+      *func_expr_state_copy = *func_expr_state;
+
+      List *items = func_expr_state->args;
+      ListCell *item;
 
       func_expr_state_copy->args = NIL;
-      foreach(item, items) {
-        ExprState  *expr_state = (ExprState *) lfirst(item);
+      foreach(item, items)
+      {
+        ExprState *expr_state = (ExprState *) lfirst(item);
         auto child_expr_state = CopyExprState(expr_state);
         func_expr_state_copy->args = lappend(func_expr_state_copy->args,
                                              child_expr_state);
       }
     }
-    break;
+      break;
 
-    case T_GenericExprState:
-    {
+    case T_GenericExprState: {
       expr_state_copy = (ExprState *) makeNode(GenericExprState);
-      GenericExprState *generic_expr_state_copy = (GenericExprState *) expr_state_copy;
-      GenericExprState *generic_expr_state =  (GenericExprState *) expr_state;
+      GenericExprState *generic_expr_state_copy =
+          (GenericExprState *) expr_state_copy;
+      GenericExprState *generic_expr_state = (GenericExprState *) expr_state;
+      *generic_expr_state_copy = *generic_expr_state;
 
-      ExprState  *expr_state = generic_expr_state->arg;
+      ExprState *expr_state = generic_expr_state->arg;
       auto child_expr_state = CopyExprState(expr_state);
       generic_expr_state_copy->arg = child_expr_state;
     }
-    break;
+      break;
 
-    default:
-    {
-      expr_state_copy = (ExprState *) makeNode(ExprState);
+    case T_AggrefExprState: {
+      expr_state_copy = (ExprState *) makeNode(AggrefExprState);
+      AggrefExprState *aggref_expr_state_copy =
+          (AggrefExprState*) expr_state_copy;
+      AggrefExprState *aggref_expr_state = (AggrefExprState*) expr_state;
+      *aggref_expr_state_copy = *aggref_expr_state;
+
+      aggref_expr_state_copy->args = CopyExprStateList(aggref_expr_state->args);
     }
-    break;
+      break;
+
+    default: {
+      LOG_ERROR("Seems to be unknown ExprState tag : %u", nodeTag(expr_state));
+      expr_state_copy = (ExprState *) makeNode(ExprState);
+      *expr_state_copy = *expr_state;
+    }
+      break;
   }
 
   expr_state_copy->type = expr_state->type;
@@ -681,7 +761,7 @@ ExprState *CopyExprState(ExprState *expr_state){
 }
 
 ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
-                         TupleDesc relation_tup_desc){
+                         TupleDesc relation_tup_desc) {
 
   ScanKeyData *scan_key_copy = nullptr;
   scan_key_copy = (ScanKeyData *) palloc(sizeof(ScanKeyData) * num_keys);
@@ -710,3 +790,4 @@ ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
 
 }  // namespace bridge
 }  // namespace peloton
+
