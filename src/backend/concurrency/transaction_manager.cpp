@@ -21,6 +21,8 @@
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
+#include "backend/logging/logmanager.h"
+#include "backend/logging/records/transactionrecord.h"
 
 namespace peloton {
 namespace concurrency {
@@ -76,7 +78,14 @@ Transaction *TransactionManager::BeginTransaction() {
     }
   }
 
-  // XXX LOG :: record begin(next txn) entry
+ // XXX LOG :: record begin(next txn) entry
+ // Logging 
+ {
+    auto& logManager = logging::LogManager::GetInstance();
+    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
+    logger->Insert(record);
+ }
 
   return next_txn;
 }
@@ -104,6 +113,15 @@ void TransactionManager::EndTransaction(Transaction *txn,
     // erase entry in transaction table
     txn_table.erase(txn->txn_id);
   }
+
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
+    logger->Insert(record);
+  }
+
 }
 
 // Store an entry in PG Transaction table
@@ -193,6 +211,13 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   }
 
   // XXX LOG :: record commit entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+    logger->Insert(record);
+  }
 }
 
 void TransactionManager::CommitPendingTransactions(
@@ -281,6 +306,14 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 
   // XXX LOG : group commit entry
   // we already record commit entry in CommitModifications, isn't it?
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_GROUPCOMMIT, txn->txn_id);
+    logger->Insert(record);
+  }
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -306,12 +339,20 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
       tile_group->AbortDeletedTuple(tuple_slot);
   }
 
+  // XXX LOG :: record abort entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
+    logger->Insert(record);
+  }
+
   // drop a reference
   txn->DecrementRefCount();
 
   EndTransaction(txn, false);
 
-  // XXX LOG :: record abort entry
 }
 
 }  // End concurrency namespace
