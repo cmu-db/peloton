@@ -45,7 +45,6 @@ public:
     db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     assert(db_oid);
     assert(table_oid);
-    Serialize();
   }
 
   ~TupleRecord(){

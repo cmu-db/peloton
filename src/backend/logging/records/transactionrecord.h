@@ -36,7 +36,8 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const TransactionRecord& record);
 
 private:
-  TransactionRecord(){}
+
+  txn_id_t txn_id;
 
 };
 
