@@ -15,9 +15,11 @@
 #include <string>
 #include <vector>
 
-#include "backend/planner/projection_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/projection_plan.h"
+
 
 #include "backend/expression/expression.h"
 #include "backend/expression/expression_util.h"

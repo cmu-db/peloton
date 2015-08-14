@@ -12,9 +12,11 @@
 
 #include <vector>
 
-#include "backend/planner/append_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/append_plan.h"
+
 
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
