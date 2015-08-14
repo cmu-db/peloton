@@ -14,7 +14,7 @@
 
 #include "backend/common/types.h"
 
-extern mqd_t MyBackendQueue;
+extern thread_local mqd_t MyBackendQueue;
 
 namespace peloton {
 

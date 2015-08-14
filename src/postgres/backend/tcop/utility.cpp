@@ -935,9 +935,6 @@ peloton_ProcessUtility(Node *parsetree,
             char *completionTag)
 {
 
-  // TODO: Peloton Changes
-  peloton_send_ddl(parsetree);
-
 }
 
 /*
