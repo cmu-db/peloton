@@ -47,7 +47,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
   LOG_TRACE("Process Utility");
 
-  static thread_local std::vector<Node *> parsetree_stack;
+  static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
