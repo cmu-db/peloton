@@ -1,18 +1,4 @@
-/*-------------------------------------------------------------------------
- *
- * logrecord.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logrecord.cpp
- *
- *-------------------------------------------------------------------------
- */
-
-#include "backend/common/logger.h"
-#include "backend/logging/logrecord.h"
-#include "backend/storage/tuple.h"
+#include "backend/logging/records/transactionrecord.h"
 
 #include <iostream>
 
@@ -21,57 +7,25 @@ namespace logging {
 
 /**
  * @brief Serialize given data
- * @param data 
  * @return true if we serialize data otherwise false
  */
-bool LogRecord::SerializeLogRecord(){
-  CopySerializeOutput output;
+bool TransactionRecord::Serialize(){
   bool status = true;
 
-  // Serialize the header of LogRecord
-  log_record_header.SerializeLogRecordHeader(output);
+  CopySerializeOutput output;
 
-  switch(log_record_header.GetType()){
-
-    case LOGRECORD_TYPE_TUPLE_INSERT:
-    case LOGRECORD_TYPE_TUPLE_UPDATE:{
-     storage::Tuple* tuple = (storage::Tuple*)data;
-     tuple->SerializeTo(output);
-    }break;
-
-    case LOGRECORD_TYPE_TUPLE_DELETE:{
-    }break;
-
-    default:{
-      LOG_WARN("Unsupported LOG TYPE\n");
-      status = false;
-    }break;
-  }
-
-  serialized_log_record_size = output.Size();
-  serialized_log_record = (char*)malloc(serialized_log_record_size);
-  memcpy( serialized_log_record, output.Data(), serialized_log_record_size);
+  output.WriteEnumInSingleByte(log_record_type);
+  size_t start = output.Position();
+  // then reserve 4 bytes for the header size
+  output.WriteInt(0);
+  output.WriteLong(txn_id);
+  output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
+  
+  serialized_data_size = output.Size();
+  serialized_data = (char*)malloc(serialized_data_size);
+  memcpy( serialized_data, output.Data(), serialized_data_size);
 
   return status;
-}
-
-LogRecordHeader LogRecord::GetHeader() const{
-  return log_record_header;
-}
-
-char* LogRecord::GetSerializedLogRecord() const{
-  return serialized_log_record;
-}
-
-size_t LogRecord::GetSerializedLogRecordSize() const{
-  return serialized_log_record_size;
-}
-
-std::ostream& operator<<(std::ostream& os, const LogRecord& record) {
-
-  os << record.GetHeader();
-  return os;
-
 }
 
 }  // namespace logging
