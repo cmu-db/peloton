@@ -69,7 +69,7 @@
 
 extern bool PelotonDualMode;
 
-static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
+static void __attribute__((unused)) peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 CmdType operation,
                                 bool sendTuples,
                                 long numberTuples,
@@ -351,30 +351,13 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  // PG Query
-	  if(queryDesc->plannedstmt->pelotonQuery == false)
-	  {
-	    ExecutePlan(estate,
-	                queryDesc->planstate,
-	                operation,
-	                sendTuples,
-	                count,
-	                direction,
-	                dest);
-	  }
-	  // Peloton Query
-	  else
-	  {
-	    peloton_ExecutePlan(estate,
-	                        queryDesc->planstate,
-	                        operation,
-	                        sendTuples,
-	                        count,
-	                        direction,
-	                        dest,
-	                        queryDesc->tupDesc);
-	  }
-
+    ExecutePlan(estate,
+                queryDesc->planstate,
+                operation,
+                sendTuples,
+                count,
+                direction,
+                dest);
 	}
 
 	/*
@@ -1608,6 +1591,8 @@ ExecutePlan(EState *estate,
 		 */
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
+
+		print_slot(slot);
 
 		/*
 		 * check our tuple count.. if we've processed the proper number then
