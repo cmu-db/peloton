@@ -68,6 +68,11 @@
  */
 #include "postgres.h"
 
+// TODO: Peloton Changes
+#include <thread>
+
+#include "backend/common/stack_trace.h"
+
 #include <signal.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -181,6 +186,11 @@ pq_init(void)
 	PqCommReadingMsg = false;
 	DoingCopyOut = false;
 	on_proc_exit(socket_close, 0);
+
+	// TODO: Peloton Changes
+	auto thread_id =  std::hash<std::thread::id>()(std::this_thread::get_id()) % 100;
+  elog(LOG, "PQ INIT :: TID :: %lu MyProcPort : %p FILE DESC :: %d ", thread_id,
+       MyProcPort, MyProcPort->sock);
 
 	/*
 	 * In backends (as soon as forked) we operate the underlying socket in

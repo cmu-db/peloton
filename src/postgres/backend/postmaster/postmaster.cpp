@@ -1627,8 +1627,9 @@ ServerLoop(void)
              * We no longer need the open socket or port structure
              * in this process
              */
-            StreamClose(port->sock);
-            ConnFree(port);
+            // TODO: Peloton Changes
+            //StreamClose(port->sock);
+            //ConnFree(port);
           }
         }
       }
@@ -3835,6 +3836,23 @@ processCancelRequest(Port *port, void *pkt)
     SignalUnconnectedWorkers(signal);
   }
 
+  static void BackendTask(Backend  *bn, Port *port) {
+    free(bn);
+
+    /* Detangle from postmaster */
+    InitPostmasterChild();
+
+    // TODO: Peloton Changes
+    /* Close the postmaster's sockets */
+    //ClosePostmasterPorts(false);
+
+    /* Perform additional initialization and collect startup packet */
+    BackendInitialize(port);
+
+    /* And run the backend */
+    BackendRun(port);
+  }
+
   /*
    * BackendStartup -- start backend process
    *
@@ -3845,6 +3863,8 @@ processCancelRequest(Port *port, void *pkt)
   static int
   BackendStartup(Port *port)
   {
+    elog(LOG, "Backend :: %d", getpid());
+
     Backend    *bn;				/* for backend cleanup */
     pid_t		pid;
 
@@ -3888,23 +3908,15 @@ processCancelRequest(Port *port, void *pkt)
 #ifdef EXEC_BACKEND
     pid = backend_forkexec(port);
 #else							/* !EXEC_BACKEND */
-    pid = fork_process();
-    if (pid == 0)				/* child */
-    {
-      free(bn);
 
-      /* Detangle from postmaster */
-      InitPostmasterChild();
+    elog(LOG, "Starting backend :: %d", getpid());
 
-      /* Close the postmaster's sockets */
-      ClosePostmasterPorts(false);
+    // TODO: Peloton Changes
+    //pid = fork_process();
+    pid = 0;
+    std::thread backend(BackendTask, bn, port);
+    backend.detach();
 
-      /* Perform additional initialization and collect startup packet */
-      BackendInitialize(port);
-
-      /* And run the backend */
-      BackendRun(port);
-    }
 #endif   /* EXEC_BACKEND */
 
     if (pid < 0)
@@ -4016,6 +4028,10 @@ processCancelRequest(Port *port, void *pkt)
     /* set these to empty in case they are needed before we set them up */
     port->remote_host = "";
     port->remote_port = "";
+
+    auto thread_id =  std::hash<std::thread::id>()(std::this_thread::get_id()) % 100;
+    elog(LOG, "BACKEND :: TID :: %lu MyProcPort : %p FILE DESC :: %d ", thread_id,
+         MyProcPort, MyProcPort->sock);
 
     /*
      * Initialize libpq and enable reporting of ereport errors to the client.
@@ -4227,7 +4243,7 @@ processCancelRequest(Port *port, void *pkt)
      */
     MemoryContextSwitchTo(TopMemoryContext);
 
-    PostgresMain(ac, av, port->database_name, port->user_name);
+    PostgresMain(ac, av, "postgres", "postgres");
   }
 
 

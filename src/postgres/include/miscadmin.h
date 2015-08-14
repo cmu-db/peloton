@@ -142,31 +142,31 @@ do { \
 /*
  * from utils/init/globals.c
  */
-extern pid_t PostmasterPid;
-extern bool IsPostmasterEnvironment;
-extern PGDLLIMPORT bool IsUnderPostmaster;
-extern bool IsBackgroundWorker;
-extern PGDLLIMPORT bool IsBinaryUpgrade;
+extern thread_local pid_t PostmasterPid;
+extern thread_local bool IsPostmasterEnvironment;
+extern thread_local PGDLLIMPORT bool IsUnderPostmaster;
+extern thread_local bool IsBackgroundWorker;
+extern thread_local PGDLLIMPORT bool IsBinaryUpgrade;
 
-extern bool ExitOnAnyError;
+extern thread_local bool ExitOnAnyError;
 
-extern PGDLLIMPORT char *DataDir;
+extern thread_local PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
 extern int	MaxConnections;
 extern int	max_worker_processes;
 
-extern PGDLLIMPORT int MyProcPid;
-extern PGDLLIMPORT pg_time_t MyStartTime;
-extern PGDLLIMPORT struct Port *MyProcPort;
-extern PGDLLIMPORT struct Latch *MyLatch;
-extern long MyCancelKey;
-extern int	MyPMChildSlot;
+extern thread_local PGDLLIMPORT int MyProcPid;
+extern thread_local PGDLLIMPORT pg_time_t MyStartTime;
+extern thread_local PGDLLIMPORT struct Port *MyProcPort;
+extern thread_local PGDLLIMPORT struct Latch *MyLatch;
+extern thread_local long MyCancelKey;
+extern thread_local int	MyPMChildSlot;
 
-extern char OutputFileName[];
-extern PGDLLIMPORT char my_exec_path[];
-extern char pkglib_path[];
+extern thread_local char OutputFileName[];
+extern thread_local PGDLLIMPORT char my_exec_path[];
+extern thread_local char pkglib_path[];
 
 #ifdef EXEC_BACKEND
 extern char postgres_exec_path[];
@@ -177,9 +177,9 @@ extern char postgres_exec_path[];
  *
  * extern BackendId    MyBackendId;
  */
-extern PGDLLIMPORT thread_local Oid MyDatabaseId;
+extern thread_local PGDLLIMPORT Oid MyDatabaseId;
 
-extern PGDLLIMPORT Oid MyDatabaseTableSpace;
+extern thread_local PGDLLIMPORT Oid MyDatabaseTableSpace;
 
 /*
  * Date/Time Configuration
@@ -288,7 +288,7 @@ extern int	trace_recovery(int trace_level);
 #define SECURITY_RESTRICTED_OPERATION	0x0002
 #define SECURITY_ROW_LEVEL_DISABLED		0x0004
 
-extern char *DatabasePath;
+extern thread_local char *DatabasePath;
 
 /* now in utils/init/miscinit.c */
 extern void InitPostmasterChild(void);

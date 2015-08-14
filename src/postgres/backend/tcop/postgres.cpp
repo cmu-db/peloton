@@ -80,6 +80,7 @@
 
 // TODO: Peloton Changes
 #include "backend/common/message_queue.h"
+#include "backend/common/stack_trace.h"
 
 /* ----------------
  *		global variables
@@ -3109,6 +3110,9 @@ check_stack_depth(void)
    */
   if (stack_depth < 0)
     stack_depth = -stack_depth;
+
+  // TODO: Peloton Changes
+  return;
 
   /*
    * Trouble?
