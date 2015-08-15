@@ -127,7 +127,9 @@
 #include "storage/spin.h"
 #endif
 
+// TODO: Peloton Changes
 #include "postmaster/peloton.h"
+#include "utils/resowner.h"
 
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
@@ -3840,6 +3842,10 @@ processCancelRequest(Port *port, void *pkt)
   static void BackendTask(Backend  *bn, Port *port) {
     free(bn);
 
+    // TODO: Peloton Changes
+    MemoryContextInit();
+    MemoryContextSwitchTo(TopMemoryContext);
+
     /* Detangle from postmaster */
     InitPostmasterChild();
 
@@ -4031,8 +4037,8 @@ processCancelRequest(Port *port, void *pkt)
     port->remote_port = "";
 
     auto thread_id =  std::hash<std::thread::id>()(std::this_thread::get_id()) % 100;
-    elog(LOG, "BACKEND :: TID :: %lu MyProcPort : %p FILE DESC :: %d ", thread_id,
-         MyProcPort, MyProcPort->sock);
+    elog(DEBUG1, "Initializing backend :: TID :: %lu MyProcPort : %p ",
+         thread_id, MyProcPort);
 
     /*
      * Initialize libpq and enable reporting of ereport errors to the client.
@@ -5236,8 +5242,10 @@ processCancelRequest(Port *port, void *pkt)
 
       /* Release postmaster's working memory context */
       MemoryContextSwitchTo(TopMemoryContext);
-      MemoryContextDelete(PostmasterContext);
-      PostmasterContext = NULL;
+
+      // TODO: Peloton Changes
+      //MemoryContextDelete(PostmasterContext);
+      //PostmasterContext = NULL;
 
       AuxiliaryProcessMain(ac, av);
       ExitPostmaster(0);

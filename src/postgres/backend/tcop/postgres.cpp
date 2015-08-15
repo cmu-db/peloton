@@ -3708,6 +3708,9 @@ PostgresMain(int argc, char *argv[],
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
+  elog(DEBUG1, "PostgresMain :: TopMemoryContext : %p CurrentMemoryContext : %p",
+       TopMemoryContext, CurrentMemoryContext);
+
   /*
    * General initialization.
    *
@@ -3718,8 +3721,8 @@ PostgresMain(int argc, char *argv[],
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
   // TODO :: Peloton Changes
-  auto queue_name = peloton::get_mq_name(MyBackendId);
-  MyBackendQueue = peloton::create_mq(queue_name);
+  //auto queue_name = peloton::get_mq_name(MyBackendId);
+  //MyBackendQueue = peloton::create_mq(queue_name);
 
   if(IsPostmasterEnvironment == true){
     StartTransactionCommand();
@@ -3736,8 +3739,9 @@ PostgresMain(int argc, char *argv[],
    */
   if (PostmasterContext)
   {
-    MemoryContextDelete(PostmasterContext);
-    PostmasterContext = NULL;
+    // TODO: Peloton Changes
+    //MemoryContextDelete(PostmasterContext);
+    //PostmasterContext = NULL;
   }
 
   SetProcessingMode(NormalProcessing);
