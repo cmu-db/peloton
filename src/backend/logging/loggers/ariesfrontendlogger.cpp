@@ -311,6 +311,31 @@ storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
   return tile_group;
 }
 
+void AriesFrontendLogger::AddTuples(concurrency::Transaction* destination,
+                                    concurrency::Transaction* source){
+  auto inserted_tuples = source->GetInsertedTuples();
+
+  for (auto entry : inserted_tuples) {
+    storage::TileGroup *tile_group = entry.first;
+    auto tile_group_id = tile_group->GetTileGroupId();
+
+    for (auto tuple_slot : entry.second){
+
+      destination->RecordInsert( ItemPointer(tile_group_id, tuple_slot));
+    }
+  }
+
+  auto deleted_tuples = source->GetDeletedTuples();
+  for (auto entry : deleted_tuples) {
+    storage::TileGroup *tile_group = entry.first;
+    auto tile_group_id = tile_group->GetTileGroupId();
+
+    for (auto tuple_slot : entry.second)
+      destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
+  }
+
+}
+
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
@@ -431,26 +456,7 @@ void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction
   auto txn = txn_table.at(txn_id);
 
   // Copy inserted/deleted tuples to recovery transaction
-  auto inserted_tuples = txn->GetInsertedTuples();
-  std::cout << "# tuples : " << inserted_tuples.size() << std::endl;
-  for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    for (auto tuple_slot : entry.second){
-      
-      recovery_txn->RecordInsert( ItemPointer(tile_group_id, tuple_slot));
-    }
-  }
-
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    for (auto tuple_slot : entry.second)
-      recovery_txn->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
-  }
+  AddTuples(recovery_txn, txn);
 
   // Clear inserted/deleted tuples from txn
   txn->ResetStates();
