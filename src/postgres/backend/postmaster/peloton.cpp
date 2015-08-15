@@ -268,8 +268,8 @@ PelotonMain(int argc, char *argv[]) {
    * such as the username isn't lost either; see ProcessStartupPacket().
    */
   if (PostmasterContext) {
-    MemoryContextDelete(PostmasterContext);
-    PostmasterContext = NULL;
+    //MemoryContextDelete(PostmasterContext);
+    //PostmasterContext = NULL;
   }
 
   SetProcessingMode(NormalProcessing);

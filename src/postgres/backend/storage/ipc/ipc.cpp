@@ -145,7 +145,8 @@ proc_exit(int code)
 	elog(DEBUG3, "exit(%d)", code);
 
   // TODO: Peloton Changes
-	elog(LOG, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d \n", getpid(), MyProcPid, PostmasterPid);
+	elog(DEBUG2, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d \n", getpid(),
+	     MyProcPid, PostmasterPid);
 
   // Exit the process only if not postmaster
 	if(PostmasterPid != 0)
