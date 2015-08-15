@@ -172,13 +172,10 @@ void AriesFrontendLogger::Recovery() {
       }
     }
 
-    // Read txn table and undo unfinished txn here
-    auto recovery_inserted_tuples = recovery_txn->GetInsertedTuples();
-    std::cout << "BF commit recovery insertuples : " << recovery_inserted_tuples.size() << std::endl;
-
     txn_manager.CommitTransaction(recovery_txn);
 
-    //copy remained txn from txn table and abort it
+    // Abort remained txn in txn_table
+    AbortRemainedTxnInRecoveryTable();
   }
 
 //After finishing recovery, set the next oid with maximum oid
@@ -311,8 +308,8 @@ storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
   return tile_group;
 }
 
-void AriesFrontendLogger::AddTuples(concurrency::Transaction* destination,
-                                    concurrency::Transaction* source){
+void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
+                                     concurrency::Transaction* source){
   auto inserted_tuples = source->GetInsertedTuples();
 
   for (auto entry : inserted_tuples) {
@@ -333,8 +330,42 @@ void AriesFrontendLogger::AddTuples(concurrency::Transaction* destination,
     for (auto tuple_slot : entry.second)
       destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
   }
+  // Clear inserted/deleted tuples from txn
+  source->ResetStates();
 
 }
+
+void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
+
+  auto inserted_tuples = txn->GetInsertedTuples();
+  for (auto entry : inserted_tuples) {
+    storage::TileGroup *tile_group = entry.first;
+
+    for (auto tuple_slot : entry.second)
+      tile_group->AbortInsertedTuple(tuple_slot);
+  }
+
+  // (B) rollback deletes
+  auto deleted_tuples = txn->GetDeletedTuples();
+  for (auto entry : txn->GetDeletedTuples()) {
+    storage::TileGroup *tile_group = entry.first;
+
+    for (auto tuple_slot : entry.second)
+      tile_group->AbortDeletedTuple(tuple_slot);
+  }
+
+  // Clear inserted/deleted tuples from txn
+  txn->ResetStates();
+}
+
+void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
+  for(auto  txn : txn_table){
+    auto curr_txn = txn.second;
+    AbortTuples(curr_txn);
+    txn_table.erase(curr_txn->GetTransactionId());
+  }
+}
+
 
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
@@ -456,48 +487,24 @@ void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction
   auto txn = txn_table.at(txn_id);
 
   // Copy inserted/deleted tuples to recovery transaction
-  AddTuples(recovery_txn, txn);
-
-  // Clear inserted/deleted tuples from txn
-  txn->ResetStates();
+  MoveTuples(recovery_txn, txn);
 
   LOG_INFO("Commit txd id %d object in table",(int)txn_id);
 }
 
 void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
-// move these guys to recovery txn and do aborttransaction
 
   // read transaction information from the log file
-   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
-   ReadTxnRecord(txnRecord);
-   
-   auto txn_id = txnRecord.GetTxnId();
+  TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
+  ReadTxnRecord(txnRecord);
 
-   // get the txn
-   auto txn = txn_table.at(txn_id);
+  auto txn_id = txnRecord.GetTxnId();
 
-   // remove inserted/deleted tuples from txn
-   auto inserted_tuples = txn->GetInsertedTuples();
-   std::cout << "AB insertuples : " << inserted_tuples.size() << std::endl;
-   // FIXME :: Before clean it, we need to make occupied but never commited slot free
+  // get the txn
+  auto txn = txn_table.at(txn_id);
+  //TODO :: Rename, from tuples to status ? or txn? whatever..
+  AbortTuples(txn);
 
-
-/* example 
-  auto inserted_tuples = txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-
-    for (auto tuple_slot : entry.second)
-      tile_group->AbortInsertedTuple(tuple_slot);
-  }
-  */
-   inserted_tuples.clear();
-
-   inserted_tuples = txn->GetInsertedTuples();
-   std::cout << "AB insertuples : " << inserted_tuples.size() << std::endl;
-
-   auto deleted_tuples = txn->GetDeletedTuples();
-   deleted_tuples.clear();
   LOG_INFO("Abort txd id %d object in table",(int)txn_id);
 }
 
