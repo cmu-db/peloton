@@ -3846,6 +3846,8 @@ processCancelRequest(Port *port, void *pkt)
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 
+    InitializeGUCOptions();
+
     /* Detangle from postmaster */
     InitPostmasterChild();
 
