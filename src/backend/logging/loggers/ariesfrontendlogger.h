@@ -68,7 +68,12 @@ class AriesFrontendLogger : public FrontendLogger{
 
     storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
-    static void AddTuples(concurrency::Transaction* destination, concurrency::Transaction* source);
+    void MoveTuples(concurrency::Transaction* destination,
+                    concurrency::Transaction* source);
+
+    void AbortTuples(concurrency::Transaction* txn);
+
+    void AbortRemainedTxnInRecoveryTable();
 
     void InsertTuple(concurrency::Transaction* recovery_txn);
     void DeleteTuple(concurrency::Transaction* recovery_txn);

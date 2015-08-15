@@ -66,16 +66,6 @@ class FrontendLogger : public Logger{
      */
     virtual void Recovery(void) = 0;
 
-    /**
-     * Redo
-     */
-    //TODO::virtual void Redo(void) = 0;
-
-    /**
-     * Undo
-     */
-    //TODO::virtual void Undo(void) = 0;
-
   protected:
 
     std::vector<BackendLogger*> backend_loggers;

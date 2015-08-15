@@ -55,6 +55,7 @@ class LogManager{
 
     LogManager(){};
 
+    //TODO :: It might be useful if I return default? current? selective frontend logger? for a default one ?
     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
     // frontend_logger is only one for each logging(stdoud, aries, peloton)
