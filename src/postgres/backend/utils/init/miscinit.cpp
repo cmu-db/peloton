@@ -524,8 +524,6 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 							rolename)));
 	}
 
-	elog(LOG, "Set Session Auth");
-
 	/* Record username and superuser status as GUC settings too */
 	SetConfigOption("session_authorization", rolename,
 					PGC_BACKEND, PGC_S_OVERRIDE);

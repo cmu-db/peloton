@@ -2606,7 +2606,6 @@ CleanupTransaction(void)
 	AtCleanup_Portals();		/* now safe to release portal memory */
 	AtEOXact_Snapshot(false);	/* and release the transaction's snapshots */
 
-	// TODO: Peloton Changes
 	CurrentResourceOwner = NULL;	/* and resource owner */
 	if (TopTransactionResourceOwner)
 		ResourceOwnerDelete(TopTransactionResourceOwner);
