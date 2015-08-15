@@ -3674,10 +3674,10 @@ static const char *const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
+thread_local static struct config_generic **guc_variables;
 
 /* Current number of variables contained in the vector */
-static int	num_guc_variables;
+thread_local static int	num_guc_variables;
 
 /*
  * Lookup of variables for pg_file_settings view.
