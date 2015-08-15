@@ -14,6 +14,7 @@
 
 #include "backend/logging/frontendlogger.h"
 #include "backend/logging/records/tuplerecord.h"
+#include "backend/logging/records/transactionrecord.h"
 #include "backend/concurrency/transaction.h"
 
 #include <fcntl.h>
@@ -57,6 +58,8 @@ class AriesFrontendLogger : public FrontendLogger{
 
     size_t GetLogRecordCount() const;
 
+    void ReadTxnRecord(TransactionRecord &txnRecord);
+
     bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
 
     storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema);
@@ -65,13 +68,16 @@ class AriesFrontendLogger : public FrontendLogger{
 
     storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
-    void RedoInsert(concurrency::Transaction* txn);
-    void RedoDelete(concurrency::Transaction* txn);
-    void RedoUpdate(concurrency::Transaction* txn);
+    void InsertTuple(concurrency::Transaction* recovery_txn);
+    void DeleteTuple(concurrency::Transaction* recovery_txn);
+    void UpdateTuple(concurrency::Transaction* recovery_txn);
 
-    void InsertTuple(concurrency::Transaction* txn);
-    void DeleteTuple(concurrency::Transaction* txn);
-    void UpdateTuple(concurrency::Transaction* txn);
+    // TODO :: Rename
+    void AddTxnToRecoveryTable(void);
+    void RemoveTxnFromRecoveryTable(void);
+
+    void CommitTuplesFromRecoveryTable(concurrency::Transaction* recovery_txn);
+    void AbortTuplesFromRecoveryTable(void);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
@@ -92,6 +98,11 @@ class AriesFrontendLogger : public FrontendLogger{
     // only by group members and others.
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
+    // Txn table
+    std::map<txn_id_t, concurrency::Transaction *> txn_table;
+
+    // Keep tracking max oid for setting next_oid in manager 
+    oid_t max_oid = INVALID_OID;
 };
 
 }  // namespace logging

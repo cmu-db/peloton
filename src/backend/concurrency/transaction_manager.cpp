@@ -79,7 +79,7 @@ Transaction *TransactionManager::BeginTransaction() {
   }
 
  // XXX LOG :: record begin(next txn) entry
- // Logging 
+ //Logging 
  {
     auto& logManager = logging::LogManager::GetInstance();
     auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
@@ -306,13 +306,6 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 
   // XXX LOG : group commit entry
   // we already record commit entry in CommitModifications, isn't it?
-  // Logging 
-  {
-    auto& logManager = logging::LogManager::GetInstance();
-    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_GROUPCOMMIT, txn->txn_id);
-    logger->Insert(record);
-  }
 
 }
 
