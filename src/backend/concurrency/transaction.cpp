@@ -61,6 +61,11 @@ Transaction::GetDeletedTuples() {
   return deleted_tuples;
 }
 
+void Transaction::ResetStates(void) {
+  inserted_tuples.clear();
+  deleted_tuples.clear();
+}
+
 void Transaction::IncrementRefCount() { ++ref_count; }
 
 void Transaction::DecrementRefCount() {
