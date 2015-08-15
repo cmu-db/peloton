@@ -28,5 +28,16 @@ bool TransactionRecord::Serialize(){
   return status;
 }
 
+/**
+ * @brief Deserialize LogRecordHeader
+ * @param input  
+ */
+void TransactionRecord::Deserialize(CopySerializeInput& input){
+  input.ReadInt();
+  txn_id = (txn_id_t)(input.ReadLong());
+}
+
+
+
 }  // namespace logging
 }  // namespace peloton

@@ -13,9 +13,8 @@ namespace logging {
 class TransactionRecord : public LogRecord{
 
 public:
-
   TransactionRecord( LogRecordType log_record_type,
-                     const txn_id_t txn_id)
+                     const txn_id_t txn_id = INVALID_TXN_ID)
   : LogRecord(log_record_type), txn_id(txn_id)
   {}
 
