@@ -167,18 +167,16 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
       // Make sure first column is unique in all cases
       tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(0, 0)));
 
-      // In case of random, make sure this column has duplicated values
-      tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(1, 1)));
     } else {
       // Make sure first column is unique in all cases
       tuple.SetValue(
           0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
-
-      // In case of random, make sure this column has duplicated values
-      tuple.SetValue(
-          1, ValueFactory::GetIntegerValue(PopulatedValue(
-                 random ? std::rand() % (num_rows / 2) : populate_value, 1)));
     }
+
+    // In case of random, make sure this column has duplicated values
+    tuple.SetValue(
+        1, ValueFactory::GetIntegerValue(PopulatedValue(
+               random ? std::rand() % (num_rows / 3) : populate_value, 1)));
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
                           random ? std::rand() : populate_value, 2)));
@@ -186,7 +184,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     // In case of random, make sure this column has duplicated values
     Value string_value =
         ValueFactory::GetStringValue(std::to_string(PopulatedValue(
-            random ? std::rand() % (num_rows / 2) : populate_value, 3)));
+            random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value);
 
     if (group_by) std::cout << "INSERT TUPLE :: " << tuple;

@@ -47,8 +47,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
 
   Plan *plan = plan_state->plan;
   // Ignore empty plans
-  if (plan == nullptr){
-    LOG_ERROR("Plan of PlanState is NULL. Tag of plan_state : %u \n", nodeTag(plan_state));
+  if (plan == nullptr) {
+    LOG_ERROR("Plan of PlanState is NULL. Tag of plan_state : %u \n",
+              nodeTag(plan_state));
     return nullptr;
   }
 
@@ -88,10 +89,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
           reinterpret_cast<const MergeJoinState *>(plan_state));
       break;
     case T_HashJoin:
-    // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
-    // need this
-    // case to operate AlterTable
-    // Also - Added special case in peloton_process_dml
+      // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
+      // need this
+      // case to operate AlterTable
+      // Also - Added special case in peloton_process_dml
     case T_NestLoop:
       plan_node = PlanTransformer::TransformNestLoop(
           reinterpret_cast<const NestLoopState *>(plan_state));
@@ -104,6 +105,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     case T_Agg:
       plan_node = PlanTransformer::TransformAgg(
           reinterpret_cast<const AggState*>(plan_state));
+      break;
+
+    case T_Sort:
+      plan_node = PlanTransformer::TransformSort(
+          reinterpret_cast<const SortState*>(plan_state));
           /* no break */
 
     default: {
