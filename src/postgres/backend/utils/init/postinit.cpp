@@ -72,7 +72,7 @@ static void StatementTimeoutHandler(void);
 static void LockTimeoutHandler(void);
 static bool ThereIsAtLeastOneRole(void);
 static void process_startup_options(Port *port, bool am_superuser);
-static void process_settings(Oid databaseid, Oid roleid);
+static void __attribute__((unused)) process_settings(Oid databaseid, Oid roleid);
 
 
 /*** InitPostgres support ***/
@@ -183,6 +183,8 @@ PerformAuthentication(Port *port)
 {
 	/* This should be set already, but let's make sure */
 	ClientAuthInProgress = true;	/* limit visibility of log messages */
+
+	elog(LOG, "PerformAuthentication :: pid : %d", getpid());
 
 	/*
 	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
@@ -959,7 +961,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		process_startup_options(MyProcPort, am_superuser);
 
 	/* Process pg_db_role_setting options */
-	process_settings(MyDatabaseId, GetSessionUserId());
+	//process_settings(MyDatabaseId, GetSessionUserId());
 
 	/* Apply PostAuthDelay as soon as we've read all options */
 	if (PostAuthDelay > 0)
