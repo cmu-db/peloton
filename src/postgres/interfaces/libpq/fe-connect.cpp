@@ -1634,6 +1634,8 @@ PQconnectPoll(PGconn *conn)
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
 
+	printf("Status :: %d", conn->status);
+
 	/* Get the new___ data */
 	switch (conn->status)
 	{
