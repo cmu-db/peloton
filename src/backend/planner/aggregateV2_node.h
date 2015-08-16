@@ -17,7 +17,6 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 
-
 namespace peloton {
 namespace planner {
 
@@ -34,12 +33,14 @@ class AggregateV2Node : public AbstractPlanNode {
                   const expression::AbstractExpression* predicate,
                   const std::vector<AggTerm>&& unique_agg_terms,
                   const std::vector<oid_t>&& groupby_col_ids,
-                  const catalog::Schema* output_schema)
+                  const catalog::Schema* output_schema,
+                  PelotonAggregateType aggregate_strategy = AGGREGATE_TYPE_HASH)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
-        output_schema_(output_schema){
+        output_schema_(output_schema),
+        aggregate_strategy_(aggregate_strategy) {
 
   }
 
@@ -60,20 +61,24 @@ class AggregateV2Node : public AbstractPlanNode {
   }
 
   const catalog::Schema* GetOutputSchema() const {
-    return output_schema_;
+    return output_schema_.get();
   }
 
-inline PlanNodeType GetPlanNodeType() const {
+  PelotonAggregateType GetAggregateStrategy() const {
+    return aggregate_strategy_;
+  }
+
+  inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
   }
 
-  ~AggregateV2Node(){
-    for(auto term : unique_agg_terms_){
+  ~AggregateV2Node() {
+    for (auto term : unique_agg_terms_) {
       delete term.second;
     }
   }
 
-   private:
+ private:
 
   /* For projection */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
@@ -88,7 +93,10 @@ inline PlanNodeType GetPlanNodeType() const {
   const std::vector<oid_t> groupby_col_ids_;
 
   /* Output schema */
-  const catalog::Schema* output_schema_;
+  std::unique_ptr<const catalog::Schema> output_schema_;
+
+  /* Aggregate Strategy */
+  const PelotonAggregateType aggregate_strategy_;
 
 };
 

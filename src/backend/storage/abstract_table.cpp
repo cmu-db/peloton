@@ -24,15 +24,17 @@ namespace peloton {
 namespace storage {
 
 AbstractTable::AbstractTable(oid_t table_oid, std::string table_name,
-                             catalog::Schema *schema)
+                             catalog::Schema *schema, bool own_schema)
     : table_oid(table_oid),
       database_oid(INVALID_OID),
       table_name(table_name),
-      schema(schema) {}
+      schema(schema),
+      own_schema_(own_schema){}
 
 AbstractTable::~AbstractTable() {
   // clean up schema
-  delete schema;
+  if(own_schema_)
+    delete schema;
 }
 
 }  // End storage namespace
