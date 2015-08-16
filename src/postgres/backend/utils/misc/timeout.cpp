@@ -260,6 +260,9 @@ handle_sig_alarm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
+	// TODO: Peloton Changes
+	return;
+
 	/*
 	 * Bump the holdoff counter, to make sure nothing we call will process
 	 * interrupts directly. No timeout handler should do that, but these
