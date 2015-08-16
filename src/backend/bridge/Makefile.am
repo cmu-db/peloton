@@ -32,11 +32,13 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_lock_rows.cpp \
 			   backend/bridge/dml/mapper/mapper_materialization.cpp \
 			   backend/bridge/dml/mapper/mapper_agg.cpp \
+			   backend/bridge/dml/mapper/mapper_sort.cpp \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
 			   backend/bridge/dml/tuple/tuple_transformer.cpp \
 			   backend/bridge/dml/executor/plan_executor.cpp \
 			   backend/bridge/dml/expr/expr_transformer.cpp \
-			   backend/bridge/dml/expr/pg_func_map.cpp
+			   backend/bridge/dml/expr/pg_func_map.cpp 
+			   
 
 bridge_INCLUDES = \
                   -I$(srcdir)/backend/bridge
