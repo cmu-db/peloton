@@ -94,20 +94,22 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   sleep(2);
 
   //Erase frontend logger from frontend_loggers as well
-  oid_t offset=0;
-  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-  for(auto frontend_logger : frontend_loggers){
-    if( frontend_logger->GetLoggingType() == logging_type){
-      delete frontend_logger;
-      break;
+  {
+    oid_t offset=0;
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+    for(auto frontend_logger : frontend_loggers){
+      if( frontend_logger->GetLoggingType() == logging_type){
+        delete frontend_logger;
+        break;
+      }
     }
-  }
-  if( offset >= frontend_loggers.size()){
-    LOG_WARN("%s is not running now", LoggingTypeToString(logging_type).c_str());
-    return false;
-  }else{
-    frontend_loggers.erase(frontend_loggers.begin()+offset);
-    return true;
+    if( offset >= frontend_loggers.size()){
+      LOG_WARN("%s is not running now", LoggingTypeToString(logging_type).c_str());
+      return false;
+    }else{
+      frontend_loggers.erase(frontend_loggers.begin()+offset);
+      return true;
+    }
   }
 }
 
@@ -157,14 +159,14 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
   {
     std::lock_guard<std::mutex> lock(logging_status_mutex);
 
-    std::map<LoggingType,LoggingStatus>::iterator it;
-
+    std::map<LoggingType,LoggingStatus>::iterator it; 
     it = logging_statuses.find(logging_type);
-    //TODO :: Better way?
+
     if (it != logging_statuses.end()){
-      logging_statuses.erase(it);
+       logging_statuses[logging_type] = logging_status;
+    }else{
+      logging_statuses.insert(std::make_pair(logging_type, logging_status));
     }
-    logging_statuses.insert(std::make_pair(logging_type, logging_status));
   }
 }
 
