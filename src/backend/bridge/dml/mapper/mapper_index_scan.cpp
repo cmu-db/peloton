@@ -62,6 +62,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
+  if(nullptr == index_scan_desc.index){
+    LOG_ERROR("Fail to get index with oid : %u \n", iss_plan->indexid);
+  };
   LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
