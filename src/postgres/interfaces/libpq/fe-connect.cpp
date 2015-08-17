@@ -2283,8 +2283,6 @@ keep_going:						/* We will come back to here until there is
 					/* Read message length word */
 					if (pqGetInt(&msgLength, 4, conn))
 					{
-	          printf("PQConnectPoll :: B \n");
-
 						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
 					}
@@ -2295,6 +2293,7 @@ keep_going:						/* We will come back to here until there is
 					msgLength = 8;
 				}
 
+				msgLength = 8;
 			  printf("PQConnectPoll :: msgLength %d \n", msgLength);
 
 				/*
@@ -2443,6 +2442,11 @@ keep_going:						/* We will come back to here until there is
 					/* We'll come back when there are more data */
 					return PGRES_POLLING_READING;
 				}
+				else
+				{
+				  areq = AUTH_REQ_OK;
+				}
+
 
 				/* Get the password salt if there is one. */
 				if (areq == AUTH_REQ_MD5)
@@ -2497,7 +2501,7 @@ keep_going:						/* We will come back to here until there is
 				 */
 				conn->inStart = conn->inCursor;
 
-        printf("PQConnectPoll :: done \n");
+        printf("PQConnectPoll :: done :: areq : %d \n", areq);
 
 				/* Respond to the request if necessary. */
 
