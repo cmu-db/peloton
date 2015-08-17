@@ -86,10 +86,10 @@
  *		global variables
  * ----------------
  */
-const char *debug_query_string; /* client-supplied query string */
+thread_local const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebug;
+thread_local CommandDest whereToSendOutput = DestDebug;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -3720,6 +3720,8 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
+  elog(LOG, "Finished Init Postgres");
+
   // TODO :: Peloton Changes
   //auto queue_name = peloton::get_mq_name(MyBackendId);
   //MyBackendQueue = peloton::create_mq(queue_name);
@@ -3751,6 +3753,8 @@ PostgresMain(int argc, char *argv[],
    * appropriate.
    */
   BeginReportingGUCOptions();
+
+  elog(LOG, "Finished reporting GUC");
 
   /*
    * Also set up handler to log session end; we have to wait till now to be
