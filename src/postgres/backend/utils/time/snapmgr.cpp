@@ -103,7 +103,7 @@ TransactionId RecentGlobalXmin = InvalidTransactionId;
 TransactionId RecentGlobalDataXmin = InvalidTransactionId;
 
 /* (table, ctid) => (cmin, cmax) mapping during timetravel */
-static HTAB *tuplecid_data = NULL;
+thread_local static HTAB *tuplecid_data = NULL;
 
 /*
  * Elements of the active snapshot stack.

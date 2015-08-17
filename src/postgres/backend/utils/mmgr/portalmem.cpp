@@ -49,7 +49,7 @@ typedef struct portalhashent
 	Portal		portal;
 } PortalHashEnt;
 
-static HTAB *PortalHashTable = NULL;
+thread_local static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 do { \

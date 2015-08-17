@@ -375,9 +375,9 @@ static RWConflictPoolHeader RWConflictPool;
  * The predicate locking hash tables are in shared memory.
  * Each backend keeps pointers to them.
  */
-static HTAB *SerializableXidHash;
-static HTAB *PredicateLockTargetHash;
-static HTAB *PredicateLockHash;
+thread_local static HTAB *SerializableXidHash;
+thread_local static HTAB *PredicateLockTargetHash;
+thread_local static HTAB *PredicateLockHash;
 static SHM_QUEUE *FinishedSerializableTransactions;
 
 /*
@@ -393,7 +393,7 @@ static LWLock *ScratchPartitionLock;
  * The local hash table used to determine when to combine multiple fine-
  * grained locks into a single courser-grained lock.
  */
-static HTAB *LocalPredicateLockHash = NULL;
+thread_local static HTAB *LocalPredicateLockHash = NULL;
 
 /*
  * Keep a pointer to the currently-running serializable transaction (if any)
