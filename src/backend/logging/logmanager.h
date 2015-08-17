@@ -17,6 +17,7 @@
 #include "backend/logging/backendlogger.h"
 
 #include <mutex>
+#include <map>
 #include <vector>
 
 namespace peloton {
@@ -28,6 +29,7 @@ namespace logging {
 
 static std::mutex logManager_mutex;
 static std::mutex frontend_logger_mutex;
+static std::mutex logging_status_mutex;
 
 /**
  * Global Log Manager
@@ -43,27 +45,37 @@ class LogManager{
     // global singleton
     static LogManager& GetInstance(void);
 
-    void StandbyLogging(LoggingType logging_type);
+    void SetMainLoggingType(LoggingType logging_type);
 
-    void StartLogging(void);
+    LoggingType GetMainLoggingType(void);
 
-    bool IsPelotonReadyToLogging(void);
+    void StandbyLogging(LoggingType logging_type = LOGGING_TYPE_INVALID );
 
-    BackendLogger* GetBackendLogger(LoggingType logging_type);
+    void StartLogging(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    bool EndLogging(LoggingType logging_type =  LOGGING_TYPE_INVALID);
+
+    bool IsReadyToLogging(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
+
+    LoggingStatus GetLoggingStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
   private:
 
     LogManager(){};
 
-    //TODO :: It might be useful if I return default? current? selective frontend logger? for a default one ?
     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+
+    LoggingType MainLoggingType = LOGGING_TYPE_INVALID;
 
     // frontend_logger is only one for each logging(stdoud, aries, peloton)
     // so that we can identify frontend_logger using logger_type
     std::vector<FrontendLogger*> frontend_loggers;
 
-    bool isPelotonReadyToLogging;
-
+    std::map<LoggingType, LoggingStatus> logging_statuses;
 };
 
 

@@ -379,11 +379,12 @@ peloton_MainLoop(void) {
     return;
   }
 
-  // Launching a thread and wait until Bootstrapping is done
+  // Launching a thread for logging 
   auto& logManager = peloton::logging::LogManager::GetInstance();
-  std::thread thread(&peloton::logging::LogManager::StandbyLogging,
-                     &logManager,
-                     peloton::LOGGING_TYPE_ARIES);
+  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
+  std::thread thread(&peloton::logging::LogManager::StandbyLogging, 
+                     &logManager, 
+                     logManager.GetMainLoggingType());
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -494,7 +495,12 @@ peloton_MainLoop(void) {
       break;
   }             /* end of outer loop */
 
-  //FIXME:: Should we call join or terminate for logging thread?
+  // terminate logging thread
+  if( logManager.EndLogging() ){
+    thread.join();
+  }else{
+    elog(LOG,"Failed to terminate logging thread"); 
+  }
 
   /* Normal exit from peloton is here */
   ereport(LOG,
@@ -1081,7 +1087,9 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
 
       // NOTE:: start logging since bootstrapPeloton is done
       auto& logManager = peloton::logging::LogManager::GetInstance();
-      logManager.StartLogging();
+      if( logManager.IsReadyToLogging() == false){
+        logManager.StartLogging();
+      }
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
