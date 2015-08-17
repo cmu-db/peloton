@@ -171,6 +171,7 @@ struct AggPlanState : public AbstractPlanState {
 };
 
 struct SortPlanState : public AbstractPlanState {
+  Sort* sort;
 
 };
 
