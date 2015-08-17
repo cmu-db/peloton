@@ -18,8 +18,12 @@
 #include "c.h"
 #include "nodes/nodes.h"
 
+#include <mutex>
+
 namespace peloton {
 namespace bridge {
+
+static std::mutex parsetree_stack_mutex;
 
 //===--------------------------------------------------------------------===//
 // DDL
@@ -36,7 +40,7 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree,
+  static void ProcessUtility(Node *parsetree,DDL_Info* ddl_info,
                              Peloton_Status *status, TransactionId txn_id);
 };
 

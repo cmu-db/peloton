@@ -15,6 +15,7 @@
 
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/format_transformer.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
@@ -34,17 +35,44 @@ namespace bridge {
 // DDL Utils
 //===--------------------------------------------------------------------===//
 
+
+Database_Info* DDLUtils::PrepareCreatedbStmt(Database_Info* parsetree){
+  CreatedbStmt *stmt = (CreatedbStmt*)parsetree;
+  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
+  db_info->type = nodeTag(parsetree);
+  // FIXME : failed
+  db_info->database_oid = get_database_oid(stmt->dbname, false);
+  return db_info;
+}
+
+Database_Info* DDLUtils::PrepareDropdbStmt(Database_Info* parsetree){
+  DropdbStmt *stmt = (DropdbStmt *)parsetree;
+  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
+  db_info->type = nodeTag(parsetree);
+  db_info->database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  return db_info;
+}
+
 /**
  * @brief preparing data
  * @param parsetree
  */
-void DDLUtils::peloton_prepare_data(Node *parsetree) {
+DDL_Info* DDLUtils::peloton_prepare_data(Node *parsetree) {
+  DDL_Info* ddl_info = nullptr;
   switch (nodeTag(parsetree)) {
+
+//    case T_CreatedbStmt: {
+//      ddl_info = PrepareCreatedbStmt(
+//                 reinterpret_cast<Database_Info*>(parsetree));
+//      break;
+//    }
+
     case T_DropdbStmt: {
-      DropdbStmt *stmt = (DropdbStmt *)parsetree;
-      stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+      ddl_info = PrepareDropdbStmt(
+                 reinterpret_cast<Database_Info*>(parsetree));
       break;
     }
+
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
       List *stmts = ((CreateStmt *)parsetree)->stmts;
@@ -98,6 +126,7 @@ void DDLUtils::peloton_prepare_data(Node *parsetree) {
       break;
       break;
   }
+  return ddl_info;
 }
 
 /**
