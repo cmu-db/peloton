@@ -57,11 +57,11 @@ void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
-  while(logManager.GetLoggingStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_STANDBY ){
+  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
   }
 
-  switch(logManager.GetLoggingStatus(GetLoggingType())){
+  switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_ONGOING:
       Recovery();
     break;
@@ -71,7 +71,7 @@ void AriesFrontendLogger::MainLoop(void) {
     break;
   }
 
-  while(logManager.GetLoggingStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_ONGOING){
+  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
     sleep(1);
 
     // Collect LogRecords from BackendLogger 
