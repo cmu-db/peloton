@@ -26,15 +26,15 @@
 // TODO: Peloton Changes
 #include "backend/common/message_queue.h"
 
-ProtocolVersion FrontendProtocol;
+thread_local ProtocolVersion FrontendProtocol;
 
-volatile bool InterruptPending = false;
-volatile bool QueryCancelPending = false;
-volatile bool ProcDiePending = false;
-volatile bool ClientConnectionLost = false;
-volatile uint32 InterruptHoldoffCount = 0;
-volatile uint32 QueryCancelHoldoffCount = 0;
-volatile uint32 CritSectionCount = 0;
+thread_local volatile bool InterruptPending = false;
+thread_local volatile bool QueryCancelPending = false;
+thread_local volatile bool ProcDiePending = false;
+thread_local volatile bool ClientConnectionLost = false;
+thread_local volatile uint32 InterruptHoldoffCount = 0;
+thread_local volatile uint32 QueryCancelHoldoffCount = 0;
+thread_local volatile uint32 CritSectionCount = 0;
 
 thread_local int			MyProcPid;
 thread_local pg_time_t	MyStartTime;

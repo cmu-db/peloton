@@ -184,8 +184,6 @@ PerformAuthentication(Port *port)
 	/* This should be set already, but let's make sure */
 	ClientAuthInProgress = true;	/* limit visibility of log messages */
 
-	elog(LOG, "PerformAuthentication :: pid : %d", getpid());
-
 	/*
 	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
 	 * etcetera from the postmaster, and have to load them ourselves.
