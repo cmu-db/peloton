@@ -234,7 +234,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
       continue;
     }
 
-    LOG_INFO("Target : column id %u, Expression : \n%s", col_id,
+    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
              peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);

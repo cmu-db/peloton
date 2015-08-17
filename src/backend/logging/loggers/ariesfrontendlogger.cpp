@@ -366,7 +366,6 @@ void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
   }
 }
 
-
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
