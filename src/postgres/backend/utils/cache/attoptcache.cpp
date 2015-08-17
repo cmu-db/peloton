@@ -25,7 +25,7 @@
 
 
 /* Hash table for informations about each attribute's options */
-static HTAB *AttoptCacheHash = NULL;
+thread_local static HTAB *AttoptCacheHash = NULL;
 
 /* attrelid and attnum form the lookup key, and must appear first */
 typedef struct
