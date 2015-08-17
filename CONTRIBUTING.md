@@ -11,12 +11,11 @@ You can report bugs and feature requests to [GitHub Issues](https://github.com/c
 When you file a bug, please try to follow these simple rules if applicable:
 
 * Make sure you've read the README carefully.
-* Add debug information to the issue by building Pelotn with the `--enable-debug` option
-* Provide information about your environment:
-  * Your current versions of your OS, compiler.
+* Add debug information to the issue by building Peloton with the `--enable-debug` option
+* Provide information about your environment: versions of your OS, compiler, etc.
 * Make sure that the issue is reproducible with your description.
 
-**It's most likely that your bug gets resolved faster if you provide as much information as possible!**
+It's likely that your bug gets resolved faster if you provide as much information as possible.
 
 Development
 -----------
