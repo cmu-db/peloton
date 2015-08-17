@@ -47,10 +47,6 @@ AriesFrontendLogger::~AriesFrontendLogger(){
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
-  ret = close(logFileFd);
-  if( ret == -1 ){
-    LOG_ERROR("Error occured while closing LogFileFd");
-  }
 }
 
 /**
@@ -59,22 +55,28 @@ AriesFrontendLogger::~AriesFrontendLogger(){
 //FIXME :: Performance issue remains
 void AriesFrontendLogger::MainLoop(void) {
 
-  //FIXME :: find better way..
   auto& logManager = LogManager::GetInstance();
 
-  while( !logManager.IsPelotonReadyToLogging() ){
+  while(logManager.GetLoggingStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
   }
 
-  Recovery();
+  switch(logManager.GetLoggingStatus(GetLoggingType())){
+    case LOGGING_STATUS_TYPE_ONGOING:
+      Recovery();
+    break;
 
-  for(int i=0;;i++){
+    default:
+      return;
+    break;
+  }
+
+  while(logManager.GetLoggingStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_ONGOING){
     sleep(1);
 
     // Collect LogRecords from BackendLogger 
     CollectLogRecord();
 
-    // Checkpoint ?
     if( GetLogRecordCount() >= aries_global_queue_size ){
       Flush();
     }
@@ -283,7 +285,6 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
         LOG_ERROR("Error occured in fread ");
       }
 
-      //TODO :: Make this as a function
       CopySerializeInput logBody(body, body_size);
 
       storage::Tuple *tuple = new storage::Tuple(schema, true);
