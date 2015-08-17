@@ -78,7 +78,7 @@ class DMLUtils {
 
   static NestLoopPlanState *PrepareNestLoopState(NestLoopState *nl_plan_state);
 
-  static AggPlanState *PrepareAggPlanState(AggState *agg_plan_state);
+  static AggPlanState *PrepareAggState(AggState *agg_plan_state);
 
   static SortPlanState *PrepareSortState(SortState *sort_plan_state);
 
