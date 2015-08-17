@@ -91,7 +91,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   // terminating main loop
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
-  sleep(3);
+  sleep(2);
 
   //Erase frontend logger from frontend_loggers as well
   oid_t offset=0;
@@ -112,6 +112,12 @@ bool LogManager::EndLogging(LoggingType logging_type ){
 }
 
 bool LogManager::IsReadyToLogging(LoggingType logging_type){
+  if( logging_type == LOGGING_TYPE_INVALID){
+    logging_type = MainLoggingType;
+    if( logging_type == LOGGING_TYPE_INVALID)
+      return false;
+  }
+
   auto logging_status = GetLoggingStatus(logging_type);
   if( logging_status == LOGGING_STATUS_TYPE_ONGOING)
     return true;
