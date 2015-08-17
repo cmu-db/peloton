@@ -114,14 +114,16 @@ bool UpdateExecutor::DExecute() {
    // Logging 
    {
       auto& logManager = logging::LogManager::GetInstance();
-      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-
-      auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
-                                              transaction_->GetTransactionId(), 
-                                              target_table_->GetOid(),
-                                              delete_location,
-                                              new_tuple);
-      logger->Update(record);
+      if(logManager.IsPelotonReadyToLogging()){
+        auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+  
+        auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
+                                                transaction_->GetTransactionId(), 
+                                                target_table_->GetOid(),
+                                                delete_location,
+                                                new_tuple);
+        logger->Update(record);
+      }
     }
 
     delete new_tuple;

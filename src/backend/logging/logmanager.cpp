@@ -29,7 +29,7 @@ LogManager& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StandbyLogging(LoggingType logging_type){
-  isPelotonReadyToRecovery = false;
+  isPelotonReadyToLogging = false;
 
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
@@ -62,14 +62,14 @@ void LogManager::StandbyLogging(LoggingType logging_type){
  * @brief whenever Peloton is ready, start logging 
  */
 void LogManager::StartLogging(){
-  isPelotonReadyToRecovery = true;
+  isPelotonReadyToLogging = true;
 }
 
 /**
  * @brief mark Peloton is ready, so that frontend logger can start logging
  */
-bool LogManager::IsPelotonReadyToRecovery(){
-  return isPelotonReadyToRecovery;
+bool LogManager::IsPelotonReadyToLogging(){
+  return isPelotonReadyToLogging;
 }
 
 /**
