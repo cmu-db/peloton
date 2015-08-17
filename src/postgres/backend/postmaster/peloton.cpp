@@ -1081,9 +1081,7 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
 
       // NOTE:: start logging since bootstrapPeloton is done
       auto& logManager = peloton::logging::LogManager::GetInstance();
-      if(logManager.IsPelotonReadyToRecovery() == false){
-        logManager.StartLogging();
-      }
+      logManager.StartLogging();
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());

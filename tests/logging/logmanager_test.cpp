@@ -33,6 +33,8 @@ TEST(SimpleLoggingTest, aries_logging_test) {
   // bootstrap
   // create db, etc.
 
+  logManager.StartLogging();
+
   std::terminate();
   
 }
