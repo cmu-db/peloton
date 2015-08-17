@@ -1,5 +1,8 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
+## Common flags
+include $(top_srcdir)/src/postgres/pg_common.am
+
 ######################################################################
 # POSTGRES_PORT
 ######################################################################
