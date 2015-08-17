@@ -5,10 +5,8 @@
 ######################################################################
 
 check_PROGRAMS += \
-				  logmanager_test
+	        aries_logging_test
 
-#logging_tests_common= 	logging/logging_tests_util.cpp \
-#						harness.cpp
-
-logmanager_test_SOURCES = logging/logmanager_test.cpp					
+aries_logging_test_SOURCES = \
+           logging/aries_logging_test.cpp					
 					
