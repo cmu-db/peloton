@@ -3,10 +3,7 @@
 #include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/planner/aggregateV2_node.h"
 
-#include "access/htup_details.h"
-#include "catalog/pg_aggregate.h"
 #include "executor/nodeAgg.h"
-#include "utils/syscache.h"
 
 namespace peloton {
 namespace bridge {
@@ -47,16 +44,20 @@ PlanTransformer::TransformAgg(const AggState *plan_state) {
     // We don't check whether the mapped exprtype is a valid aggregate type here.
     PltFuncMetaInfo fn_meta = itr->second;
     // We only take the first argument as input to aggregator
-    GenericExprState *gstate = (GenericExprState *) lfirst(
-        list_head(agg_state->peragg[aggno].aggrefstate->args));
-    auto agg_expr = ExprTransformer::TransformExpr(gstate->arg);
+    // WARNING: there can be no arguments (e.g., COUNT(*))
+    auto arguments = agg_state->peragg[aggno].aggrefstate->args;
+    expression::AbstractExpression* agg_expr = nullptr;
+    if (arguments) {
+      GenericExprState *gstate = (GenericExprState *) lfirst(list_head(arguments));
+      agg_expr = ExprTransformer::TransformExpr(gstate->arg);
+    }
 
     unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr);
 
     LOG_INFO(
         "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
-        agg_expr->DebugInfo().c_str());
+        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>");
   }
 
   /* Get Group by columns */
