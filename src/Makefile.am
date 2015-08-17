@@ -7,6 +7,10 @@
 ## Common flags
 include $(top_srcdir)/common.am
 
+PG_CXXFLAGS = -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow
+
 ######################################################################
 # SUBDIRS
 ######################################################################

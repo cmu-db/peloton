@@ -1,5 +1,0 @@
-## Makefile.am -- Process this file with automake to produce Makefile.in
-
-PG_CXXFLAGS = -Wno-unused-variable -Wno-unused-but-set-variable \
-			  -Wno-unused-parameter -Wno-missing-field-initializers \
-			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow	
