@@ -47,7 +47,7 @@ class LogManager{
 
     void StartLogging(void);
 
-    bool IsPelotonReadyToRecovery(void);
+    bool IsPelotonReadyToLogging(void);
 
     BackendLogger* GetBackendLogger(LoggingType logging_type);
 
@@ -62,7 +62,7 @@ class LogManager{
     // so that we can identify frontend_logger using logger_type
     std::vector<FrontendLogger*> frontend_loggers;
 
-    bool isPelotonReadyToRecovery;
+    bool isPelotonReadyToLogging;
 
 };
 

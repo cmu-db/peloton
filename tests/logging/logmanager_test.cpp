@@ -35,7 +35,7 @@ TEST(SimpleLoggingTest, aries_logging_test) {
 
   logManager.StartLogging();
 
-  std::terminate();
+  //std::terminate();
   
 }
 
