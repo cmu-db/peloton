@@ -96,7 +96,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
     return false;
   }
 
-  elog(LOG, "Create database (%u)", database_oid);
+  LOG_INFO("Create database (%u)", database_oid);
   return true;
 }
 
