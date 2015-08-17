@@ -20,6 +20,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {159, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
     {287, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
     {293, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
+    {1718, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
 
     {84, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {144, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
@@ -29,6 +30,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {165, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {288, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {294, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
+    {1719, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
 
     {56, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {64, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
@@ -38,6 +40,8 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1246, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {289, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {295, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
+    {1722, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
+
 
     {57, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {73, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
@@ -47,6 +51,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {163, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {291, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {297, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
+    {1720, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
 
     {74, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {150, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
@@ -56,6 +61,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1692, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {292, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {298, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
+    {1721, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
 
     {72, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {148, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
@@ -65,6 +71,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1691, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {290, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {296, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
+    {1723, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
 
     //====--------------------------------
     // Basic arithmetics
