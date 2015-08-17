@@ -1634,7 +1634,7 @@ PQconnectPoll(PGconn *conn)
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
 
-	printf("Status :: %d \n", conn->status);
+	printf("Status :: %d Conn : %p Socket : %d \n", conn->status, conn, conn->sock);
 
 	/* Get the new___ data */
 	switch (conn->status)
@@ -2259,6 +2259,8 @@ keep_going:						/* We will come back to here until there is
 					return PGRES_POLLING_READING;
 				}
 
+        printf("PQConnectPoll :: beresp %c \n", beresp);
+
 				/*
 				 * Validate message type: we expect only an authentication
 				 * request or an error here.  Anything else probably means
@@ -2276,9 +2278,13 @@ keep_going:						/* We will come back to here until there is
 
 				if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 				{
+				  printf("PQConnectPoll :: A \n");
+
 					/* Read message length word */
 					if (pqGetInt(&msgLength, 4, conn))
 					{
+	          printf("PQConnectPoll :: B \n");
+
 						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
 					}
@@ -2288,6 +2294,8 @@ keep_going:						/* We will come back to here until there is
 					/* Set phony message length to disable checks below */
 					msgLength = 8;
 				}
+
+			  printf("PQConnectPoll :: msgLength %d \n", msgLength);
 
 				/*
 				 * Try to validate message length before using it.
@@ -2430,6 +2438,8 @@ keep_going:						/* We will come back to here until there is
 				/* Get the type of request. */
 				if (pqGetInt((int *) &areq, 4, conn))
 				{
+	        printf("PQConnectPoll :: areq %d \n", areq);
+
 					/* We'll come back when there are more data */
 					return PGRES_POLLING_READING;
 				}
@@ -2486,6 +2496,8 @@ keep_going:						/* We will come back to here until there is
 				 * OK, we successfully read the message; mark data consumed
 				 */
 				conn->inStart = conn->inCursor;
+
+        printf("PQConnectPoll :: done \n");
 
 				/* Respond to the request if necessary. */
 

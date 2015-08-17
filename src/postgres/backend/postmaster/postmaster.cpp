@@ -3846,7 +3846,7 @@ processCancelRequest(Port *port, void *pkt)
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 
-    InitializeGUCOptions();
+    InitializeGUCOptions(false);
 
     /* Detangle from postmaster */
     InitPostmasterChild();
@@ -3872,8 +3872,6 @@ processCancelRequest(Port *port, void *pkt)
   static int
   BackendStartup(Port *port)
   {
-    elog(LOG, "Backend :: %d", getpid());
-
     Backend    *bn;				/* for backend cleanup */
     pid_t		pid;
 
@@ -4146,6 +4144,8 @@ processCancelRequest(Port *port, void *pkt)
      */
     status = ProcessStartupPacket(port, false);
 
+    elog(LOG, "Received Startup Packet from client :: %d", status);
+
     /*
      * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
      * already did any appropriate error reporting.
@@ -4252,7 +4252,7 @@ processCancelRequest(Port *port, void *pkt)
      */
     MemoryContextSwitchTo(TopMemoryContext);
 
-    PostgresMain(ac, av, "postgres", "postgres");
+    PostgresMain(ac, av, port->database_name, port->user_name);
   }
 
 

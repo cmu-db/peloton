@@ -572,6 +572,8 @@ sendAuthRequest(Port *port, AuthRequest areq)
 
 	CHECK_FOR_INTERRUPTS();
 
+  printf("sendAuthRequest :: %d  Port : %p \n", areq, port);
+
 	pq_beginmessage(&buf, 'R');
 	pq_sendint(&buf, (int32) areq, sizeof(int32));
 

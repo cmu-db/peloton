@@ -260,9 +260,6 @@ handle_sig_alarm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	// TODO: Peloton Changes
-	return;
-
 	/*
 	 * Bump the holdoff counter, to make sure nothing we call will process
 	 * interrupts directly. No timeout handler should do that, but these
@@ -274,7 +271,9 @@ handle_sig_alarm(SIGNAL_ARGS)
 	 * SIGALRM is always cause for waking anything waiting on the process
 	 * latch.
 	 */
-	SetLatch(MyLatch);
+  // TODO: Peloton Changes
+	if(MyLatch)
+	  SetLatch(MyLatch);
 
 	/*
 	 * Fire any pending timeouts, but only if we're enabled to do so.
