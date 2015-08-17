@@ -148,9 +148,13 @@ proc_exit(int code)
 	elog(INFO, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d MyBackendId :: %d \n", getpid(),
 	     MyProcPid, PostmasterPid, MyBackendId);
 
-  // Exit the process only if not postmaster
+  // Exit the process if not postmaster
 	if(PostmasterPid != 0)
 	  exit(code);
+
+  // Exit the thread if not postmaster thread
+	if(MyBackendId != InvalidBackendId)
+	  pthread_exit(0);
 }
 
 /*
