@@ -62,7 +62,7 @@ void AriesFrontendLogger::MainLoop(void) {
   //FIXME :: find better way..
   auto& logManager = LogManager::GetInstance();
 
-  while( !logManager.IsPelotonReadyToRecovery() ){
+  while( !logManager.IsPelotonReadyToLogging() ){
     sleep(1);
   }
 
