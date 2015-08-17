@@ -43,6 +43,10 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(postgres_backend_FILES) \
+			$(postgres_common_FILES) \
+			$(postgres_port_FILES) \
+			$(postgres_timezone_FILES) \
 			$(brain_FILES) \
 			$(catalog_FILES) \
 			$(backend_FILES) \
@@ -54,11 +58,7 @@ libpeloton_la_SOURCES = \
 			$(index_FILES) \
 			$(planner_FILES) \
 			$(scheduler_FILES) \
-			$(storage_FILES) \
-			$(postgres_backend_FILES) \
-			$(postgres_common_FILES) \
-			$(postgres_port_FILES) \
-			$(postgres_timezone_FILES)
+			$(storage_FILES)
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
@@ -69,9 +69,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
 
-libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2 \
-						 -Wno-write-strings -Wno-sign-compare \
-						 -Wno-unused-parameter -Wno-missing-field-initializers
+libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -lm -ldw
