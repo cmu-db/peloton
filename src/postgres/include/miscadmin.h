@@ -77,16 +77,16 @@
 
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
-extern PGDLLIMPORT volatile bool InterruptPending;
-extern PGDLLIMPORT volatile bool QueryCancelPending;
-extern PGDLLIMPORT volatile bool ProcDiePending;
+extern thread_local PGDLLIMPORT volatile bool InterruptPending;
+extern thread_local PGDLLIMPORT volatile bool QueryCancelPending;
+extern thread_local PGDLLIMPORT volatile bool ProcDiePending;
 
-extern volatile bool ClientConnectionLost;
+extern thread_local volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
-extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern PGDLLIMPORT volatile uint32 QueryCancelHoldoffCount;
-extern PGDLLIMPORT volatile uint32 CritSectionCount;
+extern thread_local PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
+extern thread_local PGDLLIMPORT volatile uint32 QueryCancelHoldoffCount;
+extern thread_local PGDLLIMPORT volatile uint32 CritSectionCount;
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(void);
