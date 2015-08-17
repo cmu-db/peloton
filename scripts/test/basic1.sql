@@ -10,11 +10,11 @@ create table foo(id integer PRIMARY KEY, year integer);
 insert into foo values(1, 100);
 insert into foo values(1, 200); -- should fail
 insert into foo values(2, 200);
-insert into foo values(3, 300);
-insert into foo values(4, 400);
-insert into foo values(5, 400);
-insert into foo values(5, 500); -- should fail
-
+-- insert into foo values(3, 300);
+-- insert into foo values(4, 400);
+-- insert into foo values(5, 400);
+-- insert into foo values(5, 500); -- should fail
+-- 
 select * from foo;
 
 -- select
