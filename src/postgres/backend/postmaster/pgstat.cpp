@@ -162,7 +162,7 @@ static TabStatusArray *pgStatTabList = NULL;
  * Backends store per-function info that's waiting to be sent to the collector
  * in this hash table (indexed by function OID).
  */
-static HTAB *pgStatFunctions = NULL;
+thread_local static HTAB *pgStatFunctions = NULL;
 
 /*
  * Indicates if backend has some function stats that it hasn't yet
@@ -209,7 +209,7 @@ typedef struct TwoPhasePgStatRecord
  * Info about current "snapshot" of stats file
  */
 static MemoryContext pgStatLocalContext = NULL;
-static HTAB *pgStatDBHash = NULL;
+thread_local static HTAB *pgStatDBHash = NULL;
 static LocalPgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 

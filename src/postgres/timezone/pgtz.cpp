@@ -177,7 +177,7 @@ typedef struct
 	pg_tz		tz;
 } pg_tz_cache;
 
-static HTAB *timezone_cache = NULL;
+thread_local static HTAB *timezone_cache = NULL;
 
 
 static bool

@@ -1658,7 +1658,7 @@ next_pow2_int(long num)
 
 #define MAX_SEQ_SCANS 100
 
-static HTAB *seq_scan_tables[MAX_SEQ_SCANS];	/* tables being scanned */
+thread_local static HTAB *seq_scan_tables[MAX_SEQ_SCANS];	/* tables being scanned */
 static int	seq_scan_level[MAX_SEQ_SCANS];		/* subtransaction nest level */
 static int	num_seq_scans = 0;
 

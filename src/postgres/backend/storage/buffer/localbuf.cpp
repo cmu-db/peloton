@@ -45,7 +45,7 @@ int32	   *LocalRefCount = NULL;
 
 static int	nextFreeLocalBuf = 0;
 
-static HTAB *LocalBufHash = NULL;
+thread_local static HTAB *LocalBufHash = NULL;
 
 
 static void InitLocalBuffers(void);
