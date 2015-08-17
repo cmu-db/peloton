@@ -98,7 +98,8 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
     case T_SortState:
       peloton_plan = PlanTransformer::TransformSort(
           reinterpret_cast<const SortPlanState*>(planstate));
-      /* no break */
+      break;
+
     default: {
       LOG_ERROR("PlanTransformer :: Unsupported Postgres Plan Tag: %u ",
                 nodeTag(planstate));
