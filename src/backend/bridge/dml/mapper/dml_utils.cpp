@@ -22,6 +22,8 @@
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
 #include "utils/datum.h"
+#include "utils/lsyscache.h"
+
 
 #include "executor/nodeAgg.h"
 
@@ -93,6 +95,11 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
     case T_NestLoopState:
       child_planstate = PrepareNestLoopState(
           reinterpret_cast<NestLoopState *>(planstate));
+      break;
+
+    case T_SortState:
+      child_planstate = PrepareSortState(
+          reinterpret_cast<SortState *>(planstate));
       break;
 
     default:
@@ -563,6 +570,43 @@ DMLUtils::PrepareAggPlanState(AggState* agg_plan_state) {
       agg_plan_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
   return info;
+}
+
+SortPlanState* DMLUtils::PrepareSortState(SortState* sort_plan_state) {
+
+  SortPlanState *info = (SortPlanState*) palloc(sizeof(SortPlanState));
+  info->type = sort_plan_state->ss.ps.type;
+
+  info->sort = (const Sort*) copyObject(sort_plan_state->ss.ps.plan);
+
+  info->reverse_flags = (bool*) palloc(sizeof(bool) * info->sort->numCols);
+
+  // Find the reverse flags here
+
+  for (int i = 0; i < info->sort->numCols; i++) {
+
+    Oid orderingOp = info->sort->sortOperators[i];
+    Oid opfamily;
+    Oid opcintype;
+    int16 strategy;
+
+    /* Find the operator___ in pg_amop */
+    if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
+                                    &strategy)) {
+      elog(ERROR, "operator___ %u is not a valid ordering operator___",
+           orderingOp);
+    }
+
+    bool reverse = (strategy == BTGreaterStrategyNumber);
+
+    info->reverse_flags[i] = reverse;
+
+    elog(INFO, "Sort Col Idx : %d, Sort OperatorOid : %u , reverse : %u",
+         info->sort->sortColIdx[i], orderingOp, reverse);
+  }
+
+  return info;
+
 }
 
 /**

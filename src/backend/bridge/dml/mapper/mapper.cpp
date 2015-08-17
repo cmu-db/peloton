@@ -89,13 +89,13 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
       peloton_plan = PlanTransformer::TransformMaterialization(
           reinterpret_cast<const MaterialPlanState *>(planstate));
       break;
-    case T_Agg:
+    case T_AggState:
       peloton_plan = PlanTransformer::TransformAgg(
           reinterpret_cast<const AggPlanState*>(planstate));
       break;
 
 
-    case T_Sort:
+    case T_SortState:
       peloton_plan = PlanTransformer::TransformSort(
           reinterpret_cast<const SortPlanState*>(planstate));
       /* no break */

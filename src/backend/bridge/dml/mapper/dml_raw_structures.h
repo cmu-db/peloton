@@ -171,7 +171,8 @@ struct AggPlanState : public AbstractPlanState {
 };
 
 struct SortPlanState : public AbstractPlanState {
-  Sort* sort;
+  const Sort* sort;
+  bool *reverse_flags;
 
 };
 
