@@ -127,6 +127,7 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   Node *m_parsetree;
+  DDL_Info *m_ddl_info;
 } Peloton_MsgDDL;
 
 /* ----------
