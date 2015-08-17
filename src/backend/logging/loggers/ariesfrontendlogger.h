@@ -91,7 +91,7 @@ class AriesFrontendLogger : public FrontendLogger{
     //===--------------------------------------------------------------------===//
 
     // FIXME :: Hard coded file name
-    std::string filename = "/home/parallels/git/peloton/build/aries_log.txt";
+    std::string filename = "/home/parallels/git/peloton/build/aries.log";
 
     // FIXME :: Hard coded global_queue size
     oid_t aries_global_queue_size = 1;
