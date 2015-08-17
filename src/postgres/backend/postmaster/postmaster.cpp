@@ -184,7 +184,7 @@ static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 static Backend *ShmemBackendArray;
 #endif
 
-BackgroundWorker *MyBgworkerEntry = NULL;
+thread_local BackgroundWorker *MyBgworkerEntry = NULL;
 
 
 
@@ -242,7 +242,7 @@ char	   *bonjour_name;
 bool		restart_after_crash = true;
 
 /* PIDs of special child processes; 0 when not running */
-static pid_t StartupPID = 0,
+static thread_local pid_t StartupPID = 0,
     BgWriterPID = 0,
     CheckpointerPID = 0,
     WalWriterPID = 0,
@@ -384,7 +384,7 @@ static void sigusr1_handler(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
-static void CleanupBackend(int pid, int exitstatus);
+//static void CleanupBackend(int pid, int exitstatus);
 static bool CleanupBackgroundWorker(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
@@ -3030,17 +3030,30 @@ processCancelRequest(Port *port, void *pkt)
   }
 
   /*
+   * GetBackendThreadID
+   *
+   */
+  int GetBackendThreadId(void) {
+    std::hash<std::thread::id> hasher;
+    uint16_t thread_id = hasher(std::this_thread::get_id());
+
+    return thread_id;
+  }
+
+  /*
    * CleanupBackend -- cleanup after terminated backend.
    *
    * Remove all local state associated with backend.
    *
    * If you change this, see also CleanupBackgroundWorker.
    */
-  static void
+  void
   CleanupBackend(int pid,
                  int exitstatus)	/* child's exit status. */
   {
     dlist_mutable_iter iter;
+
+    elog(LOG, "CleanupBackend :: pid %d \n", pid);
 
     LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
@@ -3073,9 +3086,13 @@ processCancelRequest(Port *port, void *pkt)
       return;
     }
 
+    elog(LOG, "Go over list \n");
+
     dlist_foreach_modify(iter, &BackendList)
     {
       Backend    *bp = dlist_container(Backend, elem, iter.cur);
+
+      elog(LOG, "Backend :: bp : %p tid : %d \n", bp, bp->pid);
 
       if (bp->pid == pid)
       {
@@ -3840,7 +3857,11 @@ processCancelRequest(Port *port, void *pkt)
   }
 
   static void BackendTask(Backend  *bn, Port *port) {
+
     free(bn);
+
+    //bn->tid = GetBackendThreadId();
+    //elog(LOG, "Starting Backend :: TID  %d \n", bn->pid);
 
     // TODO: Peloton Changes
     MemoryContextInit();
@@ -3915,8 +3936,6 @@ processCancelRequest(Port *port, void *pkt)
 #ifdef EXEC_BACKEND
     pid = backend_forkexec(port);
 #else							/* !EXEC_BACKEND */
-
-    elog(LOG, "Starting backend :: %d", getpid());
 
     // TODO: Peloton Changes
     //pid = fork_process();
@@ -4036,9 +4055,8 @@ processCancelRequest(Port *port, void *pkt)
     port->remote_host = "";
     port->remote_port = "";
 
-    auto thread_id =  std::hash<std::thread::id>()(std::this_thread::get_id()) % 100;
-    elog(DEBUG1, "Initializing backend :: TID :: %lu MyProcPort : %p ",
-         thread_id, MyProcPort);
+    int thread_id = GetBackendThreadId();
+    elog(INFO, "Initializing backend :: TID :: %d ", thread_id);
 
     /*
      * Initialize libpq and enable reporting of ereport errors to the client.
@@ -5166,12 +5184,21 @@ processCancelRequest(Port *port, void *pkt)
     dlist_iter	iter;
     int			cnt = 0;
 
+    printf("CountChildren :: \n");
+
     dlist_foreach(iter, &BackendList)
     {
       Backend    *bp = dlist_container(Backend, elem, iter.cur);
 
+      printf("bp dead end :: %d bp : %p BackendId : %d \n",
+             bp->dead_end, bp, bp->pid);
+
+      sleep(3);
+
       if (bp->dead_end)
         continue;
+
+      printf("Count :: %d \n", cnt);
 
       /*
        * Since target == BACKEND_TYPE_ALL is the most common case, we test

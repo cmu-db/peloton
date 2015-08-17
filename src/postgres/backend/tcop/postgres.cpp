@@ -3720,8 +3720,6 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  elog(LOG, "Finished Init Postgres");
-
   // TODO :: Peloton Changes
   //auto queue_name = peloton::get_mq_name(MyBackendId);
   //MyBackendQueue = peloton::create_mq(queue_name);
@@ -3753,8 +3751,6 @@ PostgresMain(int argc, char *argv[],
    * appropriate.
    */
   BeginReportingGUCOptions();
-
-  elog(LOG, "Finished reporting GUC");
 
   /*
    * Also set up handler to log session end; we have to wait till now to be
