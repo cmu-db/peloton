@@ -637,6 +637,26 @@ std::string LoggingTypeToString(LoggingType type) {
   return "INVALID";
 }
 
+std::string LoggingStatusToString(LoggingStatus type) {
+  switch (type) {
+    case LOGGING_STATUS_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGING_STATUS_TYPE_STANDBY: {
+      return "LOGGING_STATUS_TYPE_STANDBY";
+    }
+    case LOGGING_STATUS_TYPE_ONGOING: {
+      return "LOGGING_STATUS_TYPE_ONGOING";
+    }
+    case LOGGING_STATUS_TYPE_TERMINATE: {
+      return "LOGGING_STATUS_TYPE_TERMINATE";
+    }
+  }
+  return "INVALID";
+}
+
+
+
 std::string LoggerTypeToString(LoggerType type) {
   switch (type) {
     case LOGGER_TYPE_INVALID: {
