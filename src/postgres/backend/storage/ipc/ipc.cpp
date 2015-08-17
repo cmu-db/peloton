@@ -34,7 +34,9 @@
 
 // TODO: Peloton Changes
 #include "backend/common/stack_trace.h"
+#include "postmaster/postmaster.h"
 
+#include <thread>
 
 /*
  * This flag is set during proc_exit() to change ereport()'s behavior,
@@ -145,16 +147,19 @@ proc_exit(int code)
 	elog(DEBUG3, "exit(%d)", code);
 
   // TODO: Peloton Changes
-	elog(DEBUG3, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d MyBackendId :: %d \n", getpid(),
-	     MyProcPid, PostmasterPid, MyBackendId);
+	elog(DEBUG3, "Exiting process : %d MyProcPid :: %d PostmasterPid :: %d "
+	    "MyBackendId :: %d \n", getpid(), MyProcPid, PostmasterPid, MyBackendId);
 
   // Exit the process if not postmaster
 	if(PostmasterPid != 0)
 	  exit(code);
 
   // Exit the thread if not postmaster thread
-	if(MyBackendId != InvalidBackendId)
+	if(MyBackendId != InvalidBackendId) {
+    int thread_id = GetBackendThreadId();
+    elog(INFO, "Exiting thread : TID %d ", thread_id);
 	  pthread_exit(0);
+	}
 }
 
 /*

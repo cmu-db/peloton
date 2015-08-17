@@ -345,7 +345,8 @@ pq_endmessage(StringInfo buf)
 	/* msgtype was saved in cursor field */
 	(void) pq_putmessage(buf->cursor, buf->data, buf->len);
 
-	printf("Message :: len : %d data : -%s- \n", buf->len, buf->data);
+	// TODO: Peloton Changes
+	//printf("Message :: len : %d data : -%s- \n", buf->len, buf->data);
 
 	/* no need to complain about any failure, since pqcomm.c already did */
 	pfree(buf->data);

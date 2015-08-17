@@ -75,4 +75,7 @@ extern void ShmemBackendArrayAllocation(void);
 
 extern bool PelotonTestMode;
 
+extern int GetBackendThreadId(void);
+extern void CleanupBackend(int pid, int exitstatus);
+
 #endif   /* _POSTMASTER_H */
