@@ -24,7 +24,6 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 
-
 #include "executor/nodeAgg.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
@@ -100,6 +99,10 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
     case T_SortState:
       child_planstate = PrepareSortState(
           reinterpret_cast<SortState *>(planstate));
+      break;
+
+    case T_AggState:
+      child_planstate = PrepareAggState(reinterpret_cast<AggState*>(planstate));
       break;
 
     default:
@@ -541,7 +544,7 @@ DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
 }
 
 AggPlanState*
-DMLUtils::PrepareAggPlanState(AggState* agg_plan_state) {
+DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   AggPlanState *info = (AggPlanState*) palloc(sizeof(AggPlanState));
   info->type = agg_plan_state->ss.ps.type;
 
