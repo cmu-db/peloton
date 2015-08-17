@@ -126,8 +126,8 @@ bool InsertExecutor::DExecute() {
    // Logging 
    {
       auto& logManager = logging::LogManager::GetInstance();
-      if(logManager.IsPelotonReadyToLogging()){
-        auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      if(logManager.IsReadyToLogging()){
+        auto logger = logManager.GetBackendLogger();
   
         auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
                                                transaction_->GetTransactionId(), 

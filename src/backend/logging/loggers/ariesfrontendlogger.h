@@ -79,10 +79,8 @@ class AriesFrontendLogger : public FrontendLogger{
     void DeleteTuple(concurrency::Transaction* recovery_txn);
     void UpdateTuple(concurrency::Transaction* recovery_txn);
 
-    // TODO :: Rename
     void AddTxnToRecoveryTable(void);
     void RemoveTxnFromRecoveryTable(void);
-
     void CommitTuplesFromRecoveryTable(concurrency::Transaction* recovery_txn);
     void AbortTuplesFromRecoveryTable(void);
 
@@ -100,10 +98,6 @@ class AriesFrontendLogger : public FrontendLogger{
     FILE* logFile;
 
     int logFileFd;
-
-    // permit reading and writing by the owner, and to permit reading
-    // only by group members and others.
-    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
     // Txn table
     std::map<txn_id_t, concurrency::Transaction *> txn_table;
