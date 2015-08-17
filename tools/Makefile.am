@@ -18,7 +18,8 @@ endif
 
 pg_common_cxxflags = $(AM_CXXFLAGS) \
 					 -Wno-write-strings -Wno-sign-compare \
-					 -Wno-unused-parameter -Wno-missing-field-initializers
+					 -Wno-unused-parameter -Wno-missing-field-initializers \
+					 -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow					 
 
 
 ######################################################################
