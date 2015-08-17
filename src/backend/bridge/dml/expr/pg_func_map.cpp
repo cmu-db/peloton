@@ -95,7 +95,25 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {172, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {173, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {203, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
-    {217, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } }
+    {217, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
+
+     //====--------------------------------
+    // Cast
+    //====--------------------------------
+    {480, { EXPRESSION_TYPE_CAST, 1 } },  // int8 -> int4
+    {481, { EXPRESSION_TYPE_CAST, 1 } },  // int4 -> int8
+    {668, { EXPRESSION_TYPE_CAST, 3 } },  // bpchar -> bpchar
+    {669, { EXPRESSION_TYPE_CAST, 3 } },  // varchar -> varchar
+    {1703, { EXPRESSION_TYPE_CAST, 2 } },  // numeric -> numeric
+    {1740, { EXPRESSION_TYPE_CAST, 3 } },  // int8 -> numeric
+    {1742, { EXPRESSION_TYPE_CAST, 3 } },  // float4 -> numeric
+    {1743, { EXPRESSION_TYPE_CAST, 3 } },  // float8 -> numeric
+    {1744, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> int4
+    {1745, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> float4
+    {1746, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> float8
+    {1781, { EXPRESSION_TYPE_CAST, 1 } },  // int8 -> numeric
+    {1782, { EXPRESSION_TYPE_CAST, 1 } },  // int2 -> numeric
+
 
 });
 
