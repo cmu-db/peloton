@@ -4222,7 +4222,7 @@ guc_name_compare(const char *namea, const char *nameb)
  * processed command-line switches.
  */
 void
-InitializeGUCOptions(void)
+InitializeGUCOptions(bool send_messages)
 {
 	int			i;
 
@@ -4237,29 +4237,32 @@ InitializeGUCOptions(void)
 	 */
 	build_guc_variables();
 
-	/*
-	 * Load all variables with their compiled-in defaults, and initialize
-	 * status fields as needed.
-	 */
-	for (i = 0; i < num_guc_variables; i++)
+	if(send_messages == true)
 	{
-		InitializeOneGUCOption(guc_variables[i]);
+	  /*
+	   * Load all variables with their compiled-in defaults, and initialize
+	   * status fields as needed.
+	   */
+	  for (i = 0; i < num_guc_variables; i++)
+	  {
+	    InitializeOneGUCOption(guc_variables[i]);
+	  }
+
+	  guc_dirty = false;
+
+	  reporting_enabled = false;
+
+	  /*
+	   * Prevent any attempt to override the transaction modes from
+	   * non-interactive sources.
+	   */
+	  SetConfigOption("transaction_isolation", "default",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_read_only", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_deferrable", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
 	}
-
-	guc_dirty = false;
-
-	reporting_enabled = false;
-
-	/*
-	 * Prevent any attempt to override the transaction modes from
-	 * non-interactive sources.
-	 */
-	SetConfigOption("transaction_isolation", "default",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_read_only", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_deferrable", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from
