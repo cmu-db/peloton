@@ -82,9 +82,11 @@ Transaction *TransactionManager::BeginTransaction() {
  //Logging 
  {
     auto& logManager = logging::LogManager::GetInstance();
-    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
-    logger->Insert(record);
+    if(logManager.IsPelotonReadyToLogging()){
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
+      logger->Insert(record);
+    }
  }
 
   return next_txn;
@@ -117,9 +119,11 @@ void TransactionManager::EndTransaction(Transaction *txn,
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
-    logger->Insert(record);
+    if(logManager.IsPelotonReadyToLogging()){
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
+      logger->Insert(record);
+    }
   }
 
 }
@@ -214,9 +218,11 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
-    logger->Insert(record);
+    if(logManager.IsPelotonReadyToLogging()){
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+      logger->Insert(record);
+    }
   }
 }
 
@@ -336,9 +342,11 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-    auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
-    logger->Insert(record);
+    if(logManager.IsPelotonReadyToLogging()){
+      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
+      logger->Insert(record);
+    }
   }
 
   // drop a reference

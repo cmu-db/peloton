@@ -126,14 +126,16 @@ bool InsertExecutor::DExecute() {
    // Logging 
    {
       auto& logManager = logging::LogManager::GetInstance();
-      auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
-
-      auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
-                                             transaction_->GetTransactionId(), 
-                                             target_table->GetOid(),
-                                             location,
-                                             tuple.get());
-      logger->Insert(record);
+      if(logManager.IsPelotonReadyToLogging()){
+        auto logger = logManager.GetBackendLogger(LOGGING_TYPE_ARIES);
+  
+        auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
+                                               transaction_->GetTransactionId(), 
+                                               target_table->GetOid(),
+                                               location,
+                                               tuple.get());
+        logger->Insert(record);
+      }
     }
 
     done_ = true;
