@@ -575,6 +575,7 @@ std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
 
 std::string LoggingTypeToString(LoggingType type);
+std::string LoggingStatusToString(LoggingStatus type);
 std::string LoggerTypeToString(LoggerType type);
 std::string LogRecordTypeToString(LogRecordType type);
 
