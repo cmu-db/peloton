@@ -56,7 +56,10 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 
     oid_t table_offset = 0;
     for (auto table : tables) {
-      if (table->GetOid() == table_oid) break;
+      if (table->GetOid() == table_oid){
+        delete table;
+        break;
+      }
       table_offset++;
     }
     assert(table_offset < tables.size());
