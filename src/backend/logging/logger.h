@@ -29,6 +29,8 @@ class Logger{
 
     LoggerType GetLoggerType(void) const;
 
+    virtual ~Logger(void){};
+
   protected:
     LoggingType logging_type = LOGGING_TYPE_INVALID;
 
