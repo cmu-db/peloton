@@ -111,7 +111,7 @@ typedef struct relidcacheent
 	Relation	reldesc;
 } RelIdCacheEnt;
 
-static HTAB *RelationIdCache;
+thread_local static HTAB *RelationIdCache;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
@@ -238,7 +238,7 @@ typedef struct opclasscacheent
 	RegProcedure *supportProcs; /* OIDs of support procedures */
 } OpClassCacheEnt;
 
-static HTAB *OpClassCache = NULL;
+thread_local static HTAB *OpClassCache = NULL;
 
 
 /* non-export function prototypes */

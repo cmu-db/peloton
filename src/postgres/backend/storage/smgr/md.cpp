@@ -155,7 +155,7 @@ typedef struct
 	CycleCtr	cycle_ctr;		/* mdckpt_cycle_ctr when request was made */
 } PendingUnlinkEntry;
 
-static HTAB *pendingOpsTable = NULL;
+thread_local static HTAB *pendingOpsTable = NULL;
 static List *pendingUnlinks = NIL;
 static MemoryContext pendingOpsCxt;		/* context for the above  */
 
