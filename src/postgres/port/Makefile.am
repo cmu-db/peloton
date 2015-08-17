@@ -1,7 +1,5 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-## Common flags
-include $(top_srcdir)/src/postgres/pg_common.am
 
 ######################################################################
 # POSTGRES_PORT
@@ -46,3 +44,4 @@ postgres_port_FILES = \
 postgres_port_INCLUDES = \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend
+						 
