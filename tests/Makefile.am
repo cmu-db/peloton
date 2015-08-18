@@ -32,12 +32,14 @@ AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
+			  $(top_builddir)/src/libpelotonpg.la \
 			  $(TBB_LIBS)
 else
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
+			  $(top_builddir)/src/libpelotonpg.la \
 			  $(TBB_LIBS) 
 endif
 
