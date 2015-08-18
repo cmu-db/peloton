@@ -68,11 +68,6 @@
  */
 #include "postgres.h"
 
-// TODO: Peloton Changes
-#include <thread>
-
-#include "backend/common/stack_trace.h"
-
 #include <signal.h>
 #include <fcntl.h>
 #include <grp.h>
