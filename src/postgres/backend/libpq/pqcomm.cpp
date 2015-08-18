@@ -187,11 +187,6 @@ pq_init(void)
 	DoingCopyOut = false;
 	on_proc_exit(socket_close, 0);
 
-	// TODO: Peloton Changes
-	auto thread_id =  std::hash<std::thread::id>()(std::this_thread::get_id()) % 100;
-  elog(LOG, "PQ INIT :: TID :: %lu MyProcPort : %p FILE DESC :: %d ", thread_id,
-       MyProcPort, MyProcPort->sock);
-
 	/*
 	 * In backends (as soon as forked) we operate the underlying socket in
 	 * nonblocking mode and use latches to implement blocking semantics if
