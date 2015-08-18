@@ -79,7 +79,6 @@ void Agg::Advance(const Value val){
 }
 
 
-
 Value Agg::Finalize(){
   if(is_distinct_){
     for(auto val : distinct_set_){
@@ -147,7 +146,7 @@ bool Helper(const planner::AggregatePlan *node,
                                    econtext);
 
   LOG_TRACE("Tuple to Output :");
-//  std::cout << "GROUP TUPLE :: " << *(tuple.get());
+  std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
   auto location = output_table->InsertTuple(econtext->GetTransaction(),
                                             tuple.get());
@@ -204,7 +203,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 
   auto map_itr = aggregates_map.find(group_by_key_values);
 
-// Group not found. Make a new entry in the hash for this new group.
+  // Group not found. Make a new entry in the hash for this new group.
   if (map_itr == aggregates_map.end()) {
     LOG_TRACE("Group-by key not found. Start a new group.");
     // Allocate new aggregate list
@@ -216,10 +215,13 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
           ValueFactory::Clone(cur_tuple->GetValue(col_id)));
     };
 
-    for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
-        column_itr++) {
-      aggregate_list->aggregates[column_itr] = GetAggInstance(
-          node->GetUniqueAggTerms()[column_itr].aggtype);
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
+        aggno++) {
+      aggregate_list->aggregates[aggno] = GetAggInstance(
+          node->GetUniqueAggTerms()[aggno].aggtype);
+
+      bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+      aggregate_list->aggregates[aggno]->SetDistinct(distinct);
     }
 
     aggregates_map.insert(
@@ -309,7 +311,7 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
     }
   }
 
-// If we have started a new aggregate tuple
+  // If we have started a new aggregate tuple
   if (start_new_agg) {
     LOG_TRACE("Started a new group!");
 
@@ -326,6 +328,9 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
       delete aggregates[aggno];
       aggregates[aggno] = GetAggInstance(
           node->GetUniqueAggTerms()[aggno].aggtype);
+
+      bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+      aggregates[aggno]->SetDistinct(distinct);
     }
   }
 
