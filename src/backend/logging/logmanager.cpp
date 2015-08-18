@@ -76,7 +76,7 @@ void LogManager::StartLogging(LoggingType logging_type){
     logging_type = MainLoggingType;
     assert(logging_type);
   }
-  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_ONGOING);
+  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_RECOVERY);
 }
 
 /**
