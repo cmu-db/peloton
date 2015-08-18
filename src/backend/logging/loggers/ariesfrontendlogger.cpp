@@ -281,7 +281,8 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
   return true;
 }
 
-storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema){
+storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
+                                                         Pool *pool){
       // Measure the body size of LogRecord
       size_t body_size = GetNextFrameSize();
 
@@ -295,9 +296,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
       CopySerializeInput logBody(body, body_size);
 
       storage::Tuple *tuple = new storage::Tuple(schema, true);
-      storage::AbstractBackend *backend = new storage::VMBackend();
-      Pool *pool = new Pool(backend);
-    
+   
       tuple->DeserializeFrom(logBody, pool);
       return tuple;
 }
@@ -381,7 +380,11 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   ReadTupleRecordHeader(tupleRecord);
 
   auto table = GetTable(tupleRecord);
-  auto tuple = ReadTupleRecordBody(table->GetSchema());
+
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  Pool *pool = new Pool(backend);
+ 
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   auto tile_group_id = tupleRecord.GetItemPointer().block;
   auto tuple_slot = tupleRecord.GetItemPointer().offset;
@@ -389,7 +392,6 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto tile_group =  GetTileGroup(tile_group_id);
 
   auto txn_id = tupleRecord.GetTxnId();
-  LOG_INFO("1 Find txd id %d in object in table",(int)txn_id);
   auto txn = txn_table.at(txn_id);
  
   // Create new tile group if table doesn't have tile group that recored in the log
@@ -409,6 +411,8 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   }
 
   delete tuple;
+  delete pool;
+  delete backend;
 }
 
 void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
@@ -427,10 +431,8 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
   }
   auto txn_id = tupleRecord.GetTxnId();
-  LOG_INFO("2 Find txd id %d in object in table",(int)txn_id);
   auto txn = txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
-
 }
 
 void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
@@ -441,7 +443,10 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   auto table = GetTable(tupleRecord);
 
-  auto tuple = ReadTupleRecordBody(table->GetSchema());
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  Pool *pool = new Pool(backend);
+
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   ItemPointer delete_location = tupleRecord.GetItemPointer();
 
@@ -452,10 +457,13 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   }
 
   auto txn_id = tupleRecord.GetTxnId();
-  LOG_INFO("3 Find txd id %d in object in table",(int)txn_id);
   auto txn = txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
   txn->RecordInsert(location);
+
+  delete tuple;
+  delete pool;
+  delete backend;
 }
 
 void AriesFrontendLogger::AddTxnToRecoveryTable(){
@@ -479,6 +487,8 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   auto txn_id = txnRecord.GetTxnId();
 
   // remove txn from recovery txn table
+  auto txn = txn_table.at(txn_id);
+  delete txn;
   txn_table.erase(txn_id);
   LOG_INFO("Erase txd id %d object in table",(int)txn_id);
 }
