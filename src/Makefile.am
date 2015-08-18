@@ -34,7 +34,7 @@ bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpeloton.la
+lib_LTLIBRARIES += libpostgres.la libpeloton.la
 
 DEFAULT_INCLUDES =
 
@@ -42,15 +42,26 @@ DEFAULT_INCLUDES =
 # PELOTON LIBRARY
 ######################################################################
 
-libpostgres_CXXFLAGS = $(AM_CXXFLAGS) \
-			  -Wno-unused-variable -Wno-unused-but-set-variable \
-			  -Wno-unused-parameter -Wno-missing-field-initializers \
-			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow
-
 libpeloton_la_SOURCES = \
-			$(brain_FILES)
+						$(brain_FILES) \
+						$(catalog_FILES) \
+						$(backend_FILES) \
+						$(bridge_FILES) \
+						$(common_FILES) \
+						$(concurrency_FILES) \
+						$(executor_FILES) \
+						$(expression_FILES) \
+						$(index_FILES) \
+						$(planner_FILES) \
+						$(scheduler_FILES) \
+						$(storage_FILES)
 
-## HACK: To make use of different include flags for peloton and postgres.
+
+## Use different compiler flags for Peloton and Postgres.
+
+######################################################################
+# LIBPELOTON
+######################################################################
 
 libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
@@ -61,7 +72,9 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
 
-libpeloton_la_LIBADD = libpostgres.la
+######################################################################
+# LIBPOSTGRES
+######################################################################
 
 libpostgres_la_SOURCES = \
 			$(postgres_backend_FILES) \
@@ -75,6 +88,14 @@ libpostgres_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
+
+libpostgres_la_CXXFLAGS = $(AM_CXXFLAGS) \
+			  -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
+			  -Wno-sign-compare -Wno-write-strings
+
+libpeloton_la_LIBADD = libpostgres.la
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -lm -ldw
