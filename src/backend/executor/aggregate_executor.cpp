@@ -45,7 +45,7 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
-  LOG_TRACE("Aggregate Scan executor :: 1 child \n");
+  LOG_INFO("Aggregate Scan executor :: 1 child \n");
 
   // Grab info from plan node and check it
   const planner::AggregateV2Node &node =
@@ -117,7 +117,7 @@ bool AggregateExecutor::DExecute() {
       }
     }
 
-    LOG_TRACE("Looping over tile..");
+    LOG_INFO("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
       auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
@@ -135,10 +135,15 @@ bool AggregateExecutor::DExecute() {
      * To solve this, we always keep two tiles alive --- hopefully not expensive.
      */
     prev_tile.reset(tile.release());
-    LOG_TRACE("Finished processing logical tile");
+    LOG_INFO("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
+  if (aggregator == nullptr) {
+    // TODO: need to refactor
+    LOG_INFO("child returns empty");
+    return false;
+  }
   if (!aggregator->Finalize())
     return false;
 
@@ -161,7 +166,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   done = true;
-  LOG_TRACE("Result tiles : %lu \n", result.size());
+  LOG_INFO("Result tiles : %lu \n", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;
