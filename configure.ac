@@ -33,6 +33,21 @@ AM_PATH_PYTHON
 # LIBRARIES : MM, DL, RT, and M
 ######################################################################
 
+AC_CHECK_LIB([m], [cos], ,
+             AC_MSG_ERROR([Please install libm library], 1))
+
+AC_CHECK_LIB([mm], [mm_version], , 
+             AC_MSG_ERROR([Please install libmm library : libmm-dev], 1))
+
+AC_CHECK_LIB([dl], [dlsym], ,
+             AC_MSG_ERROR([Please install libdl library], 1))
+
+AC_CHECK_LIB([rt], [clock_gettime], ,
+             AC_MSG_ERROR([Please install librt library], 1))
+
+AC_CHECK_LIB([dw], [dwarf_filesrc], ,
+             AC_MSG_ERROR([Please install libdw library : libdw-dev], 1))
+
 ######################################################################
 # OS X Support
 ######################################################################
@@ -86,8 +101,14 @@ MAKEFLAGS="-j$NPROCS"
 # Check for readline support
 AX_LIB_READLINE
 
+# Check for zlib
+AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : libzlib1g-dev]))
+
 # Check for OpenSSL
 AC_CHECK_SSL
+
+# Check for Intel TBB library
+AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
 
 # Check for Boost libraries
 #AX_BOOST_BASE([1.42])
