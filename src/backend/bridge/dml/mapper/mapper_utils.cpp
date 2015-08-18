@@ -60,15 +60,13 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @return      Nothing.
  */
 void PlanTransformer::GetGenericInfoFromScanState(
-    planner::AbstractPlan *&parent,
-    expression::AbstractExpression *&predicate,
-    std::vector<oid_t> &out_col_list,
-    const AbstractScanPlanState *sstate,
+    planner::AbstractPlan *&parent, expression::AbstractExpression *&predicate,
+    std::vector<oid_t> &out_col_list, const AbstractScanPlanState *sstate,
     bool use_projInfo) {
 
   List *qual = sstate->qual;
-  oid_t out_column_count = static_cast<oid_t>(
-      sstate->tts_tupleDescriptor->natts);
+  oid_t out_column_count =
+      static_cast<oid_t>(sstate->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;
@@ -81,9 +79,10 @@ void PlanTransformer::GetGenericInfoFromScanState(
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   if (use_projInfo) {
     project_info.reset(BuildProjectInfoFromTLSkipJunk(sstate->targetlist));
-//    project_info.reset(BuildProjectInfo(pg_proj_info,
-//                                        out_column_count));
   }
+
+  LOG_INFO("project_info : %s",
+           project_info.get() ? project_info->Debug().c_str() : "<NULL>\n");
 
   /*
    * Based on project_info, see whether we should create a functional projection
@@ -146,13 +145,15 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
   ListCell *item;
   std::vector<oid_t> expr_col_ids;
 
-  foreach (item, pg_pi->expr_col_ids) {
+  foreach (item, pg_pi->expr_col_ids)
+  {
     oid_t expr_col_id = lfirst_int(item);
     expr_col_ids.push_back(expr_col_id);
   }
 
   oid_t list_itr = 0;
-  foreach (item, pg_pi->expr_states) {
+  foreach (item, pg_pi->expr_states)
+  {
     ExprState *expr_state = (ExprState *) lfirst(item);
 
     auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
@@ -175,25 +176,28 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
   std::vector<oid_t> out_col_ids, tuple_idxs, in_col_ids;
 
   size_t col_count;
-  foreach (item, pg_pi->out_col_ids) {
+  foreach (item, pg_pi->out_col_ids)
+  {
     oid_t out_col_id = lfirst_int(item);
     out_col_ids.push_back(out_col_id);
   }
   col_count = out_col_ids.size();
   LOG_TRACE("Direct Map :: COL COUNT :: %lu \n", out_col_ids.size());
 
-  foreach (item, pg_pi->tuple_idxs) {
+  foreach (item, pg_pi->tuple_idxs)
+  {
     oid_t tuple_idx = lfirst_int(item);
     tuple_idxs.push_back(tuple_idx);
   }
   assert(col_count == tuple_idxs.size());
-  foreach (item, pg_pi->in_col_ids) {
+  foreach (item, pg_pi->in_col_ids)
+  {
     oid_t in_col_id = lfirst_int(item);
     in_col_ids.push_back(in_col_id);
   }
   assert(col_count == in_col_ids.size());
 
-  for(oid_t col_itr = 0 ; col_itr < col_count ; col_itr++){
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     auto out_col_id = out_col_ids[col_itr];
     auto tuple_idx = tuple_idxs[col_itr];
     auto in_col_id = in_col_ids[col_itr];
@@ -314,8 +318,9 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
     GenericExprState *gstate = (GenericExprState *) lfirst(tl);
     TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
 
-    if (tle->resjunk || !AttributeNumberIsValid(tle->resno)
-        || !AttrNumberIsForUserDefinedAttr(tle->resno)) {
+    if (tle->resjunk
+        || !AttributeNumberIsValid(
+            tle->resno) || !AttrNumberIsForUserDefinedAttr(tle->resno)) {
       LOG_INFO("Skip junk / invalid attribute. \n");
       continue;  // SKIP junk / invalid attributes.
     }
@@ -362,7 +367,7 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
 
       target_list.emplace_back(output_col_id, peloton_expr);
     }
-  } // end foreach
+  }  // end foreach
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));

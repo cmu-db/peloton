@@ -554,7 +554,9 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   info->numphases = agg_plan_state->numphases;
 
   /* Target list and qual */
+  elog(INFO, "PrepareAggState : copying targetlist");
   info->ps_targetlist = CopyExprStateList(agg_plan_state->ss.ps.targetlist);
+  elog(INFO, "PrepareAggState : copying qual");
   info->ps_qual = CopyExprStateList(agg_plan_state->ss.ps.qual);
 
   /* Peraggs */
@@ -563,9 +565,16 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   info->peragg = (AggStatePerAgg) palloc(
       sizeof(struct AggStatePerAggData) * info->numaggs);
   for (int i = 0; i < info->numaggs; i++) {
+    elog(INFO, "PrepareAggState : copying AggrefState");
+
     info->peragg[i] = agg_plan_state->peragg[i];  // Shallow copy
     info->peragg[i].aggrefstate = (AggrefExprState*) CopyExprState(
         (ExprState*) (agg_plan_state->peragg[i].aggrefstate));
+
+    info->peragg[i].sortColIdx = (AttrNumber*) palloc(
+        sizeof(AttrNumber) * info->peragg[i].numSortCols);
+    ::memcpy(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
+             sizeof(AttrNumber) * info->peragg[i].numSortCols);
   }
 
   /* result tuple desc */
@@ -794,7 +803,8 @@ ExprState *CopyExprState(ExprState *expr_state) {
       break;
 
     default: {
-      LOG_ERROR("Seems to be unknown ExprState tag : %u", nodeTag(expr_state));
+      LOG_WARN("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
+               nodeTag(expr_state->expr));
       expr_state_copy = (ExprState *) makeNode(ExprState);
       *expr_state_copy = *expr_state;
     }
