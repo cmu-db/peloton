@@ -28,7 +28,13 @@ public:
 
   TupleRecord( LogRecordType log_record_type)
   : LogRecord(log_record_type)
-  {}
+  {
+    txn_id = INVALID_TXN_ID;
+    db_oid = INVALID_OID;
+    table_oid = INVALID_OID;
+    memset(&itemPointer, 0, sizeof(ItemPointer));
+    data = nullptr;
+  }
 
   TupleRecord( LogRecordType log_record_type,
                const txn_id_t txn_id,
@@ -41,7 +47,8 @@ public:
     txn_id(txn_id), 
     table_oid(table_oid), 
     itemPointer(itemPointer),
-    data(data)
+    data(data),
+    db_oid(db_oid)
   {
     assert(txn_id);
     if( db_oid == INVALID_OID)
@@ -54,7 +61,7 @@ public:
     if( serialized_data_size > 0 ){
       free(serialized_data);
     }
-  }
+  } 
 
   //===--------------------------------------------------------------------===//
   // Serial/Deserialization 
@@ -85,8 +92,6 @@ private:
   // Member Variables
   //===--------------------------------------------------------------------===//
 
-  oid_t db_oid;
-
   txn_id_t txn_id;
 
   oid_t table_oid;
@@ -94,6 +99,8 @@ private:
   ItemPointer itemPointer;
 
   const void* data;
+
+  oid_t db_oid;
 
 };
 

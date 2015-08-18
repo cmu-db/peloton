@@ -117,6 +117,7 @@ void AriesFrontendLogger::Flush(void) {
     //TODO :: record LSN here
   }
 
+  //FIXME Is it right way to use fflush and fsync together? 
   int ret = fflush(logFile);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
