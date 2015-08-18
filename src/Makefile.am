@@ -34,7 +34,7 @@ bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpostgres.la libpeloton.la
+lib_LTLIBRARIES += libpelotonpg.la libpeloton.la
 
 DEFAULT_INCLUDES =
 
@@ -57,7 +57,7 @@ libpeloton_la_SOURCES = \
 						$(storage_FILES)
 
 
-## Use different compiler flags for Peloton and Postgres.
+## Use different compiler flags for Peloton and pelotonpg.
 
 ######################################################################
 # LIBPELOTON
@@ -70,32 +70,31 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
 
-libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
+libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 ######################################################################
-# LIBPOSTGRES
+# LIBPELOTONPG
 ######################################################################
 
-libpostgres_la_SOURCES = \
+libpelotonpg_la_SOURCES = \
 			$(postgres_backend_FILES) \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES)
 
-libpostgres_la_CPPFLAGS = $(AM_CPPFLAGS) \
+libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
 
-libpostgres_la_CXXFLAGS = $(AM_CXXFLAGS) \
+libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-unused-variable -Wno-unused-but-set-variable \
 			  -Wno-unused-parameter -Wno-missing-field-initializers \
 			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
-			  -Wno-sign-compare -Wno-write-strings
-
-libpeloton_la_LIBADD = libpostgres.la
+			  -Wno-sign-compare -Wno-write-strings -Wno-bool-compare \
+			  -msse4.2
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -lm -ldw
@@ -111,7 +110,7 @@ endif
 peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS) 
-peloton_LDADD = libpeloton.la $(TBB_LIBS)
+peloton_LDADD = libpeloton.la libpelotonpg.la $(TBB_LIBS)
 
 ######################################################################
 # THIRD-PARTY INCLUDES
