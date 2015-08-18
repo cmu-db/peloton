@@ -170,8 +170,7 @@ TEST(AggregateTests, SortSumGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumb = std::make_pair(
-      EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 1));
+  planner::AggregatePlan::AggTerm sumb(EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 1));
   agg_terms.push_back(sumb);
 
   // 4) Set up predicate (empty)
@@ -260,10 +259,8 @@ TEST(AggregateTests, SortSumMaxGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumb = std::make_pair(
-      EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 1));
-  planner::AggregatePlan::AggTerm maxc = std::make_pair(
-      EXPRESSION_TYPE_AGGREGATE_MAX, expression::TupleValueFactory(0, 2));
+  planner::AggregatePlan::AggTerm sumb (EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 1));
+  planner::AggregatePlan::AggTerm maxc (EXPRESSION_TYPE_AGGREGATE_MAX, expression::TupleValueFactory(0, 2));
   agg_terms.push_back(sumb);
   agg_terms.push_back(maxc);
 
@@ -444,8 +441,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumC = std::make_pair(
-      EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 2));
+  planner::AggregatePlan::AggTerm sumC (EXPRESSION_TYPE_AGGREGATE_SUM, expression::TupleValueFactory(0, 2));
   agg_terms.push_back(sumC);
 
   // 4) Set up predicate (empty)

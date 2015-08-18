@@ -22,7 +22,7 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression.h"
 #include "backend/expression/expression_util.h"
-#include "backend/planner/merge_join_node.h"
+#include "backend/planner/merge_join_plan.h"
 #include "backend/storage/data_table.h"
 
 #include "mock_executor.h"
@@ -95,8 +95,8 @@ planner::ProjectInfo *CreateProjection() {
                                   std::move(direct_map_list));
 }
 
-std::vector<planner::MergeJoinNode::JoinClause> CreateJoinClauses() {
-  std::vector<planner::MergeJoinNode::JoinClause> join_clauses;
+std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
+  std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
   auto left = expression::TupleValueFactory(0, 0);
   auto right = expression::TupleValueFactory(1, 0);
   bool reversed = false;
@@ -111,7 +111,7 @@ TEST(MergeJoinTests, BaiscTest) {
   // Create plan node.
   auto projction = CreateProjection();
   auto join_clauses = CreateJoinClauses();
-  planner::MergeJoinNode node(nullptr, projction, join_clauses);
+  planner::MergeJoinPlan node(nullptr, projction, join_clauses);
 
   // Run the executor
   executor::MergeJoinExecutor executor(&node, nullptr);
