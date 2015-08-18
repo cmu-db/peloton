@@ -185,7 +185,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
         column_itr++) {
       aggregate_list->aggregates[column_itr] = GetAggInstance(
-          node->GetUniqueAggTerms()[column_itr].first);
+          node->GetUniqueAggTerms()[column_itr].aggtype);
     }
 
     aggregates_map.insert(
@@ -198,10 +198,10 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 
 // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
-    auto predicate = node->GetUniqueAggTerms()[aggno].second;
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
     Value value = ValueFactory::GetIntegerValue(1);
     if(predicate){
-      value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           cur_tuple, nullptr, this->executor_context);
     }
     aggregate_list->aggregates[aggno]->Advance(value);
@@ -291,17 +291,17 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
       // Clean up previous aggregate
       delete aggregates[aggno];
       aggregates[aggno] = GetAggInstance(
-          node->GetUniqueAggTerms()[aggno].first);
+          node->GetUniqueAggTerms()[aggno].aggtype);
     }
   }
 
 // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
       aggno++) {
-    auto predicate = node->GetUniqueAggTerms()[aggno].second;
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
     Value value = ValueFactory::GetIntegerValue(1);
     if(predicate){
-      value = node->GetUniqueAggTerms()[aggno].second->Evaluate(
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           cur_tuple, nullptr, this->executor_context);
     }
     aggregates[aggno]->Advance(value);
