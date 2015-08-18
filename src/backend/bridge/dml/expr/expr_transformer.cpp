@@ -36,7 +36,7 @@ expression::AbstractExpression *ReMapPgFunc(Oid pg_func_id,
 extern std::unordered_map<Oid, peloton::ExpressionType> pg_func_map;
 
 void ExprTransformer::PrintPostgressExprTree(const ExprState *expr_state,
-                                             std::string prefix) {
+								__attribute__((unused)) std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
 
   /* TODO Not complete.
