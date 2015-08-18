@@ -27,7 +27,17 @@ class AggregatePlan : public AbstractPlan {
   AggregatePlan &operator=(const AggregatePlan &) = delete;
   AggregatePlan(AggregatePlan &&) = delete;
 
-  typedef std::pair<ExpressionType, const expression::AbstractExpression*> AggTerm;
+//  typedef std::pair<ExpressionType, const expression::AbstractExpression*> AggTerm;
+
+  class AggTerm {
+   public:
+    ExpressionType first;
+    const expression::AbstractExpression* second;
+
+    AggTerm(ExpressionType et, expression::AbstractExpression* expr)
+      : first(et),
+        second(expr) {}
+  } ;
 
   AggregatePlan(const planner::ProjectInfo* project_info,
                   const expression::AbstractExpression* predicate,

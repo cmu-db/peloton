@@ -59,10 +59,21 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
     unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr);
 
+
+
+
+    auto numDistinctCols = peragg[aggno].numDistinctCols;
+
     LOG_INFO(
-        "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s",
+        "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, numDistinctCols = %d",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
-        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>");
+        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>", numDistinctCols);
+
+    for(int i=0; i < numDistinctCols; i++){
+      LOG_INFO("sortColIdx[%d] : %d \n", i, peragg[aggno].sortColIdx[i]);
+    }
+
+
   }
 
   /* Get Group by columns */
