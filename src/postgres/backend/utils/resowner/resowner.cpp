@@ -124,7 +124,7 @@ typedef struct ResourceReleaseCallbackItem
 	void	   *arg;
 } ResourceReleaseCallbackItem;
 
-static ResourceReleaseCallbackItem *ResourceRelease_callbacks = NULL;
+thread_local static ResourceReleaseCallbackItem *ResourceRelease_callbacks = NULL;
 
 
 /* Internal routines */
