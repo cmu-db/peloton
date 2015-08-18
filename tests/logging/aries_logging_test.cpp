@@ -2,7 +2,6 @@
 
 #include "backend/logging/logmanager.h"
 #include "logging/logging_tests_util.h"
-#include "backend/concurrency/transaction_manager.h"
 
 #include <thread>
 
@@ -14,51 +13,79 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(AriesLoggingTest, logging_start_end) {
-  std::cout << "aries logging test start\n";
 
-  // start logging thread
-  auto& logManager = logging::LogManager::GetInstance();
-  logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
-  std::thread thread(&logging::LogManager::StandbyLogging, 
-                     &logManager, 
-                     logManager.GetMainLoggingType());
+ //FIXME
+ std::string filename = "/home/parallels/git/peloton/build/aries.log";
+ std::remove(filename.c_str());
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+ //TODO :: Make it function?
+ {
+   // start a thread for logging
+   auto& logManager = logging::LogManager::GetInstance();
+   logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
+   std::thread thread(&logging::LogManager::StandbyLogging, 
+       &logManager, 
+       logManager.GetMainLoggingType());
 
-  auto txn = txn_manager.BeginTransaction();
+   // When the frontend logger gets ready to logging,
+   // start logging
+   while(1){
+     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+       logManager.StartLogging();
+       break;
+     }
+   }
 
-  LoggingTestsUtil::CreateDatabase(20000);
+   LoggingTestsUtil::WritingSimpleLog(20000, 10000);
 
-  LoggingTestsUtil::CreateTable(20000, 10000, "test_table");
-  
-  // insert tuples
+   sleep(1);
 
-  // delete tuples
+   if( logManager.EndLogging() ){
+     thread.join();
+   }else{
+     LOG_ERROR("Failed to terminate logging thread"); 
+   }
+ }
 
-  // update tuples
+  sleep(1);
 
-  // abort ??
+  //TODO :: Make it function?
+  {
+    // start a thread for logging
+    auto& logManager = logging::LogManager::GetInstance();
+    logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
+    std::thread thread(&logging::LogManager::StandbyLogging, 
+                       &logManager, 
+                       logManager.GetMainLoggingType());
 
-  LoggingTestsUtil::DropTable(20000, 10000);
-  LoggingTestsUtil::DropDatabase(20000);
-  txn_manager.CommitTransaction(txn);
+    // When the frontend logger gets ready to logging,
+    // start logging
+    while(1){
+      if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+        // Create corresponding database and table
+        LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
+        logManager.StartLogging(); // Recovery
+        break;
+      }
+    }
 
-  sleep(2);
+    //wait recovery
+    while(1){
+      if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
+        break;
+      }
+    }
 
-  if( logManager.EndLogging() ){
-    thread.join();
-  }else{
-    LOG_ERROR("Failed to terminate logging thread"); 
+    // TODO :: check the next oid as well
+    //LoggingTestsUtil::CheckTuples(20000,10000);
+
+    if( logManager.EndLogging() ){
+      thread.join();
+    }else{
+      LOG_ERROR("Failed to terminate logging thread"); 
+    }
+    LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
   }
-
-
-  // TODO 
-
-  // create another database
-
-  // create table .. using bootstrap?
-
-  // read log file and recovery 
 
 }
 
