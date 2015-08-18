@@ -24,6 +24,7 @@ namespace logging {
  */
 bool TupleRecord::Serialize(){
 
+ 
   bool status = true;
   CopySerializeOutput output;
 
@@ -40,7 +41,7 @@ bool TupleRecord::Serialize(){
     }break;
 
     case LOGRECORD_TYPE_TUPLE_DELETE:{
-    /* nothing to do now */
+    // nothing to do now 
     }break;
 
     default:{
@@ -51,6 +52,7 @@ bool TupleRecord::Serialize(){
 
   serialized_data_size = output.Size();
   serialized_data = (char*)malloc(serialized_data_size);
+  memset( serialized_data, 0, serialized_data_size);
   memcpy( serialized_data, output.Data(), serialized_data_size);
 
   return status;
