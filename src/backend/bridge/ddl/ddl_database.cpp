@@ -82,7 +82,7 @@ bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
  * @param database_oid database id
  * @return true if we created a database, false otherwise
  */
-bool DDLDatabase::CreateDatabase(Oid database_oid) {
+bool DDLDatabase::CreateDatabase(oid_t database_oid) {
   if (database_oid == INVALID_OID) return false;
 
   auto &manager = catalog::Manager::GetInstance();
@@ -105,7 +105,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
  * @param database_oid database id.
  * @return true if we dropped the database, false otherwise
  */
-bool DDLDatabase::DropDatabase(Oid database_oid) {
+bool DDLDatabase::DropDatabase(oid_t database_oid) {
   auto &manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 
