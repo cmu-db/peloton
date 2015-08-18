@@ -3863,6 +3863,9 @@ processCancelRequest(Port *port, void *pkt)
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 
+    // TODO: Peloton Changes
+    InitializeMaxBackends();
+
     InitializeGUCOptions(false);
 
     /* Detangle from postmaster */
@@ -4157,8 +4160,6 @@ processCancelRequest(Port *port, void *pkt)
      * packet).
      */
     status = ProcessStartupPacket(port, false);
-
-    elog(LOG, "Received Startup Packet from client :: %d", status);
 
     /*
      * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
@@ -5181,8 +5182,6 @@ processCancelRequest(Port *port, void *pkt)
     int			cnt = 0;
 
     // TODO: Peloton Changes
-    InitializeMaxBackends();
-    printf("CountChildren :: MaxBackends :: %d \n", MaxBackends);
     return cnt;
 
     dlist_foreach(iter, &BackendList)
