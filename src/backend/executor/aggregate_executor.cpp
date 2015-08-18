@@ -75,7 +75,7 @@ bool AggregateExecutor::DInit() {
 bool AggregateExecutor::DExecute() {
   // Already performed the aggregation
   if (done) {
-    if (result_itr == result.size()) {
+    if (result_itr == INVALID_OID || result_itr == result.size()) {
       return false;
     } else {
       // Return appropriate tile and go to next tile
@@ -131,14 +131,20 @@ bool AggregateExecutor::DExecute() {
      * This is critical: We must not release the tile immediately because
      * the prev_tuple may still be referenced in next iteration by some aggregators.
      * To solve this, we always keep two tiles alive --- hopefully not expensive.
+     *
+     * TODO: We can solve this but forcing the aggregators to keep a local copy
+     * of the 'previous' tuple, instead of just a reference,
+     * so that we can directly release previous tile.
      */
     prev_tile.reset(tile.release());
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator->Finalize())
+  if (!aggregator || !aggregator->Finalize()){
+    done = true;
     return false;
+  }
 
   prev_tile.reset(nullptr);
 
