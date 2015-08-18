@@ -125,7 +125,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
  */
 void DDLUtils::ParsingCreateStmt(
     CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos,
-    std::vector<catalog::ForeignKey> &foreign_keys) {
+	__attribute__((unused))std::vector<catalog::ForeignKey> &foreign_keys) {
   assert(Cstmt);
 
   //===--------------------------------------------------------------------===//
