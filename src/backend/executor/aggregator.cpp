@@ -13,6 +13,8 @@
 #include "backend/executor/aggregator.h"
 #include "backend/common/logger.h"
 
+#include <set>
+
 namespace peloton {
 namespace executor {
 
@@ -55,6 +57,38 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 
   return aggregator;
 }
+
+/* Handle distinct */
+Agg::~Agg(){
+  if(is_distinct_){
+    for(auto val : distinct_set_){
+      val.FreeUninlinedData();
+    }
+  }
+}
+
+void Agg::Advance(const Value val){
+  if(is_distinct_){
+    // Insert a deep copy
+    distinct_set_.insert(ValueFactory::Clone(val));
+  }
+  else{
+    DAdvance(val);
+  }
+
+}
+
+
+
+Value Agg::Finalize(){
+  if(is_distinct_){
+    for(auto val : distinct_set_){
+      DAdvance(val);
+    }
+  }
+  return DFinalize();
+}
+
 
 /*
  * Helper method responsible for inserting the results of the aggregation

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
@@ -34,10 +35,26 @@ namespace executor {
  */
 class Agg {
  public:
-  virtual ~Agg() {
+  virtual ~Agg();
+
+  void SetDistinct(bool distinct) {
+    is_distinct_ = distinct;
   }
-  virtual void Advance(const Value val) = 0;
-  virtual Value Finalize() = 0;
+
+  void Advance(const Value val);
+  Value Finalize();
+
+  virtual void DAdvance(const Value val) = 0;
+  virtual Value DFinalize() = 0;
+
+ private:
+
+  typedef std::unordered_set<Value, Value::hash, Value::equal_to> DistinctSetType;
+
+  DistinctSetType distinct_set_;
+
+  bool is_distinct_ = false;
+
 };
 
 class SumAgg : public Agg {
@@ -47,7 +64,7 @@ class SumAgg : public Agg {
     // aggregate initialized on first advance
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -59,7 +76,7 @@ class SumAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -80,11 +97,11 @@ class AvgAgg : public Agg {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
 
-  void Advance(const Value val) {
-    this->Advance(val, default_delta);
+  void DAdvance(const Value val) {
+    this->DAdvance(val, default_delta);
   }
 
-  void Advance(const Value val, const Value delta) {
+  void DAdvance(const Value val, const Value delta) {
     if (val.IsNull()) {
       return;
     }
@@ -108,7 +125,7 @@ class AvgAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (count == 0) {
       return ValueFactory::GetNullValue();
     }
@@ -137,14 +154,14 @@ class CountAgg : public Agg {
       : count(0) {
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
     count++;
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     return ValueFactory::GetBigIntValue(count);
   }
 
@@ -158,11 +175,11 @@ class CountStarAgg : public Agg {
       : count(0) {
   }
 
-  void Advance(const Value val __attribute__((unused))) {
+  void DAdvance(const Value val __attribute__((unused))) {
     ++count;
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     return ValueFactory::GetBigIntValue(count);
   }
 
@@ -177,7 +194,7 @@ class MaxAgg : public Agg {
     aggregate.SetNull();
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -189,7 +206,7 @@ class MaxAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -209,7 +226,7 @@ class MinAgg : public Agg {
     aggregate.SetNull();
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -222,7 +239,7 @@ class MinAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -302,8 +319,7 @@ class HashAggregator : public AbstractAggregator {
  public:
   HashAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext,
-                 size_t num_input_columns);
+                 executor::ExecutorContext* econtext, size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
