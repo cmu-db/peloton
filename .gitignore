@@ -38,8 +38,6 @@ cscope.out
 autoconf/aclocal.m4
 autoconf/autom4te.cache
 /compile_commands.json
-common.am
-configure.ac
 
 #==============================================================================#
 # Directories to ignore (do not add trailing '/'s, they skip symlinks).
