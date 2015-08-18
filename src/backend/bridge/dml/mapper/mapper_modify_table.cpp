@@ -62,7 +62,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state, const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, __attribute__((unused)) const TransformOptions options) {
   planner::AbstractPlanNode *plan_node = nullptr;
 
   /* Resolve result table */

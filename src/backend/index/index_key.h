@@ -163,7 +163,7 @@ class IntsKey {
   }
 
   const storage::Tuple GetTupleForComparison(
-      const catalog::Schema *key_schema) {
+		  __attribute__((unused)) const catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
 
@@ -528,7 +528,7 @@ class TupleKey {
 
   // Set a key from a table-schema tuple.
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
-                           const catalog::Schema *key_schema) {
+		  	  __attribute__((unused)) const catalog::Schema *key_schema) {
     assert(tuple);
     assert(indices);
     column_indices = indices;
