@@ -3857,11 +3857,7 @@ processCancelRequest(Port *port, void *pkt)
   }
 
   static void BackendTask(Backend  *bn, Port *port) {
-
     free(bn);
-
-    //bn->tid = GetBackendThreadId();
-    //elog(LOG, "Starting Backend :: TID  %d \n", bn->pid);
 
     // TODO: Peloton Changes
     MemoryContextInit();
@@ -5184,21 +5180,17 @@ processCancelRequest(Port *port, void *pkt)
     dlist_iter	iter;
     int			cnt = 0;
 
-    printf("CountChildren :: \n");
+    // TODO: Peloton Changes
+    InitializeMaxBackends();
+    printf("CountChildren :: MaxBackends :: %d \n", MaxBackends);
+    return cnt;
 
     dlist_foreach(iter, &BackendList)
     {
       Backend    *bp = dlist_container(Backend, elem, iter.cur);
 
-      printf("bp dead end :: %d bp : %p BackendId : %d \n",
-             bp->dead_end, bp, bp->pid);
-
-      sleep(3);
-
       if (bp->dead_end)
         continue;
-
-      printf("Count :: %d \n", cnt);
 
       /*
        * Since target == BACKEND_TYPE_ALL is the most common case, we test
