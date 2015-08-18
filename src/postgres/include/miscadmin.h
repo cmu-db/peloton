@@ -153,7 +153,7 @@ extern thread_local bool ExitOnAnyError;
 extern thread_local PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
-extern int	MaxBackends;
+extern thread_local int	MaxBackends;
 extern int	MaxConnections;
 extern int	max_worker_processes;
 
