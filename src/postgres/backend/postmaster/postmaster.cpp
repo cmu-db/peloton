@@ -384,7 +384,7 @@ static void sigusr1_handler(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
-//static void CleanupBackend(int pid, int exitstatus);
+static void CleanupBackend(int pid, int exitstatus);
 static bool CleanupBackgroundWorker(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
@@ -392,7 +392,6 @@ static void LogChildExit(int lev, const char *procname,
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
-// TODO: Peloton Changes
 static void ExitPostmaster(int status);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
@@ -417,6 +416,8 @@ static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
 static void InitPostmasterDeathWatchHandle(void);
+
+static int GetBackendThreadId(void);
 
 #ifdef EXEC_BACKEND
 
@@ -2361,7 +2362,6 @@ processCancelRequest(Port *port, void *pkt)
 #endif
   }
 
-
   /*
    * reset_shared -- reset shared memory and semaphores
    */
@@ -3033,7 +3033,7 @@ processCancelRequest(Port *port, void *pkt)
    * GetBackendThreadID
    *
    */
-  int GetBackendThreadId(void) {
+  static int GetBackendThreadId(void) {
     std::hash<std::thread::id> hasher;
     uint16_t thread_id = hasher(std::this_thread::get_id());
 
@@ -3047,7 +3047,7 @@ processCancelRequest(Port *port, void *pkt)
    *
    * If you change this, see also CleanupBackgroundWorker.
    */
-  void
+  static void
   CleanupBackend(int pid,
                  int exitstatus)	/* child's exit status. */
   {
