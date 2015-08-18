@@ -80,7 +80,7 @@ bool BridgeTest::CheckColumn(catalog::Column &column, std::string column_name,
 bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
                                            ConstraintType constraint_type,
                                            std::string constraint_name,
-                                           int constraint_count,
+                                           unsigned int constraint_count,
                                            int foreign_key_offset) {
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
   assert(constraint_infos[0].GetType() == constraint_type);
@@ -89,7 +89,7 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
     assert(strcmp(constraint_infos[0].GetName().c_str(),
                   constraint_name.c_str()) == 0);
 
-  assert(constraint_infos.size() == (unsigned int)constraint_count);
+  assert(constraint_infos.size() == constraint_count);
   if (constraint_type == CONSTRAINT_TYPE_FOREIGN)
     assert(constraint_infos[0].GetForeignKeyListOffset() == foreign_key_offset);
 
@@ -135,8 +135,8 @@ bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
  */
 bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
                                  oid_t pktable_oid, std::string constraint_name,
-                                 int pk_column_names_count,
-                                 int fk_column_names_count,
+                                 unsigned int pk_column_names_count,
+                                 unsigned int fk_column_names_count,
                                  char fk_update_action, char fk_delete_action) {
   assert(foreign_key->GetSinkTableOid() == pktable_oid);
   assert(strcmp((foreign_key->GetConstraintName()).c_str(),
@@ -145,8 +145,8 @@ bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
   std::vector<std::string> pk_column_names = foreign_key->GetPKColumnNames();
   std::vector<std::string> fk_column_names = foreign_key->GetFKColumnNames();
 
-  assert(pk_column_names.size() == (unsigned int)pk_column_names_count);
-  assert(fk_column_names.size() == (unsigned int)fk_column_names_count);
+  assert(pk_column_names.size() == pk_column_names_count);
+  assert(fk_column_names.size() == fk_column_names_count);
 
   assert(foreign_key->GetUpdateAction() == fk_update_action);
   assert(foreign_key->GetDeleteAction() == fk_delete_action);
