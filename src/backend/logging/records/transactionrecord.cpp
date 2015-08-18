@@ -23,6 +23,7 @@ bool TransactionRecord::Serialize(){
   
   serialized_data_size = output.Size();
   serialized_data = (char*)malloc(serialized_data_size);
+  memset( serialized_data, 0, serialized_data_size);
   memcpy( serialized_data, output.Data(), serialized_data_size);
 
   return status;

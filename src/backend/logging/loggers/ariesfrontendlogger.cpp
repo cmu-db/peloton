@@ -110,7 +110,10 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 void AriesFrontendLogger::Flush(void) {
 
   for( auto record : aries_global_queue ){
-    fwrite( record->GetSerializedData(), sizeof(char), record->GetSerializedDataSize(), logFile);
+    fwrite( record->GetSerializedData(), 
+            sizeof(char), 
+            record->GetSerializedDataSize(), 
+            logFile);
     //TODO :: record LSN here
   }
 
@@ -124,6 +127,9 @@ void AriesFrontendLogger::Flush(void) {
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
 
+  for( auto record : aries_global_queue ){
+    delete record;
+  }
   aries_global_queue.clear();
 }
 

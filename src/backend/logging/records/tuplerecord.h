@@ -34,7 +34,9 @@ public:
                const txn_id_t txn_id,
                oid_t table_oid,
                ItemPointer itemPointer,
-               const void* data)
+               const void* data,
+               oid_t db_oid = INVALID_OID
+               )
   : LogRecord(log_record_type), 
     txn_id(txn_id), 
     table_oid(table_oid), 
@@ -42,14 +44,16 @@ public:
     data(data)
   {
     assert(txn_id);
-    db_oid = bridge::Bridge::GetCurrentDatabaseOid();
+    if( db_oid == INVALID_OID)
+      db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     assert(db_oid);
     assert(table_oid);
   }
 
   ~TupleRecord(){
-    if( serialized_data_size > 0 )
+    if( serialized_data_size > 0 ){
       free(serialized_data);
+    }
   }
 
   //===--------------------------------------------------------------------===//
