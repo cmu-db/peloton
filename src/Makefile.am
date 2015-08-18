@@ -7,10 +7,6 @@
 ## Common flags
 include $(top_srcdir)/common.am
 
-PG_CXXFLAGS = -Wno-unused-variable -Wno-unused-but-set-variable \
-			  -Wno-unused-parameter -Wno-missing-field-initializers \
-			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow
-
 ######################################################################
 # SUBDIRS
 ######################################################################
@@ -46,23 +42,13 @@ DEFAULT_INCLUDES =
 # PELOTON LIBRARY
 ######################################################################
 
+libpostgres_CXXFLAGS = $(AM_CXXFLAGS) \
+			  -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow
+
 libpeloton_la_SOURCES = \
-			$(postgres_backend_FILES) \
-			$(postgres_common_FILES) \
-			$(postgres_port_FILES) \
-			$(postgres_timezone_FILES) \
-			$(brain_FILES) \
-			$(catalog_FILES) \
-			$(backend_FILES) \
-			$(bridge_FILES) \
-			$(common_FILES) \
-			$(concurrency_FILES) \
-			$(executor_FILES) \
-			$(expression_FILES) \
-			$(index_FILES) \
-			$(planner_FILES) \
-			$(scheduler_FILES) \
-			$(storage_FILES)
+			$(brain_FILES)
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
@@ -74,6 +60,21 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 $(third_party_INCLUDES)
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2
+
+libpeloton_la_LIBADD = libpostgres.la
+
+libpostgres_la_SOURCES = \
+			$(postgres_backend_FILES) \
+			$(postgres_common_FILES) \
+			$(postgres_port_FILES) \
+			$(postgres_timezone_FILES)
+
+libpostgres_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 $(third_party_INCLUDES)
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -lm -ldw
