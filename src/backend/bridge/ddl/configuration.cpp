@@ -48,8 +48,6 @@ ConfigManager::BuildConfigMap() {
 
 		count++;
 	}
-	int bool_count = count;
-
 
 	/* For int options */
 	count = 0;
