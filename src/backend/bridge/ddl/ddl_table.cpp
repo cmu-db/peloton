@@ -61,25 +61,14 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
       assert(relation_oid);
 
       std::vector<catalog::Column> column_infos;
-      std::vector<catalog::ForeignKey> foreign_keys;
-
-      bool status;
 
       //===--------------------------------------------------------------------===//
       // CreateStmt --> ColumnInfo --> CreateTable
       //===--------------------------------------------------------------------===//
       if (schema != NULL) {
-        DDLUtils::ParsingCreateStmt(Cstmt, column_infos, foreign_keys);
+        DDLUtils::ParsingCreateStmt(Cstmt, column_infos);
 
         DDLTable::CreateTable(relation_oid, relation_name, column_infos);
-      }
-
-      //===--------------------------------------------------------------------===//
-      // Set Reference Tables
-      //===--------------------------------------------------------------------===//
-      status = DDLTable::SetReferenceTables(foreign_keys, relation_oid);
-      if (status == false) {
-        LOG_WARN("Failed to set reference tables");
       }
     }
   }
