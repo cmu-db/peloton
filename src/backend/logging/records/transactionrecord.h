@@ -18,6 +18,12 @@ public:
   : LogRecord(log_record_type), txn_id(txn_id)
   {}
 
+  ~TransactionRecord(){
+    if( serialized_data_size > 0 ){
+      free(serialized_data);
+    }
+  }
+
   //===--------------------------------------------------------------------===//
   // Serial/Deserialization 
   //===--------------------------------------------------------------------===//
