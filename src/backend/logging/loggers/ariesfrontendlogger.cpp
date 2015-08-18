@@ -27,6 +27,7 @@
 namespace peloton {
 namespace logging {
 
+//TODO:: Comment
 AriesFrontendLogger::AriesFrontendLogger(){
 
   logging_type = LOGGING_TYPE_ARIES;
@@ -52,7 +53,6 @@ AriesFrontendLogger::~AriesFrontendLogger(){
 /**
  * @brief MainLoop
  */
-//FIXME :: Performance issue remains
 void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
@@ -62,8 +62,10 @@ void AriesFrontendLogger::MainLoop(void) {
   }
 
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
-    case LOGGING_STATUS_TYPE_ONGOING:
+    case LOGGING_STATUS_TYPE_RECOVERY:{
       Recovery();
+      logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
+    }
     break;
 
     default:
@@ -105,7 +107,7 @@ void AriesFrontendLogger::CollectLogRecord(void) {
 }
 
 /**
- * @brief flush all record, for now it's just printing out
+ * @brief flush all record to the file
  */
 void AriesFrontendLogger::Flush(void) {
 
@@ -187,15 +189,15 @@ void AriesFrontendLogger::Recovery() {
     AbortRemainedTxnInRecoveryTable();
   }
 
-//After finishing recovery, set the next oid with maximum oid
-//  auto &manager = catalog::Manager::GetInstance();
-//  assert(max_oid);
-//  manager.SetNextOid(max_oid);
+  //After finishing recovery, set the next oid with maximum oid
+  auto &manager = catalog::Manager::GetInstance();
+  auto max_oid = manager.GetNextOid();
+  manager.SetNextOid(max_oid);
 }
 
 /**
  * @brief Read single byte so that we can distinguish the log record type
- * @return LogRecordType otherwise return invalid log record type if there is no more log in the log file
+ * @return log record type otherwise return invalid log record type, which menas there is no more log in the log file
  */
 LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
   char buffer;
@@ -210,7 +212,7 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
 
 /**
  * @brief Measure the size of log file
- * @return the size if a file exists otherwise 0
+ * @return the size if the log file exists otherwise 0
  */
 size_t AriesFrontendLogger::LogFileSize(){
   struct stat logStats;   
@@ -224,6 +226,7 @@ size_t AriesFrontendLogger::LogFileSize(){
 
 // TupleRecord consiss of two frame ( header and Body)
 // Transaction Record has a single frame
+//TODO:: Comment
 size_t AriesFrontendLogger::GetNextFrameSize(){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
@@ -252,6 +255,7 @@ size_t AriesFrontendLogger::GetLogRecordCount() const{
   return aries_global_queue.size();
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
 
   auto txn_record_size = GetNextFrameSize();
@@ -264,6 +268,7 @@ void AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
   txnRecord.Deserialize(logTxnRecord);
 }
 
+//TODO:: Comment
 bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   auto header_size = GetNextFrameSize();
@@ -281,6 +286,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
   return true;
 }
 
+//TODO:: Comment
 storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
                                                          Pool *pool){
       // Measure the body size of LogRecord
@@ -301,6 +307,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
       return tuple;
 }
 
+//TODO:: Comment
 storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
@@ -309,12 +316,14 @@ storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
   return table;
 }
 
+//TODO:: Comment
 storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   return tile_group;
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
                                      concurrency::Transaction* source){
   auto inserted_tuples = source->GetInsertedTuples();
@@ -342,6 +351,7 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
 
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 
   auto inserted_tuples = txn->GetInsertedTuples();
@@ -365,6 +375,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   txn->ResetStates();
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
   for(auto  txn : txn_table){
     auto curr_txn = txn.second;
@@ -373,6 +384,7 @@ void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
   }
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
@@ -396,12 +408,12 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
  
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
-    //FIXME in this case, data table's # of tuples isn't updated
     table->AddTileGroupWithOid(tile_group_id);
     auto tile_group = table->GetTileGroupById(tile_group_id);
-    tile_group->InsertTuple(tuple_slot/*XXX:CHECK*/, tuple);
+    tile_group->InsertTuple(tuple_slot, tuple);
     ItemPointer location(tile_group_id, tuple_slot);
     txn->RecordInsert(location);
+    table->IncreaseNumberOfTuplesBy(1);
   }else{
     ItemPointer location = table->InsertTuple(recovery_txn, tuple);
     if (location.block == INVALID_OID) {
@@ -415,6 +427,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   delete backend;
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_DELETE);
@@ -466,6 +479,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   delete backend;
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::AddTxnToRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
@@ -479,6 +493,7 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
   LOG_INFO("Added txd id %d object in table",(int)txn_id);
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
@@ -493,6 +508,7 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   LOG_INFO("Erase txd id %d object in table",(int)txn_id);
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction* recovery_txn) {
 
   // read transaction information from the log file
@@ -509,6 +525,7 @@ void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction
   LOG_INFO("Commit txd id %d object in table",(int)txn_id);
 }
 
+//TODO:: Comment
 void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // read transaction information from the log file

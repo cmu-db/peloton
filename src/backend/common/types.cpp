@@ -645,6 +645,9 @@ std::string LoggingStatusToString(LoggingStatus type) {
     case LOGGING_STATUS_TYPE_STANDBY: {
       return "LOGGING_STATUS_TYPE_STANDBY";
     }
+    case LOGGING_STATUS_TYPE_RECOVERY: {
+      return "LOGGING_STATUS_TYPE_RECOVERY";
+    }
     case LOGGING_STATUS_TYPE_ONGOING: {
       return "LOGGING_STATUS_TYPE_ONGOING";
     }
