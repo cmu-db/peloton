@@ -86,8 +86,11 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
 void TupleRecord::DeserializeHeader(CopySerializeInput& input){
   input.ReadInt();
   db_oid = (oid_t)(input.ReadShort());
+  assert(db_oid);
   table_oid = (oid_t)(input.ReadShort());
+  assert(table_oid);
   txn_id = (txn_id_t)(input.ReadLong());
+  assert(txn_id);
   itemPointer.block = (oid_t)(input.ReadShort());
   itemPointer.offset = (oid_t)(input.ReadShort());
 }
