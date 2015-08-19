@@ -253,11 +253,6 @@ bool HashAggregator::Finalize() {
     }
   }
 
-// TODO: if no record exists in input_table, we have to output a null record
-// only when it doesn't have GROUP BY. See difference of these cases:
-//   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
-//   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
-
   return true;
 }
 
@@ -267,40 +262,58 @@ bool HashAggregator::Finalize() {
 
 SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
                                    storage::DataTable *output_table,
-                                   executor::ExecutorContext* econtext)
-    : AbstractAggregator(node, output_table, econtext) {
+                                   executor::ExecutorContext* econtext,
+                                   size_t num_input_columns)
+    : AbstractAggregator(node, output_table, econtext),
+      delegate_tuple_(&delegate_tuple_values_), // Bind value vector to wrapper container tuple
+      num_input_columns_(num_input_columns) {
 
   aggregates = new Agg*[node->GetUniqueAggTerms().size()];
   ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
 
+  assert(delegate_tuple_values_.empty());
+
 }
 
 SortedAggregator::~SortedAggregator() {
-// Clean up aggregators
+  // Clean up aggregators
   for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
       column_itr++) {
     delete aggregates[column_itr];
   }
   delete[] aggregates;
+
+  // Clean current group keys
+  for(auto value : delegate_tuple_values_){
+    value.FreeUninlinedData();
+  }
 }
 
 bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   bool start_new_agg = false;
 
 // Check if we are starting a new aggregate tuple
-  if (prev_tuple == nullptr) {
-    LOG_TRACE("Prev tuple is nullptr!");
+  if (delegate_tuple_values_.empty()) {  // No current group
+    LOG_TRACE("Current group keys are empty!");
     start_new_agg = true;
-  } else {
-    // Compare group by columns
-    for (oid_t grpby_colno = 0; grpby_colno < node->GetGroupbyColIds().size();
-        grpby_colno++) {
-      Value lval = next_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
-      Value rval = prev_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
+  } else {  // Current group exists
+    assert(delegate_tuple_values_.size() == num_input_columns_);
+    // Check whether crossed group boundary
+    for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
+        grpColOffset++) {
+      Value lval = next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]);
+      Value rval = delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]);
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal) {
         LOG_TRACE("Group-by columns changed.");
+
+        // Call helper to output the current group result
+        if (!Helper(node, aggregates, output_table, &delegate_tuple_,
+                    this->executor_context)) {
+          return false;
+        }
+
         start_new_agg = true;
         break;
       }
@@ -310,12 +323,6 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   // If we have started a new aggregate tuple
   if (start_new_agg) {
     LOG_TRACE("Started a new group!");
-
-    if (prev_tuple
-        && !Helper(node, aggregates, output_table, prev_tuple,
-                   this->executor_context)) {
-      return false;
-    }
 
     // Create aggregate
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
@@ -327,9 +334,20 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
       bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
       aggregates[aggno]->SetDistinct(distinct);
     }
+
+    // Update delegate tuple values
+    for(auto value : delegate_tuple_values_){
+      value.FreeUninlinedData();
+    }
+    delegate_tuple_values_.clear();
+
+    for(oid_t col_id = 0; col_id < num_input_columns_; col_id++){
+      Value val = next_tuple->GetValue(col_id);
+      delegate_tuple_values_.push_back(ValueFactory::Clone(val));
+    }
   }
 
-// Update the aggregation calculation
+  // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
     Value value = ValueFactory::GetIntegerValue(1);
@@ -340,22 +358,17 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     aggregates[aggno]->Advance(value);
   }
 
-  prev_tuple = next_tuple;
-
   return true;
 }
 
 bool SortedAggregator::Finalize() {
-  if (Helper(node, aggregates, output_table, prev_tuple,
-             this->executor_context) ==
-             false) {
+
+  // Call helper to output the current group result
+  if (!delegate_tuple_values_.empty()
+      && !Helper(node, aggregates, output_table, &delegate_tuple_,
+                 this->executor_context)) {
     return false;
   }
-
-// TODO: if no record exists in input_table, we have to output a null record
-// only when it doesn't have GROUP BY. See difference of these cases:
-//   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
-//   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
 }
@@ -402,6 +415,11 @@ bool PlainAggregator::Finalize() {
               this->executor_context)) {
     return false;
   }
+
+  // TODO: if no record exists in input_table, we have to output a null record
+  // only when it doesn't have GROUP BY. See difference of these cases:
+  //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
+  //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
 

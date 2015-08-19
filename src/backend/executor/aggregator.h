@@ -351,7 +351,8 @@ class SortedAggregator : public AbstractAggregator {
  public:
   SortedAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext);
+                 executor::ExecutorContext* econtext,
+                 size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
@@ -360,7 +361,10 @@ class SortedAggregator : public AbstractAggregator {
   ~SortedAggregator();
 
  private:
-  AbstractTuple *prev_tuple = nullptr;
+//  AbstractTuple *prev_tuple = nullptr;
+  std::vector<Value> delegate_tuple_values_;
+  const expression::ContainerTuple<std::vector<Value>> delegate_tuple_;
+  const size_t num_input_columns_;
   Agg** aggregates;
 
 };
