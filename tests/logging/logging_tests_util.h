@@ -27,19 +27,15 @@ public:
 
 private:
 
-  static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
-
-  static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
+  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
 
   static void CheckTuples(oid_t db_oid, oid_t table_oid);
 
   static void CheckNextOid(void);
 
-  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
+  static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void CreateDatabase(oid_t db_oid);
-
-  static void DropDatabase(oid_t db_oid);
 
   static storage::DataTable* CreateSimpleTable(oid_t db_oid, oid_t table_oid);
 
@@ -48,6 +44,10 @@ private:
   static std::vector<storage::Tuple*> CreateSimpleTuples(catalog::Schema* schema);
 
   static void InsertTuples(storage::DataTable* table);
+
+  static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
+
+  static void DropDatabase(oid_t db_oid);
 
 };
 

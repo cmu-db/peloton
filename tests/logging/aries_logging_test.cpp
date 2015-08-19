@@ -22,7 +22,7 @@ TEST(AriesLoggingTest, logging_start_end) {
  // writing simple log file
  LoggingTestsUtil::PrepareLogFile();
 
- sleep(1);
+ sleep(3);
 
  // recover database and check the tuples
  LoggingTestsUtil::CheckTupleAfterRecovery();
