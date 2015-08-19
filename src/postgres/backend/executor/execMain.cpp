@@ -1544,8 +1544,6 @@ ExecutePlan(EState *estate,
 	TupleTableSlot *slot;
 	long		current_tuple_count;
 
-  elog(LOG, "DML Query Start :: %d TupleCount : %ld", operation, numberTuples);
-
 	/*
 	 * initialize local variables
 	 */
@@ -1606,8 +1604,6 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
-
-  elog(LOG, "DML Query Done :: %d TupleCount : %ld", operation, numberTuples);
 
 }
 
