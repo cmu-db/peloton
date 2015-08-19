@@ -21,7 +21,7 @@ class LoggingTestsUtil{
 
 public:
 
-  static void PrepareLogFile(void);
+  static bool PrepareLogFile(void);
 
   static void CheckTupleAfterRecovery(void);
 
@@ -41,11 +41,13 @@ private:
 
   static std::vector<catalog::Column> CreateSimpleColumns(void);
 
-  static std::vector<storage::Tuple*> CreateSimpleTuples(catalog::Schema* schema);
+  static std::vector<storage::Tuple*> CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples);
 
   static void InsertTuples(storage::DataTable* table);
 
   static void DeleteTuples(storage::DataTable* table);
+
+  static void UpdateTuples(storage::DataTable* table);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
