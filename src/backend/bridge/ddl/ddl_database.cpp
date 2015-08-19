@@ -14,6 +14,7 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "postmaster/peloton.h"
 #include "nodes/parsenodes.h"
 #include "commands/dbcommands.h"
 

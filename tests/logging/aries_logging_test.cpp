@@ -16,8 +16,10 @@ TEST(AriesLoggingTest, logging_start_end) {
 
  //FIXME
  std::string filename = "/home/parallels/git/peloton/build/aries.log";
- std::remove(filename.c_str());
-
+ if( std::remove(filename.c_str()) < 0 ){
+   LOG_ERROR("Failed to remove aries logfile"); 
+ }
+   
  //TODO :: Make it function?
  {
    // start a thread for logging
@@ -51,6 +53,8 @@ TEST(AriesLoggingTest, logging_start_end) {
 
   //TODO :: Make it function?
   {
+    LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
+
     // start a thread for logging
     auto& logManager = logging::LogManager::GetInstance();
     logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
@@ -63,21 +67,24 @@ TEST(AriesLoggingTest, logging_start_end) {
     while(1){
       if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
         // Create corresponding database and table
-        LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
-        logManager.StartLogging(); // Recovery
+        logManager.StartLogging(); // Change status to recovery
         break;
       }
     }
 
     //wait recovery
     while(1){
+      // escape when recovery is done
       if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
         break;
       }
     }
 
-    // TODO :: check the next oid as well
-    //LoggingTestsUtil::CheckTuples(20000,10000);
+    // Check the tuples
+    LoggingTestsUtil::CheckTuples(20000,10000);
+
+    // Check the next oid
+    LoggingTestsUtil::CheckNextOid();
 
     if( logManager.EndLogging() ){
       thread.join();
