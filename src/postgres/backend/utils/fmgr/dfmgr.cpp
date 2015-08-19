@@ -663,7 +663,7 @@ find_in_dynamic_libpath(const char *basename)
 void	  **
 find_rendezvous_variable(const char *varName)
 {
-	thread_local static HTAB *rendezvousHash = NULL;
+	static HTAB *rendezvousHash = NULL;
 
 	rendezvousHashEntry *hentry;
 	bool		found;

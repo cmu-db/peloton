@@ -170,7 +170,7 @@ typedef struct lwlock_stats
 	int			spin_delay_count;
 }	lwlock_stats;
 
-thread_local static HTAB *lwlock_stats_htab;
+static HTAB *lwlock_stats_htab;
 static lwlock_stats lwlock_stats_dummy;
 #endif
 
