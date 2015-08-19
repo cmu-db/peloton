@@ -108,7 +108,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       "aggstrategy : %s\n",
       (AGG_HASHED == aggstrategy) ? "HASH" : (AGG_SORTED ? "SORT" : "PLAIN"));
 
-  PelotonAggregateType agg_type = AGGREGATE_TYPE_INVALID;
+  PelotonAggType agg_type = AGGREGATE_TYPE_INVALID;
 
   switch (aggstrategy) {
     case AGG_SORTED:
