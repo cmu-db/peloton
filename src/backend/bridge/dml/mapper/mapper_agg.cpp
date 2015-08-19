@@ -57,10 +57,10 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
     }
 
-    unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr);
+    /* XXX Only Trivial case */
+    bool distinct = (peragg[aggno].numDistinctCols > 0);
 
-
-
+    unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr, distinct);
 
     auto numDistinctCols = peragg[aggno].numDistinctCols;
 
