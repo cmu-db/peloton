@@ -42,6 +42,11 @@ storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
   return location;
 }
 
+//used for logging test
+void Manager::ClearTileGroup(){
+  locator.clear(); 
+}
+
 //===--------------------------------------------------------------------===//
 // DATABASE
 //===--------------------------------------------------------------------===//
