@@ -15,6 +15,7 @@
 namespace peloton {
 namespace test {
 
+//TODO :: Comment
 void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
 
   // Create db
@@ -41,6 +42,7 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
   DropDatabase(db_oid);
 }
 
+//TODO :: Comment
 void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
 
   bridge::DDLDatabase::CreateDatabase(db_oid);
@@ -52,6 +54,7 @@ void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
 
 }
 
+//TODO :: Comment
 void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
@@ -59,6 +62,7 @@ void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
+//TODO :: Comment
 storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
 
   auto column_infos = LoggingTestsUtil::CreateSimpleColumns();
@@ -71,12 +75,14 @@ storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t tabl
   return table;
 }
 
+//TODO :: Comment
 void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
   // Create Database
   bridge::DDLDatabase::CreateDatabase(db_oid);
 }
 
 void LoggingTestsUtil::DropDatabase(oid_t db_oid){
+//TODO :: Comment
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
@@ -101,6 +107,7 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
   return columns;
 }
 
+//TODO :: Comment
 void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
 
   // Create Tuples
@@ -130,6 +137,8 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
     }
   }
 
+  std::cout << *table << std::endl;
+
   sleep(2);
 
   for( auto tuple : tuples){
@@ -140,42 +149,37 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
   txn_manager.CommitTransaction(txn);
 }
 
+//TODO :: Comment
 void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
 
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
-  //TODO:: Check tile group id
-  auto TileGroupCount = table->GetTileGroupCount();
-  for(oid_t tg_itr=0; tg_itr<TileGroupCount; tg_itr++){
-    auto TileGroup = table->GetTileGroup(tg_itr);
-    std::cout << "# " << TileGroup->GetTileGroupId() << std::endl;
-    auto TileCount = TileGroup->GetTileCount();
-    for(oid_t t_itr=0; t_itr<TileCount; t_itr++){
-      auto Tile = TileGroup->GetTile(tg_itr);
-      std::cout << "## " << Tile->GetTileId() << std::endl;
-    }
-  }
+  //FIXME :: Tile Group has invalid db oid
+  auto tile_group = table->GetTileGroupById(5);
 
-  auto TileGroup = table->GetTileGroupById(5);
-  auto tile = TileGroup->GetTile(6);
-  if(0){
+  oid_t t = 0;
+  auto tile = tile_group->GetTile(t);
+  std::cout << (*tile);
 
-  for(oid_t tuple_itr=0; tuple_itr<5; tuple_itr++){
-    auto tuple = tile->GetTuple(tuple_itr);
-    std::cout << *tuple << std::endl;
-  }
-  }
+  Value integerValue = ValueFactory::GetIntegerValue(243432);
+  Value stringValue = ValueFactory::GetStringValue("dude");
+  Value timestampValue = ValueFactory::GetTimestampValue(10.22);
+  Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
+
+  Value value = tile->GetValue(0,0);
+
+  EXPECT_EQ(value, integerValue);
 }
 
 void LoggingTestsUtil::CheckNextOid(){
     auto &manager = catalog::Manager::GetInstance();
     auto max_oid = manager.GetNextOid();
-    //TODO CHange to .. EXPECT_EQ
     EXPECT_EQ(max_oid,8);
 }
 
+//TODO :: Comment
 std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuples(catalog::Schema* schema) {
   std::vector<storage::Tuple*> tuples;
 
