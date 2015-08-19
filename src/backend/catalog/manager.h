@@ -60,6 +60,8 @@ class Manager {
 
   storage::TileGroup *GetTileGroup(const oid_t oid) const;
 
+  void ClearTileGroup(void);
+
   //===--------------------------------------------------------------------===//
   // DATABASE
   //===--------------------------------------------------------------------===//
