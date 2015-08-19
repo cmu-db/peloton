@@ -187,12 +187,12 @@ void AriesFrontendLogger::Recovery() {
 
     // Abort remained txn in txn_table
     AbortRemainedTxnInRecoveryTable();
-  }
 
-  //After finishing recovery, set the next oid with maximum oid
-  auto &manager = catalog::Manager::GetInstance();
-  auto max_oid = manager.GetNextOid();
-  manager.SetNextOid(max_oid);
+    //After finishing recovery, set the next oid with maximum oid
+    auto &manager = catalog::Manager::GetInstance();
+    auto max_oid = manager.GetNextOid();
+    manager.SetNextOid(max_oid);
+  }
 }
 
 /**
