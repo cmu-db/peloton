@@ -92,7 +92,7 @@ TEST(AggregateTests, SortedDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
                               std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORT);
+                              AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -189,7 +189,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
                               std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORT);
+                              AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -288,7 +288,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
                               std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORT);
+                              AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto &txn_manager = concurrency::TransactionManager::GetInstance();

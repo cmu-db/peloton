@@ -108,8 +108,19 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       "aggstrategy : %s\n",
       (AGG_HASHED == aggstrategy) ? "HASH" : (AGG_SORTED ? "SORT" : "PLAIN"));
 
-  PelotonAggregateType agg_type =
-      (AGG_SORTED == aggstrategy) ?  AGGREGATE_TYPE_SORT : AGGREGATE_TYPE_HASH ;
+  PelotonAggregateType agg_type = AGGREGATE_TYPE_INVALID;
+
+  switch (aggstrategy) {
+    case AGG_SORTED:
+      agg_type = AGGREGATE_TYPE_SORTED;
+      break;
+    case AGG_HASHED:
+      agg_type = AGGREGATE_TYPE_HASH;
+      break;
+    case AGG_PLAIN:
+      agg_type = AGGREGATE_TYPE_PLAIN;
+      break;
+  }
 
   auto retval = new planner::AggregatePlan(proj_info.release(),
                                            predicate.release(),

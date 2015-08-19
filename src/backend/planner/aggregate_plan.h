@@ -45,7 +45,7 @@ class AggregatePlan : public AbstractPlan {
                 const std::vector<AggTerm>&& unique_agg_terms,
                 const std::vector<oid_t>&& groupby_col_ids,
                 const catalog::Schema* output_schema,
-                PelotonAggregateType aggregate_strategy = AGGREGATE_TYPE_HASH)
+                PelotonAggregateType aggregate_strategy)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
