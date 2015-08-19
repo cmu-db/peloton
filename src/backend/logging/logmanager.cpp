@@ -90,8 +90,8 @@ bool LogManager::EndLogging(LoggingType logging_type ){
 
   // terminating main loop
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
-
   LOG_INFO("Wait until frontend logger escapes main loop..");
+
   while(1){
     if( GetLoggingStatus() == LOGGING_STATUS_TYPE_SLEEP){
       break;
@@ -131,6 +131,11 @@ bool LogManager::IsReadyToLogging(LoggingType logging_type){
     return true;
   else
     return false;
+}
+
+size_t LogManager::ActiveFrontendLoggerCount(void) const{
+  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+  return frontend_loggers.size();
 }
 
 /**

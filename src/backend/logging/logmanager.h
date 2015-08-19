@@ -57,6 +57,8 @@ class LogManager{
 
     bool IsReadyToLogging(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
+    size_t ActiveFrontendLoggerCount(void) const;
+
     void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
 
     LoggingStatus GetLoggingStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
