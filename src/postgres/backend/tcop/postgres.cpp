@@ -3739,9 +3739,8 @@ PostgresMain(int argc, char *argv[],
    */
   if (PostmasterContext)
   {
-    // TODO: Peloton Changes
-    //MemoryContextDelete(PostmasterContext);
-    //PostmasterContext = NULL;
+    MemoryContextDelete(PostmasterContext);
+    PostmasterContext = NULL;
   }
 
   SetProcessingMode(NormalProcessing);
