@@ -107,7 +107,7 @@ bool AggregateExecutor::DExecute() {
           break;
         case AGGREGATE_TYPE_SORTED:
           LOG_INFO("Use SortedAggregator\n");
-          aggregator.reset(new SortedAggregator(&node, output_table, executor_context_));
+          aggregator.reset(new SortedAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
           LOG_INFO("Use PlainAggregator\n");
