@@ -2,18 +2,99 @@
 
 #include "logging/logging_tests_util.h"
 
+#include "backend/bridge/ddl/ddl_database.h"
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/table_factory.h"
-#include "backend/storage/data_table.h"
 #include "backend/common/value_factory.h"
 #include "backend/logging/logmanager.h"
 #include "backend/logging/records/tuplerecord.h"
-
-#include "backend/bridge/ddl/ddl_database.h"
+#include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
+#include "backend/storage/data_table.h"
+
+#include <thread>
 
 namespace peloton {
 namespace test {
+
+void LoggingTestsUtil::PrepareLogFile(){
+
+   // start a thread for logging
+   auto& logManager = logging::LogManager::GetInstance();
+   logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
+   std::thread thread(&logging::LogManager::StandbyLogging, 
+                      &logManager, 
+                      logManager.GetMainLoggingType());
+
+   // When the frontend logger gets ready to logging,
+   // start logging
+   while(1){
+     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+       logManager.StartLogging();
+       break;
+     }
+   }
+
+   LoggingTestsUtil::WritingSimpleLog(20000, 10000);
+
+   sleep(1);
+
+   if( logManager.EndLogging() ){
+     thread.join();
+   }else{
+     LOG_ERROR("Failed to terminate logging thread"); 
+   }
+}
+
+void LoggingTestsUtil::CheckTupleAfterRecovery(){
+
+  LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
+
+  // start a thread for logging
+  auto& logManager = logging::LogManager::GetInstance();
+  logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
+  std::thread thread(&logging::LogManager::StandbyLogging, 
+      &logManager, 
+      logManager.GetMainLoggingType());
+
+  // When the frontend logger gets ready to logging,
+  // start logging
+  while(1){
+    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+      // Create corresponding database and table
+      logManager.StartLogging(); // Change status to recovery
+      break;
+    }
+  }
+
+  //wait recovery
+  while(1){
+    // escape when recovery is done
+    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
+      break;
+    }
+  }
+
+
+  sleep(2);
+
+  // Check the tuples
+  LoggingTestsUtil::CheckTuples(20000,10000);
+
+  sleep(2);
+
+  // Check the next oid
+  LoggingTestsUtil::CheckNextOid();
+
+  sleep(2);
+
+  if( logManager.EndLogging() ){
+    thread.join();
+  }else{
+    LOG_ERROR("Failed to terminate logging thread"); 
+  }
+  LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
+}
+
 
 //TODO :: Comment
 void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
@@ -164,13 +245,19 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   std::cout << (*tile);
 
   Value integerValue = ValueFactory::GetIntegerValue(243432);
-  Value stringValue = ValueFactory::GetStringValue("dude");
+  Value stringValue = ValueFactory::GetStringValue("dude0");
   Value timestampValue = ValueFactory::GetTimestampValue(10.22);
   Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
 
-  Value value = tile->GetValue(0,0);
+  EXPECT_EQ(tile->GetValue(0,0), integerValue);
+  if(0){
+  EXPECT_EQ(tile->GetValue(0,1), stringValue);
+  }
+  EXPECT_EQ(tile->GetValue(0,2), timestampValue);
+  EXPECT_EQ(tile->GetValue(0,3), doubleValue);
 
-  EXPECT_EQ(value, integerValue);
+  // Make valgrind happy
+  stringValue.FreeUninlinedData();
 }
 
 void LoggingTestsUtil::CheckNextOid(){
