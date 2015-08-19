@@ -24,7 +24,6 @@ namespace logging {
  */
 bool TupleRecord::Serialize(){
 
- 
   bool status = true;
   CopySerializeOutput output;
 

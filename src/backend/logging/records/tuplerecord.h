@@ -41,18 +41,19 @@ public:
                oid_t table_oid,
                ItemPointer itemPointer,
                const void* data,
-               oid_t db_oid = INVALID_OID
+               oid_t _db_oid = INVALID_OID
                )
   : LogRecord(log_record_type), 
     txn_id(txn_id), 
     table_oid(table_oid), 
     itemPointer(itemPointer),
     data(data),
-    db_oid(db_oid)
+    db_oid(_db_oid)
   {
     assert(txn_id);
-    if( db_oid == INVALID_OID)
+    if( db_oid == INVALID_OID){
       db_oid = bridge::Bridge::GetCurrentDatabaseOid();
+    }
     assert(db_oid);
     assert(table_oid);
   }
