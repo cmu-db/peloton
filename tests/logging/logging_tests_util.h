@@ -45,6 +45,8 @@ private:
 
   static void InsertTuples(storage::DataTable* table);
 
+  static void DeleteTuples(storage::DataTable* table);
+
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void DropDatabase(oid_t db_oid);
