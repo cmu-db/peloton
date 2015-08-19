@@ -3053,8 +3053,6 @@ processCancelRequest(Port *port, void *pkt)
   {
     dlist_mutable_iter iter;
 
-    elog(LOG, "CleanupBackend :: pid %d \n", pid);
-
     LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
     /*
@@ -3086,13 +3084,9 @@ processCancelRequest(Port *port, void *pkt)
       return;
     }
 
-    elog(LOG, "Go over list \n");
-
     dlist_foreach_modify(iter, &BackendList)
     {
       Backend    *bp = dlist_container(Backend, elem, iter.cur);
-
-      elog(LOG, "Backend :: bp : %p tid : %d \n", bp, bp->pid);
 
       if (bp->pid == pid)
       {
@@ -3856,14 +3850,13 @@ processCancelRequest(Port *port, void *pkt)
     SignalUnconnectedWorkers(signal);
   }
 
+  // TODO: Peloton Changes
   static void BackendTask(Backend  *bn, Port *port) {
     free(bn);
 
-    // TODO: Peloton Changes
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 
-    // TODO: Peloton Changes
     InitializeMaxBackends();
 
     InitializeGUCOptions(false);
@@ -3871,7 +3864,6 @@ processCancelRequest(Port *port, void *pkt)
     /* Detangle from postmaster */
     InitPostmasterChild();
 
-    // TODO: Peloton Changes
     /* Close the postmaster's sockets */
     //ClosePostmasterPorts(false);
 
@@ -5263,9 +5255,8 @@ processCancelRequest(Port *port, void *pkt)
       /* Release postmaster's working memory context */
       MemoryContextSwitchTo(TopMemoryContext);
 
-      // TODO: Peloton Changes
-      //MemoryContextDelete(PostmasterContext);
-      //PostmasterContext = NULL;
+      MemoryContextDelete(PostmasterContext);
+      PostmasterContext = NULL;
 
       AuxiliaryProcessMain(ac, av);
       ExitPostmaster(0);

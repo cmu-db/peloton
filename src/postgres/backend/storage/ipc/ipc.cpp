@@ -152,10 +152,7 @@ proc_exit(int code)
 
   // Exit the thread if not postmaster thread
 	if(MyBackendId != InvalidBackendId) {
-	  // TODO: Close the socket ?
-    //StreamClose(MyProcPort->sock);
-    //closesocket(MyProcPort->sock);
-    pthread_exit(0);
+	  pthread_exit(0);
 	}
 
 }
