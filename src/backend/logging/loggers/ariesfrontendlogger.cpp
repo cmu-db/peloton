@@ -90,6 +90,9 @@ void AriesFrontendLogger::MainLoop(void) {
       Flush();
     }
   }
+
+  //Setting frontend logger status to sleep
+  logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
 
 /**
@@ -445,11 +448,11 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto tile_group_id = tupleRecord.GetItemPointer().block;
   auto tuple_slot = tupleRecord.GetItemPointer().offset;
 
-  auto tile_group =  GetTileGroup(tile_group_id);
+  auto tile_group = GetTileGroup(tile_group_id);
 
   auto txn_id = tupleRecord.GetTxnId();
   auto txn = txn_table.at(txn_id);
- 
+
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
     table->AddTileGroupWithOid(tile_group_id);
