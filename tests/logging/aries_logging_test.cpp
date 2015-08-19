@@ -22,12 +22,13 @@ TEST(AriesLoggingTest, logging_start_end) {
   }
 
  // writing simple log file
- LoggingTestsUtil::PrepareLogFile();
-
- sleep(5);
-
- // recover database and check the tuples
- LoggingTestsUtil::CheckTupleAfterRecovery();
+ if( LoggingTestsUtil::PrepareLogFile() ){
+   // recover database and check the tuples
+   LoggingTestsUtil::CheckTupleAfterRecovery();
+ }else{
+    //Something's wrong !!
+    EXPECT_EQ(1,0);
+ }
 
 }
 

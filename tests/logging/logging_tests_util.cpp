@@ -19,7 +19,7 @@ namespace test {
 /**
  * @brief writing a simple log file
  */
-void LoggingTestsUtil::PrepareLogFile(){
+bool LoggingTestsUtil::PrepareLogFile(){
 
    // start a thread for logging
    auto& logManager = logging::LogManager::GetInstance();
@@ -39,18 +39,15 @@ void LoggingTestsUtil::PrepareLogFile(){
      }
    }
 
-   // TODO :: Remove
-   sleep(3);
-
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
 
-   // TODO :: Remove
-   sleep(3);
-
+   // ongoing->terminate->sleep
    if( logManager.EndLogging() ){
      thread.join();
+     return true;
    }else{
      LOG_ERROR("Failed to terminate logging thread"); 
+     return false;
    }
 }
 
@@ -58,6 +55,8 @@ void LoggingTestsUtil::PrepareLogFile(){
  * @brief recover the database and check the tuples
  */
 void LoggingTestsUtil::CheckTupleAfterRecovery(){
+
+  sleep(3);
 
   // Initialize oid since we assume that we restart the system
   auto &manager = catalog::Manager::GetInstance();
@@ -77,8 +76,9 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
   // start logging
   while(1){
     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
-      // Create corresponding database and table
-      logManager.StartLogging(); // Change status to recovery
+      // Standby -> Recovery
+      logManager.StartLogging();
+      // Recovery -> Ongoing
       break;
     }
   }
@@ -91,21 +91,11 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
     }
   }
 
-
-   // TODO :: Remove
-  sleep(3);
-
   // Check the tuples
   LoggingTestsUtil::CheckTuples(20000,10000);
 
-   // TODO :: Remove
-  sleep(3);
-
   // Check the next oid
   LoggingTestsUtil::CheckNextOid();
-
-   // TODO :: Remove
-  sleep(3);
 
   if( logManager.EndLogging() ){
     thread.join();
@@ -134,7 +124,10 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
 
   DeleteTuples(table);
 
-  //TODO:: UpdateTuples(table);
+  UpdateTuples(table);
+
+  //FIXME
+  //txn_manager.EndTransaction(txn);
 
   db->AddTable(table);
   db->DropTableWithOid(table_oid);
@@ -147,32 +140,31 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
-  //FIXME :: Tile Group has invalid db oid
   auto tile_group = table->GetTileGroupById(3);
-
   auto tile = tile_group->GetTile((oid_t)0);
+
+  // check # of tuples
+  EXPECT_EQ(tile_group->GetActiveTupleCount(), 2);
 
   Value integerValue = ValueFactory::GetIntegerValue(243432);
   Value stringValue = ValueFactory::GetStringValue("dude0");
   Value timestampValue = ValueFactory::GetTimestampValue(10.22);
   Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
 
-  EXPECT_EQ(tile->GetValue(0,0), integerValue);
-  EXPECT_EQ(tile->GetValue(0,1), stringValue);
-  EXPECT_EQ(tile->GetValue(0,2), timestampValue);
-  EXPECT_EQ(tile->GetValue(0,3), doubleValue);
+  EXPECT_EQ(tile->GetValue(3,0), integerValue);
+  EXPECT_EQ(tile->GetValue(3,1), stringValue);
+  EXPECT_EQ(tile->GetValue(3,2), timestampValue);
+  EXPECT_EQ(tile->GetValue(3,3), doubleValue);
 
   Value integerValue2 = ValueFactory::GetIntegerValue(243433);
   Value stringValue2 = ValueFactory::GetStringValue("dude1");
-  Value timestampValue2 = ValueFactory::GetTimestampValue(10.22);
+  Value timestampValue2 = ValueFactory::GetTimestampValue(11.22);
   Value doubleValue2 = ValueFactory::GetDoubleValue(244644.1236);
 
   EXPECT_EQ(tile->GetValue(1,0), integerValue2);
   EXPECT_EQ(tile->GetValue(1,1), stringValue2);
   EXPECT_EQ(tile->GetValue(1,2), timestampValue2);
   EXPECT_EQ(tile->GetValue(1,3), doubleValue2);
-
-  //TODO :: check # of tuples
 
   // Make valgrind happy
   stringValue.FreeUninlinedData();
@@ -231,16 +223,16 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuples(catalog::Schema* schema) {
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples) {
   std::vector<storage::Tuple*> tuples;
 
-  for (int col_itr = 0; col_itr < 5; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
     storage::Tuple *tuple = new storage::Tuple(schema, true);
 
     // Setting values
     Value integerValue = ValueFactory::GetIntegerValue(243432+col_itr);
     Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr));
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22);
+    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr));
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr));
 
     tuple->SetValue(0, integerValue);
@@ -255,7 +247,7 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuples(catalog::Schem
 void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
 
   // Create Tuples
-  auto tuples = CreateSimpleTuples(table->GetSchema());
+  auto tuples = CreateSimpleTuple(table->GetSchema(),3);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -263,7 +255,6 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
     auto txn = txn_manager.BeginTransaction();
     ItemPointer location = table->InsertTuple(txn, tuple);
     txn->RecordInsert(location);
-    std::cout << "Record Location : " << location.block  << " " << location.offset << "\n";
 
     // Logging 
     {
@@ -278,15 +269,13 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
                                                tuple,
                                                20000);
         logger->Insert(record);
+
+        // wait recording to delete tuple
+        while(logger->GetCommitOffset() > 0){}
       }
     }
     txn_manager.CommitTransaction(txn);
   }
-
-  std::cout << *table << std::endl;
-
-  // wait tuple recording
-  sleep(2);
 
   for( auto tuple : tuples){
     tuple->FreeUninlinedData();
@@ -321,11 +310,52 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table){
     }
   }
 
-  std::cout << *table << std::endl;
+  txn_manager.CommitTransaction(txn);
+}
+
+void LoggingTestsUtil::UpdateTuples(storage::DataTable* table){
+
+  ItemPointer delete_location(3,0);
+
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+
+  table->DeleteTuple(txn, delete_location);
+  txn->RecordDelete(delete_location);
+
+  // Create Tuples
+  auto tuples = CreateSimpleTuple(table->GetSchema(),1);
+
+  for( auto tuple : tuples){
+    ItemPointer location = table->InsertTuple(txn, tuple);
+
+    // Logging 
+    {
+       auto& logManager = logging::LogManager::GetInstance();
+       if(logManager.IsReadyToLogging()){
+         auto logger = logManager.GetBackendLogger();
+   
+         auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
+                                                 txn->GetTransactionId(), 
+                                                 table->GetOid(),
+                                                 delete_location,
+                                                 tuple,
+                                                 20000);
+         logger->Update(record);
+         // wait recording to delete tuple
+         while(logger->GetCommitOffset() > 0){}
+       }
+     }
+    txn->RecordInsert(location);
+  }
 
   txn_manager.CommitTransaction(txn);
-  //FIXME
-  //txn_manager.EndTransaction(txn);
+
+  for( auto tuple : tuples){
+    tuple->FreeUninlinedData();
+    delete tuple;
+  }
 }
 
 void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){

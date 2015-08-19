@@ -424,6 +424,7 @@ void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
   for(auto  txn : txn_table){
     auto curr_txn = txn.second;
     AbortTuples(curr_txn);
+    delete curr_txn;
     txn_table.erase(curr_txn->GetTransactionId());
   }
 }
@@ -496,6 +497,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
   auto txn_id = tupleRecord.GetTxnId();
   auto txn = txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
+
 }
 
 /**
@@ -601,7 +603,6 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // get the txn
   auto txn = txn_table.at(txn_id);
-  //TODO :: Rename, from tuples to status ? or txn? whatever..
   AbortTuples(txn);
 
   LOG_INFO("Abort txd id %d object in table",(int)txn_id);
