@@ -1,13 +1,16 @@
+#include "gtest/gtest.h"
+
+#include "logging/logging_tests_util.h"
+
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/bridge/ddl/ddl_table.h"
 #include "backend/storage/table_factory.h"
-#include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/common/value_factory.h"
 #include "backend/logging/logmanager.h"
 #include "backend/logging/records/tuplerecord.h"
-#include "logging/logging_tests_util.h"
+
+#include "backend/bridge/ddl/ddl_database.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace test {
@@ -26,7 +29,7 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
   db->DropTableWithOid(table_oid);
   table = CreateSimpleTable(db_oid, table_oid);
 
-  // After inserting tuples, store ItemPointers so that we can check in checking part
+  // TODO :: After inserting tuples, store ItemPointers so that we can check in checking part
   InsertTuples(table);
 
   //TODO:: DeleteTuples(table);
@@ -117,11 +120,11 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
         auto logger = logManager.GetBackendLogger();
 
         auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
-            txn->GetTransactionId(), 
-            table->GetOid(),
-            location,
-            tuple,
-            20000);
+                                               txn->GetTransactionId(), 
+                                               table->GetOid(),
+                                               location,
+                                               tuple,
+                                               20000);
         logger->Insert(record);
       }
     }
@@ -144,13 +147,33 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   auto table = db->GetTableWithOid(table_oid);
 
   //TODO:: Check tile group id
-  auto TileGroup = table->GetTileGroupById(6);
-  auto tile = TileGroup->GetTile(7);
+  auto TileGroupCount = table->GetTileGroupCount();
+  for(oid_t tg_itr=0; tg_itr<TileGroupCount; tg_itr++){
+    auto TileGroup = table->GetTileGroup(tg_itr);
+    std::cout << "# " << TileGroup->GetTileGroupId() << std::endl;
+    auto TileCount = TileGroup->GetTileCount();
+    for(oid_t t_itr=0; t_itr<TileCount; t_itr++){
+      auto Tile = TileGroup->GetTile(tg_itr);
+      std::cout << "## " << Tile->GetTileId() << std::endl;
+    }
+  }
+
+  auto TileGroup = table->GetTileGroupById(5);
+  auto tile = TileGroup->GetTile(6);
+  if(0){
 
   for(oid_t tuple_itr=0; tuple_itr<5; tuple_itr++){
     auto tuple = tile->GetTuple(tuple_itr);
     std::cout << *tuple << std::endl;
   }
+  }
+}
+
+void LoggingTestsUtil::CheckNextOid(){
+    auto &manager = catalog::Manager::GetInstance();
+    auto max_oid = manager.GetNextOid();
+    //TODO CHange to .. EXPECT_EQ
+    EXPECT_EQ(max_oid,8);
 }
 
 std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuples(catalog::Schema* schema) {

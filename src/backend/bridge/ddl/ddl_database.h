@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "postmaster/peloton.h"
+#include "backend/common/types.h"
 #include "nodes/nodes.h"
+
+struct Peloton_Status;
 
 namespace peloton {
 namespace bridge {
