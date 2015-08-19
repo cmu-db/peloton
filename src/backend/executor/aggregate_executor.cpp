@@ -106,8 +106,12 @@ bool AggregateExecutor::DExecute() {
           aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORT:
-          LOG_INFO("Use SortAggregator\n");
-          aggregator.reset(new SortAggregator(&node, output_table, executor_context_));
+          LOG_INFO("Use SortedAggregator\n");
+          aggregator.reset(new SortedAggregator(&node, output_table, executor_context_));
+          break;
+        case AGGREGATE_TYPE_PLAIN:
+          LOG_INFO("Use PlainAggregator\n");
+          aggregator.reset(new PlainAggregator(&node, output_table, executor_context_));
           break;
         default:
           LOG_ERROR("Invalid aggregate type. Return.\n");

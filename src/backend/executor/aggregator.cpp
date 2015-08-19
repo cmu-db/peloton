@@ -59,35 +59,32 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 }
 
 /* Handle distinct */
-Agg::~Agg(){
-  if(is_distinct_){
-    for(auto val : distinct_set_){
+Agg::~Agg() {
+  if (is_distinct_) {
+    for (auto val : distinct_set_) {
       val.FreeUninlinedData();
     }
   }
 }
 
-void Agg::Advance(const Value val){
-  if(is_distinct_){
+void Agg::Advance(const Value val) {
+  if (is_distinct_) {
     // Insert a deep copy
     distinct_set_.insert(ValueFactory::Clone(val));
-  }
-  else{
+  } else {
     DAdvance(val);
   }
 
 }
 
-
-Value Agg::Finalize(){
-  if(is_distinct_){
-    for(auto val : distinct_set_){
+Value Agg::Finalize() {
+  if (is_distinct_) {
+    for (auto val : distinct_set_) {
       DAdvance(val);
     }
   }
   return DFinalize();
 }
-
 
 /*
  * Helper method responsible for inserting the results of the aggregation
@@ -101,14 +98,13 @@ Value Agg::Finalize(){
  *
  * FIXME: need to examine Value's uninlined data problem later.
  */
-bool Helper(const planner::AggregatePlan *node,
-            Agg **aggregates,
+bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
             storage::DataTable *output_table,
             const AbstractTuple *delegate_tuple,
             executor::ExecutorContext* econtext) {
-  // Ignore null tuples
-  if (delegate_tuple == nullptr)
-    return true;
+//  // Ignore null tuples
+//  if (delegate_tuple == nullptr)
+//    return true;
 
   auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
@@ -135,15 +131,16 @@ bool Helper(const planner::AggregatePlan *node,
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate
-      && predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext).IsFalse()) {
+      && predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext)
+          .IsFalse()) {
     return true;  // Qual fails, do nothing
   }
 
   /*
    * 3) Construct the tuple to insert using projectInfo
    */
-  node->GetProjectInfo()->Evaluate(tuple.get(), delegate_tuple, aggref_tuple.get(),
-                                   econtext);
+  node->GetProjectInfo()->Evaluate(tuple.get(), delegate_tuple,
+                                   aggref_tuple.get(), econtext);
 
   LOG_TRACE("Tuple to Output :");
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
@@ -166,7 +163,7 @@ HashAggregator::HashAggregator(const planner::AggregatePlan *node,
                                executor::ExecutorContext* econtext,
                                size_t num_input_columns)
     : AbstractAggregator(node, output_table, econtext),
-      num_input_columns(num_input_columns){
+      num_input_columns(num_input_columns) {
 
   group_by_key_values.resize(node->GetGroupbyColIds().size(),
                              ValueFactory::GetNullValue());
@@ -215,8 +212,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
           ValueFactory::Clone(cur_tuple->GetValue(col_id)));
     };
 
-    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
-        aggno++) {
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
       aggregate_list->aggregates[aggno] = GetAggInstance(
           node->GetUniqueAggTerms()[aggno].aggtype);
 
@@ -236,7 +232,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
     Value value = ValueFactory::GetIntegerValue(1);
-    if(predicate){
+    if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           cur_tuple, nullptr, this->executor_context);
     }
@@ -269,9 +265,9 @@ bool HashAggregator::Finalize() {
 // Sort Aggregator
 //===--------------------------------------------------------------------===//
 
-SortAggregator::SortAggregator(const planner::AggregatePlan *node,
-                               storage::DataTable *output_table,
-                               executor::ExecutorContext* econtext)
+SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
+                                   storage::DataTable *output_table,
+                                   executor::ExecutorContext* econtext)
     : AbstractAggregator(node, output_table, econtext) {
 
   aggregates = new Agg*[node->GetUniqueAggTerms().size()];
@@ -279,7 +275,7 @@ SortAggregator::SortAggregator(const planner::AggregatePlan *node,
 
 }
 
-SortAggregator::~SortAggregator() {
+SortedAggregator::~SortedAggregator() {
 // Clean up aggregators
   for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
       column_itr++) {
@@ -288,7 +284,7 @@ SortAggregator::~SortAggregator() {
   delete[] aggregates;
 }
 
-bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
+bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   bool start_new_agg = false;
 
 // Check if we are starting a new aggregate tuple
@@ -299,7 +295,7 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
     // Compare group by columns
     for (oid_t grpby_colno = 0; grpby_colno < node->GetGroupbyColIds().size();
         grpby_colno++) {
-      Value lval = cur_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
+      Value lval = next_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
       Value rval = prev_tuple->GetValue(node->GetGroupbyColIds()[grpby_colno]);
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
@@ -315,15 +311,14 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
   if (start_new_agg) {
     LOG_TRACE("Started a new group!");
 
-    if (Helper(node, aggregates, output_table, prev_tuple,
-               this->executor_context) ==
-    false) {
+    if (prev_tuple
+        && !Helper(node, aggregates, output_table, prev_tuple,
+                   this->executor_context)) {
       return false;
     }
 
     // Create aggregate
-    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
-        aggno++) {
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
       // Clean up previous aggregate
       delete aggregates[aggno];
       aggregates[aggno] = GetAggInstance(
@@ -335,23 +330,22 @@ bool SortAggregator::Advance(AbstractTuple *cur_tuple) {
   }
 
 // Update the aggregation calculation
-  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size();
-      aggno++) {
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
     Value value = ValueFactory::GetIntegerValue(1);
-    if(predicate){
+    if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
-          cur_tuple, nullptr, this->executor_context);
+          next_tuple, nullptr, this->executor_context);
     }
     aggregates[aggno]->Advance(value);
   }
 
-  prev_tuple = cur_tuple;
+  prev_tuple = next_tuple;
 
   return true;
 }
 
-bool SortAggregator::Finalize() {
+bool SortedAggregator::Finalize() {
   if (Helper(node, aggregates, output_table, prev_tuple,
              this->executor_context) ==
              false) {
@@ -364,6 +358,63 @@ bool SortAggregator::Finalize() {
 //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
+}
+
+//===--------------------------------------------------------------------===//
+// Plain Aggregator
+//===--------------------------------------------------------------------===//
+PlainAggregator::PlainAggregator(const planner::AggregatePlan* node,
+                                 storage::DataTable* output_table,
+                                 executor::ExecutorContext* econtext)
+    : AbstractAggregator(node, output_table, econtext) {
+
+  // allocate aggregators
+  aggregates = new Agg*[node->GetUniqueAggTerms().size()];
+  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
+
+  // initialize aggregators
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    aggregates[aggno] = GetAggInstance(
+        node->GetUniqueAggTerms()[aggno].aggtype);
+
+    bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+    aggregates[aggno]->SetDistinct(distinct);
+  }
+
+}
+
+bool PlainAggregator::Advance(AbstractTuple* next_tuple) {
+  // Update the aggregation calculation
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if (predicate) {
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
+          next_tuple, nullptr, this->executor_context);
+    }
+    aggregates[aggno]->Advance(value);
+  }
+  return true;
+}
+
+bool PlainAggregator::Finalize() {
+  if (!Helper(node, aggregates, output_table, nullptr,
+              this->executor_context)) {
+    return false;
+  }
+
+  return true;
+
+}
+
+PlainAggregator::~PlainAggregator() {
+  // Clean up aggregators
+  for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
+      column_itr++) {
+    delete aggregates[column_itr];
+  }
+
+  delete[] aggregates;
 }
 
 }  // namespace executor
