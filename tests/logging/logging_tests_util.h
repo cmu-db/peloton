@@ -18,7 +18,9 @@ class DataTable;
 namespace test {
 
 class LoggingTestsUtil{
+
 public:
+
   static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
 
   static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
@@ -26,6 +28,8 @@ public:
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void CheckTuples(oid_t db_oid, oid_t table_oid);
+
+  static void CheckNextOid(void);
 
 private:
 
