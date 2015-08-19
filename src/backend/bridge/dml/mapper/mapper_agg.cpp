@@ -18,6 +18,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   auto qual = plan_state->ps_qual;
   auto peragg = plan_state->peragg;
   auto tupleDesc = plan_state->result_tupleDescriptor;
+  auto aggstrategy = plan_state->agg_plan->aggstrategy;
 
   LOG_INFO("Number of Agg phases: %d \n", numphases);
 
@@ -47,7 +48,8 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
     // We don't check whether the mapped exprtype is a valid aggregate type here.
     PltFuncMetaInfo fn_meta = itr->second;
-    // We only take the first argument as input to aggregator
+    // We only take the first argument as input to aggregator because
+    // we don't have multi-argument aggregator in Peloton at the moment.
     // WARNING: there can be no arguments (e.g., COUNT(*))
     auto arguments = peragg[aggno].aggrefstate->args;
     expression::AbstractExpression* agg_expr = nullptr;
@@ -57,24 +59,33 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
     }
 
-    /* XXX Only Trivial case */
+    /*
+     * AggStatePerAggData.sortColIdx along with other related attributes
+     * are used to handle ORDER BY and DISTINCT *within* aggregation.
+     * E.g.,
+     * SELECT count(DISTINCT x) ...
+     * SELECT str_agg(y ORDER BY x) ...
+     * Currently, we only handle the agg(DISTINCT x) case by
+     * checking whether numDistinctCols > 0.
+     * Note that numDistinctCols > 0 may be a necessary but not sufficient
+     * condition for agg(DISTINCT x).
+     */
+
     bool distinct = (peragg[aggno].numDistinctCols > 0);
 
     unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr, distinct);
 
-    auto numDistinctCols = peragg[aggno].numDistinctCols;
-
     LOG_INFO(
         "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, numDistinctCols = %d",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
-        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>", numDistinctCols);
+        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>",
+        peragg[aggno].numDistinctCols);
 
-    for(int i=0; i < numDistinctCols; i++){
+    for (int i = 0; i < peragg[aggno].numDistinctCols; i++) {
       LOG_INFO("sortColIdx[%d] : %d \n", i, peragg[aggno].sortColIdx[i]);
     }
 
-
-  }
+  }  // end loop aggno
 
   /* Get Group by columns */
   std::vector<oid_t> groupby_col_ids;
@@ -92,12 +103,18 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   std::unique_ptr<catalog::Schema> output_schema(
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
+  /* Map agg stragegy */
+  LOG_INFO(
+      "aggstrategy : %s\n",
+      (AGG_HASHED == aggstrategy) ? "HASH" : (AGG_SORTED ? "SORT" : "PLAIN"));
+  PelotonAggregateType agg_type =
+      (AGG_HASHED == aggstrategy) ? AGGREGATE_TYPE_HASH : AGGREGATE_TYPE_SORT;
+
   auto retval = new planner::AggregatePlan(proj_info.release(),
                                            predicate.release(),
                                            std::move(unique_agg_terms),
                                            std::move(groupby_col_ids),
-                                           output_schema.release(),
-                                           AGGREGATE_TYPE_HASH);
+                                           output_schema.release(), agg_type);
 
   // Find children
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
