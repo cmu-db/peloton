@@ -23,6 +23,9 @@ select b, max(a) from fooagg group by b having max(a) > 4;
 select b, max(c) from fooagg group by b;
 select b, max(c) from fooagg group by b having max(c) > 2;
 
+-- plain aggregate
+select sum(a) from fooagg;
+select count(b) as cnt, count(distinct b) as cntdistinct from fooagg;
 
 -- simple distinct
 insert into fooagg values (6, 11, 1.1, '#6');
@@ -32,3 +35,5 @@ select * from fooagg;
 
 select b, count(c), count(distinct c) from fooagg group by b;
 select b, sum(c), sum(distinct c) from fooagg group by b;
+
+
