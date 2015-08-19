@@ -654,6 +654,9 @@ std::string LoggingStatusToString(LoggingStatus type) {
     case LOGGING_STATUS_TYPE_TERMINATE: {
       return "LOGGING_STATUS_TYPE_TERMINATE";
     }
+    case LOGGING_STATUS_TYPE_SLEEP: {
+      return "LOGGING_STATUS_TYPE_SLEEP";
+    }
   }
   return "INVALID";
 }
