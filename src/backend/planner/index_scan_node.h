@@ -44,11 +44,13 @@ class IndexScanNode : public AbstractScanNode {
 
     IndexScanDesc(index::Index *index, const std::vector<oid_t> &column_ids,
                   const std::vector<ExpressionType> &expr_types,
-                  const std::vector<Value> &values)
+                  const std::vector<Value> &values,
+                  const std::vector<expression::AbstractExpression*> &runtime_keys)
         : index(index),
           key_column_ids(column_ids),
           expr_types(expr_types),
-          values(values) {}
+          values(values) ,
+          runtime_keys(runtime_keys) {}
 
     index::Index *index = nullptr;
 
@@ -57,6 +59,8 @@ class IndexScanNode : public AbstractScanNode {
     std::vector<ExpressionType> expr_types;
 
     std::vector<Value> values;
+
+    std::vector<expression::AbstractExpression *> runtime_keys;
   };
 
   IndexScanNode(expression::AbstractExpression *predicate,
@@ -69,7 +73,8 @@ class IndexScanNode : public AbstractScanNode {
         column_ids_(column_ids),
         key_column_ids_(std::move(index_scan_desc.key_column_ids)),
         expr_types_(std::move(index_scan_desc.expr_types)),
-        values_(std::move(index_scan_desc.values)) {}
+        values_(std::move(index_scan_desc.values)),
+        runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
 
   ~IndexScanNode() {}
 
@@ -86,6 +91,8 @@ class IndexScanNode : public AbstractScanNode {
   }
 
   const std::vector<Value> &GetValues() const { return values_; }
+
+  const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const { return runtime_keys_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
@@ -107,6 +114,8 @@ class IndexScanNode : public AbstractScanNode {
   const std::vector<ExpressionType> expr_types_;
 
   const std::vector<Value> values_;
+
+  const std::vector<expression::AbstractExpression*> runtime_keys_;
 };
 
 }  // namespace planner
