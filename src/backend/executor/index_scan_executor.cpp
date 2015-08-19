@@ -62,6 +62,18 @@ bool IndexScanExecutor::DInit() {
   key_column_ids_ = node.GetKeyColumnIds();
   expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
+  runtime_keys_ = node.GetRunTimeKeys();
+
+  if (runtime_keys_.size() != 0) {
+    assert(runtime_keys_.size() == values_.size());
+    values_.clear();
+  }
+
+  for (auto expr : runtime_keys_) {
+    auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
+    LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+    values_.push_back(value);
+  }
 
   auto table = node.GetTable();
 
