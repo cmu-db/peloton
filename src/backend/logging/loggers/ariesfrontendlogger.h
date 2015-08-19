@@ -60,7 +60,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void ReadTxnRecord(TransactionRecord &txnRecord);
 
-    bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
+    void ReadTupleRecordHeader(TupleRecord& tupleRecord);
 
     storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
                                         Pool *pool);
