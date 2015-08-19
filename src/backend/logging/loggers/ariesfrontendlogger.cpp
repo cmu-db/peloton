@@ -312,7 +312,9 @@ storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDbId());
+  assert(db);
   auto table = db->GetTableWithOid(tupleRecord.GetTableId());
+  assert(table);
   return table;
 }
 
