@@ -290,26 +290,6 @@ class AbstractAggregator {
 
 };
 
-/**
- * @brief Used when input is sorted on group-by keys.
- */
-class SortAggregator : public AbstractAggregator {
- public:
-  SortAggregator(const planner::AggregatePlan *node,
-                 storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext);
-
-  bool Advance(AbstractTuple *next_tuple) override;
-
-  bool Finalize() override;
-
-  ~SortAggregator();
-
- private:
-  AbstractTuple *prev_tuple = nullptr;
-  Agg** aggregates;
-
-};
 
 /**
  * @brief Used when input is NOT sorted.
@@ -363,6 +343,48 @@ class HashAggregator : public AbstractAggregator {
   HashAggregateMapType aggregates_map;
 
 };
+
+/**
+ * @brief Used when input is sorted on group-by keys.
+ */
+class SortedAggregator : public AbstractAggregator {
+ public:
+  SortedAggregator(const planner::AggregatePlan *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
+
+  bool Advance(AbstractTuple *next_tuple) override;
+
+  bool Finalize() override;
+
+  ~SortedAggregator();
+
+ private:
+  AbstractTuple *prev_tuple = nullptr;
+  Agg** aggregates;
+
+};
+
+/**
+ * @brief Used when there's NO Group-By.
+ */
+class PlainAggregator : public AbstractAggregator {
+ public:
+  PlainAggregator(const planner::AggregatePlan *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
+
+  bool Advance(AbstractTuple *next_tuple) override;
+
+  bool Finalize() override;
+
+  ~PlainAggregator();
+
+ private:
+  Agg** aggregates;
+
+};
+
 
 }
 // namespace executor
