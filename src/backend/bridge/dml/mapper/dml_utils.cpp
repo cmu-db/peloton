@@ -571,6 +571,7 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
     info->peragg[i].aggrefstate = (AggrefExprState*) CopyExprState(
         (ExprState*) (agg_plan_state->peragg[i].aggrefstate));
 
+
     info->peragg[i].sortColIdx = (AttrNumber*) palloc(
         sizeof(AttrNumber) * info->peragg[i].numSortCols);
     ::memcpy(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
@@ -580,6 +581,7 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   /* result tuple desc */
   info->result_tupleDescriptor = CreateTupleDescCopy(
       agg_plan_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+
 
   return info;
 }
