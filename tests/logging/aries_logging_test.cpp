@@ -3,6 +3,8 @@
 #include "logging/logging_tests_util.h"
 #include "backend/common/logger.h"
 
+#include <fstream>
+
 namespace peloton {
 namespace test {
 
@@ -13,16 +15,16 @@ namespace test {
 TEST(AriesLoggingTest, logging_start_end) {
 
  //FIXME :: Hard coded file path
- std::string filename = "/home/parallels/git/peloton/build/aries.log";
-
- if( std::remove(filename.c_str()) < 0 ){
-   LOG_ERROR("Failed to remove aries logfile"); 
- }
+  std::string filename = "/home/parallels/git/peloton/build/aries.log";
+  std::ifstream logfile(filename.c_str());
+  if( logfile.good() ){
+    EXPECT_TRUE( std::remove(filename.c_str()) == 0 );
+  }
 
  // writing simple log file
  LoggingTestsUtil::PrepareLogFile();
 
- sleep(3);
+ sleep(5);
 
  // recover database and check the tuples
  LoggingTestsUtil::CheckTupleAfterRecovery();
