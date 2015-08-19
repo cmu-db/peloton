@@ -336,7 +336,7 @@ enum PelotonJoinType {
 //===--------------------------------------------------------------------===//
 enum PelotonAggregateType {
   AGGREGATE_TYPE_INVALID = 0,
-  AGGREGATE_TYPE_SORT = 1,
+  AGGREGATE_TYPE_SORTED = 1,
   AGGREGATE_TYPE_HASH = 2,
   AGGREGATE_TYPE_PLAIN = 3  // no group-by
 };

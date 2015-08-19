@@ -105,7 +105,7 @@ bool AggregateExecutor::DExecute() {
           LOG_INFO("Use HashAggregator\n");
           aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_SORT:
+        case AGGREGATE_TYPE_SORTED:
           LOG_INFO("Use SortedAggregator\n");
           aggregator.reset(new SortedAggregator(&node, output_table, executor_context_));
           break;
