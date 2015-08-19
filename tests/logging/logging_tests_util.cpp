@@ -32,14 +32,20 @@ void LoggingTestsUtil::PrepareLogFile(){
    // start logging
    while(1){
      if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+       // Standby -> Recovery
        logManager.StartLogging();
+       // Recovery -> Ongoing
        break;
      }
    }
 
+   // TODO :: Remove
+   sleep(3);
+
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
 
-   sleep(1);
+   // TODO :: Remove
+   sleep(3);
 
    if( logManager.EndLogging() ){
      thread.join();
@@ -52,6 +58,11 @@ void LoggingTestsUtil::PrepareLogFile(){
  * @brief recover the database and check the tuples
  */
 void LoggingTestsUtil::CheckTupleAfterRecovery(){
+
+  // Initialize oid since we assume that we restart the system
+  auto &manager = catalog::Manager::GetInstance();
+  manager.SetNextOid(0);
+  manager.ClearTileGroup();
 
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
@@ -81,17 +92,20 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
   }
 
 
-  sleep(2);
+   // TODO :: Remove
+  sleep(3);
 
   // Check the tuples
   LoggingTestsUtil::CheckTuples(20000,10000);
 
-  sleep(2);
+   // TODO :: Remove
+  sleep(3);
 
   // Check the next oid
   LoggingTestsUtil::CheckNextOid();
 
-  sleep(2);
+   // TODO :: Remove
+  sleep(3);
 
   if( logManager.EndLogging() ){
     thread.join();
@@ -118,7 +132,7 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
 
   InsertTuples(table);
 
-  //TODO:: DeleteTuples(table);
+  DeleteTuples(table);
 
   //TODO:: UpdateTuples(table);
 
@@ -134,7 +148,7 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   auto table = db->GetTableWithOid(table_oid);
 
   //FIXME :: Tile Group has invalid db oid
-  auto tile_group = table->GetTileGroupById(5);
+  auto tile_group = table->GetTileGroupById(3);
 
   auto tile = tile_group->GetTile((oid_t)0);
 
@@ -148,14 +162,27 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   EXPECT_EQ(tile->GetValue(0,2), timestampValue);
   EXPECT_EQ(tile->GetValue(0,3), doubleValue);
 
+  Value integerValue2 = ValueFactory::GetIntegerValue(243433);
+  Value stringValue2 = ValueFactory::GetStringValue("dude1");
+  Value timestampValue2 = ValueFactory::GetTimestampValue(10.22);
+  Value doubleValue2 = ValueFactory::GetDoubleValue(244644.1236);
+
+  EXPECT_EQ(tile->GetValue(1,0), integerValue2);
+  EXPECT_EQ(tile->GetValue(1,1), stringValue2);
+  EXPECT_EQ(tile->GetValue(1,2), timestampValue2);
+  EXPECT_EQ(tile->GetValue(1,3), doubleValue2);
+
+  //TODO :: check # of tuples
+
   // Make valgrind happy
   stringValue.FreeUninlinedData();
+  stringValue2.FreeUninlinedData();
 }
 
 void LoggingTestsUtil::CheckNextOid(){
     auto &manager = catalog::Manager::GetInstance();
     auto max_oid = manager.GetNextOid();
-    EXPECT_EQ(max_oid,8);
+    EXPECT_EQ(max_oid,5);
 }
 
 void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
@@ -165,6 +192,7 @@ void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
 
   auto table = CreateSimpleTable(db_oid, table_oid);
+
   db->AddTable(table);
 
 }
@@ -230,11 +258,12 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
   auto tuples = CreateSimpleTuples(table->GetSchema());
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
 
   for( auto tuple : tuples){
+    auto txn = txn_manager.BeginTransaction();
     ItemPointer location = table->InsertTuple(txn, tuple);
     txn->RecordInsert(location);
+    std::cout << "Record Location : " << location.block  << " " << location.offset << "\n";
 
     // Logging 
     {
@@ -251,10 +280,12 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
         logger->Insert(record);
       }
     }
+    txn_manager.CommitTransaction(txn);
   }
 
   std::cout << *table << std::endl;
 
+  // wait tuple recording
   sleep(2);
 
   for( auto tuple : tuples){
@@ -262,7 +293,39 @@ void LoggingTestsUtil::InsertTuples(storage::DataTable* table){
     delete tuple;
   }
 
+}
+
+void LoggingTestsUtil::DeleteTuples(storage::DataTable* table){
+
+  ItemPointer delete_location(3,2);
+
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  table->DeleteTuple(txn, delete_location);
+  txn->RecordDelete(delete_location);
+
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+
+      auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, 
+                                            txn->GetTransactionId(), 
+                                            table->GetOid(),
+                                            delete_location,
+                                            nullptr,
+                                            20000);
+      logger->Delete(record);
+    }
+  }
+
+  std::cout << *table << std::endl;
+
   txn_manager.CommitTransaction(txn);
+  //FIXME
+  //txn_manager.EndTransaction(txn);
 }
 
 void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
