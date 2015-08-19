@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "postmaster/peloton.h"
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
 #include "backend/common/logger.h"
