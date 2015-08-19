@@ -92,7 +92,11 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
   LOG_INFO("Wait until frontend logger escapes main loop..");
-  sleep(2);
+  while(1){
+    if( GetLoggingStatus() == LOGGING_STATUS_TYPE_SLEEP){
+      break;
+    }
+  }
 
   //Erase frontend logger from frontend_loggers as well
   {
@@ -109,6 +113,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
       return false;
     }else{
       frontend_loggers.erase(frontend_loggers.begin()+offset);
+      LOG_INFO("%s has been terminated successfully", LoggingTypeToString(logging_type).c_str());
       return true;
     }
   }
