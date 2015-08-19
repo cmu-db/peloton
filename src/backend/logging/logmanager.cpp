@@ -91,6 +91,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   // terminating main loop
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
+  LOG_INFO("Wait until frontend logger escapes main loop..");
   sleep(2);
 
   //Erase frontend logger from frontend_loggers as well
