@@ -21,7 +21,11 @@ class LoggingTestsUtil{
 
 public:
 
-  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
+  static void PrepareLogFile(void);
+
+  static void CheckTupleAfterRecovery(void);
+
+private:
 
   static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
@@ -31,7 +35,7 @@ public:
 
   static void CheckNextOid(void);
 
-private:
+  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
 
   static void CreateDatabase(oid_t db_oid);
 
