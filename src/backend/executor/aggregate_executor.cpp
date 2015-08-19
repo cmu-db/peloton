@@ -30,7 +30,7 @@ namespace executor {
  */
 AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {
+    : AbstractExecutor(node, executor_context) {
 }
 
 AggregateExecutor::~AggregateExecutor() {
@@ -59,11 +59,10 @@ bool AggregateExecutor::DInit() {
   result_itr = START_OID;
 
   bool own_schema = false;
-  output_table = storage::TableFactory::GetDataTable(INVALID_OID, INVALID_OID,
-                                                     output_table_schema,
-                                                     "aggregate_temp_table",
-                                                     DEFAULT_TUPLES_PER_TILEGROUP,
-                                                     own_schema);
+  output_table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      own_schema);
 
   return true;
 }
@@ -92,29 +91,36 @@ bool AggregateExecutor::DExecute() {
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
 
   // Get input tiles and aggregate them
-  std::unique_ptr<expression::ContainerTuple<LogicalTile>> prev_tuple(nullptr);
-  std::unique_ptr<LogicalTile> prev_tile(nullptr);
   while (children_[0]->Execute() == true) {
 
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-    if(nullptr == aggregator.get()){
+    if (nullptr == aggregator.get()) {
       // Initialize the aggregator
-      switch(node.GetAggregateStrategy()){
+      switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_INFO("Use HashAggregator\n");
-          aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+          LOG_INFO("Use HashAggregator\n")
+          ;
+          aggregator.reset(
+              new HashAggregator(&node, output_table, executor_context_,
+                                 tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORTED:
-          LOG_INFO("Use SortedAggregator\n");
-          aggregator.reset(new SortedAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+          LOG_INFO("Use SortedAggregator\n")
+          ;
+          aggregator.reset(
+              new SortedAggregator(&node, output_table, executor_context_,
+                                   tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
-          LOG_INFO("Use PlainAggregator\n");
-          aggregator.reset(new PlainAggregator(&node, output_table, executor_context_));
+          LOG_INFO("Use PlainAggregator\n")
+          ;
+          aggregator.reset(
+              new PlainAggregator(&node, output_table, executor_context_));
           break;
         default:
-          LOG_ERROR("Invalid aggregate type. Return.\n");
+          LOG_ERROR("Invalid aggregate type. Return.\n")
+          ;
           return false;
       }
     }
@@ -122,35 +128,24 @@ bool AggregateExecutor::DExecute() {
     LOG_TRACE("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
-      auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
-                                                                   tuple_id);
 
-      if (aggregator->Advance(cur_tuple) == false) {
+      std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
+          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id));
+
+      if (aggregator->Advance(cur_tuple.get()) == false) {
         return false;
       }
-      prev_tuple.reset(cur_tuple);
+
     }
 
-    /*
-     * This is critical: We must not release the tile immediately because
-     * the prev_tuple may still be referenced in next iteration by some aggregators.
-     * To solve this, we always keep two tiles alive --- hopefully not expensive.
-     *
-     * TODO: We can solve this but forcing the aggregators to keep a local copy
-     * of the 'previous' tuple, instead of just a reference,
-     * so that we can directly release previous tile.
-     */
-    prev_tile.reset(tile.release());
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator || !aggregator->Finalize()){
+  if (!aggregator || !aggregator->Finalize()) {
     done = true;
     return false;
   }
-
-  prev_tile.reset(nullptr);
 
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();

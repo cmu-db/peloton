@@ -95,16 +95,11 @@ Value Agg::Finalize() {
  * Left is the 'delegate' tuple, which is usually the first tuple in the group,
  * used to retrieve pass-through values;
  * Right is the tuple holding all aggregated values.
- *
- * FIXME: need to examine Value's uninlined data problem later.
  */
 bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
             storage::DataTable *output_table,
             const AbstractTuple *delegate_tuple,
             executor::ExecutorContext* econtext) {
-//  // Ignore null tuples
-//  if (delegate_tuple == nullptr)
-//    return true;
 
   auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
