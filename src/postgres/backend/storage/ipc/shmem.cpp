@@ -84,7 +84,7 @@ static void *ShmemEnd;			/* end+1 address of shared memory */
 slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
 								 * allocation */
 
-thread_local static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
+static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 
 /*

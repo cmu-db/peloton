@@ -1544,6 +1544,8 @@ ExecutePlan(EState *estate,
 	TupleTableSlot *slot;
 	long		current_tuple_count;
 
+  elog(LOG, "DML Query Start :: %d TupleCount : %ld", operation, numberTuples);
+
 	/*
 	 * initialize local variables
 	 */
@@ -1585,6 +1587,9 @@ ExecutePlan(EState *estate,
 		if (estate->es_junkFilter != NULL)
 			slot = ExecFilterJunk(estate->es_junkFilter, slot);
 
+		// TODO: Peloton Changes
+		print_slot(slot);
+
 		/*
 		 * If we are supposed to send the tuple somewhere, do so. (In
 		 * practice, this is probably always the case at this point.)
@@ -1601,6 +1606,9 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+
+  elog(LOG, "DML Query Done :: %d TupleCount : %ld", operation, numberTuples);
+
 }
 
 /* ----------------------------------------------------------------
