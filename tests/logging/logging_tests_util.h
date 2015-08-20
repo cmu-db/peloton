@@ -43,11 +43,13 @@ private:
 
   static std::vector<storage::Tuple*> CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples);
 
-  static void InsertTuples(storage::DataTable* table);
+  static void ParallelWriting(storage::DataTable* table);
 
-  static void DeleteTuples(storage::DataTable* table);
+  static std::vector<oid_t> InsertTuples(storage::DataTable* table, bool committed);
 
-  static void UpdateTuples(storage::DataTable* table);
+  static void DeleteTuples(storage::DataTable* table, oid_t tuple_slot, bool committed);
+
+  static void UpdateTuples(storage::DataTable* table, oid_t tuple_slot, bool committed);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 

@@ -54,7 +54,7 @@ class FrontendLogger : public Logger{
     /**
      * Collect LogRecord from BackendLoggers
      */
-    virtual void CollectLogRecord(bool coerce) = 0;
+    virtual void CollectLogRecord(void) = 0;
 
     /**
      * Flush collected LogRecord to stdout or file or nvram
