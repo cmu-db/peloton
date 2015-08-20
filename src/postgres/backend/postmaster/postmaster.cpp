@@ -241,7 +241,7 @@ char	   *bonjour_name;
 bool		restart_after_crash = true;
 
 /* PIDs of special child processes; 0 when not running */
-static thread_local pid_t StartupPID = 0,
+thread_local static pid_t StartupPID = 0,
     BgWriterPID = 0,
     CheckpointerPID = 0,
     WalWriterPID = 0,
