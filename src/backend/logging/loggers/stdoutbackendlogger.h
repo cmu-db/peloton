@@ -33,7 +33,7 @@ class StdoutBackendLogger : public BackendLogger{
 
     void Update(LogRecord* record);
 
-    void Commit(bool coerce = true);
+    void Commit(void);
 
     void Truncate(oid_t offset);
 
