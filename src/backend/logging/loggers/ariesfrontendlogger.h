@@ -38,7 +38,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void MainLoop(void);
 
-    void CollectLogRecord(bool coerce = false);
+    void CollectLogRecord(void);
 
     void Flush(void);
 
@@ -82,7 +82,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void AddTxnToRecoveryTable(void);
     void RemoveTxnFromRecoveryTable(void);
-    void CommitTuplesFromRecoveryTable(concurrency::Transaction* recovery_txn);
+    void MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction* recovery_txn);
     void AbortTuplesFromRecoveryTable(void);
 
     //===--------------------------------------------------------------------===//
@@ -101,7 +101,7 @@ class AriesFrontendLogger : public FrontendLogger{
     int logFileFd;
 
     // Txn table
-    std::map<txn_id_t, concurrency::Transaction *> txn_table;
+    std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;
 
     // Keep tracking max oid for setting next_oid in manager 
     oid_t max_oid = INVALID_OID;

@@ -32,7 +32,7 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     void MainLoop(void);
 
-    void CollectLogRecord(bool coerce = false);
+    void CollectLogRecord(void);
 
     void Flush(void);
 

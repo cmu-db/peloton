@@ -16,7 +16,7 @@ namespace peloton {
 namespace logging {
 
 AriesBackendLogger* AriesBackendLogger::GetInstance(){
-  static AriesBackendLogger pInstance; 
+  static  thread_local AriesBackendLogger pInstance; 
   return &pInstance;
 }
 
@@ -62,12 +62,10 @@ void AriesBackendLogger::Update(LogRecord* record){
 /**
  * @brief set the current size of local_queue
  */
-void AriesBackendLogger::Commit(bool coerce){
+void AriesBackendLogger::Commit(){
   {
-    if( coerce || (!coerce && (aries_local_queue.size() > aries_local_queue_size) )){ 
-      std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
-      commit_offset = aries_local_queue.size();
-    }
+    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+    commit_offset = aries_local_queue.size();
   }
 }
 
