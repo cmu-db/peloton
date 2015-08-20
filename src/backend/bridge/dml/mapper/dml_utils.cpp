@@ -43,6 +43,9 @@ List* CopyExprStateList(List* from);
 ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
                          TupleDesc relation_tup_desc);
 
+IndexRuntimeKeyInfo* CopyRuntimeKeys(IndexRuntimeKeyInfo* from,
+                                     int numRuntimeKeys);
+
 AbstractPlanState *
 DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
                            bool left_child) {
@@ -467,6 +470,11 @@ DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
                                    iss_plan_state->iss_NumScanKeys,
                                    iss_relation_desc->rd_att);
 
+  // Copy runtime scan keys
+  info->iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
+  info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
+                                          iss_plan_state->iss_NumRuntimeKeys);
+
   return info;
 }
 
@@ -488,6 +496,11 @@ DMLUtils::PrepareIndexOnlyScanState(IndexOnlyScanState *ioss_plan_state) {
   info->ioss_ScanKeys = CopyScanKey(ioss_plan_state->ioss_ScanKeys,
                                     ioss_plan_state->ioss_NumScanKeys,
                                     ioss_relation_desc->rd_att);
+
+  // Copy runtime scan keys
+  info->ioss_NumRuntimeKeys = ioss_plan_state->ioss_NumRuntimeKeys;
+  info->ioss_RuntimeKeys = CopyRuntimeKeys(
+      ioss_plan_state->ioss_RuntimeKeys, ioss_plan_state->ioss_NumRuntimeKeys);
 
   return info;
 }
@@ -517,6 +530,10 @@ DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
   child_info->biss_ScanKeys = CopyScanKey(biss_plan_state->biss_ScanKeys,
                                           biss_plan_state->biss_NumScanKeys,
                                           biss_relation_desc->rd_att);
+
+  child_info->biss_NumRuntimeKeys = biss_plan_state->biss_NumRuntimeKeys;
+  child_info->biss_RuntimeKeys = CopyRuntimeKeys(
+      biss_plan_state->biss_RuntimeKeys, biss_plan_state->biss_NumRuntimeKeys);
 
   // Copy underlying biss scan node
   child_info->biss_plan = (BitmapIndexScan *) copyObject(
@@ -571,7 +588,6 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
     info->peragg[i].aggrefstate = (AggrefExprState*) CopyExprState(
         (ExprState*) (agg_plan_state->peragg[i].aggrefstate));
 
-
     info->peragg[i].sortColIdx = (AttrNumber*) palloc(
         sizeof(AttrNumber) * info->peragg[i].numSortCols);
     ::memcpy(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
@@ -581,7 +597,6 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   /* result tuple desc */
   info->result_tupleDescriptor = CreateTupleDescCopy(
       agg_plan_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
-
 
   return info;
 }
@@ -845,6 +860,20 @@ ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
   }
 
   return scan_key_copy;
+}
+
+IndexRuntimeKeyInfo* CopyRuntimeKeys(IndexRuntimeKeyInfo* from,
+                                     int numRuntimeKeys) {
+  IndexRuntimeKeyInfo* retval = (IndexRuntimeKeyInfo*) palloc(
+      sizeof(IndexRuntimeKeyInfo) * numRuntimeKeys);
+
+  for (int key_itr = 0; key_itr < numRuntimeKeys; key_itr++) {
+    retval[key_itr] = from[key_itr];  // shallow copy
+    retval[key_itr].key_expr = CopyExprState(from[key_itr].key_expr);  // Deep copy the expression
+    // NB: No need to copy scan_key?
+  }
+
+  return retval;
 }
 
 }  // namespace bridge
