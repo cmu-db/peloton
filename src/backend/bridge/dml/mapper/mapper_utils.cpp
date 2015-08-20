@@ -360,14 +360,14 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
       auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
       assert(peloton_expr);
-//      if (peloton_expr == nullptr) {
-//        LOG_INFO("Seems to be a row value expression. Skipped.");
-//        continue;
-//      }
 
       target_list.emplace_back(output_col_id, peloton_expr);
     }
   }  // end foreach
+
+  if (target_list.empty() && direct_map_list.empty()) {
+    return nullptr;
+  }
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
