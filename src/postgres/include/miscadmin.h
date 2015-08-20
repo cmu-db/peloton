@@ -147,6 +147,7 @@ extern thread_local bool IsPostmasterEnvironment;
 extern thread_local PGDLLIMPORT bool IsUnderPostmaster;
 extern thread_local bool IsBackgroundWorker;
 extern thread_local PGDLLIMPORT bool IsBinaryUpgrade;
+extern thread_local bool IsBackend;
 
 extern thread_local bool ExitOnAnyError;
 

@@ -3854,6 +3854,8 @@ processCancelRequest(Port *port, void *pkt)
   static void BackendTask(Backend  *bn, Port *port) {
     free(bn);
 
+    IsBackend = true;
+
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 

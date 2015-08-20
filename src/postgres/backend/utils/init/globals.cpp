@@ -101,6 +101,7 @@ thread_local bool		IsPostmasterEnvironment = false;
 thread_local bool		IsUnderPostmaster = false;
 thread_local bool		IsBinaryUpgrade = false;
 thread_local bool		IsBackgroundWorker = false;
+thread_local bool   IsBackend = false;
 
 thread_local bool		ExitOnAnyError = false;
 
