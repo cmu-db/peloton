@@ -31,7 +31,6 @@ SELECT * FROM A,B WHERE A.id > 2 AND B.id >= 6;
 SELECT * FROM B,A WHERE A.id > 2 AND B.id = 6;
 
 
-/*
 -- nested loop join with projection
 SELECT A.* FROM A,B;
 SELECT B.* FROM B,A;
@@ -65,7 +64,6 @@ SELECT a.id,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.data,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 SELECT a.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-*/
 
 SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
 
