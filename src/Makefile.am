@@ -34,7 +34,7 @@ bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpelotonpg.la libpeloton.la
+lib_LTLIBRARIES += libpeloton.la libpelotonpg.la
 
 DEFAULT_INCLUDES =
 
