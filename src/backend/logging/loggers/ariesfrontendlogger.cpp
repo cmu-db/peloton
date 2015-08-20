@@ -62,19 +62,23 @@ void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
+  LOG_INFO("Frontendlogger is going into Standby Mode");
   // Standby before we are ready to recovery
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
-    printf("Standby\n");
     sleep(1);
   }
 
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
-      printf("Recovery Start\n");
+      LOG_INFO("Frontendlogger is going into Recovery Mode");
       Recovery();
-      printf("Recovery End\n");
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
+    }
+    break;
+
+    case LOGGING_STATUS_TYPE_ONGOING:{
+      LOG_INFO("Frontendlogger is going into Ongoing Mode");
     }
     break;
 
@@ -84,9 +88,7 @@ void AriesFrontendLogger::MainLoop(void) {
 
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
     sleep(1);
-    printf("Ongoing\n");
-
-    // Collect LogRecords from BackendLogger 
+    // Collect LogRecords from all BackendLogger 
     CollectLogRecord();
 
     if( GetLogRecordCount() >= aries_global_queue_size ){
@@ -94,12 +96,11 @@ void AriesFrontendLogger::MainLoop(void) {
     }
   }
 
-  // If log record remains in the queue, flush 
-  //TODO :: Collect every data from backend logger
-  CollectLogRecord(true);
+  // flush remanent log record
+  CollectLogRecord();
   Flush();
 
-  printf("Sleep\n");
+  LOG_INFO("Frontendlogger is going into Sleep Mode");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
@@ -107,18 +108,14 @@ void AriesFrontendLogger::MainLoop(void) {
 /**
  * @brief Collect the LogRecord from BackendLoggers
  */
-void AriesFrontendLogger::CollectLogRecord(bool coerce) {
+void AriesFrontendLogger::CollectLogRecord() {
   backend_loggers = GetBackendLoggers();
 
-  // Look over current frontend logger's backend loggers
+  // Look over hte commit mark of current frontend logger's backend loggers
   for( auto backend_logger : backend_loggers){
     auto commit_offset = ((AriesBackendLogger*)backend_logger)->GetCommitOffset();
 
-    if(coerce){
-      backend_logger->Commit(true);
-    }
-
-    // Skip this backend_logger, nothing to do
+    // Skip current backend_logger, nothing to do
     if(commit_offset == 0 ) continue; 
 
     for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
@@ -172,7 +169,8 @@ void AriesFrontendLogger::Recovery() {
 
     while(!EOF_OF_LOG_FILE){
 
-      // Read the first sing bite so that we can distinguish log record type
+      // Read the first single bite so that we can distinguish log record type
+      // otherwise, finish the recovery 
       switch(GetNextLogRecordType()){
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
@@ -184,7 +182,7 @@ void AriesFrontendLogger::Recovery() {
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          CommitTuplesFromRecoveryTable(recovery_txn);
+          MoveCommittedTuplesToRecoveryTxn(recovery_txn);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_ABORT:
@@ -209,10 +207,10 @@ void AriesFrontendLogger::Recovery() {
       }
     }
 
-    txn_manager.CommitTransaction(recovery_txn);
-
-    // Abort remained txn in txn_table
+    // Abort remained txn in recovery_txn_table
     AbortRemainedTxnInRecoveryTable();
+
+    txn_manager.CommitTransaction(recovery_txn);
 
     //After finishing recovery, set the next oid with maximum oid
     auto &manager = catalog::Manager::GetInstance();
@@ -417,7 +415,6 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
       tile_group->AbortInsertedTuple(tuple_slot);
   }
 
-  // (B) rollback deletes
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : txn->GetDeletedTuples()) {
     storage::TileGroup *tile_group = entry.first;
@@ -434,12 +431,12 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
  * @brief Abort tuples inside txn table
  */
 void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
-  for(auto  txn : txn_table){
+  for(auto  txn : recovery_txn_table){
     auto curr_txn = txn.second;
     AbortTuples(curr_txn);
-    txn_table.erase(curr_txn->GetTransactionId());
     delete curr_txn;
   }
+  recovery_txn_table.clear();
 }
 
 /**
@@ -465,7 +462,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto tile_group = GetTileGroup(tile_group_id);
 
   auto txn_id = tupleRecord.GetTxnId();
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
 
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
@@ -508,7 +505,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
   }
   auto txn_id = tupleRecord.GetTxnId();
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
 
 }
@@ -539,7 +536,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   }
 
   auto txn_id = tupleRecord.GetTxnId();
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
   txn->RecordInsert(location);
 
@@ -558,9 +555,9 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
 
   auto txn_id = txnRecord.GetTxnId();
 
-  // create the new txn object and added it into recovery txn_table
+  // create the new txn object and added it into recovery recovery_txn_table
   concurrency::Transaction* txn = new concurrency::Transaction(txn_id, INVALID_CID);
-  txn_table.insert(std::make_pair(txn_id, txn));
+  recovery_txn_table.insert(std::make_pair(txn_id, txn));
   LOG_INFO("Added txd id %d object in table",(int)txn_id);
 }
 
@@ -575,9 +572,9 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   auto txn_id = txnRecord.GetTxnId();
 
   // remove txn from recovery txn table
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
+  recovery_txn_table.erase(txn_id);
   delete txn;
-  txn_table.erase(txn_id);
   LOG_INFO("Erase txd id %d object in table",(int)txn_id);
 }
 
@@ -585,8 +582,7 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
  * @brief move tuples from current txn to recovery txn so that we can commit them later
  * @param recovery txn
  */
-// TODO::RENAME
-void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction* recovery_txn) {
+void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction* recovery_txn) {
 
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
@@ -594,7 +590,7 @@ void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction
 
   // get the txn
   auto txn_id = txnRecord.GetTxnId();
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
 
   // Copy inserted/deleted tuples to recovery transaction
   MoveTuples(recovery_txn, txn);
@@ -605,7 +601,6 @@ void AriesFrontendLogger::CommitTuplesFromRecoveryTable(concurrency::Transaction
 /**
  * @brief abort tuple 
  */
-// TODO::RENAME
 void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // read transaction information from the log file
@@ -615,7 +610,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   auto txn_id = txnRecord.GetTxnId();
 
   // get the txn
-  auto txn = txn_table.at(txn_id);
+  auto txn = recovery_txn_table.at(txn_id);
   AbortTuples(txn);
 
   LOG_INFO("Abort txd id %d object in table",(int)txn_id);
