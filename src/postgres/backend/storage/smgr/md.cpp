@@ -115,7 +115,7 @@ typedef struct _MdfdVec
 	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 } MdfdVec;
 
-static MemoryContext MdCxt;		/* context for all MdfdVec objects */
+thread_local static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /*
