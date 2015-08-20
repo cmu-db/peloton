@@ -38,7 +38,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void MainLoop(void);
 
-    void CollectLogRecord(void);
+    void CollectLogRecord(bool coerce = false);
 
     void Flush(void);
 
@@ -93,7 +93,7 @@ class AriesFrontendLogger : public FrontendLogger{
     std::string filename = "/home/parallels/git/peloton/build/aries.log";
 
     // FIXME :: Hard coded global_queue size
-    oid_t aries_global_queue_size = 1;
+    oid_t aries_global_queue_size = 10;
 
     // File pointer and descriptor
     FILE* logFile;
