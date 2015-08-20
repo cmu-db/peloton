@@ -152,6 +152,7 @@ struct AbstractJoinPlanState : public AbstractPlanState {
   JoinType jointype;
   List *joinqual;
   List *qual;
+  List *targetlist;
 
 };
 
@@ -160,6 +161,9 @@ struct NestLoopPlanState : public AbstractJoinPlanState {
 };
 
 struct MergeJoinPlanState : public AbstractJoinPlanState {
+
+  int     mj_NumClauses;
+  MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
 
 };
 
