@@ -82,8 +82,7 @@ void AriesFrontendLogger::MainLoop(void) {
     break;
   }
 
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING
-        || GetLogRecordCount() >= aries_global_queue_size /* ignore terminate message */ ){
+  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
     sleep(1);
     printf("Ongoing\n");
 
@@ -95,6 +94,11 @@ void AriesFrontendLogger::MainLoop(void) {
     }
   }
 
+  // If log record remains in the queue, flush 
+  //TODO :: Collect every data from backend logger
+  CollectLogRecord(true);
+  Flush();
+
   printf("Sleep\n");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
@@ -103,15 +107,19 @@ void AriesFrontendLogger::MainLoop(void) {
 /**
  * @brief Collect the LogRecord from BackendLoggers
  */
-void AriesFrontendLogger::CollectLogRecord(void) {
+void AriesFrontendLogger::CollectLogRecord(bool coerce) {
   backend_loggers = GetBackendLoggers();
 
   // Look over current frontend logger's backend loggers
   for( auto backend_logger : backend_loggers){
     auto commit_offset = ((AriesBackendLogger*)backend_logger)->GetCommitOffset();
 
+    if(coerce){
+      backend_logger->Commit(true);
+    }
+
     // Skip this backend_logger, nothing to do
-    if( commit_offset == 0 ) continue; 
+    if(commit_offset == 0 ) continue; 
 
     for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
       // Copy LogRecord from backend_logger to here
