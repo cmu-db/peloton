@@ -57,7 +57,8 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
-                                                        expr_types, values);
+                                                        expr_types, values,
+                                                        std::vector<expression::AbstractExpression*>());
 
   expression::AbstractExpression *predicate = nullptr;
 
@@ -120,7 +121,8 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
-                                                        expr_types, values);
+                                                        expr_types, values,
+                                                        std::vector<expression::AbstractExpression*>());
 
   expression::AbstractExpression *predicate = nullptr;
 

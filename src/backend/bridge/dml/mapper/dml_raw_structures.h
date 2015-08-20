@@ -94,6 +94,9 @@ struct IndexScanPlanState : public AbstractScanPlanState {
 
   ScanKey   iss_ScanKeys;
   int iss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *iss_RuntimeKeys;
+  int     iss_NumRuntimeKeys;
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {
@@ -106,6 +109,9 @@ struct BitmapIndexScanPlanState : public AbstractScanPlanState {
 
   ScanKey  biss_ScanKeys;
   int biss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *biss_RuntimeKeys;
+  int     biss_NumRuntimeKeys;
 };
 
 struct IndexOnlyScanPlanState : public AbstractScanPlanState {
@@ -114,6 +120,9 @@ struct IndexOnlyScanPlanState : public AbstractScanPlanState {
 
   ScanKey  ioss_ScanKeys;
   int ioss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *ioss_RuntimeKeys;
+  int     ioss_NumRuntimeKeys;
 };
 
 struct MaterialPlanState : public AbstractPlanState {
