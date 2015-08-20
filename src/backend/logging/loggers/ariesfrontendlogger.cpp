@@ -64,24 +64,28 @@ void AriesFrontendLogger::MainLoop(void) {
 
   // Standby before we are ready to recovery
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
+    printf("Standby\n");
     sleep(1);
   }
 
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
+      printf("Recovery Start\n");
       Recovery();
+      printf("Recovery End\n");
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
     }
     break;
 
     default:
-      return;
     break;
   }
 
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
+  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING
+        || GetLogRecordCount() >= aries_global_queue_size /* ignore terminate message */ ){
     sleep(1);
+    printf("Ongoing\n");
 
     // Collect LogRecords from BackendLogger 
     CollectLogRecord();
@@ -91,6 +95,7 @@ void AriesFrontendLogger::MainLoop(void) {
     }
   }
 
+  printf("Sleep\n");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
@@ -424,8 +429,8 @@ void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
   for(auto  txn : txn_table){
     auto curr_txn = txn.second;
     AbortTuples(curr_txn);
-    delete curr_txn;
     txn_table.erase(curr_txn->GetTransactionId());
+    delete curr_txn;
   }
 }
 

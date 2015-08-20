@@ -61,6 +61,8 @@ class LogManager{
 
     void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
 
+    void MakeItSleepy(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
     LoggingStatus GetLoggingStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
     BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);

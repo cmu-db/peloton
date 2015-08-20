@@ -23,6 +23,11 @@ bool LoggingTestsUtil::PrepareLogFile(){
 
    // start a thread for logging
    auto& logManager = logging::LogManager::GetInstance();
+
+   if( logManager.ActiveFrontendLoggerCount() > 0){
+     LOG_ERROR("another logging thread is running now"); 
+     return false;
+   }
    logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
    std::thread thread(&logging::LogManager::StandbyLogging, 
                       &logManager, 
@@ -31,6 +36,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
    // When the frontend logger gets ready to logging,
    // start logging
    while(1){
+     sleep(1);
      if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
        // Standby -> Recovery
        logManager.StartLogging();
@@ -39,7 +45,14 @@ bool LoggingTestsUtil::PrepareLogFile(){
      }
    }
 
+   // wait for recovery
+   while(logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
+
+   printf("logging start\n");
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
+   printf("logging end\n");
+
+   sleep(5);
 
    // ongoing->terminate->sleep
    if( logManager.EndLogging() ){
@@ -56,8 +69,6 @@ bool LoggingTestsUtil::PrepareLogFile(){
  */
 void LoggingTestsUtil::CheckTupleAfterRecovery(){
 
-  sleep(3);
-
   // Initialize oid since we assume that we restart the system
   auto &manager = catalog::Manager::GetInstance();
   manager.SetNextOid(0);
@@ -65,8 +76,13 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
 
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
-  // start a thread for logging
   auto& logManager = logging::LogManager::GetInstance();
+   if( logManager.ActiveFrontendLoggerCount() > 0){
+     LOG_ERROR("another logging thread is running now"); 
+     return false;
+   }
+
+  // start a thread for logging
   logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
   std::thread thread(&logging::LogManager::StandbyLogging, 
       &logManager, 
@@ -75,6 +91,7 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
   // When the frontend logger gets ready to logging,
   // start logging
   while(1){
+    sleep(1);
     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
       // Standby -> Recovery
       logManager.StartLogging();
@@ -85,6 +102,7 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
 
   //wait recovery
   while(1){
+    sleep(1);
     // escape when recovery is done
     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
       break;
@@ -125,9 +143,6 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
   DeleteTuples(table);
 
   UpdateTuples(table);
-
-  //FIXME
-  //txn_manager.EndTransaction(txn);
 
   db->AddTable(table);
   db->DropTableWithOid(table_oid);
