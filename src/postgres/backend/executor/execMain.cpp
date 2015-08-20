@@ -351,6 +351,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
+    elog(LOG, "DML Query Start :: Type :: %d", operation);
+
     ExecutePlan(estate,
                 queryDesc->planstate,
                 operation,
@@ -358,6 +360,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
                 count,
                 direction,
                 dest);
+
+    elog(LOG, "DML Query End :: Type :: %d", operation);
 	}
 
 	/*
