@@ -80,6 +80,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 enum PostgresValueType {
+  POSTGRES_VALUE_TYPE_INVALID = -1,
   POSTGRES_VALUE_TYPE_BOOLEAN = 16,
 
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
