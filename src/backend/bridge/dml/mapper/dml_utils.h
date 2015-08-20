@@ -68,6 +68,9 @@ class DMLUtils {
   static BitmapHeapScanPlanState *PrepareBitmapHeapScanState(
       BitmapHeapScanState *bhss_state);
 
+  static BitmapIndexScanPlanState *PrepareBitmapIndexScanState(
+      BitmapIndexScanState *biss_state);
+
   static LockRowsPlanState *PrepareLockRowsState(LockRowsState *lr_state);
 
   static LimitPlanState *PrepareLimitState(LimitState *limit_state);

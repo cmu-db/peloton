@@ -65,6 +65,7 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       child_planstate = PrepareModifyTableState(
           reinterpret_cast<ModifyTableState *>(planstate));
       break;
+
     case T_SeqScanState:
       child_planstate = PrepareSeqScanState(
           reinterpret_cast<SeqScanState *>(planstate));
@@ -81,6 +82,11 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       child_planstate = PrepareBitmapHeapScanState(
           reinterpret_cast<BitmapHeapScanState *>(planstate));
       break;
+    case T_BitmapIndexScanState:
+      child_planstate = PrepareBitmapIndexScanState(
+          reinterpret_cast<BitmapIndexScanState*>(planstate));
+      break;
+
     case T_LockRowsState:
       child_planstate = PrepareLockRowsState(
           reinterpret_cast<LockRowsState *>(planstate));
@@ -96,7 +102,8 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       break;
 
     case T_MergeJoinState:
-      child_planstate = PrepareMergeJoinState(reinterpret_cast<MergeJoinState*>(planstate));
+      child_planstate = PrepareMergeJoinState(
+          reinterpret_cast<MergeJoinState*>(planstate));
       break;
 
     case T_HashJoinState:
@@ -132,6 +139,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
   }
 
   // Recurse
+  // TODO: We should push this recursion to the individual PrepareXXXXState() functions,
+  // because not all states' children are cooked in the same way
+  // (e.g., some are extracted from sub-plans)
   auto left_tree = outerPlanState(planstate);
   auto right_tree = innerPlanState(planstate);
 
@@ -539,45 +549,46 @@ DMLUtils::PrepareBitmapHeapScanState(BitmapHeapScanState *bhss_plan_state) {
   // only support a bitmap index scan at lower level
   assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
 
-  // Construct the child node which must be a BitmapIndexScan
-  BitmapIndexScanState *biss_plan_state =
-      (BitmapIndexScanState *) outerPlanState(bhss_plan_state);
+  return info;
+}
 
-  BitmapIndexScanPlanState *child_info = (BitmapIndexScanPlanState*) palloc(
+BitmapIndexScanPlanState* DMLUtils::PrepareBitmapIndexScanState(
+    BitmapIndexScanState* biss_state) {
+
+  BitmapIndexScanPlanState *info = (BitmapIndexScanPlanState*) palloc(
       sizeof(BitmapIndexScanPlanState));
+  info->type = biss_state->ss.ps.type;
 
   // Copy scan keys
-  child_info->biss_NumScanKeys = biss_plan_state->biss_NumScanKeys;
-  Relation biss_relation_desc = biss_plan_state->biss_RelationDesc;
-  child_info->biss_ScanKeys = CopyScanKey(biss_plan_state->biss_ScanKeys,
-                                          biss_plan_state->biss_NumScanKeys,
-                                          biss_relation_desc->rd_att);
+  info->biss_NumScanKeys = biss_state->biss_NumScanKeys;
+  Relation biss_relation_desc = biss_state->biss_RelationDesc;
+  info->biss_ScanKeys = CopyScanKey(biss_state->biss_ScanKeys,
+                                    biss_state->biss_NumScanKeys,
+                                    biss_relation_desc->rd_att);
 
-  child_info->biss_NumRuntimeKeys = biss_plan_state->biss_NumRuntimeKeys;
-  child_info->biss_RuntimeKeys = CopyRuntimeKeys(
-      biss_plan_state->biss_RuntimeKeys, biss_plan_state->biss_NumRuntimeKeys);
+  info->biss_NumRuntimeKeys = biss_state->biss_NumRuntimeKeys;
+  info->biss_RuntimeKeys = CopyRuntimeKeys(biss_state->biss_RuntimeKeys,
+                                           biss_state->biss_NumRuntimeKeys);
 
   // Copy underlying biss scan node
-  child_info->biss_plan = (BitmapIndexScan *) copyObject(
-      biss_plan_state->ss.ps.plan);
-
-  // Add child
-  outerAbstractPlanState(info) = child_info;
+  info->biss_plan = (BitmapIndexScan *) copyObject(biss_state->ss.ps.plan);
 
   return info;
+
 }
 
 MaterialPlanState *
 DMLUtils::PrepareMaterialState(MaterialState *material_plan_state) {
+
   MaterialPlanState *info = (MaterialPlanState*) palloc(
       sizeof(MaterialPlanState));
   info->type = material_plan_state->ss.ps.type;
 
-  PlanState *outer_plan_state = outerPlanState(material_plan_state);
-  AbstractPlanState *child_plan_state = PreparePlanState(nullptr,
-                                                         outer_plan_state,
-                                                         true);
-  outerAbstractPlanState(info) = child_plan_state;
+//  PlanState *outer_plan_state = outerPlanState(material_plan_state);
+//  AbstractPlanState *child_plan_state = PreparePlanState(nullptr,
+//                                                         outer_plan_state,
+//                                                         true);
+//  outerAbstractPlanState(info) = child_plan_state;
 
   return info;
 }
