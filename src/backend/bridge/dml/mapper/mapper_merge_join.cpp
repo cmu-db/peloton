@@ -29,18 +29,14 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
-    const MergeJoinPlanState* mj_planstate) {
+    const MergeJoinPlanState* mj_plan_state) {
 
-  // TODO: TEMP HACK
-  MergeJoinState* mj_plan_state = nullptr;
 
-  const JoinState *js = &(mj_plan_state->js);
-  //const MergeJoin *mj_plan = reinterpret_cast<const MergeJoin *>(js->ps.plan);
   planner::AbstractPlan *result = nullptr;
   planner::MergeJoinPlan *plan_node = nullptr;
-  PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
+  PelotonJoinType join_type = PlanTransformer::TransformJoinType(mj_plan_state->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
-    LOG_ERROR("unsupported join type: %d", js->jointype);
+    LOG_ERROR("unsupported join type: %d", mj_plan_state->jointype);
     return nullptr;
   }
 
@@ -51,10 +47,10 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
                             mj_plan_state->mj_NumClauses);
 
   expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->joinqual));
+      reinterpret_cast<ExprState *>(mj_plan_state->joinqual));
 
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->ps.qual));
+      reinterpret_cast<ExprState *>(mj_plan_state->qual));
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
@@ -69,7 +65,7 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
 
-  project_info.reset(BuildProjectInfoFromTLSkipJunk(js->ps.targetlist));
+  project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
@@ -77,7 +73,7 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        mj_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+        mj_plan_state->tts_tupleDescriptor);
     result = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
     plan_node = new planner::MergeJoinPlan(predicate, nullptr, join_clauses);
@@ -90,9 +86,9 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
   }
 
   planner::AbstractPlan *outer = PlanTransformer::TransformPlan(
-      outerAbstractPlanState(mj_planstate));
+      outerAbstractPlanState(mj_plan_state));
   planner::AbstractPlan *inner = PlanTransformer::TransformPlan(
-      innerAbstractPlanState(mj_planstate));
+      innerAbstractPlanState(mj_plan_state));
 
   /* Add the children nodes */
   plan_node->SetJoinType(join_type);
