@@ -88,16 +88,17 @@ bool LogManager::EndLogging(LoggingType logging_type ){
     assert(logging_type);
   }
 
-  // terminating main loop
-  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
-  LOG_INFO("Wait until frontend logger escapes main loop..");
+  // Wait if current status is recovery
+  while(GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_RECOVERY){ }
+
+  LOG_INFO("Wait until frontend logger(%s) escpes main loop..", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
   while(1){
-    if( GetLoggingStatus() == LOGGING_STATUS_TYPE_SLEEP){
-      break;
-    }
+    MakeItSleepy();
+    if( GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP) break;
   }
 
+  //TODO :: Make function
   //Erase frontend logger from frontend_loggers as well
   {
     oid_t offset=0;
@@ -106,14 +107,30 @@ bool LogManager::EndLogging(LoggingType logging_type ){
       if( frontend_logger->GetLoggingType() == logging_type){
         delete frontend_logger;
         break;
+      }else{
+        offset++;
       }
     }
     if( offset >= frontend_loggers.size()){
-      LOG_WARN("%s is not running now", LoggingTypeToString(logging_type).c_str());
+      LOG_WARN("%s isn't running", LoggingTypeToString(logging_type).c_str());
       return false;
     }else{
       frontend_loggers.erase(frontend_loggers.begin()+offset);
+
+      // Remove status 
+      {
+        std::map<LoggingType,LoggingStatus>::iterator it; 
+        it = logging_statuses.find(logging_type);
+
+        if (it != logging_statuses.end()){
+          logging_statuses.erase(it);
+        }
+      }
+      // Reset MainLoggingType 
+      MainLoggingType = LOGGING_TYPE_INVALID;
+
       LOG_INFO("%s has been terminated successfully", LoggingTypeToString(logging_type).c_str());
+
       return true;
     }
   }
@@ -174,12 +191,26 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
     it = logging_statuses.find(logging_type);
 
     if (it != logging_statuses.end()){
-       logging_statuses[logging_type] = logging_status;
+       // Cannot change to previous status
+       // For example,  we can change status only in follow direction, standby->recovery->ongoing->terminate->sleep 
+       if( logging_statuses[logging_type] < logging_status){
+         logging_statuses[logging_type] = logging_status;
+       }
     }else{
       logging_statuses.insert(std::make_pair(logging_type, logging_status));
     }
   }
 }
+
+void LogManager::MakeItSleepy(LoggingType logging_type){
+  if( logging_type == LOGGING_TYPE_INVALID){
+    logging_type = MainLoggingType;
+    assert(logging_type);
+  }
+
+  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
+}
+
 
 /**
  * @brief Return the backend logger based on logging type
