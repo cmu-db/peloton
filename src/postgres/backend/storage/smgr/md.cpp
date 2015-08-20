@@ -206,8 +206,8 @@ mdinit(void)
 	 * it if we are standalone (not under a postmaster) or if we are a startup
 	 * or checkpointer auxiliary process.
 	 */
-	//if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
-	//{
+	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess() || IsBackend)
+	{
 		HASHCTL		hash_ctl;
 
 		/*
@@ -235,7 +235,7 @@ mdinit(void)
 									  &hash_ctl,
 									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 		pendingUnlinks = NIL;
-	//}
+	}
 }
 
 /*
