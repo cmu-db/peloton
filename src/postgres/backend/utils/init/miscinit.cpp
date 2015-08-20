@@ -51,12 +51,12 @@
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
 
-ProcessingMode Mode = InitProcessing;
+thread_local ProcessingMode Mode = InitProcessing;
 
 /* List of lock files to be removed at proc exit */
-static List *lock_files = NIL;
+thread_local static List *lock_files = NIL;
 
-static Latch LocalLatchData;
+thread_local static Latch LocalLatchData;
 
 /* ----------------------------------------------------------------
  *		ignoring system indexes support stuff
@@ -68,7 +68,7 @@ static Latch LocalLatchData;
  * ----------------------------------------------------------------
  */
 
-bool		IgnoreSystemIndexes = false;
+thread_local bool		IgnoreSystemIndexes = false;
 
 
 /* ----------------------------------------------------------------
