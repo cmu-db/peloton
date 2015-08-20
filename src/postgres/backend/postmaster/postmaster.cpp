@@ -184,9 +184,8 @@ static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 static Backend *ShmemBackendArray;
 #endif
 
+
 thread_local BackgroundWorker *MyBgworkerEntry = NULL;
-
-
 
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
@@ -3033,7 +3032,8 @@ processCancelRequest(Port *port, void *pkt)
    * GetBackendThreadID
    *
    */
-  static int GetBackendThreadId(void) {
+  static int
+  GetBackendThreadId(void) {
     std::hash<std::thread::id> hasher;
     uint16_t thread_id = hasher(std::this_thread::get_id());
 
@@ -3123,6 +3123,8 @@ processCancelRequest(Port *port, void *pkt)
       }
     }
   }
+
+
 
   /*
    * HandleChildCrash -- cleanup after failed backend, bgwriter, checkpointer,
@@ -5174,13 +5176,16 @@ processCancelRequest(Port *port, void *pkt)
   {
     dlist_iter	iter;
     int			cnt = 0;
-
-    // TODO: Peloton Changes
-    return cnt;
+    Backend    *bp = NULL;
+    Backend    *prev_bp = NULL;
 
     dlist_foreach(iter, &BackendList)
     {
-      Backend    *bp = dlist_container(Backend, elem, iter.cur);
+      prev_bp = bp;
+      bp = dlist_container(Backend, elem, iter.cur);
+
+      if(prev_bp == bp)
+        break;
 
       if (bp->dead_end)
         continue;
