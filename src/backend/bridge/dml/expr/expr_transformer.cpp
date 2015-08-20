@@ -24,9 +24,11 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/cast_expression.h"
 
 namespace peloton {
 namespace bridge {
+
 
 /**
  * @brief Transform a ExprState tree (Postgres) to a AbstractExpression tree
@@ -36,7 +38,7 @@ namespace bridge {
 expression::AbstractExpression* ExprTransformer::TransformExpr(
     const ExprState* expr_state) {
   if (nullptr == expr_state) {
-    LOG_TRACE("Null expression");
+    LOG_INFO("Null expression");
     return nullptr;
   }
 
@@ -112,7 +114,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_INFO("Probably handing a string constant \n");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
@@ -131,7 +133,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 
 expression::AbstractExpression* ExprTransformer::TransformOp(
     const ExprState* es) {
-  LOG_TRACE("Transform Op \n");
+  LOG_INFO("Transform Op \n");
 
   auto op_expr = reinterpret_cast<const OpExpr*>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState*>(es);
@@ -168,6 +170,15 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
     return TransformExpr(first_child);
   }
 
+  if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
+    expression::CastExpression *cast_expr = reinterpret_cast<expression::CastExpression*>(retval);
+    ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
+    cast_expr->SetChild(TransformExpr(first_child));
+    PostgresValueType type = static_cast<PostgresValueType>(rettype);
+    cast_expr->SetResultType(type);
+    return cast_expr;
+  }
+
   return retval;
 }
 
@@ -191,7 +202,7 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
       var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_INFO("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -216,17 +227,17 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
 
   switch (bool_op) {
     case AND_EXPR:
-      LOG_TRACE("Bool AND list \n");
+      LOG_INFO("Bool AND list \n");
       return TransformList(reinterpret_cast<const ExprState*>(args),
                            EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
-      LOG_TRACE("Bool OR list \n");
+      LOG_INFO("Bool OR list \n");
       return TransformList(reinterpret_cast<const ExprState*>(args),
                            EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR: {
-      LOG_TRACE("Bool NOT \n");
+      LOG_INFO("Bool NOT \n");
       auto child_es =
           reinterpret_cast<const ExprState*>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
@@ -248,7 +259,7 @@ expression::AbstractExpression* ExprTransformer::TransformParam(
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
-      LOG_TRACE("Handle EXTREN PARAM");
+      LOG_INFO("Handle EXTREN PARAM");
       return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
       break;
     default:
@@ -268,7 +279,7 @@ expression::AbstractExpression* ExprTransformer::TransformRelabelType(
 
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
-  LOG_TRACE("Handle relabel as %d", expr->resulttype);
+  LOG_INFO("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression* child = ExprTransformer::TransformExpr(
       child_state);
 
@@ -301,7 +312,7 @@ expression::AbstractExpression* ExprTransformer::TransformList(
   ListCell* l;
   int length = list_length(list);
   assert(length > 0);
-  LOG_TRACE("Expression List of length %d", length);
+  LOG_INFO("Expression List of length %d", length);
   std::list<expression::AbstractExpression*> exprs;  // a list of AND'ed expressions
 
   foreach (l, list)
@@ -338,6 +349,12 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
     return nullptr;
   }
   PltFuncMetaInfo func_meta = itr->second;
+
+  if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
+    // it is a cast, but we need casted type and the child expr.
+    // so we just create an empty cast expr and return it.
+    return expression::CastFactory();
+  }
 
   assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
 
