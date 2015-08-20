@@ -52,7 +52,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
    printf("logging end\n");
 
-   sleep(5);
+   sleep(10);
 
    // ongoing->terminate->sleep
    if( logManager.EndLogging() ){

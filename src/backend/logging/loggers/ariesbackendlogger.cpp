@@ -30,7 +30,6 @@ void AriesBackendLogger::Insert(LogRecord* record){
     record->Serialize();
     aries_local_queue.push_back(record);
   }
-  //FIXME :: Commit everytime for testing
   Commit();
 }
 
@@ -44,7 +43,6 @@ void AriesBackendLogger::Delete(LogRecord* record){
     record->Serialize();
     aries_local_queue.push_back(record);
   }
-  //FIXME :: Commit everytime for testing
   Commit();
 }
 
@@ -58,17 +56,18 @@ void AriesBackendLogger::Update(LogRecord* record){
     record->Serialize();
     aries_local_queue.push_back(record);
   }
-  //FIXME :: Commit everytime for testing
   Commit();
 }
 
 /**
  * @brief set the current size of local_queue
  */
-void AriesBackendLogger::Commit(){
+void AriesBackendLogger::Commit(bool coerce){
   {
-    std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
-    commit_offset = aries_local_queue.size();
+    if( coerce || (!coerce && (aries_local_queue.size() > aries_local_queue_size) )){ 
+      std::lock_guard<std::mutex> lock(aries_local_queue_mutex);
+      commit_offset = aries_local_queue.size();
+    }
   }
 }
 
