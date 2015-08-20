@@ -51,7 +51,7 @@ class BackendLogger : public Logger{
     /**
      * Commit locally so that FrontendLogger can collect LogRecord from here
      */
-    virtual void Commit(bool coerce) = 0;
+    virtual void Commit(void) = 0;
 
     /**
      * Remove LogRecord that already collected by FrontendLogger
