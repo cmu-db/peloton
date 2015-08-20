@@ -21,6 +21,7 @@ TEST(AriesLoggingTest, logging_start_end) {
     EXPECT_TRUE( std::remove(filename.c_str()) == 0 );
   }
 
+
  // writing simple log file
  if( LoggingTestsUtil::PrepareLogFile() ){
    // recover database and check the tuples
