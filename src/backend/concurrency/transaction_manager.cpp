@@ -107,6 +107,29 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
   return (txn_id < next_txn_id);
 }
 
+void TransactionManager::ResetStates(void){
+  next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
+  next_cid = ATOMIC_VAR_INIT(START_CID);
+
+  // BASE transaction
+  // All transactions are based on this transaction
+  delete last_txn;
+  last_txn = new Transaction(START_TXN_ID, START_CID);
+  last_txn->cid = START_CID;
+  last_cid = START_CID;
+
+  for(auto txn : txn_table){
+    auto curr_txn = txn.second;
+    delete curr_txn;
+  }
+  txn_table.clear();
+  for(auto txn : pg_txn_table){
+    auto curr_txn = txn.second;
+    delete curr_txn;
+  }
+  pg_txn_table.clear();
+}
+
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
   // XXX LOG :: record txn end entry

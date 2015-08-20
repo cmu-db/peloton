@@ -37,15 +37,12 @@ void StdoutFrontendLogger::MainLoop(void) {
 /**
  * @brief Collect the LogRecord from BackendLogger
  */
-void StdoutFrontendLogger::CollectLogRecord(bool coerce) {
+void StdoutFrontendLogger::CollectLogRecord() {
   backend_loggers = GetBackendLoggers();
 
   // Look over current frontend logger's backend loggers
   for( auto backend_logger : backend_loggers){
     auto commit_offset = ((StdoutBackendLogger*)backend_logger)->GetCommitOffset();
-
-    if( coerce )
-      backend_logger->Commit(true);
 
     // Skip this backend_logger, nothing to do
     if(commit_offset == 0 ) continue; 

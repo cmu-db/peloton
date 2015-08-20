@@ -12,25 +12,41 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
-TEST(AriesLoggingTest, logging_start_end) {
+//FIXME :: Hard coded file path
+std::string filename = "/home/parallels/git/peloton/build/aries.log";
 
- //FIXME :: Hard coded file path
-  std::string filename = "/home/parallels/git/peloton/build/aries.log";
+/**
+ * @brief writing a simple log with multiple threads
+ */
+TEST(AriesLoggingTest, writing_logfile) {
+
   std::ifstream logfile(filename.c_str());
+  // delete the log file if exists
   if( logfile.good() ){
     EXPECT_TRUE( std::remove(filename.c_str()) == 0 );
   }
 
-
- // writing simple log file
- if( LoggingTestsUtil::PrepareLogFile() ){
-   // recover database and check the tuples
-   LoggingTestsUtil::CheckTupleAfterRecovery();
- }else{
+  // writing simple log file
+  if( LoggingTestsUtil::PrepareLogFile() ){
+  }else{
     //Something's wrong !!
     EXPECT_EQ(1,0);
- }
+  }
+}
 
+/**
+ * @brief recovery test
+ */
+TEST(AriesLoggingTest, recovery) {
+
+  std::ifstream logfile(filename.c_str());
+  // recovery if the log file exists
+  if( logfile.good() ){
+   LoggingTestsUtil::CheckTupleAfterRecovery();
+  }else{
+    //Something's wrong !!
+    EXPECT_EQ(1,0);
+  }
 }
 
 }  // End test namespace
