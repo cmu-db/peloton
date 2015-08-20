@@ -20,7 +20,6 @@ INSERT INTO B VALUES(6, 'Joy says World Hello 6');
 INSERT INTO B VALUES(7, 'Joy says World Hello 7');
 
 
-/*
 -- nested loop join
 SELECT * FROM A,B;
 SELECT * FROM B,A;
@@ -32,6 +31,7 @@ SELECT * FROM A,B WHERE A.id > 2 AND B.id >= 6;
 SELECT * FROM B,A WHERE A.id > 2 AND B.id = 6;
 
 
+/*
 -- nested loop join with projection
 SELECT A.* FROM A,B;
 SELECT B.* FROM B,A;

@@ -46,6 +46,9 @@ ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
 IndexRuntimeKeyInfo* CopyRuntimeKeys(IndexRuntimeKeyInfo* from,
                                      int numRuntimeKeys);
 
+MergeJoinClauseData* CopyMergeJoinClause(MergeJoinClauseData* from,
+                                         int numClauses);
+
 AbstractPlanState *
 DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
                            bool left_child) {
@@ -93,6 +96,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       break;
 
     case T_MergeJoinState:
+      child_planstate = PrepareMergeJoinState(reinterpret_cast<MergeJoinState*>(planstate));
+      break;
+
     case T_HashJoinState:
     case T_NestLoopState:
       child_planstate = PrepareNestLoopState(
@@ -364,42 +370,58 @@ DMLUtils::PrepareLimitState(LimitState *limit_plan_state) {
   return info;
 }
 
-NestLoopPlanState *
-DMLUtils::PrepareNestLoopState(NestLoopState *nl_plan_state) {
-  NestLoopPlanState *info = (NestLoopPlanState*) palloc(
-      sizeof(NestLoopPlanState));
-  info->type = nl_plan_state->js.ps.type;
+void DMLUtils::PrepareAbstractJoinPlanState(AbstractJoinPlanState* j_plan_state,
+                                            const JoinState& j_state) {
 
-  const JoinState *js = &(nl_plan_state->js);
-  info->jointype = js->jointype;
+  // Copy join type
+  j_plan_state->jointype = j_state.jointype;
 
   // Copy join qual expr states
-  auto qual_list = js->joinqual;
-  ListCell *qual_item;
-  info->joinqual = NIL;
-  foreach(qual_item, qual_list)
-  {
-    ExprState *expr_state = (ExprState *) lfirst(qual_item);
-    ExprState *expr_state_copy = CopyExprState(expr_state);
-    info->joinqual = lappend(info->joinqual, expr_state_copy);
-  }
+  j_plan_state->joinqual = CopyExprStateList(j_state.joinqual);
 
-  // Copy ps qual expr states
-  auto ps_qual_list = js->ps.qual;
-  info->qual = NIL;
-  foreach(qual_item, ps_qual_list)
-  {
-    ExprState *expr_state = (ExprState *) lfirst(qual_item);
-    ExprState *expr_state_copy = CopyExprState(expr_state);
-    info->qual = lappend(info->qual, expr_state_copy);
-  }
+  // Copy ps qual
+  j_plan_state->qual = CopyExprStateList(j_state.ps.qual);
+
+  // Copy target list
+  j_plan_state->targetlist = CopyExprStateList(j_state.ps.targetlist);
 
   // Copy tuple desc
-  auto tup_desc = js->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
-  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+  auto tup_desc = j_state.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+  j_plan_state->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
 
   // Construct projection info
-  info->ps_ProjInfo = BuildProjectInfo(js->ps.ps_ProjInfo, tup_desc->natts);
+  j_plan_state->ps_ProjInfo = BuildProjectInfo(j_state.ps.ps_ProjInfo,
+                                               tup_desc->natts);
+
+}
+
+NestLoopPlanState *
+DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
+
+  NestLoopPlanState *info = (NestLoopPlanState*) palloc(
+      sizeof(NestLoopPlanState));
+
+  info->type = nl_state->js.ps.type;
+
+  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
+                               nl_state->js);
+
+  return info;
+}
+
+MergeJoinPlanState* DMLUtils::PrepareMergeJoinState(MergeJoinState* mj_state) {
+
+  MergeJoinPlanState *info = (MergeJoinPlanState*) palloc(
+      sizeof(MergeJoinPlanState));
+
+  info->type = mj_state->js.ps.type;
+
+  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
+                               mj_state->js);
+
+  info->mj_NumClauses = mj_state->mj_NumClauses;
+  info->mj_Clauses = CopyMergeJoinClause(mj_state->mj_Clauses,
+                                         mj_state->mj_NumClauses);
 
   return info;
 }
@@ -412,7 +434,7 @@ void DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
   ss_plan_state->table_oid = ss_relation_desc->rd_id;
   ss_plan_state->database_oid = Bridge::GetCurrentDatabaseOid();
 
-  // Copy expr states
+  // Copy qual
   auto qual_list = ss_state.ps.qual;
   ListCell *qual_item;
 
@@ -871,6 +893,21 @@ IndexRuntimeKeyInfo* CopyRuntimeKeys(IndexRuntimeKeyInfo* from,
     retval[key_itr] = from[key_itr];  // shallow copy
     retval[key_itr].key_expr = CopyExprState(from[key_itr].key_expr);  // Deep copy the expression
     // NB: No need to copy scan_key?
+  }
+
+  return retval;
+}
+
+MergeJoinClauseData* CopyMergeJoinClause(MergeJoinClauseData* from,
+                                         int numClauses) {
+  auto retval = (MergeJoinClauseData*) palloc(
+      sizeof(MergeJoinClauseData) * numClauses);
+
+  for (int itr = 0; itr < numClauses; itr++) {
+    retval[itr] = from[itr];
+    retval[itr].lexpr = CopyExprState(from[itr].lexpr);
+    retval[itr].rexpr = CopyExprState(from[itr].rexpr);
+    retval[itr].ssup.ssup_reverse = from[itr].ssup.ssup_reverse;  // no need actually
   }
 
   return retval;
