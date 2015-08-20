@@ -91,7 +91,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   // Wait if current status is recovery
   while(GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_RECOVERY){ printf("End logging recovery\n");}
 
-  LOG_INFO("Wait until frontend logger(%s) escpes main loop..", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
+  LOG_INFO("Wait until frontend logger(%s) escapes main loop..", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
   while(1){
     MakeItSleepy();

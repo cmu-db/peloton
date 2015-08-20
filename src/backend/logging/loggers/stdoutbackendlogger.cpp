@@ -62,12 +62,10 @@ void StdoutBackendLogger::Update(LogRecord* record){
 /**
  * @brief set the current size of local_queue
  */
-void StdoutBackendLogger::Commit(bool coerce){
+void StdoutBackendLogger::Commit(void){
   {
-    if(coerce){
-      std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-      commit_offset = stdout_local_queue.size();
-    }
+    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
+    commit_offset = stdout_local_queue.size();
   }
 }
 
