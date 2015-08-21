@@ -45,7 +45,7 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
-  LOG_INFO("Aggregate Scan executor :: 1 child \n");
+  LOG_TRACE("Aggregate executor :: 1 child \n");
 
   // Grab info from plan node and check it
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
