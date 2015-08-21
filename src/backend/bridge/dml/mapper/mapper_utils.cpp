@@ -76,6 +76,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
   /* Transform predicate */
   predicate = BuildPredicateFromQual(qual);
 
+  LOG_TRACE("out_column_count = %d", out_column_count);
+
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   if (use_projInfo) {
@@ -113,7 +115,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
     column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
     out_col_list = std::move(column_ids);
 
-    assert(out_col_list.size() == out_column_count);
+    //assert(out_col_list.size() == out_column_count);
+    // TODO: sometimes, these two do not equal due to junk attributes.
   }
 }
 
@@ -169,7 +172,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         direct_map_list.emplace_back(out_col_id,
                                      std::make_pair(tuple_idx, in_col_id));
 
-        LOG_INFO("DirectMap: Input : [%u , %u] , Output column : %u \n",
+        LOG_TRACE("DirectMap: Input : [%u , %u] , Output column : %u \n",
                  tuple_idx, in_col_id, out_col_id);
       }
     } else  // Non-sequential direct map
@@ -188,7 +191,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         direct_map_list.emplace_back(out_col_id,
                                      std::make_pair(tuple_idx, in_col_id));
 
-        LOG_INFO("DirectMap: Input : [%u , %u] , Output column : %u \n",
+        LOG_TRACE("DirectMap: Input : [%u , %u] , Output column : %u \n",
                  tuple_idx, in_col_id, out_col_id);
       }
     }
@@ -219,7 +222,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
 
     if (!(resind < column_count && AttributeNumberIsValid(tle->resno)
         && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
-      LOG_INFO(
+      LOG_TRACE(
           "Invalid / Junk attribute. Skipped.  resno : %u , resjunk : %u \n",
           tle->resno, tle->resjunk);
       continue;  // skip junk attributes
@@ -230,11 +233,11 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
     if (peloton_expr == nullptr) {
-      LOG_INFO("Seems to be a row value expression. Skipped.");
+      LOG_TRACE("Seems to be a row value expression. Skipped.");
       continue;
     }
 
-    LOG_INFO("Target : column id %u, Expression : \n%s", col_id,
+    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
              peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
@@ -307,7 +310,7 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
     TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
 
     if (tle->resjunk || !AttributeNumberIsValid(tle->resno) || !AttrNumberIsForUserDefinedAttr(tle->resno)) {
-      LOG_INFO("Skip junk / invalid attribute. \n");
+      LOG_TRACE("Skip junk / invalid attribute. \n");
       continue;  // SKIP junk / invalid attributes.
     }
 
@@ -347,7 +350,7 @@ PlanTransformer::BuildProjectInfoFromTLSkipJunk(List *targetList) {
 
       assert(peloton_expr);
 //      if (peloton_expr == nullptr) {
-//        LOG_INFO("Seems to be a row value expression. Skipped.");
+//        LOG_TRACE("Seems to be a row value expression. Skipped.");
 //        continue;
 //      }
 
