@@ -40,6 +40,9 @@ class ExecutorContext {
 
   const ValueArray &GetParams() const { return params_; }
 
+  // num of tuple processed
+  uint32_t num_processed = 0;
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -50,6 +53,7 @@ class ExecutorContext {
 
   // params
   ValueArray params_;
+
 };
 
 }  // namespace executor
