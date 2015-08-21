@@ -74,7 +74,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void AbortTuples(concurrency::Transaction* txn);
 
-    void AbortRemainedTxnInRecoveryTable();
+    void AbortTxnInRecoveryTable();
 
     void InsertTuple(concurrency::Transaction* recovery_txn);
     void DeleteTuple(concurrency::Transaction* recovery_txn);
@@ -91,9 +91,6 @@ class AriesFrontendLogger : public FrontendLogger{
 
     // FIXME :: Hard coded file name
     std::string filename = "/home/parallels/git/peloton/build/aries.log";
-
-    // FIXME :: Hard coded global_queue size
-    oid_t aries_global_queue_size = 10;
 
     // File pointer and descriptor
     FILE* logFile;
