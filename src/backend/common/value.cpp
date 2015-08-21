@@ -555,7 +555,7 @@ Value Value::CastAsDecimal() const {
       return GetDecimalValue(retval);
     }
     case VALUE_TYPE_DOUBLE: {
-      // TODO: Cast from a double to decimal,
+      // FIXME: Cast from a double to decimal,
       // for now, we can only cast it into an Int and then to a Decimal
       // but we lost precision here,
       int64_t rhsint = CastAsBigIntAndGetValue();
