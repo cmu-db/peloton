@@ -38,7 +38,11 @@ void TransactionRecord::Deserialize(CopySerializeInput& input){
   txn_id = (txn_id_t)(input.ReadLong());
 }
 
-
+void TransactionRecord::print(void){
+  std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
+  std::cout << " #Txn ID:" << GetTxnId() << "\n";
+  std::cout << "\n";
+}
 
 }  // namespace logging
 }  // namespace peloton
