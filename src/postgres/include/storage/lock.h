@@ -502,6 +502,8 @@ typedef enum
  * function prototypes
  */
 extern void InitLocks(void);
+extern void InitLockMethodLocalHash(void);
+
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
 extern uint32 LockTagHashCode(const LOCKTAG *locktag);
 extern bool DoLockModesConflict(LOCKMODE mode1, LOCKMODE mode2);

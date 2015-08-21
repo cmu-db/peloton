@@ -131,7 +131,7 @@ thread_local static ActiveSnapshotElt *ActiveSnapshot = NULL;
 static int xmin_cmp(const pairingheap_node *a, const pairingheap_node *b,
 		 void *arg);
 
-static pairingheap RegisteredSnapshots = { &xmin_cmp, NULL, NULL };
+thread_local static pairingheap RegisteredSnapshots = { &xmin_cmp, NULL, NULL };
 
 /* first GetTransactionSnapshot call in a transaction? */
 thread_local bool		FirstSnapshotSet = false;
