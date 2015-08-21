@@ -107,6 +107,22 @@ class TileGroupHeader {
     return tuple_slot_id;
   }
 
+  // New version
+  bool GetEmptyTupleSlot(oid_t tuple_slot_id) {
+    {
+      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
+
+      if( tuple_slot_id < num_tuple_slots){
+        if( next_tuple_slot <= tuple_slot_id){
+          next_tuple_slot = tuple_slot_id+1;
+        }
+        return true;
+      }else{
+        return false;
+      }
+    }
+  }
+
   void ReclaimTupleSlot(oid_t tuple_slot_id) {
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
