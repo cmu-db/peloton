@@ -79,11 +79,8 @@ void BackendLogger::Truncate(oid_t offset){
  * @param offset
  */
 LogRecord* BackendLogger::GetLogRecord(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    assert(offset < local_queue.size());
-    return local_queue[offset];
-  }
+  assert(offset < local_queue.size());
+  return local_queue[offset];
 }
 
 /**
