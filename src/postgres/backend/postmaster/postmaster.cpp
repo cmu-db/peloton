@@ -413,7 +413,7 @@ static int	CountUnconnectedWorkers(void);
 static void maybe_start_bgworker(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(AuxProcType type);
-static void StartAutovacuumWorker(void);
+static void __attribute__((unused)) StartAutovacuumWorker(void);
 static void InitPostmasterDeathWatchHandle(void);
 
 #ifdef EXEC_BACKEND
@@ -2711,8 +2711,8 @@ processCancelRequest(Port *port, void *pkt)
           PgArchPID = pgarch_start();
         if (PgStatPID == 0)
           PgStatPID = pgstat_start();
-        if (PelotonPID == 0)
-          PelotonPID = peloton_start();
+        //if (PelotonPID == 0)
+        // PelotonPID = peloton_start();
 
         /* workers may be scheduled to start now */
         maybe_start_bgworker();
@@ -5009,7 +5009,7 @@ processCancelRequest(Port *port, void *pkt)
         Shutdown == NoShutdown)
     {
       /* The autovacuum launcher wants us to start a worker process. */
-      StartAutovacuumWorker();
+      //StartAutovacuumWorker();
     }
 
     if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
