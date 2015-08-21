@@ -43,7 +43,7 @@ template <typename V>
 class GenericValueArray {
  public:
   inline GenericValueArray()
-      : size(0), data_(reinterpret_cast<V *>(new char[sizeof(V) * size])) {
+      : size(0), data_(nullptr) {
     ::memset(data_, 0, sizeof(V) * size);
   }
 
