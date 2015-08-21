@@ -38,20 +38,9 @@ class AriesBackendLogger : public BackendLogger{
 
     void Update(LogRecord* record);
 
-    void Commit(void);
-
-    void Truncate(oid_t offset);
-
-    LogRecord* GetLogRecord(oid_t offset);
-
   private:
 
-    AriesBackendLogger(){ logging_type = LOGGING_TYPE_STDOUT;}
-
-    // TODO change vector to list
-    std::vector<LogRecord*> aries_local_queue;
-
-    std::mutex aries_local_queue_mutex;
+    AriesBackendLogger(){ logging_type = LOGGING_TYPE_ARIES;}
 
 };
 
