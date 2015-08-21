@@ -251,12 +251,12 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
 
   TupleTableSlot *slot = NULL;
   HeapTuple heap_tuple;
-  int natts = tuple_desc->natts;
+  const int natts = tuple_desc->natts;
   Datum *datums;
   bool *nulls;
 
   if (tuple->GetColumnCount() != natts) {
-    LOG_WARN("tuple attr count : %u tuple desc attr count : %d \n",
+    LOG_WARN("tuple attr count : %u , tuple desc attr count : %d \n",
              tuple->GetColumnCount(), natts);
     return nullptr;
   }
@@ -290,10 +290,9 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   // This function just sets a point in slot to the heap_tuple.
   ExecStoreTuple(heap_tuple, slot, InvalidBuffer, true);
 
-  // Clean up Datums (A-B): seems we have to do the cleaning manually (no PG
-  // utility?)
-
+  // Clean up
   // (A) Clean up any possible varlena's
+  assert(natts == tuple_desc->natts);
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
       assert(tuple_desc->attrs[att_itr]->attbyval == false);
