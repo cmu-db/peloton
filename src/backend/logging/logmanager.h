@@ -27,10 +27,6 @@ namespace logging {
 // Log Manager
 //===--------------------------------------------------------------------===//
 
-static std::mutex logManager_mutex;
-static std::mutex frontend_logger_mutex;
-static std::mutex logging_status_mutex;
-
 /**
  * Global Log Manager
  */
@@ -72,6 +68,10 @@ class LogManager{
     LogManager(){};
 
     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+
+    std::mutex frontend_logger_mutex;
+
+    std::mutex logging_status_mutex;
 
     LoggingType MainLoggingType = LOGGING_TYPE_INVALID;
 
