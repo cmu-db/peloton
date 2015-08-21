@@ -19,11 +19,14 @@
 namespace peloton {
 namespace test {
 
+oid_t current_tile_group_id;
+
 /**
  * @brief writing a simple log file 
  */
 bool LoggingTestsUtil::PrepareLogFile(){
 
+   //TODO Make function
    // start a thread for logging
    auto& logManager = logging::LogManager::GetInstance();
 
@@ -36,6 +39,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
                       &logManager, 
                       logManager.GetMainLoggingType());
 
+   //TODO Make function
    // When the frontend logger gets ready to logging,
    // start logging
    while(1){
@@ -48,14 +52,13 @@ bool LoggingTestsUtil::PrepareLogFile(){
      }
    }
 
+   //TODO Make function
    // wait for recovery
    while(logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
 
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
 
-   //XXX CHECK
-   sleep(10);
-
+   //TODO Make function
    // ongoing->terminate->sleep
    if( logManager.EndLogging() ){
      thread.join();
@@ -64,6 +67,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
      LOG_ERROR("Failed to terminate logging thread"); 
      return false;
    }
+   //TODO Truncate the file
 }
 
 /**
@@ -118,7 +122,7 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
   LoggingTestsUtil::CheckTuples(20000,10000);
 
   // Check the next oid
-  LoggingTestsUtil::CheckNextOid();
+  //LoggingTestsUtil::CheckNextOid();
 
   if( logManager.EndLogging() ){
     thread.join();
@@ -156,45 +160,11 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
+  auto tile_group = table->GetTileGroupById(current_tile_group_id);
 
-  std::cout << *table;
+  // check # of active tuples
+  EXPECT_EQ(tile_group->GetActiveTupleCount(), 6);
 
-//FIXME XXX XXX 
-//  auto tile_group = table->GetTileGroupById(3);
-//  auto tile = tile_group->GetTile((oid_t)0);
-//
-//  // check # of tuples
-//  EXPECT_EQ(tile_group->GetActiveTupleCount(), 6);
-//
-//  Value integerValue = ValueFactory::GetIntegerValue(243432);
-//  Value stringValue = ValueFactory::GetStringValue("dude0");
-//  Value timestampValue = ValueFactory::GetTimestampValue(10.22);
-//  Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
-//
-//  EXPECT_EQ(tile->GetValue(3,0), integerValue);
-//  EXPECT_EQ(tile->GetValue(3,1), stringValue);
-//  EXPECT_EQ(tile->GetValue(3,2), timestampValue);
-//  EXPECT_EQ(tile->GetValue(3,3), doubleValue);
-//
-//  Value integerValue2 = ValueFactory::GetIntegerValue(243433);
-//  Value stringValue2 = ValueFactory::GetStringValue("dude1");
-//  Value timestampValue2 = ValueFactory::GetTimestampValue(11.22);
-//  Value doubleValue2 = ValueFactory::GetDoubleValue(244644.1236);
-//
-//  EXPECT_EQ(tile->GetValue(1,0), integerValue2);
-//  EXPECT_EQ(tile->GetValue(1,1), stringValue2);
-//  EXPECT_EQ(tile->GetValue(1,2), timestampValue2);
-//  EXPECT_EQ(tile->GetValue(1,3), doubleValue2);
-//
-//  // Make valgrind happy
-//  stringValue.FreeUninlinedData();
-//  stringValue2.FreeUninlinedData();
-}
-
-void LoggingTestsUtil::CheckNextOid(){
-    auto &manager = catalog::Manager::GetInstance();
-    auto max_oid = manager.GetNextOid();
-    EXPECT_EQ(max_oid,5);
 }
 
 void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
@@ -269,8 +239,19 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema
 
 void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
   auto tuple_slot = InsertTuples(table, true);
+  if(tuple_slot.size() >= 2)
   DeleteTuples(table, tuple_slot[1], true);
+  if(tuple_slot.size() >= 1)
   UpdateTuples(table, tuple_slot[0], true);
+
+  auto& logManager = logging::LogManager::GetInstance();
+  if(logManager.IsReadyToLogging()){
+    auto logger = logManager.GetBackendLogger();
+    // Wait until frontendlogger collect the data
+    while( logger->IsWaitFlush()){
+      sleep(1);
+    }
+  }
 }
 
 std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
@@ -284,6 +265,12 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
   for( auto tuple : tuples){
     auto txn = txn_manager.BeginTransaction();
     ItemPointer location = table->InsertTuple(txn, tuple);
+    if (location.block == INVALID_OID) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      continue;
+    }
+
+    current_tile_group_id = location.block;
     tuple_slot.push_back(location.offset);
     txn->RecordInsert(location);
 
@@ -308,9 +295,6 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
     }
   }
 
-  // wait to delete tuples
-  sleep(5);
-
   for( auto tuple : tuples){
     tuple->FreeUninlinedData();
     delete tuple;
@@ -321,7 +305,9 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
 
 void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot, bool committed){
 
-  ItemPointer delete_location(3,tuple_slot);
+  //TODO current tile group id ...
+  ItemPointer delete_location(current_tile_group_id,tuple_slot);
+
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -329,7 +315,6 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot,
   bool status = table->DeleteTuple(txn, delete_location);
   if (status == false) {
     txn->SetResult(Result::RESULT_FAILURE);
-    txn_manager.AbortTransaction(txn);
     return;
   }
 
@@ -358,7 +343,7 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot,
 
 void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, oid_t tuple_slot, bool committed){
 
-  ItemPointer delete_location(3,tuple_slot);
+  ItemPointer delete_location(current_tile_group_id,tuple_slot);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -376,6 +361,11 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, oid_t tuple_slot,
 
   for( auto tuple : tuples){
     ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
+    if (location.block == INVALID_OID) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      continue;
+    }
+    txn->RecordInsert(location);
 
     // Logging 
     {
@@ -392,15 +382,11 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, oid_t tuple_slot,
          logger->Update(record);
        }
      }
-    txn->RecordInsert(location);
   }
 
   if(committed){
     txn_manager.CommitTransaction(txn);
   }
-
-  // wait to delete tuples
-  sleep(5);
 
   for( auto tuple : tuples){
     tuple->FreeUninlinedData();
