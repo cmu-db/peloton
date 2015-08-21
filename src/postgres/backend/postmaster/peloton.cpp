@@ -1112,7 +1112,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   /* Ignore empty plans */
   if(plan == nullptr) {
-    elog(WARNING, "Empty plan is sent to Peloton");
+    elog(WARNING, "Empty or unrecognized plan is sent to Peloton");
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
