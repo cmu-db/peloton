@@ -142,6 +142,9 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
+    // Print tile group visibility
+    tile_group_header->PrintVisibility(txn_id, commit_id);
+
     // Add visible tuples to logical tile
     std::vector<oid_t> position_list;
     for (auto tuple_id : block.second) {

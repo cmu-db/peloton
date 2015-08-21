@@ -82,6 +82,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {179, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
     {204, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
     {218, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
+    {1724, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
 
     {180, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {181, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
@@ -89,6 +90,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {183, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {205, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {219, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
+    {1725, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
 
     {141, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {152, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
@@ -96,6 +98,8 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {171, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {202, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {216, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
+    {1726, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
+
 
     {153, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {154, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
@@ -103,6 +107,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {173, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {203, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {217, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
+    {1727, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
 
      //====--------------------------------
     // Cast

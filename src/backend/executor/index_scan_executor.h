@@ -67,6 +67,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<peloton::Value> values_;
 
   std::vector<expression::AbstractExpression *> runtime_keys_;
+
+  bool key_ready = false;
 };
 
 }  // namespace executor

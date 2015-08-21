@@ -375,6 +375,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                        queryDesc->tupDesc);
 	  }
 
+
 	}
 
 	/*
@@ -1648,7 +1649,6 @@ peloton_ExecutePlan(EState *estate,
                    sendTuples,
                    dest,
                    tupDesc);
-
 }
 
 /*
