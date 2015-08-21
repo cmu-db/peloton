@@ -60,7 +60,6 @@ void FrontendLogger::AddBackendLogger(BackendLogger* _backend_logger){
       }
     }
     if( already_exist == false){
-      printf("AddBackendLogger\n");
       backend_loggers.push_back(_backend_logger);
     }
   }

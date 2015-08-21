@@ -75,8 +75,6 @@ void AriesFrontendLogger::MainLoop(void) {
       Recovery();
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
     }
-    break;
-
     case LOGGING_STATUS_TYPE_ONGOING:{
       LOG_INFO("Frontendlogger is going into Ongoing Mode");
     }
@@ -88,13 +86,10 @@ void AriesFrontendLogger::MainLoop(void) {
 
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
     sleep(1);
+
     // Collect LogRecords from all BackendLogger 
     CollectLogRecord();
-
-    //TODO 
-    //if( GetLogRecordCount() >= aries_global_queue_size ){
-      Flush();
-    //}
+    Flush();
   }
 
   // flush remanent log record
@@ -114,13 +109,11 @@ void AriesFrontendLogger::CollectLogRecord() {
   backend_loggers = GetBackendLoggers();
 
   {
-    printf("CollectLogRecord\n");
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
 
     // Look over hte commit mark of current frontend logger's backend loggers
     for( auto backend_logger : backend_loggers){
       auto local_queue_size = backend_logger->GetLocalQueueSize();
-      printf("local queue size %d\n", (int)local_queue_size);
 
       // Skip current backend_logger, nothing to do
       if(local_queue_size == 0 ) continue; 
@@ -139,7 +132,6 @@ void AriesFrontendLogger::CollectLogRecord() {
  * @brief flush all record to the file
  */
 void AriesFrontendLogger::Flush(void) {
-  printf("Flush\n");
 
   for( auto record : aries_global_queue ){
     fwrite( record->GetSerializedData(), 
@@ -217,7 +209,7 @@ void AriesFrontendLogger::Recovery() {
           break;
 
         case LOGRECORD_TYPE_TUPLE_UPDATE:
-          //UpdateTuple(recovery_txn);
+          UpdateTuple(recovery_txn);
           break;
 
         default:
@@ -227,7 +219,7 @@ void AriesFrontendLogger::Recovery() {
     }
 
     // Abort remained txn in recovery_txn_table
-    AbortRemainedTxnInRecoveryTable();
+    AbortTxnInRecoveryTable();
 
     txn_manager.CommitTransaction(recovery_txn);
 
@@ -449,7 +441,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 /**
  * @brief Abort tuples inside txn table
  */
-void AriesFrontendLogger::AbortRemainedTxnInRecoveryTable(){
+void AriesFrontendLogger::AbortTxnInRecoveryTable(){
   for(auto  txn : recovery_txn_table){
     auto curr_txn = txn.second;
     AbortTuples(curr_txn);
@@ -495,10 +487,8 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   location.block = tile_group_id;
   location.offset = tuple_slot;
   if (location.block == INVALID_OID) {
-    printf("Recovery Insert failed??\n");
     recovery_txn->SetResult(Result::RESULT_FAILURE);
   }else{
-    printf("Recovery Insert location %u %u \n", location.block, location.offset);
     txn->RecordInsert(location);
     table->IncreaseNumberOfTuplesBy(1);
   }
@@ -522,8 +512,6 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
   ItemPointer delete_location = tupleRecord.GetItemPointer();
 
-  std::cout << "Recovery mode DD, Delete tuple : " << delete_location.block  << ", " << delete_location.offset  << std::endl;
-
   bool status = table->DeleteTuple(recovery_txn, delete_location);
   if (status == false) {
     recovery_txn->SetResult(Result::RESULT_FAILURE);
@@ -546,6 +534,9 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   ReadTupleRecordHeader(tupleRecord);
 
+  auto txn_id = tupleRecord.GetTxnId();
+  auto txn = recovery_txn_table.at(txn_id);
+
   auto table = GetTable(tupleRecord);
 
   storage::AbstractBackend *backend = new storage::VMBackend();
@@ -558,15 +549,12 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   if (status == false) {
     recovery_txn->SetResult(Result::RESULT_FAILURE);
   }else{
+    txn->RecordDelete(delete_location);
 
     ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
     if (location.block == INVALID_OID) {
       recovery_txn->SetResult(Result::RESULT_FAILURE);
     }else{
-      std::cout << "Recovery mode UU, Delete tuple : " << delete_location.block  << ", " << delete_location.offset  << std::endl;
-      auto txn_id = tupleRecord.GetTxnId();
-      auto txn = recovery_txn_table.at(txn_id);
-      txn->RecordDelete(delete_location);
       txn->RecordInsert(location);
     }
   }
