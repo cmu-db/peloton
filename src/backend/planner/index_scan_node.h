@@ -76,7 +76,11 @@ class IndexScanNode : public AbstractScanNode {
         values_(std::move(index_scan_desc.values)),
         runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
 
-  ~IndexScanNode() {}
+  ~IndexScanNode() {
+    for (auto expr : runtime_keys_) {
+      delete expr;
+    }
+  }
 
   const storage::AbstractTable *GetTable() const { return table_; }
 
