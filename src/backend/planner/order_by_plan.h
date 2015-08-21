@@ -43,7 +43,7 @@ class OrderByPlan : public AbstractPlan {
         output_column_ids_(output_column_ids),
         backend_(backend) {}
 
-  storage::AbstractBackend *GetBackend() const { return backend_; }
+  storage::AbstractBackend *GetBackend() const { return backend_.get(); }
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -73,7 +73,7 @@ class OrderByPlan : public AbstractPlan {
   const std::vector<oid_t> output_column_ids_;
 
   /** @brief Backend used to allocate intermediate physical tiles. */
-  storage::AbstractBackend *backend_;
+  std::unique_ptr<storage::AbstractBackend> backend_;
 };
 }
 }

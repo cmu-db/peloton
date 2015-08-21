@@ -142,6 +142,7 @@ inline bool operator>=(const GenericValueArray<V> &lhs,
 
 template <>
 inline GenericValueArray<Value>::~GenericValueArray() {
+
   delete[] reinterpret_cast<char *>(data_);
 }
 

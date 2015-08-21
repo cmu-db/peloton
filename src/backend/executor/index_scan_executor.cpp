@@ -139,7 +139,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
     tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
   }
 
-  LOG_INFO("Tuple locations : %lu", tuple_locations.size());
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 

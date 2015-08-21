@@ -29,8 +29,7 @@ namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlan *plan,
-                                              ParamListInfo param_list,
-                                              concurrency::Transaction *txn);
+                                              executor::ExecutorContext *ec);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -64,18 +63,12 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlan *plan,
-                                              ParamListInfo param_list,
-                                              concurrency::Transaction *txn) {
+                                              executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr)
     return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
-
-  ValueArray params = PlanTransformer::BuildParams(param_list);
-
-  executor::ExecutorContext *executor_context = new executor::ExecutorContext(
-      txn, params);
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
@@ -151,7 +144,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto children = plan->GetChildren();
   for (auto child : children) {
-    child_executor = BuildExecutorTree(child_executor, child, param_list, txn);
+    child_executor = BuildExecutorTree(child_executor, child, executor_context);
   }
 
   return root;
@@ -238,10 +231,14 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
+  // Cook the executor context
+  ValueArray params = PlanTransformer::BuildParams(param_list);
+  executor::ExecutorContext *executor_context = new executor::ExecutorContext(
+      txn, params);
+
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr, plan,
-                                                                param_list,
-                                                                txn);
+                                                                executor_context);
 
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
@@ -326,8 +323,17 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     }
   }
 
-  // clean up
+  // clean up executor tree
   CleanExecutorTree(executor_tree);
+
+  // Clean executor context
+  delete executor_context;
+
+  // Clean params (uninlined data)
+  for(size_t i=0; i < params.GetSize(); i++){
+    params[i].FreeUninlinedData();
+  }
+
   pstatus->m_result = txn->GetResult();
   return;
 }
