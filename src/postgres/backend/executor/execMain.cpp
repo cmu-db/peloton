@@ -351,11 +351,10 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  // Single Mode
-	  if(PelotonDualMode == false)
-	  {
+
 	    // PG Query
 	    if(queryDesc->plannedstmt->pelotonQuery == false)
+	    //if (true)
 	    {
 	      ExecutePlan(estate,
 	                  queryDesc->planstate,
@@ -378,30 +377,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                          dest,
 	                          queryDesc->tupDesc);
 	    }
-	  }
-	  // Dual Mode
-	  else
-	  {
-
-      ExecutePlan(estate,
-                  queryDesc->planstate,
-                  operation,
-                  sendTuples,
-                  count,
-                  direction,
-                  dest,
-                  queryDesc->tupDesc);
-
-      peloton_ExecutePlan(estate,
-                          queryDesc->planstate,
-                          operation,
-                          sendTuples,
-                          count,
-                          direction,
-                          dest,
-                          queryDesc->tupDesc);
-
-	  }
 
 	}
 
@@ -1681,6 +1656,8 @@ peloton_ExecutePlan(EState *estate,
 
   peloton_process_status(status);
 
+  estate->es_processed = status->m_processed; // num of tuples actually processed, only valid in modify table statements
+
   // Go over any result slots
   if(status->m_result_slots != NULL)
   {
@@ -1694,8 +1671,10 @@ peloton_ExecutePlan(EState *estate,
        * if the tuple is null, then we assume there is nothing more to
        * process so we just end the loop...
        */
-      if (TupIsNull(slot))
+      if (TupIsNull(slot)) {
+        std::cout << "tuple is null \n";
         break;
+      }
 
       /*
        * If we are supposed to send the tuple somewhere, do so. (In
@@ -1710,6 +1689,8 @@ peloton_ExecutePlan(EState *estate,
        */
       ExecDropSingleTupleTableSlot(slot);
     }
+
+
 
     // Clean up list
     list_free(status->m_result_slots);
