@@ -69,6 +69,10 @@ class LogManager{
 
     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
+    bool RemoveFrontend(LoggingType logging_type);
+
+    void ResetLoggingStatus(LoggingType logging_type);
+
     std::mutex frontend_logger_mutex;
 
     std::mutex logging_status_mutex;
