@@ -62,7 +62,7 @@ void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
-  LOG_INFO("Frontendlogger is going into Standby Mode");
+  LOG_INFO("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
@@ -71,12 +71,12 @@ void AriesFrontendLogger::MainLoop(void) {
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
-      LOG_INFO("Frontendlogger is going into Recovery Mode");
+      LOG_INFO("Frontendlogger] Recovery Mode");
       Recovery();
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
     }
     case LOGGING_STATUS_TYPE_ONGOING:{
-      LOG_INFO("Frontendlogger is going into Ongoing Mode");
+      LOG_INFO("Frontendlogger] Ongoing Mode");
     }
     break;
 
@@ -96,7 +96,7 @@ void AriesFrontendLogger::MainLoop(void) {
   CollectLogRecord();
   Flush();
 
-  LOG_INFO("Frontendlogger is going into Sleep Mode");
+  LOG_INFO("Frontendlogger] Sleep Mode");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
@@ -138,10 +138,8 @@ void AriesFrontendLogger::Flush(void) {
             sizeof(char), 
             record->GetSerializedDataSize(), 
             logFile);
-    //TODO :: record LSN here
   }
 
-  //FIXME Is it right way to use fflush and fsync together? 
   int ret = fflush(logFile);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
@@ -456,6 +454,7 @@ void AriesFrontendLogger::AbortTxnInRecoveryTable(){
  */
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
+
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
 
   ReadTupleRecordHeader(tupleRecord);
@@ -577,7 +576,7 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
   // create the new txn object and added it into recovery recovery_txn_table
   concurrency::Transaction* txn = new concurrency::Transaction(txn_id, INVALID_CID);
   recovery_txn_table.insert(std::make_pair(txn_id, txn));
-  LOG_INFO("Added txd id %d object in table",(int)txn_id);
+  LOG_TRACE("Added txd id %d object in table",(int)txn_id);
 }
 
 /**
@@ -594,7 +593,7 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   auto txn = recovery_txn_table.at(txn_id);
   recovery_txn_table.erase(txn_id);
   delete txn;
-  LOG_INFO("Erase txd id %d object in table",(int)txn_id);
+  LOG_TRACE("Erase txd id %d object in table",(int)txn_id);
 }
 
 /**
@@ -614,7 +613,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
   // Copy inserted/deleted tuples to recovery transaction
   MoveTuples(recovery_txn, txn);
 
-  LOG_INFO("Commit txd id %d object in table",(int)txn_id);
+  LOG_TRACE("Commit txd id %d object in table",(int)txn_id);
 }
 
 /**
@@ -632,7 +631,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   auto txn = recovery_txn_table.at(txn_id);
   AbortTuples(txn);
 
-  LOG_INFO("Abort txd id %d object in table",(int)txn_id);
+  LOG_TRACE("Abort txd id %d object in table",(int)txn_id);
 }
 
 }  // namespace logging
