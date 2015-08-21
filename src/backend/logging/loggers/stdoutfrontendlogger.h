@@ -36,7 +36,7 @@ class StdoutFrontendLogger : public FrontendLogger{
 
     void Flush(void);
 
-    // FIXME :: Dummy function
+    //Dummy function
     void Recovery(void) {};
 
   private:
