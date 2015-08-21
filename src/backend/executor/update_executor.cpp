@@ -60,7 +60,7 @@ bool UpdateExecutor::DExecute() {
   assert(executor_context_);
 
   // We are scanning over a logical tile.
-  LOG_TRACE("Update executor :: 1 child \n");
+  LOG_INFO("Update executor :: 1 child \n");
 
   if (!children_[0]->Execute()) {
     return false;
@@ -77,7 +77,7 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-    LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
+    LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
     // (A) Try to delete the tuple first
@@ -107,6 +107,8 @@ bool UpdateExecutor::DExecute() {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
+
+    executor_context_->num_processed += 1; // updated one
     transaction_->RecordInsert(location);
     delete new_tuple;
   }
