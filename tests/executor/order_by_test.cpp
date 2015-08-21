@@ -115,7 +115,6 @@ TEST(OrderByTests, IntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntDescTest) {
@@ -158,7 +157,6 @@ TEST(OrderByTests, IntDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, StringDescTest) {
@@ -201,7 +199,6 @@ TEST(OrderByTests, StringDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntAscStringDescTest) {
@@ -243,8 +240,6 @@ TEST(OrderByTests, IntAscStringDescTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
-  delete backend;
 }
 
 /**
@@ -290,7 +285,6 @@ TEST(OrderByTests, StringDescIntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 }
 
