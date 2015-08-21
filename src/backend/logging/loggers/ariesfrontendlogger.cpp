@@ -110,8 +110,6 @@ void AriesFrontendLogger::MainLoop(void) {
  */
 void AriesFrontendLogger::CollectLogRecord() {
 
-  //TODO :: Check bacnend logger is still arive 
-
   backend_loggers = GetBackendLoggers();
 
   // Look over hte commit mark of current frontend logger's backend loggers
@@ -158,7 +156,6 @@ void AriesFrontendLogger::Flush(void) {
   for( auto record : aries_global_queue ){
     delete record;
   }
-  //TODO ::Truncate backendlogger here..
   aries_global_queue.clear();
 
   // Commit each backend logger 
