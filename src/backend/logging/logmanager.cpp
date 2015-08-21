@@ -94,9 +94,12 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   LOG_INFO("Wait until frontend logger(%s) escapes main loop..", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
   while(1){
+    sleep(1);
     MakeItSleepy();
     if( GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP) break;
   }
+
+  LOG_INFO("Escaped from MainLoop(%s)", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
   //TODO :: Make function
   //Erase frontend logger from frontend_loggers as well
