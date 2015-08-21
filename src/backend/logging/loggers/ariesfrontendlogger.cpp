@@ -91,9 +91,10 @@ void AriesFrontendLogger::MainLoop(void) {
     // Collect LogRecords from all BackendLogger 
     CollectLogRecord();
 
-    if( GetLogRecordCount() >= aries_global_queue_size ){
+    //TODO 
+    //if( GetLogRecordCount() >= aries_global_queue_size ){
       Flush();
-    }
+    //}
   }
 
   // flush remanent log record
@@ -112,19 +113,25 @@ void AriesFrontendLogger::CollectLogRecord() {
 
   backend_loggers = GetBackendLoggers();
 
-  // Look over hte commit mark of current frontend logger's backend loggers
-  for( auto backend_logger : backend_loggers){
-    auto local_queue_size = backend_logger->GetLocalQueueSize();
+  {
+    printf("CollectLogRecord\n");
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
 
-    // Skip current backend_logger, nothing to do
-    if(local_queue_size == 0 ) continue; 
+    // Look over hte commit mark of current frontend logger's backend loggers
+    for( auto backend_logger : backend_loggers){
+      auto local_queue_size = backend_logger->GetLocalQueueSize();
+      printf("local queue size %d\n", (int)local_queue_size);
 
-    for(oid_t log_record_itr=0; log_record_itr<local_queue_size; log_record_itr++){
-      // Copy LogRecord from backend_logger to here
-      aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
+      // Skip current backend_logger, nothing to do
+      if(local_queue_size == 0 ) continue; 
+
+      for(oid_t log_record_itr=0; log_record_itr<local_queue_size; log_record_itr++){
+        // Copy LogRecord from backend_logger to here
+        aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
+      }
+      // truncate the local queue 
+      backend_logger->Truncate(local_queue_size);
     }
-    // truncate the local queue 
-    backend_logger->Truncate(local_queue_size);
   }
 }
 
@@ -132,6 +139,7 @@ void AriesFrontendLogger::CollectLogRecord() {
  * @brief flush all record to the file
  */
 void AriesFrontendLogger::Flush(void) {
+  printf("Flush\n");
 
   for( auto record : aries_global_queue ){
     fwrite( record->GetSerializedData(), 
@@ -161,7 +169,9 @@ void AriesFrontendLogger::Flush(void) {
   backend_loggers = GetBackendLoggers();
 
   for( auto backend_logger : backend_loggers){
-    backend_logger->Commit();
+    if(backend_logger->IsWaitFlush()){
+      backend_logger->Commit();
+    }
   }
 }
 

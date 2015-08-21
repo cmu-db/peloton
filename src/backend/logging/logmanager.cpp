@@ -154,7 +154,6 @@ bool LogManager::IsReadyToLogging(LoggingType logging_type){
 }
 
 size_t LogManager::ActiveFrontendLoggerCount(void) const{
-  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
   return frontend_loggers.size();
 }
 
