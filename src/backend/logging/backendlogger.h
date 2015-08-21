@@ -33,7 +33,15 @@ class BackendLogger : public Logger{
 
     static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
-    oid_t GetCommitOffset(void) const;
+    void Truncate(oid_t offset);
+
+    LogRecord* GetLogRecord(oid_t offset);
+
+    void Commit(void);
+
+    size_t GetLocalQueueSize(void) const;
+
+    bool IsWaitFlush(void) const;
 
     //===--------------------------------------------------------------------===//
     // Virtual Functions
@@ -48,25 +56,16 @@ class BackendLogger : public Logger{
 
     virtual void Update(LogRecord* record) = 0;
 
-    /**
-     * Commit locally so that FrontendLogger can collect LogRecord from here
-     */
-    virtual void Commit(void) = 0;
-
-    /**
-     * Remove LogRecord that already collected by FrontendLogger
-     */
-    virtual void Truncate(oid_t offset) = 0;
-
-    /**
-     * Return LogRecord with offset
-     */
-    virtual LogRecord* GetLogRecord(oid_t offset) = 0;
-
   protected:
+
+    // TODO change vector to list
+    std::vector<LogRecord*> local_queue;
+
+    std::mutex local_queue_mutex;
 
     oid_t commit_offset = 0;
 
+    bool wait_flush = false;
 };
 
 }  // namespace logging

@@ -16,7 +16,7 @@ namespace peloton {
 namespace logging {
 
 StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
-  static StdoutBackendLogger pInstance; 
+  static thread_local StdoutBackendLogger pInstance; 
   return &pInstance;
 }
 
@@ -26,11 +26,9 @@ StdoutBackendLogger* StdoutBackendLogger::GetInstance(){
  */
 void StdoutBackendLogger::Insert(LogRecord* record){
   {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(record);
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+    local_queue.push_back(record);
   }
-  //Commit everytime for testing
-  Commit();
 }
 
 /**
@@ -39,11 +37,9 @@ void StdoutBackendLogger::Insert(LogRecord* record){
  */
 void StdoutBackendLogger::Delete(LogRecord* record){
   {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(record);
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+    local_queue.push_back(record);
   }
-  //Commit everytime for testing
-  Commit();
 }
 
 /**
@@ -52,56 +48,8 @@ void StdoutBackendLogger::Delete(LogRecord* record){
  */
 void StdoutBackendLogger::Update(LogRecord* record){
   {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    stdout_local_queue.push_back(record);
-  }
-  //Commit everytime for testing
-  Commit();
-}
-
-/**
- * @brief set the current size of local_queue
- */
-void StdoutBackendLogger::Commit(void){
-  {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    commit_offset = stdout_local_queue.size();
-  }
-}
-
-/**
- * @brief truncate local_queue with commit_offset
- * @param offset
- */
-void StdoutBackendLogger::Truncate(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-
-    if(commit_offset == offset){
-      for(auto record : stdout_local_queue)
-        delete record;
-      stdout_local_queue.clear();
-    }else{
-      auto record = stdout_local_queue[offset];
-      delete record;
-      stdout_local_queue.erase(stdout_local_queue.begin(), stdout_local_queue.begin()+offset);
-    }
-
-    // It will be updated larger than 0 if we update commit_offset during the
-    // flush in frontend logger
-    commit_offset -= offset;
-  }
-}
-
-/**
- * @brief Get the LogRecord with offset
- * @param offset
- */
-LogRecord* StdoutBackendLogger::GetLogRecord(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(stdout_local_queue_mutex);
-    assert(offset < stdout_local_queue.size());
-    return stdout_local_queue[offset];
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+    local_queue.push_back(record);
   }
 }
 

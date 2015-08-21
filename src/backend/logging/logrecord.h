@@ -36,6 +36,8 @@ public:
 
   virtual bool Serialize(void) = 0;
 
+  virtual void print(void) = 0;
+
   char* GetSerializedData(void) const {return serialized_data;}
 
   size_t GetSerializedDataSize(void) const {return serialized_data_size;}
