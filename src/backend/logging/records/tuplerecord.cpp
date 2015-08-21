@@ -95,15 +95,15 @@ void TupleRecord::DeserializeHeader(CopySerializeInput& input){
   itemPointer.offset = (oid_t)(input.ReadShort());
 }
 
-std::ostream& operator<<(std::ostream& os, const TupleRecord& tupleRecord) {
-  os << "#LOG TYPE:" << LogRecordTypeToString(tupleRecord.GetType()) << "\n";
-  os << " #Db  ID:" << tupleRecord.GetDbId() << "\n";
-  os << " #Tb  ID:" << tupleRecord.GetTableId() << "\n";
-  os << " #Txn ID:" << tupleRecord.GetTxnId() << "\n";
-  os << " #Location :" << tupleRecord.GetItemPointer().block;
-  os << " " << tupleRecord.GetItemPointer().offset << "\n";
-  os << "\n";
-  return os;
+//just for debugging
+void TupleRecord::print(){
+  std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
+  std::cout << " #Db  ID:" << GetDbId() << "\n";
+  std::cout << " #Tb  ID:" << GetTableId() << "\n";
+  std::cout << " #Txn ID:" << GetTxnId() << "\n";
+  std::cout << " #Location :" << GetItemPointer().block;
+  std::cout << " " << GetItemPointer().offset << "\n";
+  std::cout << "\n";
 }
 
 }  // namespace logging

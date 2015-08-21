@@ -38,7 +38,7 @@ public:
 
   txn_id_t GetTxnId() const{ return txn_id; }
 
-  friend std::ostream &operator<<(std::ostream &os, const TransactionRecord& record);
+  void print(void);
 
 private:
 

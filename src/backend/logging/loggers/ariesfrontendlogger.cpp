@@ -62,7 +62,7 @@ void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
-  LOG_INFO("Frontendlogger is going into Standby Mode");
+  LOG_TRACE("Frontendlogger is going into Standby Mode");
   // Standby before we are ready to recovery
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
@@ -71,14 +71,14 @@ void AriesFrontendLogger::MainLoop(void) {
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
-      LOG_INFO("Frontendlogger is going into Recovery Mode");
+      LOG_TRACE("Frontendlogger is going into Recovery Mode");
       Recovery();
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
     }
     break;
 
     case LOGGING_STATUS_TYPE_ONGOING:{
-      LOG_INFO("Frontendlogger is going into Ongoing Mode");
+      LOG_TRACE("Frontendlogger is going into Ongoing Mode");
     }
     break;
 
@@ -100,7 +100,7 @@ void AriesFrontendLogger::MainLoop(void) {
   CollectLogRecord();
   Flush();
 
-  LOG_INFO("Frontendlogger is going into Sleep Mode");
+  LOG_TRACE("Frontendlogger is going into Sleep Mode");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
@@ -109,20 +109,25 @@ void AriesFrontendLogger::MainLoop(void) {
  * @brief Collect the LogRecord from BackendLoggers
  */
 void AriesFrontendLogger::CollectLogRecord() {
+
+  //TODO :: Check bacnend logger is still arive 
+
   backend_loggers = GetBackendLoggers();
 
   // Look over hte commit mark of current frontend logger's backend loggers
   for( auto backend_logger : backend_loggers){
-    auto commit_offset = ((AriesBackendLogger*)backend_logger)->GetCommitOffset();
+   AriesBackendLogger* aries_backend_logger = (AriesBackendLogger*)backend_logger; 
+    auto local_queue_size = aries_backend_logger->GetLocalQueueSize();
 
     // Skip current backend_logger, nothing to do
-    if(commit_offset == 0 ) continue; 
+    if(local_queue_size == 0 ) continue; 
 
-    for(oid_t log_record_itr=0; log_record_itr<commit_offset; log_record_itr++){
+    for(oid_t log_record_itr=0; log_record_itr<local_queue_size; log_record_itr++){
       // Copy LogRecord from backend_logger to here
-      aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
+      aries_global_queue.push_back(aries_backend_logger->GetLogRecord(log_record_itr));
     }
-    backend_logger->Truncate(commit_offset);
+    // truncate the local queue 
+    aries_backend_logger->Truncate(local_queue_size);
   }
 }
 
@@ -153,7 +158,16 @@ void AriesFrontendLogger::Flush(void) {
   for( auto record : aries_global_queue ){
     delete record;
   }
+  //TODO ::Truncate backendlogger here..
   aries_global_queue.clear();
+
+  // Commit each backend logger 
+  backend_loggers = GetBackendLoggers();
+
+  for( auto backend_logger : backend_loggers){
+    backend_logger->Commit();
+  }
+  printf("Finish flush\n");
 }
 
 /**
@@ -464,20 +478,28 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto txn_id = tupleRecord.GetTxnId();
   auto txn = recovery_txn_table.at(txn_id);
 
+  ItemPointer location;
+
   // Create new tile group if table doesn't have tile group that recored in the log
   if(tile_group == nullptr){
     table->AddTileGroupWithOid(tile_group_id);
     auto tile_group = table->GetTileGroupById(tile_group_id);
     tile_group->InsertTuple(tuple_slot, tuple);
-    ItemPointer location(tile_group_id, tuple_slot);
-    txn->RecordInsert(location);
-    table->IncreaseNumberOfTuplesBy(1);
-  }else{
-    ItemPointer location = table->InsertTuple(recovery_txn, tuple);
+    location.block = tile_group_id;
+    location.offset = tuple_slot;
     if (location.block == INVALID_OID) {
-      LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+      recovery_txn->SetResult(Result::RESULT_FAILURE);
+    }else{
+      txn->RecordInsert(location);
+      table->IncreaseNumberOfTuplesBy(1);
     }
-    txn->RecordInsert(location);
+  }else{
+    location = table->InsertTuple(recovery_txn, tuple);
+    if (location.block == INVALID_OID) {
+      recovery_txn->SetResult(Result::RESULT_FAILURE);
+    }else{
+      txn->RecordInsert(location);
+    }
   }
 
   delete tuple;
@@ -499,11 +521,14 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
   ItemPointer delete_location = tupleRecord.GetItemPointer();
 
-  bool status = table->DeleteTuple(recovery_txn, delete_location);
+  std::cout << "Recovery mode DD, Delete tuple : " << delete_location.block  << ", " << delete_location.offset  << std::endl;
 
-  if( status == false){
-    LOG_ERROR("Error !! DeleteTuple in Recovery Mode");
+  bool status = table->DeleteTuple(recovery_txn, delete_location);
+  if (status == false) {
+    recovery_txn->SetResult(Result::RESULT_FAILURE);
+    return;
   }
+
   auto txn_id = tupleRecord.GetTxnId();
   auto txn = recovery_txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
@@ -528,17 +553,21 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   ItemPointer delete_location = tupleRecord.GetItemPointer();
-
-  ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
-
-  if (location.block == INVALID_OID) {
-    LOG_ERROR("Error !! InsertTuple in Recovery Mode");
+  std::cout << "Recovery mode UU, Delete tuple : " << delete_location.block  << ", " << delete_location.offset  << std::endl;
+  bool status = table->DeleteTuple(recovery_txn, delete_location);
+  if (status == false) {
+    recovery_txn->SetResult(Result::RESULT_FAILURE);
+  }else{
+    ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
+    if (location.block == INVALID_OID) {
+      recovery_txn->SetResult(Result::RESULT_FAILURE);
+    }else{
+      auto txn_id = tupleRecord.GetTxnId();
+      auto txn = recovery_txn_table.at(txn_id);
+      txn->RecordDelete(delete_location);
+      txn->RecordInsert(location);
+    }
   }
-
-  auto txn_id = tupleRecord.GetTxnId();
-  auto txn = recovery_txn_table.at(txn_id);
-  txn->RecordDelete(delete_location);
-  txn->RecordInsert(location);
 
   delete tuple;
   delete pool;
