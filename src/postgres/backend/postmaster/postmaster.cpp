@@ -416,8 +416,6 @@ static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
 static void InitPostmasterDeathWatchHandle(void);
 
-static int GetBackendThreadId(void);
-
 #ifdef EXEC_BACKEND
 
 #ifdef WIN32
@@ -3032,7 +3030,7 @@ processCancelRequest(Port *port, void *pkt)
    * GetBackendThreadID
    *
    */
-  static int
+  int
   GetBackendThreadId(void) {
     std::hash<std::thread::id> hasher;
     uint16_t thread_id = hasher(std::this_thread::get_id());

@@ -351,7 +351,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-    elog(LOG, "DML Query Start :: Type :: %d", operation);
+    elog(DEBUG3, "DML Query :: Type :: %d", operation);
 
     ExecutePlan(estate,
                 queryDesc->planstate,
@@ -360,8 +360,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
                 count,
                 direction,
                 dest);
-
-    elog(LOG, "DML Query End :: Type :: %d", operation);
 	}
 
 	/*
@@ -1547,11 +1545,13 @@ ExecutePlan(EState *estate,
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
+  long    result_tuple_count;
 
 	/*
 	 * initialize local variables
 	 */
 	current_tuple_count = 0;
+	result_tuple_count = 0;
 
 	/*
 	 * Set the direction.
@@ -1589,15 +1589,14 @@ ExecutePlan(EState *estate,
 		if (estate->es_junkFilter != NULL)
 			slot = ExecFilterJunk(estate->es_junkFilter, slot);
 
-		// TODO: Peloton Changes
-		print_slot(slot);
-
 		/*
 		 * If we are supposed to send the tuple somewhere, do so. (In
 		 * practice, this is probably always the case at this point.)
 		 */
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
+
+		result_tuple_count++;
 
 		/*
 		 * check our tuple count.. if we've processed the proper number then
@@ -1609,6 +1608,7 @@ ExecutePlan(EState *estate,
 			break;
 	}
 
+	elog(DEBUG3, "Result Tuple Count :: %ld", result_tuple_count);
 }
 
 /* ----------------------------------------------------------------
