@@ -99,11 +99,6 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   return tuple_slot_id;
 }
 
-void TileGroup::ReclaimTuple(oid_t tuple_slot_id) {
-  // add it to free slots
-  tile_group_header->ReclaimTupleSlot(tuple_slot_id);
-}
-
 Tuple *TileGroup::SelectTuple(oid_t tile_offset, oid_t tuple_slot_id) {
   assert(tile_offset < tile_count);
   assert(tuple_slot_id < num_tuple_slots);
@@ -149,6 +144,8 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id) {
   if (atomic_cas<txn_id_t>(
           tile_group_header->GetEndCommitIdLocation(tuple_slot_id), MAX_CID,
           transaction_id)) {
+    // do a dirty delete
+    tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
     return true;
   }
 
@@ -171,7 +168,8 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id
 
 void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
   // undo insert (we don't reset MVCC info currently)
-  ReclaimTuple(tuple_slot_id);
+  //TODO: can reclaim tuple here
+  //ReclaimTuple(tuple_slot_id);
 }
 
 void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id) {
