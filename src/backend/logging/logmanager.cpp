@@ -101,42 +101,12 @@ bool LogManager::EndLogging(LoggingType logging_type ){
 
   LOG_INFO("Escaped from MainLoop(%s)", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
-  //TODO :: Make function
-  //Erase frontend logger from frontend_loggers as well
-  {
-    oid_t offset=0;
-    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-    for(auto frontend_logger : frontend_loggers){
-      if( frontend_logger->GetLoggingType() == logging_type){
-        delete frontend_logger;
-        break;
-      }else{
-        offset++;
-      }
-    }
-    if( offset >= frontend_loggers.size()){
-      LOG_WARN("%s isn't running", LoggingTypeToString(logging_type).c_str());
-      return false;
-    }else{
-      frontend_loggers.erase(frontend_loggers.begin()+offset);
-
-      // Remove status 
-      {
-        std::map<LoggingType,LoggingStatus>::iterator it; 
-        it = logging_statuses.find(logging_type);
-
-        if (it != logging_statuses.end()){
-          logging_statuses.erase(it);
-        }
-      }
-      // Reset MainLoggingType 
-      MainLoggingType = LOGGING_TYPE_INVALID;
-
-      LOG_INFO("%s has been terminated successfully", LoggingTypeToString(logging_type).c_str());
-
-      return true;
-    }
+  if( RemoveFrontend(logging_type) ){
+    ResetLoggingStatus(logging_type);
+    LOG_INFO("%s has been terminated successfully", LoggingTypeToString(logging_type).c_str());
+    return true;
   }
+  return false;
 }
 
 bool LogManager::IsReadyToLogging(LoggingType logging_type){
@@ -261,6 +231,43 @@ FrontendLogger* LogManager::GetFrontendLogger(LoggingType logging_type){
     }
   }
   return nullptr;
+}
+
+bool LogManager::RemoveFrontend(LoggingType logging_type ){
+  //Erase frontend logger from frontend_loggers as well
+  {
+    oid_t offset=0;
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+    for(auto frontend_logger : frontend_loggers){
+      if( frontend_logger->GetLoggingType() == logging_type){
+        delete frontend_logger;
+        break;
+      }else{
+        offset++;
+      }
+    }
+    if( offset >= frontend_loggers.size()){
+      LOG_WARN("%s isn't running", LoggingTypeToString(logging_type).c_str());
+      return false;
+    }else{
+      frontend_loggers.erase(frontend_loggers.begin()+offset);
+      return true;
+    }
+  }
+}
+
+void LogManager::ResetLoggingStatus(LoggingType logging_type ){
+  // Remove status 
+  {
+    std::map<LoggingType,LoggingStatus>::iterator it; 
+    it = logging_statuses.find(logging_type);
+
+    if (it != logging_statuses.end()){
+      logging_statuses.erase(it);
+    }
+  }
+  // Reset MainLoggingType 
+  MainLoggingType = LOGGING_TYPE_INVALID;
 }
 
 }  // namespace logging
