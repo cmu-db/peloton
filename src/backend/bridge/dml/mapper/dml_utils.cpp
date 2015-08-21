@@ -141,7 +141,7 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
   // Recurse
   // TODO: We should push this recursion to the individual PrepareXXXXState() functions,
   // because not all states' children are cooked in the same way
-  // (e.g., some are extracted from sub-plans)
+  // (e.g., some are extracted from sub-plans, or some may absorb their children)
   auto left_tree = outerPlanState(planstate);
   auto right_tree = innerPlanState(planstate);
 
@@ -853,7 +853,7 @@ ExprState *CopyExprState(ExprState *expr_state) {
       break;
 
     default: {
-      LOG_WARN("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
+      LOG_TRACE("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
                nodeTag(expr_state->expr));
       expr_state_copy = (ExprState *) makeNode(ExprState);
       *expr_state_copy = *expr_state;
