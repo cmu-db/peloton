@@ -91,6 +91,7 @@ bool InsertExecutor::DExecute() {
       transaction_->RecordInsert(location);
     }
 
+    executor_context_->num_processed += 1; // insert one
     return true;
   }
   // Inserting a collection of tuples from plan node
@@ -115,12 +116,14 @@ bool InsertExecutor::DExecute() {
 
     // Carry out insertion
     ItemPointer location = target_table->InsertTuple(transaction_, tuple.get());
+    LOG_INFO("location: %d, %d", location.block, location.offset);
     if (location.block == INVALID_OID) {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordInsert(location);
 
+    executor_context_->num_processed += 1; // insert one
     done_ = true;
     return true;
   }
