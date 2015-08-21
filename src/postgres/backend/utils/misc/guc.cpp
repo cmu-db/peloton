@@ -687,7 +687,7 @@ typedef struct
 static const char *memory_units_hint =
 	gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
 
-static const unit_conversion memory_unit_conversion_table[] =
+thread_local static const unit_conversion memory_unit_conversion_table[] =
 {
 	{ "TB",		GUC_UNIT_KB,	 	1024*1024*1024 },
 	{ "GB",		GUC_UNIT_KB,	 	1024*1024 },
@@ -712,10 +712,10 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{ "" }		/* end of table marker */
 };
 
-static const char *time_units_hint =
+thread_local static const char *time_units_hint =
 	gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
 
-static const unit_conversion time_unit_conversion_table[] =
+thread_local static const unit_conversion time_unit_conversion_table[] =
 {
 	{ "d",		GUC_UNIT_MS,	1000 * 60 * 60 * 24 },
 	{ "h",		GUC_UNIT_MS,	1000 * 60 * 60 },
@@ -768,7 +768,7 @@ static const unit_conversion time_unit_conversion_table[] =
 
 /******** option records follow ********/
 
-static struct config_bool ConfigureNamesBool[] =
+thread_local static struct config_bool ConfigureNamesBool[] =
 {
 	{
 		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -3664,7 +3664,7 @@ static struct config_enum ConfigureNamesEnum[] =
  * should be mapped to a new___ one only if the new___ variable has very similar
  * semantics to the old.
  */
-static const char *const map_old_guc_names[] = {
+thread_local static const char *const map_old_guc_names[] = {
 	"sort_mem", "work_mem",
 	"vacuum_mem", "maintenance_work_mem",
 	NULL
@@ -3690,20 +3690,20 @@ typedef struct ConfigFileVariable
 	char	*filename;
 	int		sourceline;
 } ConfigFileVariable;
-static struct ConfigFileVariable *guc_file_variables;
+thread_local static struct ConfigFileVariable *guc_file_variables;
 
 /* Number of file variables */
-static int	num_guc_file_variables;
+thread_local static int	num_guc_file_variables;
 
 /* Vector capacity */
-static int	size_guc_variables;
+thread_local static int	size_guc_variables;
 
 
-static bool guc_dirty;			/* TRUE if need to do commit/abort work */
+thread_local static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
-static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
+thread_local static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
-static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+thread_local static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);

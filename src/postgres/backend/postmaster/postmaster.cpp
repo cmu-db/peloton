@@ -3859,6 +3859,8 @@ processCancelRequest(Port *port, void *pkt)
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
 
+    InitLockMethodLocalHash();
+
     InitializeMaxBackends();
 
     InitializeGUCOptions(false);
