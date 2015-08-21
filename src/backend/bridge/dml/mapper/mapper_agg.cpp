@@ -27,7 +27,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
+  LOG_TRACE("proj_info : \n%s", proj_info->Debug().c_str());
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
