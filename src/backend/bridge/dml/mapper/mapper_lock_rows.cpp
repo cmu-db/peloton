@@ -37,10 +37,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLockRows(
   /* get the underlying plan */
   PlanState *outer_plan_state = outerPlanState(lr_plan_state);
 
-  TransformOptions options = kDefaultOptions;
-  options.use_projInfo = false;
-
-  return PlanTransformer::TransformPlan(outer_plan_state, options);
+  return PlanTransformer::TransformPlan(outer_plan_state);
 }
 
 }  // namespace bridge
