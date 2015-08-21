@@ -28,7 +28,6 @@ namespace logging {
 // Frontend Logger 
 //===--------------------------------------------------------------------===//
 
-static std::mutex backend_logger_mutex;
 
 class FrontendLogger : public Logger{
 
@@ -69,6 +68,8 @@ class FrontendLogger : public Logger{
   protected:
 
     std::vector<BackendLogger*> backend_loggers;
+
+    std::mutex backend_logger_mutex;
 
 };
 
