@@ -95,6 +95,7 @@ bool DeleteExecutor::DExecute() {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
+    executor_context_->num_processed += 1; // deleted one
     transaction_->RecordDelete(delete_location);
   }
 
