@@ -86,7 +86,7 @@ public:
 
   ItemPointer GetItemPointer(void) const {return itemPointer;}
 
-  friend std::ostream& operator<<(std::ostream& os, const TupleRecord& tupleRecord);
+  void print(void);
 
 private:
   //===--------------------------------------------------------------------===//

@@ -132,13 +132,6 @@ void TransactionManager::ResetStates(void){
 
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
-  // XXX LOG :: record txn end entry
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    // erase entry in transaction table
-    txn_table.erase(txn->txn_id);
-  }
-
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
@@ -149,6 +142,12 @@ void TransactionManager::EndTransaction(Transaction *txn,
     }
   }
 
+  // XXX LOG :: record txn end entry
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    // erase entry in transaction table
+    txn_table.erase(txn->txn_id);
+  }
 }
 
 // Store an entry in PG Transaction table
@@ -220,6 +219,18 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
 
 void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
+
+  // XXX LOG :: record commit entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+      logger->Insert(record);
+    }
+  }
+
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -237,16 +248,6 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
-  // XXX LOG :: record commit entry
-  // Logging 
-  {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
-      logger->Insert(record);
-    }
-  }
 }
 
 void TransactionManager::CommitPendingTransactions(
@@ -343,6 +344,18 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 //===--------------------------------------------------------------------===//
 
 void TransactionManager::AbortTransaction(Transaction *txn) {
+
+  // XXX LOG :: record abort entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
+      logger->Insert(record);
+    }
+  }
+
   // (A) rollback inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -359,17 +372,6 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
 
     for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot);
-  }
-
-  // XXX LOG :: record abort entry
-  // Logging 
-  {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
-      logger->Insert(record);
-    }
   }
 
   // drop a reference
