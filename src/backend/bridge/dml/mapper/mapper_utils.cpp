@@ -136,7 +136,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
  * For example, the "row" projection
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
-    const PelotonProjectionInfo *pg_pi, oid_t column_count) {
+    const PelotonProjectionInfo *pg_pi) {
 
   if (pg_pi == nullptr) {
     LOG_TRACE("pg proj info is null, no projection");

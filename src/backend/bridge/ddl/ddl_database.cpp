@@ -40,7 +40,7 @@ bool DDLDatabase::ExecCreatedbStmt(Node *parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(Node *parsetree, DDL_Info* ddl_info) {
+bool DDLDatabase::ExecDropdbStmt(__attribute__((unused)) Node *parsetree, DDL_Info* ddl_info) {
   const Database_Info* database_info = 
     reinterpret_cast<const Database_Info *>(ddl_info);
   DDLDatabase::DropDatabase(database_info->database_oid);
