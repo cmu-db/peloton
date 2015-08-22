@@ -67,8 +67,6 @@ void PlanTransformer::GetGenericInfoFromScanState(
     bool use_projInfo) {
 
   List *qual = sstate->qual;
-  oid_t out_column_count =
-      static_cast<oid_t>(sstate->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;

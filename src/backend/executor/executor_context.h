@@ -44,7 +44,7 @@ class ExecutorContext {
   uint32_t num_processed = 0;
 
   ~ExecutorContext(){
-    for(size_t i=0; i < params_.GetSize(); i++){
+    for(int i=0; i < params_.GetSize(); i++){
       params_[i].FreeUninlinedData();
     }
   }
