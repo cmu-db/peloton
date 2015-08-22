@@ -62,7 +62,7 @@ void AriesFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
-  LOG_INFO("Frontendlogger] Standby Mode");
+  LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
   while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
@@ -71,12 +71,12 @@ void AriesFrontendLogger::MainLoop(void) {
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
-      LOG_INFO("Frontendlogger] Recovery Mode");
+      LOG_TRACE("Frontendlogger] Recovery Mode");
       Recovery();
       logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
     }
     case LOGGING_STATUS_TYPE_ONGOING:{
-      LOG_INFO("Frontendlogger] Ongoing Mode");
+      LOG_TRACE("Frontendlogger] Ongoing Mode");
     }
     break;
 
@@ -96,7 +96,7 @@ void AriesFrontendLogger::MainLoop(void) {
   CollectLogRecord();
   Flush();
 
-  LOG_INFO("Frontendlogger] Sleep Mode");
+  LOG_TRACE("Frontendlogger] Sleep Mode");
   //Setting frontend logger status to sleep
   logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
 }
@@ -234,6 +234,9 @@ void AriesFrontendLogger::Recovery() {
  */
 LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
   char buffer;
+  if( IsFileBroken(1) ){
+    return LOGRECORD_TYPE_INVALID;
+  }
   int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
   if( ret <= 0 ){
     return LOGRECORD_TYPE_INVALID;
@@ -266,6 +269,10 @@ size_t AriesFrontendLogger::LogFileSize(){
 size_t AriesFrontendLogger::GetNextFrameSize(){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
+
+  if( IsFileBroken(sizeof(int32_t)) ){
+    return 0;
+  }
   size_t ret = fread(buffer, 1, sizeof(buffer), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
@@ -295,28 +302,52 @@ size_t AriesFrontendLogger::GetLogRecordCount() const{
  * @brief Read TransactionRecord
  * @param txnRecord
  */
-void AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
+bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
 
   auto txn_record_size = GetNextFrameSize();
+  if( txn_record_size == 0 ){
+    return false;
+  }
   char txn_record[txn_record_size];
+  if( IsFileBroken(txn_record_size) ){
+    return false;
+  }
   size_t ret = fread(txn_record, 1, sizeof(txn_record), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
   CopySerializeInput logTxnRecord(txn_record,txn_record_size);
   txnRecord.Deserialize(logTxnRecord);
+
+  return true;
+}
+
+bool AriesFrontendLogger::IsFileBroken(size_t size_to_read){
+  size_t current_position = ftell(logFile);
+  if( LogFileSize() < (current_position+size_to_read)){
+    fseek(logFile, 0, SEEK_END);
+    return true;
+  }else{
+    return false;
+  }
 }
 
 /**
  * @brief Read TupleRecordHeader
  * @param tupleRecord
  */
-void AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
+bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   auto header_size = GetNextFrameSize();
+  if( header_size == 0 ){
+    return false;
+  }
 
   // Read header 
   char header[header_size];
+  if(IsFileBroken(header_size)){
+    return false;
+  }
   size_t ret = fread(header, 1, sizeof(header), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
@@ -324,6 +355,8 @@ void AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   CopySerializeInput logHeader(header,header_size);
   tupleRecord.DeserializeHeader(logHeader);
+
+  return true;
 }
 
 /**
@@ -336,9 +369,15 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
                                                          Pool *pool){
       // Measure the body size of LogRecord
       size_t body_size = GetNextFrameSize();
+      if( body_size == 0 ){
+        return nullptr;
+      }
 
       // Read Body 
       char body[body_size];
+      if(IsFileBroken(body_size)){
+        return nullptr;
+      }
       int ret = fread(body, 1, sizeof(body), logFile);
       if( ret <= 0 ){
         LOG_ERROR("Error occured in fread ");
@@ -416,6 +455,8 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
  */
 void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 
+  LOG_INFO("Abort txd id %d object in table",(int)txn->GetTransactionId());
+
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
@@ -454,10 +495,11 @@ void AriesFrontendLogger::AbortTxnInRecoveryTable(){
  */
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
-
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
 
-  ReadTupleRecordHeader(tupleRecord);
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    return;
+  }
 
   auto table = GetTable(tupleRecord);
 
@@ -465,6 +507,12 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   Pool *pool = new Pool(backend);
  
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
+
+  if( tuple == nullptr){
+    delete pool;
+    delete backend;
+    return;
+  }
 
   auto tile_group_id = tupleRecord.GetItemPointer().block;
   auto tuple_slot = tupleRecord.GetItemPointer().offset;
@@ -505,7 +553,9 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_DELETE);
 
-  ReadTupleRecordHeader(tupleRecord);
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    return;
+  }
 
   auto table = GetTable(tupleRecord);
 
@@ -531,7 +581,9 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE);
 
-  ReadTupleRecordHeader(tupleRecord);
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    return;
+  }
 
   auto txn_id = tupleRecord.GetTxnId();
   auto txn = recovery_txn_table.at(txn_id);
@@ -542,6 +594,12 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   Pool *pool = new Pool(backend);
 
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
+
+  if( tuple == nullptr){
+     delete pool;
+     delete backend;
+    return;
+  }
 
   ItemPointer delete_location = tupleRecord.GetItemPointer();
   bool status = table->DeleteTuple(recovery_txn, delete_location);
@@ -569,7 +627,9 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 void AriesFrontendLogger::AddTxnToRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
-  ReadTxnRecord(txnRecord);
+  if( ReadTxnRecord(txnRecord) == false ){
+    return;
+  }
 
   auto txn_id = txnRecord.GetTxnId();
 
@@ -585,7 +645,9 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
 void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
-  ReadTxnRecord(txnRecord);
+  if( ReadTxnRecord(txnRecord) == false ){
+    return;
+  }
 
   auto txn_id = txnRecord.GetTxnId();
 
@@ -604,7 +666,9 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
 
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-  ReadTxnRecord(txnRecord);
+  if( ReadTxnRecord(txnRecord) == false ){
+    return;
+  }
 
   // get the txn
   auto txn_id = txnRecord.GetTxnId();
@@ -623,7 +687,9 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
-  ReadTxnRecord(txnRecord);
+  if( ReadTxnRecord(txnRecord) == false ){
+    return;
+  }
 
   auto txn_id = txnRecord.GetTxnId();
 
@@ -631,7 +697,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   auto txn = recovery_txn_table.at(txn_id);
   AbortTuples(txn);
 
-  LOG_TRACE("Abort txd id %d object in table",(int)txn_id);
+  LOG_INFO("Abort txd id %d object in table",(int)txn_id);
 }
 
 }  // namespace logging
