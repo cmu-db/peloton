@@ -196,11 +196,11 @@ class TileGroupHeader {
     bool activated = (at_lcid >= tuple_begin_cid);
     bool invalidated = (at_lcid >= tuple_end_cid);
 
-    LOG_INFO("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
              tuple_txn_id);
-    LOG_INFO("Activated :: %d cid : %lu tuple begin cid : %lu", activated,
+    LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : %lu", activated,
              at_lcid, tuple_begin_cid);
-    LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
+    LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
              at_lcid, tuple_end_cid);
 
     // Visible iff past Insert || Own Insert
