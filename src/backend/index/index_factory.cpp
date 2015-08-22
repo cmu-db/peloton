@@ -26,8 +26,10 @@ namespace index {
 Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   bool unique_keys = metadata->unique_keys;
   bool ints_only = false;
+
   LOG_TRACE("Creating index %s", metadata->GetName().c_str());
-  const int key_size = metadata->key_schema->GetLength();
+  const auto key_size = metadata->key_schema->GetLength();
+
   auto index_type = metadata->GetIndexMethodType();
   LOG_TRACE("Index type : %d", index_type);
   LOG_TRACE("Unique keys : %d", unique_keys);

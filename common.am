@@ -13,9 +13,7 @@ CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*" "*/postgres/*
 AM_CPPFLAGS = $(DEBUG_CPPFLAGS)
 
 AM_CXXFLAGS = $(DEBUG_CXXFLAGS) -std=c++11 \
-              -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
               -fPIC -fpermissive -fno-strict-aliasing \
               $(CODE_COVERAGE_CFLAGS)
 
-AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@ 
-
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@

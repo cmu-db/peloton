@@ -64,8 +64,9 @@ planner::AbstractPlan *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlan.
  */
 planner::AbstractPlan *PlanTransformer::TransformInsert(
-    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, __attribute__((unused)) const TransformOptions options) {
   planner::AbstractPlan *plan_node = nullptr;
+
 
   Oid database_oid = mt_plan_state->database_oid;
   Oid table_oid = mt_plan_state->table_oid;
@@ -87,8 +88,7 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
 
   auto project_info =
-      BuildProjectInfo(result_planstate->proj,
-                       mt_plan_state->table_nattrs);
+      BuildProjectInfo(result_planstate->proj);
 
   plan_node = new planner::InsertPlan(target_table, project_info);
 
@@ -130,8 +130,7 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
   // Child must be a scan node
   auto sub_planstate = (AbstractScanPlanState*) mt_plan_state->mt_plans[0];
 
-  auto project_info = BuildProjectInfo(sub_planstate->proj,
-                                       mt_plan_state->table_nattrs);
+  auto project_info = BuildProjectInfo(sub_planstate->proj);
 
   planner::AbstractPlan *plan_node = nullptr;
   plan_node = new planner::UpdatePlan(target_table, project_info);
