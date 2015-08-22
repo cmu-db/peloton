@@ -12,8 +12,7 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
-//FIXME :: Hard coded file path
-std::string filename = "/home/parallels/git/peloton/build/aries.log";
+std::string filename = "aries.log";
 
 /**
  * @brief writing a simple log with multiple threads
