@@ -410,6 +410,12 @@ peloton_MainLoop(void) {
   Peloton_Msg  msg;
   int     wr;
 
+  /* Start our scheduler */
+  std::unique_ptr<peloton::scheduler::TBBScheduler> scheduler(new peloton::scheduler::TBBScheduler());
+  if(scheduler.get() == NULL) {
+    elog(ERROR, "Could not create peloton scheduler \n");
+    return;
+  }
 
   std::vector<std::thread> thread_group;
   if(logging_on){
@@ -494,17 +500,20 @@ peloton_MainLoop(void) {
           break;
 
         case PELOTON_MTYPE_DDL: {
-          std::thread(peloton_process_ddl, reinterpret_cast<Peloton_MsgDDL*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
+                               reinterpret_cast<Peloton_MsgDDL*>(&msg));
         }
         break;
 
         case PELOTON_MTYPE_DML: {
-          std::thread(peloton_process_dml, reinterpret_cast<Peloton_MsgDML*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
+                               reinterpret_cast<Peloton_MsgDML*>(&msg));
         }
         break;
 
         case PELOTON_MTYPE_BOOTSTRAP: {
-          std::thread(peloton_process_bootstrap, reinterpret_cast<Peloton_MsgBootstrap*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_bootstrap),
+                               reinterpret_cast<Peloton_MsgBootstrap*>(&msg));
         }
         break;
 
