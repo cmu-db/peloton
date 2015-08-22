@@ -84,7 +84,7 @@
  * We thread the structs manually instead of using List cells so that we can
  * guarantee to save a CachedPlanSource without error.
  */
-static CachedPlanSource *first_saved_plan = NULL;
+thread_local static CachedPlanSource *first_saved_plan = NULL;
 
 static void ReleaseGenericPlan(CachedPlanSource *plansource);
 static List *RevalidateCachedQuery(CachedPlanSource *plansource);
@@ -159,7 +159,6 @@ CreateCachedPlan(Node *raw_parse_tree, const char *query_string,
    * child of the caller's context (which we assume to be transient), so
    * that it will be cleaned up on error.
    */
-  // TODO: Peloton Changes
   source_context = AllocSetContextCreate(CurrentMemoryContext,
                                          "CachedPlanSource",
                                          ALLOCSET_DEFAULT_MINSIZE,
