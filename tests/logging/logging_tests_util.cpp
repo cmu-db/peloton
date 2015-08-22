@@ -14,7 +14,8 @@
 
 #include <thread>
 
-#define NUM_TUPLES 3
+#define NUM_TUPLES 5
+#define NUM_BACKEND 3
 
 namespace peloton {
 namespace test {
@@ -26,7 +27,6 @@ oid_t current_tile_group_id;
  */
 bool LoggingTestsUtil::PrepareLogFile(){
 
-   //TODO Make function
    // start a thread for logging
    auto& logManager = logging::LogManager::GetInstance();
 
@@ -39,7 +39,6 @@ bool LoggingTestsUtil::PrepareLogFile(){
                       &logManager, 
                       logManager.GetMainLoggingType());
 
-   //TODO Make function
    // When the frontend logger gets ready to logging,
    // start logging
    while(1){
@@ -52,22 +51,19 @@ bool LoggingTestsUtil::PrepareLogFile(){
      }
    }
 
-   //TODO Make function
    // wait for recovery
    while(logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
 
    LoggingTestsUtil::WritingSimpleLog(20000, 10000);
 
-   //TODO Make function
    // ongoing->terminate->sleep
    if( logManager.EndLogging() ){
      thread.join();
      return true;
-   }else{
-     LOG_ERROR("Failed to terminate logging thread"); 
-     return false;
    }
-   //TODO Truncate the file
+
+   LOG_ERROR("Failed to terminate logging thread"); 
+   return false;
 }
 
 /**
@@ -147,7 +143,7 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
   db->DropTableWithOid(table_oid);
   table = CreateSimpleTable(db_oid, table_oid);
 
-  LaunchParallelTest(3, ParallelWriting, table);
+  LaunchParallelTest(NUM_BACKEND, ParallelWriting, table);
 
   db->AddTable(table);
   db->DropTableWithOid(table_oid);
@@ -163,7 +159,7 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   auto tile_group = table->GetTileGroupById(current_tile_group_id);
 
   // check # of active tuples
-  EXPECT_EQ(tile_group->GetActiveTupleCount(), 6);
+  EXPECT_LT(tile_group->GetActiveTupleCount(), ((NUM_TUPLES-1)*NUM_BACKEND));
 
 }
 
@@ -305,7 +301,6 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
 
 void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot, bool committed){
 
-  //TODO current tile group id ...
   ItemPointer delete_location(current_tile_group_id,tuple_slot);
 
 
