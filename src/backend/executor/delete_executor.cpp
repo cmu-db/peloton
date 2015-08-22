@@ -16,6 +16,9 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/logging/logmanager.h"
+#include "backend/logging/records/tuplerecord.h"
+
 
 namespace peloton {
 namespace executor {
@@ -86,6 +89,21 @@ bool DeleteExecutor::DExecute() {
               visible_tuple_id, physical_tuple_id);
 
     peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
+
+   // Logging 
+   {
+      auto& logManager = logging::LogManager::GetInstance();
+      if(logManager.IsReadyToLogging()){
+        auto logger = logManager.GetBackendLogger();
+  
+        auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, 
+                                              transaction_->GetTransactionId(), 
+                                              target_table_->GetOid(),
+                                              delete_location,
+                                              nullptr);
+        logger->Delete(record);
+      }
+    }
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple

@@ -83,6 +83,10 @@ class Transaction {
 
   const std::map<storage::TileGroup *, std::vector<oid_t>> &GetDeletedTuples();
 
+  // reset inserted tuples and deleted tuples
+  // used by recovery (logging)
+  void ResetStates(void);
+
   // maintain reference counts for transactions
   void IncrementRefCount();
 
