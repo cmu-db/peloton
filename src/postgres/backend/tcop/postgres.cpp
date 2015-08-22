@@ -79,7 +79,9 @@
 #include "utils/memutils.h"
 
 // TODO: Peloton Changes
+#include "backend/logging/logmanager.h"
 #include "backend/common/message_queue.h"
+
 
 /* ----------------
  *		global variables

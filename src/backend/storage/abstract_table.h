@@ -30,7 +30,7 @@ class AbstractTable {
 
  protected:
   // Table constructor
-  AbstractTable(oid_t table_oid, std::string table_name,
+  AbstractTable(oid_t database_oid, oid_t table_oid, std::string table_name,
                 catalog::Schema *schema, bool own_schema);
 
  public:
@@ -67,8 +67,9 @@ class AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  oid_t table_oid;
   oid_t database_oid;
+
+  oid_t table_oid;
 
   // table name
   std::string table_name;

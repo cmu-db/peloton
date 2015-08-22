@@ -21,6 +21,8 @@
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
+#include "backend/logging/logmanager.h"
+#include "backend/logging/records/transactionrecord.h"
 
 namespace peloton {
 namespace concurrency {
@@ -76,6 +78,17 @@ Transaction *TransactionManager::BeginTransaction() {
     }
   }
 
+ // XXX LOG :: record begin(next txn) entry
+ //Logging 
+ {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
+      logger->Insert(record);
+    }
+ }
+
   return next_txn;
 }
 
@@ -94,9 +107,42 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
   return (txn_id < next_txn_id);
 }
 
+void TransactionManager::ResetStates(void){
+  next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
+  next_cid = ATOMIC_VAR_INIT(START_CID);
+
+  // BASE transaction
+  // All transactions are based on this transaction
+  delete last_txn;
+  last_txn = new Transaction(START_TXN_ID, START_CID);
+  last_txn->cid = START_CID;
+  last_cid = START_CID;
+
+  for(auto txn : txn_table){
+    auto curr_txn = txn.second;
+    delete curr_txn;
+  }
+  txn_table.clear();
+  for(auto txn : pg_txn_table){
+    auto curr_txn = txn.second;
+    delete curr_txn;
+  }
+  pg_txn_table.clear();
+}
+
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
-  // XXX LOG :: record commit entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
+      logger->Insert(record);
+    }
+  }
+
+  // XXX LOG :: record txn end entry
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
     // erase entry in transaction table
@@ -173,6 +219,18 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
 
 void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
+
+  // XXX LOG :: record commit entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+      logger->Insert(record);
+    }
+  }
+
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -190,7 +248,6 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
-  // XXX LOG :: record commit entry
 }
 
 void TransactionManager::CommitPendingTransactions(
@@ -278,6 +335,8 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
+  // we already record commit entry in CommitModifications, isn't it?
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -285,6 +344,18 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 //===--------------------------------------------------------------------===//
 
 void TransactionManager::AbortTransaction(Transaction *txn) {
+
+  // XXX LOG :: record abort entry
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
+      logger->Insert(record);
+    }
+  }
+
   // (A) rollback inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -308,7 +379,6 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
 
   EndTransaction(txn, false);
 
-  // XXX LOG :: record abort entry
 }
 
 }  // End concurrency namespace

@@ -23,6 +23,7 @@ include $(srcdir)/backend/main/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
+include $(srcdir)/backend/logging/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
@@ -43,19 +44,19 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-						$(brain_FILES) \
-						$(catalog_FILES) \
-						$(backend_FILES) \
-						$(bridge_FILES) \
-						$(common_FILES) \
-						$(concurrency_FILES) \
-						$(executor_FILES) \
-						$(expression_FILES) \
-						$(index_FILES) \
-						$(planner_FILES) \
-						$(scheduler_FILES) \
-						$(storage_FILES)
-
+			$(brain_FILES) \
+			$(catalog_FILES) \
+			$(backend_FILES) \
+			$(bridge_FILES) \
+			$(common_FILES) \
+			$(concurrency_FILES) \
+			$(executor_FILES) \
+			$(expression_FILES) \
+			$(index_FILES) \
+			$(planner_FILES) \
+			$(scheduler_FILES) \
+			$(storage_FILES) \
+			$(logging_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
