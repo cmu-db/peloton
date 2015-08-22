@@ -49,20 +49,9 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
  * @brief Store backend logger
  * @param backend logger
  */
-void FrontendLogger::AddBackendLogger(BackendLogger* _backend_logger){
-  {
-    bool already_exist = false;
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-    for( auto backend_logger : backend_loggers){
-      if( backend_logger == _backend_logger){
-        already_exist = true;
-        break;
-      }
-    }
-    if( already_exist == false){
-      backend_loggers.push_back(_backend_logger);
-    }
-  }
+void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
+  std::lock_guard<std::mutex> lock(backend_logger_mutex);
+  backend_loggers.push_back(backend_logger);
 }
 
 /**

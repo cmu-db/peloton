@@ -209,7 +209,10 @@ if( logging_type == LOGGING_TYPE_INVALID){
     // If frontend logger exists
     if( frontend_logger != nullptr){
       backend_logger = BackendLogger::GetBackendLogger(logging_type);
-      frontend_logger->AddBackendLogger(backend_logger);
+      if( backend_logger->IsAddedFrontend() == false){
+        frontend_logger->AddBackendLogger(backend_logger);
+        backend_logger->AddedFrontend();
+      }
     }
   }
 
