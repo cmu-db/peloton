@@ -43,11 +43,11 @@ private:
 
   static void ParallelWriting(storage::DataTable* table);
 
-  static std::vector<oid_t> InsertTuples(storage::DataTable* table, bool committed);
+  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, bool committed);
 
-  static void DeleteTuples(storage::DataTable* table, oid_t tuple_slot, bool committed);
+  static void DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed);
 
-  static void UpdateTuples(storage::DataTable* table, oid_t tuple_slot, bool committed);
+  static void UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
