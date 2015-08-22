@@ -21,7 +21,7 @@
 namespace peloton {
 
 namespace planner {
-class AbstractPlanNode;
+class AbstractPlan;
 }
 
 namespace storage {
@@ -40,7 +40,7 @@ class MaterializationExecutor : public AbstractExecutor {
 
   // If node is null, then we will create a default node in DExecute()
   // Else, we will apply the column mapping on the logical tile based on node.
-  explicit MaterializationExecutor(planner::AbstractPlanNode *node,
+  explicit MaterializationExecutor(planner::AbstractPlan *node,
                                    ExecutorContext *executor_context);
 
  protected:

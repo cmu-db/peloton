@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
 
@@ -28,27 +28,30 @@ class DataTable;
 
 namespace planner {
 
-class SeqScanNode : public AbstractScanNode {
+class SeqScanPlan : public AbstractScan {
  public:
-  SeqScanNode(const SeqScanNode &) = delete;
-  SeqScanNode &operator=(const SeqScanNode &) = delete;
-  SeqScanNode(SeqScanNode &&) = delete;
-  SeqScanNode &operator=(SeqScanNode &&) = delete;
+  SeqScanPlan(const SeqScanPlan &) = delete;
+  SeqScanPlan &operator=(const SeqScanPlan &) = delete;
+  SeqScanPlan(SeqScanPlan &&) = delete;
+  SeqScanPlan &operator=(SeqScanPlan &&) = delete;
 
-  SeqScanNode(storage::DataTable *table,
+  SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : AbstractScanNode(predicate, column_ids), table_(table) {}
+      : AbstractScan(predicate, column_ids), target_table_(table) {}
 
-  const storage::DataTable *GetTable() const { return table_; }
+  storage::DataTable *GetTable() const {
+    return target_table_;
+  }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   inline std::string GetInfo() const { return "SeqScan"; }
 
  private:
+
   /** @brief Pointer to table to scan from. */
-  const storage::DataTable *table_;
+  storage::DataTable *target_table_ = nullptr;
 };
 
 }  // namespace planner

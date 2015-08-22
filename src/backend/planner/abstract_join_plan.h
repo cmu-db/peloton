@@ -17,9 +17,9 @@
 #include <map>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/planner/project_info.h"
 
 namespace peloton {
@@ -29,20 +29,20 @@ namespace planner {
 // Abstract Join Plan Node
 //===--------------------------------------------------------------------===//
 
-class AbstractJoinPlanNode : public AbstractPlanNode {
+class AbstractJoinPlan : public AbstractPlan {
  public:
-  AbstractJoinPlanNode(const AbstractJoinPlanNode &) = delete;
-  AbstractJoinPlanNode &operator=(const AbstractJoinPlanNode &) = delete;
-  AbstractJoinPlanNode(AbstractJoinPlanNode &&) = delete;
-  AbstractJoinPlanNode &operator=(AbstractJoinPlanNode &&) = delete;
+  AbstractJoinPlan(const AbstractJoinPlan &) = delete;
+  AbstractJoinPlan &operator=(const AbstractJoinPlan &) = delete;
+  AbstractJoinPlan(AbstractJoinPlan &&) = delete;
+  AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
 
-  AbstractJoinPlanNode(PelotonJoinType joinType,
-                       const expression::AbstractExpression *predicate,
-                       const ProjectInfo *proj_info)
-      : AbstractPlanNode(),
-        joinType_(joinType),
-        predicate_(predicate),
-        proj_info_(proj_info) {
+  AbstractJoinPlan(PelotonJoinType joinType,
+                   const expression::AbstractExpression *predicate,
+                   const ProjectInfo *proj_info)
+  : AbstractPlan(),
+    joinType_(joinType),
+    predicate_(predicate),
+    proj_info_(proj_info) {
     // Fuck off!
   }
 

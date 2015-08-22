@@ -20,6 +20,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {159, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
     {287, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
     {293, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
+    {1718, { EXPRESSION_TYPE_COMPARE_EQ, 2 } },
 
     {84, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {144, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
@@ -29,6 +30,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {165, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {288, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
     {294, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
+    {1719, { EXPRESSION_TYPE_COMPARE_NE, 2 } },
 
     {56, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {64, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
@@ -38,6 +40,8 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1246, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {289, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
     {295, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
+    {1722, { EXPRESSION_TYPE_COMPARE_LT, 2 } },
+
 
     {57, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {73, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
@@ -47,6 +51,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {163, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {291, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
     {297, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
+    {1720, { EXPRESSION_TYPE_COMPARE_GT, 2 } },
 
     {74, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {150, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
@@ -56,6 +61,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1692, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {292, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
     {298, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
+    {1721, { EXPRESSION_TYPE_COMPARE_GTE, 2 } },
 
     {72, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {148, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
@@ -65,6 +71,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1691, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {290, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
     {296, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
+    {1723, { EXPRESSION_TYPE_COMPARE_LTE, 2 } },
 
     //====--------------------------------
     // Basic arithmetics
@@ -75,6 +82,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {179, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
     {204, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
     {218, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
+    {1724, { EXPRESSION_TYPE_OPERATOR_PLUS, 2 } },
 
     {180, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {181, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
@@ -82,6 +90,7 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {183, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {205, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
     {219, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
+    {1725, { EXPRESSION_TYPE_OPERATOR_MINUS, 2 } },
 
     {141, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {152, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
@@ -89,13 +98,34 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {171, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {202, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
     {216, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
+    {1726, { EXPRESSION_TYPE_OPERATOR_MULTIPLY, 2 } },
+
 
     {153, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {154, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {172, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {173, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
     {203, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
-    {217, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } }
+    {217, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
+    {1727, { EXPRESSION_TYPE_OPERATOR_DIVIDE, 2 } },
+
+     //====--------------------------------
+    // Cast
+    //====--------------------------------
+    {480, { EXPRESSION_TYPE_CAST, 1 } },  // int8 -> int4
+    {481, { EXPRESSION_TYPE_CAST, 1 } },  // int4 -> int8
+    {668, { EXPRESSION_TYPE_CAST, 3 } },  // bpchar -> bpchar
+    {669, { EXPRESSION_TYPE_CAST, 3 } },  // varchar -> varchar
+    {1703, { EXPRESSION_TYPE_CAST, 2 } },  // numeric -> numeric
+    {1740, { EXPRESSION_TYPE_CAST, 3 } },  // int8 -> numeric
+    {1742, { EXPRESSION_TYPE_CAST, 3 } },  // float4 -> numeric
+    {1743, { EXPRESSION_TYPE_CAST, 3 } },  // float8 -> numeric
+    {1744, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> int4
+    {1745, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> float4
+    {1746, { EXPRESSION_TYPE_CAST, 1 } },  // numeric -> float8
+    {1781, { EXPRESSION_TYPE_CAST, 1 } },  // int8 -> numeric
+    {1782, { EXPRESSION_TYPE_CAST, 1 } },  // int2 -> numeric
+
 
 });
 

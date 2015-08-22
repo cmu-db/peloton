@@ -10,22 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "plan_util.h"
+
 #include <sstream>
 
-#include "backend/planner/plan_node_util.h"
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
-#include "backend/planner/nodes.h"
 
 namespace peloton {
 namespace planner {
 
-AbstractPlanNode *GetEmptyPlanNode(PlanNodeType type) {
+AbstractPlan *GetEmptyPlanNode(PlanNodeType type) {
   // TODO Uncomment after fixing compilation error.
   // LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " <<
   // PlanNodeTypeToString(type));
-  AbstractPlanNode *ret = NULL;
+  AbstractPlan *ret = NULL;
 
   switch (type) {
     /*

@@ -18,6 +18,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/materialization_plan.h"
+
+
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -26,8 +30,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
-#include "backend/planner/abstract_plan_node.h"
-#include "backend/planner/materialization_node.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
@@ -126,7 +128,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationNode node(old_to_new_cols, output_schema.release(),
+  planner::MaterializationPlan node(old_to_new_cols, output_schema.release(),
                                     physify_flag);
 
   // Pass through materialization executor.

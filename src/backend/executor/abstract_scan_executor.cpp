@@ -34,7 +34,7 @@ namespace executor {
  * @brief Constructor
  * @param node AbstractScanNode node corresponding to this executor.
  */
-AbstractScanExecutor::AbstractScanExecutor(planner::AbstractPlanNode *node,
+AbstractScanExecutor::AbstractScanExecutor(planner::AbstractPlan *node,
                                            ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -47,11 +47,14 @@ bool AbstractScanExecutor::DInit() {
   assert(executor_context_);
 
   // Grab data from plan node.
-  const planner::AbstractScanNode &node =
-      GetPlanNode<planner::AbstractScanNode>();
+  const planner::AbstractScan &node =
+      GetPlanNode<planner::AbstractScan>();
 
   predicate_ = node.GetPredicate();
-  column_ids_ = node.GetColumnIds();
+  auto column_ids = node.GetColumnIds();
+
+  for(auto column_id : column_ids)
+    column_ids_.push_back(column_id);
 
   return true;
 }

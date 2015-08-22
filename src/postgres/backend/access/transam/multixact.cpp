@@ -1531,12 +1531,11 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 	{
 		/* The cache only lives as long as the current transaction */
 		debug_elog2(DEBUG2, "CachePut: initializing memory context");
-		MXactContext = SHMAllocSetContextCreate(TopTransactionContext,
-											 "MultiXact Cache Context",
-											 ALLOCSET_SMALL_MINSIZE,
-											 ALLOCSET_SMALL_INITSIZE,
-											 ALLOCSET_SMALL_MAXSIZE,
-											 SHM_DEFAULT_SEGMENT);
+		MXactContext = AllocSetContextCreate(TopTransactionContext,
+		                                     "MultiXact Cache Context",
+		                                     ALLOCSET_SMALL_MINSIZE,
+		                                     ALLOCSET_SMALL_INITSIZE,
+		                                     ALLOCSET_SMALL_MAXSIZE);
 	}
 
 	entry = (mXactCacheEnt *)

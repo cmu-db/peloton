@@ -17,34 +17,31 @@
 #include <unordered_map>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
+#include "backend/catalog/schema.h"
 
 namespace peloton {
 
-namespace catalog {
-class Schema;
-}
-
 namespace planner {
 
-class MaterializationNode : public AbstractPlanNode {
+class MaterializationPlan : public AbstractPlan {
  public:
-  MaterializationNode(const MaterializationNode &) = delete;
-  MaterializationNode &operator=(const MaterializationNode &) = delete;
-  MaterializationNode(MaterializationNode &&) = delete;
-  MaterializationNode &operator=(MaterializationNode &&) = delete;
+  MaterializationPlan(const MaterializationPlan &) = delete;
+  MaterializationPlan &operator=(const MaterializationPlan &) = delete;
+  MaterializationPlan(MaterializationPlan &&) = delete;
+  MaterializationPlan &operator=(MaterializationPlan &&) = delete;
 
-  MaterializationNode(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+  MaterializationPlan(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
                       catalog::Schema *schema, bool physify_flag)
       : old_to_new_cols_(old_to_new_cols),
         schema_(schema),
         physify_flag_(physify_flag) {}
 
-  MaterializationNode(bool physify_flag)
+  MaterializationPlan(bool physify_flag)
       : schema_(nullptr), physify_flag_(physify_flag) {}
 
-  ~MaterializationNode() {
+  ~MaterializationPlan() {
     // Clean up schema
     if (schema_) delete schema_;
   }

@@ -13,9 +13,8 @@
 #pragma once
 
 #include "backend/executor/abstract_scan_executor.h"
-#include "backend/planner/index_scan_node.h"
-
 #include <vector>
+#include "../planner/index_scan_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -25,7 +24,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   IndexScanExecutor &operator=(const IndexScanExecutor &) = delete;
 
  public:
-  explicit IndexScanExecutor(planner::AbstractPlanNode *node,
+  explicit IndexScanExecutor(planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
  protected:
@@ -65,7 +64,11 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   std::vector<ExpressionType> expr_types_;
 
-  std::vector<Value> values_;
+  std::vector<peloton::Value> values_;
+
+  std::vector<expression::AbstractExpression *> runtime_keys_;
+
+  bool key_ready = false;
 };
 
 }  // namespace executor

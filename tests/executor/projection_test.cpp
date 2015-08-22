@@ -18,11 +18,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/projection_plan.h"
+
+
 #include "backend/expression/expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/projection_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -91,7 +93,7 @@ TEST(ProjectionTests, BasicTest) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::ProjectionNode node(project_info, schema);
+  planner::ProjectionPlan node(project_info, schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -152,7 +154,7 @@ TEST(ProjectionTests, TwoColumnTest) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::ProjectionNode node(project_info, schema);
+  planner::ProjectionPlan node(project_info, schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -215,7 +217,7 @@ TEST(ProjectionTests, BasicTargetTest) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::ProjectionNode node(project_info, schema);
+  planner::ProjectionPlan node(project_info, schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);

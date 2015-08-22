@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan_node.h"
-
+#include "abstract_plan.h"
 #include "backend/planner/project_info.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/common/types.h"
@@ -22,15 +21,15 @@
 namespace peloton {
 namespace planner {
 
-class UpdateNode : public AbstractPlanNode {
+class UpdatePlan : public AbstractPlan {
  public:
-  UpdateNode() = delete;
-  UpdateNode(const UpdateNode &) = delete;
-  UpdateNode &operator=(const UpdateNode &) = delete;
-  UpdateNode(UpdateNode &&) = delete;
-  UpdateNode &operator=(UpdateNode &&) = delete;
+  UpdatePlan() = delete;
+  UpdatePlan(const UpdatePlan &) = delete;
+  UpdatePlan &operator=(const UpdatePlan &) = delete;
+  UpdatePlan(UpdatePlan &&) = delete;
+  UpdatePlan &operator=(UpdatePlan &&) = delete;
 
-  explicit UpdateNode(storage::DataTable *table,
+  explicit UpdatePlan(storage::DataTable *table,
                       const planner::ProjectInfo *project_info)
       : target_table_(table), project_info_(project_info) {}
 

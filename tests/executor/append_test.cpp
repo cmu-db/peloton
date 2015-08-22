@@ -15,11 +15,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/append_plan.h"
+
+
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/append_executor.h"
-#include "backend/planner/append_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -52,7 +54,7 @@ void RunTest(executor::AppendExecutor &executor, size_t expected_num_tuples) {
 
 TEST(AppendTests, AppendTwoTest) {
   // Create the plan node
-  planner::AppendNode node;
+  planner::AppendPlan node;
 
   // Create and set up executor
   executor::AppendExecutor executor(&node, nullptr);
