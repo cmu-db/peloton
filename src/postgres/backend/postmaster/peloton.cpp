@@ -64,6 +64,11 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
+/* ----------
+ * Log Flag
+ * ----------
+ */
+ bool logging_on = false;
 
 /* ----------
  * Local data
@@ -405,12 +410,18 @@ peloton_MainLoop(void) {
   Peloton_Msg  msg;
   int     wr;
 
+  if(logging_on){
+    #define LOGGING_ON 
+  }
+
+  #ifdef LOGGING_ON
   // Launching a thread for logging 
-//  auto& logManager = peloton::logging::LogManager::GetInstance();
-//  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
-//  std::thread thread(&peloton::logging::LogManager::StandbyLogging,
-//                     &logManager,
-//                     logManager.GetMainLoggingType());
+  auto& logManager = peloton::logging::LogManager::GetInstance();
+  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
+  std::thread thread(&peloton::logging::LogManager::StandbyLogging,
+                     &logManager,
+                     logManager.GetMainLoggingType());
+  #endif
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -518,12 +529,14 @@ peloton_MainLoop(void) {
       break;
   }             /* end of outer loop */
 
+  #ifdef LOGGING_ON
   // terminate logging thread
-//  if( logManager.EndLogging() ){
-//    thread.join();
-//  }else{
-//    elog(LOG,"Failed to terminate logging thread");
-//  }
+  if( logManager.EndLogging() ){
+    thread.join();
+  }else{
+    elog(LOG,"Failed to terminate logging thread");
+  }
+  #endif
 
   /* Normal exit from peloton is here */
   ereport(LOG,
