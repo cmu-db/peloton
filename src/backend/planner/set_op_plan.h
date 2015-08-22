@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace planner {
@@ -25,14 +25,14 @@ namespace planner {
  * @warning UNION (ALL) is handled differently.
  * IMPORTANT: Both children must have the same physical schema.
  */
-class SetOpNode : public AbstractPlanNode {
+class SetOpPlan : public AbstractPlan {
  public:
-  SetOpNode(const SetOpNode &) = delete;
-  SetOpNode &operator=(const SetOpNode &) = delete;
-  SetOpNode(const SetOpNode &&) = delete;
-  SetOpNode &operator=(const SetOpNode &&) = delete;
+  SetOpPlan(const SetOpPlan &) = delete;
+  SetOpPlan &operator=(const SetOpPlan &) = delete;
+  SetOpPlan(const SetOpPlan &&) = delete;
+  SetOpPlan &operator=(const SetOpPlan &&) = delete;
 
-  SetOpNode(SetOpType set_op) : set_op_(set_op) {}
+  SetOpPlan(SetOpType set_op) : set_op_(set_op) {}
 
   SetOpType GetSetOp() const { return set_op_; }
 

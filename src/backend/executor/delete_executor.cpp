@@ -12,12 +12,13 @@
 
 #include "backend/executor/delete_executor.h"
 
+#include "../planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/delete_node.h"
 #include "backend/logging/logmanager.h"
 #include "backend/logging/records/tuplerecord.h"
+
 
 namespace peloton {
 namespace executor {
@@ -26,7 +27,7 @@ namespace executor {
  * @brief Constructor for delete executor.
  * @param node Delete node corresponding to this executor.
  */
-DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
+DeleteExecutor::DeleteExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -41,12 +42,12 @@ bool DeleteExecutor::DInit() {
   assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
-  LOG_TRACE("Delete executor :: 1 child \n");
+  LOG_INFO("Delete executor :: 1 child \n");
 
   // Grab data from plan node.
-  const planner::DeleteNode &node = GetPlanNode<planner::DeleteNode>();
-
+  const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
+  assert(target_table_);
 
   return true;
 }
@@ -75,19 +76,19 @@ bool DeleteExecutor::DExecute() {
   auto tile_group_id = tile_group->GetTileGroupId();
   auto transaction_ = executor_context_->GetTransaction();
 
-  LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(),
-            source_tile->NumTuples());
+  LOG_INFO("Source tile : %p Tuples : %lu \n", source_tile.get(),
+            source_tile->GetTupleCount());
 
-  LOG_TRACE("Transaction ID: %lu\n", txn_id);
+  LOG_INFO("Transaction ID: %lu\n", transaction_->GetTransactionId());
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
+    LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
-    ItemPointer delete_location(tile_group_id, physical_tuple_id);
+    peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
    // Logging 
    {
@@ -109,9 +110,10 @@ bool DeleteExecutor::DExecute() {
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
 
     if (status == false) {
-      transaction_->SetResult(Result::RESULT_FAILURE);
+      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
+    executor_context_->num_processed += 1; // deleted one
     transaction_->RecordDelete(delete_location);
   }
 

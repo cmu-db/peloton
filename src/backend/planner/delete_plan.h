@@ -12,27 +12,29 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan_node.h"
+#include "abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace planner {
 
-class DeleteNode : public AbstractPlanNode {
+class DeletePlan : public AbstractPlan {
  public:
-  DeleteNode() = delete;
-  DeleteNode(const DeleteNode &) = delete;
-  DeleteNode &operator=(const DeleteNode &) = delete;
-  DeleteNode(DeleteNode &&) = delete;
-  DeleteNode &operator=(DeleteNode &&) = delete;
+  DeletePlan() = delete;
+  DeletePlan(const DeletePlan &) = delete;
+  DeletePlan &operator=(const DeletePlan &) = delete;
+  DeletePlan(DeletePlan &&) = delete;
+  DeletePlan &operator=(DeletePlan &&) = delete;
 
-  explicit DeleteNode(storage::DataTable *table, bool truncate)
+  explicit DeletePlan(storage::DataTable *table, bool truncate)
       : target_table_(table), truncate(truncate) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
-  storage::DataTable *GetTable() const { return target_table_; }
+  storage::DataTable *GetTable() const {
+    return target_table_;
+  }
 
   std::string GetInfo() const { return target_table_->GetName(); }
 
@@ -40,7 +42,7 @@ class DeleteNode : public AbstractPlanNode {
 
  private:
   /** @brief Target table. */
-  storage::DataTable *target_table_;
+  storage::DataTable *target_table_ = nullptr;
 
   /** @brief Truncate table. */
   bool truncate = false;

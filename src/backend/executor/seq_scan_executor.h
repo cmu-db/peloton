@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "../planner/seq_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/executor/abstract_scan_executor.h"
-#include "backend/planner/seq_scan_node.h"
 
 namespace peloton {
 namespace executor {
@@ -26,7 +26,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   SeqScanExecutor(SeqScanExecutor &&) = delete;
   SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
 
-  explicit SeqScanExecutor(planner::AbstractPlanNode *node,
+  explicit SeqScanExecutor(planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
  protected:
@@ -50,7 +50,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief Pointer to table to scan from. */
-  const storage::DataTable *table_ = nullptr;
+  storage::DataTable *target_table_ = nullptr;
 };
 
 }  // namespace executor

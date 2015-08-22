@@ -49,8 +49,8 @@ MemoryContext ErrorContext = NULL;
 MemoryContext PostmasterContext = NULL;
 MemoryContext CacheMemoryContext = NULL;
 MemoryContext MessageContext = NULL;
-thread_local MemoryContext TopTransactionContext = NULL;
-thread_local MemoryContext CurTransactionContext = NULL;
+MemoryContext TopTransactionContext = NULL;
+MemoryContext CurTransactionContext = NULL;
 
 // TODO: Peloton Changes
 /*
@@ -61,6 +61,13 @@ thread_local MemoryContext CurTransactionContext = NULL;
  * and can be destroyed at postmaster exit via a call to SHMContextShutdown
  */
 MemoryContext TopSharedMemoryContext = NULL;
+
+/*
+ * We create a subcontext of the TopSharedMemoryContext for each
+ * query that is passed between the Postgres frontend and Peloton backend.
+ * Memory ownership is passed between processes by handing off this context.
+ * */
+MemoryContext thread_local SHMQueryContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
@@ -1137,3 +1144,5 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
+
+

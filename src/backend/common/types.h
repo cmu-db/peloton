@@ -55,7 +55,7 @@ namespace peloton {
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
+#define DEFAULT_TUPLES_PER_TILEGROUP 10
 
 //===--------------------------------------------------------------------===//
 // Other Constants
@@ -80,6 +80,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 enum PostgresValueType {
+  POSTGRES_VALUE_TYPE_INVALID = -1,
   POSTGRES_VALUE_TYPE_BOOLEAN = 16,
 
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
@@ -334,10 +335,11 @@ enum PelotonJoinType {
 //===--------------------------------------------------------------------===//
 // Aggregate Types
 //===--------------------------------------------------------------------===//
-enum PelotonAggregateType {
+enum PelotonAggType {
   AGGREGATE_TYPE_INVALID = 0,
-  AGGREGATE_TYPE_SORT = 1,
-  AGGREGATE_TYPE_HASH = 2
+  AGGREGATE_TYPE_SORTED = 1,
+  AGGREGATE_TYPE_HASH = 2,
+  AGGREGATE_TYPE_PLAIN = 3  // no group-by
 };
 
 //===--------------------------------------------------------------------===//

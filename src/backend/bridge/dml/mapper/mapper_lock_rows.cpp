@@ -25,22 +25,19 @@ namespace bridge {
  *    currently, we just ignore the lock step, and return the
  *    underlying node
  *
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan.
  *
  */
-planner::AbstractPlanNode *PlanTransformer::TransformLockRows(
-    const LockRowsState *lr_plan_state) {
-  assert(nodeTag(lr_plan_state) == T_LockRowsState);
+planner::AbstractPlan *PlanTransformer::TransformLockRows(
+    const LockRowsPlanState *lr_plan_state) {
 
   LOG_INFO("Handle LockRows");
 
-  /* get the underlying plan */
-  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
+  // get the underlying plan
+  AbstractPlanState *outer_plan_state = outerAbstractPlanState(lr_plan_state);
 
-  TransformOptions options = kDefaultOptions;
-  options.use_projInfo = false;
+  return PlanTransformer::TransformPlan(outer_plan_state);
 
-  return PlanTransformer::TransformPlan(outer_plan_state, options);
 }
 
 }  // namespace bridge

@@ -26,11 +26,13 @@ namespace index {
 Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   bool unique_keys = metadata->unique_keys;
   bool ints_only = false;
-  LOG_INFO("Creating index %s", metadata->GetName().c_str());
-  const int key_size = metadata->key_schema->GetLength();
+
+  LOG_TRACE("Creating index %s", metadata->GetName().c_str());
+  const auto key_size = metadata->key_schema->GetLength();
+
   auto index_type = metadata->GetIndexMethodType();
-  LOG_INFO("Index type : %d", index_type);
-  LOG_INFO("Unique keys : %d", unique_keys);
+  LOG_TRACE("Index type : %d", index_type);
+  LOG_TRACE("Unique keys : %d", unique_keys);
 
   // no int specialization beyond this point
   if (key_size > sizeof(int64_t) * 4) {

@@ -30,9 +30,6 @@ class ExprTransformer {
   ExprTransformer(const ExprTransformer &&) = delete;
   ExprTransformer &operator=(const ExprTransformer &&) = delete;
 
-  static void PrintPostgressExprTree(const ExprState *expr_state,
-                                     std::string prefix = "");
-
   static expression::AbstractExpression *TransformExpr(
       const ExprState *expr_state);
   static bool CleanExprTree(expression::AbstractExpression* root);

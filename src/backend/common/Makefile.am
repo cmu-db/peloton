@@ -9,7 +9,8 @@ common_FILES = \
 			   backend/common/types.cpp \
 			   backend/common/varlen.cpp \
 			   backend/common/pool.cpp \
-			   backend/common/stack_trace.cpp
+			   backend/common/stack_trace.cpp \
+			   backend/common/message_queue.cpp
 
 common_INCLUDES = \
 				  -I$(srcdir)/backend/common    

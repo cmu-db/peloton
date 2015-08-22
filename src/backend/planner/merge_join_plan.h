@@ -16,16 +16,17 @@
 #include <string>
 #include <vector>
 
+#include "abstract_join_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/project_info.h"
-#include "backend/planner/abstract_join_node.h"
 
 namespace peloton {
 namespace planner {
 
-class MergeJoinNode : public AbstractJoinPlanNode {
+class MergeJoinPlan : public AbstractJoinPlan {
  public:
+
   struct JoinClause {
     JoinClause(const expression::AbstractExpression *left,
                const expression::AbstractExpression *right,
@@ -44,17 +45,17 @@ class MergeJoinNode : public AbstractJoinPlanNode {
     bool reversed_;
   };
 
-  MergeJoinNode(const MergeJoinNode &) = delete;
-  MergeJoinNode &operator=(const MergeJoinNode &) = delete;
-  MergeJoinNode(MergeJoinNode &&) = delete;
-  MergeJoinNode &operator=(MergeJoinNode &&) = delete;
+  MergeJoinPlan(const MergeJoinPlan &) = delete;
+  MergeJoinPlan &operator=(const MergeJoinPlan &) = delete;
+  MergeJoinPlan(MergeJoinPlan &&) = delete;
+  MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
 
-  MergeJoinNode(const expression::AbstractExpression *predicate,
+  MergeJoinPlan(const expression::AbstractExpression *predicate,
                 const ProjectInfo *proj_info,
                 std::vector<JoinClause> &join_clauses)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info),
-        join_clauses_(std::move(join_clauses)) {  // FIXME
-   // Nothing to see here...
+  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info),
+    join_clauses_(std::move(join_clauses)) {
+    // Nothing to see here...
   }
 
   inline PlanNodeType GetPlanNodeType() const {

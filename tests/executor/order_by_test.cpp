@@ -18,12 +18,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/order_by_plan.h"
+
+
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/order_by_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -79,7 +81,7 @@ TEST(OrderByTests, IntAscTest) {
   std::vector<bool> descend_flags({false});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   storage::AbstractBackend *backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
   executor::OrderByExecutor executor(&node, nullptr);
@@ -113,7 +115,6 @@ TEST(OrderByTests, IntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntDescTest) {
@@ -122,7 +123,7 @@ TEST(OrderByTests, IntDescTest) {
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   storage::AbstractBackend *backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
   executor::OrderByExecutor executor(&node, nullptr);
@@ -156,7 +157,6 @@ TEST(OrderByTests, IntDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, StringDescTest) {
@@ -165,7 +165,7 @@ TEST(OrderByTests, StringDescTest) {
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   storage::AbstractBackend *backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
   executor::OrderByExecutor executor(&node, nullptr);
@@ -199,7 +199,6 @@ TEST(OrderByTests, StringDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntAscStringDescTest) {
@@ -208,7 +207,7 @@ TEST(OrderByTests, IntAscStringDescTest) {
   std::vector<bool> descend_flags({false, true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   storage::AbstractBackend *backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
   executor::OrderByExecutor executor(&node, nullptr);
@@ -241,8 +240,6 @@ TEST(OrderByTests, IntAscStringDescTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
-  delete backend;
 }
 
 /**
@@ -254,7 +251,7 @@ TEST(OrderByTests, StringDescIntAscTest) {
   std::vector<bool> descend_flags({true, false});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   storage::AbstractBackend *backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
   executor::OrderByExecutor executor(&node, nullptr);
@@ -288,7 +285,6 @@ TEST(OrderByTests, StringDescIntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 }
 

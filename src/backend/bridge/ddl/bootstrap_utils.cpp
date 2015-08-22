@@ -75,9 +75,9 @@ void BootstrapUtils::CopyRawIndexes(raw_database_info *raw_database,
  */
 void BootstrapUtils::CopyRawForeignkeys(
     raw_database_info *raw_database,
-    std::vector<raw_foreignkey_info *> raw_foreignkeys) {
-  raw_database->raw_foreignkeys = (raw_foreignkey_info **)palloc(
-      sizeof(raw_foreignkey_info *) * raw_foreignkeys.size());
+    std::vector<raw_foreign_key_info *> raw_foreignkeys) {
+  raw_database->raw_foreignkeys = (raw_foreign_key_info **)palloc(
+      sizeof(raw_foreign_key_info *) * raw_foreignkeys.size());
   oid_t foreignkey_itr = 0;
   for (auto raw_foreignkey : raw_foreignkeys) {
     raw_database->raw_foreignkeys[foreignkey_itr++] = raw_foreignkey;
@@ -145,7 +145,7 @@ void BootstrapUtils::PrintRawIndexes(raw_index_info **raw_indexes,
   }
 }
 
-void BootstrapUtils::PrintRawForeignkeys(raw_foreignkey_info **raw_foreignkeys,
+void BootstrapUtils::PrintRawForeignkeys(raw_foreign_key_info **raw_foreignkeys,
                                          oid_t foreignkey_count) {
   for (int foreignkey_itr = 0; foreignkey_itr < foreignkey_count;
        foreignkey_itr++) {
@@ -186,7 +186,7 @@ void BootstrapUtils::PrintRawColumn(raw_column_info *raw_column) {
   printf("    column name %s \n", raw_column->column_name);
   printf("    column type %s \n",
          ValueTypeToString(raw_column->column_type).c_str());
-  printf("    column length %u \n", raw_column->column_length);
+  printf("    column length %lu \n", raw_column->column_length);
   printf("    column inlined %d \n", (int)raw_column->is_inlined);
   PrintRawConstraints(raw_column->raw_constraints,
                       raw_column->constraint_count);
