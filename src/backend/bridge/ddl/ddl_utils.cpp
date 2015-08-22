@@ -19,6 +19,7 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "postmaster/peloton.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"

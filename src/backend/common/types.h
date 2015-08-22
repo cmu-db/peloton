@@ -452,6 +452,49 @@ enum SetOpType {
 };
 
 //===--------------------------------------------------------------------===//
+// Log Types
+//===--------------------------------------------------------------------===//
+
+enum LoggingType{
+  LOGGING_TYPE_INVALID = 0, 
+
+  LOGGING_TYPE_STDOUT  = 1, 
+  LOGGING_TYPE_ARIES   = 2,
+  LOGGING_TYPE_PELOTON = 3 
+};
+
+enum LoggingStatus{
+  LOGGING_STATUS_TYPE_INVALID = 0, 
+
+  LOGGING_STATUS_TYPE_STANDBY  = 1, 
+  LOGGING_STATUS_TYPE_RECOVERY = 2, 
+  LOGGING_STATUS_TYPE_ONGOING  = 3,
+  LOGGING_STATUS_TYPE_TERMINATE  = 4,
+  LOGGING_STATUS_TYPE_SLEEP  = 5
+};
+
+enum LoggerType{
+  LOGGER_TYPE_INVALID = 0, 
+
+  LOGGER_TYPE_FRONTEND = 1, 
+  LOGGER_TYPE_BACKEND = 2
+
+};
+
+enum LogRecordType{
+  LOGRECORD_TYPE_INVALID = 0, 
+
+  LOGRECORD_TYPE_TRANSACTION_BEGIN   = 1,
+  LOGRECORD_TYPE_TRANSACTION_COMMIT  = 2,
+  LOGRECORD_TYPE_TRANSACTION_END     = 3,
+  LOGRECORD_TYPE_TRANSACTION_ABORT   = 4,
+
+  LOGRECORD_TYPE_TUPLE_INSERT        = 5,
+  LOGRECORD_TYPE_TUPLE_DELETE        = 6,
+  LOGRECORD_TYPE_TUPLE_UPDATE        = 7
+};
+
+//===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
@@ -534,6 +577,11 @@ PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
+
+std::string LoggingTypeToString(LoggingType type);
+std::string LoggingStatusToString(LoggingStatus type);
+std::string LoggerTypeToString(LoggerType type);
+std::string LogRecordTypeToString(LogRecordType type);
 
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
