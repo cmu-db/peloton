@@ -140,16 +140,11 @@ Tuple *TileGroup::SelectTuple(oid_t tuple_slot_id) {
 
 // delete tuple at given slot if it is not already locked
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id) {
-  // compare and exchange the end commit id to start delete
-  if (atomic_cas<txn_id_t>(
-          tile_group_header->GetEndCommitIdLocation(tuple_slot_id), MAX_CID,
-          transaction_id)) {
-    // do a dirty delete
-    tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-    return true;
-  }
 
-  return false;
+  // do a dirty delete
+  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+  return true;
+
 }
 
 void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id) {
