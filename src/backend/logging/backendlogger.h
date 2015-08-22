@@ -43,6 +43,10 @@ class BackendLogger : public Logger{
 
     bool IsWaitFlush(void) const;
 
+    bool IsAddedFrontend(void) const;
+
+    void AddedFrontend(void);
+
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
@@ -66,6 +70,8 @@ class BackendLogger : public Logger{
     oid_t commit_offset = 0;
 
     bool wait_flush = false;
+
+    bool added_in_frontend = false;
 };
 
 }  // namespace logging
