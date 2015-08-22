@@ -59,6 +59,7 @@ void send_message(mqd_t mqd, const std::string message) {
 static void
 handler(int sig)
 {
+  (void)sig;
   // Just interrupt sigsuspend()
 }
 

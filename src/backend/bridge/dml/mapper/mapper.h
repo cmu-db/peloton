@@ -164,7 +164,7 @@ class PlanTransformer {
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
-      const PelotonProjectionInfo *pi, oid_t column_count);
+      const PelotonProjectionInfo *pi);
 
   static const planner::ProjectInfo::TargetList BuildTargetList(
       const List* targetList, oid_t column_count);

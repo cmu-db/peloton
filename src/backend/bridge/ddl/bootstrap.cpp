@@ -290,7 +290,7 @@ raw_index_info *Bootstrap::GetRawIndex(
  * @return raw columns
  */
 std::vector<raw_column_info *> Bootstrap::GetRawColumn(
-    Oid relation_oid, char relation_kind, Relation pg_attribute_rel) {
+    Oid relation_oid, __attribute__((unused)) char relation_kind, Relation pg_attribute_rel) {
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
 
@@ -335,7 +335,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
           raw_constraint_info *raw_constraint =
               (raw_constraint_info *)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_NOTNULL;
-          raw_constraint->constraint_name = "";
+          //raw_constraint->constraint_name = (char *)"";
           raw_constraint->expr = nullptr;
 
           raw_constraints.push_back(raw_constraint);
@@ -360,7 +360,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
                   static_cast<Node *>(stringToNode(default_expression));
             }
           }
-          raw_constraint->constraint_name = "";
+          //raw_constraint->constraint_name = (char *)"";
           raw_constraints.push_back(raw_constraint);
 
           heap_close(relation, AccessShareLock);

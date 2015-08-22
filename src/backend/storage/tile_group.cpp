@@ -167,6 +167,7 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id
 }
 
 void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
+  (void)tuple_slot_id;
   // undo insert (we don't reset MVCC info currently)
   //TODO: can reclaim tuple here
   //ReclaimTuple(tuple_slot_id);

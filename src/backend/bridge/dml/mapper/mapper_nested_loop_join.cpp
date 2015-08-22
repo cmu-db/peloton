@@ -60,8 +60,7 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   // Transform project info
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
 
-  project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo,
-                                      nl_plan_state->tts_tupleDescriptor->natts));
+  project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 

@@ -392,6 +392,20 @@ static const struct config_enum_entry row_security_options[] = {
 	{NULL, 0, false}
 };
 
+// TODO: Peloton Changes
+/*
+ * Peloton mode options can take values 0,1,2
+ * Range of values may be changed
+ * Values have to be defined as enum
+ */
+static const struct config_enum_entry peloton_mode_options[] = {
+	{"peloton_mode_0", 0, false},
+	{"peloton_mode_1", 1, false},
+	{"peloton_mode_2", 2, false},
+	{NULL, 0, false}
+};
+
+
 /*
  * Options for enum values stored in other modules
  */
@@ -450,6 +464,9 @@ int			tcp_keepalives_interval;
 int			tcp_keepalives_count;
 
 int			row_security;
+
+// TODO: Peloton Changes
+int			peloton_mode = 0;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -768,7 +785,9 @@ static const unit_conversion time_unit_conversion_table[] =
 
 /******** option records follow ********/
 
-static struct config_bool ConfigureNamesBool[] =
+// TODO: Peloton Changes
+// made it non-static
+struct config_bool ConfigureNamesBool[] =
 {
 	{
 		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -1622,7 +1641,7 @@ static struct config_bool ConfigureNamesBool[] =
 };
 
 
-static struct config_int ConfigureNamesInt[] =
+struct config_int ConfigureNamesInt[] =
 {
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
@@ -2677,7 +2696,7 @@ static struct config_int ConfigureNamesInt[] =
 };
 
 
-static struct config_real ConfigureNamesReal[] =
+struct config_real ConfigureNamesReal[] =
 {
 	{
 		{"seq_page_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2818,7 +2837,7 @@ static struct config_real ConfigureNamesReal[] =
 };
 
 
-static struct config_string ConfigureNamesString[] =
+struct config_string ConfigureNamesString[] =
 {
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
@@ -3400,7 +3419,7 @@ static struct config_string ConfigureNamesString[] =
 };
 
 
-static struct config_enum ConfigureNamesEnum[] =
+struct config_enum ConfigureNamesEnum[] =
 {
 	{
 		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -3646,6 +3665,19 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&row_security,
 		ROW_SECURITY_ON, row_security_options,
+		NULL, NULL, NULL
+	},
+
+	// TODO: Peloton Changes
+  // Refer guc_tables.h for PELOTON_MODE_OPTIONS declaration
+	{
+		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
+			gettext_noop("Change peloton mode"),
+			gettext_noop("System behavior will be modified depending on the specific peloton mode")
+		},
+		&peloton_mode,
+		0, peloton_mode_options,
+		// the constant 0 can be replaced by an enum
 		NULL, NULL, NULL
 	},
 
