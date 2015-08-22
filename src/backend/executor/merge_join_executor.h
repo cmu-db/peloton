@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/executor/abstract_join_executor.h"
-#include "backend/planner/merge_join_node.h"
-
 #include <vector>
+
+#include "backend/executor/abstract_join_executor.h"
+#include "backend/planner/merge_join_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -25,25 +25,25 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
   MergeJoinExecutor &operator=(const MergeJoinExecutor &) = delete;
 
  public:
-  explicit MergeJoinExecutor(planner::AbstractPlanNode *node,
-                                  ExecutorContext *executor_context);
+  explicit MergeJoinExecutor(planner::AbstractPlan *node,
+                             ExecutorContext *executor_context);
 
  protected:
   bool DInit();
 
   bool DExecute();
 
-  bool left_end_;
+  bool left_end_ = false;
 
-  bool right_end_;
+  bool right_end_ = false;
 
  private:
 
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
-  /** @beief a vector of join clauses
+  /** @brief a vector of join clauses
    * Get this from plan node while init */
-  const std::vector<planner::MergeJoinNode::JoinClause> *join_clauses_;
+  const std::vector<planner::MergeJoinPlan::JoinClause> *join_clauses_;
 
 };
 

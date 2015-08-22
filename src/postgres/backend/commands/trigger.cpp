@@ -3338,12 +3338,11 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		/* Create event context if we didn't already */
 		if (afterTriggers.event_cxt == NULL)
 			afterTriggers.event_cxt =
-				SHMAllocSetContextCreate(TopTransactionContext,
-									  "AfterTriggerEvents",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE,
-									  SHM_DEFAULT_SEGMENT);
+			    AllocSetContextCreate(TopTransactionContext,
+			                          "AfterTriggerEvents",
+			                          ALLOCSET_DEFAULT_MINSIZE,
+			                          ALLOCSET_DEFAULT_INITSIZE,
+			                          ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
 		 * Chunk size starts at 1KB and is allowed to increase up to 1MB.

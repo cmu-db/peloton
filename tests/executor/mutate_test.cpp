@@ -29,10 +29,6 @@
 #include "backend/expression/expression_util.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression.h"
-#include "backend/planner/delete_node.h"
-#include "backend/planner/insert_node.h"
-#include "backend/planner/seq_scan_node.h"
-#include "backend/planner/update_node.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/table_factory.h"
 
@@ -41,6 +37,10 @@
 #include "harness.h"
 
 #include <atomic>
+#include "backend/planner/delete_plan.h"
+#include "backend/planner/insert_plan.h"
+#include "backend/planner/seq_scan_plan.h"
+#include "backend/planner/update_plan.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -87,7 +87,7 @@ void InsertTuple(storage::DataTable *table) {
 
     auto project_info = MakeProjectInfoFromTuple(tuple);
 
-    planner::InsertNode node(table, project_info);
+    planner::InsertPlan node(table, project_info);
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
 
@@ -117,8 +117,9 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
-  planner::UpdateNode update_node(
+  planner::UpdatePlan update_node(
       table, new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list)));
+
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
@@ -135,7 +136,7 @@ void UpdateTuple(storage::DataTable *table) {
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanNode seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
@@ -157,7 +158,7 @@ void DeleteTuple(storage::DataTable *table) {
   std::vector<storage::Tuple *> tuples;
 
   // Delete
-  planner::DeleteNode delete_node(table, false);
+  planner::DeletePlan delete_node(table, false);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Predicate
@@ -174,7 +175,7 @@ void DeleteTuple(storage::DataTable *table) {
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanNode seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
@@ -204,7 +205,7 @@ TEST(MutateTests, StressTests) {
 
   auto project_info = MakeProjectInfoFromTuple(tuple);
 
-  planner::InsertNode node(table, project_info);
+  planner::InsertPlan node(table, project_info);
   executor::InsertExecutor executor(&node, context.get());
 
   try {
@@ -218,7 +219,7 @@ TEST(MutateTests, StressTests) {
 
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   project_info = MakeProjectInfoFromTuple(tuple);
-  planner::InsertNode node2(table, project_info);
+  planner::InsertPlan node2(table, project_info);
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
@@ -301,7 +302,7 @@ TEST(MutateTests, InsertTest) {
   EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 
-  planner::InsertNode node(dest_data_table.get(), nullptr);
+  planner::InsertPlan node(dest_data_table.get(), nullptr);
   executor::InsertExecutor executor(&node, context.get());
 
   MockExecutor child_executor;

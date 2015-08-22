@@ -36,6 +36,7 @@ class DDLTable {
   DDLTable &operator=(DDLTable &&) = delete;
 
   static bool ExecCreateStmt(Node *parsetree,
+                             DDL_Info* ddl_info,
                              std::vector<Node *> &parsetree_stack,
                              Peloton_Status *status, TransactionId txn_id);
 

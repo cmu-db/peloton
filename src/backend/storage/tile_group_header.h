@@ -56,13 +56,14 @@ class TileGroupHeader {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
-    data = (char *)backend->Allocate(header_size);
+    data = (char *) backend->Allocate(header_size);
     assert(data != nullptr);
   }
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
-    if (&other == this) return *this;
+    if (&other == this)
+      return *this;
 
     backend = other.backend;
     header_size = other.header_size;
@@ -71,10 +72,10 @@ class TileGroupHeader {
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
-    next_tuple_slot = other.next_tuple_slot;
-    empty_slots = other.empty_slots;
+    oid_t val = other.next_tuple_slot;
+    next_tuple_slot = val;
 
-    oid_t val = other.active_tuple_slots;
+    val = other.active_tuple_slots;
     active_tuple_slots = val;
 
     return *this;
@@ -92,13 +93,8 @@ class TileGroupHeader {
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-      //  first, check free slots
-      if (empty_slots.empty() == false) {
-        tuple_slot_id = empty_slots.front();
-        empty_slots.pop();
-      }
       // check tile group capacity
-      else if (next_tuple_slot < num_tuple_slots) {
+      if (next_tuple_slot < num_tuple_slots) {
         tuple_slot_id = next_tuple_slot;
         next_tuple_slot++;
       }
@@ -107,35 +103,39 @@ class TileGroupHeader {
     return tuple_slot_id;
   }
 
+  /**
+   * Used by logging
+   */
   bool GetEmptyTupleSlot(oid_t tuple_slot_id) {
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-      if( tuple_slot_id < num_tuple_slots){
-        if( next_tuple_slot <= tuple_slot_id){
-          next_tuple_slot = tuple_slot_id+1;
+      if (tuple_slot_id < num_tuple_slots) {
+        if (next_tuple_slot <= tuple_slot_id) {
+          next_tuple_slot = tuple_slot_id + 1;
         }
         return true;
-      }else{
+      } else {
         return false;
       }
     }
   }
 
-  void ReclaimTupleSlot(oid_t tuple_slot_id) {
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-      empty_slots.push(tuple_slot_id);
-    }
+  oid_t GetNextTupleSlot() const {
+    return next_tuple_slot;
   }
 
-  oid_t GetNextTupleSlot() const { return next_tuple_slot; }
+  inline oid_t GetActiveTupleCount() const {
+    return active_tuple_slots;
+  }
 
-  inline oid_t GetActiveTupleCount() const { return active_tuple_slots; }
+  inline void IncrementActiveTupleCount() {
+    ++active_tuple_slots;
+  }
 
-  inline void IncrementActiveTupleCount() { ++active_tuple_slots; }
-
-  inline void DecrementActiveTupleCount() { --active_tuple_slots; }
+  inline void DecrementActiveTupleCount() {
+    --active_tuple_slots;
+  }
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
@@ -144,62 +144,62 @@ class TileGroupHeader {
   // Getters
 
   inline txn_id_t GetTransactionId(const oid_t tuple_slot_id) const {
-    return *((txn_id_t *)(data + (tuple_slot_id * header_entry_size)));
+    return *((txn_id_t *) (data + (tuple_slot_id * header_entry_size)));
   }
 
   inline cid_t GetBeginCommitId(const oid_t tuple_slot_id) const {
-    return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                       sizeof(txn_id_t)));
+    return *((cid_t *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t)));
   }
 
   inline cid_t GetEndCommitId(const oid_t tuple_slot_id) const {
-    return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                       sizeof(txn_id_t) + sizeof(cid_t)));
+    return *((cid_t *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
   inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
-    return *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-                             sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+    return *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
   }
 
   // Getters for addresses
 
   inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
-    return ((txn_id_t *)(data + (tuple_slot_id * header_entry_size)));
+    return ((txn_id_t *) (data + (tuple_slot_id * header_entry_size)));
   }
 
   inline cid_t *GetBeginCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t)));
+    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t)));
   }
 
   inline cid_t *GetEndCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t) + sizeof(cid_t)));
+    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
   // Setters
 
   inline void SetTransactionId(const oid_t tuple_slot_id,
                                txn_id_t transaction_id) {
-    *((txn_id_t *)(data + (tuple_slot_id * header_entry_size))) =
+    *((txn_id_t *) (data + (tuple_slot_id * header_entry_size))) =
         transaction_id;
   }
 
   inline void SetBeginCommitId(const oid_t tuple_slot_id, cid_t begin_cid) {
-    *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                sizeof(txn_id_t))) = begin_cid;
+    *((cid_t *) (data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t))) =
+        begin_cid;
   }
 
   inline void SetEndCommitId(const oid_t tuple_slot_id, cid_t end_cid) const {
-    *((cid_t *)(data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t) +
-                sizeof(cid_t))) = end_cid;
+    *((cid_t *) (data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t)
+        + sizeof(cid_t))) = end_cid;
   }
 
   inline void SetPrevItemPointer(const oid_t tuple_slot_id,
                                  ItemPointer item) const {
-    *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
+    *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
   }
 
   // Visibility check
@@ -213,15 +213,16 @@ class TileGroupHeader {
     bool activated = (at_lcid >= tuple_begin_cid);
     bool invalidated = (at_lcid >= tuple_end_cid);
 
-
-    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id, tuple_txn_id);
-    LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : %lu", activated, at_lcid, tuple_begin_cid);
-    LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated, at_lcid, tuple_end_cid);
-
+    LOG_INFO("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+             tuple_txn_id);
+    LOG_INFO("Activated :: %d cid : %lu tuple begin cid : %lu", activated,
+             at_lcid, tuple_begin_cid);
+    LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
+             at_lcid, tuple_end_cid);
 
     // Visible iff past Insert || Own Insert
-    if ((!own && activated && !invalidated) ||
-        (own && !activated && !invalidated))
+    if ((!own && activated && !invalidated)
+        || (own && !activated && !invalidated))
       return true;
 
     return false;
@@ -239,8 +240,8 @@ class TileGroupHeader {
 
  private:
   // header entry size is the size of the layout described above
-  static const size_t header_entry_size =
-      sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(ItemPointer);
+  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t)
+      + sizeof(ItemPointer);
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -263,11 +264,9 @@ class TileGroupHeader {
   // active tuples
   std::atomic<oid_t> active_tuple_slots;
 
-  // free slots
-  std::queue<oid_t> empty_slots;
-
   // synch helpers
   std::mutex tile_header_mutex;
+
 };
 
 }  // End storage namespace

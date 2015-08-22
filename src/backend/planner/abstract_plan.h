@@ -19,6 +19,8 @@
 
 #include "backend/common/types.h"
 
+#include "nodes/nodes.h"
+
 namespace peloton {
 
 namespace executor {
@@ -29,37 +31,33 @@ class LogicalTile;
 namespace planner {
 
 //===--------------------------------------------------------------------===//
-// Abstract Plan Node
+// Abstract Plan
 //===--------------------------------------------------------------------===//
 
-class AbstractPlanNode {
+class AbstractPlan {
  public:
-  AbstractPlanNode(const AbstractPlanNode &) = delete;
-  AbstractPlanNode &operator=(const AbstractPlanNode &) = delete;
-  AbstractPlanNode(AbstractPlanNode &&) = delete;
-  AbstractPlanNode &operator=(AbstractPlanNode &&) = delete;
+  AbstractPlan(const AbstractPlan &) = delete;
+  AbstractPlan &operator=(const AbstractPlan &) = delete;
+  AbstractPlan(AbstractPlan &&) = delete;
+  AbstractPlan &operator=(AbstractPlan &&) = delete;
 
-  explicit AbstractPlanNode(oid_t plan_node_id);
-  AbstractPlanNode();
-  virtual ~AbstractPlanNode();
+  AbstractPlan();
+
+  virtual ~AbstractPlan();
 
   //===--------------------------------------------------------------------===//
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(AbstractPlanNode *child);
+  void AddChild(AbstractPlan *child);
 
-  const std::vector<AbstractPlanNode *> &GetChildren() const;
+  const std::vector<AbstractPlan *> &GetChildren() const;
 
-  AbstractPlanNode *GetParent();
+  AbstractPlan *GetParent();
 
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
-
-  oid_t GetPlanNodeId() const;
-
-  void SetPlanNodeId(oid_t plan_node_id);
 
   // Each sub-class will have to implement this function to return their type
   // This is better than having to store redundant types in all the objects
@@ -71,20 +69,18 @@ class AbstractPlanNode {
 
   // Debugging convenience methods
   friend std::ostream &operator<<(std::ostream &os,
-                                  const AbstractPlanNode &node);
+                                  const AbstractPlan &node);
   std::string GetInfo(std::string spacer) const;
 
   // Override in derived plan nodes
   virtual std::string GetInfo() const;
 
  private:
-  // Every plan node will have a unique id assigned to it at compile time
-  oid_t plan_node_id_;
 
-  // A node can have multiple children and parents
-  std::vector<AbstractPlanNode *> children_;
+  // A plan node can have multiple children
+  std::vector<AbstractPlan *> children_;
 
-  AbstractPlanNode *parent_ = nullptr;
+  AbstractPlan *parent_ = nullptr;
 };
 
 }  // namespace planner

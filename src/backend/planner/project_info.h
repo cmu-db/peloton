@@ -82,7 +82,9 @@ class ProjectInfo {
   ~ProjectInfo();
 
  private:
+
   TargetList target_list_;
+
   DirectMapList direct_map_list_;
 };
 

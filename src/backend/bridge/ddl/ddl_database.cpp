@@ -41,9 +41,10 @@ bool DDLDatabase::ExecCreatedbStmt(Node *parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(Node *parsetree) {
-  DropdbStmt *stmt = (DropdbStmt *)parsetree;
-  DDLDatabase::DropDatabase(stmt->database_id);
+bool DDLDatabase::ExecDropdbStmt(__attribute__((unused)) Node *parsetree, DDL_Info* ddl_info) {
+  const Database_Info* database_info = 
+    reinterpret_cast<const Database_Info *>(ddl_info);
+  DDLDatabase::DropDatabase(database_info->database_oid);
   return true;
 }
 
@@ -92,8 +93,8 @@ bool DDLDatabase::CreateDatabase(oid_t database_oid) {
   if (database == nullptr) {
     storage::Database *db = new storage::Database(database_oid);
     manager.AddDatabase(db);
-  }else {
-    LOG_TRACE("Database(%u) already exists!!", database_oid);
+  } else {
+    LOG_TRACE("Database(%u) already exists", database_oid);
     return false;
   }
 

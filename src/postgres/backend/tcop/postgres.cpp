@@ -78,7 +78,10 @@
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
+// TODO: Peloton Changes
 #include "backend/logging/logmanager.h"
+#include "backend/common/message_queue.h"
+
 
 /* ----------------
  *		global variables
@@ -1098,20 +1101,12 @@ exec_simple_query(const char *query_string)
      */
     MemoryContextSwitchTo(oldcontext);
 
-    // TODO: Peloton Changes
-    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
-
     /*
      * Now we can create the destination receiver object.
      */
     receiver = CreateDestReceiver(dest);
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
-
-    /*
-     * Switch back to transaction context for execution.
-     */
-    MemoryContextSwitchTo(oldcontext);
 
     /*
      * Run the portal to completion, and then drop it (and the receiver).
@@ -1276,12 +1271,11 @@ exec_parse_message(const char *query_string,	/* string to execute */
     drop_unnamed_stmt();
     /* Create context for parsing */
     unnamed_stmt_context =
-        SHMAllocSetContextCreate(MessageContext,
-                                 "unnamed prepared statement",
-                                 ALLOCSET_DEFAULT_MINSIZE,
-                                 ALLOCSET_DEFAULT_INITSIZE,
-                                 ALLOCSET_DEFAULT_MAXSIZE,
-                                 SHM_DEFAULT_SEGMENT);
+        AllocSetContextCreate(MessageContext,
+                              "unnamed prepared statement",
+                              ALLOCSET_DEFAULT_MINSIZE,
+                              ALLOCSET_DEFAULT_INITSIZE,
+                              ALLOCSET_DEFAULT_MAXSIZE);
     oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
   }
 
@@ -3722,12 +3716,12 @@ PostgresMain(int argc, char *argv[],
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
   // TODO :: Peloton Changes
+  //auto queue_name = peloton::get_mq_name(MyBackendId);
+  //MyBackendQueue = peloton::create_mq(queue_name);
+
   if(IsPostmasterEnvironment == true){
     StartTransactionCommand();
-    Peloton_Status *status = peloton_create_status();
-    peloton_send_bootstrap(status);
-    peloton_process_status(status);
-    peloton_destroy_status(status);
+    peloton_send_bootstrap();
     CommitTransactionCommand();
   }
 
@@ -3794,12 +3788,11 @@ PostgresMain(int argc, char *argv[],
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
-                                            "MessageContext",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+  MessageContext = AllocSetContextCreate(TopMemoryContext,
+                                         "MessageContext",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
 
   /*
    * Remember stand-alone backend startup time
@@ -3957,7 +3950,7 @@ PostgresMain(int argc, char *argv[],
 
     /*
      * (1) If we've reached idle state, tell the frontend we're ready for
-     * a new___ query.
+     * a new query.
      *
      * Note: this includes fflush()'ing the last of the prior output.
      *
