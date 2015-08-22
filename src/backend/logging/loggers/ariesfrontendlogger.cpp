@@ -273,6 +273,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   if( IsFileBroken(sizeof(int32_t)) ){
     return 0;
   }
+
   size_t ret = fread(buffer, 1, sizeof(buffer), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
@@ -287,6 +288,12 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   if(ret == -1){
     LOG_ERROR("Error occured in fseek ");
   }
+
+  if( IsFileBroken(frame_size) ){
+    // file is broken
+    return 0;
+  }
+
   return frame_size;
 }
 
@@ -305,13 +312,13 @@ size_t AriesFrontendLogger::GetLogRecordCount() const{
 bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
 
   auto txn_record_size = GetNextFrameSize();
+
   if( txn_record_size == 0 ){
+    // file is broken
     return false;
   }
+
   char txn_record[txn_record_size];
-  if( IsFileBroken(txn_record_size) ){
-    return false;
-  }
   size_t ret = fread(txn_record, 1, sizeof(txn_record), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
@@ -340,14 +347,12 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   auto header_size = GetNextFrameSize();
   if( header_size == 0 ){
+    // file is broken
     return false;
   }
 
   // Read header 
   char header[header_size];
-  if(IsFileBroken(header_size)){
-    return false;
-  }
   size_t ret = fread(header, 1, sizeof(header), logFile);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
@@ -367,28 +372,26 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
  */
 storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
                                                          Pool *pool){
-      // Measure the body size of LogRecord
-      size_t body_size = GetNextFrameSize();
-      if( body_size == 0 ){
-        return nullptr;
-      }
+  // Measure the body size of LogRecord
+  size_t body_size = GetNextFrameSize();
+  if( body_size == 0 ){
+    // file is broken
+    return nullptr;
+  }
 
-      // Read Body 
-      char body[body_size];
-      if(IsFileBroken(body_size)){
-        return nullptr;
-      }
-      int ret = fread(body, 1, sizeof(body), logFile);
-      if( ret <= 0 ){
-        LOG_ERROR("Error occured in fread ");
-      }
+  // Read Body 
+  char body[body_size];
+  int ret = fread(body, 1, sizeof(body), logFile);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
 
-      CopySerializeInput logBody(body, body_size);
+  CopySerializeInput logBody(body, body_size);
 
-      storage::Tuple *tuple = new storage::Tuple(schema, true);
-   
-      tuple->DeserializeFrom(logBody, pool);
-      return tuple;
+  storage::Tuple *tuple = new storage::Tuple(schema, true);
+
+  tuple->DeserializeFrom(logBody, pool);
+  return tuple;
 }
 
 /**
@@ -498,6 +501,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
     return;
   }
 
@@ -509,6 +513,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   if( tuple == nullptr){
+    // file is broken
     delete pool;
     delete backend;
     return;
@@ -554,6 +559,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_DELETE);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
     return;
   }
 
@@ -582,6 +588,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
     return;
   }
 
@@ -596,6 +603,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   if( tuple == nullptr){
+    // file is broken
      delete pool;
      delete backend;
     return;
@@ -627,7 +635,9 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 void AriesFrontendLogger::AddTxnToRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
+
   if( ReadTxnRecord(txnRecord) == false ){
+    // file is broken
     return;
   }
 
@@ -645,7 +655,9 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
 void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
+
   if( ReadTxnRecord(txnRecord) == false ){
+    // file is broken
     return;
   }
 
@@ -666,7 +678,9 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
 
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+
   if( ReadTxnRecord(txnRecord) == false ){
+    // file is broken
     return;
   }
 
@@ -687,7 +701,9 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
+
   if( ReadTxnRecord(txnRecord) == false ){
+    // file is broken
     return;
   }
 
