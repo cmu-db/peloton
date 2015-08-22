@@ -15,6 +15,7 @@
 #include "backend/common/types.h"
 
 #include "postgres.h"
+#include "nodes/nodes.h"
 
 //===--------------------------------------------------------------------===//
 // DDL raw data structures
