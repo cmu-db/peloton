@@ -92,7 +92,7 @@ class AriesFrontendLogger : public FrontendLogger{
     //===--------------------------------------------------------------------===//
 
     // FIXME :: Hard coded file name
-    std::string filename = "/home/parallels/git/peloton/build/aries.log";
+    std::string filename = "aries.log";
 
     // File pointer and descriptor
     FILE* logFile;
