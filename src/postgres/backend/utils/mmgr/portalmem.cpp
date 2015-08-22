@@ -86,7 +86,7 @@ do { \
 		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)
 
-static MemoryContext PortalMemory = NULL;
+thread_local static MemoryContext PortalMemory = NULL;
 
 
 /* ----------------------------------------------------------------
