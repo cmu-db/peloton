@@ -14,42 +14,46 @@
 #include "foreign/fdwapi.h"
 #include "nodes/pprint.h"
 
-
-
 /* static helpers */
-static void print_plan(FILE *DEST, const PlanState *planstate,
-                       const char * relationship, const char * plan_name,
-                       int ind);
-static void print_subplan(FILE *DEST, List *plans, const char *plan_name,
-                          int ind);
-static void print_member(FILE *DEST, List *plans, PlanState **planstates,
+
+static void PrintPlan(FILE *DEST,
+                      const PlanState *planstate,
+                      const char * relationship,
+                      const char * plan_name,
+                      int ind);
+
+static void PrintSubPlan(FILE *DEST,
+                         List *plans,
+                         const char *plan_name,
                          int ind);
-static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
+
+static void PrintMember(FILE *DEST,
+                        List *plans,
+                        PlanState **planstates,
+                        int ind);
+
+static void PrintModifyTableInfo(FILE *DEST, ModifyTableState *mtstate,
                                    int ind);
 
 /* deprecated */
-static void print_planstate(FILE *DEST, const PlanState *planstate, int ind);
-static void print_list(FILE *DEST, const List* list, int ind);
+
+static void PrintPlanState(FILE *DEST, const PlanState *planstate, int ind);
+
+static void PrintList(FILE *DEST, const List* list, int ind);
 
 /* Utils */
-static void indent(FILE *DEST, int ind);
-//static const char *logpath = "/home/parallels/git/peloton/build/minglog";
+static void IndentHelper(FILE *DEST, int ind);
 
-void printQueryDesc(const QueryDesc *queryDesc) {
-  //FILE *minglog = fopen(logpath, "a+");
-  print_plan(stdout, queryDesc->planstate, NULL, NULL, 0);
-  //fclose(minglog);
+void PrintQueryDesc(const QueryDesc *queryDesc) {
+  PrintPlan(stdout, queryDesc->planstate, NULL, NULL, 0);
 }
 
-void printPlanStateTree(const PlanState *planstate) {
-  //FILE *minglog = fopen(logpath, "a+");
-  print_plan(stdout, planstate, NULL, NULL, 0);
+void PrintPlanStateTree(const PlanState *planstate) {
+  PrintPlan(stdout, planstate, NULL, NULL, 0);
   fprintf(stdout, "\n");
-  //fprintf(minglog, "\n");
-  //fclose(minglog);
 }
 
-static void print_plan(FILE *DEST, const PlanState *planstate,
+static void PrintPlan(FILE *DEST, const PlanState *planstate,
                        const char * relationship, const char * plan_name,
                        int ind) {
   Plan *plan = planstate->plan;
@@ -231,26 +235,26 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
       break;
   }
 
-  indent(DEST, ind);
+  IndentHelper(DEST, ind);
   fprintf(DEST, "Node Type: %s/%s|", sname, pname);  // node type
   if (plan_name) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Subplan Name: %s|", plan_name);
   }
   if (relationship) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Relationship: %s|", relationship);
   }
   if (strategy) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Strategy: %s|", strategy);
   }
   if (operation) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Operation: %s|", operation);
   }
   if (custom_name) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Custom Plan Provider: %s|", custom_name);
   }
 
@@ -297,7 +301,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
        * ModifyTableTarget, for relation that was named in the original query
        * ModifyTable_info(multiple target table or non-nominal relation, FDW and foreign , on conflict clause)
        * */
-      print_modifytable_info(DEST, (ModifyTableState *) planstate, ind + 1);
+      PrintModifyTableInfo(DEST, (ModifyTableState *) planstate, ind + 1);
 
       break;
     case T_NestLoop:
@@ -329,7 +333,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
           break;
       }
 
-      indent(DEST, ind + 1);
+      IndentHelper(DEST, ind + 1);
       fprintf(DEST, "Type: %s|", jointype);
     }
       break;
@@ -353,7 +357,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
           setopcmd = "???";
           break;
       }
-      indent(DEST, ind + 1);
+      IndentHelper(DEST, ind + 1);
       fprintf(DEST, "Command: %s", setopcmd);
     }
       break;
@@ -383,44 +387,44 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
    */
   /* initPlan(s) */
   if (planstate->initPlan) {
-    print_subplan(DEST, planstate->initPlan, "InitPlan", ind + 1);
+    PrintSubPlan(DEST, planstate->initPlan, "InitPlan", ind + 1);
   }
 
   /* left tree */
   if (outerPlanState(planstate)) {
-    print_plan(DEST, outerPlanState(planstate), "LeftTree", NULL, ind + 1);
+    PrintPlan(DEST, outerPlanState(planstate), "LeftTree", NULL, ind + 1);
   }
 
   /* right tree */
   if (innerPlanState(planstate)) {
-    print_plan(DEST, innerPlanState(planstate), "RightTree", NULL, ind + 1);
+    PrintPlan(DEST, innerPlanState(planstate), "RightTree", NULL, ind + 1);
 
   }
 
   /* special child plans */
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      print_member(DEST, ((ModifyTable *) plan)->plans,
+      PrintMember(DEST, ((ModifyTable *) plan)->plans,
                    ((ModifyTableState *) planstate)->mt_plans, ind + 1);
       break;
     case T_Append:
-      print_member(DEST, ((Append *) plan)->appendplans,
+      PrintMember(DEST, ((Append *) plan)->appendplans,
                    ((AppendState *) planstate)->appendplans, ind + 1);
       break;
     case T_MergeAppend:
-      print_member(DEST, ((MergeAppend *) plan)->mergeplans,
+      PrintMember(DEST, ((MergeAppend *) plan)->mergeplans,
                    ((MergeAppendState *) planstate)->mergeplans, ind + 1);
       break;
     case T_BitmapAnd:
-      print_member(DEST, ((BitmapAnd *) plan)->bitmapplans,
+      PrintMember(DEST, ((BitmapAnd *) plan)->bitmapplans,
                    ((BitmapAndState *) planstate)->bitmapplans, ind + 1);
       break;
     case T_BitmapOr:
-      print_member(DEST, ((BitmapOr *) plan)->bitmapplans,
+      PrintMember(DEST, ((BitmapOr *) plan)->bitmapplans,
                    ((BitmapOrState *) planstate)->bitmapplans, ind + 1);
       break;
     case T_SubqueryScan:
-      print_plan(DEST, ((SubqueryScanState *) planstate)->subplan, "Subquery",
+      PrintPlan(DEST, ((SubqueryScanState *) planstate)->subplan, "Subquery",
       NULL,
                  ind + 1);
       break;
@@ -430,11 +434,11 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
 
   /* subPlan-s */
   if (planstate->subPlan)
-    print_subplan(DEST, planstate->subPlan, "SubPlan", ind + 1);
+    PrintSubPlan(DEST, planstate->subPlan, "SubPlan", ind + 1);
 
 }
 
-static void print_subplan(FILE *DEST, List *plans, const char *relationship,
+static void PrintSubPlan(FILE *DEST, List *plans, const char *relationship,
                           int ind) {
   ListCell *lst;
 
@@ -442,20 +446,20 @@ static void print_subplan(FILE *DEST, List *plans, const char *relationship,
   {
     SubPlanState *sps = (SubPlanState *) lfirst(lst);
     SubPlan *sp = (SubPlan *) sps->xprstate.expr;
-    print_plan(DEST, sps->planstate, relationship, sp->plan_name, ind);
+    PrintPlan(DEST, sps->planstate, relationship, sp->plan_name, ind);
   }
 }
 
-static void print_member(FILE *DEST, List *plans, PlanState **planstates,
+static void PrintMember(FILE *DEST, List *plans, PlanState **planstates,
                          int ind) {
   int nplans = list_length(plans);
   int j;
   for (j = 0; j < nplans; ++j) {
-    print_plan(DEST, planstates[j], "Member", NULL, ind);
+    PrintPlan(DEST, planstates[j], "Member", NULL, ind);
   }
 }
 
-static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
+static void PrintModifyTableInfo(FILE *DEST, ModifyTableState *mtstate,
                                    int ind) {
   ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
   bool labeltargets;
@@ -467,7 +471,7 @@ static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
               && mtstate->resultRelInfo->ri_RangeTableIndex
                   != node->nominalRelation));
   if (labeltargets) {
-    indent(DEST, ind);
+    IndentHelper(DEST, ind);
     fprintf(
         DEST,
         "More than one target relations or the target relation is not nominal|");
@@ -478,20 +482,20 @@ static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
     FdwRoutine *fdwroutine = resultRelInfo->ri_FdwRoutine;
 
     if (fdwroutine && fdwroutine->ExplainForeignModify != NULL) {
-      indent(DEST, ind);
+      IndentHelper(DEST, ind);
       fprintf(DEST, "Foreign modify|");
     }
   }
 
   if (node->onConflictAction != ONCONFLICT_NONE) {
-    indent(DEST, ind);
+    IndentHelper(DEST, ind);
     fprintf(DEST, "ON CONFLICT ACTION|");
   }
 
 }
 
-static void print_planstate(FILE *DEST, const PlanState *planstate, int ind) {
-  indent(DEST, ind);
+static void PrintPlanState(FILE *DEST, const PlanState *planstate, int ind) {
+  IndentHelper(DEST, ind);
   if (planstate == NULL) {
     fprintf(DEST, "Plan: NULL|");
   } else {
@@ -614,35 +618,35 @@ static void print_planstate(FILE *DEST, const PlanState *planstate, int ind) {
         break;
     }
 
-    print_list(DEST, planstate->subPlan, ind + 1);
+    PrintList(DEST, planstate->subPlan, ind + 1);
 
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Left Child:|");
-    print_planstate(DEST, planstate->lefttree, ind + 2);
+    PrintPlanState(DEST, planstate->lefttree, ind + 2);
 
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Right Child:|");
-    print_planstate(DEST, planstate->righttree, ind + 2);
+    PrintPlanState(DEST, planstate->righttree, ind + 2);
   }
 }
 
-static void print_list(FILE *DEST, const List* list, int ind) {
+static void PrintList(FILE *DEST, const List* list, int ind) {
   ListCell *l;
-  indent(DEST, ind);
+  IndentHelper(DEST, ind);
   fprintf(DEST, "Subplan State List: |");
   if (list == NIL) {
-    indent(DEST, ind + 1);
+    IndentHelper(DEST, ind + 1);
     fprintf(DEST, "Empty List|");
   } else {
     foreach(l, list)
     {
       SubPlanState *subplanstate = (SubPlanState *) lfirst(l);
-      print_planstate(DEST, subplanstate->planstate, ind + 1);
+      PrintPlanState(DEST, subplanstate->planstate, ind + 1);
     }
   }
 }
 
-static void indent(FILE *DEST, int ind) {
+static void IndentHelper(FILE *DEST, int ind) {
   int i;
   for (i = 0; i < ind; i++) {
     //fprintf(DEST, "-");

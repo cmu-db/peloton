@@ -13,7 +13,8 @@
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/append_executor.h"
-#include "backend/planner/append_node.h"
+
+#include "../planner/append_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -21,7 +22,7 @@ namespace executor {
 /**
  * @brief Constructor
  */
-AppendExecutor::AppendExecutor(planner::AbstractPlanNode *node,
+AppendExecutor::AppendExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

@@ -12,10 +12,10 @@
 
 #include "backend/executor/insert_executor.h"
 
+#include "backend/planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/insert_node.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/logging/logmanager.h"
 #include "backend/logging/records/tuplerecord.h"
@@ -27,9 +27,9 @@ namespace executor {
  * @brief Constructor for insert executor.
  * @param node Insert node corresponding to this executor.
  */
-InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
+InsertExecutor::InsertExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -52,8 +52,10 @@ bool InsertExecutor::DExecute() {
 
   assert(!done_);
 
-  const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
-  storage::DataTable *target_table = node.GetTable();
+  const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
+  storage::DataTable *target_table_ = node.GetTable();
+  assert(target_table_);
+
   auto transaction_ = executor_context_->GetTransaction();
 
   // Inserting a logical tile.
@@ -71,7 +73,7 @@ bool InsertExecutor::DExecute() {
     storage::Tile *physical_tile = logical_tile.get()->GetBaseTile(0);
 
     // Next, check logical tile schema against table schema
-    auto schema = target_table->GetSchema();
+    auto schema = target_table_->GetSchema();
     const catalog::Schema *tile_schema = physical_tile->GetSchema();
 
     if (*schema != *tile_schema) {
@@ -85,14 +87,15 @@ bool InsertExecutor::DExecute() {
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {
-      ItemPointer location = target_table->InsertTuple(transaction_, &tuple);
+      peloton::ItemPointer location = target_table_->InsertTuple(transaction_, &tuple);
       if (location.block == INVALID_OID) {
-        transaction_->SetResult(Result::RESULT_FAILURE);
+        transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
       transaction_->RecordInsert(location);
    }
 
+    executor_context_->num_processed += 1; // insert one
     return true;
   }
   // Inserting a collection of tuples from plan node
@@ -101,13 +104,13 @@ bool InsertExecutor::DExecute() {
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
-    auto schema = target_table->GetSchema();
+    auto schema = target_table_->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
+    // There should be no direct maps
     assert(project_info);
-    assert(project_info->GetDirectMapList().size() ==
-           0);  // There should be no direct maps
+    assert(project_info->GetDirectMapList().size() == 0);
 
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
@@ -116,9 +119,11 @@ bool InsertExecutor::DExecute() {
     }
 
     // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(transaction_, tuple.get());
+    ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
+    LOG_INFO("location: %d, %d", location.block, location.offset);
+
     if (location.block == INVALID_OID) {
-      transaction_->SetResult(Result::RESULT_FAILURE);
+      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordInsert(location);
@@ -131,13 +136,14 @@ bool InsertExecutor::DExecute() {
   
         auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
                                                transaction_->GetTransactionId(), 
-                                               target_table->GetOid(),
+                                               target_table_->GetOid(),
                                                location,
                                                tuple.get());
         logger->Insert(record);
       }
     }
 
+    executor_context_->num_processed += 1; // insert one
     done_ = true;
     return true;
   }

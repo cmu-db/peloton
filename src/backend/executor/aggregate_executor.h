@@ -39,7 +39,7 @@ class AggregateExecutor : public AbstractExecutor {
   AggregateExecutor(AggregateExecutor &&) = delete;
   AggregateExecutor &operator=(AggregateExecutor &&) = delete;
 
-  AggregateExecutor(planner::AbstractPlanNode *node,
+  AggregateExecutor(planner::AbstractPlan *node,
                     ExecutorContext *executor_context);
 
   ~AggregateExecutor();

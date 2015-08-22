@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/nested_loop_join_node.h"
-#include "backend/planner/projection_node.h"
+#include "backend/planner/nested_loop_join_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 
 namespace peloton {
@@ -26,65 +26,71 @@ namespace bridge {
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformNestLoop(
-    const NestLoopState *nl_plan_state) {
-  const JoinState *js = &(nl_plan_state->js);
-  planner::AbstractPlanNode *result = nullptr;
-  planner::NestedLoopJoinNode *plan_node = nullptr;
-  PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
-  if (join_type == JOIN_TYPE_INVALID) {
-    LOG_ERROR("unsupported join type: %d", js->jointype);
+planner::AbstractPlan *PlanTransformer::TransformNestLoop(
+    const NestLoopPlanState *nl_plan_state) {
+
+  auto join_type = nl_plan_state->jointype;
+  PelotonJoinType peloton_join_type =
+      PlanTransformer::TransformJoinType(nl_plan_state->jointype);
+
+  if (peloton_join_type == JOIN_TYPE_INVALID) {
+    LOG_ERROR("unsupported join type: %d", join_type);
     return nullptr;
   }
 
   expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->joinqual));
+      reinterpret_cast<ExprState *>(nl_plan_state->joinqual));
 
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
-      reinterpret_cast<ExprState *>(js->ps.qual));
+      reinterpret_cast<ExprState *>(nl_plan_state->qual));
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
                                                join_filter, plan_filter);
-  } else if (join_filter) {
+  }
+  else if (join_filter) {
     predicate = join_filter;
-  } else {
+  }
+  else {
     predicate = plan_filter;
   }
 
-  /* TODO: do we need to consider target list here? */
-  /* Transform project info */
+  // TODO: do we need to consider target list here?
+  // Transform project info
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
-  project_info.reset(
-      BuildProjectInfo(js->ps.ps_ProjInfo,
-                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+
+  project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+
+  planner::AbstractPlan *result = nullptr;
+  planner::NestedLoopJoinPlan *plan_node = nullptr;
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
+
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
-    result =
-        new planner::ProjectionNode(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinNode(predicate, nullptr);
+        nl_plan_state->tts_tupleDescriptor);
+
+    result = new planner::ProjectionPlan(project_info.release(), project_schema);
+    plan_node = new planner::NestedLoopJoinPlan(predicate, nullptr);
     result->AddChild(plan_node);
-  } else {
+  }
+  else {
     LOG_INFO("We have direct mapping projection");
-    plan_node =
-        new planner::NestedLoopJoinNode(predicate, project_info.release());
+    plan_node = new planner::NestedLoopJoinPlan(predicate, project_info.release());
     result = plan_node;
   }
 
-  planner::AbstractPlanNode *outer =
-      PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlanNode *inner =
-      PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+  planner::AbstractPlan *outer =
+      PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state), true);
+  planner::AbstractPlan *inner =
+      PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state), false);
 
   /* Add the children nodes */
-  plan_node->SetJoinType(join_type);
+  plan_node->SetJoinType(peloton_join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 

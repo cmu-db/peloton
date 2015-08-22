@@ -14,11 +14,15 @@
 #define PELOTON_H
 
 #include "backend/common/types.h"
+#include "backend/common/message_queue.h"
 #include "backend/bridge/ddl/bootstrap.h"
+#include "backend/planner/abstract_plan.h"
+#include "backend/bridge/dml/mapper/dml_utils.h"
 
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
 #include "utils/memutils.h"
+#include "tcop/dest.h"
 
 /* ----------
  * The types of backend -> peloton messages
@@ -47,10 +51,10 @@ typedef struct Peloton_MsgHdr
 {
   PelotonMsgType m_type;
   int     m_size;
+  BackendId m_backend_id;
   Oid   m_dbid;
   TransactionId m_txn_id;
-  MemoryContext m_top_transaction_context;
-  MemoryContext m_cur_transaction_context;
+  MemoryContext m_query_context;
 } Peloton_MsgHdr;
 
 /* ----------
@@ -80,6 +84,7 @@ typedef struct Peloton_Status
   int m_status;
   dirty_table_info** m_dirty_tables;
   int m_dirty_count;
+  uint32_t m_processed; // num of tuple processed, used in modifytable operation for sending back number of tuples actually modified
 } Peloton_Status;
 
 /* ----------
@@ -109,7 +114,8 @@ typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  PlanState *m_planstate;
+  AbstractPlanState *m_plan_state;
+  ParamListInfo m_param_list;
   TupleDesc m_tuple_desc;
 } Peloton_MsgDML;
 
@@ -122,7 +128,7 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   Node *m_parsetree;
-  const char *m_queryString;
+  DDL_Info *m_ddl_info;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -133,7 +139,7 @@ typedef struct Peloton_MsgBootstrap
 {
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
-  peloton::bridge::raw_database_info *m_raw_database;
+  raw_database_info *m_raw_database;
 } Peloton_MsgBootstrap;
 
 /* ----------
@@ -161,28 +167,19 @@ extern bool IsPelotonQuery(List *relationOids);
 extern void peloton_init(void);
 extern int  peloton_start(void);
 
-extern void peloton_send_ping(void);
-
 /* ----------
  * Functions called from execMain and utility
  * ----------
  */
 
-extern void peloton_send_dml(Peloton_Status  *status,
-                             PlanState *node,
+extern void peloton_send_dml(PlanState *planstate,
+                             bool sendTuples,
+                             DestReceiver *dest,
                              TupleDesc tuple_desc);
 
-extern void peloton_send_ddl(Peloton_Status  *status,
-                             Node *parsetree,
-                             const char *queryString);
+extern void peloton_send_ddl(Node *parsetree);
 
-extern void peloton_send_bootstrap(Peloton_Status *status);
-
-extern Peloton_Status *peloton_create_status();
-
-extern void peloton_process_status(Peloton_Status *status);
-
-extern void peloton_destroy_status(Peloton_Status *status);
+extern void peloton_send_bootstrap();
 
 #endif   /* PELOTON_H */
 

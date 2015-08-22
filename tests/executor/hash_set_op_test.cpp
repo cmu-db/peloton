@@ -15,11 +15,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/set_op_plan.h"
+
+
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/hash_set_op_executor.h"
-#include "backend/planner/set_op_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -56,7 +58,7 @@ void RunTest(executor::HashSetOpExecutor &executor,
 
 TEST(HashSetOptTests, ExceptTest) {
   // Create the plan node
-  planner::SetOpNode node(SETOP_TYPE_EXCEPT);
+  planner::SetOpPlan node(SETOP_TYPE_EXCEPT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -120,7 +122,7 @@ TEST(HashSetOptTests, ExceptTest) {
 
 TEST(HashSetOptTests, ExceptAllTest) {
   // Create the plan node
-  planner::SetOpNode node(SETOP_TYPE_EXCEPT_ALL);
+  planner::SetOpPlan node(SETOP_TYPE_EXCEPT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -207,7 +209,7 @@ TEST(HashSetOptTests, ExceptAllTest) {
 
 TEST(HashSetOptTests, IntersectTest) {
   // Create the plan node
-  planner::SetOpNode node(SETOP_TYPE_INTERSECT);
+  planner::SetOpPlan node(SETOP_TYPE_INTERSECT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -271,7 +273,7 @@ TEST(HashSetOptTests, IntersectTest) {
 
 TEST(HashSetOptTests, IntersectAllTest) {
   // Create the plan node
-  planner::SetOpNode node(SETOP_TYPE_INTERSECT_ALL);
+  planner::SetOpPlan node(SETOP_TYPE_INTERSECT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);

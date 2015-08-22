@@ -534,12 +534,11 @@ CreateCacheMemoryContext(void)
 	 * did so already.
 	 */
 	if (!CacheMemoryContext)
-	  CacheMemoryContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
-	                                                "CacheMemoryContext",
-	                                                ALLOCSET_DEFAULT_MINSIZE,
-	                                                ALLOCSET_DEFAULT_INITSIZE,
-	                                                ALLOCSET_DEFAULT_MAXSIZE,
-	                                                SHM_DEFAULT_SEGMENT);
+	  CacheMemoryContext = AllocSetContextCreate(TopMemoryContext,
+	                                             "CacheMemoryContext",
+	                                             ALLOCSET_DEFAULT_MINSIZE,
+	                                             ALLOCSET_DEFAULT_INITSIZE,
+	                                             ALLOCSET_DEFAULT_MAXSIZE);
 }
 
 

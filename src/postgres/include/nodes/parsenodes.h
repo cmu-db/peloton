@@ -203,9 +203,9 @@ typedef struct TypeName {
 	List	   *arrayBounds;	/* array bounds */
 	int			location;		/* token location, or -1 if unknown */
 
-        //TODO :: Peloton Changes
-        Oid type_oid;
-        int type_len;
+  //TODO :: Peloton Changes
+  Oid type_oid;
+  int type_len;
 } TypeName;
 
 /*
@@ -2855,8 +2855,8 @@ typedef struct IndexStmt {
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 
 
-        // TODO: Peloton Changes
-        Oid      index_id;   /* cache the index id for DDL */
+  // TODO: Peloton Changes
+  Oid      index_id;   /* cache the index id for DDL */
 } IndexStmt;
 
 /* ----------------------
@@ -3254,8 +3254,6 @@ typedef struct DropdbStmt {
 
 	char	   *dbname;			/* database to drop */
 	bool		missing_ok;		/* skip error if db is missing? */
-	// TODO: Peloton Changes
-	Oid      database_id;   /* cache the database id for DDL */
 } DropdbStmt;
 
 /* ----------------------
