@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/abstract_plan.h"
 #include "backend/planner/project_info.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
@@ -20,27 +20,38 @@
 namespace peloton {
 namespace planner {
 
-class AggregateV2Node : public AbstractPlanNode {
+class AggregatePlan : public AbstractPlan {
  public:
-  AggregateV2Node() = delete;
-  AggregateV2Node(const AggregateV2Node &) = delete;
-  AggregateV2Node &operator=(const AggregateV2Node &) = delete;
-  AggregateV2Node(AggregateV2Node &&) = delete;
+  AggregatePlan() = delete;
+  AggregatePlan(const AggregatePlan &) = delete;
+  AggregatePlan &operator=(const AggregatePlan &) = delete;
+  AggregatePlan(AggregatePlan &&) = delete;
 
-  typedef std::pair<ExpressionType, const expression::AbstractExpression*> AggTerm;
+  class AggTerm {
+   public:
+    ExpressionType aggtype;
+    const expression::AbstractExpression* expression;
+    bool distinct;
 
-  AggregateV2Node(const planner::ProjectInfo* project_info,
-                  const expression::AbstractExpression* predicate,
-                  const std::vector<AggTerm>&& unique_agg_terms,
-                  const std::vector<oid_t>&& groupby_col_ids,
-                  const catalog::Schema* output_schema,
-                  PelotonAggregateType aggregate_strategy = AGGREGATE_TYPE_HASH)
+    AggTerm(ExpressionType et, expression::AbstractExpression* expr, bool distinct = false)
+        : aggtype(et),
+          expression(expr),
+          distinct(distinct) {
+    }
+  };
+
+  AggregatePlan(const planner::ProjectInfo* project_info,
+                const expression::AbstractExpression* predicate,
+                const std::vector<AggTerm>&& unique_agg_terms,
+                const std::vector<oid_t>&& groupby_col_ids,
+                const catalog::Schema* output_schema,
+                PelotonAggType aggregate_strategy)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
         output_schema_(output_schema),
-        aggregate_strategy_(aggregate_strategy) {
+        agg_strategy_(aggregate_strategy) {
 
   }
 
@@ -64,17 +75,17 @@ class AggregateV2Node : public AbstractPlanNode {
     return output_schema_.get();
   }
 
-  PelotonAggregateType GetAggregateStrategy() const {
-    return aggregate_strategy_;
+  PelotonAggType GetAggregateStrategy() const {
+    return agg_strategy_;
   }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
   }
 
-  ~AggregateV2Node() {
+  ~AggregatePlan() {
     for (auto term : unique_agg_terms_) {
-      delete term.second;
+      delete term.expression;
     }
   }
 
@@ -96,7 +107,7 @@ class AggregateV2Node : public AbstractPlanNode {
   std::unique_ptr<const catalog::Schema> output_schema_;
 
   /* Aggregate Strategy */
-  const PelotonAggregateType aggregate_strategy_;
+  const PelotonAggType agg_strategy_;
 
 };
 

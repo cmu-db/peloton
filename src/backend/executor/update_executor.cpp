@@ -12,11 +12,11 @@
 
 #include "backend/executor/update_executor.h"
 
+#include "../planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/update_node.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/logging/logmanager.h"
@@ -29,7 +29,7 @@ namespace executor {
  * @brief Constructor for update executor.
  * @param node Update node corresponding to this executor.
  */
-UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
+UpdateExecutor::UpdateExecutor(planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -43,7 +43,7 @@ bool UpdateExecutor::DInit() {
   assert(project_info_ == nullptr);
 
   // Grab settings from node
-  const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
+  const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   project_info_ = node.GetProjectInfo();
 
@@ -62,7 +62,7 @@ bool UpdateExecutor::DExecute() {
   assert(executor_context_);
 
   // We are scanning over a logical tile.
-  LOG_TRACE("Update executor :: 1 child \n");
+  LOG_INFO("Update executor :: 1 child \n");
 
   if (!children_[0]->Execute()) {
     return false;
@@ -79,7 +79,7 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-    LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
+    LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
     // (A) Try to delete the tuple first
@@ -108,6 +108,9 @@ bool UpdateExecutor::DExecute() {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
+
+
+    executor_context_->num_processed += 1; // updated one
 
     transaction_->RecordInsert(location);
 

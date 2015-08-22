@@ -15,6 +15,7 @@
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/catalog/schema.h"
+#include "backend/bridge/ddl/ddl_raw_structures.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -35,15 +36,17 @@ class DDLUtils {
   DDLUtils(DDLUtils &&) = delete;
   DDLUtils &operator=(DDLUtils &&) = delete;
 
-  static void peloton_prepare_data(Node *parsetree);
+  static DDL_Info* peloton_prepare_data(Node *parsetree);
+
+  static Database_Info* PrepareCreatedbStmt(Database_Info* parsetree);
+
+  static Database_Info* PrepareDropdbStmt(Database_Info* parsetree);
 
   static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
 
-  // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt(
-      CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos,
-      std::vector<catalog::ForeignKey> &reference_table_infos);
+      CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos);
 };
 
 }  // namespace bridge

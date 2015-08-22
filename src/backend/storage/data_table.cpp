@@ -141,15 +141,10 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   ItemPointer location = GetTupleSlot(transaction, tuple, INVALID_ITEMPOINTER);
   if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
+  LOG_INFO("Location: %d, %d", location.block, location.offset);
+
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
-    // Reclaim slot if we fail
-    oid_t tile_group_id = location.block;
-    oid_t tuple_slot = location.offset;
-
-    auto tile_group = GetTileGroupById(tile_group_id);
-    tile_group->ReclaimTuple(tuple_slot);
-
     LOG_WARN("Index constraint violated\n");
     return INVALID_ITEMPOINTER;
   }
@@ -182,13 +177,13 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       continue;
     }
 
-    LOG_TRACE("Index : %u . Key exists. Checking visibility. \n",
+    LOG_INFO("Index : %u . Key exists. Checking visibility. \n",
               index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
-    LOG_TRACE("location      :: block = %u offset = %u \n", location.block,
+    LOG_INFO("location      :: block = %u offset = %u \n", location.block,
               location.offset);
-    LOG_TRACE("old location  :: block = %u offset = %u \n", old_location.block,
+    LOG_INFO("old location  :: block = %u offset = %u \n", old_location.block,
               old_location.offset);
     if (old_location.block != INVALID_OID) {
       // Is this key visible or not ?
@@ -206,7 +201,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       // The previous tuple is not visible,
       // so let's update it atomically
       if (visible == false) {
-        LOG_TRACE("Index : %u. Existing tuple is not visible.\n",
+        LOG_INFO("Index : %u. Existing tuple is not visible.\n",
                   index->GetOid());
         bool status = index->UpdateEntry(key, location, old_location);
         if (status == true) {
@@ -214,7 +209,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
           continue;
         }
       }
-      LOG_TRACE("Existing tuple is still visible.\n");
+      LOG_INFO("Existing tuple is still visible.\n");
     }
 
     LOG_ERROR("Failed to insert into index %s.%s [%s].", GetName().c_str(),

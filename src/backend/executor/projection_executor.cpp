@@ -12,12 +12,12 @@
 
 #include "backend/executor/projection_executor.h"
 
+#include "../planner/projection_plan.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/projection_node.h"
 #include "backend/storage/tile.h"
 
 namespace peloton {
@@ -27,7 +27,7 @@ namespace executor {
  * @brief Constructor
  * @param node  ProjectionNode plan node corresponding to this executor
  */
-ProjectionExecutor::ProjectionExecutor(planner::AbstractPlanNode *node,
+ProjectionExecutor::ProjectionExecutor(planner::AbstractPlan *node,
                                        ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
@@ -39,7 +39,7 @@ bool ProjectionExecutor::DInit() {
   assert(children_.size() == 1 || children_.size() == 2);
 
   // Grab settings from plan node
-  const planner::ProjectionNode &node = GetPlanNode<planner::ProjectionNode>();
+  const planner::ProjectionPlan &node = GetPlanNode<planner::ProjectionPlan>();
   this->project_info_ = node.GetProjectInfo();
   this->schema_ = node.GetSchema();
 

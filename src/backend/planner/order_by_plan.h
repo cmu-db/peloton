@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace planner {
@@ -27,14 +27,14 @@ namespace planner {
  * IMPORTANT All tiles got from child must have the same physical schema.
  */
 
-class OrderByNode : public AbstractPlanNode {
+class OrderByPlan : public AbstractPlan {
  public:
-  OrderByNode(const OrderByNode &) = delete;
-  OrderByNode &operator=(const OrderByNode &) = delete;
-  OrderByNode(const OrderByNode &&) = delete;
-  OrderByNode &operator=(const OrderByNode &&) = delete;
+  OrderByPlan(const OrderByPlan &) = delete;
+  OrderByPlan &operator=(const OrderByPlan &) = delete;
+  OrderByPlan(const OrderByPlan &&) = delete;
+  OrderByPlan &operator=(const OrderByPlan &&) = delete;
 
-  OrderByNode(const std::vector<oid_t> &sort_keys,
+  OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids,
               storage::AbstractBackend *backend)
@@ -43,17 +43,7 @@ class OrderByNode : public AbstractPlanNode {
         output_column_ids_(output_column_ids),
         backend_(backend) {}
 
-  //  OrderByNode(
-  //        const std::vector<oid_t>  &sort_keys,
-  //        const std::vector<bool>   &descend_flags,
-  //        const std::vector<oid_t>  &output_column_ids)
-  //    : sort_keys_(sort_keys),
-  //      descend_flags_(descend_flags),
-  //      output_column_ids_(output_column_ids) {
-  //    backend_ = new storage::VMBackend();
-  //  }
-
-  storage::AbstractBackend *GetBackend() const { return backend_; }
+  storage::AbstractBackend *GetBackend() const { return backend_.get(); }
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -83,7 +73,7 @@ class OrderByNode : public AbstractPlanNode {
   const std::vector<oid_t> output_column_ids_;
 
   /** @brief Backend used to allocate intermediate physical tiles. */
-  storage::AbstractBackend *backend_;
+  std::unique_ptr<storage::AbstractBackend> backend_;
 };
 }
 }

@@ -21,6 +21,9 @@
 #include "backend/common/abstract_tuple.h"
 #include "backend/executor/executor_context.h"
 
+#include "postgres.h"
+#include "common/fe_memutils.h"
+
 #include <json_spirit.h>
 
 namespace peloton {
@@ -123,6 +126,38 @@ class AbstractExpression {
   char *alias = nullptr;
 
   bool distinct = false;
+
+  //===--------------------------------------------------------------------===//
+  // Override allocators
+  //===--------------------------------------------------------------------===//
+
+  void* operator new(std::size_t sz) {
+    if(CurrentMemoryContext)
+      return palloc(sz);
+    else
+      return malloc(sz);
+  }
+
+  void* operator new[](std::size_t sz) {
+    if(CurrentMemoryContext)
+      return palloc(sz);
+    else
+      return malloc(sz);
+  }
+
+  void operator delete(void* ptr) {
+    if(CurrentMemoryContext)
+      return pfree(ptr);
+    else
+      return free(ptr);
+  }
+
+  void operator delete[](void* ptr) {
+    if(CurrentMemoryContext)
+      return pfree(ptr);
+    else
+      return free(ptr);
+  }
 
  protected:
   AbstractExpression();
