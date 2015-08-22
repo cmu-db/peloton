@@ -14,7 +14,7 @@
 
 #include <thread>
 
-#define NUM_TUPLES 5
+#define NUM_TUPLES 100
 #define NUM_BACKEND 3
 
 namespace peloton {
