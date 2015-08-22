@@ -34,6 +34,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
+#include "backend/logging/logmanager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -63,6 +64,11 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
+/* ----------
+ * Log Flag
+ * ----------
+ */
+bool logging_on = false;
 
 /* ----------
  * Local data
@@ -298,9 +304,6 @@ PelotonMain(int argc, char *argv[]) {
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
-  /* Init Peloton */
-  //peloton::bridge::Bootstrap::BootstrapPeloton();
-
   /*
    * Create a resource owner to keep track of our resources (not clear that
    * we need this, but may as well have one).
@@ -407,6 +410,23 @@ peloton_MainLoop(void) {
   Peloton_Msg  msg;
   int     wr;
 
+  /* Start our scheduler */
+  std::unique_ptr<peloton::scheduler::TBBScheduler> scheduler(new peloton::scheduler::TBBScheduler());
+  if(scheduler.get() == NULL) {
+    elog(ERROR, "Could not create peloton scheduler \n");
+    return;
+  }
+
+  std::vector<std::thread> thread_group;
+  if(logging_on){
+  // Launching a thread for logging 
+  auto& logManager = peloton::logging::LogManager::GetInstance();
+  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
+  thread_group.push_back(std::thread(&peloton::logging::LogManager::StandbyLogging,
+                                     &logManager,
+                                     logManager.GetMainLoggingType()));
+  }
+
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
    * death of our parent postmaster.
@@ -480,17 +500,20 @@ peloton_MainLoop(void) {
           break;
 
         case PELOTON_MTYPE_DDL: {
-          std::thread(peloton_process_ddl, reinterpret_cast<Peloton_MsgDDL*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
+                               reinterpret_cast<Peloton_MsgDDL*>(&msg));
         }
         break;
 
         case PELOTON_MTYPE_DML: {
-          std::thread(peloton_process_dml, reinterpret_cast<Peloton_MsgDML*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
+                               reinterpret_cast<Peloton_MsgDML*>(&msg));
         }
         break;
 
         case PELOTON_MTYPE_BOOTSTRAP: {
-          std::thread(peloton_process_bootstrap, reinterpret_cast<Peloton_MsgBootstrap*>(&msg)).detach();
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_bootstrap),
+                               reinterpret_cast<Peloton_MsgBootstrap*>(&msg));
         }
         break;
 
@@ -512,6 +535,18 @@ peloton_MainLoop(void) {
     if (wr & WL_POSTMASTER_DEATH)
       break;
   }             /* end of outer loop */
+
+  if(logging_on){
+    auto& logManager = peloton::logging::LogManager::GetInstance();
+    // terminate logging thread
+    if( logManager.EndLogging() ){
+      for(uint64_t thread_itr = 0; thread_itr < thread_group.size(); ++thread_itr){
+        thread_group[thread_itr].join();
+      }
+    }else{
+      elog(LOG,"Failed to terminate logging thread");
+    }
+  }
 
   /* Normal exit from peloton is here */
   ereport(LOG,
@@ -1223,6 +1258,14 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       /* Process the utility statement */
       peloton::bridge::Bootstrap::BootstrapPeloton(raw_database,
                                                    msg->m_status);
+
+      if( logging_on){
+        // NOTE:: start logging since bootstrapPeloton is done
+        auto& logManager = peloton::logging::LogManager::GetInstance();
+        if( logManager.IsReadyToLogging() == false){
+          logManager.StartLogging();
+        }
+      }
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
