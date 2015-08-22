@@ -20,8 +20,6 @@
 namespace peloton {
 namespace test {
 
-oid_t current_tile_group_id;
-
 /**
  * @brief writing a simple log file 
  */
@@ -156,10 +154,16 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
-  auto tile_group = table->GetTileGroupById(current_tile_group_id);
+  oid_t tile_group_count = table->GetTileGroupCount();
+  oid_t active_tuple_count = 0;
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+      tile_group_itr++) {
+    auto tile_group = table->GetTileGroup(tile_group_itr);
+    active_tuple_count += tile_group->GetActiveTupleCount();
+  }
 
   // check # of active tuples
-  EXPECT_LT(tile_group->GetActiveTupleCount(), ((NUM_TUPLES-1)*NUM_BACKEND));
+  EXPECT_LT( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
 
 }
 
@@ -234,11 +238,11 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema
 }
 
 void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
-  auto tuple_slot = InsertTuples(table, true);
-  if(tuple_slot.size() >= 2)
-  DeleteTuples(table, tuple_slot[1], true);
-  if(tuple_slot.size() >= 1)
-  UpdateTuples(table, tuple_slot[0], true);
+  auto locations = InsertTuples(table, true);
+  if(locations.size() >= 2)
+  DeleteTuples(table, locations[1], true);
+  if(locations.size() >= 1)
+  UpdateTuples(table, locations[0], true);
 
   auto& logManager = logging::LogManager::GetInstance();
   if(logManager.IsReadyToLogging()){
@@ -250,8 +254,8 @@ void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
   }
 }
 
-std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
-  std::vector<oid_t> tuple_slot;
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
+  std::vector<ItemPointer> locations;
 
   // Create Tuples
   auto tuples = CreateSimpleTuple(table->GetSchema(),NUM_TUPLES);
@@ -266,8 +270,8 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
       continue;
     }
 
-    current_tile_group_id = location.block;
-    tuple_slot.push_back(location.offset);
+    locations.push_back(location);
+
     txn->RecordInsert(location);
 
     // Logging 
@@ -296,13 +300,12 @@ std::vector<oid_t> LoggingTestsUtil::InsertTuples(storage::DataTable* table, boo
     delete tuple;
   }
   
-  return tuple_slot;
+  return locations;
 }
 
-void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot, bool committed){
+void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed){
 
-  ItemPointer delete_location(current_tile_group_id,tuple_slot);
-
+  ItemPointer delete_location(location.block,location.offset);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -336,9 +339,9 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, oid_t tuple_slot,
   }
 }
 
-void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, oid_t tuple_slot, bool committed){
+void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed){
 
-  ItemPointer delete_location(current_tile_group_id,tuple_slot);
+  ItemPointer delete_location(location.block,location.offset);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
