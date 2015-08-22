@@ -19,6 +19,8 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/logging/logmanager.h"
+#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -100,16 +102,33 @@ bool UpdateExecutor::DExecute() {
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // (C) finally insert updated tuple into the table
-    ItemPointer location =
-        target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
+    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
 
+
     executor_context_->num_processed += 1; // updated one
+
     transaction_->RecordInsert(location);
+
+   // Logging 
+   {
+      auto& logManager = logging::LogManager::GetInstance();
+      if(logManager.IsReadyToLogging()){
+        auto logger = logManager.GetBackendLogger();
+  
+        auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
+                                                transaction_->GetTransactionId(), 
+                                                target_table_->GetOid(),
+                                                delete_location,
+                                                new_tuple);
+        logger->Update(record);
+      }
+    }
+
     delete new_tuple;
   }
 
