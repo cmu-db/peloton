@@ -54,13 +54,15 @@ class AriesFrontendLogger : public FrontendLogger{
 
     size_t LogFileSize();
 
+    bool IsFileBroken(size_t size_to_read);
+
     size_t GetNextFrameSize(void);
 
     size_t GetLogRecordCount() const;
 
-    void ReadTxnRecord(TransactionRecord &txnRecord);
+    bool ReadTxnRecord(TransactionRecord &txnRecord);
 
-    void ReadTupleRecordHeader(TupleRecord& tupleRecord);
+    bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
 
     storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
                                         Pool *pool);
