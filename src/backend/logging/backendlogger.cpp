@@ -87,7 +87,7 @@ LogRecord* BackendLogger::GetLogRecord(oid_t offset){
  * @brief Get the local queue size
  * @return local queue size
  */
-size_t BackendLogger::GetLocalQueueSize(void) const {
+size_t BackendLogger::GetLocalQueueSize(void) const{
   return local_queue.size();
 }
 
@@ -95,12 +95,20 @@ size_t BackendLogger::GetLocalQueueSize(void) const {
  * @brief if we still have log record in local queue or waiting flush, 
  * @return true otherwise false
  */
-bool BackendLogger::IsWaitFlush(void) const {
+bool BackendLogger::IsWaitFlush(void) const{
   if( GetLocalQueueSize() > 0 || wait_flush ){
     return true;
   }else{
     return false;
   }
+}
+
+bool BackendLogger::IsAddedFrontend(void) const{
+  return added_in_frontend;
+}
+
+void BackendLogger::AddedFrontend(void) {
+  added_in_frontend = true;
 }
 
 }  // namespace logging
