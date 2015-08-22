@@ -1339,7 +1339,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 		 */
 		Assert(PortalGetHeapMemory(portal) == CurrentMemoryContext);
 
-		SHMContextDeleteChildren(PortalGetHeapMemory(portal));
+		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 
 	/* Pop the snapshot if we pushed one. */

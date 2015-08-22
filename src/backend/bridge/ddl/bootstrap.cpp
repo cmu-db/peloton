@@ -55,7 +55,7 @@ raw_database_info *Bootstrap::GetRawDatabase(void) {
 
   std::vector<raw_table_info *> raw_tables;
   std::vector<raw_index_info *> raw_indexes;
-  std::vector<raw_foreignkey_info *> raw_foreignkeys;
+  std::vector<raw_foreign_key_info *> raw_foreignkeys;
 
   // Get objects from Postgres
   GetRawTableAndIndex(raw_tables, raw_indexes);
@@ -96,10 +96,8 @@ bool Bootstrap::BootstrapPeloton(raw_database_info *raw_database,
   auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   db->UpdateStats(peloton_status, false);
 
-  /*
   // Verbose mode
-  std::cout << "Print db :: \n"<<*db << std::endl;
-  */
+  //std::cout << "Print db :: \n"<<*db << std::endl;
 
   elog(LOG, "Finished initializing Peloton");
   return true;
@@ -292,7 +290,7 @@ raw_index_info *Bootstrap::GetRawIndex(
  * @return raw columns
  */
 std::vector<raw_column_info *> Bootstrap::GetRawColumn(
-    Oid relation_oid, char relation_kind, Relation pg_attribute_rel) {
+    Oid relation_oid, __attribute__((unused)) char relation_kind, Relation pg_attribute_rel) {
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
 
@@ -337,7 +335,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
           raw_constraint_info *raw_constraint =
               (raw_constraint_info *)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_NOTNULL;
-          raw_constraint->constraint_name = "";
+          //raw_constraint->constraint_name = (char *)"";
           raw_constraint->expr = nullptr;
 
           raw_constraints.push_back(raw_constraint);
@@ -362,7 +360,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
                   static_cast<Node *>(stringToNode(default_expression));
             }
           }
-          raw_constraint->constraint_name = "";
+          //raw_constraint->constraint_name = (char *)"";
           raw_constraints.push_back(raw_constraint);
 
           heap_close(relation, AccessShareLock);
@@ -395,7 +393,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
 }
 
 void Bootstrap::GetRawForeignKeys(
-    std::vector<raw_foreignkey_info *> &raw_foreignkeys) {
+    std::vector<raw_foreign_key_info *> &raw_foreignkeys) {
   Relation pg_constraint_rel;
   HeapScanDesc pg_constraint_scan;
   HeapTuple pg_constraint_tuple;
@@ -421,8 +419,8 @@ void Bootstrap::GetRawForeignKeys(
 
     // store raw information from here..
 
-    raw_foreignkey_info *raw_foreignkey =
-        (raw_foreignkey_info *)palloc(sizeof(raw_foreignkey_info));
+    raw_foreign_key_info *raw_foreignkey =
+        (raw_foreign_key_info *)palloc(sizeof(raw_foreign_key_info));
 
     // Extract oid
     raw_foreignkey->source_table_id = pg_constraint->conrelid;
@@ -502,10 +500,8 @@ void Bootstrap::CreateTables(raw_table_info **raw_tables, oid_t table_count) {
 
     bool status = DDLTable::CreateTable(raw_table->table_oid,
                                         raw_table->table_name, columns);
-    if (status == true) {
-      elog(LOG, "Create Table \"%s\" in Peloton", raw_table->table_name);
-    } else {
-      elog(ERROR, "Create Table \"%s\" in Peloton", raw_table->table_name);
+    if (status == false) {
+      elog(ERROR, "Could not create table \"%s\" in Peloton", raw_table->table_name);
     }
   }
 }
@@ -523,15 +519,13 @@ void Bootstrap::CreateIndexes(raw_index_info **raw_indexes, oid_t index_count) {
 
     bool status = DDLIndex::CreateIndex(index_info);
 
-    if (status == true) {
-      elog(LOG, "Create Index \"%s\" in Peloton", raw_index->index_name);
-    } else {
-      elog(ERROR, "Create Index \"%s\" in Peloton", raw_index->index_name);
+    if (status == false) {
+      elog(ERROR, "Could not create index \"%s\" in Peloton", raw_index->index_name);
     }
   }
 }
 
-void Bootstrap::CreateForeignkeys(raw_foreignkey_info **raw_foreignkeys,
+void Bootstrap::CreateForeignkeys(raw_foreign_key_info **raw_foreignkeys,
                                   oid_t foreignkey_count) {
   for (int foreignkey_itr = 0; foreignkey_itr < foreignkey_count;
        foreignkey_itr++) {

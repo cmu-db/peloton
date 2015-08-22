@@ -35,7 +35,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "../../../backend/bridge/dml/mapper/mapper.h"
 #include "postgres.h"
 
 #include "access/htup_details.h"
@@ -66,6 +65,8 @@
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
 
+#include "backend/bridge/dml/mapper/mapper.h"
+
 extern bool PelotonDualMode;
 
 static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
@@ -95,8 +96,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			TupleDesc tupDesc);
+			DestReceiver *dest);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
@@ -351,57 +351,30 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  // Single Mode
-	  if(PelotonDualMode == false)
+	  // PG Query
+	  if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {
-	    // PG Query
-	    if(queryDesc->plannedstmt->pelotonQuery == false)
-	    {
-	      ExecutePlan(estate,
-	                  queryDesc->planstate,
-	                  operation,
-	                  sendTuples,
-	                  count,
-	                  direction,
-	                  dest,
-	                  queryDesc->tupDesc);
-	    }
-	    // Peloton Query
-	    else
-	    {
-	      peloton_ExecutePlan(estate,
-	                          queryDesc->planstate,
-	                          operation,
-	                          sendTuples,
-	                          count,
-	                          direction,
-	                          dest,
-	                          queryDesc->tupDesc);
-	    }
+	    ExecutePlan(estate,
+	                queryDesc->planstate,
+	                operation,
+	                sendTuples,
+	                count,
+	                direction,
+	                dest);
 	  }
-	  // Dual Mode
+	  // Peloton Query
 	  else
 	  {
-
-      ExecutePlan(estate,
-                  queryDesc->planstate,
-                  operation,
-                  sendTuples,
-                  count,
-                  direction,
-                  dest,
-                  queryDesc->tupDesc);
-
-      peloton_ExecutePlan(estate,
-                          queryDesc->planstate,
-                          operation,
-                          sendTuples,
-                          count,
-                          direction,
-                          dest,
-                          queryDesc->tupDesc);
-
+	    peloton_ExecutePlan(estate,
+	                        queryDesc->planstate,
+	                        operation,
+	                        sendTuples,
+	                        count,
+	                        direction,
+	                        dest,
+	                        queryDesc->tupDesc);
 	  }
+
 
 	}
 
@@ -1584,8 +1557,7 @@ ExecutePlan(EState *estate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			TupleDesc tupDesc)
+			DestReceiver *dest)
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
@@ -1672,50 +1644,11 @@ peloton_ExecutePlan(EState *estate,
       DestReceiver *dest,
       TupleDesc tupDesc)
 {
-  TupleTableSlot *slot;
-  Peloton_Status *status;
 
-  status = peloton_create_status();
-
-  peloton_send_dml(status, planstate, tupDesc);
-
-  peloton_process_status(status);
-
-  // Go over any result slots
-  if(status->m_result_slots != NULL)
-  {
-    ListCell   *lc;
-
-    foreach(lc, status->m_result_slots)
-    {
-      slot = (TupleTableSlot *) lfirst(lc);
-
-      /*
-       * if the tuple is null, then we assume there is nothing more to
-       * process so we just end the loop...
-       */
-      if (TupIsNull(slot))
-        break;
-
-      /*
-       * If we are supposed to send the tuple somewhere, do so. (In
-       * practice, this is probably always the case at this point.)
-       */
-      if (sendTuples)
-        (*dest->receiveSlot) (slot, dest);
-
-      /*
-       * Free the underlying heap_tuple
-       * and the TupleTableSlot itself.
-       */
-      ExecDropSingleTupleTableSlot(slot);
-    }
-
-    // Clean up list
-    list_free(status->m_result_slots);
-  }
-
-  peloton_destroy_status(status);
+  peloton_send_dml(planstate,
+                   sendTuples,
+                   dest,
+                   tupDesc);
 }
 
 /*

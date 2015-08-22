@@ -150,10 +150,8 @@ void Database::UpdateStatsWithOid(Peloton_Status *status,
 
 dirty_table_info **Database::CreateDirtyTables(
     std::vector<dirty_table_info *> dirty_tables_vec) {
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  dirty_table_info **dirty_tables = (dirty_table_info **)palloc(
-      sizeof(dirty_table_info *) * dirty_tables_vec.size());
-  MemoryContextSwitchTo(oldcxt);
+  dirty_table_info **dirty_tables = (dirty_table_info **)
+      palloc(sizeof(dirty_table_info *) * dirty_tables_vec.size());
 
   oid_t table_itr = 0;
   for (auto dirty_table : dirty_tables_vec)
@@ -164,10 +162,8 @@ dirty_table_info **Database::CreateDirtyTables(
 
 dirty_index_info **Database::CreateDirtyIndexes(
     std::vector<dirty_index_info *> dirty_indexes_vec) {
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  dirty_index_info **dirty_indexes = (dirty_index_info **)palloc(
-      sizeof(dirty_index_info *) * dirty_indexes_vec.size());
-  MemoryContextSwitchTo(oldcxt);
+  dirty_index_info **dirty_indexes = (dirty_index_info **)
+      palloc(sizeof(dirty_index_info *) * dirty_indexes_vec.size());
 
   oid_t index_itr = 0;
   for (auto dirty_index : dirty_indexes_vec)
@@ -180,10 +176,8 @@ dirty_table_info *Database::CreateDirtyTable(oid_t table_oid,
                                              float number_of_tuples,
                                              dirty_index_info **dirty_indexes,
                                              oid_t index_count) {
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  dirty_table_info *dirty_table =
-      (dirty_table_info *)palloc(sizeof(dirty_table_info));
-  MemoryContextSwitchTo(oldcxt);
+  dirty_table_info *dirty_table = (dirty_table_info *)
+      palloc(sizeof(dirty_table_info));
 
   dirty_table->table_oid = table_oid;
   dirty_table->number_of_tuples = number_of_tuples;
@@ -195,10 +189,8 @@ dirty_table_info *Database::CreateDirtyTable(oid_t table_oid,
 
 dirty_index_info *Database::CreateDirtyIndex(oid_t index_oid,
                                              float number_of_tuples) {
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  dirty_index_info *dirty_index =
-      (dirty_index_info *)palloc(sizeof(dirty_index_info));
-  MemoryContextSwitchTo(oldcxt);
+  dirty_index_info *dirty_index = (dirty_index_info *)
+      palloc(sizeof(dirty_index_info));
 
   dirty_index->index_oid = index_oid;
   dirty_index->number_of_tuples = number_of_tuples;

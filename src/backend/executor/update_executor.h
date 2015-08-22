@@ -14,9 +14,8 @@
 
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/update_node.h"
-
 #include <vector>
+#include "../planner/update_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -26,7 +25,7 @@ class UpdateExecutor : public AbstractExecutor {
   UpdateExecutor &operator=(const UpdateExecutor &) = delete;
 
  public:
-  explicit UpdateExecutor(planner::AbstractPlanNode *node,
+  explicit UpdateExecutor(planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
  protected:

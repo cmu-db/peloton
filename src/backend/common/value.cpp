@@ -488,9 +488,11 @@ Value Value::CastAsDouble() const {
     case VALUE_TYPE_DOUBLE:
       retval.GetDouble() = GetDouble();
       break;
+    case VALUE_TYPE_DECIMAL:
+      retval.GetDouble() = std::stod(GetDecimal().ToString());
+      break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-    case VALUE_TYPE_DECIMAL:
     default:
       throw CastException(type, VALUE_TYPE_DOUBLE);
   }
@@ -547,6 +549,15 @@ Value Value::CastAsDecimal() const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT: {
+      int64_t rhsint = CastAsBigIntAndGetValue();
+      TTInt retval(rhsint);
+      retval *= Value::max_decimal_scale_factor;
+      return GetDecimalValue(retval);
+    }
+    case VALUE_TYPE_DOUBLE: {
+      // FIXME: Cast from a double to decimal,
+      // for now, we can only cast it into an Int and then to a Decimal
+      // but we lost precision here,
       int64_t rhsint = CastAsBigIntAndGetValue();
       TTInt retval(rhsint);
       retval *= Value::max_decimal_scale_factor;

@@ -12,14 +12,15 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
-#include "backend/planner/aggregateV2_node.h"
-
-#include <unordered_map>
+#include "backend/planner/aggregate_plan.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -34,10 +35,26 @@ namespace executor {
  */
 class Agg {
  public:
-  virtual ~Agg() {
+  virtual ~Agg();
+
+  void SetDistinct(bool distinct) {
+    is_distinct_ = distinct;
   }
-  virtual void Advance(const Value val) = 0;
-  virtual Value Finalize() = 0;
+
+  void Advance(const Value val);
+  Value Finalize();
+
+  virtual void DAdvance(const Value val) = 0;
+  virtual Value DFinalize() = 0;
+
+ private:
+
+  typedef std::unordered_set<Value, Value::hash, Value::equal_to> DistinctSetType;
+
+  DistinctSetType distinct_set_;
+
+  bool is_distinct_ = false;
+
 };
 
 class SumAgg : public Agg {
@@ -47,7 +64,7 @@ class SumAgg : public Agg {
     // aggregate initialized on first advance
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -59,7 +76,7 @@ class SumAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -80,11 +97,11 @@ class AvgAgg : public Agg {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
 
-  void Advance(const Value val) {
-    this->Advance(val, default_delta);
+  void DAdvance(const Value val) {
+    this->DAdvance(val, default_delta);
   }
 
-  void Advance(const Value val, const Value delta) {
+  void DAdvance(const Value val, const Value delta) {
     if (val.IsNull()) {
       return;
     }
@@ -108,7 +125,7 @@ class AvgAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (count == 0) {
       return ValueFactory::GetNullValue();
     }
@@ -137,14 +154,14 @@ class CountAgg : public Agg {
       : count(0) {
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
     count++;
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     return ValueFactory::GetBigIntValue(count);
   }
 
@@ -158,11 +175,11 @@ class CountStarAgg : public Agg {
       : count(0) {
   }
 
-  void Advance(const Value val __attribute__((unused))) {
+  void DAdvance(const Value val __attribute__((unused))) {
     ++count;
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     return ValueFactory::GetBigIntValue(count);
   }
 
@@ -177,7 +194,7 @@ class MaxAgg : public Agg {
     aggregate.SetNull();
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -189,7 +206,7 @@ class MaxAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -209,7 +226,7 @@ class MinAgg : public Agg {
     aggregate.SetNull();
   }
 
-  void Advance(const Value val) {
+  void DAdvance(const Value val) {
     if (val.IsNull()) {
       return;
     }
@@ -222,7 +239,7 @@ class MinAgg : public Agg {
     }
   }
 
-  Value Finalize() {
+  Value DFinalize() {
     if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
@@ -246,13 +263,12 @@ Agg *GetAggInstance(ExpressionType agg_type);
  */
 class AbstractAggregator {
  public:
-  AbstractAggregator(const planner::AggregateV2Node *_node,
-                     storage::DataTable *_output_table,
-                     executor::ExecutorContext* _econtext)
-      : node(_node),
-        output_table(_output_table),
-        executor_context(_econtext) {
-
+  AbstractAggregator(const planner::AggregatePlan *node,
+                     storage::DataTable *output_table,
+                     executor::ExecutorContext* econtext)
+      : node(node),
+        output_table(output_table),
+        executor_context(econtext) {
   }
 
   virtual bool Advance(AbstractTuple *next_tuple) = 0;
@@ -264,7 +280,7 @@ class AbstractAggregator {
 
  protected:
   /** @brief Plan node */
-  const planner::AggregateV2Node *node;
+  const planner::AggregatePlan *node;
 
   /** @brief Output table */
   storage::DataTable *output_table;
@@ -274,26 +290,6 @@ class AbstractAggregator {
 
 };
 
-/**
- * @brief Used when input is sorted on group-by keys.
- */
-class SortAggregator : public AbstractAggregator {
- public:
-  SortAggregator(const planner::AggregateV2Node *node,
-                 storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext);
-
-  bool Advance(AbstractTuple *next_tuple) override;
-
-  bool Finalize() override;
-
-  ~SortAggregator();
-
- private:
-  AbstractTuple *prev_tuple = nullptr;
-  Agg** aggregates;
-
-};
 
 /**
  * @brief Used when input is NOT sorted.
@@ -301,10 +297,9 @@ class SortAggregator : public AbstractAggregator {
  */
 class HashAggregator : public AbstractAggregator {
  public:
-  HashAggregator(const planner::AggregateV2Node *node,
+  HashAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext,
-                 size_t num_input_columns);
+                 executor::ExecutorContext* econtext, size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
@@ -348,6 +343,52 @@ class HashAggregator : public AbstractAggregator {
   HashAggregateMapType aggregates_map;
 
 };
+
+/**
+ * @brief Used when input is sorted on group-by keys.
+ */
+class SortedAggregator : public AbstractAggregator {
+ public:
+  SortedAggregator(const planner::AggregatePlan *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext,
+                 size_t num_input_columns);
+
+  bool Advance(AbstractTuple *next_tuple) override;
+
+  bool Finalize() override;
+
+  ~SortedAggregator();
+
+ private:
+//  AbstractTuple *prev_tuple = nullptr;
+  std::vector<Value> delegate_tuple_values_;
+  const expression::ContainerTuple<std::vector<Value>> delegate_tuple_;
+  const size_t num_input_columns_;
+  Agg** aggregates;
+
+};
+
+/**
+ * @brief Used when there's NO Group-By.
+ */
+class PlainAggregator : public AbstractAggregator {
+ public:
+  PlainAggregator(const planner::AggregatePlan *node,
+                 storage::DataTable *output_table,
+                 executor::ExecutorContext* econtext);
+
+  bool Advance(AbstractTuple *next_tuple) override;
+
+  bool Finalize() override;
+
+  ~PlainAggregator();
+
+ private:
+  Agg** aggregates;
+
+};
+
 
 }
 // namespace executor

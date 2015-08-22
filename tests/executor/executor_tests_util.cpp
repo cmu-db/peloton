@@ -157,18 +157,18 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
 
-  for (int col_itr = 0; col_itr < num_rows; col_itr++) {
-    int populate_value = col_itr;
+  for (int rowid = 0; rowid < num_rows; rowid++) {
+    int populate_value = rowid;
     if (mutate) populate_value *= 3;
 
     storage::Tuple tuple(schema, allocate);
 
     if (group_by) {
-      // Make sure first column is unique in all cases
-      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(0, 0)));
+      // First column has only two distinct values
+      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(int(populate_value/(num_rows/2)), 0)));
 
     } else {
-      // Make sure first column is unique in all cases
+      // First column is unique in this case
       tuple.SetValue(
           0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
     }

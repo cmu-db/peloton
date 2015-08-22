@@ -26,7 +26,7 @@ class DeleteExecutor : public AbstractExecutor {
   DeleteExecutor(DeleteExecutor &&) = delete;
   DeleteExecutor &operator=(DeleteExecutor &&) = delete;
 
-  DeleteExecutor(planner::AbstractPlanNode *node,
+  DeleteExecutor(planner::AbstractPlan *node,
                  ExecutorContext *executor_context);
 
   ~DeleteExecutor() {}

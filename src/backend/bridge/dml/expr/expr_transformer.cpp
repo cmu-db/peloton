@@ -24,21 +24,11 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/cast_expression.h"
 
 namespace peloton {
 namespace bridge {
 
-void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
-                                             std::string prefix) {
-  auto tag = nodeTag(expr_state->expr);
-  (void) tag;
-
-  /* TODO Not complete.
-   * Not all ExprState has a child / children list,
-   * so it would take some multiplexing to print it recursively here.
-   */
-  LOG_TRACE("%u ", tag);
-}
 
 /**
  * @brief Transform a ExprState tree (Postgres) to a AbstractExpression tree
@@ -165,8 +155,8 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
   auto pg_func_id = fn_expr->funcid;
   auto rettype = fn_expr->funcresulttype;
 
-  LOG_INFO("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
-  LOG_INFO("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
+  LOG_TRACE("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
+  LOG_TRACE("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
 
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
@@ -178,6 +168,15 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
 
     ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
     return TransformExpr(first_child);
+  }
+
+  if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
+    expression::CastExpression *cast_expr = reinterpret_cast<expression::CastExpression*>(retval);
+    ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
+    cast_expr->SetChild(TransformExpr(first_child));
+    PostgresValueType type = static_cast<PostgresValueType>(rettype);
+    cast_expr->SetResultType(type);
+    return cast_expr;
   }
 
   return retval;
@@ -350,6 +349,12 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
     return nullptr;
   }
   PltFuncMetaInfo func_meta = itr->second;
+
+  if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
+    // it is a cast, but we need casted type and the child expr.
+    // so we just create an empty cast expr and return it.
+    return expression::CastFactory();
+  }
 
   assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
 

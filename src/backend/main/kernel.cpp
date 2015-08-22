@@ -91,7 +91,7 @@ class aggregator_task {
   }
 };
 
-Result Kernel::Handler(const char *query) {
+Result Kernel::Handler(__attribute__((unused)) const char *query) {
   Result status = RESULT_INVALID;
 
   /*

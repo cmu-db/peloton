@@ -16,8 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/storage/tuple.h"
 
 namespace peloton {
@@ -28,14 +28,14 @@ namespace planner {
  * The counter-part of Postgres Result plan
  * that returns a single constant tuple.
  */
-class ResultNode : public AbstractPlanNode {
+class ResultPlan : public AbstractPlan {
  public:
-  ResultNode(const ResultNode &) = delete;
-  ResultNode &operator=(const ResultNode &) = delete;
-  ResultNode(ResultNode &&) = delete;
-  ResultNode &operator=(ResultNode &&) = delete;
+  ResultPlan(const ResultPlan &) = delete;
+  ResultPlan &operator=(const ResultPlan &) = delete;
+  ResultPlan(ResultPlan &&) = delete;
+  ResultPlan &operator=(ResultPlan &&) = delete;
 
-  ResultNode(storage::Tuple *tuple, storage::AbstractBackend *backend)
+  ResultPlan(storage::Tuple *tuple, storage::AbstractBackend *backend)
       : tuple_(tuple), backend_(backend) {}
 
   // Accessors

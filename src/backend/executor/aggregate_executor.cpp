@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
+#include <vector>
+
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/aggregateV2_node.h"
+#include "backend/planner/aggregate_plan.h"
 #include "backend/storage/table_factory.h"
-
-#include <utility>
-#include <vector>
 
 namespace peloton {
 namespace executor {
@@ -28,7 +28,7 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
+AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
 }
@@ -45,11 +45,10 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
-  LOG_TRACE("Aggregate Scan executor :: 1 child \n");
+  LOG_TRACE("Aggregate executor :: 1 child \n");
 
   // Grab info from plan node and check it
-  const planner::AggregateV2Node &node =
-      GetPlanNode<planner::AggregateV2Node>();
+  const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
 
   // Construct the output table
   auto output_table_schema =
@@ -60,11 +59,10 @@ bool AggregateExecutor::DInit() {
   result_itr = START_OID;
 
   bool own_schema = false;
-  output_table = storage::TableFactory::GetDataTable(INVALID_OID, INVALID_OID,
-                                                     output_table_schema,
-                                                     "aggregate_temp_table",
-                                                     DEFAULT_TUPLES_PER_TILEGROUP,
-                                                     own_schema);
+  output_table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      own_schema);
 
   return true;
 }
@@ -76,7 +74,7 @@ bool AggregateExecutor::DInit() {
 bool AggregateExecutor::DExecute() {
   // Already performed the aggregation
   if (done) {
-    if (result_itr == result.size()) {
+    if (result_itr == INVALID_OID || result_itr == result.size()) {
       return false;
     } else {
       // Return appropriate tile and go to next tile
@@ -87,62 +85,67 @@ bool AggregateExecutor::DExecute() {
   }
 
   // Grab info from plan node
-  const planner::AggregateV2Node &node =
-      GetPlanNode<planner::AggregateV2Node>();
+  const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
 
   // Get an aggregator
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
 
   // Get input tiles and aggregate them
-  std::unique_ptr<expression::ContainerTuple<LogicalTile>> prev_tuple(nullptr);
-  std::unique_ptr<LogicalTile> prev_tile(nullptr);
   while (children_[0]->Execute() == true) {
 
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-    if(nullptr == aggregator.get()){
+    if (nullptr == aggregator.get()) {
       // Initialize the aggregator
-      switch(node.GetAggregateStrategy()){
+      switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_INFO("Use HashAggregator\n");
-          aggregator.reset(new HashAggregator(&node, output_table, executor_context_, tile->GetColumnCount()));
+          LOG_INFO("Use HashAggregator\n")
+          ;
+          aggregator.reset(
+              new HashAggregator(&node, output_table, executor_context_,
+                                 tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_SORT:
-          LOG_INFO("Use SortAggregator\n");
-          aggregator.reset(new SortAggregator(&node, output_table, executor_context_));
+        case AGGREGATE_TYPE_SORTED:
+          LOG_INFO("Use SortedAggregator\n")
+          ;
+          aggregator.reset(
+              new SortedAggregator(&node, output_table, executor_context_,
+                                   tile->GetColumnCount()));
+          break;
+        case AGGREGATE_TYPE_PLAIN:
+          LOG_INFO("Use PlainAggregator\n")
+          ;
+          aggregator.reset(
+              new PlainAggregator(&node, output_table, executor_context_));
           break;
         default:
-          LOG_ERROR("Invalid aggregate type. Return.\n");
+          LOG_ERROR("Invalid aggregate type. Return.\n")
+          ;
           return false;
       }
     }
 
-    LOG_TRACE("Looping over tile..");
+    LOG_INFO("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
-      auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(),
-                                                                   tuple_id);
 
-      if (aggregator->Advance(cur_tuple) == false) {
+      std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
+          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id));
+
+      if (aggregator->Advance(cur_tuple.get()) == false) {
         return false;
       }
-      prev_tuple.reset(cur_tuple);
-    }
 
-    /*
-     * This is critical: We must not release the tile immediately because
-     * the prev_tuple may still be referenced in next iteration by some aggregators.
-     * To solve this, we always keep two tiles alive --- hopefully not expensive.
-     */
-    prev_tile.reset(tile.release());
+    }
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator->Finalize())
-    return false;
+  if (!aggregator || !aggregator->Finalize()) {
+    done = true;
 
-  prev_tile.reset(nullptr);
+    return false;
+  }
 
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();
@@ -161,7 +164,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   done = true;
-  LOG_TRACE("Result tiles : %lu \n", result.size());
+  LOG_INFO("Result tiles : %lu \n", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;
