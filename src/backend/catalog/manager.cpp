@@ -42,6 +42,11 @@ storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
   return location;
 }
 
+//used for logging test
+void Manager::ClearTileGroup(){
+  locator.clear(); 
+}
+
 //===--------------------------------------------------------------------===//
 // DATABASE
 //===--------------------------------------------------------------------===//
@@ -67,6 +72,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
     oid_t database_offset = 0;
     for (auto database : databases) {
       if (database->GetOid() == database_oid) {
+        delete database;
         break;
       }
       database_offset++;
