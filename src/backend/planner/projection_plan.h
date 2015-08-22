@@ -14,8 +14,8 @@
 
 #include <memory>
 
+#include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/planner/project_info.h"
 
 namespace peloton {
@@ -26,14 +26,14 @@ class Schema;
 
 namespace planner {
 
-class ProjectionNode : public AbstractPlanNode {
+class ProjectionPlan : public AbstractPlan {
  public:
-  ProjectionNode(const ProjectionNode &) = delete;
-  ProjectionNode &operator=(const ProjectionNode &) = delete;
-  ProjectionNode(ProjectionNode &&) = delete;
-  ProjectionNode &operator=(ProjectionNode &&) = delete;
+  ProjectionPlan(const ProjectionPlan &) = delete;
+  ProjectionPlan &operator=(const ProjectionPlan &) = delete;
+  ProjectionPlan(ProjectionPlan &&) = delete;
+  ProjectionPlan &operator=(ProjectionPlan &&) = delete;
 
-  ProjectionNode(const planner::ProjectInfo *project_info,
+  ProjectionPlan(const planner::ProjectInfo *project_info,
                  const catalog::Schema *schema)
       : project_info_(project_info), schema_(schema) {}
 

@@ -34,7 +34,7 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
+SeqScanExecutor::SeqScanExecutor(planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 
@@ -48,17 +48,17 @@ bool SeqScanExecutor::DInit() {
   if (!status) return false;
 
   // Grab data from plan node.
-  const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
+  const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
 
-  table_ = node.GetTable();
+  target_table_ = node.GetTable();
 
   current_tile_group_offset_ = START_OID;
 
-  if (table_ != nullptr) {
-    table_tile_group_count_ = table_->GetTileGroupCount();
+  if (target_table_ != nullptr) {
+    table_tile_group_count_ = target_table_->GetTileGroupCount();
 
     if (column_ids_.empty()) {
-      column_ids_.resize(table_->GetSchema()->GetColumnCount());
+      column_ids_.resize(target_table_->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
   }
@@ -76,7 +76,7 @@ bool SeqScanExecutor::DExecute() {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child \n");
 
-    assert(table_ == nullptr);
+    assert(target_table_ == nullptr);
     assert(column_ids_.size() == 0);
 
     while (children_[0]->Execute()) {
@@ -109,14 +109,14 @@ bool SeqScanExecutor::DExecute() {
   else if (children_.size() == 0) {
     LOG_TRACE("Seq Scan executor :: 0 child \n");
 
-    assert(table_ != nullptr);
+    assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
 
       storage::TileGroup *tile_group =
-          table_->GetTileGroup(current_tile_group_offset_++);
+          target_table_->GetTileGroup(current_tile_group_offset_++);
       storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
@@ -166,6 +166,7 @@ bool SeqScanExecutor::DExecute() {
       SetOutput(logical_tile.release());
       return true;
     }
+
   }
 
   return false;

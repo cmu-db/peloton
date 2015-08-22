@@ -20,7 +20,7 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,
+AbstractExecutor::AbstractExecutor(planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)
     : node_(node), executor_context_(executor_context) {}
 
@@ -59,16 +59,16 @@ bool AbstractExecutor::Init() {
   for (auto child : children_) {
     status = child->Init();
     if (status == false) {
-      LOG_ERROR("Initialization failed in child executor with plan id : %d\n",
-                child->node_->GetPlanNodeId());
+      LOG_ERROR("Initialization failed in child executor with plan id : %s\n",
+                child->node_->GetInfo().c_str());
       return false;
     }
   }
 
   status = DInit();
   if (status == false) {
-    LOG_ERROR("Initialization failed in executor with plan id : %d\n",
-              node_->GetPlanNodeId());
+    LOG_ERROR("Initialization failed in executor with plan id : %s\n",
+              node_->GetInfo().c_str());
     return false;
   }
 

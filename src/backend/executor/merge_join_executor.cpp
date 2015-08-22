@@ -26,7 +26,7 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-MergeJoinExecutor::MergeJoinExecutor(planner::AbstractPlanNode *node,
+MergeJoinExecutor::MergeJoinExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractJoinExecutor(node, executor_context) {
   join_clauses_ = nullptr;
@@ -37,7 +37,7 @@ bool MergeJoinExecutor::DInit() {
   if (status == false)
     return status;
 
-  const planner::MergeJoinNode &node = GetPlanNode<planner::MergeJoinNode>();
+  const planner::MergeJoinPlan &node = GetPlanNode<planner::MergeJoinPlan>();
 
   join_clauses_ = node.GetJoinClauses();
 

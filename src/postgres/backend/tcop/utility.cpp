@@ -935,15 +935,10 @@ peloton_ProcessUtility(Node *parsetree,
             DestReceiver *dest,
             char *completionTag)
 {
-  Peloton_Status *status;
-  status = peloton_create_status();
 
   // TODO: Peloton Changes
-  peloton_send_ddl(status, parsetree, queryString);
+  peloton_send_ddl(parsetree);
 
-  peloton_process_status(status);
-
-  peloton_destroy_status(status);
 }
 
 /*
