@@ -284,8 +284,8 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   /* go back 4 bytes */
-  ret = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
-  if(ret == -1){
+  int res = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
+  if(res == -1){
     LOG_ERROR("Error occured in fseek ");
   }
 
