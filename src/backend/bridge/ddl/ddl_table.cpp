@@ -13,6 +13,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <thread>
 
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_table.h"
@@ -41,7 +42,7 @@ namespace bridge {
  * @return true if we handled it correctly, false otherwise
  */
 
-bool DDLTable::ExecCreateStmt(Node *parsetree,
+bool DDLTable::ExecCreateStmt(Node *parsetree, DDL_Info* ddl_info,
                               std::vector<Node *> &parsetree_stack,
                               Peloton_Status *status, TransactionId txn_id) {
   List *stmts = ((CreateStmt *)parsetree)->stmts;
@@ -61,25 +62,14 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
       assert(relation_oid);
 
       std::vector<catalog::Column> column_infos;
-      std::vector<catalog::ForeignKey> foreign_keys;
-
-      bool status;
 
       //===--------------------------------------------------------------------===//
       // CreateStmt --> ColumnInfo --> CreateTable
       //===--------------------------------------------------------------------===//
       if (schema != NULL) {
-        DDLUtils::ParsingCreateStmt(Cstmt, column_infos, foreign_keys);
+        DDLUtils::ParsingCreateStmt(Cstmt, column_infos);
 
         DDLTable::CreateTable(relation_oid, relation_name, column_infos);
-      }
-
-      //===--------------------------------------------------------------------===//
-      // Set Reference Tables
-      //===--------------------------------------------------------------------===//
-      status = DDLTable::SetReferenceTables(foreign_keys, relation_oid);
-      if (status == false) {
-        LOG_WARN("Failed to set reference tables");
       }
     }
   }
@@ -87,10 +77,14 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
   //===--------------------------------------------------------------------===//
   // Rerun query
   //===--------------------------------------------------------------------===//
-  for (auto parsetree : parsetree_stack) {
-    DDL::ProcessUtility(parsetree, "rerun", status, txn_id);
+  {
+    std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
+    for (auto parsetree : parsetree_stack) {
+      DDL::ProcessUtility(parsetree, ddl_info, status, txn_id);
+      pfree(parsetree);
+    }
+    parsetree_stack.clear();
   }
-  parsetree_stack.clear();
 
   return true;
 }
@@ -112,7 +106,15 @@ bool DDLTable::ExecAlterTableStmt(Node *parsetree,
   storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithOid(relation_oid)) {
-    parsetree_stack.push_back(parsetree);
+
+    // Make a copy for local storage
+    MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+    auto parse_tree_copy = (Node *) copyObject(parsetree);
+    MemoryContextSwitchTo(oldcxt);
+    {
+      std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
+      parsetree_stack.push_back(parse_tree_copy);
+    }
     return true;
   }
 
@@ -228,7 +230,7 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
     }
   }
 
-  LOG_INFO("Alter the table (%u)\n", relation_oid);
+  LOG_INFO("Altered the table (%u)\n", relation_oid);
   return true;
 }
 

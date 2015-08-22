@@ -39,10 +39,13 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, const char *queryString,
-                         Peloton_Status *status, TransactionId txn_id) {
+void DDL::ProcessUtility(Node *parsetree,
+                         DDL_Info* ddl_info,
+                         Peloton_Status *status,
+                         TransactionId txn_id) {
   assert(parsetree != nullptr);
-  assert(queryString != nullptr);
+
+  LOG_TRACE("Process Utility");
 
   static std::vector<Node *> parsetree_stack;
 
@@ -60,13 +63,13 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     }
 
     case T_DropdbStmt: {
-      DDLDatabase::ExecDropdbStmt(parsetree);
+      DDLDatabase::ExecDropdbStmt(parsetree, ddl_info);
       break;
     }
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, ddl_info, parsetree_stack, status, txn_id);
       break;
     }
 
@@ -101,12 +104,6 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     } break;
   }
 
-  /*
-    auto& manager = catalog::Manager::GetInstance();
-    storage::Database* db =
-    manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-    std::cout << "Print db :: \n"<<*db << std::endl;
-    */
 }
 
 }  // namespace bridge

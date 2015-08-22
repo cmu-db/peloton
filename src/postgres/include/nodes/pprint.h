@@ -12,7 +12,7 @@
 #include "executor/execdesc.h"
 
 
-extern void printQueryDesc(const QueryDesc *queryDesc);
-extern void printPlanStateTree(const PlanState *planstate);
+extern void PrintQueryDesc(const QueryDesc *queryDesc);
+extern void PrintPlanStateTree(const PlanState *planstate);
 
 #endif /* SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_ */

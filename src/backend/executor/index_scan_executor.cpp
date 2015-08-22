@@ -33,7 +33,7 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
+IndexScanExecutor::IndexScanExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 
@@ -50,7 +50,7 @@ bool IndexScanExecutor::DInit() {
   LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
-  const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
   index_ = node.GetIndex();
   assert(index_ != nullptr);
@@ -62,6 +62,23 @@ bool IndexScanExecutor::DInit() {
   key_column_ids_ = node.GetKeyColumnIds();
   expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
+  runtime_keys_ = node.GetRunTimeKeys();
+
+  if (runtime_keys_.size() != 0) {
+    assert(runtime_keys_.size() == values_.size());
+
+    if (!key_ready) {
+      values_.clear();
+
+      for (auto expr : runtime_keys_) {
+        auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
+        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        values_.push_back(value);
+      }
+
+      key_ready = true;
+    }
+  }
 
   auto table = node.GetTable();
 
@@ -127,7 +144,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
     tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
   }
 
-  LOG_INFO("Tuple locations : %lu", tuple_locations.size());
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 

@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "backend/planner/abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
-#include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
 namespace executor {
@@ -31,7 +31,7 @@ class AbstractScanExecutor : public AbstractExecutor {
   AbstractScanExecutor(AbstractScanExecutor &&) = delete;
   AbstractScanExecutor &operator=(AbstractScanExecutor &&) = delete;
 
-  explicit AbstractScanExecutor(planner::AbstractPlanNode *node,
+  explicit AbstractScanExecutor(planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
  protected:

@@ -107,7 +107,7 @@ std::string ValueTypeToString(ValueType type) {
     case VALUE_TYPE_BIGINT:
       return "BIGINT";
     case VALUE_TYPE_DOUBLE:
-      return "FLOAT";
+      return "DOUBLE";
     case VALUE_TYPE_VARCHAR:
       return "VARCHAR";
     case VALUE_TYPE_VARBINARY:
@@ -134,7 +134,7 @@ ValueType StringToValueType(std::string str) {
     return VALUE_TYPE_INTEGER;
   } else if (str == "BIGINT") {
     return VALUE_TYPE_BIGINT;
-  } else if (str == "FLOAT") {
+  } else if (str == "DOUBLE") {
     return VALUE_TYPE_DOUBLE;
   } else if (str == "STRING") {
     return VALUE_TYPE_VARCHAR;

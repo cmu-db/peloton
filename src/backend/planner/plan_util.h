@@ -12,12 +12,12 @@
 
 #include <string>
 
-#include "backend/planner/abstract_plan_node.h"
+#include "abstract_plan.h"
 
 namespace peloton {
 namespace planner {
 
-AbstractPlanNode *GetEmptyPlanNode(PlanNodeType type);
+AbstractPlan *GetEmptyPlanNode(PlanNodeType type);
 
 }  // namespace planner
 }  // namespace peloton
