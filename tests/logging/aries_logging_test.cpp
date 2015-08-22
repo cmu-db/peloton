@@ -28,6 +28,11 @@ TEST(AriesLoggingTest, writing_logfile) {
 
   // writing simple log file
   if( LoggingTestsUtil::PrepareLogFile() ){
+    // truncate the log file
+    auto res = truncate( filename.c_str(), 1000);
+    if( res == -1 ){
+      LOG_ERROR("Failed to truncate the log file"); 
+    }
   }else{
     //Something's wrong !!
     EXPECT_EQ(1,0);
