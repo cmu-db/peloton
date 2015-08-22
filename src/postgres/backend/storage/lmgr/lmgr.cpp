@@ -40,7 +40,7 @@
  * particularly bad happens: in the worst case they deadlock, causing one of
  * the transactions to abort.
  */
-static uint32 speculativeInsertionToken = 0;
+thread_local static uint32 speculativeInsertionToken = 0;
 
 
 /*
