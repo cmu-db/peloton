@@ -68,7 +68,7 @@
  * Log Flag
  * ----------
  */
- bool logging_on = false;
+bool logging_on = false;
 
 /* ----------
  * Local data
@@ -410,18 +410,16 @@ peloton_MainLoop(void) {
   Peloton_Msg  msg;
   int     wr;
 
-  if(logging_on){
-    #define LOGGING_ON 
-  }
 
-  #ifdef LOGGING_ON
+  std::vector<std::thread> thread_group;
+  if(logging_on){
   // Launching a thread for logging 
   auto& logManager = peloton::logging::LogManager::GetInstance();
   logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
-  std::thread thread(&peloton::logging::LogManager::StandbyLogging,
-                     &logManager,
-                     logManager.GetMainLoggingType());
-  #endif
+  thread_group.push_back(std::thread(&peloton::logging::LogManager::StandbyLogging,
+                                     &logManager,
+                                     logManager.GetMainLoggingType()));
+  }
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -529,14 +527,17 @@ peloton_MainLoop(void) {
       break;
   }             /* end of outer loop */
 
-  #ifdef LOGGING_ON
-  // terminate logging thread
-  if( logManager.EndLogging() ){
-    thread.join();
-  }else{
-    elog(LOG,"Failed to terminate logging thread");
+  if(logging_on){
+    auto& logManager = peloton::logging::LogManager::GetInstance();
+    // terminate logging thread
+    if( logManager.EndLogging() ){
+      for(uint64_t thread_itr = 0; thread_itr < thread_group.size(); ++thread_itr){
+        thread_group[thread_itr].join();
+      }
+    }else{
+      elog(LOG,"Failed to terminate logging thread");
+    }
   }
-  #endif
 
   /* Normal exit from peloton is here */
   ereport(LOG,
@@ -1249,10 +1250,12 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       peloton::bridge::Bootstrap::BootstrapPeloton(raw_database,
                                                    msg->m_status);
 
-      // NOTE:: start logging since bootstrapPeloton is done
-      auto& logManager = peloton::logging::LogManager::GetInstance();
-      if( logManager.IsReadyToLogging() == false){
-        logManager.StartLogging();
+      if( logging_on){
+        // NOTE:: start logging since bootstrapPeloton is done
+        auto& logManager = peloton::logging::LogManager::GetInstance();
+        if( logManager.IsReadyToLogging() == false){
+          logManager.StartLogging();
+        }
       }
     }
     catch(const std::exception &exception) {
