@@ -598,3 +598,4 @@ postgres_backend_INCLUDES = \
 
 BUILT_SOURCES = postgres/backend/parser/gram.h
 AM_YFLAGS = -d 
+

@@ -27,6 +27,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/message_queue.h"
 #include "backend/scheduler/tbb_scheduler.h"
+#include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
@@ -45,6 +46,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
+
 #include "nodes/params.h"
 #include "utils/guc.h"
 #include "utils/errcodes.h"
@@ -60,6 +62,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+
 
 /* ----------
  * Local data
@@ -108,6 +111,8 @@ static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
 static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
+static void __attribute__((unused)) peloton_test_config();
+
 static Peloton_Status *peloton_create_status();
 static void peloton_process_status(Peloton_Status *status);
 static void peloton_destroy_status(Peloton_Status *status);
@@ -124,6 +129,7 @@ static ParamListInfo peloton_copy_paramlist(ParamListInfo param_list);
 
 static void peloton_begin_query();
 static void __attribute__((unused)) peloton_finish_query();
+
 
 bool
 IsPelotonProcess(void) {
@@ -180,6 +186,7 @@ int peloton_start(void) {
  */
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
+
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
@@ -1306,6 +1313,21 @@ peloton_process_status(Peloton_Status *status) {
 void
 peloton_destroy_status(Peloton_Status *status) {
   pfree(status);
+}
+
+static void
+peloton_test_config() {
+
+  auto val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "Before SetConfigOption : %s", val);
+
+  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
+
+  val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "After SetConfigOption : %s", val);
+
+  // Build the configuration map
+  peloton::bridge::ConfigManager::BuildConfigMap();
 }
 
 /* ----------
