@@ -205,13 +205,13 @@ static bool lastFullPageWrites;
  * Local copy of SharedRecoveryInProgress variable. True actually means "not
  * known, need to check the shared state".
  */
-static bool LocalRecoveryInProgress = true;
+thread_local static bool LocalRecoveryInProgress = true;
 
 /*
  * Local copy of SharedHotStandbyActive variable. False actually means "not
  * known, need to check the shared state".
  */
-static bool LocalHotStandbyActive = false;
+thread_local static bool LocalHotStandbyActive = false;
 
 /*
  * Local state for XLogInsertAllowed():
@@ -223,7 +223,7 @@ static bool LocalHotStandbyActive = false;
  * The coding in XLogInsertAllowed() depends on the first two of these states
  * being numerically the same as bool true and false.
  */
-static int	LocalXLogInsertAllowed = -1;
+thread_local static int	LocalXLogInsertAllowed = -1;
 
 /*
  * When ArchiveRecoveryRequested is set, archive recovery was requested,
@@ -320,7 +320,7 @@ static TimeLineID curFileTLI;
  * stored here.  The parallel leader advances its own copy, when necessary,
  * in WaitForParallelWorkersToFinish.
  */
-static XLogRecPtr ProcLastRecPtr = InvalidXLogRecPtr;
+thread_local static XLogRecPtr ProcLastRecPtr = InvalidXLogRecPtr;
 
 XLogRecPtr	XactLastRecEnd = InvalidXLogRecPtr;
 XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
@@ -335,14 +335,14 @@ XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
  * see GetRedoRecPtr.  A freshly spawned backend obtains the value during
  * InitXLOGAccess.
  */
-static XLogRecPtr RedoRecPtr;
+thread_local static XLogRecPtr RedoRecPtr;
 
 /*
  * doPageWrites is this backend's local copy of (forcePageWrites ||
  * fullPageWrites).  It is used together with RedoRecPtr to decide whether
  * a full-page image of a page need to be taken.
  */
-static bool doPageWrites;
+thread_local static bool doPageWrites;
 
 /*
  * RedoStartLSN points to the checkpoint's REDO location which is specified
@@ -686,7 +686,7 @@ static ControlFileData *ControlFile = NULL;
  * Private, possibly out-of-date copy of shared LogwrtResult.
  * See discussion above.
  */
-static XLogwrtResult LogwrtResult = {0, 0};
+thread_local static XLogwrtResult LogwrtResult = {0, 0};
 
 /*
  * Codes indicating where we got a WAL file from during recovery, or where
@@ -709,9 +709,9 @@ static const char *xlogSourceNames[] = {"any", "archive", "pg_xlog", "stream"};
  * openLogSegNo identifies the segment.  These variables are only
  * used to write the XLOG, and so will normally refer to the active segment.
  */
-static int	openLogFile = -1;
-static XLogSegNo openLogSegNo = 0;
-static uint32 openLogOff = 0;
+thread_local static int	openLogFile = -1;
+thread_local static XLogSegNo openLogSegNo = 0;
+thread_local static uint32 openLogOff = 0;
 
 /*
  * These variables are used similarly to the ones above, but for reading
@@ -721,11 +721,11 @@ static uint32 openLogOff = 0;
  * page has been read into readBuf, and readSource indicates where we got
  * the currently open file from.
  */
-static int	readFile = -1;
-static XLogSegNo readSegNo = 0;
-static uint32 readOff = 0;
-static uint32 readLen = 0;
-static XLogSource readSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
+thread_local static int	readFile = -1;
+thread_local static XLogSegNo readSegNo = 0;
+thread_local static uint32 readOff = 0;
+thread_local static uint32 readLen = 0;
+thread_local static XLogSource readSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
 
 /*
  * Keeps track of which source we're currently reading from. This is
@@ -734,8 +734,8 @@ static XLogSource readSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code 
  * attempt to read from currentSource failed, and we should try another source
  * next.
  */
-static XLogSource currentSource = static_cast<XLogSource>(0);	/* XLOG_FROM_* code */
-static bool lastSourceFailed = false;
+thread_local static XLogSource currentSource = static_cast<XLogSource>(0);	/* XLOG_FROM_* code */
+thread_local static bool lastSourceFailed = false;
 
 typedef struct XLogPageReadPrivate
 {
@@ -752,36 +752,36 @@ typedef struct XLogPageReadPrivate
  * also changes when we try to read from a source and fail, while
  * XLogReceiptSource tracks where we last successfully read some WAL.)
  */
-static TimestampTz XLogReceiptTime = static_cast<TimestampTz>(0);
-static XLogSource XLogReceiptSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
+thread_local static TimestampTz XLogReceiptTime = static_cast<TimestampTz>(0);
+thread_local static XLogSource XLogReceiptSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
 
 /* State information for XLOG reading */
-static XLogRecPtr ReadRecPtr;	/* start of last record read */
-static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
+thread_local static XLogRecPtr ReadRecPtr;	/* start of last record read */
+thread_local static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
 
-static XLogRecPtr minRecoveryPoint;		/* local copy of
+thread_local static XLogRecPtr minRecoveryPoint;		/* local copy of
 										 * ControlFile->minRecoveryPoint */
-static TimeLineID minRecoveryPointTLI;
-static bool updateMinRecoveryPoint = true;
+thread_local static TimeLineID minRecoveryPointTLI;
+thread_local static bool updateMinRecoveryPoint = true;
 
 /*
  * Have we reached a consistent database state? In crash recovery, we have
  * to replay all the WAL, so reachedConsistency is never set. During archive
  * recovery, the database is consistent once minRecoveryPoint is reached.
  */
-bool		reachedConsistency = false;
+thread_local bool		reachedConsistency = false;
 
-static bool InRedo = false;
+thread_local static bool InRedo = false;
 
 /* Have we launched bgwriter during recovery? */
-static bool bgwriterLaunched = false;
+thread_local static bool bgwriterLaunched = false;
 
 /* For WALInsertLockAcquire/Release functions */
-static int	MyLockNo = 0;
-static bool holdingAllLocks = false;
+thread_local static int	MyLockNo = 0;
+thread_local static bool holdingAllLocks = false;
 
 #ifdef WAL_DEBUG
-static MemoryContext walDebugCxt = NULL;
+thread_local static MemoryContext walDebugCxt = NULL;
 #endif
 
 static void readRecoveryCommandFile(void);
