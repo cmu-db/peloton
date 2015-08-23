@@ -110,7 +110,7 @@ int			PostAuthDelay = 0;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static long max_stack_depth_bytes = 100 * 1024L;
+thread_local static long max_stack_depth_bytes = 100 * 1024L;
 
 /*
  * Stack base pointer -- initialized by PostmasterMain and inherited by
@@ -118,7 +118,7 @@ static long max_stack_depth_bytes = 100 * 1024L;
  * it directly. Newer versions use set_stack_base(), but we want to stay
  * binary-compatible for the time being.
  */
-char	   *stack_base_ptr = NULL;
+thread_local char	   *stack_base_ptr = NULL;
 
 /*
  * On IA64 we also have to remember the register stack base.
@@ -132,54 +132,54 @@ char	   *register_stack_base_ptr = NULL;
  * will reread the configuration file. (Better than doing the
  * reading in the signal handler, ey?)
  */
-static volatile sig_atomic_t got_SIGHUP = false;
+thread_local static volatile sig_atomic_t got_SIGHUP = false;
 
 /*
  * Flag to keep track of whether we have started a transaction.
  * For extended query protocol this has to be remembered across messages.
  */
-static bool xact_started = false;
+thread_local static bool xact_started = false;
 
 /*
  * Flag to indicate that we are doing the outer loop's read-from-client,
  * as opposed to any random read from client that might happen within
  * commands like COPY FROM STDIN.
  */
-static bool DoingCommandRead = false;
+thread_local static bool DoingCommandRead = false;
 
 /*
  * Flags to implement skip-till-Sync-after-error behavior for messages of
  * the extended query protocol.
  */
-static bool doing_extended_query_message = false;
-static bool ignore_till_sync = false;
+thread_local static bool doing_extended_query_message = false;
+thread_local static bool ignore_till_sync = false;
 
 /*
  * If an unnamed prepared statement exists, it's stored here.
  * We keep it separate from the hashtable kept by commands/prepare.c
  * in order to reduce overhead for short-lived queries.
  */
-static CachedPlanSource *unnamed_stmt_psrc = NULL;
+thread_local static CachedPlanSource *unnamed_stmt_psrc = NULL;
 
 /* assorted command-line switches */
-static const char *userDoption = NULL;	/* -D switch */
+thread_local static const char *userDoption = NULL;	/* -D switch */
 
-static bool EchoQuery = false;	/* -E switch */
+thread_local static bool EchoQuery = false;	/* -E switch */
 
 /*
  * people who want to use EOF should #define DONTUSENEWLINE in
  * tcop/tcopdebug.h
  */
 #ifndef TCOP_DONTUSENEWLINE
-static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
+thread_local static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
 #else
-static int	UseNewLine = 0;		/* Use EOF as query delimiters */
+thread_local static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 #endif   /* TCOP_DONTUSENEWLINE */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
-static bool RecoveryConflictPending = false;
-static bool RecoveryConflictRetryable = true;
-static ProcSignalReason RecoveryConflictReason;
+thread_local static bool RecoveryConflictPending = false;
+thread_local static bool RecoveryConflictRetryable = true;
+thread_local static ProcSignalReason RecoveryConflictReason;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
