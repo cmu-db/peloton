@@ -46,7 +46,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   // Executor State
   //===--------------------------------------------------------------------===//
 
-  /** @brief Result of nested loop join. */
+  /** @brief Result of  join. */
   std::vector<LogicalTile *> result;
 
   /** @brief Starting left table scan. */

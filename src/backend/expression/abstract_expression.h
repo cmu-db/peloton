@@ -43,14 +43,12 @@ class AbstractExpression;
  *
  * An expression usually has a longer life cycle than an execution, because,
  * for example, it can be cached and reused for several executions of the same
- *query template.
+ * query template.
  * Moreover, those executions can run simultaneously.
  * So, an expression should not store per-execution information in its states.
  * An expression tree (along with the plan node tree containing it) should
- *remain
+ * remain
  * constant and read-only during an execution.
- * Substituted values are passed as parameter to Evaluate().
- * - Qiang, 7/17/15
  */
 class AbstractExpression {
  public:
@@ -68,6 +66,7 @@ class AbstractExpression {
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
       executor::ExecutorContext *context /* = nullptr */) const = 0;
 
+  // TODO Please remove this function from here and all derived classes
   // set parameter values for this node and its descendants
   virtual void Substitute(const ValueArray &params);
 
@@ -89,19 +88,33 @@ class AbstractExpression {
 
   // Accessors
 
-  ExpressionType GetExpressionType() const { return expr_type; }
+  ExpressionType GetExpressionType() const {
+    return expr_type;
+  }
 
-  const AbstractExpression *GetLeft() const { return left_expr; }
+  const AbstractExpression *GetLeft() const {
+    return left_expr;
+  }
 
-  const AbstractExpression *GetRight() const { return right_expr; }
+  const AbstractExpression *GetRight() const {
+    return right_expr;
+  }
 
-  AbstractExpression *GetExpression() const { return expr; }
+  AbstractExpression *GetExpression() const {
+    return expr;
+  }
 
-  const char *GetName() const { return name; }
+  const char *GetName() const {
+    return name;
+  }
 
-  const char *GetColumn() const { return column; }
+  const char *GetColumn() const {
+    return column;
+  }
 
-  const char *GetAlias() const { return alias; }
+  const char *GetAlias() const {
+    return alias;
+  }
 
   // Parser expression
 

@@ -15,20 +15,20 @@
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
-
 #include "backend/common/exception.h"
-#include "backend/index/index.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace storage {
 
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
-                     std::string table_name, oid_t table_oid,
-                     size_t tuples_per_tilegroup)
-    : AbstractTable(table_oid, table_name, schema),
+                     std::string table_name, oid_t database_oid, oid_t table_oid,
+                     size_t tuples_per_tilegroup,
+                     bool own_schema)
+    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
       backend(backend),
-      tuples_per_tilegroup(tuples_per_tilegroup) {
+      tuples_per_tilegroup(tuples_per_tilegroup){
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -141,15 +141,10 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   ItemPointer location = GetTupleSlot(transaction, tuple, INVALID_ITEMPOINTER);
   if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
+  LOG_INFO("Location: %d, %d", location.block, location.offset);
+
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
-    // Reclaim slot if we fail
-    oid_t tile_group_id = location.block;
-    oid_t tuple_slot = location.offset;
-
-    auto tile_group = GetTileGroupById(tile_group_id);
-    tile_group->ReclaimTuple(tuple_slot);
-
     LOG_WARN("Index constraint violated\n");
     return INVALID_ITEMPOINTER;
   }
@@ -182,13 +177,13 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       continue;
     }
 
-    LOG_TRACE("Index : %u . Key exists. Checking visibility. \n",
+    LOG_INFO("Index : %u . Key exists. Checking visibility. \n",
               index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
-    LOG_TRACE("location      :: block = %u offset = %u \n", location.block,
+    LOG_INFO("location      :: block = %u offset = %u \n", location.block,
               location.offset);
-    LOG_TRACE("old location  :: block = %u offset = %u \n", old_location.block,
+    LOG_INFO("old location  :: block = %u offset = %u \n", old_location.block,
               old_location.offset);
     if (old_location.block != INVALID_OID) {
       // Is this key visible or not ?
@@ -206,7 +201,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       // The previous tuple is not visible,
       // so let's update it atomically
       if (visible == false) {
-        LOG_TRACE("Index : %u. Existing tuple is not visible.\n",
+        LOG_INFO("Index : %u. Existing tuple is not visible.\n",
                   index->GetOid());
         bool status = index->UpdateEntry(key, location, old_location);
         if (status == true) {
@@ -214,7 +209,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
           continue;
         }
       }
-      LOG_TRACE("Existing tuple is still visible.\n");
+      LOG_INFO("Existing tuple is still visible.\n");
     }
 
     LOG_ERROR("Failed to insert into index %s.%s [%s].", GetName().c_str(),
@@ -444,6 +439,38 @@ oid_t DataTable::AddDefaultTileGroup() {
       delete tile_group;
       return INVALID_OID;
     }
+
+    LOG_TRACE("Added a tile group \n");
+    tile_groups.push_back(tile_group->GetTileGroupId());
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+  }
+
+  return tile_group_id;
+}
+
+oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
+  assert(tile_group_id);
+
+  std::vector<catalog::Schema> schemas;
+  schemas.push_back(*schema);
+
+  column_map_type column_map;
+  // default column map
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    column_map[col_itr] = std::make_pair(0, col_itr);
+  }
+
+  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
+      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      column_map, tuples_per_tilegroup);
+
+  LOG_TRACE("Trying to add a tile group \n");
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
 
     LOG_TRACE("Added a tile group \n");
     tile_groups.push_back(tile_group->GetTileGroupId());

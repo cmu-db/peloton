@@ -68,6 +68,7 @@
 
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
+#include "backend/common/logger.h"
 
 void peloton_ProcessUtility(Node *parsetree, const char *queryString,
                             ProcessUtilityContext context, ParamListInfo params,

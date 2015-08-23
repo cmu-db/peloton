@@ -13,6 +13,8 @@
 #include "backend/executor/aggregator.h"
 #include "backend/common/logger.h"
 
+#include <set>
+
 namespace peloton {
 namespace executor {
 
@@ -47,8 +49,8 @@ Agg *GetAggInstance(ExpressionType agg_type) {
       aggregator = new MaxAgg();
       break;
     default: {
-      std::string message =
-          "Unknown aggregate type " + std::to_string(agg_type);
+      std::string message = "Unknown aggregate type "
+          + std::to_string(agg_type);
       throw UnknownTypeException(agg_type, message);
     }
   }
@@ -56,54 +58,90 @@ Agg *GetAggInstance(ExpressionType agg_type) {
   return aggregator;
 }
 
+/* Handle distinct */
+Agg::~Agg() {
+  if (is_distinct_) {
+    for (auto val : distinct_set_) {
+      val.FreeUninlinedData();
+    }
+  }
+}
+
+void Agg::Advance(const Value val) {
+  if (is_distinct_) {
+    // Insert a deep copy
+    distinct_set_.insert(ValueFactory::Clone(val));
+  } else {
+    DAdvance(val);
+  }
+
+}
+
+Value Agg::Finalize() {
+  if (is_distinct_) {
+    for (auto val : distinct_set_) {
+      DAdvance(val);
+    }
+  }
+  return DFinalize();
+}
+
 /*
  * Helper method responsible for inserting the results of the aggregation
  * into a new tuple in the output tile group as well as passing through any
  * additional columns from the input tile group.
+ *
+ * Output tuple is projected from two tuples:
+ * Left is the 'delegate' tuple, which is usually the first tuple in the group,
+ * used to retrieve pass-through values;
+ * Right is the tuple holding all aggregated values.
  */
 bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
-            storage::DataTable *output_table, AbstractTuple *prev_tuple,
-            const concurrency::Transaction *transaction) {
-  // Ignore null tuples
-  if (prev_tuple == nullptr) return true;
+            storage::DataTable *output_table,
+            const AbstractTuple *delegate_tuple,
+            executor::ExecutorContext* econtext) {
 
   auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
   /*
-   * This first pass is to add all columns that were aggregated on.
+   * 1) Construct a vector of aggregated values
    */
-  // LOG_TRACE("Setting aggregated columns \n");
-
-  auto aggregate_columns = node->GetAggregateColumns();
-  auto aggregate_columns_map = node->GetAggregateColumnsMap();
-  for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-       column_itr++) {
+  std::vector<Value> aggregate_values;
+  auto& aggregate_terms = node->GetUniqueAggTerms();
+  for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
+      column_itr++) {
     if (aggregates[column_itr] != nullptr) {
-      const oid_t column_index = aggregate_columns_map[column_itr];
-      const ValueType column_type = schema->GetType(column_index);
       Value final_val = aggregates[column_itr]->Finalize();
-      tuple.get()->SetValue(column_index, final_val.CastAs(column_type));
+      aggregate_values.push_back(final_val);
     }
   }
 
   /*
-   * Execute a second pass to set the output columns from the input
-   * columns that are being passed through. These are the columns
-   * that are not being aggregated on but are still in the SELECT
-   * list.
+   * 2) Evaluate filter predicate;
+   * if fail, just return
    */
-  // LOG_TRACE("Setting pass through columns \n");
+  std::unique_ptr<expression::ContainerTuple<std::vector<Value>> > aggref_tuple(
+      new expression::ContainerTuple<std::vector<Value>>(&aggregate_values));
 
-  auto pass_through_columns_map = node->GetPassThroughColumnsMap();
-  for (auto column : pass_through_columns_map) {
-    // <first, second> == <input tuple column index, output tuple column index >
-    tuple.get()->SetValue(column.second, prev_tuple->GetValue(column.first));
+  auto predicate = node->GetPredicate();
+  if (nullptr != predicate
+      && predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext)
+          .IsFalse()) {
+    return true;  // Qual fails, do nothing
   }
 
+  /*
+   * 3) Construct the tuple to insert using projectInfo
+   */
+  node->GetProjectInfo()->Evaluate(tuple.get(), delegate_tuple,
+                                   aggref_tuple.get(), econtext);
+
+  LOG_TRACE("Tuple to Output :");
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
-  auto location = output_table->InsertTuple(transaction, tuple.get());
+  auto location = output_table->InsertTuple(econtext->GetTransaction(),
+                                            tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple \n");
     return false;
@@ -113,150 +151,164 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
 }
 
 //===--------------------------------------------------------------------===//
-// Specialization of an Aggregator that uses a hash map to aggregate
-// tuples from the input table, i.e. it does not expect the input
-// table to be sorted on the group by key.
+// Hash Aggregator
 //===--------------------------------------------------------------------===//
+HashAggregator::HashAggregator(const planner::AggregatePlan *node,
+                               storage::DataTable *output_table,
+                               executor::ExecutorContext* econtext,
+                               size_t num_input_columns)
+    : AbstractAggregator(node, output_table, econtext),
+      num_input_columns(num_input_columns) {
 
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
-    const planner::AggregatePlan *node, storage::DataTable *output_table,
-    const concurrency::Transaction *transaction)
-    : node(node), output_table(output_table), transaction(transaction) {
-  group_by_columns = node->GetGroupByColumns();
-  group_by_key_schema = node->GetGroupByKeySchema();
-  assert(group_by_key_schema != nullptr);
+  group_by_key_values.resize(node->GetGroupbyColIds().size(),
+                             ValueFactory::GetNullValue());
 
-  // Allocate a group by key tuple
-  group_by_key_tuple = new storage::Tuple(group_by_key_schema, true);
-
-  aggregate_types = node->GetAggregateTypes();
-  aggregate_columns = node->GetAggregateColumns();
 }
 
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::~Aggregator() {
-  // Clean up group by key tuple
-  group_by_key_tuple->FreeUninlinedData();
-  delete group_by_key_tuple;
+HashAggregator::~HashAggregator() {
+
+  for (auto entry : aggregates_map) {
+    // Clean up allocated storage
+    for (size_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+      delete entry.second->aggregates[aggno];
+    }
+    delete[] entry.second->aggregates;
+
+    for (auto &v : entry.second->first_tuple_values) {
+      v.FreeUninlinedData();
+    }
+    delete entry.second;
+  }
 }
 
-template <>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Advance(
-    AbstractTuple *cur_tuple,
-    AbstractTuple *prev_tuple __attribute__((unused))) {
+bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
+
   AggregateList *aggregate_list;
 
-  // Configure a tuple and search for the required group.
-  for (oid_t column_itr = 0; column_itr < group_by_columns.size();
-       column_itr++) {
-    Value cur_tuple_val = cur_tuple->GetValue(group_by_columns[column_itr]);
-    group_by_key_tuple->SetValue(column_itr, cur_tuple_val);
+  // Configure a group-by-key and search for the required group.
+  for (oid_t column_itr = 0; column_itr < node->GetGroupbyColIds().size();
+      column_itr++) {
+    Value cur_tuple_val = cur_tuple->GetValue(
+        node->GetGroupbyColIds()[column_itr]);
+    group_by_key_values[column_itr] = cur_tuple_val;
   }
 
-  auto map_itr = aggregates_map.find(*group_by_key_tuple);
+  auto map_itr = aggregates_map.find(group_by_key_values);
 
   // Group not found. Make a new entry in the hash for this new group.
   if (map_itr == aggregates_map.end()) {
+    LOG_TRACE("Group-by key not found. Start a new group.");
     // Allocate new aggregate list
     aggregate_list = new AggregateList();
-    aggregate_list->aggregates = new Agg *[aggregate_columns.size()];
-    aggregate_list->group_tuple = cur_tuple;
+    aggregate_list->aggregates = new Agg *[node->GetUniqueAggTerms().size()];
+    // Make a deep copy of the first tuple we meet
+    for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
+      aggregate_list->first_tuple_values.push_back(
+          ValueFactory::Clone(cur_tuple->GetValue(col_id)));
+    };
 
-    for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-         column_itr++) {
-      aggregate_list->aggregates[column_itr] =
-          GetAggInstance(aggregate_types[column_itr]);
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+      aggregate_list->aggregates[aggno] = GetAggInstance(
+          node->GetUniqueAggTerms()[aggno].aggtype);
+
+      bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+      aggregate_list->aggregates[aggno]->SetDistinct(distinct);
     }
 
     aggregates_map.insert(
-        HashAggregateMapType::value_type(*group_by_key_tuple, aggregate_list));
+        HashAggregateMapType::value_type(group_by_key_values, aggregate_list));
   }
-  // Otherwise, the list is the second item of the pair.
+// Otherwise, the list is the second item of the pair.
   else {
     aggregate_list = map_itr->second;
   }
 
-  // Update the aggregation calculation
-  for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-       column_itr++) {
-    const oid_t column_index = aggregate_columns[column_itr];
-    Value value = cur_tuple->GetValue(column_index);
-    aggregate_list->aggregates[column_itr]->Advance(value);
+// Update the aggregation calculation
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if (predicate) {
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
+          cur_tuple, nullptr, this->executor_context);
+    }
+    aggregate_list->aggregates[aggno]->Advance(value);
   }
 
   return true;
 }
 
-template <>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
-    AbstractTuple *prev_tuple __attribute__((unused))) {
+bool HashAggregator::Finalize() {
   for (auto entry : aggregates_map) {
-    if (Helper(node, entry.second->aggregates, output_table,
-               entry.second->group_tuple, transaction) == false) {
+    // Construct a container for the first tuple
+    expression::ContainerTuple<std::vector<Value>> first_tuple(
+        &entry.second->first_tuple_values);
+    if (Helper(node, entry.second->aggregates, output_table, &first_tuple,
+               this->executor_context) == false) {
       return false;
     }
-
-    // Clean up allocated storage
-    delete entry.second->aggregates;
-    delete entry.second->group_tuple;
   }
-
-  // TODO: if no record exists in input_table, we have to output a null record
-  // only when it doesn't have GROUP BY. See difference of these cases:
-  //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
-  //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
 }
 
 //===--------------------------------------------------------------------===//
-// Specialization of an aggregator that expects the input table to be
-// sorted on the group by key.
+// Sort Aggregator
 //===--------------------------------------------------------------------===//
 
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
-    const planner::AggregatePlan *node, storage::DataTable *output_table,
-    const concurrency::Transaction *transaction)
-    : node(node), output_table(output_table), transaction(transaction) {
-  group_by_columns = node->GetGroupByColumns();
+SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
+                                   storage::DataTable *output_table,
+                                   executor::ExecutorContext* econtext,
+                                   size_t num_input_columns)
+    : AbstractAggregator(node, output_table, econtext),
+      delegate_tuple_(&delegate_tuple_values_), // Bind value vector to wrapper container tuple
+      num_input_columns_(num_input_columns) {
 
-  // Create aggregators and initialize
-  aggregate_types = node->GetAggregateTypes();
-  aggregate_columns = node->GetAggregateColumns();
-  aggregates = new Agg *[aggregate_columns.size()];
-  ::memset(aggregates, 0, sizeof(void *) * aggregate_columns.size());
+  aggregates = new Agg*[node->GetUniqueAggTerms().size()];
+  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
+
+  assert(delegate_tuple_values_.empty());
+
 }
 
-template <>
-Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
+SortedAggregator::~SortedAggregator() {
   // Clean up aggregators
-  for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-       column_itr++) {
+  for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
+      column_itr++) {
     delete aggregates[column_itr];
   }
   delete[] aggregates;
+
+  // Clean current group keys
+  for(auto value : delegate_tuple_values_){
+    value.FreeUninlinedData();
+  }
 }
 
-template <>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
-    AbstractTuple *cur_tuple, AbstractTuple *prev_tuple) {
+bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   bool start_new_agg = false;
 
-  // Check if we are starting a new aggregate tuple
-  if (prev_tuple == nullptr) {
-    LOG_TRACE("Prev tuple is nullprt!");
+// Check if we are starting a new aggregate tuple
+  if (delegate_tuple_values_.empty()) {  // No current group
+    LOG_TRACE("Current group keys are empty!");
     start_new_agg = true;
-  } else {
-    // Compare group by columns
-    for (oid_t column_itr = 0; column_itr < group_by_columns.size();
-         column_itr++) {
-      Value lval = cur_tuple->GetValue(group_by_columns[column_itr]);
-      Value rval = prev_tuple->GetValue(group_by_columns[column_itr]);
+  } else {  // Current group exists
+    assert(delegate_tuple_values_.size() == num_input_columns_);
+    // Check whether crossed group boundary
+    for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
+        grpColOffset++) {
+      Value lval = next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]);
+      Value rval = delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]);
       bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal) {
+        LOG_TRACE("Group-by columns changed.");
+
+        // Call helper to output the current group result
+        if (!Helper(node, aggregates, output_table, &delegate_tuple_,
+                    this->executor_context)) {
+          return false;
+        }
+
         start_new_agg = true;
         break;
       }
@@ -267,36 +319,95 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
   if (start_new_agg) {
     LOG_TRACE("Started a new group!");
 
-    if (Helper(node, aggregates, output_table, prev_tuple, transaction) ==
-        false) {
-      return false;
+    // Create aggregate
+    for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+      // Clean up previous aggregate
+      delete aggregates[aggno];
+      aggregates[aggno] = GetAggInstance(
+          node->GetUniqueAggTerms()[aggno].aggtype);
+
+      bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+      aggregates[aggno]->SetDistinct(distinct);
     }
 
-    // Create aggregate
-    for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-         column_itr++) {
-      // Clean up previous aggregate
-      delete aggregates[column_itr];
-      aggregates[column_itr] = GetAggInstance(aggregate_types[column_itr]);
+    // Update delegate tuple values
+    for(auto value : delegate_tuple_values_){
+      value.FreeUninlinedData();
+    }
+    delegate_tuple_values_.clear();
+
+    for(oid_t col_id = 0; col_id < num_input_columns_; col_id++){
+      Value val = next_tuple->GetValue(col_id);
+      delegate_tuple_values_.push_back(ValueFactory::Clone(val));
     }
   }
 
   // Update the aggregation calculation
-  for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
-       column_itr++) {
-    const oid_t column_index = aggregate_columns[column_itr];
-    Value value = cur_tuple->GetValue(column_index);
-    aggregates[column_itr]->Advance(value);
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if (predicate) {
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
+          next_tuple, nullptr, this->executor_context);
+    }
+    aggregates[aggno]->Advance(value);
   }
 
   return true;
 }
 
-template <>
-bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
-    AbstractTuple *prev_tuple) {
-  if (Helper(node, aggregates, output_table, prev_tuple, transaction) ==
-      false) {
+bool SortedAggregator::Finalize() {
+
+  // Call helper to output the current group result
+  if (!delegate_tuple_values_.empty()
+      && !Helper(node, aggregates, output_table, &delegate_tuple_,
+                 this->executor_context)) {
+    return false;
+  }
+
+  return true;
+}
+
+//===--------------------------------------------------------------------===//
+// Plain Aggregator
+//===--------------------------------------------------------------------===//
+PlainAggregator::PlainAggregator(const planner::AggregatePlan* node,
+                                 storage::DataTable* output_table,
+                                 executor::ExecutorContext* econtext)
+    : AbstractAggregator(node, output_table, econtext) {
+
+  // allocate aggregators
+  aggregates = new Agg*[node->GetUniqueAggTerms().size()];
+  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
+
+  // initialize aggregators
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    aggregates[aggno] = GetAggInstance(
+        node->GetUniqueAggTerms()[aggno].aggtype);
+
+    bool distinct = node->GetUniqueAggTerms()[aggno].distinct;
+    aggregates[aggno]->SetDistinct(distinct);
+  }
+
+}
+
+bool PlainAggregator::Advance(AbstractTuple* next_tuple) {
+  // Update the aggregation calculation
+  for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+    auto predicate = node->GetUniqueAggTerms()[aggno].expression;
+    Value value = ValueFactory::GetIntegerValue(1);
+    if (predicate) {
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
+          next_tuple, nullptr, this->executor_context);
+    }
+    aggregates[aggno]->Advance(value);
+  }
+  return true;
+}
+
+bool PlainAggregator::Finalize() {
+  if (!Helper(node, aggregates, output_table, nullptr,
+              this->executor_context)) {
     return false;
   }
 
@@ -306,6 +417,17 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
   //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
   return true;
+
+}
+
+PlainAggregator::~PlainAggregator() {
+  // Clean up aggregators
+  for (oid_t column_itr = 0; column_itr < node->GetUniqueAggTerms().size();
+      column_itr++) {
+    delete aggregates[column_itr];
+  }
+
+  delete[] aggregates;
 }
 
 }  // namespace executor

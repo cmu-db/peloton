@@ -60,7 +60,7 @@ class BtreeUniqueIndex : public Index {
     }
   }
 
-  bool DeleteEntry(const storage::Tuple *key, const ItemPointer location) {
+  bool DeleteEntry(const storage::Tuple *key, __attribute__((unused)) const ItemPointer location) {
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
@@ -95,7 +95,7 @@ class BtreeUniqueIndex : public Index {
     }
   }
 
-  ItemPointer Exists(const storage::Tuple *key, const ItemPointer location) {
+  ItemPointer Exists(const storage::Tuple *key, __attribute__((unused)) const ItemPointer location) {
     {
       index_lock.ReadLock();
       index_key1.SetFromKey(key);
@@ -169,6 +169,27 @@ class BtreeUniqueIndex : public Index {
 
     return result;
   }
+
+  std::vector<ItemPointer> Scan() {
+    std::vector<ItemPointer> result;
+
+    {
+      index_lock.ReadLock();
+
+      auto itr = container.begin();
+
+      while (itr != container.end()) {
+        ItemPointer location = itr->second;
+        result.push_back(location);
+        itr++;
+      }
+
+      index_lock.Unlock();
+    }
+
+    return result;
+  }
+
 
   std::string GetTypeName() const { return "BtreeMap"; }
 

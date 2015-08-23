@@ -76,8 +76,10 @@ struct AbstractScanPlanState : public AbstractPlanState {
   TupleDesc tts_tupleDescriptor;
 
   List *qual; // expr states
+  List *targetlist;
 
   PelotonProjectionInfo* proj;
+
 };
 
 struct SeqScanPlanState : public AbstractScanPlanState {
@@ -92,6 +94,9 @@ struct IndexScanPlanState : public AbstractScanPlanState {
 
   ScanKey   iss_ScanKeys;
   int iss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *iss_RuntimeKeys;
+  int     iss_NumRuntimeKeys;
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {
@@ -104,6 +109,9 @@ struct BitmapIndexScanPlanState : public AbstractScanPlanState {
 
   ScanKey  biss_ScanKeys;
   int biss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *biss_RuntimeKeys;
+  int     biss_NumRuntimeKeys;
 };
 
 struct IndexOnlyScanPlanState : public AbstractScanPlanState {
@@ -112,6 +120,9 @@ struct IndexOnlyScanPlanState : public AbstractScanPlanState {
 
   ScanKey  ioss_ScanKeys;
   int ioss_NumScanKeys;
+
+  IndexRuntimeKeyInfo *ioss_RuntimeKeys;
+  int     ioss_NumRuntimeKeys;
 };
 
 struct MaterialPlanState : public AbstractPlanState {
@@ -141,11 +152,42 @@ struct AbstractJoinPlanState : public AbstractPlanState {
   JoinType jointype;
   List *joinqual;
   List *qual;
+  List *targetlist;
 
 };
 
 struct NestLoopPlanState : public AbstractJoinPlanState {
 
 };
+
+struct MergeJoinPlanState : public AbstractJoinPlanState {
+
+  int     mj_NumClauses;
+  MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
+
+};
+
+
+struct AggPlanState : public AbstractPlanState {
+  const Agg* agg_plan;
+
+  int numphases;
+
+  List* ps_targetlist;  // Built from TL
+  List* ps_qual;
+
+  int numaggs;
+  AggStatePerAgg peragg;
+
+  TupleDesc result_tupleDescriptor;
+
+};
+
+struct SortPlanState : public AbstractPlanState {
+  const Sort* sort;
+  bool *reverse_flags;
+
+};
+
 
 

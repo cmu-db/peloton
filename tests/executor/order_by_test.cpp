@@ -15,9 +15,11 @@
 #include <string>
 #include <vector>
 
-#include "backend/planner/order_by_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/order_by_plan.h"
+
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
@@ -113,7 +115,6 @@ TEST(OrderByTests, IntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntDescTest) {
@@ -156,7 +157,6 @@ TEST(OrderByTests, IntDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, StringDescTest) {
@@ -199,7 +199,6 @@ TEST(OrderByTests, StringDescTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 
 TEST(OrderByTests, IntAscStringDescTest) {
@@ -241,8 +240,6 @@ TEST(OrderByTests, IntAscStringDescTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
-  delete backend;
 }
 
 /**
@@ -288,7 +285,6 @@ TEST(OrderByTests, StringDescIntAscTest) {
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  delete backend;
 }
 }
 

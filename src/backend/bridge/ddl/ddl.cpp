@@ -40,12 +40,14 @@ namespace bridge {
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree,
-                         Peloton_Status *status, TransactionId txn_id) {
+                         DDL_Info* ddl_info,
+                         Peloton_Status *status,
+                         TransactionId txn_id) {
   assert(parsetree != nullptr);
 
   LOG_TRACE("Process Utility");
 
-  static thread_local std::vector<Node *> parsetree_stack;
+  static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
@@ -61,13 +63,13 @@ void DDL::ProcessUtility(Node *parsetree,
     }
 
     case T_DropdbStmt: {
-      DDLDatabase::ExecDropdbStmt(parsetree);
+      DDLDatabase::ExecDropdbStmt(parsetree, ddl_info);
       break;
     }
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, ddl_info, parsetree_stack, status, txn_id);
       break;
     }
 

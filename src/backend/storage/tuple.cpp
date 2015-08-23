@@ -207,8 +207,14 @@ void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
      * to tuple storage.
      */
     const bool is_inlined = tuple_schema->IsInlined(column_itr);
+    int32_t column_length;
     char *data_ptr = GetDataPtr(column_itr);
-    const int32_t column_length = tuple_schema->GetLength(column_itr);
+
+    if( is_inlined ){
+      column_length = tuple_schema->GetLength(column_itr);
+    }else{
+      column_length = tuple_schema->GetVariableLength(column_itr);
+    }
 
     Value::DeserializeFrom(input, type, data_ptr, is_inlined, column_length,
                            dataPool);

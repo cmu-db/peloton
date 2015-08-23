@@ -353,13 +353,30 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	{
     elog(DEBUG3, "DML Query :: Type :: %d", operation);
 
-    ExecutePlan(estate,
-                queryDesc->planstate,
-                operation,
-                sendTuples,
-                count,
-                direction,
-                dest);
+    // PG Query
+	  if(true)
+	  {
+	    ExecutePlan(estate,
+	                queryDesc->planstate,
+	                operation,
+	                sendTuples,
+	                count,
+	                direction,
+	                dest);
+	  }
+	  // Peloton Query
+	  else
+	  {
+	    peloton_ExecutePlan(estate,
+	                        queryDesc->planstate,
+	                        operation,
+	                        sendTuples,
+	                        count,
+	                        direction,
+	                        dest,
+	                        queryDesc->tupDesc);
+	  }
+
 	}
 
 	/*
@@ -1639,7 +1656,6 @@ peloton_ExecutePlan(EState *estate,
                    sendTuples,
                    dest,
                    tupDesc);
-
 }
 
 /*
