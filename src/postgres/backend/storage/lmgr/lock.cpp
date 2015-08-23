@@ -254,9 +254,9 @@ thread_local static HTAB *LockMethodLocalHash;
 
 
 /* private___ state for error cleanup */
-static LOCALLOCK *StrongLockInProgress;
-static LOCALLOCK *awaitedLock;
-static ResourceOwner awaitedOwner;
+thread_local static LOCALLOCK *StrongLockInProgress;
+thread_local static LOCALLOCK *awaitedLock;
+thread_local static ResourceOwner awaitedOwner;
 
 
 #ifdef LOCK_DEBUG
