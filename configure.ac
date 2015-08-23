@@ -141,11 +141,11 @@ AC_MSG_RESULT([$debugit])
 
 if test x"$debugit" = x"yes"; then
     AC_DEFINE([DEBUG],[],[Debug Mode])
-    DEBUG_CXXFLAGS="-g -Wno-uninitialized -O0 -Wall -Wextra -Werror"
+    DEBUG_CXXFLAGS="-g -O0 -Wall -Wextra -Werror"
     DEBUG_CPPFLAGS=""
 else
     AC_DEFINE([NDEBUG],[],[No-debug Mode])
-    DEBUG_CXXFLAGS="-O2 -Wno-unused-variable -Wno-unused-but-set-variable"
+    DEBUG_CXXFLAGS="-O2 "
     DEBUG_CPPFLAGS="-DNDEBUG"
 fi
 

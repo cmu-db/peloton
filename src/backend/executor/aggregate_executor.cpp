@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
+#include <vector>
+
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/table_factory.h"
 #include "backend/expression/container_tuple.h"
-
-#include <utility>
-#include <vector>
-#include "../planner/aggregate_plan.h"
+#include "backend/planner/aggregate_plan.h"
+#include "backend/storage/table_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -30,7 +30,8 @@ namespace executor {
  */
 AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {
+}
 
 AggregateExecutor::~AggregateExecutor() {
   // clean up temporary aggregation table
@@ -44,20 +45,24 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
-  LOG_TRACE("Aggregate Scan executor :: 1 child \n");
+  LOG_TRACE("Aggregate executor :: 1 child \n");
 
   // Grab info from plan node and check it
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
 
   // Construct the output table
-  auto output_table_schema = node.GetOutputTableSchema();
-  size_t column_count = output_table_schema->GetColumnCount();
-  assert(column_count >= 1);
+  auto output_table_schema =
+      const_cast<catalog::Schema*>(node.GetOutputSchema());
+
+  assert(output_table_schema->GetColumnCount() >= 1);
 
   result_itr = START_OID;
 
+  bool own_schema = false;
   output_table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, output_table_schema, "temp_table");
+      INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      own_schema);
 
   return true;
 }
@@ -69,7 +74,7 @@ bool AggregateExecutor::DInit() {
 bool AggregateExecutor::DExecute() {
   // Already performed the aggregation
   if (done) {
-    if (result_itr == result.size()) {
+    if (result_itr == INVALID_OID || result_itr == result.size()) {
       return false;
     } else {
       // Return appropriate tile and go to next tile
@@ -81,45 +86,75 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
-  auto transaction_ = executor_context_->GetTransaction();
 
   // Get an aggregator
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
-      &node, output_table, transaction_);
+  std::unique_ptr<AbstractAggregator> aggregator(nullptr);
 
   // Get input tiles and aggregate them
   while (children_[0]->Execute() == true) {
+
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-    LOG_TRACE("Looping over tile..");
-    expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
+    if (nullptr == aggregator.get()) {
+      // Initialize the aggregator
+      switch (node.GetAggregateStrategy()) {
+        case AGGREGATE_TYPE_HASH:
+          LOG_INFO("Use HashAggregator\n")
+          ;
+          aggregator.reset(
+              new HashAggregator(&node, output_table, executor_context_,
+                                 tile->GetColumnCount()));
+          break;
+        case AGGREGATE_TYPE_SORTED:
+          LOG_INFO("Use SortedAggregator\n")
+          ;
+          aggregator.reset(
+              new SortedAggregator(&node, output_table, executor_context_,
+                                   tile->GetColumnCount()));
+          break;
+        case AGGREGATE_TYPE_PLAIN:
+          LOG_INFO("Use PlainAggregator\n")
+          ;
+          aggregator.reset(
+              new PlainAggregator(&node, output_table, executor_context_));
+          break;
+        default:
+          LOG_ERROR("Invalid aggregate type. Return.\n")
+          ;
+          return false;
+      }
+    }
+
+    LOG_INFO("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
-      auto cur_tuple =
-          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
-      if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
+      std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
+          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id));
+
+      if (aggregator->Advance(cur_tuple.get()) == false) {
         return false;
       }
 
-      delete prev_tuple;
-      prev_tuple = cur_tuple;
     }
-
-    LOG_TRACE("Finalizing..");
-    if (!aggregator.Finalize(prev_tuple)) return false;
-
-    delete prev_tuple;
     LOG_TRACE("Finished processing logical tile");
+  }
+
+  LOG_INFO("Finalizing..");
+  if (!aggregator || !aggregator->Finalize()) {
+    done = true;
+
+    return false;
   }
 
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();
 
-  if (tile_group_count == 0) return false;
+  if (tile_group_count == 0)
+    return false;
 
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
@@ -129,7 +164,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   done = true;
-  LOG_TRACE("Result tiles : %lu \n", result.size());
+  LOG_INFO("Result tiles : %lu \n", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;

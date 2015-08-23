@@ -81,7 +81,7 @@ std::string ProjectInfo::Debug() const {
   buffer << "DirectMap List: < NEW_col_id , <tuple_idx , OLD_col_id>  > \n";
   for (auto &dmap : direct_map_list_) {
     buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
-           << dmap.second.second << "> >\n\n";
+           << dmap.second.second << "> >\n";
   }
 
   return (buffer.str());

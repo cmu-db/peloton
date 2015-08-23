@@ -62,6 +62,23 @@ bool IndexScanExecutor::DInit() {
   key_column_ids_ = node.GetKeyColumnIds();
   expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
+  runtime_keys_ = node.GetRunTimeKeys();
+
+  if (runtime_keys_.size() != 0) {
+    assert(runtime_keys_.size() == values_.size());
+
+    if (!key_ready) {
+      values_.clear();
+
+      for (auto expr : runtime_keys_) {
+        auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
+        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        values_.push_back(value);
+      }
+
+      key_ready = true;
+    }
+  }
 
   auto table = node.GetTable();
 
@@ -121,9 +138,13 @@ bool IndexScanExecutor::ExecIndexLookup() {
 
   std::vector<ItemPointer> tuple_locations;
 
-  tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
+  if (0 == key_column_ids_.size()) {
+    tuple_locations = index_->Scan();
+  } else {
+    tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
+  }
 
-  LOG_INFO("Tuple locations : %lu", tuple_locations.size());
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 

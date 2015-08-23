@@ -42,9 +42,7 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer(){};
-
-  static void PrintPlan(const Plan *plan);
+  PlanTransformer() {}
 
   static planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate) {
     return TransformPlan(planstate, DefaultOptions);
@@ -64,7 +62,9 @@ class PlanTransformer {
    public:
     bool use_projInfo = true;  // Use Plan.projInfo or not
     TransformOptions() = default;
-    TransformOptions(bool pi) : use_projInfo(pi) {}
+    TransformOptions(bool pi)
+        : use_projInfo(pi) {
+    }
   };
 
   static const TransformOptions DefaultOptions;
@@ -127,6 +127,9 @@ class PlanTransformer {
   static planner::AbstractPlan *TransformNestLoop(
       const NestLoopPlanState *planstate);
 
+  static planner::AbstractPlan *TransformMergeJoin(
+      const MergeJoinPlanState *plan_state);
+
   //===--------------------------------------------------------------------===//
   // OTHERS
   //===--------------------------------------------------------------------===//
@@ -140,7 +143,14 @@ class PlanTransformer {
   static planner::AbstractPlan *TransformLimit(
       const LimitPlanState *planstate);
 
-  static PelotonJoinType TransformJoinType(const JoinType type);
+  static planner::AbstractPlan *TransformAgg(
+      const AggPlanState *plan_state);
+
+  static planner::AbstractPlan *TransformSort(
+      const SortPlanState *plan_state);
+
+  static PelotonJoinType TransformJoinType(
+      const JoinType type);
 
   //===--------------------------------------------------------------------===//
   // Common utility functions for Scans
@@ -154,12 +164,17 @@ class PlanTransformer {
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
-      const PelotonProjectionInfo *pi, oid_t column_count);
+      const PelotonProjectionInfo *pi);
+
+  static const planner::ProjectInfo::TargetList BuildTargetList(
+      const List* targetList, oid_t column_count);
 
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
 
 };
 

@@ -14,9 +14,31 @@
 
 #include "backend/common/types.h"
 
+#include "postgres.h"
+#include "nodes/nodes.h"
+
 //===--------------------------------------------------------------------===//
 // DDL raw data structures
 //===--------------------------------------------------------------------===//
+
+struct DDL_Info {
+  NodeTag type;
+};
+
+// Used by CreateDb, DropDb
+struct Database_Info : public DDL_Info {
+  Oid database_oid;
+};
+
+// Used by CreateStmt, AlterTableStmt, IndexStmt
+struct Relation_Info : public DDL_Info {
+  Oid relation_oid;
+};
+
+struct Type_Info : public DDL_Info {
+  Oid type_oid;
+  int type_len;
+};
 
 struct raw_database_info;
 struct raw_table_info;

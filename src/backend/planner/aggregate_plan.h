@@ -4,7 +4,7 @@
 //
 // aggregate_node.h
 //
-// Identification: src/backend/planner/aggregate_node.h
+// Identification: src/backend/planner/aggregateV2_node.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,92 +12,104 @@
 
 #pragma once
 
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/project_info.h"
 #include "backend/common/types.h"
-#include "backend/catalog/schema.h"
-
-#include <map>
-#include "abstract_plan.h"
+#include "backend/expression/abstract_expression.h"
 
 namespace peloton {
 namespace planner {
 
-// IMPORTANT:: Need own copy of output table schema.
-// TODO: Can we relax this constraint ?
 class AggregatePlan : public AbstractPlan {
  public:
   AggregatePlan() = delete;
   AggregatePlan(const AggregatePlan &) = delete;
   AggregatePlan &operator=(const AggregatePlan &) = delete;
   AggregatePlan(AggregatePlan &&) = delete;
-  AggregatePlan &operator=(AggregatePlan &&) = delete;
 
-  AggregatePlan(const std::vector<oid_t> &aggregate_columns,
-                const std::map<oid_t, oid_t> &aggregate_columns_map,
-                const std::vector<oid_t> &group_by_columns,
-                const catalog::Schema *group_by_key_schema,
-                const std::map<oid_t, oid_t> &pass_through_columns_map,
-                const std::vector<ExpressionType> &aggregate_types,
-                catalog::Schema *output_table_schema)
-      : aggregate_columns_(aggregate_columns),
-        aggregate_columns_map_(aggregate_columns_map),
-        group_by_columns_(group_by_columns),
-        group_by_key_schema_(group_by_key_schema),
-        pass_through_columns_map_(pass_through_columns_map),
-        aggregate_types_(aggregate_types),
-        output_table_schema_(output_table_schema) {}
+  class AggTerm {
+   public:
+    ExpressionType aggtype;
+    const expression::AbstractExpression* expression;
+    bool distinct;
+
+    AggTerm(ExpressionType et, expression::AbstractExpression* expr, bool distinct = false)
+        : aggtype(et),
+          expression(expr),
+          distinct(distinct) {
+    }
+  };
+
+  AggregatePlan(const planner::ProjectInfo* project_info,
+                const expression::AbstractExpression* predicate,
+                const std::vector<AggTerm>&& unique_agg_terms,
+                const std::vector<oid_t>&& groupby_col_ids,
+                const catalog::Schema* output_schema,
+                PelotonAggType aggregate_strategy)
+      : project_info_(project_info),
+        predicate_(predicate),
+        unique_agg_terms_(unique_agg_terms),
+        groupby_col_ids_(groupby_col_ids),
+        output_schema_(output_schema),
+        agg_strategy_(aggregate_strategy) {
+
+  }
+
+  const std::vector<oid_t>& GetGroupbyColIds() const {
+    return groupby_col_ids_;
+  }
+
+  const expression::AbstractExpression* GetPredicate() const {
+    return predicate_.get();
+  }
+
+  const planner::ProjectInfo* GetProjectInfo() const {
+    return project_info_.get();
+  }
+
+  const std::vector<AggTerm>& GetUniqueAggTerms() const {
+    return unique_agg_terms_;
+  }
+
+  const catalog::Schema* GetOutputSchema() const {
+    return output_schema_.get();
+  }
+
+  PelotonAggType GetAggregateStrategy() const {
+    return agg_strategy_;
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE;
+    return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
   }
 
-  const std::vector<oid_t> &GetAggregateColumns() const {
-    return aggregate_columns_;
+  ~AggregatePlan() {
+    for (auto term : unique_agg_terms_) {
+      delete term.expression;
+    }
   }
-
-  const std::map<oid_t, oid_t> &GetAggregateColumnsMap() const {
-    return aggregate_columns_map_;
-  }
-
-  const std::vector<oid_t> &GetGroupByColumns() const {
-    return group_by_columns_;
-  }
-
-  const catalog::Schema *GetGroupByKeySchema() const {
-    return group_by_key_schema_;
-  }
-
-  const std::map<oid_t, oid_t> &GetPassThroughColumnsMap() const {
-    return pass_through_columns_map_;
-  }
-
-  const std::vector<ExpressionType> &GetAggregateTypes() const {
-    return aggregate_types_;
-  }
-
-  catalog::Schema *GetOutputTableSchema() const { return output_table_schema_; }
 
  private:
-  /** @brief Aggregate columns */
-  const std::vector<oid_t> aggregate_columns_;
 
-  /** @brief Aggregate columns mapping */
-  const std::map<oid_t, oid_t> aggregate_columns_map_;
+  /* For projection */
+  std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-  /** @brief Group by columns */
-  const std::vector<oid_t> group_by_columns_;
+  /* For HAVING clause */
+  std::unique_ptr<const expression::AbstractExpression> predicate_;
 
-  /** @brief Group by key tuple used (Needed only for hash aggregation) */
-  const catalog::Schema *group_by_key_schema_;
+  /* Unique aggregate terms */
+  const std::vector<AggTerm> unique_agg_terms_;
 
-  /** @brief Pass through columns mapping (input -> output) */
-  const std::map<oid_t, oid_t> pass_through_columns_map_;
+  /* Group-by Keys */
+  const std::vector<oid_t> groupby_col_ids_;
 
-  /** @brief Aggregate types */
-  const std::vector<ExpressionType> aggregate_types_;
+  /* Output schema */
+  std::unique_ptr<const catalog::Schema> output_schema_;
 
-  /** @brief Output columns */
-  catalog::Schema *output_table_schema_;
+  /* Aggregate Strategy */
+  const PelotonAggType agg_strategy_;
+
 };
 
-}  // namespace planner
-}  // namespace peloton
+}
+}

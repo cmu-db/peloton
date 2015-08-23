@@ -80,7 +80,7 @@ bool BridgeTest::CheckColumn(catalog::Column &column, std::string column_name,
 bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
                                            ConstraintType constraint_type,
                                            std::string constraint_name,
-                                           int constraint_count,
+                                           unsigned int constraint_count,
                                            int foreign_key_offset) {
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
   assert(constraint_infos[0].GetType() == constraint_type);
@@ -135,8 +135,8 @@ bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
  */
 bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
                                  oid_t pktable_oid, std::string constraint_name,
-                                 int pk_column_names_count,
-                                 int fk_column_names_count,
+                                 unsigned int pk_column_names_count,
+                                 unsigned int fk_column_names_count,
                                  char fk_update_action, char fk_delete_action) {
   assert(foreign_key->GetSinkTableOid() == pktable_oid);
   assert(strcmp((foreign_key->GetConstraintName()).c_str(),

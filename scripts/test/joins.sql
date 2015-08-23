@@ -46,3 +46,27 @@ SELECT A.id, B.id FROM A,B WHERE A.id <= 2;
 SELECT A.id, B.data FROM A,B WHERE A.id = 1 AND B.id > 4;
 SELECT A.id, A.id, B.data, B.data FROM A,B WHERE A.id > 2;
 SELECT A.*, B.* FROM A,B WHERE A.id > 2;
+
+
+
+-- merge join
+SELECT * FROM (SELECT * FROM A ORDER BY id) AS aa JOIN (SELECT * FROM B ORDER BY id) AS bb ON aa.id = bb.id;
+SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
+
+-- merge join with projections
+SELECT a.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT b.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.*,b.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.id,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.data,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.id,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.data,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+SELECT a.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
+SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
+SELECT b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
+
+SELECT b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
