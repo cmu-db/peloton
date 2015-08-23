@@ -89,7 +89,7 @@ typedef enum
 extern XLogRecPtr XactLastRecEnd;
 extern PGDLLIMPORT XLogRecPtr XactLastCommitEnd;
 
-extern bool reachedConsistency;
+extern thread_local bool reachedConsistency;
 
 /* these variables are GUC parameters related to XLOG */
 extern int	min_wal_size;
