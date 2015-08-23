@@ -14,6 +14,7 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "postmaster/peloton.h"
 #include "nodes/parsenodes.h"
 #include "commands/dbcommands.h"
 
@@ -40,9 +41,10 @@ bool DDLDatabase::ExecCreatedbStmt(Node *parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(Node *parsetree) {
-  DropdbStmt *stmt = (DropdbStmt *)parsetree;
-  DDLDatabase::DropDatabase(stmt->database_id);
+bool DDLDatabase::ExecDropdbStmt(__attribute__((unused)) Node *parsetree, DDL_Info* ddl_info) {
+  const Database_Info* database_info = 
+    reinterpret_cast<const Database_Info *>(ddl_info);
+  DDLDatabase::DropDatabase(database_info->database_oid);
   return true;
 }
 
@@ -82,7 +84,7 @@ bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
  * @param database_oid database id
  * @return true if we created a database, false otherwise
  */
-bool DDLDatabase::CreateDatabase(Oid database_oid) {
+bool DDLDatabase::CreateDatabase(oid_t database_oid) {
   if (database_oid == INVALID_OID) return false;
 
   auto &manager = catalog::Manager::GetInstance();
@@ -96,7 +98,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
     return false;
   }
 
-  elog(LOG, "Create database (%u)", database_oid);
+  LOG_INFO("Create database (%u)", database_oid);
   return true;
 }
 
@@ -105,7 +107,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
  * @param database_oid database id.
  * @return true if we dropped the database, false otherwise
  */
-bool DDLDatabase::DropDatabase(Oid database_oid) {
+bool DDLDatabase::DropDatabase(oid_t database_oid) {
   auto &manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 

@@ -15,10 +15,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/materialization_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/materialization_plan.h"
+
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"

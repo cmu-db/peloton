@@ -14,9 +14,12 @@
 #include <iostream>
 
 #include "backend/bridge/ddl/ddl_utils.h"
+#include "backend/bridge/ddl/format_transformer.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "postmaster/peloton.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"
@@ -33,17 +36,44 @@ namespace bridge {
 // DDL Utils
 //===--------------------------------------------------------------------===//
 
+
+Database_Info* DDLUtils::PrepareCreatedbStmt(Database_Info* parsetree){
+  CreatedbStmt *stmt = (CreatedbStmt*)parsetree;
+  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
+  db_info->type = nodeTag(parsetree);
+  // FIXME : failed
+  db_info->database_oid = get_database_oid(stmt->dbname, false);
+  return db_info;
+}
+
+Database_Info* DDLUtils::PrepareDropdbStmt(Database_Info* parsetree){
+  DropdbStmt *stmt = (DropdbStmt *)parsetree;
+  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
+  db_info->type = nodeTag(parsetree);
+  db_info->database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  return db_info;
+}
+
 /**
  * @brief preparing data
  * @param parsetree
  */
-void DDLUtils::peloton_prepare_data(Node *parsetree) {
+DDL_Info* DDLUtils::peloton_prepare_data(Node *parsetree) {
+  DDL_Info* ddl_info = nullptr;
   switch (nodeTag(parsetree)) {
+
+//    case T_CreatedbStmt: {
+//      ddl_info = PrepareCreatedbStmt(
+//                 reinterpret_cast<Database_Info*>(parsetree));
+//      break;
+//    }
+
     case T_DropdbStmt: {
-      DropdbStmt *stmt = (DropdbStmt *)parsetree;
-      stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+      ddl_info = PrepareDropdbStmt(
+                 reinterpret_cast<Database_Info*>(parsetree));
       break;
     }
+
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
       List *stmts = ((CreateStmt *)parsetree)->stmts;
@@ -97,6 +127,7 @@ void DDLUtils::peloton_prepare_data(Node *parsetree) {
       break;
       break;
   }
+  return ddl_info;
 }
 
 /**
@@ -124,8 +155,9 @@ void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
  * @param refernce_table_infos to store reference table to the table
  */
 void DDLUtils::ParsingCreateStmt(
-    CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos,
-    std::vector<catalog::ForeignKey> &foreign_keys) {
+
+    CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos){
+
   assert(Cstmt);
 
   //===--------------------------------------------------------------------===//
@@ -144,9 +176,14 @@ void DDLUtils::ParsingCreateStmt(
     Oid typeoid = coldef->typeName->type_oid;
     int typelen = coldef->typeName->type_len;
 
-    ValueType column_valueType =
-        PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
-    int column_length = typelen;
+
+    PostgresValueFormat postgresValueFormat( typeoid, typelen, typelen);
+    PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+
+    ValueType column_valueType = pelotonValueFormat.GetType();
+    int column_length = pelotonValueFormat.GetLength();
+    bool is_inlined = pelotonValueFormat.IsInlined();
+
     std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
@@ -208,7 +245,7 @@ void DDLUtils::ParsingCreateStmt(
     }  // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
-                                false);
+                                is_inlined);
 
     for (auto constraint : column_constraints)
       column_info.AddConstraint(constraint);

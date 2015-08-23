@@ -56,8 +56,6 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id) {
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
-  PelotonStartTransactionCommand();
-
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
 
@@ -69,8 +67,6 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id) {
   }
 
   heap_close(pg_class_rel, AccessShareLock);
-
-  PelotonCommitTransactionCommand();
 
   return tuple;
 }
@@ -84,8 +80,6 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name) {
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
-
-  PelotonStartTransactionCommand();
 
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -106,8 +100,6 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name) {
 
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
-
-  PelotonCommitTransactionCommand();
 
   return tuple;
 }
@@ -215,16 +207,6 @@ float Bridge::GetNumberOfTuples(Oid relation_id) {
 Oid Bridge::GetCurrentDatabaseOid(void) { return MyDatabaseId; }
 
 /**
- * @brief Printing the current database information out
- */
-void Bridge::GetDbInfo(void) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
-  printf("Mydatabase Id %u ", MyDatabaseId);
-  printf("MydatabaseTableSpace Id %u ", MyDatabaseTableSpace);
-  printf("Mydatabase path %s ", DatabasePath);
-}
-
-/**
  * @Determine whether table exists in the *current* database or not
  * @param table_name table name
  * @return true or false depending on whether table exists or not.
@@ -254,8 +236,6 @@ void Bridge::GetTableList(bool catalog_only) {
   HeapScanDesc scan;
   HeapTuple tuple;
 
-  PelotonStartTransactionCommand();
-
   // Scan pg class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
@@ -274,7 +254,6 @@ void Bridge::GetTableList(bool catalog_only) {
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
-  PelotonCommitTransactionCommand();
 }
 
 /**
@@ -285,8 +264,6 @@ void Bridge::GetDatabaseList(void) {
   Relation pg_database_rel;
   HeapScanDesc scan;
   HeapTuple tup;
-
-  PelotonStartTransactionCommand();
 
   // Scan pg database table
   pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
@@ -301,8 +278,6 @@ void Bridge::GetDatabaseList(void) {
 
   heap_endscan(scan);
   heap_close(pg_database_rel, AccessShareLock);
-
-  PelotonCommitTransactionCommand();
 }
 
 //===--------------------------------------------------------------------===//

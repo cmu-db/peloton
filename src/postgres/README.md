@@ -131,6 +131,9 @@ In order to port Postgres to C++, we made the following changes:
     * `/src/postgres/backend/access/brin`
     * `/src/postgres/backend/access/gin`
     * `/src/postgres/backend/access/gist`
+
 2. Changed 3 C-style casts in the same directory in fe-lobj.cpp fileto reinterpret_cast
+
 3. Suppressed warnings for String to char * conversion (which has been deprecated) by adding the CXXFLAG Wno-write-string
+
 4. Added a macro at the end of c.h file to suppress compiler warning for unused variables in various function calls. Used this UNUSED macro wherever variables passed to a function were unused or used in #ifdef ... #endif

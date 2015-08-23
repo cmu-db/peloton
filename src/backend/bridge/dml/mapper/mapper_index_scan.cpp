@@ -25,8 +25,12 @@ namespace bridge {
  * */
 static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
+    const IndexRuntimeKeyInfo *runtime_keys, int num_runtime_keys,
     planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
 
+
+static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_runtime_keys,
+    planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
 /**
  * @brief Convert a Postgres IndexScanState into a Peloton IndexScanPlan.
  *        able to handle:
@@ -62,6 +66,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
+  if(nullptr == index_scan_desc.index){
+    LOG_ERROR("Fail to get index with oid : %u \n", iss_plan->indexid);
+  };
   LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
@@ -71,10 +78,10 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
-  LOG_INFO("num of scan keys = %d", iss_plan_state->iss_NumScanKeys);
 
-  BuildScanKey(iss_plan_state->iss_ScanKeys,
-               iss_plan_state->iss_NumScanKeys,
+  LOG_INFO("num of scan keys = %d, num of runtime key = %d", iss_plan_state->iss_NumScanKeys, iss_plan_state->iss_NumRuntimeKeys);
+  BuildScanKey(iss_plan_state->iss_ScanKeys, iss_plan_state->iss_NumScanKeys,
+               iss_plan_state->iss_RuntimeKeys, iss_plan_state->iss_NumRuntimeKeys,
                index_scan_desc);
 
   /* handle simple cases */
@@ -116,9 +123,15 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
  */
 static void BuildScanKey(
     const ScanKey scan_keys, int num_keys,
+    const IndexRuntimeKeyInfo* runtime_keys, int num_runtime_keys,
     planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
+
   ScanKey scan_key = scan_keys;
-  assert(num_keys > 0);
+
+  if (num_runtime_keys > 0) {
+    assert(num_runtime_keys == num_keys);
+    BuildRuntimeKey(runtime_keys, num_runtime_keys, index_scan_desc);
+  }
 
   for (int key_itr = 0; key_itr < num_keys; key_itr++, scan_key++) {
     // currently, only support simple case
@@ -132,38 +145,37 @@ static void BuildScanKey(
     assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
 
     Value value =
-        TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
 
-    // 1 indexed
-    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);
+       TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno -
+                                             1);  // 1 indexed
+
 
     index_scan_desc.values.push_back(value);
-    std::ostringstream oss;
-    oss << value;
     LOG_INFO("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_INFO("key < %s", oss.str().c_str());
+        LOG_INFO("key < %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_INFO("key <= %s", oss.str().c_str());
+        LOG_INFO("key <= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
         break;
       case BTEqualStrategyNumber:
-        LOG_INFO("key = %s", oss.str().c_str());
+        LOG_INFO("key = %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
         break;
       case BTGreaterEqualStrategyNumber:
-        LOG_INFO("key >= %s", oss.str().c_str());
+        LOG_INFO("key >= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
         break;
       case BTGreaterStrategyNumber:
-        LOG_INFO("key > %s", oss.str().c_str());
+        LOG_INFO("key > %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
         break;
@@ -173,6 +185,15 @@ static void BuildScanKey(
             ExpressionType::EXPRESSION_TYPE_INVALID);
         break;
     }
+  }
+}
+
+static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_runtime_keys,
+    planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
+  for (int i = 0; i < num_runtime_keys; i++) {
+    auto expr = ExprTransformer::TransformExpr(runtime_keys[i].key_expr);
+    index_scan_desc.runtime_keys.push_back(expr);
+    LOG_INFO("Runtime scankey Expr: %s", expr->Debug(" ").c_str());
   }
 }
 
@@ -221,10 +242,12 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
-  LOG_INFO("num of scan keys = %d", ioss_plan_state->ioss_NumScanKeys);
+  LOG_INFO("num of scan keys = %d, num of runtime key = %d", ioss_plan_state->ioss_NumScanKeys, ioss_plan_state->ioss_NumRuntimeKeys);
   BuildScanKey(ioss_plan_state->ioss_ScanKeys,
                ioss_plan_state->ioss_NumScanKeys,
-               index_scan_desc);
+               ioss_plan_state->ioss_RuntimeKeys,
+               ioss_plan_state->ioss_NumRuntimeKeys, index_scan_desc);
+
 
   /* handle simple cases */
   /* ORDER BY, not support */
@@ -296,10 +319,10 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
   /* Only support forward scan direction */
 
   /* index qualifier and scan keys */
-  LOG_INFO("num of scan keys = %d", biss_state->biss_NumScanKeys);
 
-  BuildScanKey(biss_state->biss_ScanKeys,
-               biss_state->biss_NumScanKeys,
+  LOG_INFO("num of scan keys = %d, num of runtime key = %d", biss_state->biss_NumScanKeys, biss_state->biss_NumRuntimeKeys);
+  BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys,
+               biss_state->biss_RuntimeKeys, biss_state->biss_NumRuntimeKeys,
                index_scan_desc);
 
   /* handle simple cases */

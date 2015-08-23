@@ -17,7 +17,6 @@
 #include "tcop/dest.h"
 #include "utils/array.h"
 
-
 /* upper limit for GUC variables measured in kilobytes of memory */
 /* note that various places assume the byte size fits in a "long" variable */
 #if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4

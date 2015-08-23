@@ -32,12 +32,14 @@ AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
+			  $(top_builddir)/src/libpelotonpg.la \
 			  $(TBB_LIBS)
 else
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
+			  $(top_builddir)/src/libpelotonpg.la \
 			  $(TBB_LIBS) 
 endif
 
@@ -52,6 +54,7 @@ include $(srcdir)/concurrency/Makefile.am
 include $(srcdir)/executor/Makefile.am
 include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
+include $(srcdir)/logging/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am

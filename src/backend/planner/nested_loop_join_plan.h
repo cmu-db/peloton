@@ -31,10 +31,9 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
-  NestedLoopJoinPlan(expression::AbstractExpression *predicate,
+  NestedLoopJoinPlan(const expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
-      : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate,
-                             proj_info) {  // FIXME
+  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {
     // Nothing to see here...
   }
 
@@ -44,8 +43,6 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
   inline std::string GetInfo() const { return "NestedLoopJoin"; }
 
- private:
-  // There is nothing special that we need here
 };
 
 }  // namespace planner

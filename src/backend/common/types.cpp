@@ -12,6 +12,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 
 #include <sstream>
 #include <cstring>
@@ -56,6 +57,7 @@ std::size_t GetTypeSize(ValueType type) {
 //===--------------------------------------------------------------------===//
 // BackendType <--> String Utilities
 //===--------------------------------------------------------------------===//
+
 std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
@@ -105,7 +107,7 @@ std::string ValueTypeToString(ValueType type) {
     case VALUE_TYPE_BIGINT:
       return "BIGINT";
     case VALUE_TYPE_DOUBLE:
-      return "FLOAT";
+      return "DOUBLE";
     case VALUE_TYPE_VARCHAR:
       return "VARCHAR";
     case VALUE_TYPE_VARBINARY:
@@ -132,7 +134,7 @@ ValueType StringToValueType(std::string str) {
     return VALUE_TYPE_INTEGER;
   } else if (str == "BIGINT") {
     return VALUE_TYPE_BIGINT;
-  } else if (str == "FLOAT") {
+  } else if (str == "DOUBLE") {
     return VALUE_TYPE_DOUBLE;
   } else if (str == "STRING") {
     return VALUE_TYPE_VARCHAR;
@@ -502,6 +504,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_RESULT: {
       return "RESULT";
     }
+    case PLAN_NODE_TYPE_AGGREGATE_V2: {
+      return "AGGREGATE_V2";
+    }
   }
   return "INVALID";
 }
@@ -610,6 +615,99 @@ ConstraintType StringToConstraintType(std::string str) {
   return CONSTRAINT_TYPE_INVALID;
 }
 
+//===--------------------------------------------------------------------===//
+// Log Types - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LoggingTypeToString(LoggingType type) {
+  switch (type) {
+    case LOGGING_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGING_TYPE_STDOUT: {
+      return "LOGGING_TYPE_STDOUT";
+    }
+    case LOGGING_TYPE_ARIES: {
+      return "LOGGING_TYPE_ARIES";
+    }
+    case LOGGING_TYPE_PELOTON: {
+      return "LOGGING_TYPE_PELOTON";
+    }
+  }
+  return "INVALID";
+}
+
+std::string LoggingStatusToString(LoggingStatus type) {
+  switch (type) {
+    case LOGGING_STATUS_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGING_STATUS_TYPE_STANDBY: {
+      return "LOGGING_STATUS_TYPE_STANDBY";
+    }
+    case LOGGING_STATUS_TYPE_RECOVERY: {
+      return "LOGGING_STATUS_TYPE_RECOVERY";
+    }
+    case LOGGING_STATUS_TYPE_ONGOING: {
+      return "LOGGING_STATUS_TYPE_ONGOING";
+    }
+    case LOGGING_STATUS_TYPE_TERMINATE: {
+      return "LOGGING_STATUS_TYPE_TERMINATE";
+    }
+    case LOGGING_STATUS_TYPE_SLEEP: {
+      return "LOGGING_STATUS_TYPE_SLEEP";
+    }
+  }
+  return "INVALID";
+}
+
+
+
+std::string LoggerTypeToString(LoggerType type) {
+  switch (type) {
+    case LOGGER_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGER_TYPE_FRONTEND: {
+      return "LOGGER_TYPE_FRONTEND";
+    }
+    case LOGGER_TYPE_BACKEND: {
+      return "LOGGER_TYPE_BACKEND";
+    }
+  }
+  return "INVALID";
+}
+
+std::string LogRecordTypeToString(LogRecordType type) {
+  switch (type) {
+    case LOGRECORD_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
+      return "LOGRECORD_TYPE_TRANSACTION_BEGIN";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+      return "LOGRECORD_TYPE_TRANSACTION_COMMIT";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_END: {
+      return "LOGRECORD_TYPE_TRANSACTION_END";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_ABORT: {
+      return "LOGRECORD_TYPE_TRANSACTION_ABORT";
+    }
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_TUPLE_INSERT";
+    }
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_TUPLE_DELETE";
+    }
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_TUPLE_UPDATE";
+    }
+  }
+  return "INVALID";
+}
+
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType) {
   ValueType valueType = VALUE_TYPE_INVALID;
@@ -657,7 +755,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      printf("INVALID VALUE TYPE : %d \n", PostgresValType);
+      LOG_WARN("INVALID VALUE TYPE : %d \n", PostgresValType);
       valueType = VALUE_TYPE_INVALID;
       break;
   }

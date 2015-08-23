@@ -27,10 +27,12 @@
 namespace peloton {
 namespace bridge {
 
+executor::ExecutorContext *BuildExecutorContext(PlanState *planstate, concurrency::Transaction *txn);
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlan *plan,
-                                              ParamListInfo param_list,
-                                              concurrency::Transaction *txn);
+                                              PlanState *planstate,
+                                              executor::ExecutorContext *executor_context);
+
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -41,7 +43,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
                              std::string prefix) {
-  if (plan == nullptr) return;
+  if (plan == nullptr)
+    return;
 
   prefix += "  ";
 
@@ -55,6 +58,16 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 }
 
 /**
+ * @brief Build Executor Context
+ */
+executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list, concurrency::Transaction *txn) {
+  ValueArray params = PlanTransformer::BuildParams(param_list);
+
+  return new executor::ExecutorContext(txn, params);
+}
+
+
+/**
  * @brief Build the executor tree.
  * @param The current executor tree
  * @param The plan tree
@@ -63,22 +76,18 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlan *plan,
-                                              ParamListInfo param_list,
-                                              concurrency::Transaction *txn) {
+                                              executor::ExecutorContext *executor_context) {
   // Base case
-  if (plan == nullptr) return root;
+  if (plan == nullptr)
+    return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
-
-  ValueArray params = PlanTransformer::BuildParams(param_list);
-
-  executor::ExecutorContext *executor_context =
-      new executor::ExecutorContext(txn, params);
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
     case PLAN_NODE_TYPE_INVALID:
-      LOG_ERROR("Invalid plan node type ");
+      LOG_ERROR("Invalid plan node type ")
+      ;
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
@@ -106,8 +115,12 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor =
-          new executor::NestedLoopJoinExecutor(plan, executor_context);
+      child_executor = new executor::NestedLoopJoinExecutor(plan,
+                                                            executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_MERGEJOIN:
+      child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
@@ -115,12 +128,21 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_MATERIALIZE:
-      child_executor =
-          new executor::MaterializationExecutor(plan, executor_context);
+      child_executor = new executor::MaterializationExecutor(plan,
+                                                             executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_AGGREGATE_V2:
+      child_executor = new executor::AggregateExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_ORDERBY:
+      child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
     default:
-      LOG_TRACE("Unsupported plan node type : %d ", plan_node_type);
+      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type)
+      ;
       break;
   }
 
@@ -135,8 +157,9 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto children = plan->GetChildren();
   for (auto child : children) {
-    child_executor = BuildExecutorTree(child_executor, child,
-                                       param_list, txn);
+
+    child_executor = BuildExecutorTree(child_executor, child, executor_context);
+
   }
 
   return root;
@@ -148,7 +171,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
  * @return none.
  */
 void CleanExecutorTree(executor::AbstractExecutor *root) {
-  if (root == nullptr) return;
+  if (root == nullptr)
+    return;
 
   // Recurse
   auto children = root->GetChildren();
@@ -168,20 +192,22 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
  */
 executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     executor::AbstractExecutor *root) {
-  if (root == nullptr) return root;
+  if (root == nullptr)
+    return root;
   auto type = root->GetRawNode()->GetPlanNodeType();
   executor::AbstractExecutor *new_root = root;
 
   switch (type) {
+    case PLAN_NODE_TYPE_MERGEJOIN:
     case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-    /* FALL THRU */
+      /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr, nullptr);
       new_root->AddChild(root);
       LOG_TRACE("Added materialization, the original root executor type is %d",
-               type);
+                type);
       break;
     default:
       break;
@@ -195,11 +221,9 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @return status of execution.
  */
 void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
-                               ParamListInfo param_list,
-                               TupleDesc tuple_desc,
-                               Peloton_Status *pstatus,
-                               TransactionId txn_id) {
-  if(plan == nullptr)
+                               ParamListInfo param_list, TupleDesc tuple_desc,
+                               Peloton_Status *pstatus, TransactionId txn_id) {
+  if (plan == nullptr)
     return;
 
   LOG_TRACE("PlanExecutor Start \n");
@@ -219,17 +243,21 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   }
   assert(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_TRACE("Building the executor tree");
+  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_INFO("Building the executor tree");
+
+
+  auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
+
   executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, param_list, txn);
+      BuildExecutorTree(nullptr, plan, executor_context);
 
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
-  LOG_TRACE("Initializing the executor tree");
+  LOG_INFO("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -241,7 +269,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_TRACE("Running the executor tree");
+  LOG_INFO("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
@@ -271,9 +299,11 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
+
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        //        print_slot(slot);
+        LOG_INFO("1 slot");
+        //print_slot(slot);
       }
     }
 
@@ -282,18 +312,22 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   }
 
   // Set the result
+  pstatus->m_processed = executor_context->num_processed;
   pstatus->m_result_slots = slots;
 
 // final cleanup
-cleanup:
+  cleanup:
+
+  LOG_INFO("About to commit %d, %d", single_statement_txn, init_failure);
 
   // should we commit or abort ?
-  if (single_statement_txn == true || init_failure == true) {
+  if (single_statement_txn == true || init_failure == true)
+  {
     auto status = txn->GetResult();
     switch (status) {
       case Result::RESULT_SUCCESS:
         LOG_TRACE("Committing txn_id : %lu , cid : %lu\n",
-                 txn->GetTransactionId(), txn->GetCommitId());
+                  txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
 
@@ -302,14 +336,19 @@ cleanup:
       case Result::RESULT_FAILURE:
       default:
         LOG_TRACE("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
-                 txn->GetCommitId());
+                  txn->GetCommitId());
         // Abort
         txn_manager.AbortTransaction(txn);
     }
   }
 
-  // clean up
+
+  // clean up executor tree
   CleanExecutorTree(executor_tree);
+
+  // Clean executor context
+  delete executor_context;
+
   pstatus->m_result = txn->GetResult();
   return;
 }
