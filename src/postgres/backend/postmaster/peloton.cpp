@@ -27,12 +27,14 @@
 #include "backend/common/logger.h"
 #include "backend/common/message_queue.h"
 #include "backend/scheduler/tbb_scheduler.h"
+#include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
+#include "backend/logging/logmanager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -45,6 +47,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
+
 #include "nodes/params.h"
 #include "utils/guc.h"
 #include "utils/errcodes.h"
@@ -60,6 +63,12 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+
+/* ----------
+ * Log Flag
+ * ----------
+ */
+bool logging_on = false;
 
 /* ----------
  * Local data
@@ -108,6 +117,8 @@ static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
 static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
+static void __attribute__((unused)) peloton_test_config();
+
 static Peloton_Status *peloton_create_status();
 static void peloton_process_status(Peloton_Status *status);
 static void peloton_destroy_status(Peloton_Status *status);
@@ -124,6 +135,7 @@ static ParamListInfo peloton_copy_paramlist(ParamListInfo param_list);
 
 static void peloton_begin_query();
 static void __attribute__((unused)) peloton_finish_query();
+
 
 bool
 IsPelotonProcess(void) {
@@ -180,6 +192,7 @@ int peloton_start(void) {
  */
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[]) {
+
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
@@ -291,9 +304,6 @@ PelotonMain(int argc, char *argv[]) {
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
-  /* Init Peloton */
-  //peloton::bridge::Bootstrap::BootstrapPeloton();
-
   /*
    * Create a resource owner to keep track of our resources (not clear that
    * we need this, but may as well have one).
@@ -404,6 +414,16 @@ peloton_MainLoop(void) {
     return;
   }
 
+  std::vector<std::thread> thread_group;
+  if(logging_on){
+  // Launching a thread for logging 
+  auto& logManager = peloton::logging::LogManager::GetInstance();
+  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
+  thread_group.push_back(std::thread(&peloton::logging::LogManager::StandbyLogging,
+                                     &logManager,
+                                     logManager.GetMainLoggingType()));
+  }
+
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
    * death of our parent postmaster.
@@ -512,6 +532,18 @@ peloton_MainLoop(void) {
     if (wr & WL_POSTMASTER_DEATH)
       break;
   }             /* end of outer loop */
+
+  if(logging_on){
+    auto& logManager = peloton::logging::LogManager::GetInstance();
+    // terminate logging thread
+    if( logManager.EndLogging() ){
+      for(uint64_t thread_itr = 0; thread_itr < thread_group.size(); ++thread_itr){
+        thread_group[thread_itr].join();
+      }
+    }else{
+      elog(LOG,"Failed to terminate logging thread");
+    }
+  }
 
   /* Normal exit from peloton is here */
   ereport(LOG,
@@ -985,10 +1017,11 @@ peloton_send_ddl(Node *parsetree) {
   status = peloton_create_status();
   msg.m_status = status;
 
-  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
+  auto ddl_info = peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
 
   auto parsetree_copy = peloton_copy_parsetree(parsetree);
   msg.m_parsetree = parsetree_copy;
+  msg.m_ddl_info = ddl_info;
 
   // Switch back to old context
   MemoryContextSwitchTo(oldcxt);
@@ -1118,6 +1151,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   /* Ignore empty plans */
   if(plan == nullptr) {
+    elog(WARNING, "Empty or unrecognized plan is sent to Peloton");
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
@@ -1165,6 +1199,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 
   /* Get the parsetree */
   parsetree = msg->m_parsetree;
+  auto ddl_info = msg->m_ddl_info;
 
   /* Ignore invalid parsetrees */
   if(parsetree == NULL || nodeTag(parsetree) == T_Invalid) {
@@ -1179,6 +1214,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   try {
     /* Process the utility statement */
     peloton::bridge::DDL::ProcessUtility(parsetree,
+                                         ddl_info,
                                          msg->m_status,
                                          txn_id);
   }
@@ -1219,6 +1255,14 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       /* Process the utility statement */
       peloton::bridge::Bootstrap::BootstrapPeloton(raw_database,
                                                    msg->m_status);
+
+      if( logging_on){
+        // NOTE:: start logging since bootstrapPeloton is done
+        auto& logManager = peloton::logging::LogManager::GetInstance();
+        if( logManager.IsReadyToLogging() == false){
+          logManager.StartLogging();
+        }
+      }
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -1309,6 +1353,21 @@ peloton_process_status(Peloton_Status *status) {
 void
 peloton_destroy_status(Peloton_Status *status) {
   pfree(status);
+}
+
+static void
+peloton_test_config() {
+
+  auto val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "Before SetConfigOption : %s", val);
+
+  SetConfigOption("peloton_mode", "peloton_mode_1", PGC_USERSET, PGC_S_USER);
+
+  val = GetConfigOption("peloton_mode", false, false);
+  elog(LOG, "After SetConfigOption : %s", val);
+
+  // Build the configuration map
+  peloton::bridge::ConfigManager::BuildConfigMap();
 }
 
 /* ----------

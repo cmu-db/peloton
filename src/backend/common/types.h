@@ -55,7 +55,7 @@ namespace peloton {
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
+#define DEFAULT_TUPLES_PER_TILEGROUP 10
 
 //===--------------------------------------------------------------------===//
 // Other Constants
@@ -80,6 +80,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 enum PostgresValueType {
+  POSTGRES_VALUE_TYPE_INVALID = -1,
   POSTGRES_VALUE_TYPE_BOOLEAN = 16,
 
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
@@ -267,7 +268,7 @@ enum PlanNodeType {
 
   // Algebra Nodes
   PLAN_NODE_TYPE_AGGREGATE = 50,
-  PLAN_NODE_TYPE_HASHAGGREGATE = 51,
+  PLAN_NODE_TYPE_HASHAGGREGATE = 51,  // TODO: Remove it.
   PLAN_NODE_TYPE_UNION = 52,
   PLAN_NODE_TYPE_ORDERBY = 53,
   PLAN_NODE_TYPE_PROJECTION = 54,
@@ -276,6 +277,8 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_DISTINCT = 57,
   PLAN_NODE_TYPE_SETOP = 58,   // set operation
   PLAN_NODE_TYPE_APPEND = 59,  // append
+
+  PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
 
   // Utility
   PLAN_NODE_TYPE_RESULT = 70
@@ -327,6 +330,16 @@ enum PelotonJoinType {
   JOIN_TYPE_RIGHT = 2,  // right
   JOIN_TYPE_INNER = 3,  // inner
   JOIN_TYPE_OUTER = 4   // outer
+};
+
+//===--------------------------------------------------------------------===//
+// Aggregate Types
+//===--------------------------------------------------------------------===//
+enum PelotonAggType {
+  AGGREGATE_TYPE_INVALID = 0,
+  AGGREGATE_TYPE_SORTED = 1,
+  AGGREGATE_TYPE_HASH = 2,
+  AGGREGATE_TYPE_PLAIN = 3  // no group-by
 };
 
 //===--------------------------------------------------------------------===//
@@ -439,6 +452,49 @@ enum SetOpType {
 };
 
 //===--------------------------------------------------------------------===//
+// Log Types
+//===--------------------------------------------------------------------===//
+
+enum LoggingType{
+  LOGGING_TYPE_INVALID = 0, 
+
+  LOGGING_TYPE_STDOUT  = 1, 
+  LOGGING_TYPE_ARIES   = 2,
+  LOGGING_TYPE_PELOTON = 3 
+};
+
+enum LoggingStatus{
+  LOGGING_STATUS_TYPE_INVALID = 0, 
+
+  LOGGING_STATUS_TYPE_STANDBY  = 1, 
+  LOGGING_STATUS_TYPE_RECOVERY = 2, 
+  LOGGING_STATUS_TYPE_ONGOING  = 3,
+  LOGGING_STATUS_TYPE_TERMINATE  = 4,
+  LOGGING_STATUS_TYPE_SLEEP  = 5
+};
+
+enum LoggerType{
+  LOGGER_TYPE_INVALID = 0, 
+
+  LOGGER_TYPE_FRONTEND = 1, 
+  LOGGER_TYPE_BACKEND = 2
+
+};
+
+enum LogRecordType{
+  LOGRECORD_TYPE_INVALID = 0, 
+
+  LOGRECORD_TYPE_TRANSACTION_BEGIN   = 1,
+  LOGRECORD_TYPE_TRANSACTION_COMMIT  = 2,
+  LOGRECORD_TYPE_TRANSACTION_END     = 3,
+  LOGRECORD_TYPE_TRANSACTION_ABORT   = 4,
+
+  LOGRECORD_TYPE_TUPLE_INSERT        = 5,
+  LOGRECORD_TYPE_TUPLE_DELETE        = 6,
+  LOGRECORD_TYPE_TUPLE_UPDATE        = 7
+};
+
+//===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
@@ -521,6 +577,11 @@ PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
+
+std::string LoggingTypeToString(LoggingType type);
+std::string LoggingStatusToString(LoggingStatus type);
+std::string LoggerTypeToString(LoggerType type);
+std::string LogRecordTypeToString(LogRecordType type);
 
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);

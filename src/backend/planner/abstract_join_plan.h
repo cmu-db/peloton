@@ -37,12 +37,12 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
 
   AbstractJoinPlan(PelotonJoinType joinType,
-                       expression::AbstractExpression *predicate,
-                       const ProjectInfo *proj_info)
-      : AbstractPlan(),
-        joinType_(joinType),
-        predicate_(predicate),
-        proj_info_(proj_info) {
+                   const expression::AbstractExpression *predicate,
+                   const ProjectInfo *proj_info)
+  : AbstractPlan(),
+    joinType_(joinType),
+    predicate_(predicate),
+    proj_info_(proj_info) {
     // Fuck off!
   }
 
@@ -67,7 +67,7 @@ class AbstractJoinPlan : public AbstractPlan {
   PelotonJoinType joinType_;
 
   /** @brief Join predicate. */
-  const std::unique_ptr<expression::AbstractExpression> predicate_;
+  const std::unique_ptr<const expression::AbstractExpression> predicate_;
 
   /** @brief Projection info */
   std::unique_ptr<const ProjectInfo> proj_info_;

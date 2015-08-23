@@ -66,7 +66,7 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(target_list, direct_map_list);
+  return new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 }
 
 //===--------------------------------------------------------------------===//
@@ -118,7 +118,8 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
   planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(target_list, direct_map_list));
+      table, new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list)));
+
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
@@ -238,12 +239,12 @@ TEST(MutateTests, StressTests) {
   LaunchParallelTest(1, InsertTuple, table);
   // std::cout << (*table);
 
-  std::cout << "---------------------------------------------\n";
+  LOG_INFO("---------------------------------------------\n");
 
   // LaunchParallelTest(1, UpdateTuple, table);
   // std::cout << (*table);
 
-  std::cout << "---------------------------------------------\n";
+  LOG_INFO("---------------------------------------------\n");
 
   LaunchParallelTest(1, DeleteTuple, table);
   // std::cout << (*table);

@@ -13,9 +13,12 @@
 #pragma once
 
 #include "backend/storage/data_table.h"
-#include "postmaster/peloton.h"
 
 #include <iostream>
+
+struct Peloton_Status;
+struct dirty_table_info;
+struct dirty_index_info;
 
 namespace peloton {
 namespace storage {

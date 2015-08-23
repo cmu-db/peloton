@@ -33,13 +33,11 @@ class DMLUtils {
   DMLUtils(DMLUtils &&) = delete;
   DMLUtils &operator=(DMLUtils &&) = delete;
 
-  static AbstractPlanState *PreparePlanState(
-      AbstractPlanState *root,
-      PlanState *planstate,
-      bool left_child);
+  static AbstractPlanState *PreparePlanState(AbstractPlanState *root,
+                                             PlanState *planstate,
+                                             bool left_child);
 
-  static AbstractPlanState *peloton_prepare_data(
-      PlanState *planstate);
+  static AbstractPlanState *peloton_prepare_data(PlanState *planstate);
 
  private:
 
@@ -47,48 +45,51 @@ class DMLUtils {
       ModifyTableState *mt_planstate);
 
   static void PrepareInsertState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_plan_state);
+                                 ModifyTableState *mt_state);
 
   static void PrepareUpdateState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_plan_state);
+                                 ModifyTableState *mt_state);
 
   static void PrepareDeleteState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_plan_state);
+                                 ModifyTableState *mt_state);
 
-  static ResultPlanState *PrepareResultState(
-      ResultState *result_plan_state);
+  static ResultPlanState *PrepareResultState(ResultState *result_state);
 
-  static void PrepareAbstractScanState(
-      AbstractScanPlanState* ss_plan_state,
-      const ScanState& ss_state);
+  static void PrepareAbstractScanState(AbstractScanPlanState* ss_plan_state,
+                                       const ScanState& ss_state);
 
-  static SeqScanPlanState *PrepareSeqScanState(
-      SeqScanState *ss_plan_state);
+  static SeqScanPlanState *PrepareSeqScanState(SeqScanState *ss_state);
 
-  static IndexScanPlanState *PrepareIndexScanState(
-      IndexScanState *iss_plan_state);
+  static IndexScanPlanState *PrepareIndexScanState(IndexScanState *iss_state);
 
   static IndexOnlyScanPlanState *PrepareIndexOnlyScanState(
-      IndexOnlyScanState *ioss_plan_state);
+      IndexOnlyScanState *ioss_state);
 
   static BitmapHeapScanPlanState *PrepareBitmapHeapScanState(
-      BitmapHeapScanState *bhss_plan_state);
+      BitmapHeapScanState *bhss_state);
 
-  static LockRowsPlanState *PrepareLockRowsState(
-      LockRowsState *lr_plans_tate);
+  static BitmapIndexScanPlanState *PrepareBitmapIndexScanState(
+      BitmapIndexScanState *biss_state);
 
-  static LimitPlanState *PrepareLimitState(
-      LimitState *limit_plan_state);
+  static LockRowsPlanState *PrepareLockRowsState(LockRowsState *lr_state);
 
-  static MaterialPlanState *PrepareMaterialState(
-      MaterialState *material_plan_state);
+  static LimitPlanState *PrepareLimitState(LimitState *limit_state);
 
-  static NestLoopPlanState *PrepareNestLoopState(
-      NestLoopState *nl_plan_state);
+  static MaterialPlanState *PrepareMaterialState(MaterialState *material_state);
 
-  static PelotonProjectionInfo *BuildProjectInfo(
-      ProjectionInfo *proj_info,
-      int column_count);
+  static void PrepareAbstractJoinPlanState(AbstractJoinPlanState* j_plan_state,
+                                           const JoinState& j_state);
+
+  static NestLoopPlanState *PrepareNestLoopState(NestLoopState *nl_state);
+
+  static MergeJoinPlanState *PrepareMergeJoinState(MergeJoinState *mj_state);
+
+  static AggPlanState *PrepareAggState(AggState *agg_state);
+
+  static SortPlanState *PrepareSortState(SortState *sort_state);
+
+  static PelotonProjectionInfo *BuildProjectInfo(ProjectionInfo *proj_info,
+                                                 int column_count);
 
 };
 

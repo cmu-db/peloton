@@ -12,9 +12,11 @@
 
 #include <memory>
 
-#include "backend/planner/index_scan_plan.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "backend/planner/index_scan_plan.h"
+
 
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
@@ -48,14 +50,17 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<Value> values;
+  std::vector<expression::AbstractExpression *>runtime_keys;
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
   values.push_back(ValueFactory::GetIntegerValue(110));
 
   // Create index scan desc
+
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
-                                                        expr_types, values);
+                                                        expr_types, values, runtime_keys);
+
 
   expression::AbstractExpression *predicate = nullptr;
 
@@ -108,6 +113,7 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<Value> values;
+  std::vector<expression::AbstractExpression *>runtime_keys;
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
@@ -117,8 +123,9 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   values.push_back(ValueFactory::GetIntegerValue(70));
 
   // Create index scan desc
+
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
-                                                        expr_types, values);
+                                                        expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 

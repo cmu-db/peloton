@@ -84,6 +84,7 @@ typedef struct Peloton_Status
   int m_status;
   dirty_table_info** m_dirty_tables;
   int m_dirty_count;
+  uint32_t m_processed; // num of tuple processed, used in modifytable operation for sending back number of tuples actually modified
 } Peloton_Status;
 
 /* ----------
@@ -127,6 +128,7 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   Node *m_parsetree;
+  DDL_Info *m_ddl_info;
 } Peloton_MsgDDL;
 
 /* ----------
