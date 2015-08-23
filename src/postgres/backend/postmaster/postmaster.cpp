@@ -336,7 +336,7 @@ static time_t AbortStartTime;
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;		/* T during new___-client
+thread_local bool		ClientAuthInProgress = false;		/* T during new___-client
  * authentication */
 
 bool		redirection_done = false;	/* stderr redirected for syslogger? */
