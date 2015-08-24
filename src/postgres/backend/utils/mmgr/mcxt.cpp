@@ -52,16 +52,6 @@ thread_local MemoryContext MessageContext = NULL;
 thread_local MemoryContext TopTransactionContext = NULL;
 thread_local MemoryContext CurTransactionContext = NULL;
 
-// TODO: Peloton Changes
-/*
- * The Shared memory context is a copy of the memory context routimes.
- * Calls to malloc and friends replaced with calls to the OSSP MM shared
- * memory library.  The TopSharedMemoryContext must be initialized
- * prior to fork (i.e. by the postmaster) via a call to SHMContextInit
- * and can be destroyed at postmaster exit via a call to SHMContextShutdown
- */
-MemoryContext TopSharedMemoryContext = NULL;
-
 /* This is a transient link to the active portal's memory context: */
 thread_local MemoryContext PortalContext = NULL;
 

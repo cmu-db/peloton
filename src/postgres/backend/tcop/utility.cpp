@@ -342,7 +342,7 @@ ProcessUtility(Node *parsetree,
                 dest, completionTag);
   else
   {
-    elog(LOG, "DDL Query :: %s Type :: %d",
+    elog(DEBUG3, "DDL Query :: %s Type :: %d",
          queryString, nodeTag(parsetree));
 
     standard_ProcessUtility(parsetree, queryString,
@@ -350,7 +350,7 @@ ProcessUtility(Node *parsetree,
                 dest, completionTag);
 
     // TODO: Peloton Changes
-    if(IsPostmasterEnvironment == true)
+    if(IsBackend == true)
     {
       peloton_ProcessUtility(parsetree, queryString,
                              context, params,
