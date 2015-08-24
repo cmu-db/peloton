@@ -198,15 +198,15 @@ void AriesFrontendLogger::Recovery() {
           AbortTuplesFromRecoveryTable();
           break;
 
-        case LOGRECORD_TYPE_TUPLE_INSERT:
+        case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
           InsertTuple(recovery_txn);
           break;
 
-        case LOGRECORD_TYPE_TUPLE_DELETE:
+        case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:
           DeleteTuple(recovery_txn);
           break;
 
-        case LOGRECORD_TYPE_TUPLE_UPDATE:
+        case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:
           UpdateTuple(recovery_txn);
           break;
 
@@ -498,7 +498,7 @@ void AriesFrontendLogger::AbortTxnInRecoveryTable(){
  */
 void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
-  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_INSERT);
+  TupleRecord tupleRecord(LOGRECORD_TYPE_ARIES_TUPLE_INSERT);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
     // file is broken
@@ -556,7 +556,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
  */
 void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
-  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_DELETE);
+  TupleRecord tupleRecord(LOGRECORD_TYPE_ARIES_TUPLE_DELETE);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
     // file is broken
@@ -585,7 +585,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
  */
 void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
-  TupleRecord tupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE);
+  TupleRecord tupleRecord(LOGRECORD_TYPE_ARIES_TUPLE_UPDATE);
 
   if( ReadTupleRecordHeader(tupleRecord) == false){
     // file is broken
