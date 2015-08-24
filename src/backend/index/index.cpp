@@ -20,7 +20,7 @@
 namespace peloton {
 namespace index {
 
-bool Index::Compare(const storage::Tuple &index_key,
+bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &expr_types,
                     const std::vector<Value> &values) {
