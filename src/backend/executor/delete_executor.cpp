@@ -90,16 +90,17 @@ bool DeleteExecutor::DExecute() {
 
     peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
-   // Logging 
-   {
+    // Logging 
+    {
       auto& logManager = logging::LogManager::GetInstance();
+
       if(logManager.IsReadyToLogging()){
         auto logger = logManager.GetBackendLogger();
-  
-        auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, 
-                                              transaction_->GetTransactionId(), 
-                                              target_table_->GetOid(),
-                                              delete_location);
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
+                                             transaction_->GetTransactionId(), 
+                                             target_table_->GetOid(),
+                                             delete_location);
+
         logger->Delete(record);
       }
     }

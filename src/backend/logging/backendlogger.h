@@ -60,6 +60,13 @@ class BackendLogger : public Logger{
 
     virtual void Update(LogRecord* record) = 0;
 
+    virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
+                                      txn_id_t txn_id, 
+                                      oid_t table_oid, 
+                                      ItemPointer location, 
+                                      void* data = nullptr,
+                                      oid_t db_oid = INVALID_OID) = 0;
+
   protected:
 
     // TODO change vector to list
