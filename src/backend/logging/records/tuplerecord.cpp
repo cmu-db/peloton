@@ -33,13 +33,13 @@ bool TupleRecord::Serialize(){
   // serialize other parts depends on type
   switch(GetType()){
 
-    case LOGRECORD_TYPE_TUPLE_INSERT:
-    case LOGRECORD_TYPE_TUPLE_UPDATE:{
+    case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
+    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:{
      storage::Tuple* tuple = (storage::Tuple*)data;
      tuple->SerializeTo(output);
     }break;
 
-    case LOGRECORD_TYPE_TUPLE_DELETE:{
+    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:{
     // nothing to do now 
     }break;
 

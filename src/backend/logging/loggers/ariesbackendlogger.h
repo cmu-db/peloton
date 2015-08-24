@@ -38,6 +38,13 @@ class AriesBackendLogger : public BackendLogger{
 
     void Update(LogRecord* record);
 
+    LogRecord* GetTupleRecord(LogRecordType log_record_type, 
+                              txn_id_t txn_id, 
+                              oid_t table_oid, 
+                              ItemPointer location, 
+                              void* data = nullptr,
+                              oid_t db_oid = INVALID_OID);
+
   private:
 
     AriesBackendLogger(){ logging_type = LOGGING_TYPE_ARIES;}

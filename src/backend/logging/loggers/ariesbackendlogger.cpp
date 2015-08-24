@@ -11,6 +11,7 @@
  */
 
 #include "backend/logging/loggers/ariesbackendlogger.h"
+#include "backend/logging/records/tuplerecord.h"
 
 #include <iostream>
 
@@ -56,6 +57,40 @@ void AriesBackendLogger::Update(LogRecord* record){
     record->Serialize();
     local_queue.push_back(record);
   }
+}
+
+LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
+                                              txn_id_t txn_id, 
+                                              oid_t table_oid, 
+                                              ItemPointer location, 
+                                              void* data,
+                                              oid_t db_oid){
+  switch(log_record_type){
+    case LOGRECORD_TYPE_TUPLE_INSERT:  {
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_INSERT; 
+      break;
+    }
+    case LOGRECORD_TYPE_TUPLE_DELETE:  {
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_DELETE; 
+      break;
+    }
+    case LOGRECORD_TYPE_TUPLE_UPDATE:  {
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_UPDATE; 
+      break;
+    }
+    default:  {
+      assert(false);
+      break;
+    }
+  }
+
+  LogRecord* record = new TupleRecord(log_record_type, 
+                                      txn_id,
+                                      table_oid,
+                                      location,
+                                      data,
+                                      db_oid);
+  return record;
 }
 
 }  // namespace logging

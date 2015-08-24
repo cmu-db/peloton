@@ -112,6 +112,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
 bool LogManager::IsReadyToLogging(LoggingType logging_type){
   if( logging_type == LOGGING_TYPE_INVALID){
     logging_type = MainLoggingType;
+
     if( logging_type == LOGGING_TYPE_INVALID)
       return false;
   }
