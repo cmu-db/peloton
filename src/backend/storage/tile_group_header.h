@@ -58,6 +58,8 @@ class TileGroupHeader {
     // allocate storage space for header
     data = (char *) backend->Allocate(header_size);
     assert(data != nullptr);
+    insert_commit = false;
+    delete_commit = false;
   }
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
@@ -269,6 +271,10 @@ class TileGroupHeader {
 
   // synch helpers
   std::mutex tile_header_mutex;
+
+  // commit marks used for Peloton(NVRAM) logging
+  bool insert_commit;
+  bool delete_commit;
 
 };
 
