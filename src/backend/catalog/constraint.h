@@ -28,11 +28,13 @@ namespace catalog {
 
 class Constraint {
  public:
-  Constraint(ConstraintType type, std::string constraint_name = "",
+  Constraint(ConstraintType type,
+             std::string constraint_name,
              Node *raw_expr = nullptr)
       : constraint_type(type),
         constraint_name(constraint_name),
-        expr(raw_expr) {}
+        expr(raw_expr) {
+  }
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -71,7 +73,7 @@ class Constraint {
 
   oid_t unique_index_list_offset = INVALID_OID;
 
-  std::string constraint_name = "";
+  std::string constraint_name;
 
   // Default_expr
   Node *expr = nullptr;
