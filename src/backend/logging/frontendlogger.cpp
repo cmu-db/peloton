@@ -11,7 +11,6 @@
  */
 
 #include "backend/logging/frontendlogger.h"
-#include "backend/logging/loggers/stdoutfrontendlogger.h"
 #include "backend/logging/loggers/ariesfrontendlogger.h"
 
 namespace peloton {
@@ -26,7 +25,7 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
 
   switch(logging_type){
     case LOGGING_TYPE_STDOUT:{
-      frontendLogger = new StdoutFrontendLogger();
+      //frontendLogger = new StdoutFrontendLogger();
     }break;
 
     case LOGGING_TYPE_ARIES:{

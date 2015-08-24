@@ -11,7 +11,6 @@
  */
 
 #include "backend/logging/backendlogger.h"
-#include "backend/logging/loggers/stdoutbackendlogger.h"
 #include "backend/logging/loggers/ariesbackendlogger.h"
 
 namespace peloton {
@@ -26,7 +25,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
 
   switch(logging_type){
     case LOGGING_TYPE_STDOUT:{
-      backendLogger = StdoutBackendLogger::GetInstance();
+      //backendLogger = StdoutBackendLogger::GetInstance();
     }break;
 
     case LOGGING_TYPE_ARIES:{
