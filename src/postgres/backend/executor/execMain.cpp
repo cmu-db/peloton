@@ -67,9 +67,7 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
-extern bool PelotonDualMode;
-
-static void __attribute__((unused)) peloton_ExecutePlan(EState *estate, PlanState *planstate,
+static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 CmdType operation,
                                 bool sendTuples,
                                 long numberTuples,
@@ -354,7 +352,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
     elog(DEBUG3, "DML Query :: Type :: %d", operation);
 
     // PG Query
-	  if(true)
+	  if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {
 	    ExecutePlan(estate,
 	                queryDesc->planstate,
@@ -1652,10 +1650,12 @@ peloton_ExecutePlan(EState *estate,
       TupleDesc tupDesc)
 {
 
-  peloton_send_dml(planstate,
-                   sendTuples,
-                   dest,
-                   tupDesc);
+  // TODO: Peloton Changes
+  peloton_dml(planstate,
+              sendTuples,
+              dest,
+              tupDesc);
+
 }
 
 /*

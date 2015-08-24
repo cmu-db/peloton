@@ -25,108 +25,25 @@
 #include "tcop/dest.h"
 
 /* ----------
- * The types of backend -> peloton messages
- * ----------
- */
-typedef enum PelotonMsgType
-{
-  PELOTON_MTYPE_INVALID,    // Invalid message type
-  PELOTON_MTYPE_DUMMY,      // Dummy message type
-  PELOTON_MTYPE_DML,        // DML information to Peloton
-  PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
-} PelotonMsgType;
-
-/* ------------------------------------------------------------
- * Message formats follow
- * ------------------------------------------------------------
- */
-
-/* ----------
- * Peloton_MsgHdr        The common message header
- * ----------
- */
-typedef struct Peloton_MsgHdr
-{
-  PelotonMsgType m_type;
-  int     m_size;
-  BackendId m_backend_id;
-  Oid   m_dbid;
-  TransactionId m_txn_id;
-  MemoryContext m_query_context;
-} Peloton_MsgHdr;
-
-/* ----------
- * Stats Sent by the peloton to share the status with backend.
- * ----------
- */
-typedef struct dirty_index_info{
-  Oid index_oid;
-  float number_of_tuples;
-}dirty_index_info;
-
-typedef struct dirty_table_info{
-  Oid table_oid;
-  float number_of_tuples;
-  dirty_index_info** dirty_indexes;
-  Oid dirty_index_count;
-}dirty_table_info;
-
-/* ----------
  * Peloton_Status     Sent by the peloton to share the status with backend.
  * ----------
  */
-typedef struct Peloton_Status
-{
+typedef struct peloton_status {
   peloton::Result m_result;
   List *m_result_slots;
-  int m_status;
-  dirty_table_info** m_dirty_tables;
-  int m_dirty_count;
-  uint32_t m_processed; // num of tuple processed, used in modifytable operation for sending back number of tuples actually modified
-} Peloton_Status;
 
-/* ----------
- * Space available in a message.  This will keep the UDP packets below 1K,
- * which should fit unfragmented into the MTU of the loopback interface.
- * (Larger values of PELOTON_MAX_MSG_SIZE would work for that on most
- * platforms, but we're being conservative here.)
- * ----------
- */
-#define PELOTON_MAX_MSG_SIZE 1000
-#define PELOTON_MSG_PAYLOAD  (PELOTON_MAX_MSG_SIZE - sizeof(Peloton_MsgHdr))
+  // number of tuples processed
+  uint32_t m_processed;
 
-/* ----------
- * Peloton_MsgDummy        A dummy message, ignored by peloton.
- * ----------
- */
-typedef struct Peloton_MsgDummy
-{
-  Peloton_MsgHdr m_hdr;
-} Peloton_MsgDummy;
+  peloton_status(){
+    m_processed = 0;
+    m_result = peloton::RESULT_SUCCESS;
+    m_result_slots = nullptr;
+  }
 
-/* ----------
- * Peloton_MsgDML     Sent by the backend to share the plan to peloton.
- * ----------
- */
-typedef struct Peloton_MsgDML
-{
-  Peloton_MsgHdr m_hdr;
-  Peloton_Status  *m_status;
-  AbstractPlanState *m_plan_state;
-  ParamListInfo m_param_list;
-  TupleDesc m_tuple_desc;
-} Peloton_MsgDML;
+} peloton_status;
 
-/* ----------
- * Peloton_Msg         Union over all possible messages.
- * ----------
- */
-typedef union Peloton_Msg
-{
-  Peloton_MsgHdr msg_hdr;
-  Peloton_MsgDummy msg_dummy;
-  Peloton_MsgDML msg_dml;
-} Peloton_Msg;
+extern bool logging_on;
 
 /* ----------
  * Functions called from postmaster
@@ -137,7 +54,7 @@ extern bool IsPelotonQuery(List *relationOids);
 
 
 /* ----------
- * Functions called from postgres
+ * Functions called from postgres, utility, and execMain
  * ----------
  */
 
@@ -145,19 +62,27 @@ extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);
 
-extern void peloton_dml();
-
-extern void peloton_send_dml(PlanState *planstate,
-                             bool sendTuples,
-                             DestReceiver *dest,
-                             TupleDesc tuple_desc);
-
-extern bool logging_on;
-
-extern Peloton_Status *peloton_create_status();
-extern void peloton_process_status(Peloton_Status *status);
-extern void peloton_destroy_status(Peloton_Status *status);
+extern void peloton_dml(PlanState *planstate,
+                        bool sendTuples,
+                        DestReceiver *dest,
+                        TupleDesc tuple_desc);
 
 
+/* ----------
+ * Stats Sent by the peloton to share the status with backend.
+ * ----------
+ */
+
+struct dirty_index_info {
+  Oid index_oid;
+  float number_of_tuples;
+};
+
+struct dirty_table_info {
+  Oid table_oid;
+  float number_of_tuples;
+  dirty_index_info** dirty_indexes;
+  Oid dirty_index_count;
+};
 #endif   /* PELOTON_H */
 

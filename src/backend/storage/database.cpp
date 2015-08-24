@@ -82,7 +82,7 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateStats(Peloton_Status *status, bool dirty_care) {
+void Database::UpdateStats(bool dirty_care) {
   if (dirty_care) {
     LOG_INFO("Update only dirty tables in Database(%u)", database_oid);
   } else {
@@ -113,12 +113,9 @@ void Database::UpdateStats(Peloton_Status *status, bool dirty_care) {
     dirty_tables.push_back(dirty_table);
   }
 
-  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
-  status->m_dirty_count = dirty_tables.size();
 }
 
-void Database::UpdateStatsWithOid(Peloton_Status *status,
-                                  const oid_t table_oid) {
+void Database::UpdateStatsWithOid(const oid_t table_oid) {
   LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid, database_oid);
 
   std::vector<dirty_table_info *> dirty_tables;
@@ -140,8 +137,6 @@ void Database::UpdateStatsWithOid(Peloton_Status *status,
   table->ResetDirty();
   dirty_tables.push_back(dirty_table);
 
-  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
-  status->m_dirty_count = dirty_tables.size();
 }
 
 //===--------------------------------------------------------------------===//

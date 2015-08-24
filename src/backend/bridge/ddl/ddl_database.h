@@ -15,7 +15,7 @@
 #include "backend/bridge/ddl/ddl_raw_structures.h"
 #include "backend/common/types.h"
 
-struct Peloton_Status;
+struct peloton_status;
 
 namespace peloton {
 namespace bridge {
