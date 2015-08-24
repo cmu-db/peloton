@@ -261,7 +261,7 @@ class TileFactory {
     // These temporary tiles don't belong to any tile group.
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
-    AbstractBackend *backend = new VMBackend();
+    AbstractBackend *backend = new NVMBackend();
 
     Tile *tile = GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
                          header, backend, schema, tile_group, tuple_count);
