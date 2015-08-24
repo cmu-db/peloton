@@ -93,8 +93,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 }
 
 ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple,
-                                    const ItemPointer old_location) {
+                                    const storage::Tuple *tuple) {
   assert(tuple);
 
   if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
@@ -123,12 +122,6 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   // Set tuple location
   ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
 
-  // Set back pointer in tile group header in case of updated tuple
-  if (old_location.block != INVALID_OID) {
-    auto header = tile_group->GetHeader();
-    header->SetPrevItemPointer(location.offset, old_location);
-  }
-
   return location;
 }
 
@@ -139,7 +132,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple, INVALID_ITEMPOINTER);
+  ItemPointer location = GetTupleSlot(transaction, tuple);
   if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
   LOG_TRACE("Location: %d, %d", location.block, location.offset);
@@ -204,7 +197,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       if (visible == false) {
         LOG_TRACE("Index : %u. Existing tuple is not visible.\n",
                   index->GetOid());
-        bool status = index->UpdateEntry(key, location, old_location);
+        bool status = index->UpdateEntry(key, location);
         if (status == true) {
           delete key;
           continue;
@@ -268,43 +261,19 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
   return true;
 }
 
-// void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
-//                                const ItemPointer location) {
-//  // Go over every index
-//  for (auto index : indexes) {
-//    auto index_schema = index->GetKeySchema();
-//    auto indexed_columns = index_schema->GetIndexedColumns();
-//
-//    storage::Tuple *key = new storage::Tuple(index_schema, true);
-//    key->SetFromTuple(tuple, indexed_columns);
-//
-//    // Delete the entry in the index
-//    if (index->DeleteEntry(key, location) == false) {
-//      delete key;
-//      LOG_WARN("Failed to delete tuple from index %s . %s %s",
-//               GetName().c_str(),
-//               index->GetName().c_str(),
-//               index->GetTypeName().c_str());
-//    }
-//
-//    delete key;
-//  }
-//}
-
 //===--------------------------------------------------------------------===//
 // UPDATE
 //===--------------------------------------------------------------------===//
 
 ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple,
-                                   const ItemPointer old_location) {
+                                   const storage::Tuple *tuple) {
   // Do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple, old_location);
+  ItemPointer location = GetTupleSlot(transaction, tuple);
   if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
   bool status = false;
   // 1) Try as if it's a same-key update
-  status = UpdateInIndexes(tuple, location, old_location);
+  status = UpdateInIndexes(tuple, location);
 
   // 2) If 1) fails, try again as an Insert
   if (false == status) {
@@ -320,8 +289,7 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
 }
 
 bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
-                                const ItemPointer location,
-                                const ItemPointer old_location) {
+                                const ItemPointer location) {
   for (auto index : indexes) {
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
@@ -329,7 +297,7 @@ bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
 
-    if (index->UpdateEntry(key, location, old_location) == false) {
+    if (index->UpdateEntry(key, location) == false) {
       LOG_TRACE("Same-key update index failed \n");
       delete key;
       return false;

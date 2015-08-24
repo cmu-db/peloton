@@ -139,27 +139,6 @@ class TileGroupHeader {
         + sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
-  inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
-    return *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
-  }
-
-  // Getters for addresses
-
-  inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
-    return ((txn_id_t *) (data + (tuple_slot_id * header_entry_size)));
-  }
-
-  inline cid_t *GetBeginCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t)));
-  }
-
-  inline cid_t *GetEndCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + sizeof(cid_t)));
-  }
-
   // Setters
 
   inline void SetTransactionId(const oid_t tuple_slot_id,
@@ -176,12 +155,6 @@ class TileGroupHeader {
   inline void SetEndCommitId(const oid_t tuple_slot_id, cid_t end_cid) const {
     *((cid_t *) (data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t)
         + sizeof(cid_t))) = end_cid;
-  }
-
-  inline void SetPrevItemPointer(const oid_t tuple_slot_id,
-                                 ItemPointer item) const {
-    *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
   }
 
   // Visibility check
