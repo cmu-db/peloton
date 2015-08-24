@@ -117,14 +117,16 @@ bool UpdateExecutor::DExecute() {
    // Logging 
    {
       auto& logManager = logging::LogManager::GetInstance();
+
       if(logManager.IsReadyToLogging()){
         auto logger = logManager.GetBackendLogger();
-  
-        auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
-                                                transaction_->GetTransactionId(), 
-                                                target_table_->GetOid(),
-                                                delete_location,
-                                                new_tuple);
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+                                             transaction_->GetTransactionId(), 
+                                             target_table_->GetOid(),
+                                             delete_location, 
+                                             new_tuple);
+
+
         logger->Update(record);
       }
     }

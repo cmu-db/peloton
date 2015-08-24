@@ -277,15 +277,15 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     // Logging 
     {
       auto& logManager = logging::LogManager::GetInstance();
+
       if(logManager.IsReadyToLogging()){
         auto logger = logManager.GetBackendLogger();
-
-        auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, 
-                                               txn->GetTransactionId(), 
-                                               table->GetOid(),
-                                               location,
-                                               tuple,
-                                               20000);
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+                                             txn->GetTransactionId(), 
+                                             table->GetOid(),
+                                             location,
+                                             tuple,
+                                             20000);
         logger->Insert(record);
 
       }
@@ -321,10 +321,10 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
+
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
-
-      auto record = new logging::TupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, 
+      auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                             txn->GetTransactionId(), 
                                             table->GetOid(),
                                             delete_location,
@@ -370,13 +370,12 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
        auto& logManager = logging::LogManager::GetInstance();
        if(logManager.IsReadyToLogging()){
          auto logger = logManager.GetBackendLogger();
-   
-         auto record = new logging::TupleRecord (LOGRECORD_TYPE_TUPLE_UPDATE, 
-                                                 txn->GetTransactionId(), 
-                                                 table->GetOid(),
-                                                 delete_location,
-                                                 tuple,
-                                                 20000);
+         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+                                             txn->GetTransactionId(), 
+                                             table->GetOid(),
+                                             delete_location,
+                                             tuple,
+                                             20000);
          logger->Update(record);
        }
      }
