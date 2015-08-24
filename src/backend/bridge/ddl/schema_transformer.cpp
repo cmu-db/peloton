@@ -56,13 +56,15 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
 
     // NOT NULL constraint
     if (tupleDesc->attrs[column_itr]->attnotnull) {
-      catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL);
+      std::string constraint_name = "not_null";
+      catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL, constraint_name);
       constraint_infos.push_back(constraint);
     }
 
     // DEFAULT value constraint
     if (tupleDesc->attrs[column_itr]->atthasdef) {
-      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT);
+      std::string constraint_name = "default";
+      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT, constraint_name);
       constraint_infos.push_back(constraint);
     }
 
