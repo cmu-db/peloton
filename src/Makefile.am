@@ -96,7 +96,7 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-unused-variable -Wno-unused-but-set-variable \
 			  -Wno-unused-parameter -Wno-missing-field-initializers \
 			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
-			  -Wno-sign-compare -Wno-write-strings -Wno-bool-compare \
+			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
 
 libpelotonpg_la_LIBADD = libpeloton.la

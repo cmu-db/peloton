@@ -32,9 +32,7 @@ typedef enum PelotonMsgType
 {
   PELOTON_MTYPE_INVALID,    // Invalid message type
   PELOTON_MTYPE_DUMMY,      // Dummy message type
-  PELOTON_MTYPE_DDL,        // DDL information to Peloton
   PELOTON_MTYPE_DML,        // DML information to Peloton
-  PELOTON_MTYPE_BOOTSTRAP,  // BOOTSTRAP information to Peloton
   PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
 } PelotonMsgType;
 
@@ -120,29 +118,6 @@ typedef struct Peloton_MsgDML
 } Peloton_MsgDML;
 
 /* ----------
- * Peloton_MsgDDL     Sent by the backend to share the plan to peloton.
- * ----------
- */
-typedef struct Peloton_MsgDDL
-{
-  Peloton_MsgHdr m_hdr;
-  Peloton_Status  *m_status;
-  Node *m_parsetree;
-  DDL_Info *m_ddl_info;
-} Peloton_MsgDDL;
-
-/* ----------
- * Peloton_MsgBootstrap  Sent by the backend to share the raw database to peloton.
- * ----------
- */
-typedef struct Peloton_MsgBootstrap
-{
-  Peloton_MsgHdr m_hdr;
-  Peloton_Status  *m_status;
-  raw_database_info *m_raw_database;
-} Peloton_MsgBootstrap;
-
-/* ----------
  * Peloton_Msg         Union over all possible messages.
  * ----------
  */
@@ -150,12 +125,8 @@ typedef union Peloton_Msg
 {
   Peloton_MsgHdr msg_hdr;
   Peloton_MsgDummy msg_dummy;
-  Peloton_MsgDDL msg_ddl;
   Peloton_MsgDML msg_dml;
 } Peloton_Msg;
-
-/* Status inquiry functions */
-extern bool IsPelotonProcess(void);
 
 /* ----------
  * Functions called from postmaster
@@ -164,22 +135,29 @@ extern bool IsPelotonProcess(void);
 
 extern bool IsPelotonQuery(List *relationOids);
 
-extern void peloton_init(void);
-extern int  peloton_start(void);
 
 /* ----------
- * Functions called from execMain and utility
+ * Functions called from postgres
  * ----------
  */
+
+extern void peloton_bootstrap();
+
+extern void peloton_ddl(Node *parsetree);
+
+extern void peloton_dml();
 
 extern void peloton_send_dml(PlanState *planstate,
                              bool sendTuples,
                              DestReceiver *dest,
                              TupleDesc tuple_desc);
 
-extern void peloton_send_ddl(Node *parsetree);
+extern bool logging_on;
 
-extern void peloton_send_bootstrap();
+extern Peloton_Status *peloton_create_status();
+extern void peloton_process_status(Peloton_Status *status);
+extern void peloton_destroy_status(Peloton_Status *status);
+
 
 #endif   /* PELOTON_H */
 
