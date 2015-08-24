@@ -148,10 +148,16 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     // Add visible tuples to logical tile
     std::vector<oid_t> position_list;
     for (auto tuple_id : block.second) {
-      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
-        continue;
-      } else {
-        position_list.push_back(tuple_id);
+      while (tuple_id != INVALID_OID) {
+        if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
+          // Keep following the back pointer until we find a visible tuple or reaching the end
+          ItemPointer location = tile_group_header->GetPrevItemPointer(tuple_id);
+          //LOG_INFO("Back pointer: block: %d, offset: %d", location.block, location.offset);
+          tuple_id = location.offset;
+        } else {
+          position_list.push_back(tuple_id);
+          break;
+        }
       }
     }
 
