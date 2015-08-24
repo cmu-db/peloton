@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-struct Peloton_Status;
+struct peloton_status;
 struct dirty_table_info;
 struct dirty_index_info;
 
@@ -61,9 +61,9 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void UpdateStats(Peloton_Status *status, bool dirty_care);
+  void UpdateStats(bool dirty_care);
 
-  void UpdateStatsWithOid(Peloton_Status *status, const oid_t table_oid);
+  void UpdateStatsWithOid(const oid_t table_oid);
 
   //===--------------------------------------------------------------------===//
   // UTILITIES

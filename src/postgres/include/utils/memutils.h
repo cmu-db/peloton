@@ -82,7 +82,6 @@ extern thread_local PGDLLIMPORT MemoryContext TopTransactionContext;
 extern thread_local PGDLLIMPORT MemoryContext CurTransactionContext;
 
 extern PGDLLIMPORT MemoryContext TopSharedMemoryContext;
-extern thread_local PGDLLIMPORT MemoryContext SHMQueryContext;
 
 /* This is a transient link to the active portal's memory context: */
 extern thread_local PGDLLIMPORT MemoryContext PortalContext;

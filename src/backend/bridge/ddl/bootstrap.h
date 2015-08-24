@@ -21,7 +21,7 @@
 #include "miscadmin.h"
 #include "utils/rel.h"
 
-struct Peloton_Status;
+struct peloton_status;
 
 namespace peloton {
 namespace bridge {

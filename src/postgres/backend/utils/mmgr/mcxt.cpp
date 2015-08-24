@@ -62,13 +62,6 @@ thread_local MemoryContext CurTransactionContext = NULL;
  */
 MemoryContext TopSharedMemoryContext = NULL;
 
-/*
- * We create a subcontext of the TopSharedMemoryContext for each
- * query that is passed between the Postgres frontend and Peloton backend.
- * Memory ownership is passed between processes by handing off this context.
- * */
-thread_local MemoryContext SHMQueryContext = NULL;
-
 /* This is a transient link to the active portal's memory context: */
 thread_local MemoryContext PortalContext = NULL;
 
