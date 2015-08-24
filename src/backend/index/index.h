@@ -186,14 +186,14 @@ class Index {
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
- protected:
-  Index(IndexMetadata *schema);
-
   // Generic key comparator between index key and given arbitrary key
-  bool Compare(const storage::Tuple &index_key,
+  static bool Compare(const AbstractTuple &index_key,
                const std::vector<oid_t> &column_ids,
                const std::vector<ExpressionType> &expr_types,
                const std::vector<Value> &values);
+
+ protected:
+  Index(IndexMetadata *schema);
 
   // Set the lower bound tuple for index iteration
   bool SetLowerBoundTuple(storage::Tuple *index_key,
