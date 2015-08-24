@@ -682,7 +682,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * In standalone mode and in autovacuum worker processes, we use a fixed
 	 * ID, otherwise we figure it out from the authenticated user name.
 	 */
-	if (bootstrap || IsAutoVacuumWorkerProcess() || IsPelotonProcess())
+	if (bootstrap || IsAutoVacuumWorkerProcess())
 	{
 		InitializeSessionUserIdStandalone();
 		am_superuser = true;

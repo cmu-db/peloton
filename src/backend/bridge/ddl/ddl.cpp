@@ -41,11 +41,10 @@ namespace bridge {
  */
 void DDL::ProcessUtility(Node *parsetree,
                          DDL_Info* ddl_info,
-                         Peloton_Status *status,
                          TransactionId txn_id) {
   assert(parsetree != nullptr);
 
-  LOG_TRACE("Process Utility");
+  LOG_INFO("Process Utility");
 
   static std::vector<Node *> parsetree_stack;
 
@@ -69,7 +68,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, ddl_info, parsetree_stack, status, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, ddl_info, parsetree_stack, txn_id);
       break;
     }
 
@@ -89,7 +88,7 @@ void DDL::ProcessUtility(Node *parsetree,
     }
 
     case T_VacuumStmt: {
-      DDLDatabase::ExecVacuumStmt(parsetree, status);
+      DDLDatabase::ExecVacuumStmt(parsetree);
       break;
     }
 
