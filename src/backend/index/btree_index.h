@@ -31,20 +31,20 @@ namespace index {
  * @see Index
  */
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-class BtreeMultiIndex : public Index {
+class BtreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
   typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
-  BtreeMultiIndex(IndexMetadata *metadata)
+  BtreeIndex(IndexMetadata *metadata)
       : Index(metadata),
         container(KeyComparator(metadata)),
         equals(metadata),
         comparator(metadata) {}
 
-  ~BtreeMultiIndex() {}
+  ~BtreeIndex() {}
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
     {
