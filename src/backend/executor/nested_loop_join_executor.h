@@ -27,6 +27,8 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   explicit NestedLoopJoinExecutor(planner::AbstractPlan *node,
                                   ExecutorContext *executor_context);
 
+  ~NestedLoopJoinExecutor();
+
  protected:
   bool DInit();
 
@@ -39,7 +41,9 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   bool right_child_done_ = false;
   size_t right_result_itr_ = 0;
 
-  std::unique_ptr<LogicalTile> cur_left_tile_;
+  /* Buffer to store left child's result tiles */
+  std::vector<executor::LogicalTile*> left_result_tiles_;
+  /* No need for an iterator because only the back (last) element is active */
 
 };
 
