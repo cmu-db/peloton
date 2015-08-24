@@ -3723,7 +3723,7 @@ PostgresMain(int argc, char *argv[],
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
   // TODO: Peloton Changes
-  if(IsPostmasterEnvironment == true){
+  if(IsBackend == true){
     StartTransactionCommand();
     peloton_bootstrap();
     CommitTransactionCommand();
