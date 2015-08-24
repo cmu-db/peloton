@@ -38,7 +38,7 @@ class DDLTable {
   static bool ExecCreateStmt(Node *parsetree,
                              DDL_Info* ddl_info,
                              std::vector<Node *> &parsetree_stack,
-                             Peloton_Status *status, TransactionId txn_id);
+                             TransactionId txn_id);
 
   static bool ExecAlterTableStmt(Node *parsetree,
                                  std::vector<Node *> &parsetree_stack);

@@ -34,8 +34,7 @@ class Bootstrap {
  public:
   static raw_database_info *GetRawDatabase(void);
 
-  static bool BootstrapPeloton(raw_database_info *raw_database,
-                               Peloton_Status *status);
+  static bool BootstrapPeloton(raw_database_info *raw_database);
 
  private:
   static raw_database_info *InitRawDatabase();

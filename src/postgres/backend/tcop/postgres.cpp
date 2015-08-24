@@ -3722,13 +3722,10 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  // TODO :: Peloton Changes
-  //auto queue_name = peloton::get_mq_name(MyBackendId);
-  //MyBackendQueue = peloton::create_mq(queue_name);
-
+  // TODO: Peloton Changes
   if(IsPostmasterEnvironment == true){
     StartTransactionCommand();
-    peloton_send_bootstrap();
+    peloton_bootstrap();
     CommitTransactionCommand();
   }
 
