@@ -3795,7 +3795,6 @@ processCancelRequest(Port *port, void *pkt)
     free(bn);
 
     IsBackend = true;
-    IsPostmasterEnvironment = true;
 
     MemoryContextInit();
     MemoryContextSwitchTo(TopMemoryContext);
