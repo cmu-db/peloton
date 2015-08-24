@@ -40,7 +40,7 @@ public:
                const txn_id_t txn_id,
                oid_t table_oid,
                ItemPointer itemPointer,
-               const void* data,
+               const void* data = nullptr,
                oid_t _db_oid = INVALID_OID
                )
   : LogRecord(log_record_type), 
