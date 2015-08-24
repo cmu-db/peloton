@@ -336,7 +336,7 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
           raw_constraint_info *raw_constraint =
               (raw_constraint_info *)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_NOTNULL;
-          //raw_constraint->constraint_name = (char *)"";
+          raw_constraint->constraint_name = nullptr;
           raw_constraint->expr = nullptr;
 
           raw_constraints.push_back(raw_constraint);
@@ -350,6 +350,8 @@ std::vector<raw_column_info *> Bootstrap::GetRawColumn(
           raw_constraint_info *raw_constraint =
               (raw_constraint_info *)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_DEFAULT;
+          raw_constraint->constraint_name = nullptr;
+          raw_constraint->expr = nullptr;
 
           int num_defva = relation->rd_att->constr->num_defval;
           for (int def_itr = 0; def_itr < num_defva; def_itr++) {
@@ -626,8 +628,12 @@ std::vector<catalog::Constraint> Bootstrap::CreateConstraints(
        constraint_itr++) {
     auto raw_constraint = raw_constraints[constraint_itr];
 
+    std::string constraint_name;
+    if(raw_constraint->constraint_name != nullptr)
+      constraint_name = std::string(raw_constraint->constraint_name);
+
     catalog::Constraint constraint(raw_constraint->constraint_type,
-                                   raw_constraint->constraint_name,
+                                   constraint_name,
                                    raw_constraint->expr);
     constraints.push_back(constraint);
   }

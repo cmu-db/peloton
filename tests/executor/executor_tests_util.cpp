@@ -53,7 +53,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      std::string constraint_name = "not_null";
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, constraint_name));
       return column;
     } break;
 

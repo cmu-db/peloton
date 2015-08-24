@@ -4822,12 +4822,6 @@ processCancelRequest(Port *port, void *pkt)
                   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
 #endif
 
-    /* should cleanup shared memory and kill all backends */
-
-    // TODO: Peloton Changes
-    SHMContextShutdown();
-    Assert(TopSharedMemoryContext == NULL);
-
     /*
      * Not sure of the semantics here.  When the Postmaster dies, should the
      * backends all be killed? probably not.

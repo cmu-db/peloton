@@ -199,17 +199,15 @@ void DDLUtils::ParsingCreateStmt(
         Constraint *ConstraintNode =
             static_cast<Constraint *>(lfirst(constNodeEntry));
         ConstraintType contype;
-        std::string conname;
 
         // CONSTRAINT TYPE
         contype = PostgresConstraintTypeToPelotonConstraintType(
             (PostgresConstraintType)ConstraintNode->contype);
 
         // CONSTRAINT NAME
+        std::string conname;
         if (ConstraintNode->conname != NULL) {
-          conname = ConstraintNode->conname;
-        } else {
-          conname = "";
+          conname = std::string(ConstraintNode->conname);
         }
 
         switch (contype) {
