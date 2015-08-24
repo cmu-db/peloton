@@ -175,7 +175,8 @@ extern int  peloton_start(void);
 extern void peloton_send_dml(PlanState *planstate,
                              bool sendTuples,
                              DestReceiver *dest,
-                             TupleDesc tuple_desc);
+                             TupleDesc tuple_desc,
+                             EState *estate);
 
 extern void peloton_send_ddl(Node *parsetree);
 

@@ -897,7 +897,8 @@ void
 peloton_send_dml(PlanState *planstate,
                  bool sendTuples,
                  DestReceiver *dest,
-                 TupleDesc tuple_desc) {
+                 TupleDesc tuple_desc,
+                 EState *estate) {
   Peloton_Status  *status;
   Peloton_MsgDML msg;
   MemoryContext oldcxt;
@@ -943,6 +944,7 @@ peloton_send_dml(PlanState *planstate,
 
   // Wait for the response and process it
   peloton_process_status(status);
+  estate->es_processed = status->m_processed;
 
   // Send output to dest
   peloton_send_output(status, sendTuples, dest);
