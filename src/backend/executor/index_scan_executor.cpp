@@ -157,9 +157,26 @@ bool IndexScanExecutor::ExecIndexLookup() {
                                               txn_id, commit_id);
   done_ = true;
 
+  ExecRecheckScanKeys();
+
   LOG_TRACE("Result tiles : %lu", result.size());
 
   return true;
+}
+
+/**
+ * @brief Re check scan key over the result tiles and remove visibility if recheck failed;
+ */
+void IndexScanExecutor::ExecRecheckScanKeys() {
+  for (auto tile : result) {
+    for (auto row_itr : *tile) {
+      expression::ContainerTuple<executor::LogicalTile> tuple(tile, row_itr);
+      if (!index::Index::Compare(tuple, key_column_ids_, expr_types_, values_)) {
+        LOG_INFO("Row %d removed by key recheck", row_itr);
+        tile->RemoveVisibility(row_itr);
+      }
+    }
+  }
 }
 
 }  // namespace executor
