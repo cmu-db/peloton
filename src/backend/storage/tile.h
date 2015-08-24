@@ -16,6 +16,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/backend_vm.h"
+#include "backend/storage/backend_nvm.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
 
