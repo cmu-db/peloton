@@ -35,7 +35,7 @@ class DDLDatabase {
 
   static bool ExecDropdbStmt(Node *parsetree, DDL_Info* ddl_info);
 
-  static bool ExecVacuumStmt(Node *parsetree, Peloton_Status *status);
+  static bool ExecVacuumStmt(Node *parsetree);
 
   static bool CreateDatabase(oid_t database_oid);
 

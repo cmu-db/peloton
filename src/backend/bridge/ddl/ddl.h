@@ -40,8 +40,9 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree,DDL_Info* ddl_info,
-                             Peloton_Status *status, TransactionId txn_id);
+  static void ProcessUtility(Node *parsetree,
+                             DDL_Info* ddl_info,
+                             TransactionId txn_id);
 };
 
 }  // namespace bridge
