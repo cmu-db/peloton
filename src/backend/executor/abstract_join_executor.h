@@ -41,8 +41,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   // Helper
   //===--------------------------------------------------------------------===//
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
-      std::vector<LogicalTile::ColumnInfo> left,
-      std::vector<LogicalTile::ColumnInfo> right);
+      std::vector<LogicalTile::ColumnInfo> &left,
+      std::vector<LogicalTile::ColumnInfo> &right);
 
   //===--------------------------------------------------------------------===//
   // Executor State
