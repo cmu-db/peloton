@@ -29,7 +29,7 @@ class NVMBackend : public AbstractBackend {
 
   void Free(void *ptr) { ::operator delete(ptr); }
 
-  void Sync(void *ptr) {
+  void Sync(void *ptr __attribute__((unused))) {
     // does nothing
   }
 
