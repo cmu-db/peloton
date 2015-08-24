@@ -96,7 +96,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   const int position_list_idx = 0;
   // TODO Don't use allocated tuple count. Use active tuple count.
   new_tile->AddPositionList(
-//      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
+      //      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
       CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
   // Construct schema.
@@ -143,21 +143,15 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
     // Print tile group visibility
-//    tile_group_header->PrintVisibility(txn_id, commit_id);
+    //tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Add visible tuples to logical tile
     std::vector<oid_t> position_list;
     for (auto tuple_id : block.second) {
-      while (tuple_id != INVALID_OID) {
-        if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
-          // Keep following the back pointer until we find a visible tuple or reaching the end
-          ItemPointer location = tile_group_header->GetPrevItemPointer(tuple_id);
-          //LOG_INFO("Back pointer: block: %d, offset: %d", location.block, location.offset);
-          tuple_id = location.offset;
-        } else {
-          position_list.push_back(tuple_id);
-          break;
-        }
+      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
+        continue;
+      } else {
+        position_list.push_back(tuple_id);
       }
     }
 
