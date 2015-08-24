@@ -1648,7 +1648,8 @@ peloton_ExecutePlan(EState *estate,
   peloton_send_dml(planstate,
                    sendTuples,
                    dest,
-                   tupDesc);
+                   tupDesc,
+                   estate);
 }
 
 /*
