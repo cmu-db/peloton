@@ -335,7 +335,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_TRACE("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
                   txn->GetCommitId());
         // Abort
         txn_manager.AbortTransaction(txn);
