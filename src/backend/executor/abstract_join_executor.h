@@ -29,6 +29,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   explicit AbstractJoinExecutor(planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
+  virtual ~AbstractJoinExecutor(){}
+
  protected:
   bool DInit();
 
