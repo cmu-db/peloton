@@ -67,7 +67,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     bool advance_left_child = false;
 
     if(right_child_done_){  // If we have already retrieved all right child's results in buffer
-      LOG_INFO("Advance the right buffer iterator.");
+      LOG_TRACE("Advance the right buffer iterator.");
       assert(!left_result_tiles_.empty());
       assert(!right_result_tiles_.empty());
       right_result_itr_++;
@@ -79,10 +79,10 @@ bool NestedLoopJoinExecutor::DExecute() {
     else { // Otherwise, we must attempt to execute the right child
       if(false == children_[1]->Execute()){
         // right child is finished, no more tiles
-        LOG_INFO("My right child is exhausted.");
+        LOG_TRACE("My right child is exhausted.");
         if(right_result_tiles_.empty()){
           assert(left_result_tiles_.empty());
-          LOG_INFO("Right child returns nothing totally. Exit.");
+          LOG_TRACE("Right child returns nothing totally. Exit.");
           return false;
         }
         right_child_done_ = true;
@@ -90,7 +90,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         advance_left_child = true;
       }
       else { // Buffer the right child's result
-        LOG_INFO("Retrieve a new tile from right child");
+        LOG_TRACE("Retrieve a new tile from right child");
         right_result_tiles_.push_back(children_[1]->GetOutput());
         right_result_itr_ = right_result_tiles_.size() - 1;
       }
@@ -100,7 +100,7 @@ bool NestedLoopJoinExecutor::DExecute() {
       assert(0 == right_result_itr_);
       // Need to advance the left child
       if(false == children_[0]->Execute()){
-        LOG_INFO("Left child is exhausted. Returning false.");
+        LOG_TRACE("Left child is exhausted. Returning false.");
         // Left child exhausted.
         // The whole executor is done.
         // Release cur left tile. Clear right child's result buffer and return.
@@ -108,7 +108,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         return false;
       }
       else{
-        LOG_INFO("Advance the left child.");
+        LOG_TRACE("Advance the left child.");
         // Insert left child's result to buffer
         left_result_tiles_.push_back(children_[0]->GetOutput());
       }
@@ -221,7 +221,7 @@ bool NestedLoopJoinExecutor::DExecute() {
       return true;
     }
 
-    LOG_INFO("This pair produces empty join result. Loop.");
+    LOG_TRACE("This pair produces empty join result. Loop.");
   } // End large for-loop
 
 }
