@@ -32,11 +32,15 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
 
   bool DExecute();
 
-  /** @brief Starting left table scan. */
-  bool left_scan_start = false;
-
  private:
-  // nothing special here
+
+  /* Buffer to store right child's result tiles */
+  std::vector<executor::LogicalTile*> right_result_tiles_;
+  bool right_child_done_ = false;
+  size_t right_result_itr_ = 0;
+
+  std::unique_ptr<LogicalTile> cur_left_tile_;
+
 };
 
 }  // namespace executor
