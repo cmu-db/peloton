@@ -49,8 +49,6 @@ class AbstractJoinExecutor : public AbstractExecutor {
   /** @brief Result of  join. */
   std::vector<LogicalTile *> result;
 
-  /** @brief Starting left table scan. */
-  bool left_scan_start = false;
 
   //===--------------------------------------------------------------------===//
   // Plan Info
