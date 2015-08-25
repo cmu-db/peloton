@@ -36,10 +36,9 @@ namespace storage {
  *
  * Layout :
  *
- * 	--------------------------------------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- *Prev ItemPointer (4 bytes) |
- * 	--------------------------------------------------------------------------------------------------------
+ * 	----------------------------------------------------------------------------------
+ *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | Data |
+ * 	----------------------------------------------------------------------------------
  *
  */
 
@@ -48,11 +47,11 @@ class TileGroupHeader {
 
  public:
   TileGroupHeader(AbstractBackend *_backend, int tuple_count)
-      : backend(_backend),
-        data(nullptr),
-        num_tuple_slots(tuple_count),
-        next_tuple_slot(0),
-        active_tuple_slots(0) {
+ : backend(_backend),
+   data(nullptr),
+   num_tuple_slots(tuple_count),
+   next_tuple_slot(0),
+   active_tuple_slots(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -140,27 +139,6 @@ class TileGroupHeader {
         + sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
-  inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
-    return *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
-  }
-
-  // Getters for addresses
-
-  inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
-    return ((txn_id_t *) (data + (tuple_slot_id * header_entry_size)));
-  }
-
-  inline cid_t *GetBeginCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t)));
-  }
-
-  inline cid_t *GetEndCommitIdLocation(const oid_t tuple_slot_id) const {
-    return ((cid_t *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + sizeof(cid_t)));
-  }
-
   // Setters
 
   inline void SetTransactionId(const oid_t tuple_slot_id,
@@ -179,12 +157,6 @@ class TileGroupHeader {
         + sizeof(cid_t))) = end_cid;
   }
 
-  inline void SetPrevItemPointer(const oid_t tuple_slot_id,
-                                 ItemPointer item) const {
-    *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
-  }
-
   // Visibility check
 
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
@@ -196,21 +168,27 @@ class TileGroupHeader {
     bool activated = (at_lcid >= tuple_begin_cid);
     bool invalidated = (at_lcid >= tuple_end_cid);
 
+    // Own
     LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
-             tuple_txn_id);
+              tuple_txn_id);
+
+    // Activated
     if (tuple_begin_cid == MAX_CID) {
       LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : MAX_CID", activated,
-               at_lcid);
-    } else {
-      LOG_TRACE("Activated :: %d , lcid : %lu , tuple begin cid : %lu", activated,
-                   at_lcid, tuple_begin_cid);
+                at_lcid);
     }
+    else {
+      LOG_TRACE("Activated :: %d , lcid : %lu , tuple begin cid : %lu", activated,
+                at_lcid, tuple_begin_cid);
+    }
+
+    // Invalidated
     if (tuple_end_cid == MAX_CID) {
       LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : MAX_CID", invalidated,
-             at_lcid);
+                at_lcid);
     } else {
       LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
-             at_lcid, tuple_end_cid);
+                at_lcid, tuple_end_cid);
     }
 
     // Visible iff past Insert || Own Insert
@@ -233,8 +211,7 @@ class TileGroupHeader {
 
  private:
   // header entry size is the size of the layout described above
-  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t)
-      + sizeof(ItemPointer);
+  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t);
 
   //===--------------------------------------------------------------------===//
   // Data members

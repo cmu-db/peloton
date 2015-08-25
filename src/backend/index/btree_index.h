@@ -31,20 +31,20 @@ namespace index {
  * @see Index
  */
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-class BtreeMultiIndex : public Index {
+class BtreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
   typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
-  BtreeMultiIndex(IndexMetadata *metadata)
+  BtreeIndex(IndexMetadata *metadata)
       : Index(metadata),
         container(KeyComparator(metadata)),
         equals(metadata),
         comparator(metadata) {}
 
-  ~BtreeMultiIndex() {}
+  ~BtreeIndex() {}
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
     {
@@ -83,25 +83,11 @@ class BtreeMultiIndex : public Index {
     }
   }
 
-  bool UpdateEntry(const storage::Tuple *key, const ItemPointer location,
-                   const ItemPointer old_location) {
+  bool UpdateEntry(const storage::Tuple *key,
+                   const ItemPointer location) {
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
-
-      // Check for <key, old location> first
-      auto entries = container.equal_range(index_key1);
-      for (auto iterator = entries.first; iterator != entries.second;) {
-        ItemPointer value = iterator->second;
-
-        if ((value.block == old_location.block) &&
-            (value.offset == old_location.offset)) {
-          // remove matching (key, value) entry
-          iterator = container.erase(iterator);
-        } else {
-          ++iterator;
-        }
-      }
 
       // insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key1, location));

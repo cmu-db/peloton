@@ -54,11 +54,6 @@ std::ostream &operator<<(std::ostream &os,
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
-
-    peloton::ItemPointer location =
-        tile_group_header.GetPrevItemPointer(header_itr);
-    os << " prev : "
-       << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
@@ -102,10 +97,6 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
-
-    peloton::ItemPointer location = GetPrevItemPointer(header_itr);
-    os << " prev : "
-       << "[ " << location.block << " , " << location.offset << " ]";  //<<
 
     os << " own : " << own;
     os << " activated : " << activated;
