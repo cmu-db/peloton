@@ -34,19 +34,29 @@ bool TupleRecord::Serialize(){
   switch(GetType()){
 
     case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
-    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:{
+    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:  {
      storage::Tuple* tuple = (storage::Tuple*)data;
      tuple->SerializeTo(output);
-    }break;
+      break;
+    }
 
-    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:{
+    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:  {
     // nothing to do now 
-    }break;
+      break;
+    }
 
-    default:{
+    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:  
+    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:  
+    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:  {
+    // nothing to do now 
+      break;
+    } 
+
+    default:  {
       LOG_WARN("Unsupported TUPLE RECORD TYPE\n");
       status = false;
-    }break;
+      break;
+    }
   }
 
   serialized_data_size = output.Size();
