@@ -48,8 +48,6 @@ class AriesFrontendLogger : public FrontendLogger{
 
     void Recovery(void);
 
-  private:
-
     LogRecordType GetNextLogRecordType(void);
 
     size_t LogFileSize();
