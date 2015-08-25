@@ -22,8 +22,32 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class PelotonBackendLogger : public BackendLogger{
+
   public:
-    void log(LogRecord record) const;
+    PelotonBackendLogger(const PelotonBackendLogger &) = delete;
+    PelotonBackendLogger &operator=(const PelotonBackendLogger &) = delete;
+    PelotonBackendLogger(PelotonBackendLogger &&) = delete;
+    PelotonBackendLogger &operator=(PelotonBackendLogger &&) = delete;
+
+    static PelotonBackendLogger* GetInstance(void);
+
+    void Insert(LogRecord* record);
+
+    void Delete(LogRecord* record);
+
+    void Update(LogRecord* record);
+
+    LogRecord* GetTupleRecord(LogRecordType log_record_type, 
+                              txn_id_t txn_id, 
+                              oid_t table_oid, 
+                              ItemPointer location, 
+                              void* data = nullptr,
+                              oid_t db_oid = INVALID_OID);
+
+  private:
+
+    PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
+
 };
 
 }  // namespace logging

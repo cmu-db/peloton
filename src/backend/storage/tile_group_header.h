@@ -36,10 +36,9 @@ namespace storage {
  *
  * Layout :
  *
- * 	--------------------------------------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- *Prev ItemPointer (4 bytes) |
- * 	--------------------------------------------------------------------------------------------------------
+ * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
+ *      | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
+ * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
  *
  */
 
@@ -57,9 +56,9 @@ class TileGroupHeader {
 
     // allocate storage space for header
     data = (char *) backend->Allocate(header_size);
+    // initialize data with zero
+    memset(data, 0, header_size);
     assert(data != nullptr);
-    insert_commit = false;
-    delete_commit = false;
   }
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
@@ -159,9 +158,19 @@ class TileGroupHeader {
         + sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
+  inline bool GetInsertCommit(const oid_t tuple_slot_id) const {
+    return *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+  }
+
+  inline bool GetDeleteCommit(const oid_t tuple_slot_id) const {
+    return *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(bool)));
+  }
+
   inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
     return *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(bool)));
   }
 
   // Getters for addresses
@@ -198,13 +207,26 @@ class TileGroupHeader {
         + sizeof(cid_t))) = end_cid;
   }
 
+  inline void SetInsertCommit(const oid_t tuple_slot_id,
+                              bool commit) const {
+    *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = commit;
+  }
+
+  inline void SetDeleteCommit(const oid_t tuple_slot_id,
+                              bool commit) const {
+    *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(bool))) = commit;
+  }
+
   inline void SetPrevItemPointer(const oid_t tuple_slot_id,
                                  ItemPointer item) const {
     *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
-        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(bool))) = item;
   }
 
   // Visibility check
+  //TODO 
 
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
@@ -233,6 +255,7 @@ class TileGroupHeader {
     return false;
   }
 
+  //TODO 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   //===--------------------------------------------------------------------===//
@@ -246,7 +269,7 @@ class TileGroupHeader {
  private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t)
-      + sizeof(ItemPointer);
+      + sizeof(ItemPointer) + 2 * sizeof(bool);
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -271,10 +294,6 @@ class TileGroupHeader {
 
   // synch helpers
   std::mutex tile_header_mutex;
-
-  // commit marks used for Peloton(NVRAM) logging
-  bool insert_commit;
-  bool delete_commit;
 
 };
 
