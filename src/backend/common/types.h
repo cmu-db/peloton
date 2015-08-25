@@ -469,7 +469,9 @@ typedef uint64_t txn_id_t;
 
 static const txn_id_t INVALID_TXN_ID = 0;
 
-static const txn_id_t START_TXN_ID = 1;
+static const txn_id_t INITIAL_TXN_ID = 1;
+
+static const txn_id_t START_TXN_ID = 2;
 
 static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
 
