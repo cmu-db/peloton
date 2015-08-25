@@ -40,7 +40,6 @@ namespace bridge {
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree,
-                         DDL_Info* ddl_info,
                          TransactionId txn_id) {
   assert(parsetree != nullptr);
 
@@ -62,13 +61,13 @@ void DDL::ProcessUtility(Node *parsetree,
     }
 
     case T_DropdbStmt: {
-      DDLDatabase::ExecDropdbStmt(parsetree, ddl_info);
+      DDLDatabase::ExecDropdbStmt(parsetree);
       break;
     }
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, ddl_info, parsetree_stack, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, txn_id);
       break;
     }
 
