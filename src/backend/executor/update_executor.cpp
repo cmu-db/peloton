@@ -101,7 +101,7 @@ bool UpdateExecutor::DExecute() {
 
     // (C) finally insert updated tuple into the table
     ItemPointer location =
-        target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
+        target_table_->UpdateTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       transaction_->SetResult(Result::RESULT_FAILURE);
