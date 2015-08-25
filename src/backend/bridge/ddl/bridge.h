@@ -55,15 +55,6 @@ class Bridge {
 
   static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
-  //===--------------------------------------------------------------------===//
-  // Wrapper
-  //===--------------------------------------------------------------------===//
-
-  static void PelotonStartTransactionCommand();
-
-  static void PelotonCommitTransactionCommand();
-
-  static void SetCurrentResourceOwner();
 };
 
 }  // namespace bridge
