@@ -14,6 +14,7 @@
 
 #include "backend/storage/abstract_backend.h"
 #include "backend/common/logger.h"
+#include "backend/common/synch.h"
 
 #include <atomic>
 #include <mutex>
@@ -21,6 +22,7 @@
 #include <cassert>
 #include <queue>
 #include <cstring>
+
 
 namespace peloton {
 namespace storage {
@@ -141,8 +143,28 @@ class TileGroupHeader {
 
   // Setters
 
+  inline bool LatchTupleSlot(const oid_t tuple_slot_id, txn_id_t transaction_id) {
+    txn_id_t* txn_id = (txn_id_t *) (data + (tuple_slot_id * header_entry_size));
+    if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  inline bool ReleaseTupleSlot(const oid_t tuple_slot_id, txn_id_t transaction_id) {
+    txn_id_t* txn_id = (txn_id_t *) (data + (tuple_slot_id * header_entry_size));
+    if (!atomic_cas(txn_id, transaction_id, INITIAL_TXN_ID)) {
+      LOG_INFO("Release failed, expecting a deleted own insert: %lu", GetTransactionId(tuple_slot_id));
+      assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+      return false;
+    }
+    return true;
+  }
+
   inline void SetTransactionId(const oid_t tuple_slot_id,
                                txn_id_t transaction_id) {
+
     *((txn_id_t *) (data + (tuple_slot_id * header_entry_size))) =
         transaction_id;
   }
@@ -164,32 +186,36 @@ class TileGroupHeader {
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
+
     bool own = (txn_id == tuple_txn_id);
     bool activated = (at_lcid >= tuple_begin_cid);
     bool invalidated = (at_lcid >= tuple_end_cid);
 
     // Own
-    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+    LOG_INFO("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
               tuple_txn_id);
 
     // Activated
     if (tuple_begin_cid == MAX_CID) {
-      LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : MAX_CID", activated,
+      LOG_INFO("Activated :: %d cid : %lu tuple begin cid : MAX_CID", activated,
                 at_lcid);
     }
     else {
-      LOG_TRACE("Activated :: %d , lcid : %lu , tuple begin cid : %lu", activated,
+      LOG_INFO("Activated :: %d , lcid : %lu , tuple begin cid : %lu", activated,
                 at_lcid, tuple_begin_cid);
     }
 
     // Invalidated
     if (tuple_end_cid == MAX_CID) {
-      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : MAX_CID", invalidated,
+      LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : MAX_CID", invalidated,
                 at_lcid);
     } else {
-      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
+      LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
                 at_lcid, tuple_end_cid);
     }
+
+    if (tuple_txn_id == INVALID_TXN_ID)
+      return false;
 
     // Visible iff past Insert || Own Insert
     if ((!own && activated && !invalidated)
@@ -197,6 +223,16 @@ class TileGroupHeader {
       return true;
 
     return false;
+  }
+
+
+  /**
+   * This is called after latching
+   */
+  bool IsDeletable(const oid_t tuple_slot_id, __attribute__((unused)) txn_id_t txn_id, __attribute__((unused)) cid_t at_lcid) {
+    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
+
+    return tuple_end_cid == MAX_CID;
   }
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
