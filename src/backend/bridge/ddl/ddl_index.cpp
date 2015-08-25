@@ -44,14 +44,9 @@ bool DDLIndex::ExecIndexStmt(Node *parsetree,
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithName(Istmt->relation->relname)) {
 
-    // Make a copy for local storage
-    MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-    auto parse_tree_copy = (Node *) copyObject(parsetree);
-    MemoryContextSwitchTo(oldcxt);
-
     {
       std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
-      parsetree_stack.push_back(parse_tree_copy);
+      parsetree_stack.push_back(parsetree);
     }
     return true;
   }

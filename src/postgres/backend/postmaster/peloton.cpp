@@ -86,25 +86,20 @@ static void __attribute__((unused)) peloton_test_config();
 void
 peloton_bootstrap() {
 
-  // Construct raw database for bootstrap
-  raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
+  try {
+    // Process the utility statement
+    peloton::bridge::Bootstrap::BootstrapPeloton();
 
-  if(raw_database != NULL) {
-    try {
-      // Process the utility statement
-      peloton::bridge::Bootstrap::BootstrapPeloton(raw_database);
-
-      if( logging_on){
-        // NOTE:: start logging since bootstrapPeloton is done
-        auto& logManager = peloton::logging::LogManager::GetInstance();
-        if( logManager.IsReadyToLogging() == false){
-          logManager.StartLogging();
-        }
+    if( logging_on){
+      // NOTE:: start logging since bootstrapPeloton is done
+      auto& logManager = peloton::logging::LogManager::GetInstance();
+      if( logManager.IsReadyToLogging() == false){
+        logManager.StartLogging();
       }
     }
-    catch(const std::exception &exception) {
-      elog(ERROR, "Peloton exception :: %s", exception.what());
-    }
+  }
+  catch(const std::exception &exception) {
+    elog(ERROR, "Peloton exception :: %s", exception.what());
   }
 
 }
@@ -123,13 +118,11 @@ peloton_ddl(Node *parsetree) {
     return;
   }
 
-  auto ddl_info = peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
   auto txn_id = GetTopTransactionId();
 
   try {
     /* Process the utility statement */
     peloton::bridge::DDL::ProcessUtility(parsetree,
-                                         ddl_info,
                                          txn_id);
   }
   catch(const std::exception &exception) {
