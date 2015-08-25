@@ -12,10 +12,8 @@
 
 #pragma once
 
-#include "postmaster/peloton.h"
+#include "backend/concurrency/transaction_manager.h"
 
-#include "postgres.h"
-#include "c.h"
 #include "nodes/nodes.h"
 
 #include <mutex>
@@ -41,8 +39,7 @@ class DDL {
   //===--------------------------------------------------------------------===//
 
   static void ProcessUtility(Node *parsetree,
-                             DDL_Info* ddl_info,
-                             TransactionId txn_id);
+                             concurrency::TransactionId txn_id);
 };
 
 }  // namespace bridge

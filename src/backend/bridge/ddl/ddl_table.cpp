@@ -42,7 +42,7 @@ namespace bridge {
  * @return true if we handled it correctly, false otherwise
  */
 
-bool DDLTable::ExecCreateStmt(Node *parsetree, DDL_Info* ddl_info,
+bool DDLTable::ExecCreateStmt(Node *parsetree,
                               std::vector<Node *> &parsetree_stack,
                               TransactionId txn_id) {
   List *stmts = ((CreateStmt *)parsetree)->stmts;
@@ -80,7 +80,7 @@ bool DDLTable::ExecCreateStmt(Node *parsetree, DDL_Info* ddl_info,
   {
     std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
     for (auto parsetree : parsetree_stack) {
-      DDL::ProcessUtility(parsetree, ddl_info, txn_id);
+      DDL::ProcessUtility(parsetree, txn_id);
       pfree(parsetree);
     }
     parsetree_stack.clear();
@@ -107,13 +107,9 @@ bool DDLTable::ExecAlterTableStmt(Node *parsetree,
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithOid(relation_oid)) {
 
-    // Make a copy for local storage
-    MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-    auto parse_tree_copy = (Node *) copyObject(parsetree);
-    MemoryContextSwitchTo(oldcxt);
     {
       std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
-      parsetree_stack.push_back(parse_tree_copy);
+      parsetree_stack.push_back(parsetree);
     }
     return true;
   }
