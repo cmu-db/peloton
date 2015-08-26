@@ -93,7 +93,7 @@ class BtreeIndex : public Index {
       container.insert(std::pair<KeyType, ValueType>(index_key1, location));
 
       index_lock.Unlock();
-      return false;
+      return true;
     }
   }
 
