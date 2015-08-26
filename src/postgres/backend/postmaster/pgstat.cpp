@@ -156,7 +156,7 @@ typedef struct TabStatusArray
 	PgStat_TableStatus tsa_entries[TABSTAT_QUANTUM];	/* per-table data */
 } TabStatusArray;
 
-static TabStatusArray *pgStatTabList = NULL;
+thread_local static TabStatusArray *pgStatTabList = NULL;
 
 /*
  * Backends store per-function info that's waiting to be sent to the collector
@@ -168,7 +168,7 @@ thread_local static HTAB *pgStatFunctions = NULL;
  * Indicates if backend has some function stats that it hasn't yet
  * sent to the collector.
  */
-static bool have_function_stats = false;
+thread_local static bool have_function_stats = false;
 
 /*
  * Tuple insertion/deletion counts for an open transaction can't be propagated
@@ -184,12 +184,12 @@ typedef struct PgStat_SubXactStatus
 	PgStat_TableXactStatus *first;		/* head of list for this subxact */
 } PgStat_SubXactStatus;
 
-static PgStat_SubXactStatus *pgStatXactStack = NULL;
+thread_local static PgStat_SubXactStatus *pgStatXactStack = NULL;
 
-static int	pgStatXactCommit = 0;
-static int	pgStatXactRollback = 0;
-PgStat_Counter pgStatBlockReadTime = 0;
-PgStat_Counter pgStatBlockWriteTime = 0;
+thread_local static int	pgStatXactCommit = 0;
+thread_local static int	pgStatXactRollback = 0;
+thread_local PgStat_Counter pgStatBlockReadTime = 0;
+thread_local PgStat_Counter pgStatBlockWriteTime = 0;
 
 /* Record that's written to 2PC state file when pgstat state is persisted */
 typedef struct TwoPhasePgStatRecord
@@ -208,10 +208,10 @@ typedef struct TwoPhasePgStatRecord
 /*
  * Info about current "snapshot" of stats file
  */
-static MemoryContext pgStatLocalContext = NULL;
+thread_local static MemoryContext pgStatLocalContext = NULL;
 thread_local static HTAB *pgStatDBHash = NULL;
-static LocalPgBackendStatus *localBackendStatusTable = NULL;
-static int	localNumBackends = 0;
+thread_local static LocalPgBackendStatus *localBackendStatusTable = NULL;
+thread_local static int	localNumBackends = 0;
 
 /*
  * Cluster wide statistics, kept in the stats collector.
