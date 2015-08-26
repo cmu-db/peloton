@@ -160,7 +160,7 @@ class Tile {
   void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
                                           Pool *pool = nullptr);
 
-  Pool *GetPool() { return (pool); }
+  peloton::Pool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
