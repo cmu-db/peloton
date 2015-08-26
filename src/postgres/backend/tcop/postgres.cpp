@@ -3724,9 +3724,9 @@ PostgresMain(int argc, char *argv[],
 
   // TODO: Peloton Changes
   if(IsBackend == true){
-    //StartTransactionCommand();
-    //peloton_bootstrap();
-    //CommitTransactionCommand();
+    StartTransactionCommand();
+    peloton_bootstrap();
+    CommitTransactionCommand();
   }
 
   /*

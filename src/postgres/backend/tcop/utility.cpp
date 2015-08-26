@@ -943,7 +943,7 @@ peloton_ProcessUtility(Node *parsetree,
   elog(DEBUG3, "DDL Query : %s", queryString);
 
   // TODO: Peloton Changes
-  //peloton_ddl(parsetree);
+  peloton_ddl(parsetree);
 
 }
 
