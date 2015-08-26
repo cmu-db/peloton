@@ -47,7 +47,6 @@ bool IndexScanExecutor::DInit() {
   if (!status) return false;
 
   assert(children_.size() == 0);
-  LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
@@ -72,7 +71,7 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
         values_.push_back(value);
       }
 
@@ -97,6 +96,8 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
+  LOG_INFO("Index Scan executor :: 0 child");
+
   if (!done_) {
     auto status = ExecIndexLookup();
     if (status == false) return false;
