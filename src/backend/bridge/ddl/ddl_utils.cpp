@@ -78,12 +78,21 @@ void DDLUtils::ParsingCreateStmt(
   foreach (entry, ColumnList) {
     ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
-    // Get the type oid and type mod with given typeName
-    Oid typeoid = coldef->typeName->type_oid;
-    int typelen = coldef->typeName->type_len;
+    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+    int32 typemod;
+    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
+    // Get type length
+    Type tup = typeidType(typeoid);
+    int typelen = typeLen(tup);
+    ReleaseSysCache(tup);
 
-    PostgresValueFormat postgresValueFormat( typeoid, typelen, typelen);
+    // For a fixed-size type, typlen is the number of bytes in the internal
+    // representation of the type. But for a variable-length type, typlen
+    // is negative.
+    if (typelen == -1) typelen = typemod;
+
+    PostgresValueFormat postgresValueFormat(typeoid, typelen, typelen);
     PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
 
     ValueType column_valueType = pelotonValueFormat.GetType();
