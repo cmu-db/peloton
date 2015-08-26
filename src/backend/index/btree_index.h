@@ -198,6 +198,23 @@ class BtreeIndex : public Index {
     return result;
   }
 
+  /**
+   * @brief Return all locations related to this key.
+   */
+  std::vector<ItemPointer> Scan(const storage::Tuple* key) {
+    index_lock.ReadLock();
+    index_key1.SetFromKey(key);
+
+    std::vector<ItemPointer> retval;
+    // find the <key, location> pair
+    auto entries = container.equal_range(index_key1);
+    for (auto entry = entries.first; entry != entries.second; ++entry) {
+      retval.push_back(entry->second);
+    }
+
+    return std::move(retval);
+  }
+
 
   std::string GetTypeName() const { return "BtreeMulti"; }
 
