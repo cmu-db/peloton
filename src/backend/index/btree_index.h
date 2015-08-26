@@ -212,6 +212,7 @@ class BtreeIndex : public Index {
       retval.push_back(entry->second);
     }
 
+    index_lock.Unlock();
     return std::move(retval);
   }
 
