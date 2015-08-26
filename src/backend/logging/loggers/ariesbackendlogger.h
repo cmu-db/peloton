@@ -32,16 +32,17 @@ class AriesBackendLogger : public BackendLogger{
 
     static AriesBackendLogger* GetInstance(void);
 
-    void Insert(LogRecord* record);
+    void log(LogRecord* record);
 
-    void Delete(LogRecord* record);
+    size_t GetLocalQueueSize(void) const ;
 
-    void Update(LogRecord* record);
+    void Truncate(oid_t offset);
 
     LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                               txn_id_t txn_id, 
                               oid_t table_oid, 
-                              ItemPointer location, 
+                              ItemPointer insert_location, 
+                              ItemPointer delete_location, 
                               void* data = nullptr,
                               oid_t db_oid = INVALID_OID);
 

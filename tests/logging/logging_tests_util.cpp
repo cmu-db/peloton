@@ -14,8 +14,8 @@
 
 #include <thread>
 
-#define NUM_TUPLES 100
-#define NUM_BACKEND 4
+#define NUM_TUPLES 5
+#define NUM_BACKEND 3
 
 namespace peloton {
 namespace test {
@@ -23,7 +23,7 @@ namespace test {
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(){
+bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
 
    // start a thread for logging
    auto& logManager = logging::LogManager::GetInstance();
@@ -32,7 +32,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
      LOG_ERROR("another logging thread is running now"); 
      return false;
    }
-   logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
+   logManager.SetMainLoggingType(logging_type);
    std::thread thread(&logging::LogManager::StandbyLogging, 
                       &logManager, 
                       logManager.GetMainLoggingType());
@@ -52,7 +52,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
    // wait for recovery
    while(logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
 
-   LoggingTestsUtil::WritingSimpleLog(20000, 10000);
+   LoggingTestsUtil::WritingSimpleLog(20000, 10000, logging_type);
 
    // ongoing->terminate->sleep
    if( logManager.EndLogging() ){
@@ -67,7 +67,7 @@ bool LoggingTestsUtil::PrepareLogFile(){
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::CheckTupleAfterRecovery(){
+void LoggingTestsUtil::CheckAriesRecovery(){
 
   // Initialize oid since we assume that we restart the system
   auto &manager = catalog::Manager::GetInstance();
@@ -113,7 +113,69 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
   }
 
   // Check the tuples
-  LoggingTestsUtil::CheckTuples(20000,10000);
+  LoggingTestsUtil::CheckTupleCount(20000,10000);
+
+  // Check the next oid
+  //LoggingTestsUtil::CheckNextOid();
+
+  if( logManager.EndLogging() ){
+    thread.join();
+  }else{
+    LOG_ERROR("Failed to terminate logging thread"); 
+  }
+  LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
+}
+
+/**
+ * @brief recover the database and check the tuples
+ */
+void LoggingTestsUtil::CheckPelotonRecovery(){
+
+//  // Initialize oid since we assume that we restart the system
+//  auto &manager = catalog::Manager::GetInstance();
+//  manager.SetNextOid(0);
+//  manager.ClearTileGroup();
+//
+//  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+//  txn_manager.ResetStates();
+
+  LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
+
+  auto& logManager = logging::LogManager::GetInstance();
+   if( logManager.ActiveFrontendLoggerCount() > 0){
+     LOG_ERROR("another logging thread is running now"); 
+     return false;
+   }
+
+  // start a thread for logging
+  logManager.SetMainLoggingType(LOGGING_TYPE_PELOTON);
+  std::thread thread(&logging::LogManager::StandbyLogging, 
+      &logManager, 
+      logManager.GetMainLoggingType());
+
+  // When the frontend logger gets ready to logging,
+  // start logging
+  while(1){
+    sleep(1);
+    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+      // Standby -> Recovery
+      logManager.StartLogging();
+      // Recovery -> Ongoing
+      break;
+    }
+  }
+
+  //wait recovery
+  while(1){
+    sleep(1);
+    // escape when recovery is done
+    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
+      break;
+    }
+  }
+
+  // Check the tuples
+  LoggingTestsUtil::CheckTupleCount(20000,10000);
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
@@ -127,7 +189,7 @@ void LoggingTestsUtil::CheckTupleAfterRecovery(){
 }
 
 
-void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
+void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type){
 
   // Create db
   CreateDatabase(db_oid);
@@ -144,15 +206,20 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid){
   LaunchParallelTest(NUM_BACKEND, ParallelWriting, table);
 
   db->AddTable(table);
-  db->DropTableWithOid(table_oid);
-  DropDatabase(db_oid);
+
+  if(logging_type == LOGGING_TYPE_ARIES ){
+    db->DropTableWithOid(table_oid);
+    DropDatabase(db_oid);
+  }
 }
 
-void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
+void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
 
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
+
+  std::cout << *table << std::endl;
 
   oid_t tile_group_count = table->GetTileGroupCount();
   oid_t active_tuple_count = 0;
@@ -163,7 +230,7 @@ void LoggingTestsUtil::CheckTuples(oid_t db_oid, oid_t table_oid){
   }
 
   // check # of active tuples
-  EXPECT_LT( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
+  EXPECT_EQ( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
 
 }
 
@@ -238,11 +305,17 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema
 }
 
 void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
-  auto locations = InsertTuples(table, true);
+
+  auto locations = InsertTuples(table, true/*commit*/);
+
+  if(locations.size() >= 3)
+  DeleteTuples(table, locations[2], false/*abort*/);
+
   if(locations.size() >= 2)
-  DeleteTuples(table, locations[1], true);
+  DeleteTuples(table, locations[1], true/*commit*/);
+
   if(locations.size() >= 1)
-  UpdateTuples(table, locations[0], true);
+  UpdateTuples(table, locations[0], true/*commit*/);
 
   auto& logManager = logging::LogManager::GetInstance();
   if(logManager.IsReadyToLogging()){
@@ -251,6 +324,7 @@ void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
     while( logger->IsWaitFlush()){
       sleep(1);
     }
+    logManager.RemoveBackendLogger(logger);
   }
 }
 
@@ -284,9 +358,10 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
                                              location,
+                                             INVALID_ITEMPOINTER,
                                              tuple,
                                              20000);
-        logger->Insert(record);
+        logger->log(record);
 
       }
     }
@@ -327,15 +402,18 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
       auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                             txn->GetTransactionId(), 
                                             table->GetOid(),
+                                            INVALID_ITEMPOINTER,
                                             delete_location,
                                             nullptr,
                                             20000);
-      logger->Delete(record);
+      logger->log(record);
     }
   }
 
   if(committed){
     txn_manager.CommitTransaction(txn);
+  }else{
+    txn_manager.AbortTransaction(txn);
   }
 }
 
@@ -373,10 +451,11 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
          auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
+                                             location,
                                              delete_location,
                                              tuple,
                                              20000);
-         logger->Update(record);
+         logger->log(record);
        }
      }
   }

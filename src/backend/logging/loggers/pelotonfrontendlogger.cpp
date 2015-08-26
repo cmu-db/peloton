@@ -128,17 +128,36 @@ void PelotonFrontendLogger::CollectLogRecord() {
   }
 }
 
+void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record,
+                                                  std::vector<ItemPointer> &inserted_tuples,
+                                                  std::vector<ItemPointer> &deleted_tuples){
+
+  if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT){
+    inserted_tuples.push_back(record->GetInsertLocation());
+  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE){
+    deleted_tuples.push_back(record->GetDeleteLocation());
+  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE){
+    inserted_tuples.push_back(record->GetInsertLocation());
+    deleted_tuples.push_back(record->GetDeleteLocation());
+  }
+}
+
 /**
  * @brief flush all record to the file
  */
 void PelotonFrontendLogger::Flush(void) {
+ 
+  std::vector<ItemPointer> inserted_tuples;
+  std::vector<ItemPointer> deleted_tuples;
 
   for( auto record : peloton_global_queue ){
-    //TODO :: write on nvm 
+
     fwrite( record->GetSerializedData(), 
             sizeof(char), 
             record->GetSerializedDataSize(), 
             logFile);
+
+    CollectCommittedTuples((TupleRecord*)record, inserted_tuples, deleted_tuples );
   }
 
   int ret = fflush(logFile);
@@ -164,6 +183,32 @@ void PelotonFrontendLogger::Flush(void) {
       backend_logger->Commit();
     }
   }
+
+  // set insert/delete commit based on logs
+  for( auto inserted_tuple : inserted_tuples){
+    SetInsertCommit(inserted_tuple, true);
+  }
+  for( auto deleted_tuple : deleted_tuples){
+    SetDeleteCommit(deleted_tuple, true);
+  }
+
+  auto done = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE, 1/*FIXME*/);
+
+  fwrite( done->GetSerializedData(), 
+          sizeof(char), 
+          done->GetSerializedDataSize(), 
+          logFile);
+
+  ret = fflush(logFile);
+  if( ret != 0 ){
+    LOG_ERROR("Error occured in fflush(%d)", ret);
+  }
+
+  ret = fsync(logFileFd);
+  if( ret != 0 ){
+    LOG_ERROR("Error occured in fsync(%d)", ret);
+  }
+  delete done;
 }
 
 /**
@@ -172,10 +217,10 @@ void PelotonFrontendLogger::Flush(void) {
 void PelotonFrontendLogger::Recovery() {
 
   if(LogFileSize() > 0){
+
     bool EOF_OF_LOG_FILE = false;
 
-    auto &txn_manager = concurrency::TransactionManager::GetInstance();
-    auto recovery_txn = txn_manager.BeginTransaction();
+    JumpToLastUnfinishedTxn();
 
     while(!EOF_OF_LOG_FILE){
 
@@ -184,31 +229,33 @@ void PelotonFrontendLogger::Recovery() {
       switch(GetNextLogRecordType()){
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          AddTxnToRecoveryTable();
-          break;
-
-        case LOGRECORD_TYPE_TRANSACTION_END:
-          RemoveTxnFromRecoveryTable();
+          printf("BEGIN\n");
+          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          MoveCommittedTuplesToRecoveryTxn(recovery_txn);
+          printf("COMMIT\n");
+          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
           break;
 
-        case LOGRECORD_TYPE_TRANSACTION_ABORT:
-          AbortTuplesFromRecoveryTable();
+        case LOGRECORD_TYPE_TRANSACTION_END:
+          printf("END\n");
+          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_END);
           break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-          InsertTuple(recovery_txn);
+          printf("INSERT\n");
+          InsertTuple();
           break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-          DeleteTuple(recovery_txn);
+          printf("DELETE\n");
+          DeleteTuple();
           break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-          UpdateTuple(recovery_txn);
+          printf("UPDATE\n");
+          UpdateTuple();
           break;
 
         default:
@@ -216,16 +263,6 @@ void PelotonFrontendLogger::Recovery() {
           break;
       }
     }
-
-    // Abort remained txn in recovery_txn_table
-    AbortTxnInRecoveryTable();
-
-    txn_manager.CommitTransaction(recovery_txn);
-
-    //After finishing recovery, set the next oid with maximum oid
-    auto &manager = catalog::Manager::GetInstance();
-    auto max_oid = manager.GetNextOid();
-    manager.SetNextOid(max_oid);
   }
 }
 
@@ -245,6 +282,38 @@ LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
   CopySerializeInput input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
   return log_record_type;
+}
+
+void PelotonFrontendLogger::JumpToLastUnfinishedTxn(){
+  char buffer;
+  fseek(logFile, -1, SEEK_END);
+  // Read last log record type
+  int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread(%d)", ret);
+  }
+  CopySerializeInput input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+  std::cout << "log record ::::::::: " << LogRecordTypeToString(log_record_type) << std::endl;
+
+  if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT ||
+      log_record_type == LOGRECORD_TYPE_TRANSACTION_END){
+    /* we need peloton recovery
+     * jump to last begin txn log record
+     */
+
+    while(ftell(logFile) >= 0){
+      fseek(logFile, -2, SEEK_CUR);
+      if(GetNextLogRecordType() == LOGRECORD_TYPE_TRANSACTION_BEGIN){
+        fseek(logFile, -1, SEEK_CUR);
+        break;
+      }
+    }
+  }else{
+    /* no recovery */
+    LOG_INFO("No recovery\n");
+    fseek(logFile, 0, SEEK_END);
+  }
 }
 
 /**
@@ -296,14 +365,6 @@ size_t PelotonFrontendLogger::GetNextFrameSize(){
   }
 
   return frame_size;
-}
-
-/**
- * @brief Get global_queue size
- * @return the size of global_queue
- */
-size_t PelotonFrontendLogger::GetLogRecordCount() const{
-  return peloton_global_queue.size();
 }
 
 /**
@@ -366,138 +427,10 @@ bool PelotonFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 }
 
 /**
- * @brief Read TupleRecordBody
- * @param schema
- * @param pool
- * @return tuple
- */
-storage::Tuple* PelotonFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
-                                                         Pool *pool){
-  // Measure the body size of LogRecord
-  size_t body_size = GetNextFrameSize();
-  if( body_size == 0 ){
-    // file is broken
-    return nullptr;
-  }
-
-  // Read Body 
-  char body[body_size];
-  int ret = fread(body, 1, sizeof(body), logFile);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInput logBody(body, body_size);
-
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
-
-  tuple->DeserializeFrom(logBody, pool);
-  return tuple;
-}
-
-/**
- * @brief Read get table based on tuple record
- * @param tuple record
- * @return data table
- */
-storage::DataTable* PelotonFrontendLogger::GetTable(TupleRecord tupleRecord){
-  // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDbId());
-  assert(db);
-  auto table = db->GetTableWithOid(tupleRecord.GetTableId());
-  assert(table);
-  return table;
-}
-
-/**
- * @brief Get tile group
- * @param tile group id
- * @return tile group
- */
-storage::TileGroup* PelotonFrontendLogger::GetTileGroup(oid_t tile_group_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  return tile_group;
-}
-
-/**
- * @brief Move Tuples from source to destination
- * @param destination
- * @param source
- */
-void PelotonFrontendLogger::MoveTuples(concurrency::Transaction* destination,
-                                     concurrency::Transaction* source){
-  auto inserted_tuples = source->GetInsertedTuples();
-
-  for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    for (auto tuple_slot : entry.second){
-
-      destination->RecordInsert( ItemPointer(tile_group_id, tuple_slot));
-    }
-  }
-
-  auto deleted_tuples = source->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    for (auto tuple_slot : entry.second)
-      destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
-  }
-  // Clear inserted/deleted tuples from txn
-  source->ResetStates();
-
-}
-
-/**
- * @brief Abort tuples inside txn
- * @param txn
- */
-void PelotonFrontendLogger::AbortTuples(concurrency::Transaction* txn){
-
-  LOG_INFO("Abort txd id %d object in table",(int)txn->GetTransactionId());
-
-  auto inserted_tuples = txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-
-    for (auto tuple_slot : entry.second)
-      tile_group->AbortInsertedTuple(tuple_slot);
-  }
-
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : txn->GetDeletedTuples()) {
-    storage::TileGroup *tile_group = entry.first;
-
-    for (auto tuple_slot : entry.second)
-      tile_group->AbortDeletedTuple(tuple_slot);
-  }
-
-  // Clear inserted/deleted tuples from txn
-  txn->ResetStates();
-}
-
-/**
- * @brief Abort tuples inside txn table
- */
-void PelotonFrontendLogger::AbortTxnInRecoveryTable(){
-  for(auto  txn : recovery_txn_table){
-    auto curr_txn = txn.second;
-    AbortTuples(curr_txn);
-    delete curr_txn;
-  }
-  recovery_txn_table.clear();
-}
-
-/**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void PelotonFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
+void PelotonFrontendLogger::InsertTuple(void){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
 
@@ -506,56 +439,15 @@ void PelotonFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto table = GetTable(tupleRecord);
+  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
- 
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
-
-  if( tuple == nullptr){
-    // file is broken
-    delete pool;
-    delete backend;
-    return;
-  }
-
-  auto tile_group_id = tupleRecord.GetItemPointer().block;
-  auto tuple_slot = tupleRecord.GetItemPointer().offset;
-
-  auto tile_group = GetTileGroup(tile_group_id);
-
-  auto txn_id = tupleRecord.GetTxnId();
-  auto txn = recovery_txn_table.at(txn_id);
-
-  ItemPointer location;
-
-  // Create new tile group if table doesn't have tile group that recored in the log
-  if(tile_group == nullptr){
-    table->AddTileGroupWithOid(tile_group_id);
-    tile_group = table->GetTileGroupById(tile_group_id);
-  }
-
-  tile_group->InsertTuple(recovery_txn->GetTransactionId(), tuple_slot, tuple);
-  location.block = tile_group_id;
-  location.offset = tuple_slot;
-  if (location.block == INVALID_OID) {
-    recovery_txn->SetResult(Result::RESULT_FAILURE);
-  }else{
-    txn->RecordInsert(location);
-    table->IncreaseNumberOfTuplesBy(1);
-  }
-
-  delete tuple;
-  delete pool;
-  delete backend;
 }
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void PelotonFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
+void PelotonFrontendLogger::DeleteTuple(void){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
 
@@ -564,27 +456,14 @@ void PelotonFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto table = GetTable(tupleRecord);
-
-  ItemPointer delete_location = tupleRecord.GetItemPointer();
-
-  bool status = table->DeleteTuple(recovery_txn, delete_location);
-  if (status == false) {
-    recovery_txn->SetResult(Result::RESULT_FAILURE);
-    return;
-  }
-
-  auto txn_id = tupleRecord.GetTxnId();
-  auto txn = recovery_txn_table.at(txn_id);
-  txn->RecordDelete(delete_location);
-
+  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
 }
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void PelotonFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
+void PelotonFrontendLogger::UpdateTuple(void){
 
   TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
 
@@ -593,128 +472,34 @@ void PelotonFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto txn_id = tupleRecord.GetTxnId();
-  auto txn = recovery_txn_table.at(txn_id);
-
-  auto table = GetTable(tupleRecord);
-
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
-
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
-
-  if( tuple == nullptr){
-    // file is broken
-     delete pool;
-     delete backend;
-    return;
-  }
-
-  ItemPointer delete_location = tupleRecord.GetItemPointer();
-  bool status = table->DeleteTuple(recovery_txn, delete_location);
-  if (status == false) {
-    recovery_txn->SetResult(Result::RESULT_FAILURE);
-  }else{
-    txn->RecordDelete(delete_location);
-
-    ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
-    if (location.block == INVALID_OID) {
-      recovery_txn->SetResult(Result::RESULT_FAILURE);
-    }else{
-      txn->RecordInsert(location);
-    }
-  }
-
-  delete tuple;
-  delete pool;
-  delete backend;
+  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
+  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
 }
 
-/**
- * @brief Add new txn to recovery table
- */
-void PelotonFrontendLogger::AddTxnToRecoveryTable(){
+void PelotonFrontendLogger::SkipTxnRecord(LogRecordType log_record_type){
   // read transaction information from the log file
-  TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
+  TransactionRecord txnRecord(log_record_type);
 
   if( ReadTxnRecord(txnRecord) == false ){
     // file is broken
     return;
   }
-
-  auto txn_id = txnRecord.GetTxnId();
-
-  // create the new txn object and added it into recovery recovery_txn_table
-  concurrency::Transaction* txn = new concurrency::Transaction(txn_id, INVALID_CID);
-  recovery_txn_table.insert(std::make_pair(txn_id, txn));
-  LOG_TRACE("Added txd id %d object in table",(int)txn_id);
 }
 
-/**
- * @brief Remove txn from recovery table
- */
-void PelotonFrontendLogger::RemoveTxnFromRecoveryTable(){
-  // read transaction information from the log file
-  TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
-
-  if( ReadTxnRecord(txnRecord) == false ){
-    // file is broken
-    return;
-  }
-
-  auto txn_id = txnRecord.GetTxnId();
-
-  // remove txn from recovery txn table
-  auto txn = recovery_txn_table.at(txn_id);
-  recovery_txn_table.erase(txn_id);
-  delete txn;
-  LOG_TRACE("Erase txd id %d object in table",(int)txn_id);
+void PelotonFrontendLogger::SetInsertCommit(ItemPointer location, bool commit){
+  //Commit Insert Mark
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group_header = tile_group->GetHeader();
+  tile_group_header->SetInsertCommit(location.offset, commit); 
 }
 
-/**
- * @brief move tuples from current txn to recovery txn so that we can commit them later
- * @param recovery txn
- */
-void PelotonFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction* recovery_txn) {
-
-  // read transaction information from the log file
-  TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-
-  if( ReadTxnRecord(txnRecord) == false ){
-    // file is broken
-    return;
-  }
-
-  // get the txn
-  auto txn_id = txnRecord.GetTxnId();
-  auto txn = recovery_txn_table.at(txn_id);
-
-  // Copy inserted/deleted tuples to recovery transaction
-  MoveTuples(recovery_txn, txn);
-
-  LOG_TRACE("Commit txd id %d object in table",(int)txn_id);
-}
-
-/**
- * @brief abort tuple 
- */
-void PelotonFrontendLogger::AbortTuplesFromRecoveryTable(){
-
-  // read transaction information from the log file
-  TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
-
-  if( ReadTxnRecord(txnRecord) == false ){
-    // file is broken
-    return;
-  }
-
-  auto txn_id = txnRecord.GetTxnId();
-
-  // get the txn
-  auto txn = recovery_txn_table.at(txn_id);
-  AbortTuples(txn);
-
-  LOG_INFO("Abort txd id %d object in table",(int)txn_id);
+void PelotonFrontendLogger::SetDeleteCommit(ItemPointer location, bool commit){
+  //Commit Insert Mark
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group_header = tile_group->GetHeader();
+  tile_group_header->SetDeleteCommit(location.offset, commit); 
 }
 
 }  // namespace logging

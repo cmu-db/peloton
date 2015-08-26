@@ -24,48 +24,61 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
 }
 
 /**
- * @brief Insert LogRecord
+ * @brief log LogRecord
  * @param log record 
  */
-void PelotonBackendLogger::Insert(LogRecord* record){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
-    local_queue.push_back(record);
+void PelotonBackendLogger::log(LogRecord* record){
+  std::lock_guard<std::mutex> lock(local_queue_mutex);
+  record->Serialize();
+  local_queue.push_back(record);
+
+  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
+    assert(local_queue.size()>=2);
+    auto previous_record = local_queue[local_queue.size()-2];
+
+    if(previous_record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT)  {
+      log_record_count = local_queue.size();
+    }else if(previous_record->GetType() == LOGRECORD_TYPE_TRANSACTION_ABORT)  {
+      // Remove aborted log record
+      for(oid_t log_record_itr=log_record_count; log_record_itr<local_queue.size();
+          log_record_itr++){
+        delete local_queue[log_record_itr];;
+      }
+      local_queue.erase(local_queue.begin()+log_record_count, local_queue.end());
+    }
   }
 }
 
 /**
- * @brief Delete LogRecord
- * @param log record 
+ * @brief Get the local queue size
+ * @return local queue size
  */
-void PelotonBackendLogger::Delete(LogRecord* record){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
-    local_queue.push_back(record);
-  }
+size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
+  return log_record_count;
 }
 
 /**
- * @brief Delete LogRecord
- * @param log record 
+ * @brief set the wait flush to true and truncate local_queue with commit_offset
+ * @param offset
  */
-void PelotonBackendLogger::Update(LogRecord* record){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
-    local_queue.push_back(record);
-  }
+void PelotonBackendLogger::Truncate(oid_t offset){
+  std::lock_guard<std::mutex> lock(local_queue_mutex);
+
+  wait_flush = true;
+
+  local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
+
+  log_record_count -= offset;
 }
 
 LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
                                               txn_id_t txn_id, 
                                               oid_t table_oid, 
-                                              ItemPointer location, 
+                                              ItemPointer insert_location, 
+                                              ItemPointer delete_location, 
                                               void* data,
                                               oid_t db_oid){
-  // data should be nullptr here
+  data = nullptr;
   assert(data == nullptr);
 
   switch(log_record_type){
@@ -93,7 +106,8 @@ LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
   LogRecord* record = new TupleRecord(log_record_type, 
                                       txn_id,
                                       table_oid,
-                                      location,
+                                      insert_location,
+                                      delete_location,
                                       data,
                                       db_oid);
   return record;

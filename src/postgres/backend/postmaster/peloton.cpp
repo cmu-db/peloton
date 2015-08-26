@@ -69,6 +69,7 @@
  * ----------
  */
 bool logging_on = false;
+bool syncronization_commit = false;
 
 /* ----------
  * Local data
@@ -422,6 +423,7 @@ peloton_MainLoop(void) {
   // Launching a thread for logging 
   auto& logManager = peloton::logging::LogManager::GetInstance();
   logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
+  logManager.SetSyncCommit(syncronization_commit);
   thread_group.push_back(std::thread(&peloton::logging::LogManager::StandbyLogging,
                                      &logManager,
                                      logManager.GetMainLoggingType()));

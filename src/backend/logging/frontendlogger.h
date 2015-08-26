@@ -39,6 +39,8 @@ class FrontendLogger : public Logger{
 
     void AddBackendLogger(BackendLogger* backend_logger);
 
+    bool RemoveBackendLogger(BackendLogger* backend_logger);
+
     std::vector<BackendLogger*> GetBackendLoggers(void);
 
     //===--------------------------------------------------------------------===//

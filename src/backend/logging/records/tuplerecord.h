@@ -32,21 +32,24 @@ public:
     txn_id = INVALID_TXN_ID;
     db_oid = INVALID_OID;
     table_oid = INVALID_OID;
-    memset(&itemPointer, 0, sizeof(ItemPointer));
+    memset(&insert_location, 0, sizeof(ItemPointer));
+    memset(&delete_location, 0, sizeof(ItemPointer));
     data = nullptr;
   }
 
   TupleRecord( LogRecordType log_record_type,
                const txn_id_t txn_id,
                oid_t table_oid,
-               ItemPointer itemPointer,
+               ItemPointer insert_location,
+               ItemPointer delete_location,
                const void* data = nullptr,
                oid_t _db_oid = INVALID_OID
                )
   : LogRecord(log_record_type), 
     txn_id(txn_id), 
     table_oid(table_oid), 
-    itemPointer(itemPointer),
+    insert_location(insert_location),
+    delete_location(delete_location),
     data(data),
     db_oid(_db_oid)
   {
@@ -84,7 +87,9 @@ public:
  
   oid_t GetTableId(void) const {return table_oid;}
 
-  ItemPointer GetItemPointer(void) const {return itemPointer;}
+  ItemPointer GetInsertLocation(void) const {return insert_location;}
+
+  ItemPointer GetDeleteLocation(void) const {return delete_location;}
 
   void print(void);
 
@@ -97,7 +102,9 @@ private:
 
   oid_t table_oid;
 
-  ItemPointer itemPointer;
+  ItemPointer insert_location;
+
+  ItemPointer delete_location;
 
   const void* data;
 

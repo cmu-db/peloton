@@ -12,12 +12,12 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
-std::string filename = "aries.log";
+std::string filename = "peloton.log";
 
 /**
  * @brief writing a simple log with multiple threads
  */
-TEST(AriesLoggingTest, writing_logfile) {
+TEST(PelotonLoggingTest, writing_logfile) {
 
   std::ifstream logfile(filename.c_str());
   // delete the log file if exists
@@ -26,7 +26,11 @@ TEST(AriesLoggingTest, writing_logfile) {
   }
 
   // writing simple log file
-  if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES) ){
+  if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON) ){
+    auto res = truncate( filename.c_str(), 1343);
+    if( res == -1 ){
+      LOG_ERROR("Failed to truncate the log file"); 
+    }
   }else{
     //Something's wrong !!
     EXPECT_EQ(1,0);
@@ -36,12 +40,12 @@ TEST(AriesLoggingTest, writing_logfile) {
 /**
  * @brief recovery test
  */
-TEST(AriesLoggingTest, recovery) {
+TEST(PelotonLoggingTest, recovery) {
 
   std::ifstream logfile(filename.c_str());
   // recovery if the log file exists
   if( logfile.good() ){
-   LoggingTestsUtil::CheckAriesRecovery();
+    LoggingTestsUtil::CheckPelotonRecovery();
   }else{
     //Something's wrong !!
     EXPECT_EQ(1,0);

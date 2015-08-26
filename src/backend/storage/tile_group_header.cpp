@@ -35,6 +35,8 @@ std::ostream &operator<<(std::ostream &os,
     txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
     cid_t beg_commit_id = tile_group_header.GetBeginCommitId(header_itr);
     cid_t end_commit_id = tile_group_header.GetEndCommitId(header_itr);
+    bool insert_commit= tile_group_header.GetInsertCommit(header_itr);
+    bool delete_commit= tile_group_header.GetDeleteCommit(header_itr);
 
     int width = 10;
     os << "\t txn id : ";
@@ -54,6 +56,18 @@ std::ostream &operator<<(std::ostream &os,
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
+
+    os << " insert commit : ";
+    if (insert_commit == true)
+      os << "O";
+    else
+      os << "X";
+
+    os << " delete commit : ";
+    if (delete_commit == true)
+      os << "O";
+    else
+      os << "X";
 
     peloton::ItemPointer location =
         tile_group_header.GetPrevItemPointer(header_itr);
@@ -80,6 +94,8 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     txn_id_t txn_id = GetTransactionId(header_itr);
     cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
+    bool insert_commit= GetInsertCommit(header_itr);
+    bool delete_commit= GetDeleteCommit(header_itr);
 
     int width = 10;
 
@@ -102,6 +118,18 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
+
+    os << " insert commit : ";
+    if (insert_commit == true)
+      os << "O";
+    else
+      os << "X";
+
+    os << " delete commit : ";
+    if (delete_commit == true)
+      os << "O";
+    else
+      os << "X";
 
     peloton::ItemPointer location = GetPrevItemPointer(header_itr);
     os << " prev : "

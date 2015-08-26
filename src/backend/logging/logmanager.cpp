@@ -93,14 +93,11 @@ bool LogManager::EndLogging(LoggingType logging_type ){
 
   LOG_INFO("Wait until frontend logger(%s) escapes main loop..", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
-  while(1){
-    sleep(1);
-    MakeItSleepy();
-    if( GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP) break;
-  }
+  MakeItSleepy();
 
   LOG_INFO("Escaped from MainLoop(%s)", LoggingStatusToString(GetLoggingStatus(logging_type)).c_str());
 
+  //TODO Call RemoveBackend?
   if( RemoveFrontend(logging_type) ){
     ResetLoggingStatus(logging_type);
     LOG_INFO("%s has been terminated successfully", LoggingTypeToString(logging_type).c_str());
@@ -181,7 +178,11 @@ void LogManager::MakeItSleepy(LoggingType logging_type){
     assert(logging_type);
   }
 
-  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
+  while(1){
+    sleep(1);
+    SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
+    if( GetLoggingStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP) break;
+  }
 }
 
 
@@ -221,6 +222,29 @@ if( logging_type == LOGGING_TYPE_INVALID){
     LOG_ERROR("%s frontend logger doesn't exist!!\n",LoggingTypeToString(logging_type).c_str());
   }
   return backend_logger;
+}
+
+bool LogManager::RemoveBackendLogger(BackendLogger* backend_logger, LoggingType logging_type){
+  if( logging_type == LOGGING_TYPE_INVALID){
+    logging_type = MainLoggingType;
+    assert(logging_type);
+  }
+
+  bool status = false;
+
+  // Check whether the corresponding frontend logger exists or not
+  // if so, remove backend logger otherwise return false
+  {
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+
+    FrontendLogger* frontend_logger = GetFrontendLogger(logging_type);
+
+    // If frontend logger exists
+    if( frontend_logger != nullptr){
+      status = frontend_logger->RemoveBackendLogger(backend_logger);
+    }
+  }
+  return status;
 }
 
 /**
