@@ -43,7 +43,7 @@ void DDL::ProcessUtility(Node *parsetree,
                          TransactionId txn_id) {
   assert(parsetree != nullptr);
 
-  LOG_INFO("Process Utility");
+  LOG_TRACE("Process Utility");
 
   static std::vector<Node *> parsetree_stack;
 
