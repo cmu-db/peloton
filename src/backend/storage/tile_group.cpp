@@ -157,7 +157,8 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     return true;
   } else {
-    LOG_INFO("Delete failed: Latch failed and Ownership check failed: %lu != %lu", tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
+    LOG_INFO("Delete failed: Latch failed and Ownership check failed: %lu != %lu",
+             tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
     return false;
   }
 }
