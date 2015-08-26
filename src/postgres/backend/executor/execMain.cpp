@@ -352,8 +352,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
     elog(DEBUG3, "DML Query :: Type :: %d", operation);
 
     // PG Query
-	  //if(queryDesc->plannedstmt->pelotonQuery == false)
-    if(true)
+    //if(true)
+    if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {
 	    ExecutePlan(estate,
 	                queryDesc->planstate,
