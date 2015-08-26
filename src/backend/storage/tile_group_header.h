@@ -23,7 +23,6 @@
 #include <queue>
 #include <cstring>
 
-
 namespace peloton {
 namespace storage {
 
@@ -49,16 +48,26 @@ class TileGroupHeader {
 
  public:
   TileGroupHeader(AbstractBackend *_backend, int tuple_count)
- : backend(_backend),
-   data(nullptr),
-   num_tuple_slots(tuple_count),
-   next_tuple_slot(0),
-   active_tuple_slots(0) {
+      : backend(_backend),
+        data(nullptr),
+        num_tuple_slots(tuple_count),
+        next_tuple_slot(0),
+        active_tuple_slots(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
     data = (char *) backend->Allocate(header_size);
     assert(data != nullptr);
+
+    // Set MVCC Initial Value
+    for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+        tuple_slot_id++) {
+
+      SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+      SetBeginCommitId(tuple_slot_id, MAX_CID);
+      SetEndCommitId(tuple_slot_id, MAX_CID);
+    }
+
   }
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
@@ -143,7 +152,8 @@ class TileGroupHeader {
 
   // Setters
 
-  inline bool LatchTupleSlot(const oid_t tuple_slot_id, txn_id_t transaction_id) {
+  inline bool LatchTupleSlot(const oid_t tuple_slot_id,
+                             txn_id_t transaction_id) {
     txn_id_t* txn_id = (txn_id_t *) (data + (tuple_slot_id * header_entry_size));
     if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
       return true;
@@ -152,10 +162,12 @@ class TileGroupHeader {
     }
   }
 
-  inline bool ReleaseTupleSlot(const oid_t tuple_slot_id, txn_id_t transaction_id) {
+  inline bool ReleaseTupleSlot(const oid_t tuple_slot_id,
+                               txn_id_t transaction_id) {
     txn_id_t* txn_id = (txn_id_t *) (data + (tuple_slot_id * header_entry_size));
     if (!atomic_cas(txn_id, transaction_id, INITIAL_TXN_ID)) {
-      LOG_INFO("Release failed, expecting a deleted own insert: %lu", GetTransactionId(tuple_slot_id));
+      LOG_INFO("Release failed, expecting a deleted own insert: %lu",
+               GetTransactionId(tuple_slot_id));
       assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
       return false;
     }
@@ -186,50 +198,51 @@ class TileGroupHeader {
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
-
     bool own = (txn_id == tuple_txn_id);
     bool activated = (at_lcid >= tuple_begin_cid);
     bool invalidated = (at_lcid >= tuple_end_cid);
 
     // Own
-    LOG_INFO("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
               tuple_txn_id);
 
     // Activated
     if (tuple_begin_cid == MAX_CID) {
-      LOG_INFO("Activated :: %d cid : %lu tuple begin cid : MAX_CID", activated,
-                at_lcid);
-    }
-    else {
-      LOG_INFO("Activated :: %d , lcid : %lu , tuple begin cid : %lu", activated,
-                at_lcid, tuple_begin_cid);
+      LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : MAX_CID",
+                activated, at_lcid);
+    } else {
+      LOG_TRACE("Activated :: %d , lcid : %lu , tuple begin cid : %lu",
+                activated, at_lcid, tuple_begin_cid);
     }
 
     // Invalidated
     if (tuple_end_cid == MAX_CID) {
-      LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : MAX_CID", invalidated,
-                at_lcid);
+      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : MAX_CID",
+                invalidated, at_lcid);
     } else {
-      LOG_INFO("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
+      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
                 at_lcid, tuple_end_cid);
     }
 
-    if (tuple_txn_id == INVALID_TXN_ID)
-      return false;
-
     // Visible iff past Insert || Own Insert
-    if ((!own && activated && !invalidated)
-        || (own && !activated && !invalidated))
-      return true;
+    bool visible = !(tuple_txn_id == INVALID_TXN_ID)
+        && ((!own && activated && !invalidated)
+            || (own && !activated && !invalidated));
 
-    return false;
+    LOG_INFO(
+        "<%p, %u> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",
+        this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
+        txn_id, at_lcid, visible);
+
+    return visible;
   }
-
 
   /**
    * This is called after latching
    */
-  bool IsDeletable(const oid_t tuple_slot_id, __attribute__((unused)) txn_id_t txn_id, __attribute__((unused)) cid_t at_lcid) {
+  bool IsDeletable(const oid_t tuple_slot_id,
+                   __attribute__((unused))         txn_id_t txn_id,
+                   __attribute__((unused))         cid_t at_lcid) {
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
     return tuple_end_cid == MAX_CID;
