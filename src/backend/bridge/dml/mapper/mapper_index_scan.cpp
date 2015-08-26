@@ -69,7 +69,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   if(nullptr == index_scan_desc.index){
     LOG_ERROR("Fail to get index with oid : %u \n", iss_plan->indexid);
   };
-  LOG_TRACE("Index scan on oid %u, index name: %s", iss_plan->indexid,
+  LOG_INFO("Index scan on %s using oid %u, index name: %s",table->GetName().c_str(), iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
@@ -310,8 +310,8 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Can't find Index oid %u \n", biss_plan->indexid);
   }
-  LOG_TRACE("BitmapIdxmap scan on Index oid %u, index name: %s",
-           biss_plan->indexid, index_scan_desc.index->GetName().c_str());
+  LOG_INFO("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
+           table->GetName().c_str(), biss_plan->indexid, index_scan_desc.index->GetName().c_str());
 
   assert(index_scan_desc.index);
 

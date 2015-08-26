@@ -324,8 +324,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     switch (status) {
       case Result::RESULT_SUCCESS:
         LOG_INFO("Committing txn_id : %lu , cid : %lu\n",
-                 txn->GetTransactionId(), txn->GetCommitId())
-        ;
+                 txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
 
@@ -334,17 +333,11 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
       case Result::RESULT_FAILURE:
       default:
         LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
-                 txn->GetCommitId())
-        ;
+                 txn->GetCommitId());
         // Abort
         txn_manager.AbortTransaction(txn);
     }
-  } else {
-    LOG_WARN(
-        "What happen ... ? single_statement = %d, init_failure = %d, GetResult() = %d",
-        single_statement_txn, init_failure, txn->GetResult());
   }
-
   // clean up executor tree
   CleanExecutorTree(executor_tree);
 

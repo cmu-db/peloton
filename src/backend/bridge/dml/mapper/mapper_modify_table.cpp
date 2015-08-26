@@ -81,8 +81,8 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_INFO("Insert into: database oid %u table oid %u", database_oid,
-           table_oid);
+  LOG_INFO("Insert into: database oid %u table oid %u: %s", database_oid,
+           table_oid, target_table->GetName().c_str());
 
   AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
   ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
@@ -124,8 +124,8 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
     return nullptr;
   }
 
-  LOG_INFO("Update table : database oid %u table oid %u", database_oid,
-            table_oid);
+  LOG_INFO("Update table : database oid %u table oid %u: %s", database_oid,
+            table_oid, target_table->GetName().c_str());
 
   // Child must be a scan node
   auto sub_planstate = (AbstractScanPlanState*) mt_plan_state->mt_plans[0];
@@ -171,8 +171,8 @@ planner::AbstractPlan *PlanTransformer::TransformDelete(
     return nullptr;
   }
 
-  LOG_INFO("Delete :: database oid %u table oid %u", database_oid,
-           table_oid);
+  LOG_INFO("Delete :: database oid %u table oid %u: %s", database_oid,
+           table_oid, target_table->GetName().c_str());
 
   // Create the peloton plan node
   bool truncate = false;

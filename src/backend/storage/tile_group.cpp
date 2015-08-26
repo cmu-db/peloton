@@ -146,9 +146,9 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
   // do a dirty delete
   if (tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id)) {
     if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id, last_cid)) {
-      LOG_INFO("Delete failed: not deletable");
       return true;
     } else {
+      LOG_INFO("Delete failed: not deletable");
       tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id);
       return false;
     }
