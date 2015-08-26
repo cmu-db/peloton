@@ -58,7 +58,7 @@ bool InsertExecutor::DExecute() {
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_TRACE("Insert executor :: 1 child \n");
+    LOG_INFO("Insert executor :: 1 child \n");
 
     if (!children_[0]->Execute()) {
       return false;
@@ -98,7 +98,7 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    LOG_TRACE("Insert executor :: 0 child \n");
+    LOG_INFO("Insert executor :: 0 child \n");
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
