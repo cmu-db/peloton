@@ -12,6 +12,7 @@
 
 #include "backend/logging/frontendlogger.h"
 #include "backend/logging/loggers/ariesfrontendlogger.h"
+#include "backend/logging/loggers/pelotonfrontendlogger.h"
 
 namespace peloton {
 namespace logging {
@@ -33,7 +34,7 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
     }break;
 
     case LOGGING_TYPE_PELOTON:{
-//      frontendLogger = new PelotonFrontendLogger();
+      frontendLogger = new PelotonFrontendLogger();
     }break;
 
     default:
@@ -59,6 +60,22 @@ void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
  */
 std::vector<BackendLogger*> FrontendLogger::GetBackendLoggers(){
     return backend_loggers;
+}
+
+bool FrontendLogger::RemoveBackendLogger(BackendLogger* _backend_logger){
+
+  std::lock_guard<std::mutex> lock(backend_logger_mutex);
+  oid_t offset=0;
+  for(auto backend_logger : backend_loggers){
+    if( backend_logger == _backend_logger){
+      break;
+    }else{
+      offset++;
+    }
+  }
+  assert(offset<backend_loggers.size());
+  backend_loggers.erase(backend_loggers.begin()+offset);
+  return true;
 }
 
 }  // namespace logging

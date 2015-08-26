@@ -99,9 +99,10 @@ bool DeleteExecutor::DExecute() {
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),
+                                             INVALID_ITEMPOINTER,
                                              delete_location);
 
-        logger->Delete(record);
+        logger->log(record);
       }
     }
 

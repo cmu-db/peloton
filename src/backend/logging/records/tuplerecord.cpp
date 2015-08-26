@@ -40,17 +40,13 @@ bool TupleRecord::Serialize(){
       break;
     }
 
-    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:  {
+    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:
     // nothing to do now 
-      break;
-    }
-
     case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:  
     case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:  
-    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:  {
+    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
     // nothing to do now 
       break;
-    } 
 
     default:  {
       LOG_WARN("Unsupported TUPLE RECORD TYPE\n");
@@ -83,8 +79,10 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
   output.WriteShort(db_oid);
   output.WriteShort(table_oid);
   output.WriteLong(txn_id);
-  output.WriteShort(itemPointer.block);
-  output.WriteShort(itemPointer.offset);
+  output.WriteShort(insert_location.block);
+  output.WriteShort(insert_location.offset);
+  output.WriteShort(delete_location.block);
+  output.WriteShort(delete_location.offset);
 
   output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
@@ -101,8 +99,10 @@ void TupleRecord::DeserializeHeader(CopySerializeInput& input){
   assert(table_oid);
   txn_id = (txn_id_t)(input.ReadLong());
   assert(txn_id);
-  itemPointer.block = (oid_t)(input.ReadShort());
-  itemPointer.offset = (oid_t)(input.ReadShort());
+  insert_location.block = (oid_t)(input.ReadShort());
+  insert_location.offset = (oid_t)(input.ReadShort());
+  delete_location.block = (oid_t)(input.ReadShort());
+  delete_location.offset = (oid_t)(input.ReadShort());
 }
 
 //just for debugging
@@ -111,8 +111,10 @@ void TupleRecord::print(){
   std::cout << " #Db  ID:" << GetDbId() << "\n";
   std::cout << " #Tb  ID:" << GetTableId() << "\n";
   std::cout << " #Txn ID:" << GetTxnId() << "\n";
-  std::cout << " #Location :" << GetItemPointer().block;
-  std::cout << " " << GetItemPointer().offset << "\n";
+  std::cout << " #Insert Location :" << GetInsertLocation().block;
+  std::cout << " " << GetInsertLocation().offset << "\n";
+  std::cout << " #Delete Location :" << GetDeleteLocation().block;
+  std::cout << " " << GetDeleteLocation().offset << "\n";
   std::cout << "\n";
 }
 

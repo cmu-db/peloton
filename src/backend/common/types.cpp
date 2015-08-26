@@ -695,6 +695,9 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_TRANSACTION_ABORT: {
       return "LOGRECORD_TYPE_TRANSACTION_ABORT";
     }
+    case LOGRECORD_TYPE_TRANSACTION_DONE: {
+      return "LOGRECORD_TYPE_TRANSACTION_DONE";
+    }
     case LOGRECORD_TYPE_TUPLE_INSERT: {
       return "LOGRECORD_TYPE_TUPLE_INSERT";
     }

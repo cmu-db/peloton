@@ -21,15 +21,17 @@ class LoggingTestsUtil{
 
 public:
 
-  static bool PrepareLogFile(void);
+  static bool PrepareLogFile(LoggingType logging_type);
 
-  static void CheckTupleAfterRecovery(void);
+  static void CheckAriesRecovery(void);
+
+  static void CheckPelotonRecovery(void);
 
 private:
 
-  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid);
+  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type);
 
-  static void CheckTuples(oid_t db_oid, oid_t table_oid);
+  static void CheckTupleCount(oid_t db_oid, oid_t table_oid);
 
   static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 

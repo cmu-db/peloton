@@ -63,6 +63,12 @@ class LogManager{
 
     BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
+    bool RemoveBackendLogger(BackendLogger* backend_logger, LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
+
+    bool GetSyncCommit(void) const { return syncronization_commit;}
+
   private:
 
     LogManager(){};
@@ -84,6 +90,8 @@ class LogManager{
     std::vector<FrontendLogger*> frontend_loggers;
 
     std::map<LoggingType, LoggingStatus> logging_statuses;
+
+    bool syncronization_commit = false;
 };
 
 

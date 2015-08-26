@@ -33,13 +33,9 @@ class BackendLogger : public Logger{
 
     static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
-    void Truncate(oid_t offset);
-
     LogRecord* GetLogRecord(oid_t offset);
 
     void Commit(void);
-
-    size_t GetLocalQueueSize(void) const;
 
     bool IsWaitFlush(void) const;
 
@@ -54,16 +50,17 @@ class BackendLogger : public Logger{
     /**
      * Record log
      */
-    virtual void Insert(LogRecord* record) = 0;
+    virtual void log(LogRecord* record) = 0;
 
-    virtual void Delete(LogRecord* record) = 0;
+    virtual size_t GetLocalQueueSize(void) const = 0;
 
-    virtual void Update(LogRecord* record) = 0;
+    virtual void Truncate(oid_t offset) = 0;
 
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                                       txn_id_t txn_id, 
                                       oid_t table_oid, 
-                                      ItemPointer location, 
+                                      ItemPointer insert_location, 
+                                      ItemPointer delete_location, 
                                       void* data = nullptr,
                                       oid_t db_oid = INVALID_OID) = 0;
 
