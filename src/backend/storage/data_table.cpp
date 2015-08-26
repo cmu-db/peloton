@@ -137,17 +137,22 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     // First, figure out last tile group
     {
       std::lock_guard<std::mutex> lock(table_mutex);
+      assert(GetTileGroupCount() > 0);
       tile_group_offset = GetTileGroupCount() - 1;
-      LOG_INFO("Tile group offset :: %d \n", tile_group_offset);
+      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
     }
 
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
     if (tuple_slot == INVALID_OID) {
+      // XXX Should we put this in a critical section?
       AddDefaultTileGroup();
     }
   }
+
+  LOG_INFO("tile group offset: %u, tile group id: %u, address: %p",
+           tile_group_offset, tile_group->GetTileGroupId(), tile_group);
 
   // Set tuple location
   ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
@@ -163,9 +168,10 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple);
-  if (location.block == INVALID_OID)
+  if (location.block == INVALID_OID){
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
+  }
 
   LOG_INFO("Location: %d, %d", location.block, location.offset);
 
@@ -434,8 +440,8 @@ oid_t DataTable::AddDefaultTileGroup() {
     oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if (active_tuple_count < allocated_tuple_count) {
-      LOG_TRACE("Slot exists in last tile group :: %d %d \n",
-                active_tuple_count, allocated_tuple_count);
+      LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count,
+               allocated_tuple_count);
       delete tile_group;
       return INVALID_OID;
     }
