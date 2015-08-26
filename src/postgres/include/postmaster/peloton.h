@@ -67,22 +67,5 @@ extern void peloton_dml(PlanState *planstate,
                         DestReceiver *dest,
                         TupleDesc tuple_desc);
 
-
-/* ----------
- * Stats Sent by the peloton to share the status with backend.
- * ----------
- */
-
-struct dirty_index_info {
-  Oid index_oid;
-  float number_of_tuples;
-};
-
-struct dirty_table_info {
-  Oid table_oid;
-  float number_of_tuples;
-  dirty_index_info** dirty_indexes;
-  Oid dirty_index_count;
-};
 #endif   /* PELOTON_H */
 
