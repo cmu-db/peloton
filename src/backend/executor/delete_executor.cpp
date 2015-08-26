@@ -87,8 +87,6 @@ bool DeleteExecutor::DExecute() {
 
     peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
-    // try to delete the tuple
-    // this might fail due to a concurrent operation that has latched the tuple
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
 
     if (status == false) {
