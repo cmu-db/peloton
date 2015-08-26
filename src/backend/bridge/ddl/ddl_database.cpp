@@ -54,30 +54,28 @@ bool DDLDatabase::ExecDropdbStmt(Node *parsetree){
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLDatabase::ExecVacuumStmt(Node *parsetree) {
-  VacuumStmt *vacuum = (VacuumStmt *)parsetree;
+  VacuumStmt* vacuum = (VacuumStmt*) parsetree;
   std::string relation_name;
 
-  if (vacuum->relation != NULL) relation_name = vacuum->relation->relname;
+  if( vacuum->relation != NULL )
+    relation_name = vacuum->relation->relname;
 
   // Get database oid
-  //oid_t database_oid = Bridge::GetCurrentDatabaseOid();
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
 
   // Get data table based on dabase oid and table name
-  //auto &manager = catalog::Manager::GetInstance();
-  //auto db = manager.GetDatabaseWithOid(database_oid);
+  auto& manager = catalog::Manager::GetInstance();
+  auto db = manager.GetDatabaseWithOid(database_oid);
 
   // Update every table and index
-  if (relation_name.empty()) {
-    // TODO: Fix update stats
-    //db->UpdateStats(status, true);
+  if(relation_name.empty()){
+    db->UpdateStats();
   }
   // Otherwise, update the specific table
-  else {
-    //oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    // TODO: Fix update stats
-    //db->UpdateStatsWithOid(status, relation_oid);
+  else{
+    oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
+    db->UpdateStatsWithOid(relation_oid);
   }
-
   return true;
 }
 
