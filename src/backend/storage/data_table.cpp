@@ -167,7 +167,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
 
-  LOG_TRACE("Location: %d, %d", location.block, location.offset);
+  LOG_INFO("Location: %d, %d", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
@@ -223,6 +223,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       default:
         break;
     }
+    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   // (B) Insert into index
