@@ -121,6 +121,7 @@ bool InsertExecutor::DExecute() {
     LOG_INFO("Inserted into location: %d, %d", location.block, location.offset);
 
     if (location.block == INVALID_OID) {
+      LOG_INFO("Failed to Insert. Set txn failure.");
       transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
