@@ -146,7 +146,7 @@ proc_exit(int code)
 
 	elog(DEBUG3, "exit(%d)", code);
 
-	elog(DEBUG1, "proc_exit(%d) :: PID %d TID %d MyBackendId %d PostmasterPid %d \n",
+	elog(DEBUG3, "proc_exit(%d) :: PID %d TID %d MyBackendId %d PostmasterPid %d \n",
 	     code, getpid(), GetBackendThreadId(),
 	     MyBackendId, PostmasterPid);
 
