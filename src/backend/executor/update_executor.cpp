@@ -123,11 +123,12 @@ bool UpdateExecutor::DExecute() {
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),
+                                             location,
                                              delete_location, 
                                              new_tuple);
 
 
-        logger->Update(record);
+        logger->log(record);
       }
     }
 

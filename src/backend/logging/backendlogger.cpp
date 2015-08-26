@@ -12,6 +12,7 @@
 
 #include "backend/logging/backendlogger.h"
 #include "backend/logging/loggers/ariesbackendlogger.h"
+#include "backend/logging/loggers/pelotonbackendlogger.h"
 
 namespace peloton {
 namespace logging {
@@ -33,7 +34,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
     }break;
 
     case LOGGING_TYPE_PELOTON:{
-//      backendLogger = new PelotonBackendLogger();
+      backendLogger = PelotonBackendLogger::GetInstance();
     }break;
 
     default:
@@ -52,42 +53,13 @@ void BackendLogger::Commit(void){
 }
 
 /**
- * @brief set the wait flush to true and truncate local_queue with commit_offset
- * @param offset
- */
-void BackendLogger::Truncate(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-
-    wait_flush = true;
-
-    if(commit_offset == offset){
-      local_queue.clear();
-    }else{
-      local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
-    }
-
-    // It will be updated larger than 0 if we update commit_offset during the
-    // flush in frontend logger
-    commit_offset -= offset;
-  }
-}
-
-/**
  * @brief Get the LogRecord with offset
  * @param offset
  */
 LogRecord* BackendLogger::GetLogRecord(oid_t offset){
+  std::lock_guard<std::mutex> lock(local_queue_mutex);
   assert(offset < local_queue.size());
   return local_queue[offset];
-}
-
-/**
- * @brief Get the local queue size
- * @return local queue size
- */
-size_t BackendLogger::GetLocalQueueSize(void) const{
-  return local_queue.size();
 }
 
 /**

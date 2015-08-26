@@ -519,8 +519,8 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto tile_group_id = tupleRecord.GetItemPointer().block;
-  auto tuple_slot = tupleRecord.GetItemPointer().offset;
+  auto tile_group_id = tupleRecord.GetInsertLocation().block;
+  auto tuple_slot = tupleRecord.GetInsertLocation().offset;
 
   auto tile_group = GetTileGroup(tile_group_id);
 
@@ -565,7 +565,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
 
   auto table = GetTable(tupleRecord);
 
-  ItemPointer delete_location = tupleRecord.GetItemPointer();
+  ItemPointer delete_location = tupleRecord.GetDeleteLocation();
 
   bool status = table->DeleteTuple(recovery_txn, delete_location);
   if (status == false) {
@@ -609,7 +609,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  ItemPointer delete_location = tupleRecord.GetItemPointer();
+  ItemPointer delete_location = tupleRecord.GetDeleteLocation();
   bool status = table->DeleteTuple(recovery_txn, delete_location);
   if (status == false) {
     recovery_txn->SetResult(Result::RESULT_FAILURE);

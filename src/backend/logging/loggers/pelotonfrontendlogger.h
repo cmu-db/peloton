@@ -13,11 +13,13 @@
 #pragma once
 
 #include "backend/logging/frontendlogger.h"
+#include "backend/logging/records/transactionrecord.h"
+#include "backend/logging/records/tuplerecord.h" 
 
 namespace peloton {
 namespace logging {
 
-static std::vector<LogRecord*> aries_global_queue;
+static std::vector<LogRecord*> peloton_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Peloton Frontend Logger 
@@ -27,9 +29,9 @@ class PelotonFrontendLogger : public FrontendLogger{
 
   public:
 
-    AriesFrontendLogger(void);
+    PelotonFrontendLogger(void);
 
-   ~AriesFrontendLogger(void);
+   ~PelotonFrontendLogger(void);
 
     void MainLoop(void);
 
@@ -37,11 +39,41 @@ class PelotonFrontendLogger : public FrontendLogger{
 
     void Flush(void);
 
+    void CollectCommittedTuples(TupleRecord* record,
+                                std::vector<ItemPointer> &inserted_tuples,
+                                std::vector<ItemPointer> &deleted_tuples);
+
     //===--------------------------------------------------------------------===//
     // Recovery 
     //===--------------------------------------------------------------------===//
 
     void Recovery(void);
+
+    LogRecordType GetNextLogRecordType(void);
+
+    void JumpToLastUnfinishedTxn(void);
+
+    size_t LogFileSize();
+
+    bool IsFileBroken(size_t size_to_read);
+
+    size_t GetNextFrameSize(void);
+
+    bool ReadTxnRecord(TransactionRecord &txnRecord);
+
+    bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
+
+    void InsertTuple(void);
+
+    void DeleteTuple(void);
+
+    void UpdateTuple(void);
+
+    void SkipTxnRecord(LogRecordType log_record_type);
+
+    void SetInsertCommit(ItemPointer location, bool commit);
+
+    void SetDeleteCommit(ItemPointer location, bool commit);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
@@ -54,13 +86,6 @@ class PelotonFrontendLogger : public FrontendLogger{
     FILE* logFile;
 
     int logFileFd;
-
-    // Txn table
-    std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;
-
-    // Keep tracking max oid for setting next_oid in manager 
-    oid_t max_oid = INVALID_OID;
-}
 };
 
 }  // namespace logging

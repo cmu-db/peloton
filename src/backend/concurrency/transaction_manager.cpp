@@ -85,7 +85,7 @@ Transaction *TransactionManager::BeginTransaction() {
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
-      logger->Insert(record);
+      logger->log(record);
     }
  }
 
@@ -138,7 +138,7 @@ void TransactionManager::EndTransaction(Transaction *txn,
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
-      logger->Insert(record);
+      logger->log(record);
     }
   }
 
@@ -221,16 +221,6 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
 
   // XXX LOG :: record commit entry
-  // Logging 
-  {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
-      logger->Insert(record);
-    }
-  }
-
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -248,6 +238,19 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
+  // Logging 
+  {
+    auto& logManager = logging::LogManager::GetInstance();
+    if(logManager.IsReadyToLogging()){
+      auto logger = logManager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+      logger->log(record);
+
+      if( logManager.GetSyncCommit())  {
+        while(logger->IsWaitFlush()){sleep(1);}
+      }
+    }
+  }
 }
 
 void TransactionManager::CommitPendingTransactions(
@@ -352,7 +355,11 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
-      logger->Insert(record);
+      logger->log(record);
+
+      if( logManager.GetSyncCommit())  {
+        while(logger->IsWaitFlush()){sleep(1);}
+      }
     }
   }
 
@@ -374,10 +381,10 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
       tile_group->AbortDeletedTuple(tuple_slot);
   }
 
+  EndTransaction(txn, false);
+
   // drop a reference
   txn->DecrementRefCount();
-
-  EndTransaction(txn, false);
 
 }
 
