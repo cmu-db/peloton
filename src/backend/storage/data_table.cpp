@@ -138,7 +138,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     {
       std::lock_guard<std::mutex> lock(table_mutex);
       tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
+      LOG_INFO("Tile group offset :: %d \n", tile_group_offset);
     }
 
     // Then, try to grab a slot in the tile group header
@@ -164,6 +164,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple);
   if (location.block == INVALID_OID)
+    LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
 
   LOG_TRACE("Location: %d, %d", location.block, location.offset);
@@ -206,11 +207,10 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns);
 
-    auto locations = index->Scan(key.get());
-
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        auto locations = index->Scan(key.get());
         auto exist_visible = ContainsVisibleEntry(locations, transaction);
         if (exist_visible) {
           LOG_WARN("A visible index entry exists.");
