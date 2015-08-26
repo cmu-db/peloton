@@ -259,7 +259,7 @@ expression::AbstractExpression* ExprTransformer::TransformParam(
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
-      LOG_INFO("Handle EXTREN PARAM");
+      LOG_TRACE("Handle EXTREN PARAM");
       return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
       break;
     default:
