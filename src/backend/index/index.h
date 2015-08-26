@@ -139,6 +139,10 @@ class Index {
   // scan all keys in the index, working like a sort
   virtual std::vector<ItemPointer> Scan() = 0;
 
+  virtual std::vector<ItemPointer> Scan(const storage::Tuple* key) = 0;
+
+
+
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
