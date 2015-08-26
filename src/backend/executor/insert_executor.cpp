@@ -58,7 +58,7 @@ bool InsertExecutor::DExecute() {
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_TRACE("Insert executor :: 1 child \n");
+    LOG_INFO("Insert executor :: 1 child \n");
 
     if (!children_[0]->Execute()) {
       return false;
