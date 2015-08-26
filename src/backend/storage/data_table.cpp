@@ -23,13 +23,43 @@
 namespace peloton {
 namespace storage {
 
+bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
+                          const concurrency::Transaction* transaction);
+
+/**
+ * Check if the locations contains at least one visible entry to the transaction
+ */
+bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
+                          const concurrency::Transaction* transaction) {
+  auto &manager = catalog::Manager::GetInstance();
+
+  for (auto loc : locations) {
+
+    oid_t tile_group_id = loc.block;
+    oid_t tuple_offset = loc.offset;
+
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto header = tile_group->GetHeader();
+
+    auto transaction_id = transaction->GetTransactionId();
+    auto last_commit_id = transaction->GetLastCommitId();
+    bool visible = header->IsVisible(tuple_offset, transaction_id,
+                                     last_commit_id);
+
+    if (visible)
+      return true;
+  }
+
+  return false;
+}
+
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t table_oid,
                      size_t tuples_per_tilegroup,
                      bool own_schema)
     : AbstractTable(table_oid, table_name, schema, own_schema),
       backend(backend),
-      tuples_per_tilegroup(tuples_per_tilegroup){
+      tuples_per_tilegroup(tuples_per_tilegroup) {
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -38,7 +68,7 @@ DataTable::~DataTable() {
   // clean up tile groups
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
     delete tile_group;
   }
@@ -71,8 +101,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
-          "%d th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
+          "%d th attribute in the tuple was NULL. It is non-nullable " "attribute.",
           column_itr);
       return false;
     }
@@ -84,8 +113,8 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
-    throw ConstraintException("Not NULL constraint violated : " +
-                              tuple->GetInfo());
+    throw ConstraintException(
+        "Not NULL constraint violated : " + tuple->GetInfo());
     return false;
   }
 
@@ -96,7 +125,8 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
                                     const storage::Tuple *tuple) {
   assert(tuple);
 
-  if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
+  if (CheckConstraints(tuple) == false)
+    return INVALID_ITEMPOINTER;
 
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
@@ -133,7 +163,8 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple);
-  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
+  if (location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
 
   LOG_TRACE("Location: %d, %d", location.block, location.offset);
 
@@ -146,79 +177,65 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // Increase the table's number of tuples by 1
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+  for (auto index : indexes)
+    index->IncreaseNumberOfTuplesBy(1);
 
   return location;
 }
 
+/**
+ * @brief Insert a tuple into all indexes. If index is primary/unique,
+ * check visibility of existing
+ * index entries.
+ * @warning This still doesn't guarantee serializability.
+ *
+ * @returns True on success, false if a visible entry exists (in case of primary/unique).
+ */
 bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
                                 const storage::Tuple *tuple,
                                 ItemPointer location) {
+
   int index_count = GetIndexCount();
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns);
 
-    // First, try to insert into the index
-    bool status = index->InsertEntry(key, location);
-    if (status == true) {
-      LOG_TRACE("Index : %u. Key not exists yet. Simple Insert. \n",
-                index->GetOid());
-      delete key;
-      continue;
-    }
+    auto locations = index->Scan(key.get());
 
-    LOG_TRACE("Index : %u . Key exists. Checking visibility. \n",
-              index->GetOid());
-    // Key already exists
-    auto old_location = index->Exists(key, location);
-    LOG_TRACE("location      :: block = %u offset = %u \n", location.block,
-              location.offset);
-    LOG_TRACE("old location  :: block = %u offset = %u \n", old_location.block,
-              old_location.offset);
-    if (old_location.block != INVALID_OID) {
-      // Is this key visible or not ?
-      oid_t tile_group_id = old_location.block;
-      oid_t tuple_offset = old_location.offset;
-
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group = manager.GetTileGroup(tile_group_id);
-      auto header = tile_group->GetHeader();
-
-      auto transaction_id = transaction->GetTransactionId();
-      auto commit_id = transaction->GetLastCommitId();
-      bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
-
-      // The previous tuple is not visible,
-      // so let's update it atomically
-      if (visible == false) {
-        LOG_TRACE("Index : %u. Existing tuple is not visible.\n",
-                  index->GetOid());
-        bool status = index->UpdateEntry(key, location);
-        if (status == true) {
-          delete key;
-          continue;
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        if (exist_visible) {
+          LOG_WARN("A visible index entry exists.");
+          return false;
         }
       }
-      LOG_TRACE("Existing tuple is still visible.\n");
+        break;
+
+      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      default:
+        break;
     }
+  }
 
-    LOG_ERROR("Failed to insert into index %s.%s [%s].", GetName().c_str(),
-              index->GetName().c_str(), index->GetTypeName().c_str());
+  // (B) Insert into index
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+    key->SetFromTuple(tuple, indexed_columns);
 
-    // Time to clean up !
-    // Undo insert in other indexes as well
-    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
-         ++prev_index_itr) {
-      auto prev_index = GetIndex(prev_index_itr);
-      prev_index->DeleteEntry(key, location);
-    }
-
-    delete key;
-    return false;
+    auto status = index->InsertEntry(key.get(), location);
+    (void) status;
+    assert(status);
   }
 
   return true;
@@ -230,7 +247,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
 
 /**
  * @brief Try to delete a tuple from the table.
- * It may fail because the tuple has been latched.
+ * It may fail because the tuple has been latched or conflict with a future delete.
  *
  * @param transaction_id  The current transaction Id.
  * @param location        ItemPointer of the tuple to delete.
@@ -265,12 +282,15 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // UPDATE
 //===--------------------------------------------------------------------===//
-
+/**
+ * @return Location of the newly inserted (updated) tuple
+ */
 ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // Do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple);
-  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
+  if (location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
 
   bool status = false;
   // 1) Try as if it's a same-key update
@@ -345,18 +365,24 @@ void DataTable::SetNumberOfTuples(const float num_tuples) {
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples; }
+float DataTable::GetNumberOfTuples() const {
+  return number_of_tuples;
+}
 
 /**
  * @brief return dirty flag
  * @return dirty flag
  */
-bool DataTable::IsDirty() const { return dirty; }
+bool DataTable::IsDirty() const {
+  return dirty;
+}
 
 /**
  * @brief Reset dirty flag
  */
-void DataTable::ResetDirty() { dirty = false; }
+void DataTable::ResetDirty() {
+  dirty = false;
+}
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP
@@ -377,9 +403,12 @@ oid_t DataTable::AddDefaultTileGroup() {
     column_map[col_itr] = std::make_pair(0, col_itr);
   }
 
-  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, backend, schemas,
-      column_map, tuples_per_tilegroup);
+  TileGroup *tile_group = TileGroupFactory::GetTileGroup(database_oid,
+                                                         table_oid,
+                                                         tile_group_id, this,
+                                                         backend, schemas,
+                                                         column_map,
+                                                         tuples_per_tilegroup);
 
   LOG_TRACE("Trying to add a tile group \n");
   {
@@ -461,12 +490,12 @@ std::ostream &operator<<(std::ostream &os, const DataTable &table) {
 
   oid_t tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = table.GetTileGroup(tile_group_itr);
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    os << "Tile Group Id  : " << tile_group_itr
-       << " Tuple Count : " << tile_tuple_count << "\n";
+    os << "Tile Group Id  : " << tile_group_itr << " Tuple Count : "
+       << tile_tuple_count << "\n";
     os << (*tile_group);
 
     tuple_count += tile_tuple_count;
@@ -500,7 +529,8 @@ void DataTable::AddIndex(index::Index *index) {
 
 index::Index *DataTable::GetIndexWithOid(const oid_t index_oid) const {
   for (auto index : indexes)
-    if (index->GetOid() == index_oid) return index;
+    if (index->GetOid() == index_oid)
+      return index;
 
   return nullptr;
 }
@@ -511,7 +541,8 @@ void DataTable::DropIndexWithOid(const oid_t index_id) {
 
     oid_t index_offset = 0;
     for (auto index : indexes) {
-      if (index->GetOid() == index_id) break;
+      if (index->GetOid() == index_id)
+        break;
       index_offset++;
     }
     assert(index_offset < indexes.size());
@@ -527,7 +558,9 @@ index::Index *DataTable::GetIndex(const oid_t index_offset) const {
   return index;
 }
 
-oid_t DataTable::GetIndexCount() const { return indexes.size(); }
+oid_t DataTable::GetIndexCount() const {
+  return indexes.size();
+}
 
 //===--------------------------------------------------------------------===//
 // FOREIGN KEYS
@@ -563,7 +596,9 @@ void DataTable::DropForeignKey(const oid_t key_offset) {
   }
 }
 
-oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
+oid_t DataTable::GetForeignKeyCount() const {
+  return foreign_keys.size();
+}
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
@@ -646,8 +681,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
-    auto found_itr =
-        std::find(tile_groups.begin(), tile_groups.end(), tile_group_id);
+    auto found_itr = std::find(tile_groups.begin(), tile_groups.end(),
+                               tile_group_id);
 
     if (found_itr == tile_groups.end()) {
       LOG_ERROR("Tile group not found in table : %u \n", tile_group_id);
@@ -676,7 +711,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group, if needed which is normally the case
-  if (cleanup) delete tile_group;
+  if (cleanup)
+    delete tile_group;
 
   return new_tile_group;
 }
