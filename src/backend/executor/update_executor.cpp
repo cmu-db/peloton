@@ -81,7 +81,6 @@ bool UpdateExecutor::DExecute() {
               visible_tuple_id, physical_tuple_id);
 
     // (A) Try to delete the tuple first
-    // this might fail due to a concurrent operation that has latched the tuple
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
     if (status == false) {
@@ -101,7 +100,7 @@ bool UpdateExecutor::DExecute() {
 
     // (C) finally insert updated tuple into the table
     ItemPointer location =
-        target_table_->UpdateTuple(transaction_, new_tuple);
+        target_table_->InsertTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       transaction_->SetResult(Result::RESULT_FAILURE);
