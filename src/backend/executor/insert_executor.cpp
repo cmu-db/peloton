@@ -138,9 +138,10 @@ bool InsertExecutor::DExecute() {
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),
                                              location,
+                                             INVALID_ITEMPOINTER,
                                              tuple.get());
 
-        logger->Insert(record);
+        logger->log(record);
       }
     }
 

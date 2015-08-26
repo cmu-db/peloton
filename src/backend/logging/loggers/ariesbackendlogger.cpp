@@ -24,10 +24,10 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
 }
 
 /**
- * @brief Insert LogRecord
+ * @brief log LogRecord
  * @param log record 
  */
-void AriesBackendLogger::Insert(LogRecord* record){
+void AriesBackendLogger::log(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     record->Serialize();
@@ -36,33 +36,32 @@ void AriesBackendLogger::Insert(LogRecord* record){
 }
 
 /**
- * @brief Delete LogRecord
- * @param log record 
+ * @brief Get the local queue size
+ * @return local queue size
  */
-void AriesBackendLogger::Delete(LogRecord* record){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
-    local_queue.push_back(record);
-  }
+size_t AriesBackendLogger::GetLocalQueueSize(void) const{
+  return local_queue.size();
 }
 
 /**
- * @brief Delete LogRecord
- * @param log record 
+ * @brief set the wait flush to true and truncate local_queue with commit_offset
+ * @param offset
  */
-void AriesBackendLogger::Update(LogRecord* record){
+void AriesBackendLogger::Truncate(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
-    local_queue.push_back(record);
+
+    wait_flush = true;
+
+   local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
   }
 }
 
 LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
                                               txn_id_t txn_id, 
                                               oid_t table_oid, 
-                                              ItemPointer location, 
+                                              ItemPointer insert_location, 
+                                              ItemPointer delete_location, 
                                               void* data,
                                               oid_t db_oid){
   switch(log_record_type){
@@ -90,7 +89,8 @@ LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type,
   LogRecord* record = new TupleRecord(log_record_type, 
                                       txn_id,
                                       table_oid,
-                                      location,
+                                      insert_location,
+                                      delete_location,
                                       data,
                                       db_oid);
   return record;

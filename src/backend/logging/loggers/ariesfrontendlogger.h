@@ -17,8 +17,6 @@
 #include "backend/logging/records/transactionrecord.h"
 #include "backend/concurrency/transaction.h"
 
-#include <fcntl.h>
-
 namespace peloton {
 namespace logging {
 
