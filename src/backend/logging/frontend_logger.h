@@ -65,7 +65,7 @@ class FrontendLogger : public Logger{
     /**
      * Restore database
      */
-    virtual void Recovery(void) = 0;
+    virtual void DoRecovery(void) = 0;
 
   protected:
 

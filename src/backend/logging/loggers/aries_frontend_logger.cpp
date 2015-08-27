@@ -35,7 +35,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  log_file = fopen( filename.c_str(),"ab+");
+  log_file = fopen( file_name.c_str(),"ab+");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
@@ -87,7 +87,7 @@ void AriesFrontendLogger::MainLoop(void) {
       /////////////////////////////////////////////////////////////////////
 
       // First, do recovery if needed
-      Recovery();
+      DoRecovery();
 
       // Now, enable active logging
       log_manager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_LOGGING);
@@ -204,12 +204,16 @@ void AriesFrontendLogger::Flush(void) {
   }
 }
 
+//===--------------------------------------------------------------------===//
+// Recovery
+//===--------------------------------------------------------------------===//
+
 /**
  * @brief Recovery system based on log file
  */
-void AriesFrontendLogger::Recovery() {
+void AriesFrontendLogger::DoRecovery() {
 
-  if(LogFileSize() > 0){
+  if(GetLogFileSize() > 0){
     bool EOF_OF_LOG_FILE = false;
 
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -222,11 +226,11 @@ void AriesFrontendLogger::Recovery() {
       switch(GetNextLogRecordType()){
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          AddTxnToRecoveryTable();
+          AddTransactionToRecoveryTable();
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_END:
-          RemoveTxnFromRecoveryTable();
+          RemoveTransactionFromRecoveryTable();
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
@@ -256,7 +260,7 @@ void AriesFrontendLogger::Recovery() {
     }
 
     // Abort remained txn in recovery_txn_table
-    AbortTxnInRecoveryTable();
+    AbortTransactionInRecoveryTable();
 
     txn_manager.CommitTransaction(recovery_txn);
 
@@ -265,198 +269,6 @@ void AriesFrontendLogger::Recovery() {
     auto max_oid = manager.GetNextOid();
     manager.SetNextOid(max_oid);
   }
-}
-
-/**
- * @brief Read single byte so that we can distinguish the log record type
- * @return log record type otherwise return invalid log record type, which menas there is no more log in the log file
- */
-LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
-  char buffer;
-  if( IsFileBroken(1) ){
-    return LOGRECORD_TYPE_INVALID;
-  }
-  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
-  if( ret <= 0 ){
-    return LOGRECORD_TYPE_INVALID;
-  }
-  CopySerializeInput input(&buffer, sizeof(char));
-  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
-  return log_record_type;
-}
-
-/**
- * @brief Measure the size of log file
- * @return the size if the log file exists otherwise 0
- */
-size_t AriesFrontendLogger::LogFileSize(){
-  struct stat logStats;   
-  if(stat(filename.c_str(), &logStats) == 0){
-    fstat(log_file_fd, &logStats);
-    return logStats.st_size;
-  }else{
-    return 0;
-  }
-}
-
-/**
- * @brief get the next frame size
- *  TupleRecord consiss of two frame ( header and Body)
- *  Transaction Record has a single frame
- * @return the next frame size
- */
-size_t AriesFrontendLogger::GetNextFrameSize(){
-  size_t frame_size;
-  char buffer[sizeof(int32_t)];
-
-  if( IsFileBroken(sizeof(int32_t)) ){
-    return 0;
-  }
-
-  size_t ret = fread(buffer, 1, sizeof(buffer), log_file);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  // Read next 4 bytes as an integer
-  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
-  frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
-
-  /* go back 4 bytes */
-  int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
-  if(res == -1){
-    LOG_ERROR("Error occured in fseek ");
-  }
-
-  if( IsFileBroken(frame_size) ){
-    // file is broken
-    return 0;
-  }
-
-  return frame_size;
-}
-
-/**
- * @brief Get global_queue size
- * @return the size of global_queue
- */
-size_t AriesFrontendLogger::GetLogRecordCount() const{
-  return aries_global_queue.size();
-}
-
-/**
- * @brief Read TransactionRecord
- * @param txnRecord
- */
-bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
-
-  auto txn_record_size = GetNextFrameSize();
-
-  if( txn_record_size == 0 ){
-    // file is broken
-    return false;
-  }
-
-  char txn_record[txn_record_size];
-  size_t ret = fread(txn_record, 1, sizeof(txn_record), log_file);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
-  CopySerializeInput logTxnRecord(txn_record,txn_record_size);
-  txnRecord.Deserialize(logTxnRecord);
-
-  return true;
-}
-
-bool AriesFrontendLogger::IsFileBroken(size_t size_to_read){
-  size_t current_position = ftell(log_file);
-  if( LogFileSize() < (current_position+size_to_read)){
-    fseek(log_file, 0, SEEK_END);
-    return true;
-  }else{
-    return false;
-  }
-}
-
-/**
- * @brief Read TupleRecordHeader
- * @param tupleRecord
- */
-bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
-
-  auto header_size = GetNextFrameSize();
-  if( header_size == 0 ){
-    // file is broken
-    return false;
-  }
-
-  // Read header 
-  char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), log_file);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInput logHeader(header,header_size);
-  tupleRecord.DeserializeHeader(logHeader);
-
-  return true;
-}
-
-/**
- * @brief Read TupleRecordBody
- * @param schema
- * @param pool
- * @return tuple
- */
-storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
-                                                         Pool *pool){
-  // Measure the body size of LogRecord
-  size_t body_size = GetNextFrameSize();
-  if( body_size == 0 ){
-    // file is broken
-    return nullptr;
-  }
-
-  // Read Body 
-  char body[body_size];
-  int ret = fread(body, 1, sizeof(body), log_file);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInput logBody(body, body_size);
-
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
-
-  tuple->DeserializeFrom(logBody, pool);
-  return tuple;
-}
-
-/**
- * @brief Read get table based on tuple record
- * @param tuple record
- * @return data table
- */
-storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
-  // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDatabaseOid());
-  assert(db);
-  auto table = db->GetTableWithOid(tupleRecord.GetTableId());
-  assert(table);
-  return table;
-}
-
-/**
- * @brief Get tile group
- * @param tile group id
- * @return tile group
- */
-storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  return tile_group;
 }
 
 /**
@@ -522,7 +334,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 /**
  * @brief Abort tuples inside txn table
  */
-void AriesFrontendLogger::AbortTxnInRecoveryTable(){
+void AriesFrontendLogger::AbortTransactionInRecoveryTable(){
   for(auto  txn : recovery_txn_table){
     auto curr_txn = txn.second;
     AbortTuples(curr_txn);
@@ -671,11 +483,11 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 /**
  * @brief Add new txn to recovery table
  */
-void AriesFrontendLogger::AddTxnToRecoveryTable(){
+void AriesFrontendLogger::AddTransactionToRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
 
-  if( ReadTxnRecord(txnRecord) == false ){
+  if( ReadTransactionRecordHeader(txnRecord) == false ){
     // file is broken
     return;
   }
@@ -691,11 +503,11 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
 /**
  * @brief Remove txn from recovery table
  */
-void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
+void AriesFrontendLogger::RemoveTransactionFromRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
 
-  if( ReadTxnRecord(txnRecord) == false ){
+  if( ReadTransactionRecordHeader(txnRecord) == false ){
     // file is broken
     return;
   }
@@ -718,7 +530,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
 
-  if( ReadTxnRecord(txnRecord) == false ){
+  if( ReadTransactionRecordHeader(txnRecord) == false ){
     // file is broken
     return;
   }
@@ -741,7 +553,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   // read transaction information from the log file
   TransactionRecord txnRecord(LOGRECORD_TYPE_TRANSACTION_END);
 
-  if( ReadTxnRecord(txnRecord) == false ){
+  if( ReadTransactionRecordHeader(txnRecord) == false ){
     // file is broken
     return;
   }
@@ -753,6 +565,219 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   AbortTuples(txn);
 
   LOG_INFO("Abort txd id %d object in table",(int)txn_id);
+}
+
+//===--------------------------------------------------------------------===//
+// Utility functions
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief Measure the size of log file
+ * @return the size if the log file exists otherwise 0
+ */
+size_t AriesFrontendLogger::GetLogFileSize(){
+  struct stat log_stats;
+
+  if(stat(file_name.c_str(), &log_stats) == 0){
+    fstat(log_file_fd, &log_stats);
+    return log_stats.st_size;
+  }else{
+    return 0;
+  }
+}
+
+bool AriesFrontendLogger::IsFileTruncated(size_t size_to_read){
+  size_t current_position = ftell(log_file);
+
+  // Check if the actual file size is less than the expected file size
+  // Current position + frame length
+  if( GetLogFileSize() < (current_position+size_to_read)){
+    fseek(log_file, 0, SEEK_END);
+    return true;
+  }else{
+    return false;
+  }
+}
+
+/**
+ * @brief get the next frame size
+ *  TupleRecord consiss of two frame ( header and Body)
+ *  Transaction Record has a single frame
+ * @return the next frame size
+ */
+size_t AriesFrontendLogger::GetNextFrameSize(){
+  size_t frame_size;
+  char buffer[sizeof(int32_t)];
+
+  // Check if the frame is broken
+  if( IsFileTruncated(sizeof(int32_t)) ){
+    return 0;
+  }
+
+  // Otherwise, read the frame size
+  size_t ret = fread(buffer, 1, sizeof(buffer), log_file);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  // Read next 4 bytes as an integer
+  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
+  frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
+
+  // Move back by 4 bytes
+  // So that tuple deserializer works later as expected
+  int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
+  if(res == -1){
+    LOG_ERROR("Error occured in fseek ");
+  }
+
+  // TODO: Do we need this check again ?
+  if( IsFileTruncated(frame_size) ){
+    return 0;
+  }
+
+  return frame_size;
+}
+
+/**
+ * @brief Get global_queue size
+ * @return the size of global_queue
+ */
+size_t AriesFrontendLogger::GetLogRecordCount() const{
+  return aries_global_queue.size();
+}
+
+/**
+ * @brief Read single byte so that we can distinguish the log record type
+ * @return log record type otherwise return invalid log record type,
+ * which menas there is no more log in the log file
+ */
+LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
+  char buffer;
+
+  // Check if the log record type is broken
+  if( IsFileTruncated(1) ){
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  // Otherwise, read the log record type
+  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
+  if( ret <= 0 ){
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  CopySerializeInput input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+
+  return log_record_type;
+}
+
+/**
+ * @brief Read TransactionRecord
+ * @param txnRecord
+ */
+bool AriesFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txn_record){
+
+  // Check if frame is broken
+  auto header_size = GetNextFrameSize();
+  if( header_size == 0 ){
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), log_file);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInput txn_header(header, header_size);
+  txn_record.Deserialize(txn_header);
+
+  return true;
+}
+
+/**
+ * @brief Read TupleRecordHeader
+ * @param tupleRecord
+ */
+bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tuple_record){
+
+  // Check if frame is broken
+  auto header_size = GetNextFrameSize();
+  if( header_size == 0 ){
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), log_file);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInput tuple_header(header,header_size);
+  tuple_record.DeserializeHeader(tuple_header);
+
+  return true;
+}
+
+/**
+ * @brief Read TupleRecordBody
+ * @param schema
+ * @param pool
+ * @return tuple
+ */
+storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema,
+                                                         Pool *pool){
+  // Check if the frame is broken
+  size_t body_size = GetNextFrameSize();
+  if( body_size == 0 ){
+    return nullptr;
+  }
+
+  // Read Body
+  char body[body_size];
+  int ret = fread(body, 1, sizeof(body), log_file);
+  if( ret <= 0 ){
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInput tuple_body(body, body_size);
+
+  // We create a tuple based on the message
+  storage::Tuple *tuple = new storage::Tuple(schema, true);
+  tuple->DeserializeFrom(tuple_body, pool);
+
+  return tuple;
+}
+
+/**
+ * @brief Read get table based on tuple record
+ * @param tuple record
+ * @return data table
+ */
+storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tuple_record){
+  // Get db, table, schema to insert tuple
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
+  assert(db);
+
+  auto table = db->GetTableWithOid(tuple_record.GetTableId());
+  assert(table);
+
+  return table;
+}
+
+/**
+ * @brief Get tile group - used to check if tile group already exists
+ * @param tile group id
+ * @return tile group
+ */
+storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+  return tile_group;
 }
 
 }  // namespace logging
