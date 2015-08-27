@@ -135,8 +135,6 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
   // Construct a logical tile for each block
   for (auto block : blocks) {
     LogicalTile *logical_tile = LogicalTileFactory::GetTile();
-    const bool own_base_tile = false;
-    const int position_list_idx = 0;
 
     auto &manager = catalog::Manager::GetInstance();
     storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
@@ -158,15 +156,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     logical_tile->AddPositionList(std::move(position_list));
 
     // Add relevant columns to logical tile
-    for (oid_t origin_column_id : column_ids) {
-      oid_t base_tile_offset, tile_column_id;
-
-      tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
-                                      tile_column_id);
-
-      logical_tile->AddColumn(tile_group->GetTile(base_tile_offset),
-                              own_base_tile, tile_column_id, position_list_idx);
-    }
+    logical_tile->AddColumns(tile_group, column_ids);
 
     result.push_back(logical_tile);
   }
