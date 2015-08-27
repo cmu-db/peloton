@@ -28,6 +28,6 @@
 
 extern void geqo_selection(PlannerInfo *root,
 			   Chromosome *momma, Chromosome *daddy,
-			   VarlenPool *pool, double bias);
+			   Pool *pool, double bias);
 
 #endif   /* GEQO_SELECTION_H */
