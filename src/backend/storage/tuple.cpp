@@ -57,7 +57,7 @@ void Tuple::SetValue(const oid_t column_id, Value value) {
 
 // Set all columns by value into this tuple.
 void Tuple::SetValueAllocate(const oid_t column_id, Value value,
-                             Pool *dataPool) {
+                             VarlenPool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -87,7 +87,7 @@ void Tuple::SetFromTuple(const storage::Tuple *tuple,
 
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
-void Tuple::Copy(const void *source, Pool *pool) {
+void Tuple::Copy(const void *source, VarlenPool *pool) {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -186,7 +186,7 @@ size_t Tuple::GetUninlinedMemorySize() const {
   return bytes;
 }
 
-void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
+void Tuple::DeserializeFrom(SerializeInput &input, VarlenPool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
 

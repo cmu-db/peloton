@@ -63,13 +63,13 @@ inline T nexthigher(T k) {
  * only way to release memory is to free all memory in the pool by
  * calling purge.
  */
-class Pool {
-  Pool() = delete;
-  Pool(const Pool &) = delete;
-  Pool &operator=(const Pool &) = delete;
+class VarlenPool {
+  VarlenPool() = delete;
+  VarlenPool(const VarlenPool &) = delete;
+  VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  Pool(storage::AbstractBackend *_backend)
+  VarlenPool(storage::AbstractBackend *_backend)
       : backend(_backend),
         allocation_size(TEMP_POOL_CHUNK_SIZE),
         max_chunk_count(1),
@@ -77,7 +77,7 @@ class Pool {
     Init();
   }
 
-  Pool(storage::AbstractBackend *_backend, uint64_t allocation_size,
+  VarlenPool(storage::AbstractBackend *_backend, uint64_t allocation_size,
        uint64_t max_chunk_count)
       : backend(_backend),
         allocation_size(allocation_size),
@@ -91,7 +91,7 @@ class Pool {
     chunks.push_back(Chunk(allocation_size, storage));
   }
 
-  ~Pool() {
+  ~VarlenPool() {
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
       backend->Free(chunks[ii].chunk_data);
     }

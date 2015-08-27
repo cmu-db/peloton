@@ -38,15 +38,15 @@ static int	compare(const void *arg1, const void *arg2);
  * alloc_pool
  *		allocates memory for GA pool
  */
-Pool *
+VarlenPool *
 alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 {
-	Pool	   *new_pool;
+	VarlenPool	   *new_pool;
 	Chromosome *chromo;
 	int			i;
 
 	/* pool */
-	new_pool = (Pool *) palloc(sizeof(Pool));
+	new_pool = (VarlenPool *) palloc(sizeof(VarlenPool));
 	new_pool->size = (int) pool_size;
 	new_pool->string_length = (int) string_length;
 
@@ -66,7 +66,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
  *		deallocates memory for GA pool
  */
 void
-free_pool(PlannerInfo *root, Pool *pool)
+free_pool(PlannerInfo *root, VarlenPool *pool)
 {
 	Chromosome *chromo;
 	int			i;
@@ -88,7 +88,7 @@ free_pool(PlannerInfo *root, Pool *pool)
  *		initialize genetic pool
  */
 void
-random_init_pool(PlannerInfo *root, Pool *pool)
+random_init_pool(PlannerInfo *root, VarlenPool *pool)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
 	int			i;
@@ -132,7 +132,7 @@ random_init_pool(PlannerInfo *root, Pool *pool)
  *	 maybe you have to change compare() for different ordering ...
  */
 void
-sort_pool(PlannerInfo *root, Pool *pool)
+sort_pool(PlannerInfo *root, VarlenPool *pool)
 {
 	qsort(pool->data, pool->size, sizeof(Chromosome), compare);
 }
@@ -184,7 +184,7 @@ free_chromo(PlannerInfo *root, Chromosome *chromo)
  *	 assumes best->worst = smallest->largest
  */
 void
-spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool)
+spread_chromo(PlannerInfo *root, Chromosome *chromo, VarlenPool *pool)
 {
 	int			top,
 				mid,

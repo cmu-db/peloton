@@ -52,7 +52,7 @@ static int	linear_rand(PlannerInfo *root, int max, double bias);
  */
 void
 geqo_selection(PlannerInfo *root, Chromosome *momma, Chromosome *daddy,
-			   Pool *pool, double bias)
+			   VarlenPool *pool, double bias)
 {
 	int			first,
 				second;
