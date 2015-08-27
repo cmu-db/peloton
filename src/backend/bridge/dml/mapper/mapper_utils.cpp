@@ -269,7 +269,7 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
   expression::AbstractExpression *predicate = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(qual));
-  LOG_TRACE("Predicate:\n%s \n",
+  LOG_INFO("Predicate:\n%s \n",
             (nullptr == predicate) ? "NULL" : predicate->DebugInfo().c_str());
 
   return predicate;
