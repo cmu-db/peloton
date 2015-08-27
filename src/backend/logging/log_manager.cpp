@@ -142,8 +142,6 @@ bool LogManager::EndLogging(LoggingType logging_type ){
     return true;
   }
 
-  // TODO: Remove backend loggers as well ?
-
   return false;
 }
 

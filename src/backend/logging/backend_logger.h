@@ -31,6 +31,12 @@ class BackendLogger : public Logger{
 
     BackendLogger() {logger_type = LOGGER_TYPE_BACKEND;}
 
+    ~BackendLogger(){
+      for(auto log_record : local_queue){
+        delete log_record;
+      }
+    }
+
     static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
     // Get the log record in the local queue at given offset
