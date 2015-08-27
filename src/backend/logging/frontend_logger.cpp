@@ -10,9 +10,9 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/frontendlogger.h"
-#include "backend/logging/loggers/ariesfrontendlogger.h"
-#include "backend/logging/loggers/pelotonfrontendlogger.h"
+#include "backend/logging/frontend_logger.h"
+#include "backend/logging/loggers/aries_frontend_logger.h"
+#include "backend/logging/loggers/peloton_frontend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -38,8 +38,8 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
     }break;
 
     default:
-    LOG_ERROR("Unsupported frontend logging type");
-    break;
+      LOG_ERROR("Unsupported frontend logging type");
+      break;
   }
 
   return frontendLogger;
@@ -50,8 +50,10 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
-  std::lock_guard<std::mutex> lock(backend_logger_mutex);
-  backend_loggers.push_back(backend_logger);
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    backend_loggers.push_back(backend_logger);
+  }
 }
 
 /**
@@ -59,22 +61,27 @@ void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
  * @return the backend loggers
  */
 std::vector<BackendLogger*> FrontendLogger::GetBackendLoggers(){
-    return backend_loggers;
+  return backend_loggers;
 }
 
 bool FrontendLogger::RemoveBackendLogger(BackendLogger* _backend_logger){
 
-  std::lock_guard<std::mutex> lock(backend_logger_mutex);
-  oid_t offset=0;
-  for(auto backend_logger : backend_loggers){
-    if( backend_logger == _backend_logger){
-      break;
-    }else{
-      offset++;
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    oid_t offset=0;
+
+    for(auto backend_logger : backend_loggers){
+      if( backend_logger == _backend_logger){
+        break;
+      }else{
+        offset++;
+      }
     }
+
+    assert(offset<backend_loggers.size());
+    backend_loggers.erase(backend_loggers.begin()+offset);
   }
-  assert(offset<backend_loggers.size());
-  backend_loggers.erase(backend_loggers.begin()+offset);
+
   return true;
 }
 

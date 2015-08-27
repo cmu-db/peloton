@@ -32,8 +32,11 @@ class Logger{
     virtual ~Logger(void){};
 
   protected:
+
+    // Type of logging -- aries, peloton etc.
     LoggingType logging_type = LOGGING_TYPE_INVALID;
 
+    // Type of logger -- frontend, backend etc.
     LoggerType logger_type = LOGGER_TYPE_INVALID;
 
 };

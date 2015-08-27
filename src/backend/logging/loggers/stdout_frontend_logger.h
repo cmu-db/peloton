@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/logging/logrecord.h"
-#include "backend/logging/frontendlogger.h"
+#include "backend/logging/frontend_logger.h"
+#include "backend/logging/log_record.h"
 
 namespace peloton {
 namespace logging {

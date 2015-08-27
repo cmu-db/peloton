@@ -6,13 +6,13 @@
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/common/value_factory.h"
-#include "backend/logging/logmanager.h"
-#include "backend/logging/records/tuplerecord.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 
 #include <thread>
+#include "../../src/backend/logging/log_manager.h"
+#include "../../src/backend/logging/records/tuple_record.h"
 
 #define NUM_TUPLES 5
 #define NUM_BACKEND 3
@@ -321,7 +321,7 @@ void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
   if(logManager.IsReadyToLogging()){
     auto logger = logManager.GetBackendLogger();
     // Wait until frontendlogger collect the data
-    while( logger->IsWaitFlush()){
+    while( logger->IsWaitingForFlushing()){
       sleep(1);
     }
     logManager.RemoveBackendLogger(logger);
@@ -361,7 +361,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
                                              INVALID_ITEMPOINTER,
                                              tuple,
                                              20000);
-        logger->log(record);
+        logger->Log(record);
 
       }
     }
@@ -406,7 +406,7 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
                                             delete_location,
                                             nullptr,
                                             20000);
-      logger->log(record);
+      logger->Log(record);
     }
   }
 
@@ -455,7 +455,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
                                              delete_location,
                                              tuple,
                                              20000);
-         logger->log(record);
+         logger->Log(record);
        }
      }
   }

@@ -16,13 +16,14 @@
 #include <mutex>
 
 #include "backend/concurrency/transaction_manager.h"
+
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/common/exception.h"
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
-#include "backend/logging/logmanager.h"
-#include "backend/logging/records/transactionrecord.h"
 
 namespace peloton {
 namespace concurrency {
@@ -85,7 +86,7 @@ Transaction *TransactionManager::BeginTransaction() {
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
-      logger->log(record);
+      logger->Log(record);
     }
  }
 
@@ -138,7 +139,7 @@ void TransactionManager::EndTransaction(Transaction *txn,
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
-      logger->log(record);
+      logger->Log(record);
     }
   }
 
@@ -244,10 +245,10 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
-      logger->log(record);
+      logger->Log(record);
 
       if( logManager.GetSyncCommit())  {
-        while(logger->IsWaitFlush()){sleep(1);}
+        while(logger->IsWaitingForFlushing()){sleep(1);}
       }
     }
   }
@@ -355,10 +356,10 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
     if(logManager.IsReadyToLogging()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
-      logger->log(record);
+      logger->Log(record);
 
       if( logManager.GetSyncCommit())  {
-        while(logger->IsWaitFlush()){sleep(1);}
+        while(logger->IsWaitingForFlushing()){sleep(1);}
       }
     }
   }

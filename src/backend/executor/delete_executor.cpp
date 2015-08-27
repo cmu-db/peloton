@@ -12,12 +12,12 @@
 
 #include "backend/executor/delete_executor.h"
 
+#include "../logging/log_manager.h"
+#include "../logging/records/tuple_record.h"
 #include "../planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/logging/logmanager.h"
-#include "backend/logging/records/tuplerecord.h"
 
 
 namespace peloton {
@@ -102,7 +102,7 @@ bool DeleteExecutor::DExecute() {
                                              INVALID_ITEMPOINTER,
                                              delete_location);
 
-        logger->log(record);
+        logger->Log(record);
       }
     }
 

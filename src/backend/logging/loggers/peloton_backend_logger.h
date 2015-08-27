@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/logging/backendlogger.h"
+#include "backend/logging/backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -31,7 +31,7 @@ public:
 
   static PelotonBackendLogger* GetInstance(void);
 
-  void log(LogRecord* record);
+  void Log(LogRecord* record);
 
   size_t GetLocalQueueSize(void) const;
 
