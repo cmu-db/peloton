@@ -24,12 +24,9 @@ bool TransactionRecord::Serialize(){
   output.WriteLong(txn_id);
 
   // Write out the header now
-  int32_t msg_length = static_cast<int32_t>(output.Position() - start - sizeof(int32_t));
-  output.WriteIntAt(start, msg_length);
+  int32_t header_length = static_cast<int32_t>(output.Position() - start - sizeof(int32_t));
+  output.WriteIntAt(start, header_length);
   
-  // TODO: Is this different from msg_length ?
-  // XXX : Yes, but slightly it is. because msg_length includes log_record_type 
-
   message_length = output.Size();
   message = (char*) malloc(message_length);
   memset(message, 0, message_length);

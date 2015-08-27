@@ -13,7 +13,7 @@
 #include "aries_backend_logger.h"
 
 #include <iostream>
-#include "../records/tuple_record.h"
+#include "backend/logging/records/tuple_record.h"
 
 namespace peloton {
 namespace logging {
