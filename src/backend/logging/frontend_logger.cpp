@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/common/logger.h"
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/loggers/aries_frontend_logger.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
@@ -25,10 +26,6 @@ FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
   FrontendLogger* frontendLogger;
 
   switch(logging_type){
-    case LOGGING_TYPE_STDOUT:{
-      //frontendLogger = new StdoutFrontendLogger();
-    }break;
-
     case LOGGING_TYPE_ARIES:{
       frontendLogger = new AriesFrontendLogger();
     }break;

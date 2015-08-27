@@ -61,7 +61,7 @@ size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
  * @brief set the wait flush to true and truncate local_queue with commit_offset
  * @param offset
  */
-void PelotonBackendLogger::Truncate(oid_t offset){
+void PelotonBackendLogger::TruncateLocalQueue(oid_t offset){
   std::lock_guard<std::mutex> lock(local_queue_mutex);
 
   wait_for_flushing = true;
