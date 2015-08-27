@@ -79,13 +79,13 @@ Transaction *TransactionManager::BeginTransaction() {
     }
   }
 
- // XXX LOG :: record begin(next txn) entry
- //Logging 
+ // Log the BEGIN TXN record
  {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsInLoggingMode()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
+    auto& log_manager = logging::LogManager::GetInstance();
+    if(log_manager.IsInLoggingMode()){
+      auto logger = log_manager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN,
+                                                   next_txn->txn_id);
       logger->Log(record);
     }
  }
@@ -133,17 +133,18 @@ void TransactionManager::ResetStates(void){
 
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
-  // Logging 
+
+  // Log the END TXN record
   {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsInLoggingMode()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
+    auto& log_manager = logging::LogManager::GetInstance();
+    if(log_manager.IsInLoggingMode()){
+      auto logger = log_manager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END,
+                                                   txn->txn_id);
       logger->Log(record);
     }
   }
 
-  // XXX LOG :: record txn end entry
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
     // erase entry in transaction table
@@ -221,7 +222,6 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
 void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
 
-  // XXX LOG :: record commit entry
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
@@ -239,17 +239,23 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
-  // Logging 
+  // Log the COMMIT TXN record
   {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsInLoggingMode()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
+    auto& log_manager = logging::LogManager::GetInstance();
+    if(log_manager.IsInLoggingMode()){
+      auto logger = log_manager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+                                                   txn->txn_id);
       logger->Log(record);
 
-      if( logManager.GetSyncCommit())  {
-        while(logger->IsWaitingForFlushing()){sleep(1);}
+      // Check for sync commit
+      // If true, wait for the fronted logger to flush the data
+      if( log_manager.GetSyncCommit())  {
+        while(logger->IsWaitingForFlushing()){
+          sleep(1);
+        }
       }
+
     }
   }
 }
@@ -349,18 +355,23 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 
 void TransactionManager::AbortTransaction(Transaction *txn) {
 
-  // XXX LOG :: record abort entry
-  // Logging 
+  // Log the ABORT TXN record
   {
-    auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsInLoggingMode()){
-      auto logger = logManager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
+    auto& log_manager = logging::LogManager::GetInstance();
+    if(log_manager.IsInLoggingMode()){
+      auto logger = log_manager.GetBackendLogger();
+      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
+                                                   txn->txn_id);
       logger->Log(record);
 
-      if( logManager.GetSyncCommit())  {
-        while(logger->IsWaitingForFlushing()){sleep(1);}
+      // Check for sync commit
+      // If true, wait for the fronted logger to flush the data
+      if( log_manager.GetSyncCommit())  {
+        while(logger->IsWaitingForFlushing()){
+          sleep(1);
+        }
       }
+
     }
   }
 
