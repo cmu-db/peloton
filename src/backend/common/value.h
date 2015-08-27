@@ -159,7 +159,7 @@ class Value {
    * allocated storage for a copy of the object.
    * */
   void SerializeWithAllocation(void *storage, const bool is_inlined,
-                               const int32_t max_length, Pool *data_pool) const;
+                               const int32_t max_length, VarlenPool *data_pool) const;
 
   /**
    * Deserialize a scalar of the specified type from the tuple
@@ -178,7 +178,7 @@ class Value {
    * */
   static int64_t DeserializeFrom(SerializeInput &input, const ValueType type,
                                  char *storage, bool is_inlined,
-                                 const int32_t max_length, Pool *data_pool);
+                                 const int32_t max_length, VarlenPool *data_pool);
 
   /**
    * Read a ValueType from the SerializeInput stream and deserialize
@@ -186,7 +186,7 @@ class Value {
    * SerializeInput and perform allocations as necessary.
    * */
   static const Value DeserializeWithAllocation(SerializeInput &input,
-                                               Pool *data_pool);
+                                               VarlenPool *data_pool);
 
   //===--------------------------------------------------------------------===//
   // Operators
@@ -729,7 +729,7 @@ class Value {
     return retval;
   }
 
-  static Value GetStringValue(std::string value, Pool *data_pool) {
+  static Value GetStringValue(std::string value, VarlenPool *data_pool) {
     Value retval(VALUE_TYPE_VARCHAR);
     const int32_t length = static_cast<int32_t>(value.length());
     const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
@@ -745,7 +745,7 @@ class Value {
   }
 
   // Assumes binary value in hex
-  static Value GetBinaryValue(const std::string value, Pool *data_pool) {
+  static Value GetBinaryValue(const std::string value, VarlenPool *data_pool) {
     Value retval(VALUE_TYPE_VARBINARY);
     const int32_t length = static_cast<int32_t>(value.length() / 2);
 
@@ -765,7 +765,7 @@ class Value {
   }
 
   static Value GetBinaryValue(const unsigned char *value, const int32_t length,
-                              Pool *data_pool) {
+                              VarlenPool *data_pool) {
     Value retval(VALUE_TYPE_VARBINARY);
     const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
     const int32_t minLength = length + lengthLength;
@@ -812,7 +812,7 @@ class Value {
    * @brief Do a deep copy of the given value.
    * Uninlined data will be allocated in the provided memory pool.
    */
-  static Value Clone(const Value &src, Pool *dataPool = nullptr) {
+  static Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
     Value rv = src;  // Shallow copy first
     auto value_type = src.GetValueType();
 
@@ -1329,7 +1329,7 @@ inline void Value::SerializeToExport(ExportSerializeOutput &io) const {
  */
 inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
                                            const int32_t max_length,
-                                           Pool *data_pool) const {
+                                           VarlenPool *data_pool) const {
   const ValueType type = GetValueType();
   int32_t length = 0;
 
@@ -1474,7 +1474,7 @@ inline const Value Value::Deserialize(const void *storage, const ValueType type,
 inline int64_t Value::DeserializeFrom(SerializeInput &input,
                                       const ValueType type, char *storage,
                                       bool is_inlined, const int32_t max_length,
-                                      Pool *data_pool) {
+                                      VarlenPool *data_pool) {
   switch (type) {
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
@@ -1553,7 +1553,7 @@ inline int64_t Value::DeserializeFrom(SerializeInput &input,
  * This is used to deserialize parameter sets.
  */
 inline const Value Value::DeserializeWithAllocation(SerializeInput &input,
-                                                    Pool *data_pool) {
+                                                    VarlenPool *data_pool) {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
   Value retval(type);
   switch (type) {

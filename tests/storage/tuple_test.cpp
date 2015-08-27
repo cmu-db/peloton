@@ -87,7 +87,7 @@ TEST(TupleTests, VarcharTest) {
   tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  auto pool = new peloton::VarlenPool(backend);
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
   tuple->SetValue(3, val);
