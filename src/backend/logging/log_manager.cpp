@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/logmanager.h"
+#include "log_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -211,9 +211,9 @@ if( logging_type == LOGGING_TYPE_INVALID){
     // If frontend logger exists
     if( frontend_logger != nullptr){
       backend_logger = BackendLogger::GetBackendLogger(logging_type);
-      if( backend_logger->IsAddedFrontend() == false){
+      if( backend_logger->IsConnectedToFrontend() == false){
         frontend_logger->AddBackendLogger(backend_logger);
-        backend_logger->AddedFrontend();
+        backend_logger->SetConnectedToFrontend();
       }
     }
   }

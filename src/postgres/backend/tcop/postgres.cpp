@@ -79,7 +79,7 @@
 #include "utils/memutils.h"
 
 // TODO: Peloton Changes
-#include "backend/logging/logmanager.h"
+#include "../../../backend/logging/log_manager.h"
 #include "backend/common/message_queue.h"
 
 

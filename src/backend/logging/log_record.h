@@ -24,10 +24,11 @@ namespace logging {
 
 class LogRecord{
 
-public:
+ public:
+
   LogRecord( LogRecordType log_record_type) 
-  : log_record_type(log_record_type) { 
-  assert(log_record_type != LOGRECORD_TYPE_INVALID);
+ : log_record_type(log_record_type) {
+    assert(log_record_type != LOGRECORD_TYPE_INVALID);
   }
 
   virtual ~LogRecord(){}
@@ -36,19 +37,21 @@ public:
 
   virtual bool Serialize(void) = 0;
 
-  virtual void print(void) = 0;
+  virtual void Print(void) = 0;
 
-  char* GetSerializedData(void) const {return serialized_data;}
+  char* GetMessage(void) const {return message;}
 
-  size_t GetSerializedDataSize(void) const {return serialized_data_size;}
+  size_t GetMessageLength(void) const {return message_length;}
 
-protected:
+ protected:
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
-  char* serialized_data;
+  // serialized message
+  char* message = nullptr;
 
-  size_t serialized_data_size = 0;
+  // length of the message
+  size_t message_length = 0;
 
 };
 

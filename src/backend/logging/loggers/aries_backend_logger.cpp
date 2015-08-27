@@ -10,16 +10,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/loggers/ariesbackendlogger.h"
-#include "backend/logging/records/tuplerecord.h"
+#include "aries_backend_logger.h"
 
 #include <iostream>
+#include "../records/tuple_record.h"
 
 namespace peloton {
 namespace logging {
 
 AriesBackendLogger* AriesBackendLogger::GetInstance(){
-  static  thread_local AriesBackendLogger pInstance; 
+  thread_local static AriesBackendLogger pInstance;
   return &pInstance;
 }
 
@@ -27,7 +27,7 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
  * @brief log LogRecord
  * @param log record 
  */
-void AriesBackendLogger::log(LogRecord* record){
+void AriesBackendLogger::Log(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     record->Serialize();
@@ -51,7 +51,7 @@ void AriesBackendLogger::Truncate(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
 
-    wait_flush = true;
+    wait_for_flushing = true;
 
    local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
   }

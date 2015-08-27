@@ -12,13 +12,13 @@
 
 #include "backend/executor/insert_executor.h"
 
+#include "../logging/log_manager.h"
+#include "../logging/records/tuple_record.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/tuple_iterator.h"
-#include "backend/logging/logmanager.h"
-#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -141,7 +141,7 @@ bool InsertExecutor::DExecute() {
                                              INVALID_ITEMPOINTER,
                                              tuple.get());
 
-        logger->log(record);
+        logger->Log(record);
       }
     }
 
