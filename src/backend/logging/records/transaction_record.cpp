@@ -1,6 +1,7 @@
-#include "backend/logging/records/transactionrecord.h"
 
 #include <iostream>
+
+#include "backend/logging/records/transaction_record.h"
 
 namespace peloton {
 namespace logging {
@@ -21,10 +22,10 @@ bool TransactionRecord::Serialize(){
   output.WriteLong(txn_id);
   output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
   
-  serialized_data_size = output.Size();
-  serialized_data = (char*)malloc(serialized_data_size);
-  memset( serialized_data, 0, serialized_data_size);
-  memcpy( serialized_data, output.Data(), serialized_data_size);
+  message_length = output.Size();
+  message = (char*)malloc(message_length);
+  memset( message, 0, message_length);
+  memcpy( message, output.Data(), message_length);
 
   return status;
 }
@@ -38,7 +39,7 @@ void TransactionRecord::Deserialize(CopySerializeInput& input){
   txn_id = (txn_id_t)(input.ReadLong());
 }
 
-void TransactionRecord::print(void){
+void TransactionRecord::Print(void){
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
   std::cout << " #Txn ID:" << GetTxnId() << "\n";
   std::cout << "\n";

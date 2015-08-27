@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/logging/frontendlogger.h"
-#include "backend/logging/records/transactionrecord.h"
-#include "backend/logging/records/tuplerecord.h" 
+#include "../frontend_logger.h"
+#include "../records/transaction_record.h"
+#include "../records/tuple_record.h"
 
 namespace peloton {
 namespace logging {

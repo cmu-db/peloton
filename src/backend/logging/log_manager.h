@@ -13,12 +13,12 @@
 #pragma once
 
 #include "backend/logging/logger.h"
-#include "backend/logging/frontendlogger.h"
-#include "backend/logging/backendlogger.h"
-
 #include <mutex>
 #include <map>
 #include <vector>
+
+#include "backend_logger.h"
+#include "frontend_logger.h"
 
 namespace peloton {
 namespace logging {

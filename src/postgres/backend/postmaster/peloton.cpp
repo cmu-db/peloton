@@ -34,8 +34,6 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
-#include "backend/logging/logmanager.h"
-
 #include "postgres.h"
 #include "c.h"
 #include "access/xact.h"
@@ -59,6 +57,8 @@
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/peloton.h"
+
+#include "../../../backend/logging/log_manager.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

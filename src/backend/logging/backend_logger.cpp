@@ -10,9 +10,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/backendlogger.h"
-#include "backend/logging/loggers/ariesbackendlogger.h"
-#include "backend/logging/loggers/pelotonbackendlogger.h"
+#include "backend_logger.h"
+
+#include "backend/common/logger.h"
+#include "backend/logging/loggers/aries_backend_logger.h"
+#include "backend/logging/loggers/peloton_backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -49,7 +51,7 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
  * @brief set the wait flush to false
  */
 void BackendLogger::Commit(void){
-  wait_flush = false;
+  wait_for_flushing = false;
 }
 
 /**
@@ -57,29 +59,34 @@ void BackendLogger::Commit(void){
  * @param offset
  */
 LogRecord* BackendLogger::GetLogRecord(oid_t offset){
-  std::lock_guard<std::mutex> lock(local_queue_mutex);
-  assert(offset < local_queue.size());
-  return local_queue[offset];
-}
-
-/**
- * @brief if we still have log record in local queue or waiting flush, 
- * @return true otherwise false
- */
-bool BackendLogger::IsWaitFlush(void) const{
-  if( GetLocalQueueSize() > 0 || wait_flush ){
-    return true;
-  }else{
-    return false;
+  {
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+    assert(offset < local_queue.size());
+    return local_queue[offset];
   }
 }
 
-bool BackendLogger::IsAddedFrontend(void) const{
-  return added_in_frontend;
+/**
+ * @brief if we still have log record in local queue or waiting for flushing
+ * @return true otherwise false
+ */
+bool BackendLogger::IsWaitingForFlushing(void) const{
+
+  // TODO: Why ?
+  if(wait_for_flushing || GetLocalQueueSize() > 0) {
+    return true;
+  } else {
+    return false;
+  }
+
 }
 
-void BackendLogger::AddedFrontend(void) {
-  added_in_frontend = true;
+bool BackendLogger::IsConnectedToFrontend(void) const{
+  return connected_to_frontend;
+}
+
+void BackendLogger::SetConnectedToFrontend(void) {
+  connected_to_frontend = true;
 }
 
 }  // namespace logging

@@ -12,6 +12,8 @@
 
 #include "backend/executor/update_executor.h"
 
+#include "../logging/log_manager.h"
+#include "../logging/records/tuple_record.h"
 #include "../planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
@@ -19,8 +21,6 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/logging/logmanager.h"
-#include "backend/logging/records/tuplerecord.h"
 
 namespace peloton {
 namespace executor {
@@ -128,7 +128,7 @@ bool UpdateExecutor::DExecute() {
                                              new_tuple);
 
 
-        logger->log(record);
+        logger->Log(record);
       }
     }
 
