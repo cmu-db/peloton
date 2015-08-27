@@ -12,29 +12,30 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
-std::string filename = "peloton.log";
+std::string peloton_log_file_name = "peloton.log";
 
 /**
  * @brief writing a simple log with multiple threads
  */
-TEST(PelotonLoggingTest, writing_logfile) {
+TEST(PelotonLoggingTest, writing_log_file) {
 
-  std::ifstream logfile(filename.c_str());
-  // delete the log file if exists
-  if( logfile.good() ){
-    EXPECT_TRUE( std::remove(filename.c_str()) == 0 );
+  std::ifstream log_file(peloton_log_file_name.c_str());
+
+  // Reset the log file if exists
+  if( log_file.good() ){
+    EXPECT_TRUE( std::remove(peloton_log_file_name.c_str()) == 0 );
   }
 
-  // writing simple log file
+  // Prepare a simple log file
   if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON) ){
-    std::cout << "log file size : " <<  LoggingTestsUtil::GetLogFileSize(filename) << std::endl;
+    std::cout << "log file size : " <<
+        LoggingTestsUtil::GetLogFileSize(peloton_log_file_name) << std::endl;
     //auto res = truncate( filename.c_str(), 1343);
     //if( res == -1 ){
       //LOG_ERROR("Failed to truncate the log file"); 
     //}
   }else{
-    //Something's wrong !!
-    EXPECT_EQ(1,0);
+    LOG_ERROR("Could not prepare log file");
   }
 }
 
@@ -43,13 +44,13 @@ TEST(PelotonLoggingTest, writing_logfile) {
  */
 TEST(PelotonLoggingTest, recovery) {
 
-  std::ifstream logfile(filename.c_str());
-  // recovery if the log file exists
-  if( logfile.good() ){
+  std::ifstream log_file(peloton_log_file_name.c_str());
+
+  // Do recovery if the log file exists
+  if( log_file.good() ){
     LoggingTestsUtil::CheckPelotonRecovery();
   }else{
-    //Something's wrong !!
-    EXPECT_EQ(1,0);
+    LOG_ERROR("Could not check recovery");
   }
 }
 
