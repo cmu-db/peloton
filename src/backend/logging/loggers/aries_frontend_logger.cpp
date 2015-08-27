@@ -479,7 +479,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   Pool *pool = new Pool(backend);
  
   // Read off the tuple record body from the log
-  storage::Tuple *tuple = ReadTupleRecordBody(table->GetSchema(), pool);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   // Check for torn log write
   if( tuple == nullptr) {
@@ -490,7 +490,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   auto target_location = tuple_record.GetInsertLocation();
   auto tile_group_id = target_location.block;
-  oid_t tuple_slot = target_location.offset;
+  auto tuple_slot = target_location.offset;
 
   auto tile_group = GetTileGroup(tile_group_id);
 
@@ -504,14 +504,14 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   }
 
   // Do the insert !
-  ItemPointer location = tile_group->InsertTuple(recovery_txn->GetTransactionId(),
-                                                 tuple_slot, tuple);
+  auto inserted_tuple_slot = tile_group->InsertTuple(recovery_txn->GetTransactionId(),
+                                                     tuple_slot, tuple);
 
-  if (location.block == INVALID_OID) {
+  if (inserted_tuple_slot == INVALID_OID) {
     // TODO: We need to abort on failure !
     recovery_txn->SetResult(Result::RESULT_FAILURE);
   } else{
-    txn->RecordInsert(location);
+    txn->RecordInsert(target_location);
     table->IncreaseNumberOfTuplesBy(1);
   }
 
