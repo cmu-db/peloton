@@ -35,6 +35,12 @@ class FrontendLogger : public Logger{
 
     FrontendLogger(){ logger_type = LOGGER_TYPE_FRONTEND; }
 
+    ~FrontendLogger(){
+      for(auto backend_logger : backend_loggers){
+        delete backend_logger;
+      }
+    }
+
     static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
     void AddBackendLogger(BackendLogger* backend_logger);

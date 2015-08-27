@@ -53,6 +53,10 @@ AriesFrontendLogger::AriesFrontendLogger(){
  */
 AriesFrontendLogger::~AriesFrontendLogger(){
 
+  for(auto log_record : aries_global_queue){
+    delete log_record;
+  }
+
   // close the log file
   int ret = fclose(log_file);
   if( ret != 0 ){
