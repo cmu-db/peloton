@@ -10,6 +10,28 @@
  *-------------------------------------------------------------------------
  */
 
+/* The following entry types are distinguished:
+ *
+ * Possible Log Entries:
+ *
+ *     Transaction Record :
+ *       - LogRecordType         : enum
+ *       - Transaction Id        : txn_id_t
+ *       - Message               : char*
+ *       - Message Length        : size_t
+ *
+ *     Tuple Record :
+ *       - LogRecordType         : enum
+ *       - Transaction Id        : txn_id_t
+ *       - Message               : char*
+ *       - Message Length        : size_t
+ *       - Table Oid             : oid_t
+ *       - Inserted Location     : ItemPointer
+ *       - Deleted Location      : ItemPointer
+ *       - Data                  : void*
+ *       - Database Oid          : oid_t
+*/
+
 #pragma once
 
 #include "backend/common/types.h"
@@ -26,14 +48,16 @@ class LogRecord{
 
  public:
 
-  LogRecord( LogRecordType log_record_type) 
- : log_record_type(log_record_type) {
+  LogRecord(LogRecordType log_record_type, txn_id_t txn_id) 
+ : log_record_type(log_record_type), txn_id(txn_id) {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
   }
 
   virtual ~LogRecord(){}
 
   LogRecordType GetType() const{ return log_record_type; }
+
+  txn_id_t GetTransactionId() const{ return txn_id; }
 
   virtual bool Serialize(void) = 0;
 
@@ -46,6 +70,8 @@ class LogRecord{
  protected:
 
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
+
+  txn_id_t txn_id;
 
   // serialized message
   char* message = nullptr;

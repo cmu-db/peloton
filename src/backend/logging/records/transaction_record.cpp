@@ -21,7 +21,6 @@ bool TransactionRecord::Serialize(){
   // Then reserve 4 bytes for the header size to be written later
   size_t start = output.Position();
   output.WriteInt(0);
-
   output.WriteLong(txn_id);
 
   // Write out the header now
