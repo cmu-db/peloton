@@ -64,18 +64,18 @@ void PelotonFrontendLogger::MainLoop(void) {
 
   LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_STANDBY ){
+  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
   }
 
   // Do recovery if we can, otherwise terminate
-  switch(logManager.GetLoggingStatus(LOGGING_TYPE_PELOTON)){
+  switch(logManager.GetStatus(LOGGING_TYPE_PELOTON)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
       Recovery();
-      logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_ONGOING);
+      logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_LOGGING);
     }
-    case LOGGING_STATUS_TYPE_ONGOING:{
+    case LOGGING_STATUS_TYPE_LOGGING:{
       LOG_TRACE("Frontendlogger] Ongoing Mode");
     }
     break;
@@ -84,7 +84,7 @@ void PelotonFrontendLogger::MainLoop(void) {
     break;
   }
 
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_ONGOING){
+  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_LOGGING){
     sleep(1);
 
     // Collect LogRecords from all BackendLogger 

@@ -421,12 +421,12 @@ peloton_MainLoop(void) {
   std::vector<std::thread> thread_group;
   if(logging_on){
   // Launching a thread for logging 
-  auto& logManager = peloton::logging::LogManager::GetInstance();
-  logManager.SetMainLoggingType(peloton::LOGGING_TYPE_ARIES);
-  logManager.SetSyncCommit(syncronization_commit);
-  thread_group.push_back(std::thread(&peloton::logging::LogManager::StandbyLogging,
-                                     &logManager,
-                                     logManager.GetMainLoggingType()));
+  auto& log_manager = peloton::logging::LogManager::GetInstance();
+  log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_ARIES);
+  log_manager.SetSyncCommit(syncronization_commit);
+  thread_group.push_back(std::thread(&peloton::logging::LogManager::StartStandbyMode,
+                                     &log_manager,
+                                     log_manager.GetDefaultLoggingType()));
   }
 
   /*
@@ -1263,9 +1263,10 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
 
       if( logging_on){
         // NOTE:: start logging since bootstrapPeloton is done
-        auto& logManager = peloton::logging::LogManager::GetInstance();
-        if( logManager.IsReadyToLogging() == false){
-          logManager.StartLogging();
+        // TODO: Do we need this ?
+        auto& log_manager = peloton::logging::LogManager::GetInstance();
+        if( log_manager.IsInLoggingMode() == false){
+          log_manager.StartRecoveryMode();
         }
       }
     }
