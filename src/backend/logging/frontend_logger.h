@@ -72,9 +72,8 @@ class FrontendLogger : public Logger{
     // Associated backend loggers
     std::vector<BackendLogger*> backend_loggers;
 
-    // TODO: Do we need this ?
-    // XXX Since backend logger add itself into the frontend logger via log manager,
-    // at that time they access frontend logger concurrently
+    // Since backend loggers can add themselves into the list above
+    // via log manager, we need to protect the backend_loggers list
     std::mutex backend_logger_mutex;
 
 };
