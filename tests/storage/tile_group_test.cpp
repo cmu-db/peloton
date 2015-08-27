@@ -472,8 +472,8 @@ TEST(TileGroupTests, TileCopyTest) {
 
   // 1. Pools
   bool intended_behavior = true;
-  peloton::Pool *old_pool = tile->GetPool();
-  peloton::Pool *new_pool = new_tile->GetPool();
+  peloton::VarlenPool *old_pool = tile->GetPool();
+  peloton::VarlenPool *new_pool = new_tile->GetPool();
 
   int is_pool_same = old_pool == new_pool;
   if (is_pool_same) intended_behavior = false;

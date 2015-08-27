@@ -58,7 +58,7 @@ Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
   std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false) pool = new Pool(backend);
+  if (schema.IsInlined() == false) pool = new VarlenPool(backend);
 }
 
 Tile::~Tile() {
@@ -359,7 +359,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
  * Used for initial data loading.
  * @param allow_export if false, export enabled is overriden for this load.
  */
-void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
+void Tile::DeserializeTuplesFrom(SerializeInput &input, VarlenPool *pool) {
   /*
    * Directly receives a Tile buffer.
    * [00 01]   [02 03]   [04 .. 0x]
@@ -425,7 +425,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
  * @param allow_export if false, export enabled is overriden for this load.
  */
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                              Pool *pool) {
+                                              VarlenPool *pool) {
   oid_t tuple_count = input.ReadInt();
   assert(tuple_count > 0);
 

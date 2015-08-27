@@ -371,7 +371,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
  * @return tuple
  */
 storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
-                                                         Pool *pool){
+                                                         VarlenPool *pool){
   // Measure the body size of LogRecord
   size_t body_size = GetNextFrameSize();
   if( body_size == 0 ){
@@ -508,7 +508,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tupleRecord);
 
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
  
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
@@ -598,7 +598,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tupleRecord);
 
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
 
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 

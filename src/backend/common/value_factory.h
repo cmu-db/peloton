@@ -22,7 +22,7 @@ namespace peloton {
 
 class ValueFactory {
  public:
-  static inline Value Clone(const Value &src, Pool *dataPool = nullptr) {
+  static inline Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
     return Value::Clone(src, dataPool);
   }
 
@@ -53,7 +53,7 @@ class ValueFactory {
   }
 
   static inline Value GetStringValue(std::string value,
-                                     Pool *data_pool = nullptr) {
+                                     VarlenPool *data_pool = nullptr) {
     return Value::GetStringValue(value, data_pool);
   }
 
@@ -62,13 +62,13 @@ class ValueFactory {
   }
 
   static inline Value GetBinaryValue(std::string value,
-                                     Pool *data_pool = nullptr) {
+                                     VarlenPool *data_pool = nullptr) {
     /// uses hex encoding
     return Value::GetBinaryValue(value, data_pool);
   }
 
   static inline Value GetBinaryValue(unsigned char *value, int32_t len,
-                                     Pool *data_pool) {
+                                     VarlenPool *data_pool) {
     return Value::GetBinaryValue(value, len, data_pool);
   }
 
