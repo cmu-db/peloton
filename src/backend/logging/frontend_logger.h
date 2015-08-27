@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/logging/logger.h"
-#include "backend/logging/backendlogger.h"
-
 #include <iostream>
 #include <mutex>
 #include <vector>
 #include <unistd.h>
+
+#include "backend/common/types.h"
+#include "backend/logging/logger.h"
+#include "backend/logging/backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -33,7 +33,7 @@ class FrontendLogger : public Logger{
 
   public:
 
-    FrontendLogger(){ logger_type=LOGGER_TYPE_FRONTEND; }
+    FrontendLogger(){ logger_type = LOGGER_TYPE_FRONTEND; }
 
     static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
@@ -69,8 +69,10 @@ class FrontendLogger : public Logger{
 
   protected:
 
+    // Associated backend loggers
     std::vector<BackendLogger*> backend_loggers;
 
+    // TODO: Do we need this ?
     std::mutex backend_logger_mutex;
 
 };

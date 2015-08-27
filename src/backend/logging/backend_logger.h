@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/logging/logrecord.h"
-#include "backend/logging/logger.h"
-
 #include <vector>
 #include <mutex>
+
+#include "backend/logging/logger.h"
+#include "backend/logging/log_record.h"
 
 namespace peloton {
 namespace logging {
@@ -33,15 +33,16 @@ class BackendLogger : public Logger{
 
     static BackendLogger* GetBackendLogger(LoggingType logging_type);
 
+    // Get the log record in the local queue at given offset
     LogRecord* GetLogRecord(oid_t offset);
 
     void Commit(void);
 
-    bool IsWaitFlush(void) const;
+    bool IsWaitingForFlushing(void) const;
 
-    bool IsAddedFrontend(void) const;
+    bool IsConnectedToFrontend(void) const;
 
-    void AddedFrontend(void);
+    void SetConnectedToFrontend(void);
 
     //===--------------------------------------------------------------------===//
     // Virtual Functions
@@ -50,12 +51,16 @@ class BackendLogger : public Logger{
     /**
      * Record log
      */
-    virtual void log(LogRecord* record) = 0;
+
+    // Log the given record
+    virtual void Log(LogRecord* record) = 0;
 
     virtual size_t GetLocalQueueSize(void) const = 0;
 
+    // Truncate the log file at given offset
     virtual void Truncate(oid_t offset) = 0;
 
+    // Construct a log record with tuple information
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                                       txn_id_t txn_id, 
                                       oid_t table_oid, 
@@ -66,16 +71,17 @@ class BackendLogger : public Logger{
 
   protected:
 
-    // TODO change vector to list
+    // TODO: change vector to list ?
     std::vector<LogRecord*> local_queue;
 
     std::mutex local_queue_mutex;
 
-    oid_t commit_offset = 0;
+    // wait for the frontend to flush
+    // need to ensure synchronous commit
+    bool wait_for_flushing = false;
 
-    bool wait_flush = false;
-
-    bool added_in_frontend = false;
+    // is this backend connected to frontend ?
+    bool connected_to_frontend = false;
 };
 
 }  // namespace logging

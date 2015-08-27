@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/logging/logrecord.h"
+#include "backend/logging/log_record.h"
 #include "backend/common/serializer.h"
 
 namespace peloton {
@@ -24,8 +24,8 @@ public:
   }
 
   ~TransactionRecord(){
-    if( serialized_data_size > 0 ){
-      free(serialized_data);
+    if( message_length > 0 ){
+      free(message);
     }
   }
 
@@ -43,7 +43,7 @@ public:
 
   txn_id_t GetTxnId() const{ return txn_id; }
 
-  void print(void);
+  void Print(void);
 
 private:
 

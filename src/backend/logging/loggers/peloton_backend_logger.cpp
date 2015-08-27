@@ -10,16 +10,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/loggers/pelotonbackendlogger.h"
-#include "backend/logging/records/tuplerecord.h"
-
 #include <iostream>
+
+#include "backend/logging/records/tuple_record.h"
+#include "backend/logging/loggers/peloton_backend_logger.h"
 
 namespace peloton {
 namespace logging {
 
 PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
-  static  thread_local PelotonBackendLogger pInstance; 
+  thread_local static PelotonBackendLogger pInstance;
   return &pInstance;
 }
 
@@ -27,7 +27,7 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
  * @brief log LogRecord
  * @param log record 
  */
-void PelotonBackendLogger::log(LogRecord* record){
+void PelotonBackendLogger::Log(LogRecord* record){
   std::lock_guard<std::mutex> lock(local_queue_mutex);
   record->Serialize();
   local_queue.push_back(record);
@@ -64,7 +64,7 @@ size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
 void PelotonBackendLogger::Truncate(oid_t offset){
   std::lock_guard<std::mutex> lock(local_queue_mutex);
 
-  wait_flush = true;
+  wait_for_flushing = true;
 
   local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
 

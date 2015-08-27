@@ -10,8 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/records/tuplerecord.h"
-
+#include "backend/logging/records/tuple_record.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tuple.h"
 
@@ -55,10 +54,10 @@ bool TupleRecord::Serialize(){
     }
   }
 
-  serialized_data_size = output.Size();
-  serialized_data = (char*)malloc(serialized_data_size);
-  memset( serialized_data, 0, serialized_data_size);
-  memcpy( serialized_data, output.Data(), serialized_data_size);
+  message_length = output.Size();
+  message = (char*)malloc(message_length);
+  memset( message, 0, message_length);
+  memcpy( message, output.Data(), message_length);
 
   return status;
 }
@@ -106,7 +105,7 @@ void TupleRecord::DeserializeHeader(CopySerializeInput& input){
 }
 
 //just for debugging
-void TupleRecord::print(){
+void TupleRecord::Print(){
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
   std::cout << " #Db  ID:" << GetDbId() << "\n";
   std::cout << " #Tb  ID:" << GetTableId() << "\n";

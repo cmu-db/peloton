@@ -10,19 +10,19 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/loggers/pelotonfrontendlogger.h"
-#include "backend/logging/loggers/pelotonbackendlogger.h"
-#include "backend/logging/logmanager.h"
+#include "peloton_frontend_logger.h"
 
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+#include "../log_manager.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
+#include "peloton_backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -152,9 +152,9 @@ void PelotonFrontendLogger::Flush(void) {
 
   for( auto record : peloton_global_queue ){
 
-    fwrite( record->GetSerializedData(), 
+    fwrite( record->GetMessage(), 
             sizeof(char), 
-            record->GetSerializedDataSize(), 
+            record->GetMessageLength(), 
             logFile);
 
     CollectCommittedTuples((TupleRecord*)record, inserted_tuples, deleted_tuples );
@@ -179,7 +179,7 @@ void PelotonFrontendLogger::Flush(void) {
   backend_loggers = GetBackendLoggers();
 
   for( auto backend_logger : backend_loggers){
-    if(backend_logger->IsWaitFlush()){
+    if(backend_logger->IsWaitingForFlushing()){
       backend_logger->Commit();
     }
   }
@@ -194,9 +194,9 @@ void PelotonFrontendLogger::Flush(void) {
 
   auto done = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE, 1/*FIXME*/);
 
-  fwrite( done->GetSerializedData(), 
+  fwrite( done->GetMessage(), 
           sizeof(char), 
-          done->GetSerializedDataSize(), 
+          done->GetMessageLength(), 
           logFile);
 
   ret = fflush(logFile);

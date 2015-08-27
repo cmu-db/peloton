@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/logging/logrecord.h"
+#include "backend/logging/log_record.h"
 #include "backend/common/serializer.h"
 
 namespace peloton {
@@ -62,8 +62,8 @@ public:
   }
 
   ~TupleRecord(){
-    if( serialized_data_size > 0 ){
-      free(serialized_data);
+    if( message_length > 0 ){
+      free(message);
     }
   } 
 
@@ -91,7 +91,7 @@ public:
 
   ItemPointer GetDeleteLocation(void) const {return delete_location;}
 
-  void print(void);
+  void Print(void);
 
 private:
   //===--------------------------------------------------------------------===//

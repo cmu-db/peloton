@@ -10,16 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/loggers/ariesfrontendlogger.h"
-#include "backend/logging/loggers/ariesbackendlogger.h"
-#include "backend/logging/logmanager.h"
-
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "backend/storage/backend_vm.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/loggers/aries_frontend_logger.h"
+#include "backend/logging/loggers/aries_backend_logger.h"
+#include "backend/storage/backend_vm.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
@@ -134,9 +133,9 @@ void AriesFrontendLogger::CollectLogRecord() {
 void AriesFrontendLogger::Flush(void) {
 
   for( auto record : aries_global_queue ){
-    fwrite( record->GetSerializedData(), 
+    fwrite( record->GetMessage(), 
             sizeof(char), 
-            record->GetSerializedDataSize(), 
+            record->GetMessageLength(), 
             logFile);
   }
 
@@ -159,7 +158,7 @@ void AriesFrontendLogger::Flush(void) {
   backend_loggers = GetBackendLoggers();
 
   for( auto backend_logger : backend_loggers){
-    if(backend_logger->IsWaitFlush()){
+    if(backend_logger->IsWaitingForFlushing()){
       backend_logger->Commit();
     }
   }
