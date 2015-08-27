@@ -27,10 +27,6 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
   BackendLogger* backendLogger;
 
   switch(logging_type){
-    case LOGGING_TYPE_STDOUT:{
-      //backendLogger = StdoutBackendLogger::GetInstance();
-    }break;
-
     case LOGGING_TYPE_ARIES:{
       backendLogger = AriesBackendLogger::GetInstance();
     }break;

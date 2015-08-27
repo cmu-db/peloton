@@ -624,9 +624,6 @@ std::string LoggingTypeToString(LoggingType type) {
     case LOGGING_TYPE_INVALID: {
       return "INVALID";
     }
-    case LOGGING_TYPE_STDOUT: {
-      return "LOGGING_TYPE_STDOUT";
-    }
     case LOGGING_TYPE_ARIES: {
       return "LOGGING_TYPE_ARIES";
     }
