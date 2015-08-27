@@ -97,15 +97,18 @@ void LogManager::WaitForSleepMode(LoggingType logging_type){
     assert(logging_type);
   }
 
+  // TODO: Can we move this outside the while loop ?
+  // XXX Yes, we can. Since whenever logging status is set to the terminate,
+  // It should be either terminate(same as before) or sleep
+  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
+
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
   while(1){
     sleep(1);
-
-    // TODO: Can we move this outside the while loop ?
-    SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
-    if( GetStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP)
+    if( GetStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP){
       break;
+    }
   }
 
 }

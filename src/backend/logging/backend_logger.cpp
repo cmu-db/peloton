@@ -69,6 +69,9 @@ LogRecord* BackendLogger::GetLogRecord(oid_t offset){
 bool BackendLogger::IsWaitingForFlushing(void) const{
 
   // TODO: Why ?
+  // XXX sometimes it has some log records even if wait_for_flushing is false
+  // for example, if backend logger enqueues the log record right after
+  // frontend logger collect data and not truncate yet.
   if(wait_for_flushing || GetLocalQueueSize() > 0) {
     return true;
   } else {
