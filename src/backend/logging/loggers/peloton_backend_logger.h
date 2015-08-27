@@ -35,7 +35,7 @@ public:
 
   size_t GetLocalQueueSize(void) const;
 
-  void Truncate(oid_t offset);
+  void TruncateLocalQueue(oid_t offset);
 
   LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                             txn_id_t txn_id, 

@@ -162,7 +162,7 @@ void AriesFrontendLogger::CollectLogRecord() {
         aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
       }
       // truncate the local queue 
-      backend_logger->Truncate(local_queue_size);
+      backend_logger->TruncateLocalQueue(local_queue_size);
     }
   }
 }
