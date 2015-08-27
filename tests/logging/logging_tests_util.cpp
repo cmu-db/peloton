@@ -20,60 +20,65 @@
 namespace peloton {
 namespace test {
 
+//===--------------------------------------------------------------------===//
+// PREPARE LOG FILE
+//===--------------------------------------------------------------------===//
+
 /**
  * @brief writing a simple log file 
  */
 bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
 
-   // start a thread for logging
-   auto& logManager = logging::LogManager::GetInstance();
+  // start a thread for logging
+  auto& log_manager = logging::LogManager::GetInstance();
 
-   if( logManager.ActiveFrontendLoggerCount() > 0){
-     LOG_ERROR("another logging thread is running now"); 
-     return false;
-   }
-   logManager.SetDefaultLoggingType(logging_type);
-   std::thread thread(&logging::LogManager::StartStandbyMode, 
-                      &logManager, 
-                      logManager.GetDefaultLoggingType());
+  if( log_manager.ActiveFrontendLoggerCount() > 0){
+    LOG_ERROR("another logging thread is running now");
+    return false;
+  }
+  log_manager.SetDefaultLoggingType(logging_type);
+  std::thread thread(&logging::LogManager::StartStandbyMode,
+                     &log_manager,
+                     log_manager.GetDefaultLoggingType());
 
-   // When the frontend logger gets ready to logging,
-   // start logging
-   while(1){
-     sleep(1);
-     if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
-       // Standby -> Recovery
-       logManager.StartRecoveryMode();
-       // Recovery -> Ongoing
-       break;
-     }
-   }
+  // Wait for the frontend logger to go to enter recovery mode
+  while(1){
+    sleep(1);
+    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
+      log_manager.StartRecoveryMode();
+      break;
+    }
+  }
 
-   // wait for recovery
-   while(logManager.GetStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
+  // Wait for the frontend logger to go to enter logging mode
+  while(log_manager.GetStatus() == LOGGING_STATUS_TYPE_RECOVERY){
+    // TODO: Sleep here ?
+  }
 
-   LoggingTestsUtil::WritingSimpleLog(20000, 10000, logging_type);
+  // Build the log
+  LoggingTestsUtil::BuildLog(20000, 10000, logging_type);
 
-   // ongoing->terminate->sleep
-   if( logManager.EndLogging() ){
-     thread.join();
-     return true;
-   }
+  //  Wait for the transition :: LOGGING -> TERMINATE -> SLEEP
+  if( log_manager.EndLogging() ){
+    thread.join();
+    return true;
+  }
 
-   LOG_ERROR("Failed to terminate logging thread"); 
-   return false;
+  LOG_ERROR("Failed to terminate logging thread");
+  return false;
 }
 
 size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
   struct stat log_stats;
   size_t log_file_size;
 
+  // Open the log file
   FILE* log_file = fopen(file_name.c_str(),"rb");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
 
-  // also, get the descriptor
+  // Get the file descriptor and size
   int log_file_fd = fileno(log_file);
   if( log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
@@ -86,13 +91,18 @@ size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
     log_file_size = 0;
   }
 
-  // close the log file
+  // Finally, close the log file
   int ret = fclose(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
+
   return log_file_size;
 }
+
+//===--------------------------------------------------------------------===//
+// CHECK RECOVERY
+//===--------------------------------------------------------------------===//
 
 
 /**
@@ -110,25 +120,25 @@ void LoggingTestsUtil::CheckAriesRecovery(){
 
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
-  auto& logManager = logging::LogManager::GetInstance();
-   if( logManager.ActiveFrontendLoggerCount() > 0){
-     LOG_ERROR("another logging thread is running now"); 
-     return;
-   }
+  auto& log_manager = logging::LogManager::GetInstance();
+  if( log_manager.ActiveFrontendLoggerCount() > 0){
+    LOG_ERROR("another logging thread is running now");
+    return;
+  }
 
   // start a thread for logging
-  logManager.SetDefaultLoggingType(LOGGING_TYPE_ARIES);
+  log_manager.SetDefaultLoggingType(LOGGING_TYPE_ARIES);
   std::thread thread(&logging::LogManager::StartStandbyMode, 
-      &logManager, 
-      logManager.GetDefaultLoggingType());
+                     &log_manager,
+                     log_manager.GetDefaultLoggingType());
 
   // When the frontend logger gets ready to logging,
   // start logging
   while(1){
     sleep(1);
-    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
+    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
       // Standby -> Recovery
-      logManager.StartRecoveryMode();
+      log_manager.StartRecoveryMode();
       // Recovery -> Ongoing
       break;
     }
@@ -138,18 +148,18 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   while(1){
     sleep(1);
     // escape when recovery is done
-    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
+    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
       break;
     }
   }
 
   // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000,10000);
+  LoggingTestsUtil::CheckTupleCount(20000, 10000);
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
-  if( logManager.EndLogging() ){
+  if( log_manager.EndLogging() ){
     thread.join();
   }else{
     LOG_ERROR("Failed to terminate logging thread"); 
@@ -162,35 +172,35 @@ void LoggingTestsUtil::CheckAriesRecovery(){
  */
 void LoggingTestsUtil::CheckPelotonRecovery(){
 
-//  // Initialize oid since we assume that we restart the system
-//  auto &manager = catalog::Manager::GetInstance();
-//  manager.SetNextOid(0);
-//  manager.ClearTileGroup();
-//
-//  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-//  txn_manager.ResetStates();
+  //  // Initialize oid since we assume that we restart the system
+  //  auto &manager = catalog::Manager::GetInstance();
+  //  manager.SetNextOid(0);
+  //  manager.ClearTileGroup();
+  //
+  //  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  //  txn_manager.ResetStates();
 
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
-  auto& logManager = logging::LogManager::GetInstance();
-   if( logManager.ActiveFrontendLoggerCount() > 0){
-     LOG_ERROR("another logging thread is running now"); 
-     return;
-   }
+  auto& log_manager = logging::LogManager::GetInstance();
+  if( log_manager.ActiveFrontendLoggerCount() > 0){
+    LOG_ERROR("another logging thread is running now");
+    return;
+  }
 
   // start a thread for logging
-  logManager.SetDefaultLoggingType(LOGGING_TYPE_PELOTON);
+  log_manager.SetDefaultLoggingType(LOGGING_TYPE_PELOTON);
   std::thread thread(&logging::LogManager::StartStandbyMode, 
-      &logManager, 
-      logManager.GetDefaultLoggingType());
+                     &log_manager,
+                     log_manager.GetDefaultLoggingType());
 
   // When the frontend logger gets ready to logging,
   // start logging
   while(1){
     sleep(1);
-    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
+    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
       // Standby -> Recovery
-      logManager.StartRecoveryMode();
+      log_manager.StartRecoveryMode();
       // Recovery -> Ongoing
       break;
     }
@@ -200,7 +210,7 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   while(1){
     sleep(1);
     // escape when recovery is done
-    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
+    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
       break;
     }
   }
@@ -211,7 +221,7 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
-  if( logManager.EndLogging() ){
+  if( log_manager.EndLogging() ){
     thread.join();
   }else{
     LOG_ERROR("Failed to terminate logging thread"); 
@@ -236,32 +246,35 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
   }
 
   // check # of active tuples
-  EXPECT_EQ( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
+  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-1) * NUM_BACKEND));
 
 }
 
-/////////////////////////////////////////////////////////////////////
+//===--------------------------------------------------------------------===//
 // WRITING LOG RECORD
-/////////////////////////////////////////////////////////////////////
+//===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type){
+void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
+                                LoggingType logging_type){
 
   // Create db
   CreateDatabase(db_oid);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
 
-  // create table, drop it and create again
-  // so that table can have two tile groups
+  // Create table, drop it and create again
+  // so that table can have a newly added tile group and
+  // not just the default tile group
   storage::DataTable* table = CreateSimpleTable(db_oid, table_oid);
   db->AddTable(table);
   db->DropTableWithOid(table_oid);
   table = CreateSimpleTable(db_oid, table_oid);
 
-  LaunchParallelTest(NUM_BACKEND, ParallelWriting, table);
+  LaunchParallelTest(NUM_BACKEND, RunBackends, table);
 
   db->AddTable(table);
 
+  // We can only drop this for ARIES
   if(logging_type == LOGGING_TYPE_ARIES ){
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
@@ -269,36 +282,42 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingTy
 }
 
 
-void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
+void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   auto locations = InsertTuples(table, true/*commit*/);
 
+  // Delete the third inserted location if we insert >= 3 tuples
   if(locations.size() >= 3)
-  DeleteTuples(table, locations[2], false/*abort*/);
+    DeleteTuples(table, locations[2], false/*abort*/);
 
+  // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
-  DeleteTuples(table, locations[1], true/*commit*/);
+    DeleteTuples(table, locations[1], true/*commit*/);
 
+  // Update the first inserted location if we insert >= 1 tuples
   if(locations.size() >= 1)
-  UpdateTuples(table, locations[0], true/*commit*/);
+    UpdateTuples(table, locations[0], true/*commit*/);
 
-  auto& logManager = logging::LogManager::GetInstance();
-  if(logManager.IsInLoggingMode()){
-    auto logger = logManager.GetBackendLogger();
-    // Wait until frontendlogger collect the data
+  auto& log_manager = logging::LogManager::GetInstance();
+  if(log_manager.IsInLoggingMode()){
+    auto logger = log_manager.GetBackendLogger();
+
+    // Wait until frontend logger collects the data
     while( logger->IsWaitingForFlushing()){
       sleep(1);
     }
-    logManager.RemoveBackendLogger(logger);
+
+    log_manager.RemoveBackendLogger(logger);
   }
+
 }
 
-
+// Do insert and create insert tuple log records
 std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = CreateSimpleTuple(table->GetSchema(),NUM_TUPLES);
+  auto tuples = GetTuple(table->GetSchema(),NUM_TUPLES);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -316,10 +335,10 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
     // Logging 
     {
-      auto& logManager = logging::LogManager::GetInstance();
+      auto& log_manager = logging::LogManager::GetInstance();
 
-      if(logManager.IsInLoggingMode()){
-        auto logger = logManager.GetBackendLogger();
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
@@ -331,16 +350,20 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
       }
     }
+
     if(committed){
       txn_manager.CommitTransaction(txn);
+    } else{
+      txn_manager.AbortTransaction(txn);
     }
   }
 
+  // Clean up data
   for( auto tuple : tuples){
     tuple->FreeUninlinedData();
     delete tuple;
   }
-  
+
   return locations;
 }
 
@@ -361,17 +384,17 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
 
   // Logging 
   {
-    auto& logManager = logging::LogManager::GetInstance();
+    auto& log_manager = logging::LogManager::GetInstance();
 
-    if(logManager.IsInLoggingMode()){
-      auto logger = logManager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode()){
+      auto logger = log_manager.GetBackendLogger();
       auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                            txn->GetTransactionId(), 
-                                            table->GetOid(),
-                                            INVALID_ITEMPOINTER,
-                                            delete_location,
-                                            nullptr,
-                                            20000);
+                                           txn->GetTransactionId(),
+                                           table->GetOid(),
+                                           INVALID_ITEMPOINTER,
+                                           delete_location,
+                                           nullptr,
+                                           20000);
       logger->Log(record);
     }
   }
@@ -399,7 +422,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
   txn->RecordDelete(delete_location);
 
   // Create Tuples
-  auto tuples = CreateSimpleTuple(table->GetSchema(),1);
+  auto tuples = GetTuple(table->GetSchema(), 1);
 
   for( auto tuple : tuples){
     ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
@@ -411,37 +434,41 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
 
     // Logging 
     {
-       auto& logManager = logging::LogManager::GetInstance();
-       if(logManager.IsInLoggingMode()){
-         auto logger = logManager.GetBackendLogger();
-         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+      auto& log_manager = logging::LogManager::GetInstance();
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
                                              location,
                                              delete_location,
                                              tuple,
                                              20000);
-         logger->Log(record);
-       }
-     }
+        logger->Log(record);
+      }
+    }
   }
 
   if(committed){
     txn_manager.CommitTransaction(txn);
+  } else{
+    txn_manager.AbortTransaction(txn);
   }
 
+  // Clean up data
   for( auto tuple : tuples){
     tuple->FreeUninlinedData();
     delete tuple;
   }
 }
 
-/////////////////////////////////////////////////////////////////////
-// CREATE PELOTON OBJECT 
-/////////////////////////////////////////////////////////////////////
+//===--------------------------------------------------------------------===//
+// Utility functions
+//===--------------------------------------------------------------------===//
 
 void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
 
+  // Create database and attach a table
   bridge::DDLDatabase::CreateDatabase(db_oid);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
@@ -449,7 +476,19 @@ void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto table = CreateSimpleTable(db_oid, table_oid);
 
   db->AddTable(table);
+}
 
+storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
+
+  auto column_infos = LoggingTestsUtil::CreateSchema();
+
+  // Construct our schema from vector of ColumnInfo
+  auto schema = new catalog::Schema(column_infos);
+  storage::DataTable *table = storage::TableFactory::GetDataTable(db_oid, table_oid,
+                                                                  schema,
+                                                                  std::to_string(table_oid));
+
+  return table;
 }
 
 void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
@@ -457,19 +496,7 @@ void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
   bridge::DDLDatabase::CreateDatabase(db_oid);
 }
 
-storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
-
-  auto column_infos = LoggingTestsUtil::CreateSimpleColumns();
-
-  // Construct our schema from vector of ColumnInfo
-  auto schema = new catalog::Schema(column_infos);
-
-  storage::DataTable *table = storage::TableFactory::GetDataTable( db_oid, table_oid, schema, std::to_string(table_oid));
-
-  return table;
-}
-
-std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
+std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   // Column
   std::vector<catalog::Column> columns;
 
@@ -486,8 +513,8 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples) {
-  
+std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema, oid_t num_of_tuples) {
+
   oid_t tid = (oid_t)GetThreadId();
 
   std::vector<storage::Tuple*> tuples;
@@ -495,7 +522,7 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema
   for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
     storage::Tuple *tuple = new storage::Tuple(schema, true);
 
-    // Setting values
+    // Setting values in tuple
     Value integerValue = ValueFactory::GetIntegerValue(243432+col_itr+tid);
     Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
     Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
@@ -510,18 +537,17 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema
   return tuples;
 }
 
-/////////////////////////////////////////////////////////////////////
-// DROP PELOTON OBJECT
-/////////////////////////////////////////////////////////////////////
-
 void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto &manager = catalog::Manager::GetInstance();
+
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   db->DropTableWithOid(table_oid);
+
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
 void LoggingTestsUtil::DropDatabase(oid_t db_oid){
+
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 

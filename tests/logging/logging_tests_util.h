@@ -10,6 +10,7 @@ namespace catalog {
 class Column;
 class Schema;
 }
+
 namespace storage {
 class Tuple;
 class DataTable;
@@ -21,17 +22,17 @@ class LoggingTestsUtil{
 
 public:
 
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
   // PREPARE LOG FILE
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
 
   static bool PrepareLogFile(LoggingType logging_type);
 
   static size_t GetLogFileSize(std::string file_name);
 
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
 
   static void CheckAriesRecovery(void);
 
@@ -41,13 +42,13 @@ public:
 
 private:
 
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
   // WRITING LOG RECORD
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
 
-  static void WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type);
+  static void BuildLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type);
 
-  static void ParallelWriting(storage::DataTable* table);
+  static void RunBackends(storage::DataTable* table);
 
   static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, bool committed);
 
@@ -55,9 +56,9 @@ private:
 
   static void UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed);
   
-  /////////////////////////////////////////////////////////////////////
-  // CREATE PELOTON OBJECT 
-  /////////////////////////////////////////////////////////////////////
+  //===--------------------------------------------------------------------===//
+  // Utility functions
+  //===--------------------------------------------------------------------===//
 
   static void CreateDatabase(oid_t db_oid);
 
@@ -65,13 +66,9 @@ private:
 
   static storage::DataTable* CreateSimpleTable(oid_t db_oid, oid_t table_oid);
 
-  static std::vector<catalog::Column> CreateSimpleColumns(void);
+  static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples);
-
-  /////////////////////////////////////////////////////////////////////
-  // DROP PELOTON OBJECT
-  /////////////////////////////////////////////////////////////////////
+  static std::vector<storage::Tuple*> GetTuple(catalog::Schema* schema, oid_t num_of_tuples);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
