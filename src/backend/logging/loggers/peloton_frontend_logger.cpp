@@ -72,7 +72,7 @@ void PelotonFrontendLogger::MainLoop(void) {
   switch(logManager.GetStatus(LOGGING_TYPE_PELOTON)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
-      Recovery();
+      DoRecovery();
       logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_LOGGING);
     }
     case LOGGING_STATUS_TYPE_LOGGING:{
@@ -214,7 +214,7 @@ void PelotonFrontendLogger::Flush(void) {
 /**
  * @brief Recovery system based on log file
  */
-void PelotonFrontendLogger::Recovery() {
+void PelotonFrontendLogger::DoRecovery() {
 
   if(LogFileSize() > 0){
 

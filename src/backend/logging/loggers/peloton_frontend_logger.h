@@ -47,7 +47,7 @@ class PelotonFrontendLogger : public FrontendLogger{
     // Recovery 
     //===--------------------------------------------------------------------===//
 
-    void Recovery(void);
+    void DoRecovery(void);
 
     LogRecordType GetNextLogRecordType(void);
 
