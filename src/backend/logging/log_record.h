@@ -16,20 +16,22 @@
  *
  *     Transaction Record :
  *       - LogRecordType         : enum
+ *     - HEADER
+ *       - Header length         : int
  *       - Transaction Id        : txn_id_t
- *       - Message               : char*
- *       - Message Length        : size_t
  *
  *     Tuple Record :
  *       - LogRecordType         : enum
- *       - Transaction Id        : txn_id_t
- *       - Message               : char*
- *       - Message Length        : size_t
+ *     -HEADER
+ *       - Header length         : int
+ *       - Database Oid          : oid_t
  *       - Table Oid             : oid_t
+ *       - Transaction Id        : txn_id_t
  *       - Inserted Location     : ItemPointer
  *       - Deleted Location      : ItemPointer
+ *     -BODY
+ *       - Body length           : int
  *       - Data                  : void*
- *       - Database Oid          : oid_t
 */
 
 #pragma once

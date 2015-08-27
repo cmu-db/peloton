@@ -1264,8 +1264,9 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
       if( logging_on){
         // NOTE:: start logging since bootstrapPeloton is done
         auto& log_manager = peloton::logging::LogManager::GetInstance();
-        // XXX Since this function should be called once,
-        // Start recovery mode only if logging mode is not logging mode
+        // Since we should do recovery only once and not everytime
+        // we call this function, we first check if the logging status
+        // is not LOGGING mode
         if( log_manager.IsInLoggingMode() == false){
           log_manager.StartRecoveryMode();
         }
