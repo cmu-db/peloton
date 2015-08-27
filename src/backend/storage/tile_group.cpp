@@ -65,7 +65,10 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
-  if (tuple_slot_id == INVALID_OID) return INVALID_OID;
+  if (tuple_slot_id == INVALID_OID){
+    LOG_INFO("Failed to get next empty tuple slot within tile group.");
+    return INVALID_OID;
+  }
 
   //tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id);
 
@@ -94,6 +97,9 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
   // Set MVCC info
   assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+
   tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
@@ -140,7 +146,7 @@ Tuple *TileGroup::SelectTuple(oid_t tuple_slot_id) {
   return tuple;
 }
 
-// delete tuple at given slot if it is not already locked
+// delete tuple at given slot if it is neither already locked nor deleted in future.
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid) {
 
   // do a dirty delete
@@ -154,6 +160,8 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
     }
   } else if (tile_group_header->GetTransactionId(tuple_slot_id) == transaction_id) {
     // is a own insert, is already latched by myself and is safe to set
+    assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+    assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     return true;
   } else {

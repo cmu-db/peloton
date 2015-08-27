@@ -84,6 +84,7 @@ bool UpdateExecutor::DExecute() {
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
     if (status == false) {
+      LOG_INFO("Fail to delete old tuple. Set txn failure.");
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
@@ -103,6 +104,7 @@ bool UpdateExecutor::DExecute() {
         target_table_->InsertTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       delete new_tuple;
+      LOG_INFO("Fail to insert new tuple. Set txn failure.");
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }

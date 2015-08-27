@@ -316,7 +316,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 // final cleanup
   cleanup:
 
-  LOG_INFO("About to commit %d, %d", single_statement_txn, init_failure);
+  LOG_INFO("About to commit: single stmt: %d, init_failure: %d", single_statement_txn, init_failure);
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
