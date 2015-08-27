@@ -58,7 +58,7 @@ class BackendLogger : public Logger{
     virtual size_t GetLocalQueueSize(void) const = 0;
 
     // Truncate the log file at given offset
-    virtual void Truncate(oid_t offset) = 0;
+    virtual void TruncateLocalQueue(oid_t offset) = 0;
 
     // Construct a log record with tuple information
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 

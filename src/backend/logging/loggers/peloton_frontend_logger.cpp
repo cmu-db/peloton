@@ -10,19 +10,19 @@
  *-------------------------------------------------------------------------
  */
 
-#include "peloton_frontend_logger.h"
 
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "../log_manager.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+#include "backend/storage/backend_vm.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
-#include "peloton_backend_logger.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/loggers/peloton_frontend_logger.h"
+#include "backend/logging/loggers/peloton_backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -123,7 +123,7 @@ void PelotonFrontendLogger::CollectLogRecord() {
         peloton_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
       }
       // truncate the local queue 
-      backend_logger->Truncate(local_queue_size);
+      backend_logger->TruncateLocalQueue(local_queue_size);
     }
   }
 }

@@ -19,8 +19,8 @@ namespace peloton {
 namespace logging {
 
 AriesBackendLogger* AriesBackendLogger::GetInstance(){
-  thread_local static AriesBackendLogger pInstance;
-  return &pInstance;
+  thread_local static AriesBackendLogger aries_backend_logger;
+  return &aries_backend_logger;
 }
 
 /**
@@ -28,6 +28,8 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
  * @param log record 
  */
 void AriesBackendLogger::Log(LogRecord* record){
+
+  // Enqueue the serialized log record into the queue
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     record->Serialize();
@@ -47,14 +49,20 @@ size_t AriesBackendLogger::GetLocalQueueSize(void) const{
  * @brief set the wait flush to true and truncate local_queue with commit_offset
  * @param offset
  */
-void AriesBackendLogger::Truncate(oid_t offset){
+void AriesBackendLogger::TruncateLocalQueue(oid_t offset){
+
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
 
-    wait_for_flushing = true;
+    // cleanup the queue
+    local_queue.erase(local_queue.begin(),
+                      local_queue.begin()+offset);
 
-   local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
+    // let's wait for the frontend logger to flush !
+    // the frontend logger will call our Commit to reset it.
+    wait_for_flushing = true;
   }
+
 }
 
 LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
@@ -64,12 +72,14 @@ LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type,
                                               ItemPointer delete_location, 
                                               void* data,
                                               oid_t db_oid){
+
+  // Build the log record
   switch(log_record_type){
     case LOGRECORD_TYPE_TUPLE_INSERT:  {
       log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_INSERT; 
       break;
     }
-    
+
     case LOGRECORD_TYPE_TUPLE_DELETE:  {
       log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_DELETE; 
       break;
@@ -86,13 +96,14 @@ LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type,
     }
   }
 
-  LogRecord* record = new TupleRecord(log_record_type, 
+  LogRecord *record = new TupleRecord(log_record_type,
                                       txn_id,
                                       table_oid,
                                       insert_location,
                                       delete_location,
                                       data,
                                       db_oid);
+
   return record;
 }
 
