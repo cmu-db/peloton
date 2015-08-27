@@ -1,5 +1,8 @@
+
 #include "gtest/gtest.h"
 #include "harness.h"
+
+#include <thread>
 
 #include "logging/logging_tests_util.h"
 
@@ -9,10 +12,8 @@
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
-
-#include <thread>
-#include "../../src/backend/logging/log_manager.h"
-#include "../../src/backend/logging/records/tuple_record.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
 
 #define NUM_TUPLES 5
 #define NUM_BACKEND 3
@@ -32,25 +33,25 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
      LOG_ERROR("another logging thread is running now"); 
      return false;
    }
-   logManager.SetMainLoggingType(logging_type);
-   std::thread thread(&logging::LogManager::StandbyLogging, 
+   logManager.SetDefaultLoggingType(logging_type);
+   std::thread thread(&logging::LogManager::StartStandbyMode, 
                       &logManager, 
-                      logManager.GetMainLoggingType());
+                      logManager.GetDefaultLoggingType());
 
    // When the frontend logger gets ready to logging,
    // start logging
    while(1){
      sleep(1);
-     if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+     if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
        // Standby -> Recovery
-       logManager.StartLogging();
+       logManager.StartRecoveryMode();
        // Recovery -> Ongoing
        break;
      }
    }
 
    // wait for recovery
-   while(logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
+   while(logManager.GetStatus() == LOGGING_STATUS_TYPE_RECOVERY){}
 
    LoggingTestsUtil::WritingSimpleLog(20000, 10000, logging_type);
 
@@ -82,22 +83,22 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   auto& logManager = logging::LogManager::GetInstance();
    if( logManager.ActiveFrontendLoggerCount() > 0){
      LOG_ERROR("another logging thread is running now"); 
-     return false;
+     return;
    }
 
   // start a thread for logging
-  logManager.SetMainLoggingType(LOGGING_TYPE_ARIES);
-  std::thread thread(&logging::LogManager::StandbyLogging, 
+  logManager.SetDefaultLoggingType(LOGGING_TYPE_ARIES);
+  std::thread thread(&logging::LogManager::StartStandbyMode, 
       &logManager, 
-      logManager.GetMainLoggingType());
+      logManager.GetDefaultLoggingType());
 
   // When the frontend logger gets ready to logging,
   // start logging
   while(1){
     sleep(1);
-    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
       // Standby -> Recovery
-      logManager.StartLogging();
+      logManager.StartRecoveryMode();
       // Recovery -> Ongoing
       break;
     }
@@ -107,7 +108,7 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   while(1){
     sleep(1);
     // escape when recovery is done
-    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
+    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
       break;
     }
   }
@@ -144,22 +145,22 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   auto& logManager = logging::LogManager::GetInstance();
    if( logManager.ActiveFrontendLoggerCount() > 0){
      LOG_ERROR("another logging thread is running now"); 
-     return false;
+     return;
    }
 
   // start a thread for logging
-  logManager.SetMainLoggingType(LOGGING_TYPE_PELOTON);
-  std::thread thread(&logging::LogManager::StandbyLogging, 
+  logManager.SetDefaultLoggingType(LOGGING_TYPE_PELOTON);
+  std::thread thread(&logging::LogManager::StartStandbyMode, 
       &logManager, 
-      logManager.GetMainLoggingType());
+      logManager.GetDefaultLoggingType());
 
   // When the frontend logger gets ready to logging,
   // start logging
   while(1){
     sleep(1);
-    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_STANDBY){
+    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
       // Standby -> Recovery
-      logManager.StartLogging();
+      logManager.StartRecoveryMode();
       // Recovery -> Ongoing
       break;
     }
@@ -169,7 +170,7 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   while(1){
     sleep(1);
     // escape when recovery is done
-    if( logManager.GetLoggingStatus() == LOGGING_STATUS_TYPE_ONGOING){
+    if( logManager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
       break;
     }
   }
@@ -318,7 +319,7 @@ void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
   UpdateTuples(table, locations[0], true/*commit*/);
 
   auto& logManager = logging::LogManager::GetInstance();
-  if(logManager.IsReadyToLogging()){
+  if(logManager.IsInLoggingMode()){
     auto logger = logManager.GetBackendLogger();
     // Wait until frontendlogger collect the data
     while( logger->IsWaitingForFlushing()){
@@ -352,7 +353,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     {
       auto& logManager = logging::LogManager::GetInstance();
 
-      if(logManager.IsReadyToLogging()){
+      if(logManager.IsInLoggingMode()){
         auto logger = logManager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              txn->GetTransactionId(), 
@@ -397,7 +398,7 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
   {
     auto& logManager = logging::LogManager::GetInstance();
 
-    if(logManager.IsReadyToLogging()){
+    if(logManager.IsInLoggingMode()){
       auto logger = logManager.GetBackendLogger();
       auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                             txn->GetTransactionId(), 
@@ -446,7 +447,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
     // Logging 
     {
        auto& logManager = logging::LogManager::GetInstance();
-       if(logManager.IsReadyToLogging()){
+       if(logManager.IsInLoggingMode()){
          auto logger = logManager.GetBackendLogger();
          auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              txn->GetTransactionId(), 

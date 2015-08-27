@@ -10,23 +10,24 @@ namespace logging {
 // TransactionRecord
 //===--------------------------------------------------------------------===//
 
-class TransactionRecord : public LogRecord{
+class TransactionRecord : public LogRecord {
 
-public:
+ public:
   TransactionRecord( LogRecordType log_record_type,
                      const txn_id_t txn_id = INVALID_TXN_ID,
                      oid_t db_oid = INVALID_OID)
-  : LogRecord(log_record_type), txn_id(txn_id)
-  {
+ : LogRecord(log_record_type),
+   txn_id(txn_id),
+   db_oid(db_oid) {
+    // Set the db oid
     if( db_oid == INVALID_OID){
       db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     }
-  }
+ }
 
   ~TransactionRecord(){
-    if( message_length > 0 ){
-      free(message);
-    }
+    // Clean up the message
+    free(message);
   }
 
   //===--------------------------------------------------------------------===//
@@ -38,17 +39,20 @@ public:
   void Deserialize(CopySerializeInput& input);
 
   //===--------------------------------------------------------------------===//
-  // Accessor
+  // Accessors
   //===--------------------------------------------------------------------===//
 
-  txn_id_t GetTxnId() const{ return txn_id; }
+  txn_id_t GetTransactionId() const{ return txn_id; }
 
   void Print(void);
 
-private:
+ private:
 
+  // transaction id
   txn_id_t txn_id;
 
+  // TODO: Do we need this ?
+  // db oid
   oid_t db_oid;
 
 };

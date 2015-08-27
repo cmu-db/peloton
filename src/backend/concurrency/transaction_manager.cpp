@@ -83,7 +83,7 @@ Transaction *TransactionManager::BeginTransaction() {
  //Logging 
  {
     auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
+    if(logManager.IsInLoggingMode()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
       logger->Log(record);
@@ -136,7 +136,7 @@ void TransactionManager::EndTransaction(Transaction *txn,
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
+    if(logManager.IsInLoggingMode()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
       logger->Log(record);
@@ -242,7 +242,7 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
+    if(logManager.IsInLoggingMode()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
       logger->Log(record);
@@ -353,7 +353,7 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   // Logging 
   {
     auto& logManager = logging::LogManager::GetInstance();
-    if(logManager.IsReadyToLogging()){
+    if(logManager.IsInLoggingMode()){
       auto logger = logManager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, txn->txn_id);
       logger->Log(record);

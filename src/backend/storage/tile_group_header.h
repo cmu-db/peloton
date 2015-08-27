@@ -37,7 +37,7 @@ namespace storage {
  * Layout :
  *
  * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
- *      | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
+ *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
  * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
  *
  */

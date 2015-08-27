@@ -32,15 +32,20 @@ namespace logging {
 AriesFrontendLogger::AriesFrontendLogger(){
 
   logging_type = LOGGING_TYPE_ARIES;
+
   // open log file and file descriptor
-  logFile = fopen( filename.c_str(),"ab+");
-  if(logFile == NULL){
+  // we open it in append + binary mode
+  log_file = fopen( filename.c_str(),"ab+");
+  if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
-  logFileFd = fileno(logFile);
-  if( logFileFd == -1){
-    LOG_ERROR("LogFileFd is -1");
+
+  // also, get the descriptor
+  log_file_fd = fileno(log_file);
+  if( log_file_fd == -1) {
+    LOG_ERROR("log_file_fd is -1");
   }
+
 }
 
 /**
@@ -48,7 +53,8 @@ AriesFrontendLogger::AriesFrontendLogger(){
  */
 AriesFrontendLogger::~AriesFrontendLogger(){
 
-  int ret = fclose(logFile);
+  // close the log file
+  int ret = fclose(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
@@ -59,45 +65,79 @@ AriesFrontendLogger::~AriesFrontendLogger(){
  */
 void AriesFrontendLogger::MainLoop(void) {
 
-  auto& logManager = LogManager::GetInstance();
+  auto& log_manager = LogManager::GetInstance();
+
+  /////////////////////////////////////////////////////////////////////
+  // STANDBY MODE
+  /////////////////////////////////////////////////////////////////////
 
   LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
+  while(log_manager.GetStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
   }
 
   // Do recovery if we can, otherwise terminate
-  switch(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES)){
-    case LOGGING_STATUS_TYPE_RECOVERY:{
+  switch(log_manager.GetStatus(LOGGING_TYPE_ARIES)) {
+    case LOGGING_STATUS_TYPE_RECOVERY: {
       LOG_TRACE("Frontendlogger] Recovery Mode");
+
+      /////////////////////////////////////////////////////////////////////
+      // RECOVERY MODE
+      /////////////////////////////////////////////////////////////////////
+
+      // First, do recovery if needed
       Recovery();
-      logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_ONGOING);
+
+      // Now, enable active logging
+      log_manager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_LOGGING);
+
+      break;
     }
-    case LOGGING_STATUS_TYPE_ONGOING:{
-      LOG_TRACE("Frontendlogger] Ongoing Mode");
+
+    case LOGGING_STATUS_TYPE_LOGGING: {
+      LOG_TRACE("Frontendlogger] Logging Mode");
+      break;
     }
-    break;
 
     default:
     break;
   }
 
-  while(logManager.GetLoggingStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_ONGOING){
+  /////////////////////////////////////////////////////////////////////
+  // LOGGING MODE
+  /////////////////////////////////////////////////////////////////////
+
+
+  // Periodically, wake up and do logging
+  while(log_manager.GetStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_LOGGING){
     sleep(1);
 
-    // Collect LogRecords from all BackendLogger 
+    // Collect LogRecords from all backend loggers
     CollectLogRecord();
+
+    // Flush the data to the file
     Flush();
   }
 
-  // flush remanent log record
+  /////////////////////////////////////////////////////////////////////
+  // TERMINATE MODE
+  /////////////////////////////////////////////////////////////////////
+
+  // flush any remaining log records
   CollectLogRecord();
   Flush();
 
+  /////////////////////////////////////////////////////////////////////
+  // SLEEP MODE
+  /////////////////////////////////////////////////////////////////////
+
   LOG_TRACE("Frontendlogger] Sleep Mode");
+
   //Setting frontend logger status to sleep
-  logManager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_SLEEP);
+  log_manager.SetLoggingStatus(LOGGING_TYPE_ARIES,
+                               LOGGING_STATUS_TYPE_SLEEP);
+
 }
 
 /**
@@ -136,15 +176,15 @@ void AriesFrontendLogger::Flush(void) {
     fwrite( record->GetMessage(), 
             sizeof(char), 
             record->GetMessageLength(), 
-            logFile);
+            log_file);
   }
 
-  int ret = fflush(logFile);
+  int ret = fflush(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
   }
 
-  ret = fsync(logFileFd);
+  ret = fsync(log_file_fd);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
@@ -236,7 +276,7 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
   if( IsFileBroken(1) ){
     return LOGRECORD_TYPE_INVALID;
   }
-  int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
+  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
   if( ret <= 0 ){
     return LOGRECORD_TYPE_INVALID;
   }
@@ -252,7 +292,7 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
 size_t AriesFrontendLogger::LogFileSize(){
   struct stat logStats;   
   if(stat(filename.c_str(), &logStats) == 0){
-    fstat(logFileFd, &logStats);
+    fstat(log_file_fd, &logStats);
     return logStats.st_size;
   }else{
     return 0;
@@ -273,7 +313,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
     return 0;
   }
 
-  size_t ret = fread(buffer, 1, sizeof(buffer), logFile);
+  size_t ret = fread(buffer, 1, sizeof(buffer), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -283,7 +323,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   /* go back 4 bytes */
-  int res = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
+  int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
   if(res == -1){
     LOG_ERROR("Error occured in fseek ");
   }
@@ -318,7 +358,7 @@ bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
   }
 
   char txn_record[txn_record_size];
-  size_t ret = fread(txn_record, 1, sizeof(txn_record), logFile);
+  size_t ret = fread(txn_record, 1, sizeof(txn_record), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -329,9 +369,9 @@ bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
 }
 
 bool AriesFrontendLogger::IsFileBroken(size_t size_to_read){
-  size_t current_position = ftell(logFile);
+  size_t current_position = ftell(log_file);
   if( LogFileSize() < (current_position+size_to_read)){
-    fseek(logFile, 0, SEEK_END);
+    fseek(log_file, 0, SEEK_END);
     return true;
   }else{
     return false;
@@ -352,7 +392,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   // Read header 
   char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), logFile);
+  size_t ret = fread(header, 1, sizeof(header), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -380,7 +420,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
 
   // Read Body 
   char body[body_size];
-  int ret = fread(body, 1, sizeof(body), logFile);
+  int ret = fread(body, 1, sizeof(body), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -401,7 +441,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
 storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tupleRecord){
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDbId());
+  storage::Database* db = manager.GetDatabaseWithOid(tupleRecord.GetDatabaseOid());
   assert(db);
   auto table = db->GetTableWithOid(tupleRecord.GetTableId());
   assert(table);
@@ -523,7 +563,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   auto tile_group = GetTileGroup(tile_group_id);
 
-  auto txn_id = tupleRecord.GetTxnId();
+  auto txn_id = tupleRecord.GetTransactionId();
   auto txn = recovery_txn_table.at(txn_id);
 
   ItemPointer location;
@@ -572,7 +612,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto txn_id = tupleRecord.GetTxnId();
+  auto txn_id = tupleRecord.GetTransactionId();
   auto txn = recovery_txn_table.at(txn_id);
   txn->RecordDelete(delete_location);
 
@@ -591,7 +631,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto txn_id = tupleRecord.GetTxnId();
+  auto txn_id = tupleRecord.GetTransactionId();
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tupleRecord);
@@ -640,7 +680,7 @@ void AriesFrontendLogger::AddTxnToRecoveryTable(){
     return;
   }
 
-  auto txn_id = txnRecord.GetTxnId();
+  auto txn_id = txnRecord.GetTransactionId();
 
   // create the new txn object and added it into recovery recovery_txn_table
   concurrency::Transaction* txn = new concurrency::Transaction(txn_id, INVALID_CID);
@@ -660,7 +700,7 @@ void AriesFrontendLogger::RemoveTxnFromRecoveryTable(){
     return;
   }
 
-  auto txn_id = txnRecord.GetTxnId();
+  auto txn_id = txnRecord.GetTransactionId();
 
   // remove txn from recovery txn table
   auto txn = recovery_txn_table.at(txn_id);
@@ -684,7 +724,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
   }
 
   // get the txn
-  auto txn_id = txnRecord.GetTxnId();
+  auto txn_id = txnRecord.GetTransactionId();
   auto txn = recovery_txn_table.at(txn_id);
 
   // Copy inserted/deleted tuples to recovery transaction
@@ -706,7 +746,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
     return;
   }
 
-  auto txn_id = txnRecord.GetTxnId();
+  auto txn_id = txnRecord.GetTransactionId();
 
   // get the txn
   auto txn = recovery_txn_table.at(txn_id);

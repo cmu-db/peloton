@@ -118,7 +118,7 @@ bool UpdateExecutor::DExecute() {
    {
       auto& logManager = logging::LogManager::GetInstance();
 
-      if(logManager.IsReadyToLogging()){
+      if(logManager.IsInLoggingMode()){
         auto logger = logManager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              transaction_->GetTransactionId(), 
