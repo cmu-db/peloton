@@ -216,9 +216,6 @@ bool NestedLoopJoinExecutor::DExecute() {
     } // outer loop of NLJ
 
     LOG_INFO("Predicate removed %d rows", removed);
-    LOG_INFO("Predicate: %s", predicate_->Debug(" ").c_str());
-
-
 
     // Check if we have any matching tuples.
     if (position_lists[0].size() > 0) {
