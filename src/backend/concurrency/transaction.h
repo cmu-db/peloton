@@ -85,7 +85,7 @@ class Transaction {
 
   // reset inserted tuples and deleted tuples
   // used by recovery (logging)
-  void ResetStates(void);
+  void ResetState(void);
 
   // maintain reference counts for transactions
   void IncrementRefCount();

@@ -44,24 +44,24 @@ class AriesFrontendLogger : public FrontendLogger{
 
   void DoRecovery(void);
 
-  void InsertTuple(concurrency::Transaction* recovery_txn);
-
-  void DeleteTuple(concurrency::Transaction* recovery_txn);
-
-  void UpdateTuple(concurrency::Transaction* recovery_txn);
-
   void AddTransactionToRecoveryTable(void);
 
   void RemoveTransactionFromRecoveryTable(void);
 
   void MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction* recovery_txn);
 
+  void AbortTuplesFromRecoveryTable(void);
+
   void MoveTuples(concurrency::Transaction* destination,
                   concurrency::Transaction* source);
 
-  void AbortTuplesFromRecoveryTable(void);
+  void InsertTuple(concurrency::Transaction* recovery_txn);
 
-  void AbortTransactionInRecoveryTable();
+  void DeleteTuple(concurrency::Transaction* recovery_txn);
+
+  void UpdateTuple(concurrency::Transaction* recovery_txn);
+
+  void AbortActiveTransactions();
 
   void AbortTuples(concurrency::Transaction* txn);
 
