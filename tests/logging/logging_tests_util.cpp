@@ -1,4 +1,3 @@
-
 #include "gtest/gtest.h"
 #include "harness.h"
 
@@ -15,8 +14,8 @@
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/tuple_record.h"
 
-#define NUM_TUPLES 5
-#define NUM_BACKEND 3
+#define NUM_TUPLES 10
+#define NUM_BACKEND 4
 
 namespace peloton {
 namespace test {
@@ -64,6 +63,37 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
    LOG_ERROR("Failed to terminate logging thread"); 
    return false;
 }
+
+size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
+  struct stat log_stats;
+  size_t log_file_size;
+
+  FILE* log_file = fopen(file_name.c_str(),"rb");
+  if(log_file == NULL) {
+    LOG_ERROR("LogFile is NULL");
+  }
+
+  // also, get the descriptor
+  int log_file_fd = fileno(log_file);
+  if( log_file_fd == -1) {
+    LOG_ERROR("log_file_fd is -1");
+  }
+
+  if(stat(file_name.c_str(), &log_stats) == 0){
+    fstat(log_file_fd, &log_stats);
+    log_file_size = log_stats.st_size;
+  }else{
+    log_file_size = 0;
+  }
+
+  // close the log file
+  int ret = fclose(log_file);
+  if( ret != 0 ){
+    LOG_ERROR("Error occured while closing LogFile");
+  }
+  return log_file_size;
+}
+
 
 /**
  * @brief recover the database and check the tuples
@@ -189,6 +219,30 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
 }
 
+void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
+
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+  auto table = db->GetTableWithOid(table_oid);
+
+  std::cout << *table << std::endl;
+
+  oid_t tile_group_count = table->GetTileGroupCount();
+  oid_t active_tuple_count = 0;
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+      tile_group_itr++) {
+    auto tile_group = table->GetTileGroup(tile_group_itr);
+    active_tuple_count += tile_group->GetActiveTupleCount();
+  }
+
+  // check # of active tuples
+  EXPECT_EQ( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
+
+}
+
+/////////////////////////////////////////////////////////////////////
+// WRITING LOG RECORD
+/////////////////////////////////////////////////////////////////////
 
 void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type){
 
@@ -214,96 +268,6 @@ void LoggingTestsUtil::WritingSimpleLog(oid_t db_oid, oid_t table_oid, LoggingTy
   }
 }
 
-void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
-
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
-  auto table = db->GetTableWithOid(table_oid);
-
-  std::cout << *table << std::endl;
-
-  oid_t tile_group_count = table->GetTileGroupCount();
-  oid_t active_tuple_count = 0;
-  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
-    auto tile_group = table->GetTileGroup(tile_group_itr);
-    active_tuple_count += tile_group->GetActiveTupleCount();
-  }
-
-  // check # of active tuples
-  EXPECT_EQ( active_tuple_count, ((NUM_TUPLES-1)*NUM_BACKEND));
-
-}
-
-void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
-
-  bridge::DDLDatabase::CreateDatabase(db_oid);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
-
-  auto table = CreateSimpleTable(db_oid, table_oid);
-
-  db->AddTable(table);
-
-}
-
-void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
-  // Create Database
-  bridge::DDLDatabase::CreateDatabase(db_oid);
-}
-
-storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
-
-  auto column_infos = LoggingTestsUtil::CreateSimpleColumns();
-
-  // Construct our schema from vector of ColumnInfo
-  auto schema = new catalog::Schema(column_infos);
-
-  storage::DataTable *table = storage::TableFactory::GetDataTable( db_oid, table_oid, schema, std::to_string(table_oid));
-
-  return table;
-}
-
-std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
-  // Column
-  std::vector<catalog::Column> columns;
-
-  catalog::Column column1(VALUE_TYPE_INTEGER, 4, "id");
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
-  catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
-  catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
-
-  columns.push_back(column1);
-  columns.push_back(column2);
-  columns.push_back(column3);
-  columns.push_back(column4);
-
-  return columns;
-}
-
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples) {
-  
-  oid_t tid = (oid_t)GetThreadId();
-
-  std::vector<storage::Tuple*> tuples;
-
-  for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
-    storage::Tuple *tuple = new storage::Tuple(schema, true);
-
-    // Setting values
-    Value integerValue = ValueFactory::GetIntegerValue(243432+col_itr+tid);
-    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+tid));
-
-    tuple->SetValue(0, integerValue);
-    tuple->SetValue(1, stringValue);
-    tuple->SetValue(2, timestampValue);
-    tuple->SetValue(3, doubleValue);
-    tuples.push_back(tuple);
-  }
-  return tuples;
-}
 
 void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
 
@@ -328,6 +292,7 @@ void LoggingTestsUtil::ParallelWriting(storage::DataTable* table){
     logManager.RemoveBackendLogger(logger);
   }
 }
+
 
 std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
   std::vector<ItemPointer> locations;
@@ -470,6 +435,84 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
     delete tuple;
   }
 }
+
+/////////////////////////////////////////////////////////////////////
+// CREATE PELOTON OBJECT 
+/////////////////////////////////////////////////////////////////////
+
+void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
+
+  bridge::DDLDatabase::CreateDatabase(db_oid);
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+
+  auto table = CreateSimpleTable(db_oid, table_oid);
+
+  db->AddTable(table);
+
+}
+
+void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
+  // Create Database
+  bridge::DDLDatabase::CreateDatabase(db_oid);
+}
+
+storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
+
+  auto column_infos = LoggingTestsUtil::CreateSimpleColumns();
+
+  // Construct our schema from vector of ColumnInfo
+  auto schema = new catalog::Schema(column_infos);
+
+  storage::DataTable *table = storage::TableFactory::GetDataTable( db_oid, table_oid, schema, std::to_string(table_oid));
+
+  return table;
+}
+
+std::vector<catalog::Column> LoggingTestsUtil::CreateSimpleColumns() {
+  // Column
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(VALUE_TYPE_INTEGER, 4, "id");
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
+  catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
+  catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
+  columns.push_back(column4);
+
+  return columns;
+}
+
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateSimpleTuple(catalog::Schema* schema, oid_t num_of_tuples) {
+  
+  oid_t tid = (oid_t)GetThreadId();
+
+  std::vector<storage::Tuple*> tuples;
+
+  for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
+    storage::Tuple *tuple = new storage::Tuple(schema, true);
+
+    // Setting values
+    Value integerValue = ValueFactory::GetIntegerValue(243432+col_itr+tid);
+    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
+    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
+    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+tid));
+
+    tuple->SetValue(0, integerValue);
+    tuple->SetValue(1, stringValue);
+    tuple->SetValue(2, timestampValue);
+    tuple->SetValue(3, doubleValue);
+    tuples.push_back(tuple);
+  }
+  return tuples;
+}
+
+/////////////////////////////////////////////////////////////////////
+// DROP PELOTON OBJECT
+/////////////////////////////////////////////////////////////////////
 
 void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto &manager = catalog::Manager::GetInstance();

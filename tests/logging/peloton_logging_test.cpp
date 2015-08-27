@@ -27,10 +27,11 @@ TEST(PelotonLoggingTest, writing_logfile) {
 
   // writing simple log file
   if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON) ){
-    auto res = truncate( filename.c_str(), 1343);
-    if( res == -1 ){
-      LOG_ERROR("Failed to truncate the log file"); 
-    }
+    std::cout << "log file size : " <<  LoggingTestsUtil::GetLogFileSize(filename) << std::endl;
+    //auto res = truncate( filename.c_str(), 1343);
+    //if( res == -1 ){
+      //LOG_ERROR("Failed to truncate the log file"); 
+    //}
   }else{
     //Something's wrong !!
     EXPECT_EQ(1,0);
