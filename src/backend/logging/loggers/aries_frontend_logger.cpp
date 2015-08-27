@@ -609,7 +609,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
 
-  // Check if the frame is broken
+  // Check if the frame size is broken
   if( IsFileTruncated(sizeof(int32_t)) ){
     return 0;
   }
@@ -624,18 +624,18 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   CopySerializeInput frameCheck(buffer, sizeof(int32_t));
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
+  // TODO: Do we need this check again ?
+  // XXX Check if the frame is broken
+  if( IsFileTruncated(frame_size) ){
+    return 0;
+  }
+
   // Move back by 4 bytes
   // So that tuple deserializer works later as expected
   int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
   if(res == -1){
     LOG_ERROR("Error occured in fseek ");
   }
-
-  // TODO: Do we need this check again ?
-  if( IsFileTruncated(frame_size) ){
-    return 0;
-  }
-
   return frame_size;
 }
 

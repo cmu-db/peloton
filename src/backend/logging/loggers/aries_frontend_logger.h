@@ -20,9 +20,6 @@
 namespace peloton {
 namespace logging {
 
-// TODO: Why is this global ?
-static std::vector<LogRecord*> aries_global_queue;
-
 //===--------------------------------------------------------------------===//
 // Aries Frontend Logger 
 //===--------------------------------------------------------------------===//
@@ -106,6 +103,8 @@ class AriesFrontendLogger : public FrontendLogger{
   // File pointer and descriptor
   FILE* log_file;
   int log_file_fd;
+
+  std::vector<LogRecord*> aries_global_queue;
 
   // Txn table during recovery
   std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;
