@@ -91,9 +91,9 @@ class AriesFrontendLogger : public FrontendLogger{
     std::string filename = "aries.log";
 
     // File pointer and descriptor
-    FILE* logFile;
+    FILE* log_file;
 
-    int logFileFd;
+    int log_file_fd;
 
     // Txn table
     std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;

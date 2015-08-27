@@ -94,7 +94,7 @@ bool DeleteExecutor::DExecute() {
     {
       auto& logManager = logging::LogManager::GetInstance();
 
-      if(logManager.IsReadyToLogging()){
+      if(logManager.IsInLoggingMode()){
         auto logger = logManager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                              transaction_->GetTransactionId(), 
