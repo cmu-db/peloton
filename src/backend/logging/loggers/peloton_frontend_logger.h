@@ -49,6 +49,22 @@ class PelotonFrontendLogger : public FrontendLogger{
 
     void DoRecovery(void);
 
+    void InsertTuple(void);
+
+    void DeleteTuple(void);
+
+    void UpdateTuple(void);
+
+    void SkipTxnRecord(LogRecordType log_record_type);
+
+    void SetInsertCommit(ItemPointer location, bool commit);
+
+    void SetDeleteCommit(ItemPointer location, bool commit);
+
+    //===--------------------------------------------------------------------===//
+    // Utility functions
+    //===--------------------------------------------------------------------===//
+
     LogRecordType GetNextLogRecordType(void);
 
     void JumpToLastUnfinishedTxn(void);
@@ -62,18 +78,6 @@ class PelotonFrontendLogger : public FrontendLogger{
     bool ReadTxnRecord(TransactionRecord &txnRecord);
 
     bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
-
-    void InsertTuple(void);
-
-    void DeleteTuple(void);
-
-    void UpdateTuple(void);
-
-    void SkipTxnRecord(LogRecordType log_record_type);
-
-    void SetInsertCommit(ItemPointer location, bool commit);
-
-    void SetDeleteCommit(ItemPointer location, bool commit);
 
     //===--------------------------------------------------------------------===//
     // Member Variables

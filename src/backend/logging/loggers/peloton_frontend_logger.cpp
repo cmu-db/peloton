@@ -62,6 +62,10 @@ void PelotonFrontendLogger::MainLoop(void) {
 
   auto& logManager = LogManager::GetInstance();
 
+  /////////////////////////////////////////////////////////////////////
+  // STANDBY MODE
+  /////////////////////////////////////////////////////////////////////
+
   LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
   while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_STANDBY ){
@@ -72,9 +76,20 @@ void PelotonFrontendLogger::MainLoop(void) {
   switch(logManager.GetStatus(LOGGING_TYPE_PELOTON)){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
+
+      /////////////////////////////////////////////////////////////////////
+      // RECOVERY MODE
+      /////////////////////////////////////////////////////////////////////
+
+      // First, do recovery if needed
       DoRecovery();
+
+      // Now, enable active logging
       logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_LOGGING);
+
+      break;
     }
+
     case LOGGING_STATUS_TYPE_LOGGING:{
       LOG_TRACE("Frontendlogger] Ongoing Mode");
     }
@@ -84,21 +99,39 @@ void PelotonFrontendLogger::MainLoop(void) {
     break;
   }
 
+  /////////////////////////////////////////////////////////////////////
+  // LOGGING MODE
+  /////////////////////////////////////////////////////////////////////
+
+  // Periodically, wake up and do logging
   while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_LOGGING){
     sleep(1);
 
-    // Collect LogRecords from all BackendLogger 
+    // Collect LogRecords from all backend loggers
     CollectLogRecord();
+
+    // Flush the data to the file
     Flush();
   }
 
-  // flush remanent log record
+  /////////////////////////////////////////////////////////////////////
+  // TERMINATE MODE
+  /////////////////////////////////////////////////////////////////////
+
+  // flush any remaining log records
   CollectLogRecord();
   Flush();
 
+
+  /////////////////////////////////////////////////////////////////////
+  // SLEEP MODE
+  /////////////////////////////////////////////////////////////////////
+
   LOG_TRACE("Frontendlogger] Sleep Mode");
+
   //Setting frontend logger status to sleep
-  logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_SLEEP);
+  logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, 
+                              LOGGING_STATUS_TYPE_SLEEP);
 }
 
 /**
@@ -128,19 +161,6 @@ void PelotonFrontendLogger::CollectLogRecord() {
   }
 }
 
-void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record,
-                                                  std::vector<ItemPointer> &inserted_tuples,
-                                                  std::vector<ItemPointer> &deleted_tuples){
-
-  if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT){
-    inserted_tuples.push_back(record->GetInsertLocation());
-  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE){
-    deleted_tuples.push_back(record->GetDeleteLocation());
-  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE){
-    inserted_tuples.push_back(record->GetInsertLocation());
-    deleted_tuples.push_back(record->GetDeleteLocation());
-  }
-}
 
 /**
  * @brief flush all record to the file
@@ -211,6 +231,24 @@ void PelotonFrontendLogger::Flush(void) {
   delete done;
 }
 
+void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record,
+                                                  std::vector<ItemPointer> &inserted_tuples,
+                                                  std::vector<ItemPointer> &deleted_tuples){
+
+  if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT){
+    inserted_tuples.push_back(record->GetInsertLocation());
+  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE){
+    deleted_tuples.push_back(record->GetDeleteLocation());
+  }else if(record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE){
+    inserted_tuples.push_back(record->GetInsertLocation());
+    deleted_tuples.push_back(record->GetDeleteLocation());
+  }
+}
+
+//===--------------------------------------------------------------------===//
+// Recovery 
+//===--------------------------------------------------------------------===//
+
 /**
  * @brief Recovery system based on log file
  */
@@ -265,6 +303,87 @@ void PelotonFrontendLogger::DoRecovery() {
     }
   }
 }
+
+
+/**
+ * @brief read tuple record from log file and add them tuples to recovery txn
+ * @param recovery txn
+ */
+void PelotonFrontendLogger::InsertTuple(void){
+
+  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
+
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
+    return;
+  }
+
+  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
+
+}
+
+/**
+ * @brief read tuple record from log file and add them tuples to recovery txn
+ * @param recovery txn
+ */
+void PelotonFrontendLogger::DeleteTuple(void){
+
+  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
+
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
+    return;
+  }
+
+  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
+}
+
+/**
+ * @brief read tuple record from log file and add them tuples to recovery txn
+ * @param recovery txn
+ */
+void PelotonFrontendLogger::UpdateTuple(void){
+
+  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
+
+  if( ReadTupleRecordHeader(tupleRecord) == false){
+    // file is broken
+    return;
+  }
+
+  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
+  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
+}
+
+void PelotonFrontendLogger::SkipTxnRecord(LogRecordType log_record_type){
+  // read transaction information from the log file
+  TransactionRecord txnRecord(log_record_type);
+
+  if( ReadTxnRecord(txnRecord) == false ){
+    // file is broken
+    return;
+  }
+}
+
+void PelotonFrontendLogger::SetInsertCommit(ItemPointer location, bool commit){
+  //Commit Insert Mark
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group_header = tile_group->GetHeader();
+  tile_group_header->SetInsertCommit(location.offset, commit); 
+}
+
+void PelotonFrontendLogger::SetDeleteCommit(ItemPointer location, bool commit){
+  //Commit Insert Mark
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group_header = tile_group->GetHeader();
+  tile_group_header->SetDeleteCommit(location.offset, commit); 
+}
+
+//===--------------------------------------------------------------------===//
+// Utility functions
+//===--------------------------------------------------------------------===//
 
 /**
  * @brief Read single byte so that we can distinguish the log record type
@@ -426,81 +545,6 @@ bool PelotonFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
   return true;
 }
 
-/**
- * @brief read tuple record from log file and add them tuples to recovery txn
- * @param recovery txn
- */
-void PelotonFrontendLogger::InsertTuple(void){
-
-  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
-
-  if( ReadTupleRecordHeader(tupleRecord) == false){
-    // file is broken
-    return;
-  }
-
-  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
-
-}
-
-/**
- * @brief read tuple record from log file and add them tuples to recovery txn
- * @param recovery txn
- */
-void PelotonFrontendLogger::DeleteTuple(void){
-
-  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
-
-  if( ReadTupleRecordHeader(tupleRecord) == false){
-    // file is broken
-    return;
-  }
-
-  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
-}
-
-/**
- * @brief read tuple record from log file and add them tuples to recovery txn
- * @param recovery txn
- */
-void PelotonFrontendLogger::UpdateTuple(void){
-
-  TupleRecord tupleRecord(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
-
-  if( ReadTupleRecordHeader(tupleRecord) == false){
-    // file is broken
-    return;
-  }
-
-  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
-  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
-}
-
-void PelotonFrontendLogger::SkipTxnRecord(LogRecordType log_record_type){
-  // read transaction information from the log file
-  TransactionRecord txnRecord(log_record_type);
-
-  if( ReadTxnRecord(txnRecord) == false ){
-    // file is broken
-    return;
-  }
-}
-
-void PelotonFrontendLogger::SetInsertCommit(ItemPointer location, bool commit){
-  //Commit Insert Mark
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
-  auto tile_group_header = tile_group->GetHeader();
-  tile_group_header->SetInsertCommit(location.offset, commit); 
-}
-
-void PelotonFrontendLogger::SetDeleteCommit(ItemPointer location, bool commit){
-  //Commit Insert Mark
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
-  auto tile_group_header = tile_group->GetHeader();
-  tile_group_header->SetDeleteCommit(location.offset, commit); 
-}
 
 }  // namespace logging
 }  // namespace peloton
