@@ -17,8 +17,6 @@
 namespace peloton {
 namespace logging {
 
-// TODO: Draw the log record !
-
 /**
  * @brief Serialize given data
  * @return true if we serialize data otherwise false

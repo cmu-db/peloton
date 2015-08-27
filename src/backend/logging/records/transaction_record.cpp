@@ -28,6 +28,8 @@ bool TransactionRecord::Serialize(){
   output.WriteIntAt(start, msg_length);
   
   // TODO: Is this different from msg_length ?
+  // XXX : Yes, but slightly it is. because msg_length includes log_record_type 
+
   message_length = output.Size();
   message = (char*) malloc(message_length);
   memset(message, 0, message_length);

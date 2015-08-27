@@ -73,6 +73,8 @@ class FrontendLogger : public Logger{
     std::vector<BackendLogger*> backend_loggers;
 
     // TODO: Do we need this ?
+    // XXX Since backend logger add itself into the frontend logger via log manager,
+    // at that time they access frontend logger concurrently
     std::mutex backend_logger_mutex;
 
 };
