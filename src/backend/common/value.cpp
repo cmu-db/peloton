@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/value.h"
+#include "backend/common/logger.h"
 
 #include <cstdio>
 #include <cstring>
@@ -488,9 +489,13 @@ Value Value::CastAsDouble() const {
     case VALUE_TYPE_DOUBLE:
       retval.GetDouble() = GetDouble();
       break;
-    case VALUE_TYPE_DECIMAL:
-      retval.GetDouble() = std::stod(GetDecimal().ToString());
+    case VALUE_TYPE_DECIMAL: {
+      std::string str_decimal = CreateStringFromDecimal();
+      double d = std::stod(str_decimal);
+      LOG_TRACE("str_decimal: %s, double: %f", str_decimal.c_str(), d);
+      retval.GetDouble() = d;
       break;
+    }
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     default:
@@ -558,10 +563,13 @@ Value Value::CastAsDecimal() const {
       // FIXME: Cast from a double to decimal,
       // for now, we can only cast it into an Int and then to a Decimal
       // but we lost precision here,
-      int64_t rhsint = CastAsBigIntAndGetValue();
-      TTInt retval(rhsint);
-      retval *= Value::max_decimal_scale_factor;
-      return GetDecimalValue(retval);
+      auto d = GetDouble();
+      LOG_TRACE("Double: %f", d);
+      std::string str_double = std::to_string(GetDouble());
+      LOG_TRACE("String: %s", str_double.c_str());
+      Value decimal = GetDecimalValueFromString(str_double);
+      LOG_TRACE("after: %s", decimal.GetDecimal().ToString().c_str());
+      return decimal;
     }
     case VALUE_TYPE_DECIMAL:
       ::memcpy(retval.value_data, value_data, sizeof(TTInt));
