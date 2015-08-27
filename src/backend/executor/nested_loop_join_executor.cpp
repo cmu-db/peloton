@@ -171,6 +171,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
               right_tile_row_count);
 
+    unsigned int removed = 0;
     // Go over every pair of tuples in left and right logical tiles
     for(auto left_tile_row_itr : *left_tile){
       for(auto right_tile_row_itr : *right_tile){
@@ -188,6 +189,7 @@ bool NestedLoopJoinExecutor::DExecute() {
           // Join predicate is false. Skip pair and continue.
           if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
                   .IsFalse()) {
+            removed++;
             continue;
           }
         }
@@ -212,6 +214,10 @@ bool NestedLoopJoinExecutor::DExecute() {
         }
       } // inner loop of NLJ
     } // outer loop of NLJ
+
+    LOG_INFO("Predicate removed %d rows", removed);
+    LOG_INFO("Predicate: %s", predicate_->Debug(" ").c_str());
+
 
 
     // Check if we have any matching tuples.
