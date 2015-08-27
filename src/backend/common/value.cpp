@@ -565,7 +565,7 @@ Value Value::CastAsDecimal() const {
       // but we lost precision here,
       auto d = GetDouble();
       LOG_TRACE("Double: %f", d);
-      std::string str_double = std::to_string(GetDouble());
+      std::string str_double = std::to_string(d);
       LOG_TRACE("String: %s", str_double.c_str());
       Value decimal = GetDecimalValueFromString(str_double);
       LOG_TRACE("after: %s", decimal.GetDecimal().ToString().c_str());
