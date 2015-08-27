@@ -27,6 +27,10 @@ namespace logging {
 // Log Manager
 //===--------------------------------------------------------------------===//
 
+// Logging basically refers to the PROTOCOL -- like aries or peloton
+// Logger refers to the implementation -- like frontend or backend
+// Transition diagram :: standby -> recovery -> logging -> terminate -> sleep
+
 /**
  * Global Log Manager
  */
@@ -41,57 +45,84 @@ class LogManager{
     // global singleton
     static LogManager& GetInstance(void);
 
-    void SetMainLoggingType(LoggingType logging_type);
+    // Wait for the system to begin
+    void StartStandbyMode(LoggingType logging_type = LOGGING_TYPE_INVALID );
 
-    LoggingType GetMainLoggingType(void);
+    // Start recovery
+    void StartRecoveryMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
-    void StandbyLogging(LoggingType logging_type = LOGGING_TYPE_INVALID );
+    // Check whether the frontend logger is in logging mode
+    bool IsInLoggingMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
-    void StartLogging(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    // Used to
+    void WaitForSleepMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
+    // End the actual logging
     bool EndLogging(LoggingType logging_type =  LOGGING_TYPE_INVALID);
 
-    bool IsReadyToLogging(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    //===--------------------------------------------------------------------===//
+    // Accessors
+    //===--------------------------------------------------------------------===//
 
-    size_t ActiveFrontendLoggerCount(void) const;
-
+    // Logging status associated with the front end logger of given type
     void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
 
-    void MakeItSleepy(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    LoggingStatus GetStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
-    LoggingStatus GetLoggingStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    void ResetLoggingStatusMap(LoggingType logging_type);
 
-    BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    // Default protocol or logging type for member function calls
+    void SetDefaultLoggingType(LoggingType logging_type);
 
-    bool RemoveBackendLogger(BackendLogger* backend_logger, LoggingType logging_type = LOGGING_TYPE_INVALID);
+    LoggingType GetDefaultLoggingType(void);
 
+    // Whether to enable or disable synchronous commit ?
     void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
 
     bool GetSyncCommit(void) const { return syncronization_commit;}
+
+    size_t ActiveFrontendLoggerCount(void) const;
+
+    BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    bool RemoveBackendLogger(BackendLogger* backend_logger,
+                             LoggingType logging_type = LOGGING_TYPE_INVALID);
 
   private:
 
     LogManager(){};
 
+    //===--------------------------------------------------------------------===//
+    // Utility Functions
+    //===--------------------------------------------------------------------===//
+
     FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
-    bool RemoveFrontend(LoggingType logging_type);
+    bool RemoveFrontendLogger(LoggingType logging_type);
 
-    void ResetLoggingStatus(LoggingType logging_type);
+    //===--------------------------------------------------------------------===//
+    // Data members
+    //===--------------------------------------------------------------------===//
 
-    std::mutex frontend_logger_mutex;
+    // default logging type for new logging
+    // this is used instead when the argument passed to member functions
+    // is LOGGING_TYPE_INVALID
+    LoggingType default_logging_type = LOGGING_TYPE_INVALID;
 
-    std::mutex logging_status_mutex;
-
-    LoggingType MainLoggingType = LOGGING_TYPE_INVALID;
-
-    // frontend_logger is only one for each logging(stdoud, aries, peloton)
-    // so that we can identify frontend_logger using logger_type
+    // There is only one frontend_logger for each type of logging
+    // like -- stdout, aries, peloton
     std::vector<FrontendLogger*> frontend_loggers;
 
     std::map<LoggingType, LoggingStatus> logging_statuses;
 
     bool syncronization_commit = false;
+
+    // To manage frontend loggers
+    std::mutex frontend_logger_mutex;
+
+    // To synch the status map
+    std::mutex logging_status_mutex;
+
 };
 
 

@@ -17,6 +17,8 @@
 namespace peloton {
 namespace logging {
 
+// TODO: Draw the log record !
+
 /**
  * @brief Serialize given data
  * @return true if we serialize data otherwise false
@@ -29,22 +31,24 @@ bool TupleRecord::Serialize(){
   // Serialize the common variables such as database oid, table oid, etc.
   SerializeHeader(output);
 
-  // serialize other parts depends on type
+  // Serialize other parts depends on type
   switch(GetType()){
 
     case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
     case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:  {
-     storage::Tuple* tuple = (storage::Tuple*)data;
-     tuple->SerializeTo(output);
+      storage::Tuple* tuple = (storage::Tuple*)data;
+      tuple->SerializeTo(output);
       break;
     }
 
     case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:
-    // nothing to do now 
+      // Nothing to do here !
+      break;
+
     case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:  
     case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:  
     case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-    // nothing to do now 
+      // Nothing to do here !
       break;
 
     default:  {
@@ -90,7 +94,7 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
  * @brief Deserialize LogRecordHeader
  * @param input  
  */
-void TupleRecord::DeserializeHeader(CopySerializeInput& input){
+void TupleRecord::DeserializeHeader(CopySerializeInput& input) {
   input.ReadInt();
   db_oid = (oid_t)(input.ReadShort());
   assert(db_oid);
@@ -107,9 +111,9 @@ void TupleRecord::DeserializeHeader(CopySerializeInput& input){
 //just for debugging
 void TupleRecord::Print(){
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
-  std::cout << " #Db  ID:" << GetDbId() << "\n";
+  std::cout << " #Db  ID:" << GetDatabaseOid() << "\n";
   std::cout << " #Tb  ID:" << GetTableId() << "\n";
-  std::cout << " #Txn ID:" << GetTxnId() << "\n";
+  std::cout << " #Txn ID:" << GetTransactionId() << "\n";
   std::cout << " #Insert Location :" << GetInsertLocation().block;
   std::cout << " " << GetInsertLocation().offset << "\n";
   std::cout << " #Delete Location :" << GetDeleteLocation().block;
