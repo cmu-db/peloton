@@ -35,10 +35,12 @@ void PelotonBackendLogger::Log(LogRecord* record){
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
     assert(local_queue.size()>=2);
     auto previous_record = local_queue[local_queue.size()-2];
+    auto previous_record_type = previous_record->GetType();
 
-    if(previous_record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT)  {
+    if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT)  {
       log_record_count = local_queue.size();
-    }else if(previous_record->GetType() == LOGRECORD_TYPE_TRANSACTION_ABORT)  {
+    }
+    else if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_ABORT)  {
       // Remove aborted log record
       for(oid_t log_record_itr=log_record_count; log_record_itr<local_queue.size();
           log_record_itr++){
@@ -46,7 +48,9 @@ void PelotonBackendLogger::Log(LogRecord* record){
       }
       local_queue.erase(local_queue.begin()+log_record_count, local_queue.end());
     }
+
   }
+
 }
 
 /**
@@ -62,13 +66,20 @@ size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
  * @param offset
  */
 void PelotonBackendLogger::TruncateLocalQueue(oid_t offset){
-  std::lock_guard<std::mutex> lock(local_queue_mutex);
+  {
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
 
-  wait_for_flushing = true;
+    // let's wait for the frontend logger to flush !
+    // the frontend logger will call our Commit to reset it.
+    wait_for_flushing = true;
 
-  local_queue.erase(local_queue.begin(), local_queue.begin()+offset);
+    // cleanup the queue
+    local_queue.erase(local_queue.begin(),
+                      local_queue.begin()+offset);
 
-  log_record_count -= offset;
+    // last committed log record position
+    log_record_count -= offset;
+  }
 }
 
 LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
@@ -78,9 +89,10 @@ LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
                                               ItemPointer delete_location, 
                                               void* data,
                                               oid_t db_oid){
+  // Just, ignore the data
   data = nullptr;
-  assert(data == nullptr);
 
+  // Build the log record
   switch(log_record_type){
     case LOGRECORD_TYPE_TUPLE_INSERT:  {
       log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_INSERT; 
