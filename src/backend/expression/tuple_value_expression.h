@@ -49,10 +49,12 @@ class TupleValueExpression : public AbstractExpression,
                         const AbstractTuple *tuple2,
                         __attribute__((unused))
                         executor::ExecutorContext *) const {
-    if (tuple_idx == 0)
+    if (tuple_idx == 0) {
       return tuple1->GetValue(this->value_idx);
-    else
+    }
+    else {
       return tuple2->GetValue(this->value_idx);
+    }
   }
 
   std::string DebugInfo(const std::string &spacer) const {
