@@ -68,7 +68,7 @@
  * Log Flag
  * ----------
  */
-bool logging_on = false;
+bool logging_on = true;
 bool syncronization_commit = false;
 
 /* ----------

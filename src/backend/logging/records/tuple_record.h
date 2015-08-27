@@ -27,8 +27,7 @@ class TupleRecord : public LogRecord{
 public:
 
   TupleRecord( LogRecordType log_record_type)
-  : LogRecord(log_record_type) {
-    txn_id = INVALID_TXN_ID;
+  : LogRecord(log_record_type, INVALID_TXN_ID) {
     db_oid = INVALID_OID;
     table_oid = INVALID_OID;
 
@@ -46,8 +45,7 @@ public:
                const void* data = nullptr,
                oid_t _db_oid = INVALID_OID
                )
-  : LogRecord(log_record_type), 
-    txn_id(txn_id), 
+  : LogRecord(log_record_type, txn_id), 
     table_oid(table_oid), 
     insert_location(insert_location),
     delete_location(delete_location),
@@ -85,8 +83,6 @@ public:
 
   oid_t GetDatabaseOid() const{ return db_oid; }
 
-  txn_id_t GetTransactionId() const{ return txn_id; }
- 
   oid_t GetTableId(void) const {return table_oid;}
 
   ItemPointer GetInsertLocation(void) const {return insert_location;}
@@ -100,9 +96,6 @@ private:
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
-
-  // transaction id
-  txn_id_t txn_id;
 
   // table id
   oid_t table_oid;
