@@ -19,6 +19,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 
@@ -59,6 +60,10 @@ class LogicalTile {
 
   void AddColumn(storage::Tile *base_tile, bool own_base_tile,
                  oid_t origin_column_id, oid_t position_list_idx);
+
+  void AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids);
+
+  void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
   int AddPositionList(std::vector<oid_t> &&position_list);
 
