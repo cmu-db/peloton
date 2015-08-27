@@ -127,38 +127,6 @@ class AbstractExpression {
 
   bool distinct = false;
 
-  //===--------------------------------------------------------------------===//
-  // Override allocators
-  //===--------------------------------------------------------------------===//
-
-  void* operator new(std::size_t sz) {
-    if(CurrentMemoryContext)
-      return palloc(sz);
-    else
-      return malloc(sz);
-  }
-
-  void* operator new[](std::size_t sz) {
-    if(CurrentMemoryContext)
-      return palloc(sz);
-    else
-      return malloc(sz);
-  }
-
-  void operator delete(void* ptr) {
-    if(CurrentMemoryContext)
-      return pfree(ptr);
-    else
-      return free(ptr);
-  }
-
-  void operator delete[](void* ptr) {
-    if(CurrentMemoryContext)
-      return pfree(ptr);
-    else
-      return free(ptr);
-  }
-
  protected:
   AbstractExpression();
 
