@@ -71,7 +71,7 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	Chromosome *momma;
 	Chromosome *daddy;
 	Chromosome *kid;
-	Pool	   *pool;
+	VarlenPool	   *pool;
 	int			pool_size,
 				number_generations;
 

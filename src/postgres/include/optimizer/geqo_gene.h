@@ -35,7 +35,7 @@ typedef struct Chromosome
 	Cost		worth;
 } Chromosome;
 
-typedef struct Pool
+typedef struct VarlenPool
 {
 	Chromosome *data;
 	int			size;

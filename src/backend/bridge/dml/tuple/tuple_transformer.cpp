@@ -75,7 +75,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *bpcharptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(bpcharptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(bpcharptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , bpchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
@@ -86,7 +86,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *varlenptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(varlenptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(varlenptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , varchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
@@ -96,7 +96,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *textptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(textptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(textptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , text = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
