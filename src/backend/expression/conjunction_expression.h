@@ -39,7 +39,7 @@ class ConjunctionExpression : public AbstractExpression
         this->m_right = right;
     }
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const {
         return (spacer + "ConjunctionExpression\n");
@@ -50,8 +50,8 @@ class ConjunctionExpression : public AbstractExpression
 };
 
 template<> inline Value
-ConjunctionExpression<ConjunctionAnd>::eval(const TableTuple *tuple1,
-                                            const TableTuple *tuple2) const
+ConjunctionExpression<ConjunctionAnd>::eval(const AbstractTuple *tuple1,
+                                            const AbstractTuple *tuple2) const
 {
     Value leftBool = m_left->eval(tuple1, tuple2);
     // False False -> False
@@ -74,8 +74,8 @@ ConjunctionExpression<ConjunctionAnd>::eval(const TableTuple *tuple1,
 }
 
 template<> inline Value
-ConjunctionExpression<ConjunctionOr>::eval(const TableTuple *tuple1,
-                                           const TableTuple *tuple2) const
+ConjunctionExpression<ConjunctionOr>::eval(const AbstractTuple *tuple1,
+                                           const AbstractTuple *tuple2) const
 {
     Value leftBool = m_left->eval(tuple1, tuple2);
     // True True  -> True

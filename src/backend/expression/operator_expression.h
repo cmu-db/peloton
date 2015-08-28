@@ -34,7 +34,7 @@ public:
         m_left = left;
     };
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
         Value operand = m_left->eval(tuple1, tuple2);
         // NOT TRUE is FALSE
@@ -61,7 +61,7 @@ class OperatorIsNullExpression : public AbstractExpression {
             m_left = left;
     };
 
-   Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+   Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
        assert(m_left);
        Value tmp = m_left->eval(tuple1, tuple2);
        if (tmp.isNull()) {
@@ -86,7 +86,7 @@ public:
         m_left = left;
     };
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
         return m_left->eval(tuple1, tuple2).castAs(m_targetType);
     }
@@ -107,7 +107,7 @@ public:
         assert (m_right);
     };
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         throwFatalException("OperatorAlternativeExpression::eval function has no implementation.");
     }
 
@@ -125,7 +125,7 @@ public:
     {
     };
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
         assert (m_right);
         Value thenClause = m_left->eval(tuple1, tuple2);
@@ -186,7 +186,7 @@ class OperatorExpression : public AbstractExpression {
     }
 
     Value
-    eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
     {
         assert(m_left);
         assert(m_right);
@@ -209,7 +209,7 @@ class OperatorExistsExpression : public AbstractExpression {
     }
 
     Value
-    eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const {
         return (spacer + "OperatorExistsExpression");

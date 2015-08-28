@@ -19,7 +19,7 @@
 namespace peloton {
 namespace expression {
 
-voltdb::Value ScalarValueExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+Value ScalarValueExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
 {
     // Execute the subquery and get its subquery id
     assert(m_left != NULL);
@@ -34,10 +34,10 @@ voltdb::Value ScalarValueExpression::eval(const TableTuple *tuple1, const TableT
         // throw runtime exception
         char message[256];
         snprintf(message, 256, "More than one row returned by a scalar/row subquery");
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+        throw Exception(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
     }
     TableIterator& iterator = table->iterator();
-    TableTuple tuple(table->schema());
+    AbstractTuple tuple(table->schema());
     if (iterator.next(tuple)) {
         return tuple.getValue(0);
     } else {

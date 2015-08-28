@@ -44,6 +44,7 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(expression_FILES) \
 			$(brain_FILES) \
 			$(catalog_FILES) \
 			$(backend_FILES) \
@@ -51,7 +52,6 @@ libpeloton_la_SOURCES = \
 			$(common_FILES) \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
-			$(expression_FILES) \
 			$(index_FILES) \
 			$(planner_FILES) \
 			$(scheduler_FILES) \
