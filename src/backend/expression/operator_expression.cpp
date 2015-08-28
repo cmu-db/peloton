@@ -14,24 +14,22 @@
 
 #include <sstream>
 
-#include "common/debuglog.h"
-#include "common/executorcontext.hpp"
-#include "common/NValue.hpp"
-#include "common/ValuePeeker.hpp"
+#include "backend/common/logger.h"
+#include "backend/common/executor_context.h"
+#include "backend/common/value.h"
+#include "backend/common/value_peeker.h"
 
-#include "common/tabletuple.h"
-#include "executors/executorutil.h"
-#include "storage/table.h"
-#include "storage/tableiterator.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/data_table.h"
 
+namespace peloton {
+namespace expression {
 
-namespace voltdb {
-
-NValue OperatorExistsExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+Value OperatorExistsExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
 {
     // Execute the subquery and get its subquery id
     assert(m_left != NULL);
-    NValue lnv = m_left->eval(tuple1, tuple2);
+    Value lnv = m_left->eval(tuple1, tuple2);
     int subqueryId = ValuePeeker::peekInteger(lnv);
 
     // Get the subquery context
@@ -44,10 +42,12 @@ NValue OperatorExistsExpression::eval(const TableTuple *tuple1, const TableTuple
     Table* outputTable = exeContext->getSubqueryOutputTable(subqueryId);
     assert(outputTable != NULL);
     if (outputTable->activeTupleCount() > 0) {
-        return NValue::getTrue();
+        return Value::getTrue();
     } else {
-        return NValue::getFalse();
+        return Value::getFalse();
     }
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+

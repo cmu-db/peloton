@@ -10,15 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
+#include <ctime>
+
+#include "backend/common/exception.h"
+#include "backend/common/value.h"
+
 #include "boost/date_time/gregorian/greg_date.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/date_time/posix_time/posix_time_duration.hpp"
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "boost/date_time/posix_time/conversion.hpp"
-#include <ctime>
-#include "common/SQLException.h"
-#include "common/executorcontext.hpp"
-#include "common/NValue.hpp"
 
 static const boost::posix_time::ptime EPOCH(boost::gregorian::date(1970,1,1));
 static const int64_t GREGORIAN_EPOCH = -12212553600000000;  // 1583-01-01 00:00:00
@@ -69,7 +72,8 @@ static inline int64_t epoch_microseconds_from_components(unsigned short int year
     return epoch_seconds * 1000000;
 }
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 // REFER JAVA class: UniqueIdGenerator.
 // 23 bits are used for COUNTER_BITS and PARTITIONID_BITS.
@@ -80,7 +84,7 @@ static const long PARTITIONID_BITS = 14;
 static const int64_t VOLT_EPOCH = epoch_microseconds_from_components(2008);
 
 /** implement the timestamp YEAR extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_YEAR>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_YEAR>() const {
     if (isNull()) {
         return *this;
     }
@@ -91,7 +95,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_YEAR>() const {
 }
 
 /** implement the timestamp MONTH extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_MONTH>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_MONTH>() const {
     if (isNull()) {
         return *this;
     }
@@ -102,7 +106,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_MONTH>() const {
 }
 
 /** implement the timestamp DAY extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_DAY>() const {
     if (isNull()) {
         return *this;
     }
@@ -113,7 +117,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY>() const {
 }
 
 /** implement the timestamp DAY OF WEEK extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY_OF_WEEK>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_DAY_OF_WEEK>() const {
     if (isNull()) {
         return *this;
     }
@@ -126,7 +130,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY_OF_WEEK>() const {
 /** implement the timestamp WEEKDAY extract function **/
 // It is almost the same as FUNC_EXTRACT_DAY_OF_WEEK
 // Monday-0, ..., Saturday-5, Sunday-6
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_WEEKDAY>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_WEEKDAY>() const {
     if (isNull()) {
         return *this;
     }
@@ -137,7 +141,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_WEEKDAY>() const {
 }
 
 /** implement the timestamp WEEK OF YEAR extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_WEEK_OF_YEAR>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_WEEK_OF_YEAR>() const {
     if (isNull()) {
         return *this;
     }
@@ -148,7 +152,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_WEEK_OF_YEAR>() const {
 }
 
 /** implement the timestamp DAY OF YEAR extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY_OF_YEAR>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_DAY_OF_YEAR>() const {
     if (isNull()) {
         return *this;
     }
@@ -159,7 +163,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_DAY_OF_YEAR>() const {
 }
 
 /** implement the timestamp QUARTER extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_QUARTER>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_QUARTER>() const {
     if (isNull()) {
         return *this;
     }
@@ -170,7 +174,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_QUARTER>() const {
 }
 
 /** implement the timestamp HOUR extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_HOUR>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_HOUR>() const {
     if (isNull()) {
         return *this;
     }
@@ -181,7 +185,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_HOUR>() const {
 }
 
 /** implement the timestamp MINUTE extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_MINUTE>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_MINUTE>() const {
     if (isNull()) {
         return *this;
     }
@@ -192,7 +196,7 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_MINUTE>() const {
 }
 
 /** implement the timestamp SECOND extract function **/
-template<> inline NValue NValue::callUnary<FUNC_EXTRACT_SECOND>() const {
+template<> inline Value Value::callUnary<FUNC_EXTRACT_SECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -205,14 +209,14 @@ template<> inline NValue NValue::callUnary<FUNC_EXTRACT_SECOND>() const {
         fraction = 1000000 + fraction;
     }
     TTInt ttSecond(second);
-    ttSecond *= NValue::kMaxScaleFactor;
+    ttSecond *= Value::kMaxScaleFactor;
     TTInt ttMicro(fraction);
-    ttMicro *= NValue::kMaxScaleFactor / 1000000;
+    ttMicro *= Value::kMaxScaleFactor / 1000000;
     return getDecimalValue(ttSecond + ttMicro);
 }
 
 /** implement the timestamp SINCE_EPOCH in SECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_SECOND>() const {
+template<> inline Value Value::callUnary<FUNC_SINCE_EPOCH_SECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -222,7 +226,7 @@ template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_SECOND>() const {
 }
 
 /** implement the timestamp SINCE_EPOCH in MILLISECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_MILLISECOND>() const {
+template<> inline Value Value::callUnary<FUNC_SINCE_EPOCH_MILLISECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -232,7 +236,7 @@ template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_MILLISECOND>() const
 }
 
 /** implement the timestamp SINCE_EPOCH in MICROSECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_MICROSECOND>() const {
+template<> inline Value Value::callUnary<FUNC_SINCE_EPOCH_MICROSECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -241,7 +245,7 @@ template<> inline NValue NValue::callUnary<FUNC_SINCE_EPOCH_MICROSECOND>() const
 }
 
 /** implement the timestamp TO_TIMESTAMP from SECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_SECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TO_TIMESTAMP_SECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -251,7 +255,7 @@ template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_SECOND>() const {
 }
 
 /** implement the timestamp TO_TIMESTAMP from MILLISECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_MILLISECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TO_TIMESTAMP_MILLISECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -261,7 +265,7 @@ template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_MILLISECOND>() cons
 }
 
 /** implement the timestamp TO_TIMESTAMP from MICROSECONDs function **/
-template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_MICROSECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TO_TIMESTAMP_MICROSECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -270,7 +274,7 @@ template<> inline NValue NValue::callUnary<FUNC_TO_TIMESTAMP_MICROSECOND>() cons
 }
 
 /** implement the timestamp TRUNCATE to YEAR function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_YEAR>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_YEAR>() const {
     if (isNull()) {
         return *this;
     }
@@ -282,7 +286,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_YEAR>() const {
 }
 
 /** implement the timestamp TRUNCATE to QUARTER function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_QUARTER>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_QUARTER>() const {
     if (isNull()) {
         return *this;
     }
@@ -295,7 +299,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_QUARTER>() const {
 }
 
 /** implement the timestamp TRUNCATE to MONTH function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MONTH>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_MONTH>() const {
     if (isNull()) {
         return *this;
     }
@@ -307,7 +311,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MONTH>() const {
 }
 
 /** implement the timestamp TRUNCATE to DAY function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_DAY>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_DAY>() const {
     if (isNull()) {
         return *this;
     }
@@ -320,7 +324,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_DAY>() const {
 }
 
 /** implement the timestamp TRUNCATE to HOUR function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_HOUR>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_HOUR>() const {
     if (isNull()) {
         return *this;
     }
@@ -334,7 +338,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_HOUR>() const {
 }
 
 /** implement the timestamp TRUNCATE to MINUTE function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MINUTE>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_MINUTE>() const {
     if (isNull()) {
         return *this;
     }
@@ -348,7 +352,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MINUTE>() const {
 }
 
 /** implement the timestamp TRUNCATE to SECOND function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_SECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_SECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -362,7 +366,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_SECOND>() const {
 }
 
 /** implement the timestamp TRUNCATE to MILLIS function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MILLISECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_MILLISECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -375,7 +379,7 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MILLISECOND>() const {
 }
 
 /** implement the timestamp TRUNCATE to MICROS function **/
-template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MICROSECOND>() const {
+template<> inline Value Value::callUnary<FUNC_TRUNCATE_MICROSECOND>() const {
     if (isNull()) {
         return *this;
     }
@@ -383,10 +387,11 @@ template<> inline NValue NValue::callUnary<FUNC_TRUNCATE_MICROSECOND>() const {
     return getTimestampValue(epoch_micros);
 }
 
-template<> inline NValue NValue::callConstant<FUNC_CURRENT_TIMESTAMP>() {
+template<> inline Value Value::callConstant<FUNC_CURRENT_TIMESTAMP>() {
     ExecutorContext * context = voltdb::ExecutorContext::getExecutorContext();
     int64_t currentTimeMillis = context->currentUniqueId() >> (COUNTER_BITS + PARTITIONID_BITS);
     return getTimestampValue(currentTimeMillis * 1000 + VOLT_EPOCH);
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace

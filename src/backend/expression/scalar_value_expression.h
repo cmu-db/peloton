@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTORESCALARVALUEEXPRESSION_H
-#define HSTORESCALARVALUEEXPRESSION_H
+#pragma once
 
-#include "expressions/abstractexpression.h"
+#include "backend/expression/abstract_expression.h"
 
 #include <string>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 class ScalarValueExpression : public AbstractExpression {
   public:
@@ -25,11 +25,11 @@ class ScalarValueExpression : public AbstractExpression {
         : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, lc, NULL)
     {};
 
-    voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    voltdb::Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const;
 
 };
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace

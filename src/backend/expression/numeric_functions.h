@@ -10,17 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/NValue.hpp"
+#pragma once
 
-namespace voltdb {
+#include "backend/common/value.h"
+
+namespace peloton {
+namespace expression {
 
 /** implement the SQL ABS (absolute value) function for all numeric types */
-template<> inline NValue NValue::callUnary<FUNC_ABS>() const {
+template<> inline Value Value::callUnary<FUNC_ABS>() const {
     if (isNull()) {
         return *this;
     }
     const ValueType type = getValueType();
-    NValue retval(type);
+    Value retval(type);
     switch(type) {
     /*abs() in C++ returns int (32-bits) if input is int, and long (64-bit) if input is long.
       VoltDB INTEGER is 32-bit, BIGINT is 64-bit, so for TINYINT (8-bit) and SMALLINT (16-bit),
@@ -49,12 +52,12 @@ template<> inline NValue NValue::callUnary<FUNC_ABS>() const {
 }
 
 /** implement the SQL FLOOR function for all numeric values */
-template<> inline NValue NValue::callUnary<FUNC_FLOOR>() const {
+template<> inline Value Value::callUnary<FUNC_FLOOR>() const {
     if (isNull()) {
         return *this;
     }
     const ValueType type = getValueType();
-    NValue retval(type);
+    Value retval(type);
     switch(type) {
 
     case VALUE_TYPE_TINYINT:
@@ -71,18 +74,18 @@ template<> inline NValue NValue::callUnary<FUNC_FLOOR>() const {
     case VALUE_TYPE_DECIMAL: {
         TTInt scaledValue = getDecimal();
         TTInt fractional(scaledValue);
-        fractional %= NValue::kMaxScaleFactor;
+        fractional %= Value::kMaxScaleFactor;
         if (fractional == 0) {
             return *this;
         }
 
         TTInt whole(scaledValue);
-        whole /= NValue::kMaxScaleFactor;
+        whole /= Value::kMaxScaleFactor;
         if (scaledValue.IsSign()) {
             //whole has the sign at this point.
             whole--;
         }
-        whole *= NValue::kMaxScaleFactor;
+        whole *= Value::kMaxScaleFactor;
         retval.getDecimal() = whole;
     }
     break;
@@ -95,12 +98,12 @@ template<> inline NValue NValue::callUnary<FUNC_FLOOR>() const {
 
 
 /** implement the SQL CEIL function for all numeric values */
-template<> inline NValue NValue::callUnary<FUNC_CEILING>() const {
+template<> inline Value Value::callUnary<FUNC_CEILING>() const {
     if (isNull()) {
         return *this;
     }
     const ValueType type = getValueType();
-    NValue retval(type);
+    Value retval(type);
     switch(type) {
 
     case VALUE_TYPE_TINYINT:
@@ -119,17 +122,17 @@ template<> inline NValue NValue::callUnary<FUNC_CEILING>() const {
     case VALUE_TYPE_DECIMAL: {
         TTInt scaledValue = getDecimal();
         TTInt fractional(scaledValue);
-        fractional %= NValue::kMaxScaleFactor;
+        fractional %= Value::kMaxScaleFactor;
         if (fractional == 0) {
             return *this;
         }
 
         TTInt whole(scaledValue);
-        whole /= NValue::kMaxScaleFactor;
+        whole /= Value::kMaxScaleFactor;
         if (!scaledValue.IsSign()) {
             whole++;
         }
-        whole *= NValue::kMaxScaleFactor;
+        whole *= Value::kMaxScaleFactor;
         retval.getDecimal() = whole;
     }
     break;
@@ -143,11 +146,11 @@ template<> inline NValue NValue::callUnary<FUNC_CEILING>() const {
 
 
 /** implement the SQL SQRT function for all numeric values */
-template<> inline NValue NValue::callUnary<FUNC_SQRT>() const {
+template<> inline Value Value::callUnary<FUNC_SQRT>() const {
     if (isNull()) {
         return *this;
     }
-    NValue retval(VALUE_TYPE_DOUBLE);
+    Value retval(VALUE_TYPE_DOUBLE);
     /*sqrt() in C++ returns double (64-bits) if input is double, float (32-bit) if input is float,
       and long double (128-bit) if input is long double (128-bit).*/
     double inputValue = castAsDoubleAndGetValue();
@@ -159,11 +162,11 @@ template<> inline NValue NValue::callUnary<FUNC_SQRT>() const {
 
 
 /** implement the SQL EXP function for all numeric values */
-template<> inline NValue NValue::callUnary<FUNC_EXP>() const {
+template<> inline Value Value::callUnary<FUNC_EXP>() const {
     if (isNull()) {
         return *this;
     }
-    NValue retval(VALUE_TYPE_DOUBLE);
+    Value retval(VALUE_TYPE_DOUBLE);
     //exp() in C++ returns double (64-bits) if input is double, float (32-bit) if input is float,
     //and long double (128-bit) if input is long double (128-bit).
     double exponentValue = castAsDoubleAndGetValue();
@@ -175,11 +178,11 @@ template<> inline NValue NValue::callUnary<FUNC_EXP>() const {
 
 
 /** implement the SQL LOG/LN function for all numeric values */
-template<> inline NValue NValue::callUnary<FUNC_LN>() const {
+template<> inline Value Value::callUnary<FUNC_LN>() const {
     if (isNull()) {
         return *this;
     }
-    NValue retval(VALUE_TYPE_DOUBLE);
+    Value retval(VALUE_TYPE_DOUBLE);
     double inputValue = castAsDoubleAndGetValue();
     double resultDouble = std::log(inputValue);
     throwDataExceptionIfInfiniteOrNaN(resultDouble, "function LN");
@@ -189,11 +192,11 @@ template<> inline NValue NValue::callUnary<FUNC_LN>() const {
 
 
 /** implement the SQL POWER function for all numeric values */
-template<> inline NValue NValue::call<FUNC_POWER>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_POWER>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
-    NValue retval(VALUE_TYPE_DOUBLE);
-    const NValue& base = arguments[0];
-    const NValue& exponent = arguments[1];
+    Value retval(VALUE_TYPE_DOUBLE);
+    const Value& base = arguments[0];
+    const Value& exponent = arguments[1];
 
     if (base.isNull()) {
         return base;
@@ -223,10 +226,10 @@ template<> inline NValue NValue::call<FUNC_POWER>(const std::vector<NValue>& arg
  * FYI, Fortran semantics: https://gcc.gnu.org/onlinedocs/gfortran/MOD.html
  * It has the same semantics with C99 as: (a / b) * b + MOD(a,b)  == a
  */
-template<> inline NValue NValue::call<FUNC_MOD>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_MOD>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
-    const NValue& base = arguments[0];
-    const NValue& divisor = arguments[1];
+    const Value& base = arguments[0];
+    const Value& divisor = arguments[1];
 
     const ValueType baseType = base.getValueType();
     const ValueType divisorType = divisor.getValueType();
@@ -247,7 +250,7 @@ template<> inline NValue NValue::call<FUNC_MOD>(const std::vector<NValue>& argum
         throw SQLException(SQLException::data_exception_division_by_zero, "division by zero");
     }
 
-    NValue retval(divisorType);
+    Value retval(divisorType);
     int64_t baseValue = base.castAsBigIntAndGetValue();
     int64_t divisorValue = divisor.castAsBigIntAndGetValue();
 
@@ -259,4 +262,6 @@ template<> inline NValue NValue::call<FUNC_MOD>(const std::vector<NValue>& argum
     return getBigIntValue(result);
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+

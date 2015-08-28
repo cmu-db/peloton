@@ -10,20 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTOREOPERATOREXPRESSION_H
-#define HSTOREOPERATOREXPRESSION_H
+#pragma once
 
-#include "common/common.h"
-#include "common/serializeio.h"
-#include "common/valuevector.h"
+#include "backend/common/serializer.h"
+#include "backend/common/value_vector.h"
 
-#include "expressions/abstractexpression.h"
+#include "backend/expression/abstract_expression.h"
 
 #include <string>
 #include <cassert>
 
-namespace voltdb {
-
+namespace peloton {
+namespace expression {
 
 /*
  * Unary operators. (NOT and IS_NULL)
@@ -36,16 +34,16 @@ public:
         m_left = left;
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
-        NValue operand = m_left->eval(tuple1, tuple2);
+        Value operand = m_left->eval(tuple1, tuple2);
         // NOT TRUE is FALSE
         if (operand.isTrue()) {
-            return NValue::getFalse();
+            return Value::getFalse();
         }
         // NOT FALSE is TRUE
         if (operand.isFalse()) {
-            return NValue::getTrue();
+            return Value::getTrue();
         }
         // NOT NULL is NULL
         return operand;
@@ -63,14 +61,14 @@ class OperatorIsNullExpression : public AbstractExpression {
             m_left = left;
     };
 
-   NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+   Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
        assert(m_left);
-       NValue tmp = m_left->eval(tuple1, tuple2);
+       Value tmp = m_left->eval(tuple1, tuple2);
        if (tmp.isNull()) {
-           return NValue::getTrue();
+           return Value::getTrue();
        }
        else {
-           return NValue::getFalse();
+           return Value::getFalse();
        }
    }
 
@@ -88,7 +86,7 @@ public:
         m_left = left;
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
         return m_left->eval(tuple1, tuple2).castAs(m_targetType);
     }
@@ -109,7 +107,7 @@ public:
         assert (m_right);
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         throwFatalException("OperatorAlternativeExpression::eval function has no implementation.");
     }
 
@@ -127,10 +125,10 @@ public:
     {
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_left);
         assert (m_right);
-        NValue thenClause = m_left->eval(tuple1, tuple2);
+        Value thenClause = m_left->eval(tuple1, tuple2);
 
         if (thenClause.isTrue()) {
             return m_right->getLeft()->eval(tuple1, tuple2).castAs(m_returnType);
@@ -154,22 +152,22 @@ private:
 
 class OpPlus {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_add(right); }
+    inline Value op(Value left, Value right) const { return left.op_add(right); }
 };
 
 class OpMinus {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_subtract(right); }
+    inline Value op(Value left, Value right) const { return left.op_subtract(right); }
 };
 
 class OpMultiply {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_multiply(right); }
+    inline Value op(Value left, Value right) const { return left.op_multiply(right); }
 };
 
 class OpDivide {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_divide(right); }
+    inline Value op(Value left, Value right) const { return left.op_divide(right); }
 };
 
 
@@ -187,7 +185,7 @@ class OperatorExpression : public AbstractExpression {
     {
     }
 
-    NValue
+    Value
     eval(const TableTuple *tuple1, const TableTuple *tuple2) const
     {
         assert(m_left);
@@ -210,7 +208,7 @@ class OperatorExistsExpression : public AbstractExpression {
     {
     }
 
-    NValue
+    Value
     eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const {
@@ -218,6 +216,5 @@ class OperatorExistsExpression : public AbstractExpression {
     }
 };
 
-
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace
