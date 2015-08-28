@@ -10,13 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expressions/functionexpression.h"
-#include "expressions/expressionutil.h"
+#include "backend/expression/function_expression.h"
+#include "backend/expression/expression_util.h"
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 /** implement a forced SQL ERROR function (for test and example purposes) for either integer or string types **/
-template<> inline NValue NValue::callUnary<FUNC_VOLT_SQL_ERROR>() const {
+template<> inline Value Value::callUnary<FUNC_VOLT_SQL_ERROR>() const {
     const char* sqlstatecode;
     const char* msgtext;
     const ValueType type = getValueType();
@@ -46,13 +47,13 @@ template<> inline NValue NValue::callUnary<FUNC_VOLT_SQL_ERROR>() const {
 }
 
 /** implement the 2-argument forced SQL ERROR function (for test and example purposes) */
-template<> inline NValue NValue::call<FUNC_VOLT_SQL_ERROR>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_VOLT_SQL_ERROR>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
     const char* sqlstatecode;
     char msg_format_buffer[1024];
     char state_format_buffer[6];
 
-    const NValue& codeArg = arguments[0];
+    const Value& codeArg = arguments[0];
     if (codeArg.isNull()) {
         sqlstatecode = SQLException::nonspecific_error_code_for_error_forced_by_user;
     } else {
@@ -64,7 +65,7 @@ template<> inline NValue NValue::call<FUNC_VOLT_SQL_ERROR>(const std::vector<NVa
         sqlstatecode = state_format_buffer;
     }
 
-    const NValue& strValue = arguments[1];
+    const Value& strValue = arguments[1];
     if (strValue.isNull()) {
         msg_format_buffer[0] = '\0';
     } else {
@@ -91,8 +92,8 @@ public:
         : AbstractExpression(EXPRESSION_TYPE_FUNCTION) {
     };
 
-    NValue eval(const TableTuple *, const TableTuple *) const {
-        return NValue::callConstant<F>();
+    Value eval(const TableTuple *, const TableTuple *) const {
+        return Value::callConstant<F>();
     }
 
     std::string debugInfo(const std::string &spacer) const {
@@ -123,7 +124,7 @@ public:
         return m_child->hasParameter();
     }
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_child);
         return (m_child->eval(tuple1, tuple2)).callUnary<F>();
     }
@@ -162,15 +163,15 @@ public:
         return false;
     }
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         //TODO: Could make this vector a member, if the memory management implications
-        // (of the NValue internal state) were clear -- is there a penalty for longer-lived
-        // NValues that outweighs the current per-eval allocation penalty?
-        std::vector<NValue> nValue(m_args.size());
+        // (of the Value internal state) were clear -- is there a penalty for longer-lived
+        // Values that outweighs the current per-eval allocation penalty?
+        std::vector<Value> nValue(m_args.size());
         for (int i = 0; i < m_args.size(); ++i) {
             nValue[i] = m_args[i]->eval(tuple1, tuple2);
         }
-        return NValue::call<F>(nValue);
+        return Value::call<F>(nValue);
     }
 
     std::string debugInfo(const std::string &spacer) const {
@@ -431,4 +432,6 @@ ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpres
     return ret;
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+

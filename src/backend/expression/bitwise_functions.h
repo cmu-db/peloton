@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include <sstream>
 #include <string>
 #include <limits.h>

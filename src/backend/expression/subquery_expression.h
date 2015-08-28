@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTORESUBQUERYEXPRESSION_H
-#define HSTORESUBQUERYEXPRESSION_H
-
-#include "expressions/abstractexpression.h"
-
-#include <boost/scoped_ptr.hpp>
+#pragma once
 
 #include <vector>
 
-namespace voltdb {
+#include "backend/expression/abstract_expression.h"
+
+#include <boost/scoped_ptr.hpp>
+
+namespace peloton {
+namespace expression {
 
 /**
  * An expression that produces a temp table from a subquery.
@@ -38,7 +38,7 @@ class SubqueryExpression : public AbstractExpression {
 
     ~SubqueryExpression();
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const;
 
@@ -58,5 +58,6 @@ class SubqueryExpression : public AbstractExpression {
     boost::scoped_ptr<const std::vector<AbstractExpression*> > m_tveParams;
 };
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace
+

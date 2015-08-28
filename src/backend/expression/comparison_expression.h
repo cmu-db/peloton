@@ -10,28 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTORECOMPARISONEXPRESSION_H
-#define HSTORECOMPARISONEXPRESSION_H
+#pragma once
 
-#include "common/common.h"
-#include "common/serializeio.h"
-#include "common/valuevector.h"
-
-#include "expressions/abstractexpression.h"
-#include "expressions/parametervalueexpression.h"
-#include "expressions/constantvalueexpression.h"
-#include "expressions/tuplevalueexpression.h"
+#include "backend/common/serializer.h"
+#include "backend/common/value_vector.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/parameter_value_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/tuple_value_expression.h"
 
 #include <string>
 #include <cassert>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 // Each of these OP classes implements a standard static function interface
 // for a different comparison operator assumed to apply to two non-null-valued
-// NValues.
-// "compare_withoutNull" delegates to an NValue method implementing the specific
-// comparison and returns either a true or false boolean NValue.
+// Values.
+// "compare_withoutNull" delegates to an Value method implementing the specific
+// comparison and returns either a true or false boolean Value.
 // "implies_true_for_row" returns true if a prior true return from compare_withoutNull
 // applied to a row's prefix column implies a true result for the row comparison.
 // This may require a recheck for strict inequality.
@@ -43,10 +41,10 @@ namespace voltdb {
 class CmpEq {
 public:
     inline static const char* op_name() { return "CmpEq"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_equals_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r) { return false; }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r) { return true; }
+    inline static bool implies_true_for_row(const Value& l, const Value& r) { return false; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_null_for_row() { return false; }
     inline static bool includes_equality() { return true; }
 };
@@ -54,10 +52,10 @@ public:
 class CmpNe {
 public:
     inline static const char* op_name() { return "CmpNe"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_notEquals_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r) { return true; }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r) { return false; }
+    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r) { return false; }
     inline static bool implies_null_for_row() { return false; }
     inline static bool includes_equality() { return false; }
 };
@@ -65,10 +63,10 @@ public:
 class CmpLt {
 public:
     inline static const char* op_name() { return "CmpLt"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_lessThan_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r) { return true; }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r)
+    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r)
     { return l.op_notEquals_withoutNull(r).isTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
@@ -77,10 +75,10 @@ public:
 class CmpGt {
 public:
     inline static const char* op_name() { return "CmpGt"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_greaterThan_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r) { return true; }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r)
+    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r)
     { return l.op_notEquals_withoutNull(r).isTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
@@ -89,11 +87,11 @@ public:
 class CmpLte {
 public:
     inline static const char* op_name() { return "CmpLte"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_lessThanOrEqual_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r)
+    inline static bool implies_true_for_row(const Value& l, const Value& r)
     { return l.op_notEquals_withoutNull(r).isTrue(); }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r) { return true; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
 };
@@ -101,11 +99,11 @@ public:
 class CmpGte {
 public:
     inline static const char* op_name() { return "CmpGte"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_greaterThanOrEqual_withoutNull(r);}
-    inline static bool implies_true_for_row(const NValue& l, const NValue& r)
+    inline static bool implies_true_for_row(const Value& l, const Value& r)
     { return l.op_notEquals_withoutNull(r).isTrue(); }
-    inline static bool implies_false_for_row(const NValue& l, const NValue& r) { return true; }
+    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
 };
@@ -116,14 +114,14 @@ public:
 class CmpLike {
 public:
     inline static const char* op_name() { return "CmpLike"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r) { return l.like(r);}
+    inline static Value compare_withoutNull(const Value& l, const Value& r) { return l.like(r);}
 };
 
 class CmpIn {
 public:
     inline static const char* op_name() { return "CmpIn"; }
-    inline static NValue compare_withoutNull(const NValue& l, const NValue& r)
-    { return l.inList(r) ? NValue::getTrue() : NValue::getFalse(); }
+    inline static Value compare_withoutNull(const Value& l, const Value& r)
+    { return l.inList(r) ? Value::getTrue() : Value::getFalse(); }
 };
 
 template <typename OP>
@@ -138,7 +136,7 @@ public:
         m_right = right;
     };
 
-    inline NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    inline Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const
     {
         VOLT_TRACE("eval %s. left %s, right %s. ret=%s",
                    OP::op_name(),
@@ -149,14 +147,14 @@ public:
         assert(m_left != NULL);
         assert(m_right != NULL);
 
-        NValue lnv = m_left->eval(tuple1, tuple2);
+        Value lnv = m_left->eval(tuple1, tuple2);
         if (lnv.isNull()) {
-            return NValue::getNullValue(VALUE_TYPE_BOOLEAN);
+            return Value::getNullValue(VALUE_TYPE_BOOLEAN);
         }
 
-        NValue rnv = m_right->eval(tuple1, tuple2);
+        Value rnv = m_right->eval(tuple1, tuple2);
         if (rnv.isNull()) {
-            return NValue::getNullValue(VALUE_TYPE_BOOLEAN);
+            return Value::getNullValue(VALUE_TYPE_BOOLEAN);
         }
 
         // comparisons with null or NaN are always false
@@ -164,7 +162,7 @@ public:
         // We need to re-enable after we can verify that all plans in all configs give the
         // same answer.]
         /*if (lnv.isNull() || lnv.isNaN() || rnv.isNull() || rnv.isNaN()) {
-            return NValue::getFalse();
+            return Value::getFalse();
         }*/
 
         return OP::compare_withoutNull(lnv, rnv);
@@ -172,8 +170,8 @@ public:
 
     inline const char* traceEval(const TableTuple *tuple1, const TableTuple *tuple2) const
     {
-        NValue lnv;
-        NValue rnv;
+        Value lnv;
+        Value rnv;
         return  (((lnv = m_left->eval(tuple1, tuple2)).isNull() ||
                   (rnv = m_right->eval(tuple1, tuple2)).isNull()) ?
                  "NULL" :
@@ -202,5 +200,5 @@ public:
     {}
 };
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace

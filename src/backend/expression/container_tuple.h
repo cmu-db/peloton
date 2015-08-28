@@ -190,6 +190,5 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   const std::vector<Value>* container_ = nullptr;
 };
 
-
-}  // namespace expression
-}  // namespace peloton
+}  // End expression namespace
+}  // End peloton namespace

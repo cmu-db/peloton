@@ -14,17 +14,16 @@
 
 #include <sstream>
 
-#include "common/debuglog.h"
-#include "common/executorcontext.hpp"
-#include "common/NValue.hpp"
-#include "common/ValueFactory.hpp"
-#include "common/tabletuple.h"
-#include "executors/executorutil.h"
-#include "storage/table.h"
-#include "storage/tableiterator.h"
+#include "backend/common/logger.h"
+#include "backend/common/executor_context.h"
+#include "backend/common/value.h"
+#include "backend/common/value_factory.h"
+#include "backend/storage/tuple.h"
+#include "backend/executor/executor_util.h"
+#include "backend/storage/data_table.h"
 
-
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 SubqueryExpression::SubqueryExpression(
         ExpressionType subqueryType,
@@ -56,7 +55,7 @@ SubqueryExpression::~SubqueryExpression()
     }
 }
 
-NValue SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+Value SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
 {
     // Get the subquery context with the last evaluation result and parameters used to obtain that result
 
@@ -66,7 +65,7 @@ NValue SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tupl
 
     bool hasPriorResult = (context != NULL) && context->hasValidResult();
     bool paramsChanged = false;
-    NValueArray& parameterContainer = *(exeContext->getParameterContainer());
+    ValueArray& parameterContainer = *(exeContext->getParameterContainer());
     VOLT_TRACE ("Running subquery: %d", m_subqueryId);
 
     // Substitute parameters.
@@ -74,11 +73,11 @@ NValue SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tupl
         size_t paramsCnt = m_tveParams->size();
         for (size_t i = 0; i < paramsCnt; ++i) {
             AbstractExpression* tveParam = (*m_tveParams)[i];
-            NValue param = tveParam->eval(tuple1, tuple2);
+            Value param = tveParam->eval(tuple1, tuple2);
             // compare the new param value with the previous one. Since this parameter is set
             // by this subquery, no other subquery can change its value. So, we don't need to
             // save its value on the side for future comparisons.
-            NValue& prevParam = parameterContainer[m_paramIdxs[i]];
+            Value& prevParam = parameterContainer[m_paramIdxs[i]];
             if (hasPriorResult) {
                 if (param.compare(prevParam) == VALUE_COMPARE_EQUAL) {
                     continue;
@@ -86,18 +85,18 @@ NValue SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tupl
                 paramsChanged = true;
             }
             // Update the value stored in the executor context's parameter container:
-            prevParam = param.copyNValue();
+            prevParam = param.copyValue();
         }
     }
 
     // Note the other (non-tve) parameter values and check if they've changed since the last invocation.
     if (hasPriorResult) {
-        std::vector<NValue>& lastParams = context->accessLastParams();
+        std::vector<Value>& lastParams = context->accessLastParams();
         assert(lastParams.size() == m_otherParamIdxs.size());
         for (size_t i = 0; i < lastParams.size(); ++i) {
-            NValue& prevParam = parameterContainer[m_otherParamIdxs[i]];
+            Value& prevParam = parameterContainer[m_otherParamIdxs[i]];
             if (lastParams[i].compare(prevParam) != VALUE_COMPARE_EQUAL) {
-                lastParams[i] = prevParam.copyNValue();
+                lastParams[i] = prevParam.copyValue();
                 paramsChanged = true;
             }
         }
@@ -121,17 +120,17 @@ NValue SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tupl
 
     if (context == NULL) {
         // Preserve the value for the next run. Only 'other' parameters need to be copied
-        std::vector<NValue> lastParams;
+        std::vector<Value> lastParams;
         lastParams.reserve(m_otherParamIdxs.size());
         for (size_t i = 0; i < m_otherParamIdxs.size(); ++i) {
-            NValue& prevParam = parameterContainer[m_otherParamIdxs[i]];
-            lastParams.push_back(prevParam.copyNValue());
+            Value& prevParam = parameterContainer[m_otherParamIdxs[i]];
+            lastParams.push_back(prevParam.copyValue());
         }
         context = exeContext->setSubqueryContext(m_subqueryId, lastParams);
     }
 
     // Update the cached result for the current params. All params are already updated
-    NValue retval = ValueFactory::getIntegerValue(m_subqueryId);
+    Value retval = ValueFactory::getIntegerValue(m_subqueryId);
     context->setResult(retval);
     return retval;
 }
@@ -143,4 +142,6 @@ std::string SubqueryExpression::debugInfo(const std::string &spacer) const
     return (buffer.str());
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+

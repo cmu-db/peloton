@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef VOLTDBHASHRANGEEXPRESSION_H
-#define VOLTDBHASHRANGEEXPRESSION_H
+#pragma once
 
-#include "expressions/abstractexpression.h"
-#include "common/tabletuple.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/storage/tuple.h"
 
 #include <string>
 #include <sstream>
 #include <boost/scoped_array.hpp>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 typedef std::pair<int32_t, int32_t> srange_type;
 
@@ -45,7 +45,7 @@ public:
         }
 };
 
-    virtual voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    virtual voltdb::Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert(tuple1);
         if ( ! tuple1 ) {
             throw SerializableEEException(
@@ -53,16 +53,16 @@ public:
                     "eval:"
                     " Couldn't find tuple 1 (possible index scan planning error)");
         }
-        const int32_t hash = tuple1->getNValue(this->value_idx).murmurHash3();
+        const int32_t hash = tuple1->getValue(this->value_idx).murmurHash3();
 
         return binarySearch(hash);
     }
 
-    voltdb::NValue binarySearch(const int32_t hash) const {
+    voltdb::Value binarySearch(const int32_t hash) const {
         //The binary search blows up on only one range
         if (num_ranges == 1) {
-            if (hash >= ranges[0].first && hash <= ranges[0].second) return NValue::getTrue();
-            return NValue::getFalse();
+            if (hash >= ranges[0].first && hash <= ranges[0].second) return Value::getTrue();
+            return Value::getFalse();
         }
 
         /*
@@ -81,11 +81,11 @@ public:
             } else if (ranges[mid].first > hash) {
                 max = mid - 1;
             } else {
-                return NValue::getTrue();
+                return Value::getTrue();
             }
         }
 
-        return NValue::getFalse();
+        return Value::getFalse();
     }
 
     std::string debugInfo(const std::string &spacer) const {
@@ -106,5 +106,5 @@ private:
     const int num_ranges;
 };
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace

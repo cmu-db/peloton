@@ -28,7 +28,7 @@ namespace expression {
 #include "backend/expression/hash_range_expression.h"
 #include "backend/expression/subquery_expression.h"
 #include "backend/expression/scalar_value_expression.h"
-#include "backend/expression/vector_comparison_expression.hpp"
+#include "vector_comparison_expression.h"
 
 }  // End expression namespace
 }  // End peloton namespace

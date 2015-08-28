@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTOREEXPRESSIONUTIL_H
-#define HSTOREEXPRESSIONUTIL_H
+#pragma once
 
 #include <string>
 #include <vector>
+
+#include "backend/expression/abstract_expression.h"
+
 #include "boost/shared_array.hpp"
 
-#include "common/common.h"
-#include "expressions/abstractexpression.h"
-
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 class ExpressionUtil {
 public:
@@ -41,14 +41,14 @@ public:
     /** If the passed vector contains only TupleValueExpression, it
      * returns ColumnIds of them, otherwise NULL.*/
     static boost::shared_array<int>
-    convertIfAllTupleValues(const std::vector<voltdb::AbstractExpression*> &expressions);
+    convertIfAllTupleValues(const std::vector<voltdb::AbstractExpression*> &expression);
 
     /** If the passed vector contains only ParameterValueExpression, it
      * returns ParamIds of them, otherwise NULL.*/
     static boost::shared_array<int>
-    convertIfAllParameterValues(const std::vector<voltdb::AbstractExpression*> &expressions);
+    convertIfAllParameterValues(const std::vector<voltdb::AbstractExpression*> &expression);
 
-    /** Returns ColumnIds of TupleValueExpression expressions from passed axpression.*/
+    /** Returns ColumnIds of TupleValueExpression expression from passed axpression.*/
     static void
     extractTupleValuesColumnIdx(const AbstractExpression* expr, std::vector<int> &columnIds);
 
@@ -59,6 +59,5 @@ public:
 
 };
 
-}
-
-#endif
+}  // End expression namespace
+}  // End peloton namespace

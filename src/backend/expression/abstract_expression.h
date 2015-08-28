@@ -61,7 +61,7 @@ class AbstractExpression {
   std::string debug(const std::string &spacer) const;
   virtual std::string debugInfo(const std::string &spacer) const = 0;
 
-  /* serialization methods. expressions are serialized in java and
+  /* serialization methods. expression are serialized in java and
        deserialized in the execution engine during startup. */
 
 
