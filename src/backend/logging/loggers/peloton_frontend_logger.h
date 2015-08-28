@@ -19,13 +19,14 @@
 namespace peloton {
 namespace logging {
 
+// TODO: Should this be global ?
 static std::vector<LogRecord*> peloton_global_queue;
 
 //===--------------------------------------------------------------------===//
 // Peloton Frontend Logger 
 //===--------------------------------------------------------------------===//
 
-class PelotonFrontendLogger : public FrontendLogger{
+class PelotonFrontendLogger : public FrontendLogger {
 
   public:
 
@@ -39,6 +40,7 @@ class PelotonFrontendLogger : public FrontendLogger{
 
     void Flush(void);
 
+    // Used by flush to update the commit mark
     void CollectCommittedTuples(TupleRecord* record,
                                 std::vector<ItemPointer> &inserted_tuples,
                                 std::vector<ItemPointer> &deleted_tuples);
@@ -49,47 +51,47 @@ class PelotonFrontendLogger : public FrontendLogger{
 
     void DoRecovery(void);
 
+    void SkipTransactionRecord(LogRecordType log_record_type);
+
+    void SetInsertCommitMark(ItemPointer location, bool commit);
+
+    void SetDeleteCommitMark(ItemPointer location, bool commit);
+
     void InsertTuple(void);
 
     void DeleteTuple(void);
 
     void UpdateTuple(void);
 
-    void SkipTxnRecord(LogRecordType log_record_type);
-
-    void SetInsertCommit(ItemPointer location, bool commit);
-
-    void SetDeleteCommit(ItemPointer location, bool commit);
-
     //===--------------------------------------------------------------------===//
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    LogRecordType GetNextLogRecordType(void);
+    size_t GetLogFileSize();
 
-    void JumpToLastUnfinishedTxn(void);
-
-    size_t LogFileSize();
-
-    bool IsFileBroken(size_t size_to_read);
+    bool IsFileTruncated(size_t size_to_read);
 
     size_t GetNextFrameSize(void);
 
-    bool ReadTxnRecord(TransactionRecord &txnRecord);
+    LogRecordType GetNextLogRecordType(void);
 
-    bool ReadTupleRecordHeader(TupleRecord& tupleRecord);
+    void JumpToLastActiveTransaction(void);
+
+    bool ReadTransactionRecordHeader(TransactionRecord &txn_record);
+
+    bool ReadTupleRecordHeader(TupleRecord& tuple_record);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
     //===--------------------------------------------------------------------===//
 
-    // FIXME :: Hard coded file name
-    std::string filename = "peloton.log";
+    // TODO :: Hard coded file name
+    std::string file_name = "peloton.log";
 
     // File pointer and descriptor
-    FILE* logFile;
+    FILE* log_file;
+    int log_file_fd;
 
-    int logFileFd;
 };
 
 }  // namespace logging

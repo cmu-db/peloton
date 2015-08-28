@@ -33,20 +33,31 @@ void PelotonBackendLogger::Log(LogRecord* record){
   local_queue.push_back(record);
 
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
-    assert(local_queue.size()>=2);
-    auto previous_record = local_queue[local_queue.size()-2];
+
+    // Get the previous record
+    assert(local_queue.size() >= 2);
+    auto previous_record = local_queue[local_queue.size() - 2];
     auto previous_record_type = previous_record->GetType();
 
+    // TODO: We update local queue size only after we are sure about
+    // whether the transaction is committed or aborted
+
+    // Handle commit
     if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT)  {
-      log_record_count = local_queue.size();
+      // Update the log queue offset of last committed transaction
+      last_committed_txn_queue_offset = local_queue.size();
     }
+    // Handle abort
     else if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_ABORT)  {
+
       // Remove aborted log record
-      for(oid_t log_record_itr=log_record_count; log_record_itr<local_queue.size();
+      for(oid_t log_record_itr=last_committed_txn_queue_offset; log_record_itr<local_queue.size();
           log_record_itr++){
         delete local_queue[log_record_itr];;
       }
-      local_queue.erase(local_queue.begin()+log_record_count, local_queue.end());
+
+      // Clean up the local queue of the backend logger
+      local_queue.erase(local_queue.begin()+last_committed_txn_queue_offset, local_queue.end());
     }
 
   }
@@ -58,7 +69,7 @@ void PelotonBackendLogger::Log(LogRecord* record){
  * @return local queue size
  */
 size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
-  return log_record_count;
+  return last_committed_txn_queue_offset;
 }
 
 /**
@@ -78,7 +89,7 @@ void PelotonBackendLogger::TruncateLocalQueue(oid_t offset){
                       local_queue.begin()+offset);
 
     // last committed log record position
-    log_record_count -= offset;
+    last_committed_txn_queue_offset -= offset;
   }
 }
 
