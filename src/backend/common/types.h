@@ -134,86 +134,90 @@ enum ValueType {
 //===--------------------------------------------------------------------===//
 
 enum ExpressionType {
-  EXPRESSION_TYPE_INVALID = 0,
+    EXPRESSION_TYPE_INVALID                     = 0,
 
-  //===--------------------------------------------------------------------===//
-  // Arithmetic Operators
-  //===--------------------------------------------------------------------===//
+    // -----------------------------
+    // Arithmetic Operators
+    // Implicit Numeric Casting: Trying to implement SQL-92.
+    // Implicit Character Casting: Trying to implement SQL-92, but not easy...
+    // Anyway, use explicit EXPRESSION_TYPE_OPERATOR_CAST if you could.
+    // -----------------------------
+    EXPRESSION_TYPE_OPERATOR_PLUS                   = 1, // left + right (both must be number. implicitly casted)
+    EXPRESSION_TYPE_OPERATOR_MINUS                  = 2, // left - right (both must be number. implicitly casted)
+    EXPRESSION_TYPE_OPERATOR_MULTIPLY               = 3, // left * right (both must be number. implicitly casted)
+    EXPRESSION_TYPE_OPERATOR_DIVIDE                 = 4, // left / right (both must be number. implicitly casted)
+    EXPRESSION_TYPE_OPERATOR_CONCAT                 = 5, // left || right (both must be char/varchar)
+    EXPRESSION_TYPE_OPERATOR_MOD                    = 6, // left % right (both must be integer)
+    EXPRESSION_TYPE_OPERATOR_CAST                   = 7, // explicitly cast left as right (right is integer in ValueType enum)
+    EXPRESSION_TYPE_OPERATOR_NOT                    = 8, // logical not operator
+    EXPRESSION_TYPE_OPERATOR_IS_NULL                = 9, // is null test.
+    EXPRESSION_TYPE_OPERATOR_EXISTS                 = 18, // exists test.
 
-  EXPRESSION_TYPE_OPERATOR_PLUS =
-      1,  // left + right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MINUS =
-      2,  // left - right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MULTIPLY =
-      3,  // left * right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_DIVIDE =
-      4,  // left / right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_CONCAT =
-      5,  // left || right (both must be char/varchar)
-  EXPRESSION_TYPE_OPERATOR_MOD = 6,  // left % right (both must be integer)
-  EXPRESSION_TYPE_OPERATOR_CAST =
-      7,  // explicitly cast left as right (right is integer in ValueType enum)
-  EXPRESSION_TYPE_OPERATOR_NOT = 8,          // logical not operator
-  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 9,  // unary minus operator
+    // -----------------------------
+    // Comparison Operators
+    // -----------------------------
+    EXPRESSION_TYPE_COMPARE_EQUAL                   = 10, // equal operator between left and right
+    EXPRESSION_TYPE_COMPARE_NOTEQUAL                = 11, // inequal operator between left and right
+    EXPRESSION_TYPE_COMPARE_LESSTHAN                = 12, // less than operator between left and right
+    EXPRESSION_TYPE_COMPARE_GREATERTHAN             = 13, // greater than operator between left and right
+    EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO       = 14, // less than equal operator between left and right
+    EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO    = 15, // greater than equal operator between left and right
+    EXPRESSION_TYPE_COMPARE_LIKE                    = 16, // LIKE operator (left LIKE right). both children must be string.
+    EXPRESSION_TYPE_COMPARE_IN                      = 17, // IN operator [left IN (right1, right2, ...)]
 
-  //===--------------------------------------------------------------------===//
-  // Comparison Operators
-  //===--------------------------------------------------------------------===//
+    // -----------------------------
+    // Conjunction Operators
+    // -----------------------------
+    EXPRESSION_TYPE_CONJUNCTION_AND                 = 20,
+    EXPRESSION_TYPE_CONJUNCTION_OR                  = 21,
 
-  EXPRESSION_TYPE_COMPARE_EQ = 10,  // equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_NE = 11,  // inequal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LT = 12,  // less than operator between left and right
-  EXPRESSION_TYPE_COMPARE_GT =
-      13,  // greater than operator between left and right
-  EXPRESSION_TYPE_COMPARE_LTE =
-      14,  // less than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_GTE =
-      15,  // greater than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LIKE =
-      16,  // LIKE operator (left LIKE right). both children must be string.
+    // -----------------------------
+    // Values
+    // -----------------------------
+    EXPRESSION_TYPE_VALUE_CONSTANT                  = 30,
+    EXPRESSION_TYPE_VALUE_PARAMETER                 = 31,
+    EXPRESSION_TYPE_VALUE_TUPLE                     = 32,
+    EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS             = 33,
+    EXPRESSION_TYPE_VALUE_NULL                      = 34,
+    EXPRESSION_TYPE_VALUE_VECTOR                    = 35,
+    EXPRESSION_TYPE_VALUE_SCALAR                    = 36,
 
-  //===--------------------------------------------------------------------===//
-  // Conjunction Operators
-  //===--------------------------------------------------------------------===//
+    // -----------------------------
+    // Aggregates
+    // -----------------------------
+    EXPRESSION_TYPE_AGGREGATE_COUNT                 = 40,
+    EXPRESSION_TYPE_AGGREGATE_COUNT_STAR            = 41,
+    EXPRESSION_TYPE_AGGREGATE_SUM                   = 42,
+    EXPRESSION_TYPE_AGGREGATE_MIN                   = 43,
+    EXPRESSION_TYPE_AGGREGATE_MAX                   = 44,
+    EXPRESSION_TYPE_AGGREGATE_AVG                   = 45,
+    EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT = 46,
+    EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG   = 47,
+    EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD  = 48,
 
-  EXPRESSION_TYPE_CONJUNCTION_AND = 20,
-  EXPRESSION_TYPE_CONJUNCTION_OR = 21,
+    // -----------------------------
+    // Functions
+    // -----------------------------
+    EXPRESSION_TYPE_FUNCTION                        = 100,
 
-  //===--------------------------------------------------------------------===//
-  // Values
-  //===--------------------------------------------------------------------===//
 
-  EXPRESSION_TYPE_VALUE_CONSTANT = 30,
-  EXPRESSION_TYPE_VALUE_PARAMETER = 31,
-  EXPRESSION_TYPE_VALUE_TUPLE = 32,
-  EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS = 33,
-  EXPRESSION_TYPE_VALUE_NULL = 34,
+    // -----------------------------
+    // Internals added for Elastic
+    // -----------------------------
+    EXPRESSION_TYPE_HASH_RANGE                      = 200,
 
-  //===--------------------------------------------------------------------===//
-  // Aggregates
-  //===--------------------------------------------------------------------===//
+    // -----------------------------
+    // Internals added for Case When
+    // -----------------------------
+    EXPRESSION_TYPE_OPERATOR_CASE_WHEN                       = 300,
+    EXPRESSION_TYPE_OPERATOR_ALTERNATIVE                     = 301,
 
-  EXPRESSION_TYPE_AGGREGATE_COUNT = 40,
-  EXPRESSION_TYPE_AGGREGATE_COUNT_STAR = 41,
-  EXPRESSION_TYPE_AGGREGATE_SUM = 42,
-  EXPRESSION_TYPE_AGGREGATE_MIN = 43,
-  EXPRESSION_TYPE_AGGREGATE_MAX = 44,
-  EXPRESSION_TYPE_AGGREGATE_AVG = 45,
-  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG = 46,
+    // -----------------------------
+    // Subquery IN/EXISTS
+    // -----------------------------
+    EXPRESSION_TYPE_ROW_SUBQUERY                       = 400,
+    EXPRESSION_TYPE_SELECT_SUBQUERY                    = 401
 
-  //===--------------------------------------------------------------------===//
-  // Parser
-  //===--------------------------------------------------------------------===//
-
-  EXPRESSION_TYPE_STAR = 50,
-  EXPRESSION_TYPE_PLACEHOLDER = 51,
-  EXPRESSION_TYPE_COLUMN_REF = 52,
-  EXPRESSION_TYPE_FUNCTION_REF = 53,
-
-  //===--------------------------------------------------------------------===//
-  // Misc
-  //===--------------------------------------------------------------------===//
-  EXPRESSION_TYPE_CAST = 60
 };
 
 //===--------------------------------------------------------------------===//

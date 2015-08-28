@@ -33,11 +33,11 @@ public:
     ParameterValueExpression(int value_idx);
 
     // Constructor to use for testing purposes
-    ParameterValueExpression(int value_idx, voltdb::Value* paramValue) :
+    ParameterValueExpression(int value_idx, Value* paramValue) :
         m_valueIdx(value_idx), m_paramValue(paramValue) {
     }
 
-    voltdb::Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
         assert(m_paramValue != NULL);
         return *m_paramValue;
     }
@@ -60,7 +60,7 @@ public:
   private:
     int m_valueIdx;
 
-    voltdb::Value *m_paramValue;
+    Value *m_paramValue;
 };
 
 }  // End expression namespace

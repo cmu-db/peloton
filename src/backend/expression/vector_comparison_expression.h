@@ -29,7 +29,7 @@ namespace expression {
 
 // Compares two tuples column by column using lexicographical compare.
 template<typename OP>
-NValue compare_tuple(const TableTuple& tuple1, const TableTuple& tuple2)
+NValue compare_tuple(const AbstractTuple& tuple1, const TableTuple& tuple2)
 {
     assert(tuple1.getSchema()->columnCount() == tuple2.getSchema()->columnCount());
     NValue fallback_result = OP::includes_equality() ? NValue::getTrue() : NValue::getFalse();
@@ -84,7 +84,7 @@ public:
         assert(right != NULL);
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    NValue eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const {
         return (spacer + "VectorComparisonExpression\n");
@@ -124,7 +124,7 @@ struct NValueExtractor
     }
 
     template<typename OP>
-    NValue compare(const TableTuple& tuple) const
+    NValue compare(const AbstractTuple& tuple) const
     {
         assert(tuple.getSchema()->columnCount() == 1);
         return compare<OP>(tuple.getNValue(0));
@@ -153,7 +153,7 @@ struct NValueExtractor
 
 struct TupleExtractor
 {
-    typedef TableTuple ValueType;
+    typedef AbstractTuple ValueType;
 
     TupleExtractor(NValue value) :
         m_table(getOutputTable(value)),
@@ -192,7 +192,7 @@ struct TupleExtractor
     }
 
     template<typename OP>
-    NValue compare(const TableTuple& tuple) const
+    NValue compare(const AbstractTuple& tuple) const
     {
         return compare_tuple<OP>(m_tuple, tuple);
     }
@@ -233,7 +233,7 @@ private:
 };
 
 template <typename OP, typename ValueExtractorOuter, typename ValueExtractorInner>
-NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
 {
     // Outer and inner expressions can be either a row (expr1, expr2, expr3...) or a single expr
     // The quantifier is expected on the right side of the expression "outer_expr OP ANY/ALL(inner_expr )"
@@ -267,7 +267,7 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
         // throw runtime exception
         char message[256];
         snprintf(message, 256, "More than one row returned by a scalar/row subquery");
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+        throw Exception(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
     }
 
     // Evaluate the inner_expr. The return value is a subquery id or a value as well
@@ -277,7 +277,7 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
         // throw runtime exception
         char message[256];
         snprintf(message, 256, "More than one row returned by a scalar/row subquery");
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+        throw Exception(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
     }
 
     if (innerExtractor.resultSize() == 0) {
