@@ -33,13 +33,15 @@ namespace logging {
 PelotonFrontendLogger::PelotonFrontendLogger(){
 
   logging_type = LOGGING_TYPE_PELOTON;
+
   // open log file and file descriptor
-  logFile = fopen( filename.c_str(),"ab+");
-  if(logFile == NULL){
+  log_file = fopen( file_name.c_str(),"ab+");
+  if(log_file == NULL){
     LOG_ERROR("LogFile is NULL");
   }
-  logFileFd = fileno(logFile);
-  if( logFileFd == -1){
+
+  log_file_fd = fileno(log_file);
+  if( log_file_fd == -1){
     LOG_ERROR("LogFileFd is -1");
   }
 }
@@ -49,7 +51,7 @@ PelotonFrontendLogger::PelotonFrontendLogger(){
  */
 PelotonFrontendLogger::~PelotonFrontendLogger(){
 
-  int ret = fclose(logFile);
+  int ret = fclose(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
@@ -170,22 +172,27 @@ void PelotonFrontendLogger::Flush(void) {
   std::vector<ItemPointer> inserted_tuples;
   std::vector<ItemPointer> deleted_tuples;
 
+  //  First, write out the log record
   for( auto record : peloton_global_queue ){
 
     fwrite( record->GetMessage(), 
             sizeof(char), 
             record->GetMessageLength(), 
-            logFile);
+            log_file);
 
-    CollectCommittedTuples((TupleRecord*)record, inserted_tuples, deleted_tuples );
+    // Collect the commit information
+    CollectCommittedTuples((TupleRecord*)record,
+                           inserted_tuples,
+                           deleted_tuples );
   }
 
-  int ret = fflush(logFile);
+  // Then, write out the log record
+  int ret = fflush(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
   }
 
-  ret = fsync(logFileFd);
+  ret = fsync(log_file_fd);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
@@ -204,27 +211,29 @@ void PelotonFrontendLogger::Flush(void) {
     }
   }
 
-  // set insert/delete commit based on logs
+  // Set insert/delete COMMIT marks based on collected information
   for( auto inserted_tuple : inserted_tuples){
-    SetInsertCommit(inserted_tuple, true);
+    SetInsertCommitMark(inserted_tuple, true);
   }
   for( auto deleted_tuple : deleted_tuples){
-    SetDeleteCommit(deleted_tuple, true);
+    SetDeleteCommitMark(deleted_tuple, true);
   }
 
   auto done = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE, 1/*FIXME*/);
 
+  // Finally, write out the DONE mark
   fwrite( done->GetMessage(), 
           sizeof(char), 
           done->GetMessageLength(), 
-          logFile);
+          log_file);
 
-  ret = fflush(logFile);
+  // And, flush it out
+  ret = fflush(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fflush(%d)", ret);
   }
 
-  ret = fsync(logFileFd);
+  ret = fsync(log_file_fd);
   if( ret != 0 ){
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
@@ -254,11 +263,11 @@ void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record,
  */
 void PelotonFrontendLogger::DoRecovery() {
 
-  if(LogFileSize() > 0){
+  if(GetLogFileSize() > 0){
 
     bool EOF_OF_LOG_FILE = false;
 
-    JumpToLastUnfinishedTxn();
+    JumpToLastActiveTransaction();
 
     while(!EOF_OF_LOG_FILE){
 
@@ -268,17 +277,17 @@ void PelotonFrontendLogger::DoRecovery() {
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
           printf("BEGIN\n");
-          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
+          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
           printf("COMMIT\n");
-          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_END:
           printf("END\n");
-          SkipTxnRecord(LOGRECORD_TYPE_TRANSACTION_END);
+          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_END);
           break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
@@ -318,7 +327,7 @@ void PelotonFrontendLogger::InsertTuple(void){
     return;
   }
 
-  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
+  SetInsertCommitMark(tupleRecord.GetInsertLocation(), true);
 
 }
 
@@ -335,7 +344,7 @@ void PelotonFrontendLogger::DeleteTuple(void){
     return;
   }
 
-  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
+  SetDeleteCommitMark(tupleRecord.GetDeleteLocation(), true);
 }
 
 /**
@@ -351,21 +360,21 @@ void PelotonFrontendLogger::UpdateTuple(void){
     return;
   }
 
-  SetInsertCommit(tupleRecord.GetInsertLocation(), true);
-  SetDeleteCommit(tupleRecord.GetDeleteLocation(), true);
+  SetInsertCommitMark(tupleRecord.GetInsertLocation(), true);
+  SetDeleteCommitMark(tupleRecord.GetDeleteLocation(), true);
 }
 
-void PelotonFrontendLogger::SkipTxnRecord(LogRecordType log_record_type){
+void PelotonFrontendLogger::SkipTransactionRecord(LogRecordType log_record_type){
   // read transaction information from the log file
   TransactionRecord txnRecord(log_record_type);
 
-  if( ReadTxnRecord(txnRecord) == false ){
+  if( ReadTransactionRecordHeader(txnRecord) == false ){
     // file is broken
     return;
   }
 }
 
-void PelotonFrontendLogger::SetInsertCommit(ItemPointer location, bool commit){
+void PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location, bool commit){
   //Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
@@ -373,7 +382,7 @@ void PelotonFrontendLogger::SetInsertCommit(ItemPointer location, bool commit){
   tile_group_header->SetInsertCommit(location.offset, commit); 
 }
 
-void PelotonFrontendLogger::SetDeleteCommit(ItemPointer location, bool commit){
+void PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location, bool commit){
   //Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
@@ -391,10 +400,10 @@ void PelotonFrontendLogger::SetDeleteCommit(ItemPointer location, bool commit){
  */
 LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
   char buffer;
-  if( IsFileBroken(1) ){
+  if( IsFileTruncated(1) ){
     return LOGRECORD_TYPE_INVALID;
   }
-  int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
+  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
   if( ret <= 0 ){
     return LOGRECORD_TYPE_INVALID;
   }
@@ -403,11 +412,11 @@ LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
   return log_record_type;
 }
 
-void PelotonFrontendLogger::JumpToLastUnfinishedTxn(){
+void PelotonFrontendLogger::JumpToLastActiveTransaction(){
   char buffer;
-  fseek(logFile, -1, SEEK_END);
+  fseek(log_file, -1, SEEK_END);
   // Read last log record type
-  int ret = fread((void*)&buffer, 1, sizeof(char), logFile);
+  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread(%d)", ret);
   }
@@ -421,17 +430,17 @@ void PelotonFrontendLogger::JumpToLastUnfinishedTxn(){
      * jump to last begin txn log record
      */
 
-    while(ftell(logFile) >= 0){
-      fseek(logFile, -2, SEEK_CUR);
+    while(ftell(log_file) >= 0){
+      fseek(log_file, -2, SEEK_CUR);
       if(GetNextLogRecordType() == LOGRECORD_TYPE_TRANSACTION_BEGIN){
-        fseek(logFile, -1, SEEK_CUR);
+        fseek(log_file, -1, SEEK_CUR);
         break;
       }
     }
   }else{
     /* no recovery */
     LOG_INFO("No recovery\n");
-    fseek(logFile, 0, SEEK_END);
+    fseek(log_file, 0, SEEK_END);
   }
 }
 
@@ -439,10 +448,10 @@ void PelotonFrontendLogger::JumpToLastUnfinishedTxn(){
  * @brief Measure the size of log file
  * @return the size if the log file exists otherwise 0
  */
-size_t PelotonFrontendLogger::LogFileSize(){
+size_t PelotonFrontendLogger::GetLogFileSize(){
   struct stat logStats;   
-  if(stat(filename.c_str(), &logStats) == 0){
-    fstat(logFileFd, &logStats);
+  if(stat(file_name.c_str(), &logStats) == 0){
+    fstat(log_file_fd, &logStats);
     return logStats.st_size;
   }else{
     return 0;
@@ -459,11 +468,11 @@ size_t PelotonFrontendLogger::GetNextFrameSize(){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
 
-  if( IsFileBroken(sizeof(int32_t)) ){
+  if( IsFileTruncated(sizeof(int32_t)) ){
     return 0;
   }
 
-  size_t ret = fread(buffer, 1, sizeof(buffer), logFile);
+  size_t ret = fread(buffer, 1, sizeof(buffer), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -473,12 +482,12 @@ size_t PelotonFrontendLogger::GetNextFrameSize(){
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   /* go back 4 bytes */
-  int res = fseek(logFile, -sizeof(int32_t), SEEK_CUR);
+  int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
   if(res == -1){
     LOG_ERROR("Error occured in fseek ");
   }
 
-  if( IsFileBroken(frame_size) ){
+  if( IsFileTruncated(frame_size) ){
     // file is broken
     return 0;
   }
@@ -490,7 +499,7 @@ size_t PelotonFrontendLogger::GetNextFrameSize(){
  * @brief Read TransactionRecord
  * @param txnRecord
  */
-bool PelotonFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
+bool PelotonFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txnRecord){
 
   auto txn_record_size = GetNextFrameSize();
 
@@ -500,7 +509,7 @@ bool PelotonFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
   }
 
   char txn_record[txn_record_size];
-  size_t ret = fread(txn_record, 1, sizeof(txn_record), logFile);
+  size_t ret = fread(txn_record, 1, sizeof(txn_record), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
@@ -510,10 +519,10 @@ bool PelotonFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
   return true;
 }
 
-bool PelotonFrontendLogger::IsFileBroken(size_t size_to_read){
-  size_t current_position = ftell(logFile);
-  if( LogFileSize() < (current_position+size_to_read)){
-    fseek(logFile, 0, SEEK_END);
+bool PelotonFrontendLogger::IsFileTruncated(size_t size_to_read){
+  size_t current_position = ftell(log_file);
+  if( GetLogFileSize() < (current_position+size_to_read)){
+    fseek(log_file, 0, SEEK_END);
     return true;
   }else{
     return false;
@@ -534,7 +543,7 @@ bool PelotonFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
 
   // Read header 
   char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), logFile);
+  size_t ret = fread(header, 1, sizeof(header), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }

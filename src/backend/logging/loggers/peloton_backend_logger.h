@@ -50,7 +50,7 @@ private:
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
 
     // last committed log record position
-    oid_t log_record_count = 0;
+    oid_t last_committed_txn_queue_offset = 0;
 
 };
 
