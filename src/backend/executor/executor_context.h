@@ -40,14 +40,14 @@ class ExecutorContext {
 
   const ValueArray &GetParams() const { return params_; }
 
-  // num of tuple processed
-  uint32_t num_processed = 0;
-
   ~ExecutorContext(){
     for(int i=0; i < params_.GetSize(); i++){
       params_[i].FreeUninlinedData();
     }
   }
+
+  // num of tuple processed
+  uint32_t num_processed = 0;
 
  private:
   //===--------------------------------------------------------------------===//

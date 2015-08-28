@@ -10,66 +10,92 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#ifndef HSTORECONJUNCTIONEXPRESSION_H
+#define HSTORECONJUNCTIONEXPRESSION_H
 
-#include "backend/common/serializer.h"
-#include "backend/common/value_vector.h"
+#include "common/common.h"
+#include "common/serializeio.h"
+#include "common/valuevector.h"
 
-#include "backend/expression/abstract_expression.h"
+#include "expressions/abstractexpression.h"
 
 #include <string>
 
-namespace peloton {
-namespace expression {
+namespace voltdb {
 
 class ConjunctionAnd;
 class ConjunctionOr;
 
-//===--------------------------------------------------------------------===//
-// Conjunction Expression
-//===--------------------------------------------------------------------===//
-
 template <typename C>
-class ConjunctionExpression : public AbstractExpression {
- public:
-  ConjunctionExpression(ExpressionType type, AbstractExpression *left,
-                        AbstractExpression *right)
-      : AbstractExpression(type, left, right) {
-    this->m_left = left;
-    this->m_right = right;
-  }
+class ConjunctionExpression : public AbstractExpression
+{
+  public:
+    ConjunctionExpression(ExpressionType type,
+                                   AbstractExpression *left,
+                                   AbstractExpression *right)
+        : AbstractExpression(type, left, right)
+    {
+        this->m_left = left;
+        this->m_right = right;
+    }
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *ec) const;
+    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
 
-  std::string DebugInfo(const std::string &spacer) const {
-    std::string retval;
-    retval = spacer + "ConjunctionExpression : " +
-             ExpressionTypeToString(expr_type) + "\n";
-    if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
-    if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
-    return retval;
-  }
+    std::string debugInfo(const std::string &spacer) const {
+        return (spacer + "ConjunctionExpression\n");
+    }
 
-  AbstractExpression *m_left;
-  AbstractExpression *m_right;
+    AbstractExpression *m_left;
+    AbstractExpression *m_right;
 };
 
-template <>
-inline Value ConjunctionExpression<ConjunctionAnd>::Evaluate(
-    const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-    executor::ExecutorContext *ec) const {
-  return m_left->Evaluate(tuple1, tuple2, ec)
-      .OpAnd(m_right->Evaluate(tuple1, tuple2, ec));
+template<> inline NValue
+ConjunctionExpression<ConjunctionAnd>::eval(const TableTuple *tuple1,
+                                            const TableTuple *tuple2) const
+{
+    NValue leftBool = m_left->eval(tuple1, tuple2);
+    // False False -> False
+    // False True  -> False
+    // False NULL  -> False
+    if (leftBool.isFalse()) {
+        return leftBool;
+    }
+    NValue rightBool = m_right->eval(tuple1, tuple2);
+    // True  False -> False
+    // True  True  -> True
+    // True  NULL  -> NULL
+    // NULL  False -> False
+    if (leftBool.isTrue() || rightBool.isFalse()) {
+        return rightBool;
+    }
+    // NULL  True  -> NULL
+    // NULL  NULL  -> NULL
+    return NValue::getNullValue(VALUE_TYPE_BOOLEAN);
 }
 
-template <>
-inline Value ConjunctionExpression<ConjunctionOr>::Evaluate(
-    const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-    executor::ExecutorContext *ec) const {
-  return m_left->Evaluate(tuple1, tuple2, ec)
-      .OpOr(m_right->Evaluate(tuple1, tuple2, ec));
+template<> inline NValue
+ConjunctionExpression<ConjunctionOr>::eval(const TableTuple *tuple1,
+                                           const TableTuple *tuple2) const
+{
+    NValue leftBool = m_left->eval(tuple1, tuple2);
+    // True True  -> True
+    // True False -> True
+    // True NULL  -> True
+    if (leftBool.isTrue()) {
+        return leftBool;
+    }
+    NValue rightBool = m_right->eval(tuple1, tuple2);
+    // False True  -> True
+    // False False -> False
+    // False NULL  -> NULL
+    // NULL  True  -> True
+    if (leftBool.isFalse() || rightBool.isTrue()) {
+        return rightBool;
+    }
+    // NULL  False -> NULL
+    // NULL  NULL  -> NULL
+    return NValue::getNullValue(VALUE_TYPE_BOOLEAN);
 }
 
-}  // End expression namespace
-}  // End peloton namespace
+}
+#endif

@@ -15,23 +15,14 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/types.h"
 #include "backend/common/value.h"
-#include "backend/common/value_vector.h"
 #include "backend/common/abstract_tuple.h"
-#include "backend/executor/executor_context.h"
+#include "backend/common/types.h"
 
-#include "postgres.h"
-#include "common/fe_memutils.h"
-
-#include <json_spirit.h>
+#include "boost/shared_ptr.hpp"
 
 namespace peloton {
 namespace expression {
-
-class SerializeInput;
-class SerializeOutput;
-class AbstractExpression;
 
 //===--------------------------------------------------------------------===//
 // AbstractExpression
@@ -50,108 +41,100 @@ class AbstractExpression;
  * remain
  * constant and read-only during an execution.
  */
+
 class AbstractExpression {
  public:
   // destroy this node and all children
   virtual ~AbstractExpression();
 
-  /**
-   * @brief Evaluate the expression tree recursively and return a Value.
-   * @param tuple1 The left tuple.
-   * @param tuple2 The right tuple.
-   * @param exprcontex  The expression context that is passed through the tree.
-   * It is used when needed and no cost otherwise.
-   */
-  virtual Value Evaluate(
-      const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-      executor::ExecutorContext *context /* = nullptr */) const = 0;
+  virtual Value eval(const AbstractTuple *tuple1 = NULL,
+                     const AbstractTuple *tuple2 = NULL,
+                     executor::ExecutorContext *context /* = nullptr */) const = 0;
 
-  // TODO Please remove this function from here and all derived classes
-  // set parameter values for this node and its descendants
-  virtual void Substitute(const ValueArray &params);
+  /** return true if self or descendent should be substitute()'d */
+  virtual bool hasParameter() const;
 
-  // return true if self or descendant should be substitute()'d
-  virtual bool HasParameter() const;
+  /* debugging methods - some various ways to create a sring
+       describing the expression tree */
+  std::string debug() const;
+  std::string debug(bool traverse) const;
+  std::string debug(const std::string &spacer) const;
+  virtual std::string debugInfo(const std::string &spacer) const = 0;
 
-  /// Get a string representation for debugging
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const AbstractExpression &expr);
+  /* serialization methods. expressions are serialized in java and
+       deserialized in the execution engine during startup. */
 
-  std::string Debug() const;
-  std::string Debug(bool traverse) const;
-  std::string Debug(const std::string &spacer) const;
-  virtual std::string DebugInfo(const std::string &spacer = "->") const = 0;
 
-  // create an expression tree. call this once with the input
-  // stream positioned at the root expression node
-  static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
-
-  // Accessors
-
-  ExpressionType GetExpressionType() const {
-    return expr_type;
+  /** accessors */
+  ExpressionType getExpressionType() const {
+    return m_type;
   }
 
-  const AbstractExpression *GetLeft() const {
-    return left_expr;
+  ValueType getValueType() const
+  {
+    return m_valueType;
   }
 
-  const AbstractExpression *GetRight() const {
-    return right_expr;
+  int getValueSize() const
+  {
+    return m_valueSize;
   }
 
-  AbstractExpression *GetExpression() const {
-    return expr;
+  bool getInBytes() const
+  {
+    return m_inBytes;
   }
 
-  const char *GetName() const {
-    return name;
+  // These should really be part of the constructor, but plumbing
+  // the type and size args through the whole of the expression world is
+  // not something I'm doing right now.
+  void setValueType(ValueType type)
+  {
+    m_valueType = type;
   }
 
-  const char *GetColumn() const {
-    return column;
+  void setInBytes(bool bytes)
+  {
+    m_inBytes = bytes;
   }
 
-  const char *GetAlias() const {
-    return alias;
+  void setValueSize(int size)
+  {
+    m_valueSize = size;
   }
 
-  // Parser expression
+  const AbstractExpression *getLeft() const {
+    return m_left;
+  }
 
-  int ival = 0;
-  AbstractExpression *expr = nullptr;
-
-  char *name = nullptr;
-  char *column = nullptr;
-  char *alias = nullptr;
-
-  bool distinct = false;
+  const AbstractExpression *getRight() const {
+    return m_right;
+  }
 
  protected:
   AbstractExpression();
-
   AbstractExpression(ExpressionType type);
-
-  AbstractExpression(ExpressionType type, AbstractExpression *left,
+  AbstractExpression(ExpressionType type,
+                     AbstractExpression *left,
                      AbstractExpression *right);
 
-  //===--------------------------------------------------------------------===//
-  // Data Members
-  //===--------------------------------------------------------------------===//
-
-  // children
-  AbstractExpression *left_expr = nullptr, *right_expr = nullptr;
-
-  ExpressionType expr_type;
-
-  // true if we need to substitute ?
-  bool has_parameter;
-
  private:
-  static AbstractExpression *CreateExpressionTreeRecurse(
-      json_spirit::Object &obj);
+  bool initParamShortCircuits();
 
-  bool InitParamShortCircuits();
+ protected:
+
+  AbstractExpression *m_left, *m_right;
+
+  ExpressionType m_type;
+
+  bool m_hasParameter;
+
+  ValueType m_valueType = VALUE_TYPE_INVALID;
+
+  int m_valueSize = 0;
+
+  bool m_inBytes = false;
+
 };
 
 }  // End expression namespace
