@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef JSONFUNCTIONS_H_
-#define JSONFUNCTIONS_H_
+#pragma once
 
 #include <cassert>
 #include <cstring>
@@ -22,7 +21,8 @@
 #include <jsoncpp/jsoncpp.h>
 #include <jsoncpp/jsoncpp-forwards.h>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 /** a path node is either a field name or an array index */
 struct JsonPathNode {
@@ -302,11 +302,11 @@ private:
 };
 
 /** implement the 2-argument SQL FIELD function */
-template<> inline NValue NValue::call<FUNC_VOLT_FIELD>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_VOLT_FIELD>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
 
-    const NValue& docNVal = arguments[0];
-    const NValue& pathNVal = arguments[1];
+    const Value& docNVal = arguments[0];
+    const Value& pathNVal = arguments[1];
 
     if (docNVal.isNull()) {
         return docNVal;
@@ -336,10 +336,10 @@ template<> inline NValue NValue::call<FUNC_VOLT_FIELD>(const std::vector<NValue>
 }
 
 /** implement the 2-argument SQL ARRAY_ELEMENT function */
-template<> inline NValue NValue::call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
 
-    const NValue& docNVal = arguments[0];
+    const Value& docNVal = arguments[0];
     if (docNVal.isNull()) {
         return getNullStringValue();
     }
@@ -347,7 +347,7 @@ template<> inline NValue NValue::call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector
         throwCastSQLException(docNVal.getValueType(), VALUE_TYPE_VARCHAR);
     }
 
-    const NValue& indexNVal = arguments[1];
+    const Value& indexNVal = arguments[1];
     if (indexNVal.isNull()) {
         return getNullStringValue();
     }
@@ -402,7 +402,7 @@ template<> inline NValue NValue::call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector
 }
 
 /** implement the 1-argument SQL ARRAY_LENGTH function */
-template<> inline NValue NValue::callUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
+template<> inline Value Value::callUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 
     if (isNull()) {
         return getNullValue(VALUE_TYPE_INTEGER);
@@ -433,19 +433,19 @@ template<> inline NValue NValue::callUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
         return getNullValue(VALUE_TYPE_INTEGER);
     }
 
-    NValue result(VALUE_TYPE_INTEGER);
+    Value result(VALUE_TYPE_INTEGER);
     int32_t size = static_cast<int32_t>(root.size());
     result.getInteger() = size;
     return result;
 }
 
 /** implement the 3-argument SQL SET_FIELD function */
-template<> inline NValue NValue::call<FUNC_VOLT_SET_FIELD>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_VOLT_SET_FIELD>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 3);
 
-    const NValue& docNVal = arguments[0];
-    const NValue& pathNVal = arguments[1];
-    const NValue& valueNVal = arguments[2];
+    const Value& docNVal = arguments[0];
+    const Value& pathNVal = arguments[1];
+    const Value& valueNVal = arguments[2];
 
     if (docNVal.isNull()) {
         return docNVal;
@@ -488,7 +488,5 @@ template<> inline NValue NValue::call<FUNC_VOLT_SET_FIELD>(const std::vector<NVa
     }
 }
 
-}
-
-
-#endif /* JSONFUNCTIONS_H_ */
+}  // End expression namespace
+}  // End peloton namespace

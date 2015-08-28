@@ -10,19 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression_util.h"
-#include "common/debuglog.h"
-#include "common/ValueFactory.hpp"
-#include "common/FatalException.hpp"
-#include "expressions/abstractexpression.h"
-#include "expressions/expressions.h"
+#include "backend/common/logger.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/exception.h"
+#include "backend/expression/expression_util.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expressions.h"
 
 #include <cassert>
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 /** Parse JSON parameters to create a hash range expression */
 static AbstractExpression*
@@ -118,17 +119,17 @@ subqueryComparisonFactory(PlannerDomValue obj,
     } else if (l_subquery != NULL) {
         switch (c) {
         case (EXPRESSION_TYPE_COMPARE_EQUAL):
-            return new VectorComparisonExpression<CmpEq, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpEq, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-            return new VectorComparisonExpression<CmpNe, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpNe, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-            return new VectorComparisonExpression<CmpLt, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpLt, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-            return new VectorComparisonExpression<CmpGt, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpGt, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpLte, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpLte, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpGte, TupleExtractor, NValueExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpGte, TupleExtractor, ValueExtractor>(c, l, r, quantifier);
         default:
             char message[256];
             snprintf(message, 256, "Invalid ExpressionType '%s' called"
@@ -140,17 +141,17 @@ subqueryComparisonFactory(PlannerDomValue obj,
         assert(r_subquery != NULL);
         switch (c) {
         case (EXPRESSION_TYPE_COMPARE_EQUAL):
-            return new VectorComparisonExpression<CmpEq, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpEq, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-            return new VectorComparisonExpression<CmpNe, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpNe, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-            return new VectorComparisonExpression<CmpLt, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpLt, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-            return new VectorComparisonExpression<CmpGt, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpGt, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpLte, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpLte, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpGte, NValueExtractor, TupleExtractor>(c, l, r, quantifier);
+            return new VectorComparisonExpression<CmpGte, ValueExtractor, TupleExtractor>(c, l, r, quantifier);
         default:
             char message[256];
             snprintf(message, 256, "Invalid ExpressionType '%s' called"
@@ -343,18 +344,18 @@ static AbstractExpression* caseWhenFactory(ValueType vt,
 
 
 /** convert the enumerated value type into a concrete type for
- * constant value expressions templated ctors */
+ * constant value expression templated ctors */
 static AbstractExpression*
 constantValueFactory(PlannerDomValue obj,
                      ValueType vt, ExpressionType et,
                      AbstractExpression *lc, AbstractExpression *rc)
 {
     // read before ctor - can then instantiate fully init'd obj.
-    NValue newvalue;
+    Value newvalue;
     bool isNull = obj.valueForKey("ISNULL").asBool();
     if (isNull)
     {
-        newvalue = NValue::getNullValue(vt);
+        newvalue = Value::getNullValue(vt);
         return new ConstantValueExpression(newvalue);
     }
 
@@ -600,7 +601,7 @@ ExpressionUtil::expressionFactory(PlannerDomValue obj,
         ret = subqueryFactory(et, obj, args);
         break;
 
-        // must handle all known expressions in this factory
+        // must handle all known expression in this factory
     default:
 
         char message[256];
@@ -617,13 +618,13 @@ ExpressionUtil::expressionFactory(PlannerDomValue obj,
 }
 
 boost::shared_array<int>
-ExpressionUtil::convertIfAllTupleValues(const std::vector<voltdb::AbstractExpression*> &expressions)
+ExpressionUtil::convertIfAllTupleValues(const std::vector<voltdb::AbstractExpression*> &expression)
 {
-    size_t cnt = expressions.size();
+    size_t cnt = expression.size();
     boost::shared_array<int> ret(new int[cnt]);
     for (int i = 0; i < cnt; ++i) {
         voltdb::TupleValueExpression* casted=
-          dynamic_cast<voltdb::TupleValueExpression*>(expressions[i]);
+          dynamic_cast<voltdb::TupleValueExpression*>(expression[i]);
         if (casted == NULL) {
             return boost::shared_array<int>();
         }
@@ -633,13 +634,13 @@ ExpressionUtil::convertIfAllTupleValues(const std::vector<voltdb::AbstractExpres
 }
 
 boost::shared_array<int>
-ExpressionUtil::convertIfAllParameterValues(const std::vector<voltdb::AbstractExpression*> &expressions)
+ExpressionUtil::convertIfAllParameterValues(const std::vector<voltdb::AbstractExpression*> &expression)
 {
-    size_t cnt = expressions.size();
+    size_t cnt = expression.size();
     boost::shared_array<int> ret(new int[cnt]);
     for (int i = 0; i < cnt; ++i) {
         voltdb::ParameterValueExpression *casted =
-          dynamic_cast<voltdb::ParameterValueExpression*>(expressions[i]);
+          dynamic_cast<voltdb::ParameterValueExpression*>(expression[i]);
         if (casted == NULL) {
             return boost::shared_array<int>();
         }
@@ -670,9 +671,9 @@ ExpressionUtil::extractTupleValuesColumnIdx(const AbstractExpression* expr, std:
 void ExpressionUtil::loadIndexedExprsFromJson(std::vector<AbstractExpression*>& indexed_exprs, const std::string& jsonarraystring)
 {
     PlannerDomRoot domRoot(jsonarraystring.c_str());
-    PlannerDomValue expressionsArray = domRoot.rootObject();
-    for (int i = 0; i < expressionsArray.arrayLen(); i++) {
-        PlannerDomValue exprValue = expressionsArray.valueAtIndex(i);
+    PlannerDomValue expressionArray = domRoot.rootObject();
+    for (int i = 0; i < expressionArray.arrayLen(); i++) {
+        PlannerDomValue exprValue = expressionArray.valueAtIndex(i);
         AbstractExpression *expr = AbstractExpression::buildExpressionTree(exprValue);
         indexed_exprs.push_back(expr);
     }
@@ -684,4 +685,6 @@ AbstractExpression* ExpressionUtil::loadExpressionFromJson(const std::string& js
     return AbstractExpression::buildExpressionTree(domRoot.rootObject());
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+

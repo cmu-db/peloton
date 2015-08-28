@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTORETUPLEVALUEEXPRESSION_H
-#define HSTORETUPLEVALUEEXPRESSION_H
+#pragma once
 
-#include "expressions/abstractexpression.h"
-#include "common/tabletuple.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/storage/tuple.h"
 
 #include <string>
 #include <sstream>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 class TupleValueExpression : public AbstractExpression {
   public:
@@ -29,7 +29,7 @@ class TupleValueExpression : public AbstractExpression {
         VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
-    virtual voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    virtual voltdb::Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         if (tuple_idx == 0) {
             assert(tuple1);
             if ( ! tuple1 ) {
@@ -37,7 +37,7 @@ class TupleValueExpression : public AbstractExpression {
                                               "eval:"
                                               " Couldn't find tuple 1 (possible index scan planning error)");
             }
-            return tuple1->getNValue(value_idx);
+            return tuple1->getValue(value_idx);
         }
         else {
             assert(tuple2);
@@ -46,7 +46,7 @@ class TupleValueExpression : public AbstractExpression {
                                               "eval:"
                                               " Couldn't find tuple 2 (possible index scan planning error)");
             }
-            return tuple2->getNValue(value_idx);
+            return tuple2->getValue(value_idx);
         }
     }
 
@@ -64,5 +64,5 @@ class TupleValueExpression : public AbstractExpression {
     const int value_idx;           // which (offset) column of the tuple
 };
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace

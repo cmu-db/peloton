@@ -10,24 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTOREVECTORCOMPARISONEXPRESSION_H
-#define HSTOREVECTORCOMPARISONEXPRESSION_H
+#pragma once
 
-#include "common/common.h"
-#include "common/executorcontext.hpp"
-#include "common/serializeio.h"
-#include "common/tabletuple.h"
-#include "common/TupleSchema.h"
-#include "common/ValuePeeker.hpp"
-#include "expressions/abstractexpression.h"
-#include "expressions/comparisonexpression.h"
-#include "storage/table.h"
-#include "storage/tableiterator.h"
+#include "backend/common/executor_context.h"
+#include "backend/common/serializer.h"
+#include "backend/storage/tuple.h"
+#include "backend/common/tuple_schema.h"
+#include "backend/common/value_peeker.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/storage/data_table.h"
 
 #include <string>
 #include <cassert>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 // Compares two tuples column by column using lexicographical compare.
 template<typename OP>
@@ -334,5 +332,5 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
     return result;
 }
 
-}
-#endif
+}  // End expression namespace
+}  // End peloton namespace
