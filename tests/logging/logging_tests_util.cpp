@@ -235,8 +235,6 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
-  std::cout << *table << std::endl;
-
   oid_t tile_group_count = table->GetTileGroupCount();
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;

@@ -142,8 +142,18 @@ void TransactionManager::EndTransaction(Transaction *txn,
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END,
                                                    txn->txn_id);
       logger->Log(record);
+
+      // Check for sync commit
+      // If true, wait for the fronted logger to flush the data
+      if( log_manager.GetSyncCommit())  {
+        while(logger->IsWaitingForFlushing()){
+          sleep(1);
+        }
+      }
+
     }
   }
+
 
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
@@ -247,15 +257,6 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
                                                    txn->txn_id);
       logger->Log(record);
-
-      // Check for sync commit
-      // If true, wait for the fronted logger to flush the data
-      if( log_manager.GetSyncCommit())  {
-        while(logger->IsWaitingForFlushing()){
-          sleep(1);
-        }
-      }
-
     }
   }
 }
@@ -363,14 +364,6 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
                                                    txn->txn_id);
       logger->Log(record);
-
-      // Check for sync commit
-      // If true, wait for the fronted logger to flush the data
-      if( log_manager.GetSyncCommit())  {
-        while(logger->IsWaitingForFlushing()){
-          sleep(1);
-        }
-      }
 
     }
   }
