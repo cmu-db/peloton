@@ -10,11 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tuple_address_expression.h"
-#include "common/debuglog.h"
-#include "expressions/abstractexpression.h"
+#include "backend/expression/tuple_address_expression.h"
 
-namespace voltdb {
+#include "backend/common/logger.h"
+#include "backend/expression/abstract_expression.h"
+
+namespace peloton {
+namespace expression {
 
 TupleAddressExpression::TupleAddressExpression()
   : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS)
@@ -24,5 +26,7 @@ TupleAddressExpression::~TupleAddressExpression()
 {
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+
 

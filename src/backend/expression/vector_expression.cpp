@@ -10,17 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expressions/abstractexpression.h"
-#include "expressions/expressionutil.h"
-#include "common/ValueFactory.hpp"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression_util.h"
+#include "backend/common/value_factory.h"
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 /*
  * Expression for collecting the various elements of an "IN LIST" for passing to the IN comparison
- * operator as a single ARRAY-valued NValue.
+ * operator as a single ARRAY-valued Value.
  * It is always the rhs of an IN expression like "col IN (0, -1, ?)", especially useful when the
- * IN filter is not index-optimized and when the list element expressions are not all constants.
+ * IN filter is not index-optimized and when the list element expression are not all constants.
  */
 class VectorExpression : public AbstractExpression {
 public:
@@ -51,12 +52,12 @@ public:
         return false;
     }
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const
     {
         //TODO: Could make this vector a member, if the memory management implications
-        // (of the NValue internal state) were clear -- is there a penalty for longer-lived
-        // NValues that outweighs the current per-eval allocation penalty?
-        std::vector<NValue> nValues(m_args.size());
+        // (of the Value internal state) were clear -- is there a penalty for longer-lived
+        // Values that outweighs the current per-eval allocation penalty?
+        std::vector<Value> nValues(m_args.size());
         for (int i = 0; i < m_args.size(); ++i) {
             nValues[i] = m_args[i]->eval(tuple1, tuple2);
         }
@@ -71,7 +72,7 @@ public:
 
 private:
     const std::vector<AbstractExpression *>& m_args;
-    NValue m_inList;
+    Value m_inList;
 };
 
 AbstractExpression*
@@ -81,5 +82,7 @@ ExpressionUtil::vectorFactory(ValueType elementType, const std::vector<AbstractE
     return new VectorExpression(elementType, *arguments);
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+
 

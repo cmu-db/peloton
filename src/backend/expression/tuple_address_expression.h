@@ -10,21 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HSTORETUPLEADDRESSEXPRESSION_H
-#define HSTORETUPLEADDRESSEXPRESSION_H
+#pragma once
 
-#include "common/common.h"
-#include "common/ValueFactory.hpp"
-#include "common/serializeio.h"
-#include "common/valuevector.h"
-#include "common/tabletuple.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/serializer.h"
+#include "backend/common/value_vector.h"
+#include "backend/storage/tuple.h"
 
-#include "expressions/abstractexpression.h"
+#include "backend/expression/abstract_expression.h"
 
 #include <string>
 #include <sstream>
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 class TupleAddressExpression : public AbstractExpression {
   public:
@@ -32,7 +31,7 @@ class TupleAddressExpression : public AbstractExpression {
     ~TupleAddressExpression();
 
 
-    inline NValue eval(const TableTuple *tuple1, const TableTuple *tuple2)  const {
+    inline Value eval(const TableTuple *tuple1, const TableTuple *tuple2)  const {
         return ValueFactory::getAddressValue(tuple1->address());
     }
 
@@ -41,5 +40,5 @@ class TupleAddressExpression : public AbstractExpression {
     }
 };
 
-}
-#endif // HSTORETUPLEADDRESSEXPRESSION_H
+}  // End expression namespace
+}  // End peloton namespace

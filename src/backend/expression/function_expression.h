@@ -27,7 +27,8 @@
 // e.g. EXTRACT -> either FUNC_EXTRACT_YEAR, or FUNC_EXTRACT_MONTH, or FUNC_EXTRACT_DAY, etc.
 // For completeness, FUNC_EXTRACT is defined here, but at this point, it always represents a missing translation step in the parser.
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
 static const int FUNC_POSITION_CHAR                    = 1;     // numeric
 static const int FUNC_POSITION_BINARY                  = 2;
@@ -244,7 +245,8 @@ static const int FUNC_TRIM_LEADING_CHAR               = SQL_TRIM_VOLT_FUNC_OFFSE
 static const int FUNC_TRIM_TRAILING_CHAR              = SQL_TRIM_VOLT_FUNC_OFFSET + SQL_TRIM_TRAILING;
 static const int FUNC_TRIM_BOTH_CHAR                  = SQL_TRIM_VOLT_FUNC_OFFSET + SQL_TRIM_BOTH;
 
-}
+}  // End expression namespace
+}  // End peloton namespace
 
 // All of these "...functions.h" files need to be included AFTER the above definitions
 // (FUNC_... constants and ...FunctionExpressionTemplates).
@@ -255,3 +257,4 @@ static const int FUNC_TRIM_BOTH_CHAR                  = SQL_TRIM_VOLT_FUNC_OFFSE
 #include "backend/expression/string_functions.h"
 #include "backend/expression/logic_functions.h"
 #include "backend/expression/json_functions.h"
+

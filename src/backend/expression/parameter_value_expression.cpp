@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parameter_value_expression.h"
-#include "common/debuglog.h"
-#include "common/valuevector.h"
-#include "common/executorcontext.hpp"
+#include "backend/common/logger.h"
+#include "backend/common/value_vector.h"
+#include "backend/expression/parameter_value_expression.h"
 
-namespace voltdb {
+namespace peloton {
+namespace expression {
 
     ParameterValueExpression::ParameterValueExpression(int value_idx)
         : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
@@ -24,11 +24,12 @@ namespace voltdb {
         VOLT_TRACE("ParameterValueExpression %d", value_idx);
         ExecutorContext* context = ExecutorContext::getExecutorContext();
 
-        NValueArray* params = context->getParameterContainer();
+        ValueArray* params = context->getParameterContainer();
 
         assert(value_idx < params->size());
         m_paramValue = &(*params)[value_idx];
     };
 
-}
+}  // End expression namespace
+}  // End peloton namespace
 

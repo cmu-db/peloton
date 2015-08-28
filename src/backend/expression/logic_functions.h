@@ -10,25 +10,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/NValue.hpp"
+#pragma once
 
-namespace voltdb {
+#include "backend/common/value.h"
+
+namespace peloton {
+namespace expression {
 
 /** implement the 2n/2n+1-argument DECODE function */
-template<> inline NValue NValue::call<FUNC_DECODE>(const std::vector<NValue>& arguments) {
+template<> inline Value Value::call<FUNC_DECODE>(const std::vector<Value>& arguments) {
     int size = (int)arguments.size();
     assert(size>=3);
     int loopnum = ( size - 1 )/2;
-    const NValue& baseval = arguments[0];
+    const Value& baseval = arguments[0];
     for ( int i = 0; i < loopnum; i++ ) {
-        const NValue& condval = arguments[2*i+1];
+        const Value& condval = arguments[2*i+1];
         if ( condval.compare(baseval) == VALUE_COMPARE_EQUAL ) {
             return arguments[2*i+2];
         }
     }
     const bool hasDefault = ( size % 2 == 0 );
     if ( hasDefault ) {
-        NValue defaultResult = arguments[size-1];
+        Value defaultResult = arguments[size-1];
         // See the comment above about the reason for un-inlining, here.
         if ( defaultResult.m_sourceInlined ) {
             defaultResult.allocateObjectFromInlinedValue();
@@ -38,4 +41,6 @@ template<> inline NValue NValue::call<FUNC_DECODE>(const std::vector<NValue>& ar
     return getNullValue();
 }
 
-}
+}  // End expression namespace
+}  // End peloton namespace
+
