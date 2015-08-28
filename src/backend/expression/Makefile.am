@@ -5,6 +5,13 @@
 ######################################################################
 
 expression_FILES = \
+				   backend/expression/parameter_value_expression.cpp \
+				   backend/expression/scalar_value_expression.cpp \
+				   backend/expression/operator_expression.cpp \
+				   backend/expression/subquery_expression.cpp \
+				   backend/expression/function_expression.cpp \
+				   backend/expression/vector_expression.cpp \
+				   backend/expression/tuple_address_expression.cpp \
 				   backend/expression/abstract_expression.cpp \
 				   backend/expression/expression_util.cpp
 

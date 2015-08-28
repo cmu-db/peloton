@@ -136,7 +136,7 @@ public:
         m_right = right;
     };
 
-    inline Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    inline Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
     {
         VOLT_TRACE("eval %s. left %s, right %s. ret=%s",
                    OP::op_name(),
@@ -168,7 +168,7 @@ public:
         return OP::compare_withoutNull(lnv, rnv);
     }
 
-    inline const char* traceEval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    inline const char* traceEval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
     {
         Value lnv;
         Value rnv;

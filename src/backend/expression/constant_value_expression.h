@@ -31,8 +31,8 @@ class ConstantValueExpression : public AbstractExpression {
         value.free();
     }
 
-    voltdb::Value
-    eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    Value
+    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
     {
         VOLT_TRACE ("returning constant value as Value:%s type:%d",
                      value.debug().c_str(), (int) this->m_type);
@@ -45,7 +45,7 @@ class ConstantValueExpression : public AbstractExpression {
     }
 
   protected:
-    voltdb::Value value;
+    Value value;
 };
 
 }  // End expression namespace

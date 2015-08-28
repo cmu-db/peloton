@@ -29,11 +29,11 @@ class TupleValueExpression : public AbstractExpression {
         VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
-    virtual voltdb::Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    virtual Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         if (tuple_idx == 0) {
             assert(tuple1);
             if ( ! tuple1 ) {
-                throw SerializableEEException("TupleValueExpression::"
+                throw Exception("TupleValueExpression::"
                                               "eval:"
                                               " Couldn't find tuple 1 (possible index scan planning error)");
             }
@@ -42,7 +42,7 @@ class TupleValueExpression : public AbstractExpression {
         else {
             assert(tuple2);
             if ( ! tuple2 ) {
-                throw SerializableEEException("TupleValueExpression::"
+                throw Exception("TupleValueExpression::"
                                               "eval:"
                                               " Couldn't find tuple 2 (possible index scan planning error)");
             }

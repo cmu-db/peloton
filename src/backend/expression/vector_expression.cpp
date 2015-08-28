@@ -52,7 +52,7 @@ public:
         return false;
     }
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
     {
         //TODO: Could make this vector a member, if the memory management implications
         // (of the Value internal state) were clear -- is there a penalty for longer-lived
