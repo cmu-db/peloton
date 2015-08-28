@@ -55,7 +55,7 @@ SubqueryExpression::~SubqueryExpression()
     }
 }
 
-Value SubqueryExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+Value SubqueryExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
 {
     // Get the subquery context with the last evaluation result and parameters used to obtain that result
 

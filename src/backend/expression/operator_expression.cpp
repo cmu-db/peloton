@@ -25,7 +25,7 @@
 namespace peloton {
 namespace expression {
 
-Value OperatorExistsExpression::eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+Value OperatorExistsExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
 {
     // Execute the subquery and get its subquery id
     assert(m_left != NULL);

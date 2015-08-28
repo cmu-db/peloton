@@ -38,7 +38,7 @@ class SubqueryExpression : public AbstractExpression {
 
     ~SubqueryExpression();
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const;
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
 
     std::string debugInfo(const std::string &spacer) const;
 

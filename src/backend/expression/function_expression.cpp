@@ -92,7 +92,7 @@ public:
         : AbstractExpression(EXPRESSION_TYPE_FUNCTION) {
     };
 
-    Value eval(const TableTuple *, const TableTuple *) const {
+    Value eval(const AbstractTuple *, const TableTuple *) const {
         return Value::callConstant<F>();
     }
 
@@ -124,7 +124,7 @@ public:
         return m_child->hasParameter();
     }
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         assert (m_child);
         return (m_child->eval(tuple1, tuple2)).callUnary<F>();
     }
@@ -163,7 +163,7 @@ public:
         return false;
     }
 
-    Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
         //TODO: Could make this vector a member, if the memory management implications
         // (of the Value internal state) were clear -- is there a penalty for longer-lived
         // Values that outweighs the current per-eval allocation penalty?

@@ -18,6 +18,7 @@
 #include "backend/common/value.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
+#include "backend/common/planner_dom_value.h"
 
 #include "boost/shared_ptr.hpp"
 

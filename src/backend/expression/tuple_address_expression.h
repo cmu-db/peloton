@@ -31,7 +31,7 @@ class TupleAddressExpression : public AbstractExpression {
     ~TupleAddressExpression();
 
 
-    inline Value eval(const TableTuple *tuple1, const TableTuple *tuple2)  const {
+    inline Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2)  const {
         return ValueFactory::getAddressValue(tuple1->address());
     }
 
