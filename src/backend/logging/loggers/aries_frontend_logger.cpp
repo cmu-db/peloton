@@ -598,6 +598,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
     auto target_location = tuple_record.GetInsertLocation();
     auto tile_group_id = target_location.block;
+    auto tuple_slot = target_location.offset;
     auto tile_group = GetTileGroup(tile_group_id);
 
     // Create new tile group if table doesn't already have that tile group
@@ -609,14 +610,14 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
       }
     }
 
-    // Then, redo the insert
-    ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
-
-    if (location.block == INVALID_OID) {
+    // Do the insert !
+    auto inserted_tuple_slot = tile_group->InsertTuple(recovery_txn->GetTransactionId(),
+                                                       tuple_slot, tuple);
+    if (inserted_tuple_slot == INVALID_OID) {
       recovery_txn->SetResult(Result::RESULT_FAILURE);
     }
     else{
-      txn->RecordInsert(location);
+      txn->RecordInsert(target_location);
     }
   }
 
