@@ -111,7 +111,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
-  oid_t max_oid = INVALID_OID;
+  oid_t max_oid = 0;
 
 };
 

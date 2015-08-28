@@ -12,9 +12,9 @@
 
 #include "backend/executor/update_executor.h"
 
-#include "../logging/log_manager.h"
-#include "../logging/records/tuple_record.h"
-#include "../planner/update_plan.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
