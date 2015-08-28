@@ -202,7 +202,7 @@ inline void streamSQLFloatFormat(std::stringstream& streamOut, double floatValue
   }
   // Bring the truncated pieces together.
   streamOut << fancyText.substr(0, endSignifMantissa)
-                                  << 'E' << optionalSign << fancyText.substr(startSignifExponent);
+                                      << 'E' << optionalSign << fancyText.substr(startSignifExponent);
 }
 
 /**
@@ -2856,10 +2856,10 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
         const int scale = input.ReadByte();
         const int precisionBytes = input.ReadByte();
         if (scale != kMaxDecScale) {
-          throwFatalException("Unexpected scale %d", scale);
+          throw Exception("Unexpected scale %d", scale);
         }
         if (precisionBytes != 16) {
-          throwFatalException("Unexpected number of precision bytes %d", precisionBytes);
+          throw Exception("Unexpected number of precision bytes %d", precisionBytes);
         }
       }
       uint64_t *longStorage = reinterpret_cast<uint64_t*>(storage);
@@ -3302,8 +3302,8 @@ inline void Value::hashCombine(std::size_t &seed) const {
 
 inline Value Value::castAs(ValueType type) const {
   LOG_TRACE("Converting from %s to %s",
-             ValueTypeToString(getValueType()).c_str(),
-             ValueTypeToString(type).c_str());
+            ValueTypeToString(getValueType()).c_str(),
+            ValueTypeToString(type).c_str());
   if (getValueType() == type) {
     return *this;
   }

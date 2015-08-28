@@ -10,59 +10,43 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#ifndef HSTORECONSTANTVALUEEXPRESSION_H
+#define HSTORECONSTANTVALUEEXPRESSION_H
 
-#include "backend/expression/abstract_expression.h"
+#include "expressions/abstractexpression.h"
 
-#include "backend/common/value_vector.h"
+#include "common/valuevector.h"
 
 #include <string>
 
-namespace peloton {
-namespace expression {
-
-class SerializeInput;
-class SerializeOutput;
-
-//===--------------------------------------------------------------------===//
-// Constant Value Expression
-//===--------------------------------------------------------------------===//
+namespace voltdb {
 
 class ConstantValueExpression : public AbstractExpression {
- public:
-  ConstantValueExpression(const Value &cvalue)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
-    /**
-     * A deep copy is desired here because we don't know
-     * if the expression will live longer than the passed value
-     * or if uninlined value will be freed somewhere else
-     * (and probably yes in production).
-     */
-    this->value = ValueFactory::Clone(cvalue);
-  }
+    public:
+    ConstantValueExpression(const NValue &value)
+        : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
+        this->value = value;
+    }
 
-  virtual ~ConstantValueExpression() {
-    // clean up
-    value.FreeUninlinedData();
-  }
+    virtual ~ConstantValueExpression() {
+        value.free();
+    }
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                 __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused)) executor::ExecutorContext *) const {
-    return this->value;
-  }
+    voltdb::NValue
+    eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    {
+        VOLT_TRACE ("returning constant value as NValue:%s type:%d",
+                     value.debug().c_str(), (int) this->m_type);
+        return this->value;
+    }
 
-  std::string DebugInfo(const std::string &spacer) const {
-    std::stringstream os;
-    os << spacer << "ConstantValueExpression: " << value << "\n";
-    return os.str();
-  }
+    std::string debugInfo(const std::string &spacer) const {
+        return spacer + "OptimizedConstantValueExpression:" +
+          value.debug() + "\n";
+    }
 
-  Value GetValue() { return value; }
-
- protected:
-  Value value;
+  protected:
+    voltdb::NValue value;
 };
-
-}  // End expression namespace
-}  // End peloton namespace
+}
+#endif

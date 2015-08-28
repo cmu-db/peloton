@@ -10,61 +10,55 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#ifndef HSTOREEXPRESSIONUTIL_H
+#define HSTOREEXPRESSIONUTIL_H
 
 #include <string>
 #include <vector>
+#include "boost/shared_array.hpp"
 
-#include "backend/expression/abstract_expression.h"
+#include "common/common.h"
+#include "expressions/abstractexpression.h"
 
-namespace peloton {
-namespace expression {
+namespace voltdb {
 
-//===--------------------------------------------------------------------===//
-// Expression Utilities
-//===--------------------------------------------------------------------===//
+class ExpressionUtil {
+public:
+/** instantiate a typed expression */
+    static AbstractExpression* expressionFactory(PlannerDomValue obj,
+                                                 ExpressionType et, ValueType vt, int vs,
+                                                 AbstractExpression* lc, AbstractExpression* rc,
+                                                 const std::vector<AbstractExpression*>* arguments);
 
-// instantiate a typed expression
-AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
-                                      ExpressionType et, ValueType vt, int vs,
-                                      AbstractExpression *lc,
-                                      AbstractExpression *rc);
+    static AbstractExpression* comparisonFactory(PlannerDomValue obj,ExpressionType et, AbstractExpression *lc, AbstractExpression *rc);
+    static AbstractExpression* conjunctionFactory(ExpressionType et, AbstractExpression *lc, AbstractExpression *rc);
 
-//===--------------------------------------------------------------------===//
-// Factories
-//===--------------------------------------------------------------------===//
+    static void loadIndexedExprsFromJson(std::vector<voltdb::AbstractExpression*>& indexed_exprs,
+                                         const std::string& jsonarraystring);
 
-// Several helpers used by expressionFactory() and useful to export to
-// testcases.
+    static AbstractExpression* loadExpressionFromJson(const std::string& jsonstring);
 
-AbstractExpression *ComparisonFactory(ExpressionType et, AbstractExpression *,
-                                      AbstractExpression *);
+    /** If the passed vector contains only TupleValueExpression, it
+     * returns ColumnIds of them, otherwise NULL.*/
+    static boost::shared_array<int>
+    convertIfAllTupleValues(const std::vector<voltdb::AbstractExpression*> &expressions);
 
-AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *,
-                                    AbstractExpression *);
+    /** If the passed vector contains only ParameterValueExpression, it
+     * returns ParamIds of them, otherwise NULL.*/
+    static boost::shared_array<int>
+    convertIfAllParameterValues(const std::vector<voltdb::AbstractExpression*> &expressions);
 
-AbstractExpression *ConstantValueFactory(const peloton::Value &val);
+    /** Returns ColumnIds of TupleValueExpression expressions from passed axpression.*/
+    static void
+    extractTupleValuesColumnIdx(const AbstractExpression* expr, std::vector<int> &columnIds);
 
-AbstractExpression *ParameterValueFactory(int idx);
+    // Implemented in functionexpression.cpp because function expression handling is a system unto itself.
+    static AbstractExpression * functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments);
 
-AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
+    static AbstractExpression* vectorFactory(ValueType vt, const std::vector<AbstractExpression*>* args);
 
-AbstractExpression *ConjunctionFactory(ExpressionType, AbstractExpression *,
-                                       AbstractExpression *);
-AbstractExpression *ConjunctionFactory(ExpressionType,
-                                       std::list<AbstractExpression *>);
+};
 
-AbstractExpression *CastFactory(PostgresValueType type=POSTGRES_VALUE_TYPE_INVALID, AbstractExpression *child=nullptr);
+}
 
-// If the passed vector contains only TupleValueExpression, it
-// returns ColumnIds of them, otherwise NULL.
-boost::shared_array<int> ConvertIfAllTupleValues(
-    const std::vector<AbstractExpression *> &expressions);
-
-// If the passed vector contains only ParameterValueExpression, it
-// returns ParamIds of them, otherwise NULL.
-boost::shared_array<int> ConvertIfAllParameterValues(
-    const std::vector<AbstractExpression *> &expressions);
-
-}  // End expression namespace
-}  // End peloton namespace
+#endif

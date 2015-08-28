@@ -17,21 +17,16 @@
 #include <sstream>
 #include <iostream>
 
-#include "common/StlFriendlyValue.h"
-#include "common/executorcontext.hpp"
-#include "expressions/functionexpression.h" // Really for datefunctions and its dependencies.
-#include "logging/LogManager.h"
+#include "backend/common/stl_friendly_value.h"
+#include "backend/logging/logmanager.h"
 
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
 #include <set>
+#include "../expression/function_expression.h"
 
 namespace peloton {
-
-Pool* Value::getTempStringPool() {
-  return ExecutorContext::getTempStringPool();
-}
 
 // For x<op>y where x is an integer,
 // promote x and y to s_intPromotionTable[y]
@@ -133,7 +128,7 @@ std::string Value::debug() const {
   std::string out_val;
   const char* ptr;
   int64_t addr;
-  buffer << getTypeName(type) << "::";
+  buffer << ValueTypeToString(type) << "::";
   switch (type) {
     case VALUE_TYPE_BOOLEAN:
       buffer << (getBoolean() ? "true" : "false");
@@ -216,8 +211,7 @@ std::string Value::createStringFromDecimal() const {
  */
 void Value::createDecimalFromString(const std::string &txt) {
   if (txt.length() == 0) {
-    throw SQLException(SQLException::volt_decimal_serialization_error,
-                       "Empty string provided");
+    throw SerializationException("Empty string provided");
   }
   bool setSign = false;
   if (txt[0] == '-') {
@@ -232,8 +226,7 @@ void Value::createDecimalFromString(const std::string &txt) {
       char message[4096];
       snprintf(message, 4096, "Invalid characters in decimal string: %s",
                txt.c_str());
-      throw SQLException(SQLException::volt_decimal_serialization_error,
-                         message);
+      throw SerializationException(message);
     }
   }
 
@@ -242,8 +235,7 @@ void Value::createDecimalFromString(const std::string &txt) {
     const std::string wholeString = txt.substr( setSign ? 1 : 0, txt.size());
     const std::size_t wholeStringSize = wholeString.size();
     if (wholeStringSize > 26) {
-      throw SQLException(SQLException::volt_decimal_serialization_error,
-                         "Maximum precision exceeded. Maximum of 26 digits to the left of the decimal point");
+      throw SerializationException("Maximum precision exceeded. Maximum of 26 digits to the left of the decimal point");
     }
     TTInt whole(wholeString);
     if (setSign) {
@@ -255,8 +247,7 @@ void Value::createDecimalFromString(const std::string &txt) {
   }
 
   if (txt.find( '.', separatorPos + 1) != std::string::npos) {
-    throw SQLException(SQLException::volt_decimal_serialization_error,
-                       "Too many decimal points");
+    throw SerializationException("Too many decimal points");
   }
 
   // This is set to 1 if we carry in the scale.
@@ -315,8 +306,7 @@ void Value::createDecimalFromString(const std::string &txt) {
   TTInt whole(wholeString);
   whole += carryWhole;
   if (oversizeWholeDecimal(whole)) {
-    throw SQLException(SQLException::volt_decimal_serialization_error,
-                       "Maximum precision exceeded. Maximum of 26 digits to the left of the decimal point");
+    throw SerializationException("Maximum precision exceeded. Maximum of 26 digits to the left of the decimal point");
   }
   whole *= kMaxScaleFactor;
   whole += fractional;
@@ -347,7 +337,7 @@ struct ValueList {
   ValueList(size_t length, ValueType elementType) : m_length(length), m_elementType(elementType)
   { }
 
-  void deserializeValues(SerializeInput &input, Pool *dataPool)
+  void deserializeValues(SerializeInput &input, VarlenPool *dataPool)
   {
     for (int ii = 0; ii < m_length; ++ii) {
       m_values[ii].deserializeFromAllocateForStorage(m_elementType, input, dataPool);
@@ -393,7 +383,7 @@ bool Value::inList(const Value& rhs) const
   return std::find(listOfValues->begin(), listOfValues->end(), value) != listOfValues->end();
 }
 
-void Value::deserializeIntoANewValueList(SerializeInput &input, Pool *dataPool)
+void Value::deserializeIntoANewValueList(SerializeInput &input, VarlenPool *dataPool)
 {
   ValueType elementType = (ValueType)input.ReadByte();
   size_t length = input.ReadShort();
@@ -466,7 +456,7 @@ void Value::castAndSortAndDedupArrayForInList(const ValueType outputType, std::v
     // cast exceptions mean the in-list test is redundant
     // don't include these values in the materialized table
     // TODO: make this less hacky
-    catch (SQLException &sqlException) {}
+    catch (Exception &sqlException) {}
   }
 
   // insert all items in the set in order
@@ -682,7 +672,7 @@ int64_t Value::parseTimestampString(const std::string &str)
 int warn_if(int condition, const char* message)
 {
   if (condition) {
-    LogManager::getThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
+    //LogManager::getThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
   }
   return condition;
 }

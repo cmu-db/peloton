@@ -10,39 +10,36 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#ifndef HSTORETUPLEADDRESSEXPRESSION_H
+#define HSTORETUPLEADDRESSEXPRESSION_H
+
+#include "common/common.h"
+#include "common/ValueFactory.hpp"
+#include "common/serializeio.h"
+#include "common/valuevector.h"
+#include "common/tabletuple.h"
+
+#include "expressions/abstractexpression.h"
 
 #include <string>
 #include <sstream>
 
-#include "backend/common/value_factory.h"
-#include "backend/common/serializer.h"
-#include "backend/common/value_vector.h"
-#include "backend/expression/abstract_expression.h"
-
-namespace peloton {
-namespace expression {
-
-//===--------------------------------------------------------------------===//
-// Tuple Address Expression
-//===--------------------------------------------------------------------===//
+namespace voltdb {
 
 class TupleAddressExpression : public AbstractExpression {
- public:
-  TupleAddressExpression()
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {}
+  public:
+    TupleAddressExpression();
+    ~TupleAddressExpression();
 
-  inline Value Evaluate(const AbstractTuple *tuple1,
-                        __attribute__((unused)) const AbstractTuple *tuple2,
-                        __attribute__((unused))
-                        executor::ExecutorContext *) const {
-    return ValueFactory::GetAddressValue(tuple1->GetData());
-  }
 
-  std::string DebugInfo(const std::string &spacer) const {
-    return spacer + "TupleAddressExpression\n";
-  }
+    inline NValue eval(const TableTuple *tuple1, const TableTuple *tuple2)  const {
+        return ValueFactory::getAddressValue(tuple1->address());
+    }
+
+    std::string debugInfo(const std::string &spacer) const {
+        return spacer + "TupleAddressExpression\n";
+    }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}
+#endif // HSTORETUPLEADDRESSEXPRESSION_H
