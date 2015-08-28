@@ -230,6 +230,9 @@ void AriesFrontendLogger::DoRecovery() {
 
     // Start the recovery transaction
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+    // Although we call BeginTransaction here, recovery txn will not be
+    // recoreded in log file since we are in recovery mode
     auto recovery_txn = txn_manager.BeginTransaction();
 
     // Go over each log record in the log file
@@ -273,16 +276,15 @@ void AriesFrontendLogger::DoRecovery() {
       }
     }
 
-    // Finally, commit the recovery transaction
+    // Commit the recovery transaction
     txn_manager.CommitTransaction(recovery_txn);
 
-    // Abort ACTIVE transactions in recovery_txn_table
+    // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
     auto &manager = catalog::Manager::GetInstance();
-    auto max_oid = manager.GetNextOid();
     manager.SetNextOid(max_oid);
   }
 
@@ -501,6 +503,9 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   if(tile_group == nullptr){
     table->AddTileGroupWithOid(tile_group_id);
     tile_group = table->GetTileGroupById(tile_group_id);
+    if( max_oid < tile_group_id ){
+      max_oid = tile_group_id;
+    }
   }
 
   // Do the insert !
@@ -514,7 +519,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
     txn->RecordInsert(target_location);
     table->IncreaseNumberOfTuplesBy(1);
   }
-
+  
   delete tuple;
   delete pool;
   delete backend;
@@ -567,6 +572,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tuple_record);
+
   // TODO: Remove per-record backend construction
   storage::AbstractBackend *backend = new storage::VMBackend();
   Pool *pool = new Pool(backend);
@@ -582,6 +588,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   // First, redo the delete
   ItemPointer delete_location = tuple_record.GetDeleteLocation();
+
   bool status = table->DeleteTuple(recovery_txn, delete_location);
   if (status == false) {
     recovery_txn->SetResult(Result::RESULT_FAILURE);
@@ -589,8 +596,22 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   else{
     txn->RecordDelete(delete_location);
 
+    auto target_location = tuple_record.GetInsertLocation();
+    auto tile_group_id = target_location.block;
+    auto tile_group = GetTileGroup(tile_group_id);
+
+    // Create new tile group if table doesn't already have that tile group
+    if(tile_group == nullptr){
+      table->AddTileGroupWithOid(tile_group_id);
+      tile_group = table->GetTileGroupById(tile_group_id);
+      if( max_oid < tile_group_id ){
+        max_oid = tile_group_id;
+      }
+    }
+
     // Then, redo the insert
     ItemPointer location = table->UpdateTuple(recovery_txn, tuple, delete_location);
+
     if (location.block == INVALID_OID) {
       recovery_txn->SetResult(Result::RESULT_FAILURE);
     }
@@ -661,8 +682,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   CopySerializeInput frameCheck(buffer, sizeof(int32_t));
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
-  // TODO: Do we need this check again ?
-  // XXX Check if the frame is broken
+  // Check if the frame is broken
   if( IsFileTruncated(frame_size) ){
     return 0;
   }
