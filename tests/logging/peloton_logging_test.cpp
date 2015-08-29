@@ -28,12 +28,7 @@ TEST(PelotonLoggingTest, writing_log_file) {
 
   // Prepare a simple log file
   if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON) ){
-    std::cout << "log file size : " <<
-        LoggingTestsUtil::GetLogFileSize(peloton_log_file_name) << std::endl;
-    //auto res = truncate( filename.c_str(), 1343);
-    //if( res == -1 ){
-      //LOG_ERROR("Failed to truncate the log file"); 
-    //}
+    LoggingTestsUtil::TruncateLogFile(peloton_log_file_name);
   }else{
     LOG_ERROR("Could not prepare log file");
   }
