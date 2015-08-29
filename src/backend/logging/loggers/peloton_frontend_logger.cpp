@@ -20,7 +20,6 @@
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
-#include "backend/logging/log_manager.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
 
@@ -51,118 +50,15 @@ PelotonFrontendLogger::PelotonFrontendLogger(){
  */
 PelotonFrontendLogger::~PelotonFrontendLogger(){
 
+  for(auto log_record : global_queue){
+    delete log_record;
+  }
+
   int ret = fclose(log_file);
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
 }
-
-/**
- * @brief MainLoop
- */
-void PelotonFrontendLogger::MainLoop(void) {
-
-  auto& logManager = LogManager::GetInstance();
-
-  /////////////////////////////////////////////////////////////////////
-  // STANDBY MODE
-  /////////////////////////////////////////////////////////////////////
-
-  LOG_TRACE("Frontendlogger] Standby Mode");
-  // Standby before we are ready to recovery
-  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_STANDBY ){
-    sleep(1);
-  }
-
-  // Do recovery if we can, otherwise terminate
-  switch(logManager.GetStatus(LOGGING_TYPE_PELOTON)){
-    case LOGGING_STATUS_TYPE_RECOVERY:{
-      LOG_TRACE("Frontendlogger] Recovery Mode");
-
-      /////////////////////////////////////////////////////////////////////
-      // RECOVERY MODE
-      /////////////////////////////////////////////////////////////////////
-
-      // First, do recovery if needed
-      DoRecovery();
-
-      // Now, enable active logging
-      logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_LOGGING);
-
-      break;
-    }
-
-    case LOGGING_STATUS_TYPE_LOGGING:{
-      LOG_TRACE("Frontendlogger] Ongoing Mode");
-    }
-    break;
-
-    default:
-    break;
-  }
-
-  /////////////////////////////////////////////////////////////////////
-  // LOGGING MODE
-  /////////////////////////////////////////////////////////////////////
-
-  // Periodically, wake up and do logging
-  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_LOGGING){
-    sleep(1);
-
-    // Collect LogRecords from all backend loggers
-    CollectLogRecord();
-
-    // Flush the data to the file
-    Flush();
-  }
-
-  /////////////////////////////////////////////////////////////////////
-  // TERMINATE MODE
-  /////////////////////////////////////////////////////////////////////
-
-  // flush any remaining log records
-  CollectLogRecord();
-  Flush();
-
-
-  /////////////////////////////////////////////////////////////////////
-  // SLEEP MODE
-  /////////////////////////////////////////////////////////////////////
-
-  LOG_TRACE("Frontendlogger] Sleep Mode");
-
-  //Setting frontend logger status to sleep
-  logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, 
-                              LOGGING_STATUS_TYPE_SLEEP);
-}
-
-/**
- * @brief Collect the LogRecord from BackendLoggers
- */
-void PelotonFrontendLogger::CollectLogRecord() {
-
-  backend_loggers = GetBackendLoggers();
-
-  {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-
-    // Look over hte commit mark of current frontend logger's backend loggers
-    for( auto backend_logger : backend_loggers){
-      auto local_queue_size = backend_logger->GetLocalQueueSize();
-
-      // Skip current backend_logger, nothing to do
-      if(local_queue_size == 0 ) continue; 
-
-      for(oid_t log_record_itr=0; log_record_itr<local_queue_size; log_record_itr++){
-        // Copy LogRecord from backend_logger to here
-        peloton_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
-      }
-      // truncate the local queue 
-      backend_logger->TruncateLocalQueue(local_queue_size);
-    }
-  }
-}
-
 
 /**
  * @brief flush all record to the file
@@ -173,8 +69,7 @@ void PelotonFrontendLogger::Flush(void) {
   std::vector<ItemPointer> deleted_tuples;
 
   //  First, write out the log record
-  for( auto record : peloton_global_queue ){
-
+  for( auto record : global_queue ){
     fwrite( record->GetMessage(), 
             sizeof(char), 
             record->GetMessageLength(), 
@@ -197,10 +92,10 @@ void PelotonFrontendLogger::Flush(void) {
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
 
-  for( auto record : peloton_global_queue ){
+  for( auto record : global_queue ){
     delete record;
   }
-  peloton_global_queue.clear();
+  global_queue.clear();
 
   // Commit each backend logger 
   backend_loggers = GetBackendLoggers();
@@ -219,25 +114,25 @@ void PelotonFrontendLogger::Flush(void) {
     SetDeleteCommitMark(deleted_tuple, true);
   }
 
-  auto done = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE, 1/*FIXME*/);
+  if( inserted_tuples.size() > 0 || deleted_tuples.size() > 0){
+    auto done_mark = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE, 1/*FIXME*/);
+    done_mark ->Serialize();
 
-  // Finally, write out the DONE mark
-  fwrite( done->GetMessage(), 
-          sizeof(char), 
-          done->GetMessageLength(), 
-          log_file);
+    // Finally, write out the DONE mark
+    fwrite( done_mark ->GetMessage(), sizeof(char), done_mark->GetMessageLength(), log_file);
 
-  // And, flush it out
-  ret = fflush(log_file);
-  if( ret != 0 ){
-    LOG_ERROR("Error occured in fflush(%d)", ret);
+    // And, flush it out
+    ret = fflush(log_file);
+    if( ret != 0 ){
+      LOG_ERROR("Error occured in fflush(%d)", ret);
+    }
+
+    ret = fsync(log_file_fd);
+    if( ret != 0 ){
+      LOG_ERROR("Error occured in fsync(%d)", ret);
+    }
+    delete done_mark;
   }
-
-  ret = fsync(log_file_fd);
-  if( ret != 0 ){
-    LOG_ERROR("Error occured in fsync(%d)", ret);
-  }
-  delete done;
 }
 
 void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record,
@@ -265,49 +160,58 @@ void PelotonFrontendLogger::DoRecovery() {
 
   if(GetLogFileSize() > 0){
 
-    bool EOF_OF_LOG_FILE = false;
+    if(DoWeNeedRecovery() ){
 
-    JumpToLastActiveTransaction();
+      bool EOF_OF_LOG_FILE = false;
 
-    while(!EOF_OF_LOG_FILE){
+      //JumpToLastActiveTransaction();
 
-      // Read the first single bite so that we can distinguish log record type
-      // otherwise, finish the recovery 
-      switch(GetNextLogRecordType()){
+      while(!EOF_OF_LOG_FILE){
 
-        case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          printf("BEGIN\n");
-          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
-          break;
+        std::cout << "offset : " << ftell(log_file) << std::endl;
+        // Read the first single bite so that we can distinguish log record type
+        // otherwise, finish the recovery 
+        switch(GetNextLogRecordType()){
 
-        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          printf("COMMIT\n");
-          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-          break;
+          case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+            printf("BEGIN \n");
+            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
+            break;
 
-        case LOGRECORD_TYPE_TRANSACTION_END:
-          printf("END\n");
-          SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_END);
-          break;
+          case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+            printf("COMMIT\n");
+            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+            break;
 
-        case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-          printf("INSERT\n");
-          InsertTuple();
-          break;
+          case LOGRECORD_TYPE_TRANSACTION_END:
+            printf("END\n");
+            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_END);
+            break;
 
-        case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-          printf("DELETE\n");
-          DeleteTuple();
-          break;
+          case LOGRECORD_TYPE_TRANSACTION_DONE:
+            printf("DONE\n");
+            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE);
+            break;
 
-        case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-          printf("UPDATE\n");
-          UpdateTuple();
-          break;
+          case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
+            printf("INSERT\n");
+            InsertTuple();
+            break;
 
-        default:
-          EOF_OF_LOG_FILE = true;
-          break;
+          case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
+            printf("DELETE\n");
+            DeleteTuple();
+            break;
+
+          case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
+            printf("UPDATE\n");
+            UpdateTuple();
+            break;
+
+          default:
+            EOF_OF_LOG_FILE = true;
+            break;
+        }
       }
     }
   }
@@ -412,35 +316,42 @@ LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
   return log_record_type;
 }
 
-void PelotonFrontendLogger::JumpToLastActiveTransaction(){
+bool PelotonFrontendLogger::DoWeNeedRecovery(void){
   char buffer;
-  fseek(log_file, -1, SEEK_END);
-  // Read last log record type
+
+  // Read last transaction record type
+  fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
   int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread(%d)", ret);
   }
   CopySerializeInput input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
-  std::cout << "log record ::::::::: " << LogRecordTypeToString(log_record_type) << std::endl;
 
+  std::cout << "Log Record Type : " << LogRecordTypeToString(log_record_type) << std::endl;
+
+  // If last transaction record is COMMIT or END 
+  // Do recovery
   if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT ||
       log_record_type == LOGRECORD_TYPE_TRANSACTION_END){
-    /* we need peloton recovery
-     * jump to last begin txn log record
-     */
-
-    while(ftell(log_file) >= 0){
-      fseek(log_file, -2, SEEK_CUR);
-      if(GetNextLogRecordType() == LOGRECORD_TYPE_TRANSACTION_BEGIN){
-        fseek(log_file, -1, SEEK_CUR);
-        break;
-      }
-    }
+    fseek(log_file, 0, SEEK_SET);
+    return true;
   }else{
-    /* no recovery */
-    LOG_INFO("No recovery\n");
     fseek(log_file, 0, SEEK_END);
+    return false;
+  }
+}
+
+ 
+
+void PelotonFrontendLogger::JumpToLastActiveTransaction(){
+  while(1){
+    auto entire_txn_size = GetNextFrameSize();
+    auto current_offset = ftell(log_file);
+    if(current_offset+entire_txn_size > GetLogFileSize()){
+      break;
+    }
+    fseek(log_file, entire_txn_size , SEEK_CUR);
   }
 }
 

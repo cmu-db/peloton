@@ -13,9 +13,10 @@
 #include "backend/storage/data_table.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/tuple_record.h"
+#include "backend/logging/records/transaction_record.h"
 
-#define NUM_TUPLES 10
-#define NUM_BACKEND 4
+#define NUM_TUPLES 5
+#define NUM_BACKEND 3
 
 namespace peloton {
 namespace test {
@@ -68,12 +69,12 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
   return false;
 }
 
-size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
+void LoggingTestsUtil::TruncateLogFile(std::string file_name){
   struct stat log_stats;
   size_t log_file_size;
 
   // Open the log file
-  FILE* log_file = fopen(file_name.c_str(),"rb");
+  FILE* log_file = fopen(file_name.c_str(),"ab+");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
@@ -87,8 +88,6 @@ size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
   if(stat(file_name.c_str(), &log_stats) == 0){
     fstat(log_file_fd, &log_stats);
     log_file_size = log_stats.st_size;
-  }else{
-    log_file_size = 0;
   }
 
   // Finally, close the log file
@@ -97,7 +96,11 @@ size_t LoggingTestsUtil::GetLogFileSize(std::string file_name){
     LOG_ERROR("Error occured while closing LogFile");
   }
 
-  return log_file_size;
+  int res = truncate(file_name.c_str(), log_file_size-logging::TransactionRecord::GetTransactionRecordSize());
+  if( res == -1 ){
+    LOG_ERROR("Failed to truncate the log file"); 
+  }
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -284,7 +287,7 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   auto locations = InsertTuples(table, true/*commit*/);
 
-  // Delete the third inserted location if we insert >= 3 tuples
+  // Try to delete the third inserted location if we insert >= 3 tuples
   if(locations.size() >= 3)
     DeleteTuples(table, locations[2], false/*abort*/);
 
@@ -293,8 +296,8 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
     DeleteTuples(table, locations[1], true/*commit*/);
 
   // Update the first inserted location if we insert >= 1 tuples
-  if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], true/*commit*/);
+  //if(locations.size() >= 1)
+  //  UpdateTuples(table, locations[0], true/*commit*/);
 
   auto& log_manager = logging::LogManager::GetInstance();
   if(log_manager.IsInLoggingMode()){

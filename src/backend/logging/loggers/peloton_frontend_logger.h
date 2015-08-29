@@ -19,9 +19,6 @@
 namespace peloton {
 namespace logging {
 
-// TODO: Should this be global ?
-static std::vector<LogRecord*> peloton_global_queue;
-
 //===--------------------------------------------------------------------===//
 // Peloton Frontend Logger 
 //===--------------------------------------------------------------------===//
@@ -33,10 +30,6 @@ class PelotonFrontendLogger : public FrontendLogger {
     PelotonFrontendLogger(void);
 
    ~PelotonFrontendLogger(void);
-
-    void MainLoop(void);
-
-    void CollectLogRecord(void);
 
     void Flush(void);
 
@@ -74,6 +67,8 @@ class PelotonFrontendLogger : public FrontendLogger {
     size_t GetNextFrameSize(void);
 
     LogRecordType GetNextLogRecordType(void);
+
+    bool DoWeNeedRecovery(void);
 
     void JumpToLastActiveTransaction(void);
 

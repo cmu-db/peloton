@@ -30,6 +30,8 @@ class TransactionRecord : public LogRecord {
 
   void Deserialize(CopySerializeInput& input);
 
+  static size_t GetTransactionRecordSize(void) ;
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//

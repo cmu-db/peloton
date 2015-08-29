@@ -43,6 +43,10 @@ class FrontendLogger : public Logger{
 
     static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
+    void MainLoop(void);
+
+    void CollectLogRecord(void);
+
     void AddBackendLogger(BackendLogger* backend_logger);
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
@@ -52,16 +56,6 @@ class FrontendLogger : public Logger{
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
-
-    /**
-     * Check whether any BackendLogger has been committed or not
-     */
-    virtual void MainLoop(void) = 0;
-
-    /**
-     * Collect LogRecord from BackendLoggers
-     */
-    virtual void CollectLogRecord(void) = 0;
 
     /**
      * Flush collected LogRecord to stdout or file or nvram
@@ -81,6 +75,9 @@ class FrontendLogger : public Logger{
     // Since backend loggers can add themselves into the list above
     // via log manager, we need to protect the backend_loggers list
     std::mutex backend_logger_mutex;
+
+    // Global queue
+    std::vector<LogRecord*> global_queue;
 
 };
 

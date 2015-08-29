@@ -15,7 +15,6 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/logging/log_manager.h"
 #include "backend/logging/loggers/aries_frontend_logger.h"
 #include "backend/logging/loggers/aries_backend_logger.h"
 #include "backend/storage/backend_vm.h"
@@ -53,7 +52,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
  */
 AriesFrontendLogger::~AriesFrontendLogger(){
 
-  for(auto log_record : aries_global_queue){
+  for(auto log_record : global_queue){
     delete log_record;
   }
 
@@ -65,121 +64,12 @@ AriesFrontendLogger::~AriesFrontendLogger(){
 }
 
 /**
- * @brief MainLoop
- */
-void AriesFrontendLogger::MainLoop(void) {
-
-  auto& log_manager = LogManager::GetInstance();
-
-  /////////////////////////////////////////////////////////////////////
-  // STANDBY MODE
-  /////////////////////////////////////////////////////////////////////
-
-  LOG_TRACE("Frontendlogger] Standby Mode");
-  // Standby before we are ready to recovery
-  while(log_manager.GetStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_STANDBY ){
-    sleep(1);
-  }
-
-  // Do recovery if we can, otherwise terminate
-  switch(log_manager.GetStatus(LOGGING_TYPE_ARIES)) {
-    case LOGGING_STATUS_TYPE_RECOVERY: {
-      LOG_TRACE("Frontendlogger] Recovery Mode");
-
-      /////////////////////////////////////////////////////////////////////
-      // RECOVERY MODE
-      /////////////////////////////////////////////////////////////////////
-
-      // First, do recovery if needed
-      DoRecovery();
-
-      // Now, enable active logging
-      log_manager.SetLoggingStatus(LOGGING_TYPE_ARIES, LOGGING_STATUS_TYPE_LOGGING);
-
-      break;
-    }
-
-    case LOGGING_STATUS_TYPE_LOGGING: {
-      LOG_TRACE("Frontendlogger] Logging Mode");
-      break;
-    }
-
-    default:
-    break;
-  }
-
-  /////////////////////////////////////////////////////////////////////
-  // LOGGING MODE
-  /////////////////////////////////////////////////////////////////////
-
-
-  // Periodically, wake up and do logging
-  while(log_manager.GetStatus(LOGGING_TYPE_ARIES) == LOGGING_STATUS_TYPE_LOGGING){
-    sleep(1);
-
-    // Collect LogRecords from all backend loggers
-    CollectLogRecord();
-
-    // Flush the data to the file
-    Flush();
-  }
-
-  /////////////////////////////////////////////////////////////////////
-  // TERMINATE MODE
-  /////////////////////////////////////////////////////////////////////
-
-  // flush any remaining log records
-  CollectLogRecord();
-  Flush();
-
-  /////////////////////////////////////////////////////////////////////
-  // SLEEP MODE
-  /////////////////////////////////////////////////////////////////////
-
-  LOG_TRACE("Frontendlogger] Sleep Mode");
-
-  //Setting frontend logger status to sleep
-  log_manager.SetLoggingStatus(LOGGING_TYPE_ARIES,
-                               LOGGING_STATUS_TYPE_SLEEP);
-
-}
-
-/**
- * @brief Collect the LogRecord from BackendLoggers
- */
-void AriesFrontendLogger::CollectLogRecord() {
-
-  backend_loggers = GetBackendLoggers();
-
-  {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-
-    // Look at the commit mark of the backend loggers of the current frontend logger
-    for( auto backend_logger : backend_loggers){
-      auto local_queue_size = backend_logger->GetLocalQueueSize();
-
-      // Skip current backend_logger, nothing to do
-      if(local_queue_size == 0 ) continue; 
-
-      for(oid_t log_record_itr=0; log_record_itr<local_queue_size; log_record_itr++){
-        // Shallow copy the log record from backend_logger to here
-        aries_global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
-      }
-
-      // truncate the local queue 
-      backend_logger->TruncateLocalQueue(local_queue_size);
-    }
-  }
-
-}
-
-/**
  * @brief flush all the log records to the file
  */
 void AriesFrontendLogger::Flush(void) {
 
   // First, write all the record in the queue
-  for( auto record : aries_global_queue ){
+  for( auto record : global_queue ){
     fwrite( record->GetMessage(), 
             sizeof(char), 
             record->GetMessageLength(), 
@@ -199,10 +89,10 @@ void AriesFrontendLogger::Flush(void) {
   }
 
   // Clean up the frontend logger's queue
-  for( auto record : aries_global_queue ){
+  for( auto record : global_queue ){
     delete record;
   }
-  aries_global_queue.clear();
+  global_queue.clear();
 
   // Commit each backend logger
   backend_loggers = GetBackendLoggers();
@@ -702,7 +592,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
  * @return the size of global_queue
  */
 size_t AriesFrontendLogger::GetLogRecordCount() const{
-  return aries_global_queue.size();
+  return global_queue.size();
 }
 
 /**

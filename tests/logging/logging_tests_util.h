@@ -28,7 +28,8 @@ public:
 
   static bool PrepareLogFile(LoggingType logging_type);
 
-  static size_t GetLogFileSize(std::string file_name);
+  // Truncate the log file for Peloton Recovery Test
+  static void TruncateLogFile(std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
