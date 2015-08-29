@@ -49,6 +49,12 @@ void TransactionRecord::Deserialize(CopySerializeInput& input){
 
 }
 
+// Used for peloton logging to go back to previous transaction record
+size_t TransactionRecord::GetTransactionRecordSize(void){
+  // log_record_type + header_legnth + transaction_id 
+  return sizeof(char) + sizeof(int) + sizeof(long);
+}
+
 void TransactionRecord::Print(void){
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
   std::cout << " #Txn ID:" << GetTransactionId() << "\n";
