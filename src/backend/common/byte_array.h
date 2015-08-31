@@ -35,7 +35,7 @@ namespace peloton {
  * This class has no method that implicitly accepts std::string which can
  * be automatically constructed from NULL-terminated const char*. Be careless!
  *
- * 2. ByteArray has explicit "length" property.
+ * 2. ByteArray has explicit "Length" property.
  * This is what boost::shared_array<char> can't provide.
  *
  * 3. Passing ByteArray (not ByteArray* nor ByteArray&) has almost no cost.
@@ -54,17 +54,17 @@ template <typename T>
 class GenericArray {
  public:
   /// corresponds to "byte[] bar = null;" in Java
-  GenericArray() { reset(); };
+  GenericArray() { Reset(); };
 
   /// corresponds to "byte[] bar = new byte[len];" in Java
   /// explicit because ByteArray bar = 10; sounds really weird in the semantics.
-  explicit GenericArray(int length) { resetAndExpand(length); };
+  explicit GenericArray(int Length) { ResetAndExpand(Length); };
 
   /// corresponds to "byte[] bar = new byte[] {1,2,...,10};" in Java
-  /// this constructor is safe because it explicitly receives length.
-  GenericArray(const T *data, int length) {
-    resetAndExpand(length);
-    assign(data, 0, length);
+  /// this constructor is safe because it explicitly receives Length.
+  GenericArray(const T *Data, int Length) {
+    ResetAndExpand(Length);
+    Assign(Data, 0, Length);
   };
 
   /// IMPORTANT : NEVER make a constructor that accepts std::string! It
@@ -84,16 +84,16 @@ class GenericArray {
   ~GenericArray(){};
 
   /// corresponds to "(bar == null)" in Java
-  bool isNull() const { return array_data == NULL; };
+  bool IsNull() const { return array_data == NULL; };
 
   /// corresponds to "bar = null;" in Java
-  void reset() {
-    array_data.reset();
+  void Reset() {
+    array_data.Reset();
     array_length = -1;
   };
 
   /// corresponds to "bar = new byte[len];" in Java
-  void resetAndExpand(int newLength) {
+  void ResetAndExpand(int newLength) {
     assert(newLength >= 0);
     array_data = boost::shared_array<T>(new T[newLength]);
     ::memset(array_data.get(), 0, newLength * sizeof(T));
@@ -102,7 +102,7 @@ class GenericArray {
 
   /// corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar
   /// = tmp;" in Java
-  void copyAndExpand(int newLength) {
+  void CopyAndExpand(int newLength) {
     assert(newLength >= 0);
     assert(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
@@ -113,14 +113,14 @@ class GenericArray {
     array_length = newLength;
   };
 
-  /// corresponds to "(bar.length)" in Java
-  int length() const { return array_length; };
-  const T *data() const { return array_data.get(); };
-  T *data() { return array_data.get(); };
+  /// corresponds to "(bar.Length)" in Java
+  int Length() const { return array_length; };
+  const T *Data() const { return array_data.get(); };
+  T *Data() { return array_data.get(); };
 
   /// helper functions for convenience.
-  void assign(const T *assignedData, int offset, int assignedLength) {
-    assert(!isNull());
+  void Assign(const T *assignedData, int offset, int assignedLength) {
+    assert(!IsNull());
     assert(array_length >= offset + assignedLength);
     assert(offset >= 0);
     ::memcpy(array_data.get() + offset, assignedData,
@@ -128,23 +128,23 @@ class GenericArray {
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {
-    assert(!isNull());
-    assert(!tail.isNull());
+    assert(!IsNull());
+    assert(!tail.IsNull());
     GenericArray<T> concated(this->array_length + tail.array_length);
-    concated.assign(this->array_data.get(), 0, this->array_length);
-    concated.assign(tail.array_data.get(), this->array_length,
+    concated.Assign(this->array_data.get(), 0, this->array_length);
+    concated.Assign(tail.array_data.get(), this->array_length,
                     tail.array_length);
     return concated;
   };
 
   const T &operator[](int index) const {
-    assert(!isNull());
+    assert(!IsNull());
     assert(array_length > index);
     return array_data.get()[index];
   };
 
   T &operator[](int index) {
-    assert(!isNull());
+    assert(!IsNull());
     assert(array_length > index);
     return array_data.get()[index];
   };

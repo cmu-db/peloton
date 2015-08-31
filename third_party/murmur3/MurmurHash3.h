@@ -12,7 +12,7 @@
 #ifndef _MURMURHASH3_H_
 #define _MURMURHASH3_H_
 
-namespace voltdb {
+namespace peloton {
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros

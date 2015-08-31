@@ -21,13 +21,17 @@ namespace expression {
         : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
         m_valueIdx(value_idx), m_paramValue()
     {
-        VOLT_TRACE("ParameterValueExpression %d", value_idx);
+        LOG_TRACE("ParameterValueExpression %d", value_idx);
+
+        // TODO: Fix executor context
+        /*
         ExecutorContext* context = ExecutorContext::getExecutorContext();
 
         ValueArray* params = context->getParameterContainer();
 
         assert(value_idx < params->size());
         m_paramValue = &(*params)[value_idx];
+        */
     };
 
 }  // End expression namespace

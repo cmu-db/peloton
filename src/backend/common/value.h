@@ -86,7 +86,7 @@ inline void throwCastSQLValueOutOfRangeException<double>(
            value,
            ValueTypeToString(newType).c_str());
 
-  throw NumericValueOutOfRangeException(msg);
+  throw NumericValueOutOfRangeException(msg, 0);
     }
 
 template<>
@@ -153,7 +153,7 @@ inline void throwDataExceptionIfInfiniteOrNaN(double value, const char* function
   }
   char msg[1024];
   snprintf(msg, sizeof(msg), "Invalid result value (%f) from floating point %s", value, function);
-  throw NumericValueOutOfRangeException(std::string(msg));
+  throw NumericValueOutOfRangeException(std::string(msg), 0);
 }
 
 
@@ -296,7 +296,7 @@ class Value {
       SerializeInput<E> &input, VarlenPool *dataPool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
   static void deserializeFrom(
-      SerializeInput &input, VarlenPool *dataVarlenPool, char *storage,
+      SerializeInputBE &input, VarlenPool *dataVarlenPool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
   // TODO: no callers use the first form; Should combine these
@@ -305,8 +305,8 @@ class Value {
   /* Read a ValueType from the SerializeInput stream and deserialize
        a scalar value of the specified type into this Value from the provided
        SerializeInput and perform allocations as necessary. */
-  void deserializeFromAllocateForStorage(SerializeInput &input, VarlenPool *dataPool);
-  void deserializeFromAllocateForStorage(ValueType vt, SerializeInput &input, VarlenPool *dataPool);
+  void deserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool);
+  void deserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *dataPool);
 
   /* Serialize this Value to a SerializeOutput */
   void serializeTo(SerializeOutput &output) const;
@@ -681,7 +681,7 @@ class Value {
 
   // Helpers for inList.
   // These are purposely not inlines to avoid exposure of ValueList details.
-  void deserializeIntoANewValueList(SerializeInput &input, VarlenPool *dataPool);
+  void deserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool);
   void allocateANewValueList(size_t elementCount, ValueType elementType);
 
   // Promotion Rules. Initialized in Value.cpp
@@ -1474,7 +1474,7 @@ class Value {
         if (value >= s_gtMaxDecimalAsDouble || value <= s_ltMinDecimalAsDouble) {
           char message[4096];
           snprintf(message, 4096, "Attempted to cast value %f causing overflow/underflow", value);
-          throw ValueOutOfRangeException( message);
+          throw Exception(message);
         }
         // Resort to string as the intermediary since even int64_t does not cover the full range.
         char decimalAsString[41]; // Large enough to account for digits, sign, decimal, and terminating null.
@@ -1565,7 +1565,7 @@ class Value {
   static inline void checkTooNarrowVarcharAndVarbinary(ValueType type, const char* ptr,
                                                        int32_t objLength, int32_t maxLength, bool isInBytes) {
     if (maxLength == 0) {
-      throw ObjectSizeException("Zero maxLength for object type " << ValueTypeToString(type));
+      throw ObjectSizeException("Zero maxLength for object type" + ValueTypeToString(type));
     }
 
     if (type == VALUE_TYPE_VARBINARY) {
@@ -2037,8 +2037,7 @@ class Value {
       char message[4096];
       snprintf(message, 4096, "Attempted to add %s with %s causing overflow/underflow",
                lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str());
-      throw ValueOutOfRangeException(
-          message);
+      throw Exception(message);
     }
 
     return getDecimalValue(retval);
@@ -2055,8 +2054,7 @@ class Value {
       char message[4096];
       snprintf(message, 4096, "Attempted to subtract %s from %s causing overflow/underflow",
                rhs.createStringFromDecimal().c_str(), lhs.createStringFromDecimal().c_str());
-      throw ValueOutOfRangeException(
-          message);
+      throw Exception(message);
     }
 
     return getDecimalValue(retval);
@@ -2123,8 +2121,7 @@ class Value {
       snprintf( message, 4096, "Attempted to divide %s by %s causing overflow. Unscaled result was %s",
                 lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
                 calc.ToString(10).c_str());
-      throw ValueOutOfRangeException(
-          message);
+      throw Exception(message);
     }
     return getDecimalValue(retval);
   }
@@ -2454,10 +2451,7 @@ inline int Value::compare_withoutNull(const Value rhs) const {
     case VALUE_TYPE_DECIMAL:
       return compareDecimalValue(rhs);
     default: {
-      throw Exception(
-          "non comparable types lhs '%s' rhs '%s'",
-          getValueTypeString().c_str(),
-          rhs.getValueTypeString().c_str());
+      throw Exception("non comparable types :: " +  getValueTypeString() + rhs.getValueTypeString());
     }
     /* no break */
   }
@@ -2517,7 +2511,7 @@ inline void Value::setNull() {
       getDecimal().SetMin();
       break;
     default: {
-      throw Exception("Value::setNull() called with unsupported ValueType '%d'", getValueType());
+      throw Exception("Value::setNull() called with unsupported ValueType " + std::to_string(getValueType()));
     }
   }
 }
@@ -2639,8 +2633,9 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
       break;
     }
     default:
-      throw Exception("Value::initFromTupleStorage() invalid column type '%s'",
-                      ValueTypeToString(type).c_str());
+      throw Exception(
+          "Value::initFromTupleStorage() invalid column type " +
+          ValueTypeToString(type));
       /* no break */
   }
   return retval;
@@ -2706,8 +2701,8 @@ inline void Value::serializeToTupleStorageAllocateForObjects(void *storage, cons
       break;
     default: {
       throw Exception(
-          "Value::serializeToTupleStorageAllocateForObjects() unrecognized type '%s'",
-          ValueTypeToString(type).c_str());
+          "Value::serializeToTupleStorageAllocateForObjects() unrecognized type " +
+          ValueTypeToString(type));
     }
   }
 }
@@ -2788,7 +2783,7 @@ inline void Value::serializeToTupleStorage(void *storage, const bool isInlined,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline void Value::deserializeFrom(SerializeInput &input, VarlenPool *dataPool, char *storage,
+inline void Value::deserializeFrom(SerializeInputBE &input, VarlenPool *dataPool, char *storage,
                                    const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
   deserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, dataPool, storage, type, isInlined, maxLength, isInBytes);
 }
@@ -2889,13 +2884,13 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
  * provided SerializeInput and perform allocations as necessary.
  * This is used to deserialize parameter sets.
  */
-inline void Value::deserializeFromAllocateForStorage(SerializeInput &input, VarlenPool *dataPool)
+inline void Value::deserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool)
 {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
   deserializeFromAllocateForStorage(type, input, dataPool);
 }
 
-inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeInput &input, VarlenPool *dataPool)
+inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *dataPool)
 {
   setValueType(type);
   // Parameter array Value elements are reused from one executor call to the next,
@@ -2966,8 +2961,8 @@ inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeIn
       break;
     }
     default:
-      throw Exception("Value::deserializeFromAllocateForStorage() unrecognized type '%s'",
-                      ValueTypeToString(type).c_str());
+      throw Exception("Value::deserializeFromAllocateForStorage() unrecognized type " +
+                      ValueTypeToString(type));
   }
 }
 
@@ -3026,7 +3021,7 @@ inline void Value::serializeTo(SerializeOutput &output) const {
     }
     default:
       throw Exception( "Value::serializeTo() found a column "
-          "with ValueType '%s' that is not handled", getValueTypeString().c_str());
+          "with ValueType '%s' that is not handled" + getValueTypeString());
   }
 }
 
@@ -3295,7 +3290,7 @@ inline void Value::hashCombine(std::size_t &seed) const {
     case VALUE_TYPE_DECIMAL:
       getDecimal().hash(seed); break;
     default:
-      throw Exception( "Value::hashCombine unknown type %s", getValueTypeString().c_str());
+      throw Exception("Value::hashCombine unknown type " +  getValueTypeString());
   }
 }
 
@@ -3346,8 +3341,7 @@ inline void* Value::castAsAddress() const {
       return *reinterpret_cast<void* const*>(m_data);
     default:
       throw Exception(
-          "Type %s not a recognized type for casting as an address",
-          getValueTypeString().c_str());
+          "Type %s not a recognized type for casting as an address" + getValueTypeString());
   }
 }
 
@@ -3357,33 +3351,33 @@ inline Value Value::op_increment() const {
   switch(type) {
     case VALUE_TYPE_TINYINT:
       if (getTinyInt() == INT8_MAX) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Incrementing this TinyInt results in a value out of range");
       }
       retval.getTinyInt() = static_cast<int8_t>(getTinyInt() + 1); break;
     case VALUE_TYPE_SMALLINT:
       if (getSmallInt() == INT16_MAX) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Incrementing this SmallInt results in a value out of range");
       }
       retval.getSmallInt() = static_cast<int16_t>(getSmallInt() + 1); break;
     case VALUE_TYPE_INTEGER:
       if (getInteger() == INT32_MAX) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Incrementing this Integer results in a value out of range");
       }
       retval.getInteger() = getInteger() + 1; break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
       if (getBigInt() == INT64_MAX) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Incrementing this BigInt/Timestamp results in a value out of range");
       }
       retval.getBigInt() = getBigInt() + 1; break;
     case VALUE_TYPE_DOUBLE:
       retval.getDouble() = getDouble() + 1; break;
     default:
-      throw Exception( "type %s is not incrementable", getValueTypeString().c_str());
+      throw Exception( "type %s is not incrementable " + getValueTypeString());
       break;
   }
   return retval;
@@ -3395,33 +3389,33 @@ inline Value Value::op_decrement() const {
   switch(type) {
     case VALUE_TYPE_TINYINT:
       if (getTinyInt() == PELOTON_INT8_MIN) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Decrementing this TinyInt results in a value out of range");
       }
       retval.getTinyInt() = static_cast<int8_t>(getTinyInt() - 1); break;
     case VALUE_TYPE_SMALLINT:
       if (getSmallInt() == PELOTON_INT16_MIN) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Decrementing this SmallInt results in a value out of range");
       }
       retval.getSmallInt() = static_cast<int16_t>(getSmallInt() - 1); break;
     case VALUE_TYPE_INTEGER:
       if (getInteger() == PELOTON_INT32_MIN) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Decrementing this Integer results in a value out of range");
       }
       retval.getInteger() = getInteger() - 1; break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
       if (getBigInt() == PELOTON_INT64_MIN) {
-        throw ValueOutOfRangeException(
+        throw Exception(
             "Decrementing this BigInt/Timestamp results in a value out of range");
       }
       retval.getBigInt() = getBigInt() - 1; break;
     case VALUE_TYPE_DOUBLE:
       retval.getDouble() = getDouble() - 1; break;
     default:
-      throw Exception( "type %s is not decrementable", getValueTypeString().c_str());
+      throw Exception( "type %s is not decrementable " + getValueTypeString());
       break;
   }
   return retval;
@@ -3443,8 +3437,8 @@ inline bool Value::isZero() const {
       return getDecimal().IsZero();
     default:
       throw Exception(
-          "type %s is not a numeric type that implements isZero()",
-          getValueTypeString().c_str());
+          "type %s is not a numeric type that implements isZero()" +
+          getValueTypeString());
   }
 }
 
@@ -3475,8 +3469,8 @@ inline Value Value::op_subtract(const Value rhs) const {
       break;
   }
   throw TypeMismatchException("Promotion of %s and %s failed in op_subtract.",
-                              getValueTypeString().c_str(),
-                              rhs.getValueTypeString().c_str());
+                              getValueType(),
+                              rhs.getValueType());
 }
 
 inline Value Value::op_add(const Value rhs) const {
@@ -3505,9 +3499,9 @@ inline Value Value::op_add(const Value rhs) const {
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_add.",
-                  getValueTypeString().c_str(),
-                  rhs.getValueTypeString().c_str());
+  throw Exception("Promotion of %s and %s failed in op_add." +
+                  getValueTypeString() +
+                  rhs.getValueTypeString());
 }
 
 inline Value Value::op_multiply(const Value rhs) const {
@@ -3536,9 +3530,9 @@ inline Value Value::op_multiply(const Value rhs) const {
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_multiply.",
-                  getValueTypeString().c_str(),
-                  rhs.getValueTypeString().c_str());
+  throw Exception("Promotion of %s and %s failed in op_multiply." +
+                  getValueTypeString() +
+                  rhs.getValueTypeString());
 }
 
 inline Value Value::op_divide(const Value rhs) const {
@@ -3567,9 +3561,9 @@ inline Value Value::op_divide(const Value rhs) const {
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_divide.",
-                  getValueTypeString().c_str(),
-                  rhs.getValueTypeString().c_str());
+  throw Exception("Promotion of %s and %s failed in op_divide." +
+                  getValueTypeString() +
+                  rhs.getValueTypeString());
 }
 
 /*
@@ -3594,7 +3588,7 @@ inline int32_t Value::murmurHash3() const {
       }
       return MurmurHash3_x64_128( getObjectValue_withoutNull(), getObjectLength_withoutNull(), 0);
     default:
-      throw Exception("Unknown type for murmur hashing %d", type);
+      throw Exception("Unknown type for murmur hashing %d" + std::to_string(type));
       break;
   }
 }
@@ -3613,17 +3607,17 @@ inline Value Value::like(const Value rhs) const {
   const ValueType mType = getValueType();
   if (mType != VALUE_TYPE_VARCHAR) {
     throw Exception(
-        "lhs of LIKE expression is %s not %s",
-        getValueTypeString().c_str(),
-        ValueTypeToString(VALUE_TYPE_VARCHAR).c_str());
+        "lhs of LIKE expression is %s not %s" +
+        getValueTypeString() +
+        ValueTypeToString(VALUE_TYPE_VARCHAR));
   }
 
   const ValueType rhsType = rhs.getValueType();
   if (rhsType != VALUE_TYPE_VARCHAR) {
     throw Exception(
-        "rhs of LIKE expression is %s not %s",
-        rhs.getValueTypeString().c_str(),
-        ValueTypeToString(VALUE_TYPE_VARCHAR).c_str());
+        "rhs of LIKE expression is %s not %s" +
+        rhs.getValueTypeString() +
+        ValueTypeToString(VALUE_TYPE_VARCHAR));
   }
 
   const int32_t valueUTF8Length = getObjectLength_withoutNull();
@@ -3716,7 +3710,7 @@ inline Value Value::like(const Value rhs) const {
             if ( m_value.atEnd()) {
               return false;
             }
-            const int nextValueCodePoint = m_value.extractCodePoint();
+            const uint32_t nextValueCodePoint = m_value.extractCodePoint();
             if (nextPatternCodePoint != nextValueCodePoint) {
               return false;
             }
