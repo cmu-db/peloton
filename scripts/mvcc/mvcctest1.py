@@ -2,8 +2,6 @@
 # encoding: utf-8
 
 import psycopg2
-import sys
-import pprint
 import psycopg2.extras
 
 ############################################
@@ -20,20 +18,20 @@ import psycopg2.extras
 conn_string = "host='localhost' port='57721' dbname='tpcc' user='postgres' password='postgres'"
 test_table = "foo"
 
-drop_stmt = "DROP table if exists %s"%(test_table)
-create_stmt = "CREATE table %s (a integer, b integer)"%(test_table)
-select_stmt = "SELECT * from %s"%(test_table)
-select1_stmt = "SELECT * from %s where a = %%s"%(test_table)
-insert_stmt = "INSERT into %s values (%%s, %%s)"%(test_table)
-delete_stmt = "DELETE from %s where a = %%s"%(test_table)
-update_stmt = "UPDATE %s set b = %%s where a = %%s"%(test_table)
+drop_stmt = "DROP table if exists %s" % (test_table)
+create_stmt = "CREATE table %s (a integer, b integer)" % (test_table)
+select_stmt = "SELECT * from %s" % (test_table)
+select1_stmt = "SELECT * from %s where a = %%s" % (test_table)
+insert_stmt = "INSERT into %s values (%%s, %%s)" % (test_table)
+delete_stmt = "DELETE from %s where a = %%s" % (test_table)
+update_stmt = "UPDATE %s set b = %%s where a = %%s" % (test_table)
 
 ### Recreate the test table with initial values
 ### |a, b |
 ### (1, 11)
 ### (2, 22)
 def RecreateTestTable():
-##    print "Connecting to:\n %s\n" % (conn_string)
+    ##    print "Connecting to:\n %s\n" % (conn_string)
 
     try:
         conn = psycopg2.connect(conn_string)
@@ -42,18 +40,18 @@ def RecreateTestTable():
 
     conn.autocommit = True
     cursor = conn.cursor()
-    
+
     cursor.execute(drop_stmt)
     cursor.execute(create_stmt)
 
-    cursor.execute(insert_stmt, (1,11))
-    cursor.execute(insert_stmt, (2,22))
+    cursor.execute(insert_stmt, (1, 11))
+    cursor.execute(insert_stmt, (2, 22))
 
     cursor.execute(select_stmt)
-##    records = cursor.fetchall()
-##    print "Initial state: (%d tuples)"%(len(records))
-##    pprint.pprint(records)
-    
+    ##    records = cursor.fetchall()
+    ##    print "Initial state: (%d tuples)"%(len(records))
+    ##    pprint.pprint(records)
+
     conn.close()
 
 
@@ -67,9 +65,9 @@ def ReadMyInsertTest():
     # Confirm initial state
     cursor.execute(select_stmt)
     assert 2 == len(cursor.fetchall())
-    
+
     # Do a Dirty insert
-    cursor.execute(insert_stmt, (3,33))
+    cursor.execute(insert_stmt, (3, 33))
     # Let's see our dirty insert
     cursor.execute(select_stmt)
     assert 3 == len(cursor.fetchall())
@@ -95,11 +93,11 @@ def DeleteMyInsertTest():
     assert 2 == len(term1.fetchall())
 
     # T1 do a Dirty insert (3)
-    term1.execute(insert_stmt, (3,33))
+    term1.execute(insert_stmt, (3, 33))
     # Let's see our dirty insert
     term1.execute(select_stmt)
     assert 3 == len(term1.fetchall())
-    
+
 
     # T1 deletes (3)
     term1.execute(delete_stmt, (3,))
@@ -127,19 +125,19 @@ def UpdateMyInsert():
     assert 2 == len(term1.fetchall())
 
     # T1 do a Dirty insert (3)
-    term1.execute(insert_stmt, (3,33))
+    term1.execute(insert_stmt, (3, 33))
     # T1 see own insert
     term1.execute(select_stmt)
     assert 3 == len(term1.fetchall())
-    
+
     # T1 updates (3)
     term1.execute(update_stmt, (300, 3))
-    
+
     # T1 see own insert is updated
     term1.execute(select1_stmt, (3,))
     records = term1.fetchall()
     assert 1 == len(records)
-    assert  (3,300) == records[0]
+    assert (3, 300) == records[0]
 
     # T1 commit
     conn1.commit()
@@ -147,12 +145,11 @@ def UpdateMyInsert():
     term1.execute(select1_stmt, (3,))
     records = term1.fetchall()
     assert 1 == len(records)
-    assert  (3,300) == records[0]
-    
+    assert (3, 300) == records[0]
+
     conn1.close()
 
 
-    
 def ReadOtherInsertTest():
     RecreateTestTable()
 
@@ -171,7 +168,7 @@ def ReadOtherInsertTest():
     assert 2 == len(term2.fetchall())
 
     # T1 do a Dirty insert
-    term1.execute(insert_stmt, (3,33))
+    term1.execute(insert_stmt, (3, 33))
     # Let's see our dirty insert
     term1.execute(select_stmt)
     assert 3 == len(term1.fetchall())
@@ -243,7 +240,7 @@ def DeleteOtherDeleteTest():
     conn2.rollback()
     term2.execute(select_stmt)
     assert 1 == len(term2.fetchall())
-    
+
     conn1.close()
     conn2.close()
 
@@ -285,7 +282,7 @@ def DeleteOtherAbortedDeleteTest():
     conn2.commit()
     term2.execute(select_stmt)
     assert 1 == len(term2.fetchall())
-    
+
     conn1.close()
     conn2.close()
 
@@ -320,7 +317,7 @@ def UpdateOtherDeleteTest():
     # T2 tries to update the same tuple, should fail
     catch = False
     try:
-        term2.execute(update_stmt, (100,1))
+        term2.execute(update_stmt, (100, 1))
     except:
         catch = True
     assert True == catch
@@ -332,10 +329,9 @@ def UpdateOtherDeleteTest():
     conn2.rollback()
     term2.execute(select_stmt)
     assert 1 == len(term2.fetchall())
-    
+
     conn1.close()
     conn2.close()
-
 
 
 def UpdateOtherUpdateTest():
@@ -371,7 +367,7 @@ def UpdateOtherUpdateTest():
     # T2 tries to update the same tuple, should fail
     catch = False
     try:
-        term2.execute(update_stmt, (200,1))
+        term2.execute(update_stmt, (200, 1))
     except:
         catch = True
     assert True == catch
@@ -390,8 +386,6 @@ def UpdateOtherUpdateTest():
     conn2.close()
 
 
-
-    
 def UpdateOtherAbortedUpdateTest():
     RecreateTestTable()
 
@@ -426,35 +420,91 @@ def UpdateOtherAbortedUpdateTest():
     conn1.rollback()
 
     # T2 tries to update the same
-    term2.execute(update_stmt, (200,1))
+    term2.execute(update_stmt, (200, 1))
 
     # T2 should see updated value (in a new txn)
     conn2.commit()
     term2.execute(select1_stmt, (1,))
     records = term2.fetchall()
     assert 1 == len(records)
-##    pprint.pprint(records)
+    ##    pprint.pprint(records)
     assert (1, 200) == records[0]
-    
+
     conn1.close()
     conn2.close()
 
+def UpdateSameTupleTest():
+    RecreateTestTable()
 
+    conn1 = psycopg2.connect(conn_string)
+    conn1.autocommit = False
+    term1 = conn1.cursor()
 
+    conn2 = psycopg2.connect(conn_string)
+    conn2.autocommit = False
+    term2 = conn2.cursor()
+
+    # Confirm initial state
+    term1.execute(select_stmt)
+    assert 2 == len(term1.fetchall())
+    term2.execute(select_stmt)
+    assert 2 == len(term2.fetchall())
+
+    # T1 updates (1)
+    term1.execute(update_stmt, (100, 1))
+    # T1 sees updated value
+    term1.execute(select1_stmt, (1,))
+    records = term1.fetchall()
+    assert 1 == len(records)
+    assert (1, 100) == records[0]
+
+    # T2 should still see the old value
+    term2.execute(select1_stmt, (1,))
+    records = term2.fetchall()
+    assert (1, 11) == records[0]
+
+    # T2 tries to update the same, should fail
+    catch = False
+    try:
+        term2.execute(update_stmt, (200, 1))
+    except Exception as e:
+        catch = True
+
+    assert catch is True
+
+    # rollbacks
+    conn2.rollback()
+
+    # Commit
+    conn1.commit()
+
+    # T1 T2 should see the new values
+    term2.execute(select1_stmt, (1,))
+    records = term2.fetchall()
+    assert (1, 100) == records[0]
+    assert 1 == len(records)
+
+    term1.execute(select1_stmt, (1,))
+    records = term1.fetchall()
+    assert (1, 100) == records[0]
+    assert 1 == len(records)
+
+    conn1.close()
+    conn2.close()
 
 def main():
     print "ReadMyInsertTest"
     ReadMyInsertTest()
-    
-    print "DeleteMyInsertTest"    
+
+    print "DeleteMyInsertTest"
     DeleteMyInsertTest()
 
     print "UpdateMyInsert"
     UpdateMyInsert()
-    
+
     print "ReadOtherInsertTest"
     ReadOtherInsertTest()
-    
+
     print "DeleteOtherDeleteTest"
     DeleteOtherDeleteTest()
 
@@ -470,11 +520,11 @@ def main():
     print "UpdateOtherAbortedUpdateTest"
     UpdateOtherAbortedUpdateTest()
 
-    print "All tests are run."
-        
+    print "UpdateSameTupleTest"
+    UpdateSameTupleTest()
 
+    print "All tests are run."
 
 
 if __name__ == "__main__":
     main()
-    
