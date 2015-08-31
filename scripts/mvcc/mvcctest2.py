@@ -2,8 +2,6 @@
 # encoding: utf-8
 
 import psycopg2
-import sys
-import pprint
 import psycopg2.extras
 
 ############################################
@@ -20,22 +18,22 @@ import psycopg2.extras
 conn_string = "host='localhost' port='57721' dbname='tpcc' user='postgres' password='postgres'"
 test_table = "foo"
 
-drop_stmt = "DROP table if exists %s"%(test_table)
-create_stmt = "CREATE table %s (a integer PRIMARY KEY, b integer)"%(test_table)
-select_stmt = "SELECT * from %s"%(test_table)
-select1_stmt = "SELECT * from %s where a = %%s"%(test_table)
-select2_stmt = "SELECT * from %s where b = %%s"%(test_table)
-insert_stmt = "INSERT into %s values (%%s, %%s)"%(test_table)
-delete_stmt = "DELETE from %s where a = %%s"%(test_table)
-update_stmt = "UPDATE %s set b = %%s where a = %%s"%(test_table)
-update1_stmt = "UPDATE %s set a = %%s where b = %%s"%(test_table)
+drop_stmt = "DROP table if exists %s" % (test_table)
+create_stmt = "CREATE table %s (a integer PRIMARY KEY, b integer)" % (test_table)
+select_stmt = "SELECT * from %s" % (test_table)
+select1_stmt = "SELECT * from %s where a = %%s" % (test_table)
+select2_stmt = "SELECT * from %s where b = %%s" % (test_table)
+insert_stmt = "INSERT into %s values (%%s, %%s)" % (test_table)
+delete_stmt = "DELETE from %s where a = %%s" % (test_table)
+update_stmt = "UPDATE %s set b = %%s where a = %%s" % (test_table)
+update1_stmt = "UPDATE %s set a = %%s where b = %%s" % (test_table)
 
 ### Recreate the test table with initial values
 ### |a, b |
 ### (1, 11)
 ### (2, 22)
 def RecreateTestTable():
-##    print "Connecting to:\n %s\n" % (conn_string)
+    ##    print "Connecting to:\n %s\n" % (conn_string)
 
     try:
         conn = psycopg2.connect(conn_string)
@@ -44,23 +42,24 @@ def RecreateTestTable():
 
     conn.autocommit = True
     cursor = conn.cursor()
-    
+
     cursor.execute(drop_stmt)
     cursor.execute(create_stmt)
 
-    cursor.execute(insert_stmt, (1,11))
-    cursor.execute(insert_stmt, (2,22))
+    cursor.execute(insert_stmt, (1, 11))
+    cursor.execute(insert_stmt, (2, 22))
 
-##    cursor.execute(select_stmt)
-##    records = cursor.fetchall()
-##    print "Initial state: (%d tuples)"%(len(records))
-##    pprint.pprint(records)
-    
+    ##    cursor.execute(select_stmt)
+    ##    records = cursor.fetchall()
+    ##    print "Initial state: (%d tuples)"%(len(records))
+    ##    pprint.pprint(records)
+
     conn.close()
+
 
 def InsertExistingKeyTest():
     RecreateTestTable()
-    
+
     conn1 = psycopg2.connect(conn_string)
     term1 = conn1.cursor()
 
@@ -77,13 +76,13 @@ def InsertExistingKeyTest():
 
 def InsertSameKeyTest():
     RecreateTestTable()
-    
+
     conn1 = psycopg2.connect(conn_string)
     term1 = conn1.cursor()
 
     # T1 tries to insert (3, 33)
-    term1.execute(insert_stmt, (3,33))
-    
+    term1.execute(insert_stmt, (3, 33))
+
     # T1 insert (3, 33) again
     catch = False
     try:
@@ -93,11 +92,11 @@ def InsertSameKeyTest():
     assert True == catch
 
     conn1.close()
-    
+
 
 def DeleteThenInsertKeyTest():
     RecreateTestTable()
-    
+
     conn1 = psycopg2.connect(conn_string)
     term1 = conn1.cursor()
 
@@ -119,7 +118,7 @@ def DeleteThenInsertKeyTest():
 
 def AbortOverrideKeyTest():
     RecreateTestTable()
-    
+
     conn1 = psycopg2.connect(conn_string)
     term1 = conn1.cursor()
 
@@ -148,7 +147,7 @@ def AbortOverrideKeyTest():
 
 def UpdateChangeKeyTest():
     RecreateTestTable()
-    
+
     conn1 = psycopg2.connect(conn_string)
     term1 = conn1.cursor()
 
@@ -169,8 +168,6 @@ def UpdateChangeKeyTest():
     assert (2, 400) == records[0]
 
     conn1.close()
-    
-
 
 
 def main():
@@ -190,8 +187,5 @@ def main():
     UpdateChangeKeyTest()
 
 
-
-
 if __name__ == "__main__":
     main()
-    
