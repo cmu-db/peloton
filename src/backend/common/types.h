@@ -55,7 +55,7 @@ namespace peloton {
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 10
+#define DEFAULT_TUPLES_PER_TILEGROUP 1000
 
 //===--------------------------------------------------------------------===//
 // Other Constants
