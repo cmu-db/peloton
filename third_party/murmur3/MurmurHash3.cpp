@@ -17,7 +17,7 @@
 
 #include "MurmurHash3.h"
 
-namespace voltdb {
+namespace peloton {
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
 
