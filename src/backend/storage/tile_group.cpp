@@ -160,6 +160,9 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
     }
   } else if (tile_group_header->GetTransactionId(tuple_slot_id) == transaction_id) {
     // is a own insert, is already latched by myself and is safe to set
+    LOG_INFO("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu", tile_group_header->GetTransactionId(tuple_slot_id),
+             tile_group_header->GetBeginCommitId(tuple_slot_id),
+             tile_group_header->GetEndCommitId(tuple_slot_id));
     assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
     assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
