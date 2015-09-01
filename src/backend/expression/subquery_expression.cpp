@@ -61,22 +61,22 @@ Value SubqueryExpression::Evaluate(__attribute__((unused)) const AbstractTuple *
     // TODO: Get the subquery context
     /*
     // Get the subquery context with the last Evaluateuation result and parameters used to obtain that result
-    SubqueryContext* context = exeContext->getSubqueryContext(m_subqueryId);
+    SubqueryContext* context = exeContext-.GetSubqueryContext(m_subqueryId);
 
     bool hasPriorResult = (context != NULL) && context->hasValidResult();
     bool paramsChanged = false;
-    ValueArray& parameterContainer = *(exeContext->getParameterContainer());
+    ValueArray& parameterContainer = *(exeContext-.GetParameterContainer());
     LOG_TRACE ("Running subquery: %d", m_subqueryId);
 
     // Substitute parameters.
-    if (m_tveParams.get() != NULL) {
+    if (m_tveParams.Get() != NULL) {
         size_t paramsCnt = m_tveParams->size();
         for (size_t i = 0; i < paramsCnt; ++i) {
             AbstractExpression* tveParam = (*m_tveParams)[i];
             Value param = tveParam->Evaluate(tuple1, tuple2);
             // compare the new param value with the previous one. Since this parameter is set
             // by this subquery, no other subquery can change its value. So, we don't need to
-            // save its value on the side for future comparisons.
+            // save its value on the side for future compa.Isons.
             Value& prevParam = parameterContainer[m_paramIdxs[i]];
             if (hasPriorResult) {
                 if (param.compare(prevParam) == VALUE_COMPARE_EQUAL) {
@@ -102,15 +102,15 @@ Value SubqueryExpression::Evaluate(__attribute__((unused)) const AbstractTuple *
         }
         if (paramsChanged) {
             // If parameters have changed since the last execution,
-            // the cached result of the prior execution is obsolete.
-            // In particular, it should not be mistaken for the correct result for the current
+            // the cached result of the prior execution.Is obsolete.
+            // In particular, it should not be .Istaken for the correct result for the current
             // parameters in the event that the current execution fails.
-            // This subquery context will be restored to validity when its new result is set
+            // T.Is subquery context will be restored to validity when its new result is set
             // after execution succeeds.
             context->invalidateResult();
         } else {
             // If the parameters haven't changed since the last execution, reuse the known result.
-            return context->getResult();
+            return context-.GetResult();
         }
     }
 
@@ -130,7 +130,7 @@ Value SubqueryExpression::Evaluate(__attribute__((unused)) const AbstractTuple *
     }
 
     // Update the cached result for the current params. All params are already updated
-    Value retval = ValueFactory::getIntegerValue(m_subqueryId);
+    Value retval = ValueFactory:.GetIntegerValue(m_subqueryId);
     context->setResult(retval);
     */
     Value retval;

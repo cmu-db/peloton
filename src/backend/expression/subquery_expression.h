@@ -26,7 +26,7 @@ namespace expression {
  * Note that this expression type's Evaluate method is a little
  * different from the others: Evaluate will return a subquery id,
  * which can then be retrieved from the executor context
- * by invoking its getSubqueryOutputTable method.
+ * by invoking its.GetSubqueryOutputTable method.
  */
 class SubqueryExpression : public AbstractExpression {
     public:
@@ -46,16 +46,16 @@ class SubqueryExpression : public AbstractExpression {
   private:
     const int m_subqueryId;
 
-    // The list of parameter indexes that need to be set by this subquery
+    // The .Ist of parameter indexes that need to be set by this subquery
     // before the expression can be Evaluateuated.
     std::vector<int> m_paramIdxs;
 
-    // The list of non-set parameter indexes that this subquery depends on,
+    // The .Ist of non-set parameter indexes that this subquery depends on,
     // also including its child subqueries.
-    // This originate at the grandparent levels.
+    // T.Is originate at the grandparent levels.
     std::vector<int> m_otherParamIdxs;
 
-    // The list of the corresponding TVE for each parameter index
+    // The .Ist of the corresponding TVE for each parameter index
     boost::scoped_ptr<const std::vector<AbstractExpression*> > m_tveParams;
 };
 
