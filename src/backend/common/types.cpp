@@ -45,9 +45,9 @@ bool IsNumeric(ValueType type) {
       case (VALUE_TYPE_ARRAY):
         return false;
       default:
-          throw Exception();
+          throw Exception("IsNumeric");
     }
-    throw Exception();
+    throw Exception("IsNumeric");
 }
 
 /** Used in index optimization **/
@@ -68,9 +68,9 @@ bool IsIntegralType(ValueType type) {
       case (VALUE_TYPE_ARRAY):
         return false;
       default:
-          throw Exception();
+          throw Exception("IsIntegralType");
     }
-    throw Exception();
+    throw Exception("IsIntegralType");
 }
 
 Value GetRandomValue(ValueType type) {
@@ -110,10 +110,10 @@ Value GetRandomValue(ValueType type) {
             break;
         case VALUE_TYPE_ARRAY:
         default: {
-            throw Exception("Attempted to get a random value of unsupported value type %d", type);
+            throw Exception("Attempted to get a random value of unsupported value type %d" + std::to_string(type));
         }
     }
-    throw Exception();
+    throw Exception("GetRandomValue");
 }
 
 
@@ -411,6 +411,24 @@ std::string ExpressionTypeToString(ExpressionType type)
     case EXPRESSION_TYPE_SELECT_SUBQUERY: {
         return "SELECT_SUBQUERY";
     }
+
+    // TODO: Added by us
+    case EXPRESSION_TYPE_PLACEHOLDER : {
+        return "PLACEHOLDER";
+    }
+    case EXPRESSION_TYPE_COLUMN_REF : {
+        return "COLUMN_REF";
+    }
+    case EXPRESSION_TYPE_FUNCTION_REF : {
+        return "FUNCTION_REF";
+    }
+    case EXPRESSION_TYPE_CAST : {
+        return "CAST";
+    }
+    case EXPRESSION_TYPE_STAR : {
+        return "STAR";
+    }
+
     }
     return "INVALID";
 }

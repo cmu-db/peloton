@@ -109,7 +109,7 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
 
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
-         column_itr++) {
+        column_itr++) {
       const oid_t unlineable_column_id =
           tuple_schema->GetUninlinedColumn(column_itr);
 
@@ -154,7 +154,7 @@ size_t Tuple::ExportSerializationSize() const {
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
+              ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
         }
         break;
 
@@ -178,11 +178,11 @@ size_t Tuple::GetUninlinedMemorySize() const {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
       if ((GetType(column_itr) == VALUE_TYPE_VARCHAR ||
-           (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
+          (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
+              ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
         }
       }
     }
@@ -229,14 +229,12 @@ void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
   }
 }
 
-int64_t Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
-  int64_t total_bytes_deserialized = 0;
+void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
 
   assert(tuple_schema);
   assert(tuple_data);
 
   input.ReadInt();  // Read in the tuple size, discard
-  total_bytes_deserialized += sizeof(int);
 
   const int column_count = tuple_schema->GetColumnCount();
 
@@ -249,13 +247,12 @@ int64_t Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
 
     // TODO: Not sure about arguments
     const bool is_in_bytes = false;
-    total_bytes_deserialized += Value::DeserializeFrom(
+    Value::DeserializeFrom(
         input, NULL, data_ptr, type,
         is_inlined, column_length,
         is_in_bytes);
   }
 
-  return total_bytes_deserialized;
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {

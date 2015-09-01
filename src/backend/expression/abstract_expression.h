@@ -118,6 +118,10 @@ class AbstractExpression {
     return m_right;
   }
 
+  // create an expression tree. call this once with the input
+  // stream positioned at the root expression node
+  static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
+
  protected:
   AbstractExpression();
   AbstractExpression(ExpressionType type);
@@ -127,6 +131,9 @@ class AbstractExpression {
 
  private:
   bool InitParamShortCircuits();
+
+  static AbstractExpression *CreateExpressionTreeRecurse(
+      json_spirit::Object &obj);
 
  protected:
 

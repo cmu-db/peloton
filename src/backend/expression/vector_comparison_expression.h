@@ -77,16 +77,21 @@ Value compare_tuple(const AbstractTuple& tuple1, const AbstractTuple& tuple2)
 template <typename OP, typename ValueExtractorLeft, typename ValueExtractorRight>
 class VectorComparisonExpression : public AbstractExpression {
 public:
+
     VectorComparisonExpression(ExpressionType et,
                            AbstractExpression *left,
                            AbstractExpression *right,
-                           QuantifierType quantifier)
-        : AbstractExpression(et, left, right),
-          m_quantifier(quantifier)
+                           executor::ExecutorContext *context)
+        : AbstractExpression(et, left, right)
     {
         assert(left != NULL);
         assert(right != NULL);
-    };
+    }
+
+    // TODO: Use this function instead of constructor
+    void SetQuantifierType(QuantifierType quantifier_type) {
+      m_quantifier = quantifier_type;
+    }
 
     Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const;
 
@@ -95,7 +100,7 @@ public:
     }
 
 private:
-    QuantifierType m_quantifier;
+    QuantifierType m_quantifier = QUANTIFIER_TYPE_NONE;
 };
 
 struct ValueExtractor
@@ -130,7 +135,8 @@ struct ValueExtractor
     template<typename OP>
     Value compare(const AbstractTuple& tuple) const
     {
-        assert(tuple.GetSchema()->columnCount() == 1);
+      // TODO: enable assert
+      //assert(tuple.GetSchema()->columnCount() == 1);
         return compare<OP>(tuple.GetValue(0));
     }
 
@@ -157,6 +163,7 @@ struct ValueExtractor
 
 struct TupleExtractor
 {
+  /*
     typedef AbstractTuple ValueType;
 
     TupleExtractor(Value value) :
@@ -234,6 +241,7 @@ private:
     TableIterator& m_iterator;
     ValueType m_tuple;
     int64_t m_size;
+    */
 };
 
 template <typename OP, typename ValueExtractorOuter, typename ValueExtractorInner>

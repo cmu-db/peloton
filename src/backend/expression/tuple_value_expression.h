@@ -29,7 +29,9 @@ class TupleValueExpression : public AbstractExpression {
         LOG_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
-    virtual Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+    virtual Value Evaluate(const AbstractTuple *tuple1,
+                           const AbstractTuple *tuple2,
+                           __attribute__((unused)) executor::ExecutorContext *context) const {
         if (tuple_idx == 0) {
             assert(tuple1);
             if ( ! tuple1 ) {
