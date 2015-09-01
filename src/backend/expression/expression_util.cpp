@@ -10,18 +10,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/expression/expression_util.h"
-
-#include "backend/common/value_factory.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/expression/abstract_expression.h"
 #include <cassert>
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
 
-#include "backend/expression/expressions.h"
+#include "backend/expression/expression_util.h"
+
+#include "backend/common/value_factory.h"
+#include "backend/common/exception.h"
+#include "backend/common/logger.h"
+
+#include "backend/expression/abstract_expression.h"
+
+#include "backend/expression/operator_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/cast_expression.h"
+#include "backend/expression/tuple_address_expression.h"
+
 #include <json_spirit.h>
 
 namespace peloton {
@@ -61,17 +70,17 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
   assert(l);
   assert(r);
   switch (c) {
-    case (EXPRESSION_TYPE_COMPARE_EQ):
+    case (EXPRESSION_TYPE_COMPARE_EQUAL):
       return new InlinedComparisonExpression<CmpEq, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NE):
+    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
       return new InlinedComparisonExpression<CmpNe, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LT):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
       return new InlinedComparisonExpression<CmpLt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GT):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
       return new InlinedComparisonExpression<CmpGt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LTE):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
       return new InlinedComparisonExpression<CmpLte, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GTE):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
       return new InlinedComparisonExpression<CmpGte, L, R>(c, l, r);
     default:
       char message[256];
@@ -143,11 +152,7 @@ AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *lc,
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
-      ret = new OperatorUnaryNotExpression(lc);
-      break;
-
-    case (EXPRESSION_TYPE_OPERATOR_UNARY_MINUS):
-      ret = new OperatorUnaryMinusExpression(lc);
+      ret = new OperatorNotExpression(lc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MOD):
@@ -271,7 +276,7 @@ AbstractExpression *ParameterValueFactory(int idx) {
 }
 
 AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx) {
-  return new TupleValueExpression(tuple_idx, value_idx, "DUMMY", "DUMMY");
+  return new TupleValueExpression(tuple_idx, value_idx);
 }
 
 // convert the enumerated value type into a concrete c type for
@@ -313,8 +318,7 @@ AbstractExpression *TupleValueFactory(json_spirit::Object &obj,
   // ?
   int tuple_idx = 0;
 
-  return new TupleValueExpression(tuple_idx, valueIdxValue.get_int(),
-                                  tableName.get_str(), columnName.get_str());
+  return new TupleValueExpression(tuple_idx, valueIdxValue.get_int());
 }
 
 AbstractExpression *ConjunctionFactory(ExpressionType et,
@@ -338,7 +342,7 @@ AbstractExpression *ConjunctionFactory(ExpressionType et,
 AbstractExpression *ConjunctionFactory(ExpressionType et,
                                        std::list<AbstractExpression *> exprs) {
   if (exprs.empty())
-    return expression::ConstantValueFactory(ValueFactory::GetTrue());
+    return expression::ConstantValueFactory(ValueFactory::GetBooleanValue(true) );
 
   AbstractExpression *front = exprs.front();
   exprs.pop_front();
@@ -439,38 +443,6 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   // written thusly to ease testing/inspecting return content.
   LOG_TRACE("Created " << ExpressionTypeToString(et)
                        << " expression  : " << ret);
-  return ret;
-}
-
-boost::shared_array<int> ConvertIfAllTupleValues(
-    const std::vector<AbstractExpression *> &expressions) {
-  size_t cnt = expressions.size();
-  boost::shared_array<int> ret(new int[cnt]);
-
-  for (uint32_t i = 0; i < cnt; ++i) {
-    TupleValueExpressionMarker *casted =
-        dynamic_cast<TupleValueExpressionMarker *>(expressions[i]);
-    if (casted == nullptr) {
-      return boost::shared_array<int>();
-    }
-    ret[i] = casted->GetColumnId();
-  }
-  return ret;
-}
-
-boost::shared_array<int> ConvertIfAllParameterValues(
-    const std::vector<AbstractExpression *> &expressions) {
-  size_t cnt = expressions.size();
-  boost::shared_array<int> ret(new int[cnt]);
-
-  for (uint32_t i = 0; i < cnt; ++i) {
-    ParameterValueExpressionMarker *casted =
-        dynamic_cast<ParameterValueExpressionMarker *>(expressions[i]);
-    if (casted == nullptr) {
-      return boost::shared_array<int>();
-    }
-    ret[i] = casted->GetParameterId();
-  }
   return ret;
 }
 

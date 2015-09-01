@@ -32,7 +32,9 @@ class ConstantValueExpression : public AbstractExpression {
     }
 
     Value
-    Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
+    Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+             __attribute__((unused)) const AbstractTuple *tuple2,
+             __attribute__((unused)) executor::ExecutorContext *context) const
     {
         LOG_TRACE ("returning constant value as Value:%s type:%d",
                      value.Debug().c_str(), (int) this->m_type);

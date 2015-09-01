@@ -53,7 +53,7 @@ class HashRangeExpression : public AbstractExpression {
           "Evaluate:"
           " Couldn't find tuple 1 (possible index scan planning error)");
     }
-    const int32_t hash = tuple1->GetValue(this->value_idx).murmurHash3();
+    const int32_t hash = tuple1->GetValue(this->value_idx).MurmurHash3();
 
     return binarySearch(hash);
   }
