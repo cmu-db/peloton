@@ -2253,7 +2253,10 @@ class Value {
     return retval;
   }
 
-  static VarlenPool* GetTempStringPool();
+  static VarlenPool* GetTempStringPool() {
+    // TODO: For now, allocate out of heap !
+    return nullptr;
+  }
 
   static Value GetTempStringValue(const char* value, size_t size) {
     return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, GetTempStringPool());
