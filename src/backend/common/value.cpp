@@ -69,7 +69,7 @@ ValueType Value::DoublePromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID,
 
-    VALUE_TYPE_INVALID,  // 22 decimal  (todo)
+    VALUE_TYPE_DOUBLE,  // 22 decimal  (todo)
     VALUE_TYPE_INVALID,  // 23 boolean
     VALUE_TYPE_INVALID,  // 24 address
 };
@@ -85,7 +85,7 @@ ValueType Value::DecimalPromotionTable[] = {
     VALUE_TYPE_DECIMAL,  // 5 integer
     VALUE_TYPE_DECIMAL,  // 6 bigint
     VALUE_TYPE_INVALID,  // 7 <unused>
-    VALUE_TYPE_INVALID,  // 8 double (todo)
+    VALUE_TYPE_DECIMAL,  // 8 double (todo)
     VALUE_TYPE_INVALID,  // 9 varchar
     VALUE_TYPE_INVALID,  // 10 <unused>
     VALUE_TYPE_DECIMAL,  // 11 timestamp
@@ -195,7 +195,10 @@ double Value::CastAsDoubleAndGetValue() const {
       return GetDouble();
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-    case VALUE_TYPE_DECIMAL:
+    case VALUE_TYPE_DECIMAL: {
+      std::string str_decimal = CreateStringFromDecimal();
+      return std::stod(str_decimal);
+    }
     default:
       throw CastException(type, VALUE_TYPE_DOUBLE);
       return 0;  // NOT REACHED
@@ -223,6 +226,12 @@ TTInt Value::CastAsDecimalAndGetValue() const {
     }
     case VALUE_TYPE_DECIMAL:
       return GetDecimal();
+    case VALUE_TYPE_DOUBLE: {
+      auto d = GetDouble();
+      std::string str_double = std::to_string(d);
+      Value decimal = GetDecimalValueFromString(str_double);
+      return decimal.GetDecimal();
+    }
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     default:
