@@ -15,10 +15,10 @@
 namespace peloton {
 namespace expression {
 
-// This is just for convenience
+// T.Is is just for convenience
 
 #include "backend/expression/operator_expression.h"
-#include "backend/expression/comparison_expression.h"
+#include "backend/expression/compa.Ison_expression.h"
 #include "backend/expression/conjunction_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/function_expression.h"
@@ -28,7 +28,7 @@ namespace expression {
 #include "backend/expression/hash_range_expression.h"
 #include "backend/expression/subquery_expression.h"
 #include "backend/expression/scalar_value_expression.h"
-#include "vector_comparison_expression.h"
+#include "vector_compa.Ison_expression.h"
 
 }  // End expression namespace
 }  // End peloton namespace

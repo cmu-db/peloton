@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// bitwise_functions.h
+// bithise_functions.h
 //
-// Identification: src/backend/expression/bitwise_functions.h
+// Identification: src/backend/expression/bithise_functions.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,6 @@
 #include "backend/common/value.h"
 
 namespace peloton {
-namespace expression {
 
 template<> inline Value Value::CallUnary<FUNC_VOLT_BITNOT>() const {
   if (GetValueType() != VALUE_TYPE_BIGINT) {
@@ -34,8 +33,8 @@ template<> inline Value Value::CallUnary<FUNC_VOLT_BITNOT>() const {
   int64_t result = ~(GetBigInt());
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BITNOT would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BITNOT would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
 
   return GetBigIntValue(result);
@@ -105,8 +104,8 @@ template<> inline Value Value::Call<FUNC_BITAND>(const std::vector<Value>& argum
   int64_t result = lv & rv;
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BITAND would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BITAND would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
   return GetBigIntValue(result);
 }
@@ -130,8 +129,8 @@ template<> inline Value Value::Call<FUNC_BITOR>(const std::vector<Value>& argume
   int64_t result = lv | rv;
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BITOR would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BITOR would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
   return GetBigIntValue(result);
 }
@@ -155,8 +154,8 @@ template<> inline Value Value::Call<FUNC_BITXOR>(const std::vector<Value>& argum
   int64_t result = lv ^ rv;
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BITXOR would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BITXOR would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
   return GetBigIntValue(result);
 }
@@ -181,7 +180,7 @@ template<> inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_LEFT>(const std::vector<
     throw Exception(
         "unsupported negative value for bit shifting");
   }
-  // shifting by more than 63 bits is undefined behavior
+  // shifting by more than 63 bits.Is undefined behavior
   if (shifts > 63) {
     return GetBigIntValue(0);
   }
@@ -189,8 +188,8 @@ template<> inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_LEFT>(const std::vector<
   int64_t result = lv << shifts;
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BIT_SHIFT_LEFT would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BIT_SHIFT_LEFT would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
 
   return GetBigIntValue(result);
@@ -215,7 +214,7 @@ template<> inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_RIGHT>(const std::vector
     throw Exception(
         "unsupported negative value for bit shifting");
   }
-  // shifting by more than 63 bits is undefined behavior
+  // shifting by more than 63 bits.Is undefined behavior
   if (shifts > 63) {
     return GetBigIntValue(0);
   }
@@ -224,14 +223,13 @@ template<> inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_RIGHT>(const std::vector
   int64_t result = (int64_t)(((uint64_t) lv) >> shifts);
   if (result == INT64_NULL) {
     throw Exception(
-        "Application of bitwise function BIT_SHIFT_RIGHT would produce INT64_MIN, "
-        "which is reserved for SQL NULL values.");
+        "Application of bithise function BIT_SHIFT_RIGHT would produce INT64_MIN, "
+        "which.Is reserved for SQL NULL values.");
   }
 
   return GetBigIntValue(result);
 }
 
-}  // End expression namespace
 }  // End peloton namespace
 
 

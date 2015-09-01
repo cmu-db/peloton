@@ -20,6 +20,9 @@
 
 namespace peloton {
 
+// forward declare
+class Value;
+
 //===--------------------------------------------------------------------===//
 // NULL-related Constants
 //===--------------------------------------------------------------------===//
@@ -61,6 +64,12 @@ namespace peloton {
 #define DEFAULT_DB_NAME "default"
 
 #define DEFAULT_TUPLES_PER_TILEGROUP 10
+
+// TODO: Use ThreadLocalPool ?
+// This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently 1048576.
+// The rationale for making it any larger would be to allow calculating wider "temp" values
+// for use in situations where they are not being stored as column values
+#define POOLED_MAX_VALUE_LENGTH  1048576
 
 //===--------------------------------------------------------------------===//
 // Other Constants
@@ -367,6 +376,15 @@ enum PelotonAggType {
   AGGREGATE_TYPE_PLAIN = 3  // no group-by
 };
 
+// ------------------------------------------------------------------
+// Expression Quantifier Types
+// ------------------------------------------------------------------
+enum QuantifierType {
+    QUANTIFIER_TYPE_NONE    = 0,
+    QUANTIFIER_TYPE_ANY     = 1,
+    QUANTIFIER_TYPE_ALL     = 2,
+};
+
 //===--------------------------------------------------------------------===//
 // Table Reference Types
 //===--------------------------------------------------------------------===//
@@ -596,6 +614,12 @@ extern ItemPointer INVALID_ITEMPOINTER;
 std::size_t GetTypeSize(ValueType type);
 
 bool IsNumeric(ValueType type);
+bool IsIntegralType(ValueType type);
+
+// for testing, obtain a random instance of the specified type
+Value GetRandomValue(ValueType type);
+
+int64_t GetMaxTypeValue (ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 

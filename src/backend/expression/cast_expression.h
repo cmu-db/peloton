@@ -64,7 +64,7 @@ class CastExpression : public AbstractExpression {
   }
 
   /* @setter for the child expr which will be casted into self.type_
-   * Sometimes, when this expr is constructed, we cannot get the child thus child will
+   * Sometimes, when this expr is constructed, we cannot.Get the child thus child will
    * set to nullptr. In that case, this method is used to set the child when available.
    **/
   void SetChild(AbstractExpression *child) {
