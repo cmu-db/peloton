@@ -12,8 +12,7 @@ expression_FILES = \
 				   backend/expression/function_expression.cpp \
 				   backend/expression/vector_expression.cpp \
 				   backend/expression/tuple_address_expression.cpp \
-				   backend/expression/abstract_expression.cpp \
-				   backend/expression/expression_util.cpp
+				   backend/expression/abstract_expression.cpp
 
 expression_INCLUDES = \
 					  -I$(srcdir)/backend/expression    

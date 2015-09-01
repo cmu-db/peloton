@@ -83,7 +83,7 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
  * @brief Deserialize LogRecordHeader
  * @param input  
  */
-void TupleRecord::DeserializeHeader(CopySerializeInput& input){
+void TupleRecord::DeserializeHeader(CopySerializeInputBE& input){
   input.ReadInt();
   db_oid = (oid_t)(input.ReadShort());
   assert(db_oid);

@@ -19,12 +19,12 @@
 
 #include "backend/common/stl_friendly_value.h"
 #include "backend/logging/logmanager.h"
+#include "backend/expression/function_expression.h"
 
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
 #include <set>
-#include "../expression/function_expression.h"
 
 namespace peloton {
 
@@ -119,7 +119,7 @@ TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
 /*
  * Produce a debugging string describing an Value.
  */
-std::string Value::debug() const {
+std::string Value::Debug() const {
   const ValueType type = GetValueType();
   if (IsNull()) {
     return "<NULL>";
@@ -327,7 +327,7 @@ struct ValueList {
     return (int)(sizeof(ValueList) + length*sizeof(StlFriendlyValue));
   }
 
-  void* operator new(size_t size, char* placement)
+  void* operator new(__attribute__((unused)) size_t size, char* placement)
   {
     return placement;
   }
@@ -339,7 +339,7 @@ struct ValueList {
 
   void DeserializeValues(SerializeInputBE &input, VarlenPool *dataPool)
   {
-    for (int ii = 0; ii < m_length; ++ii) {
+    for (size_t ii = 0; ii < m_length; ++ii) {
       m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, dataPool);
     }
   }
@@ -372,7 +372,7 @@ bool Value::InList(const Value& rhs) const
 
   const ValueType rhsType = rhs.GetValueType();
   if (rhsType != VALUE_TYPE_ARRAY) {
-    throw Exception("rhs of IN expression is of a non-list type %s", rhs.GetValueTypeString().c_str());
+    throw Exception("rhs of IN expression is of a non-list type " + rhs.GetValueTypeString());
   }
   const ValueList* listOfValues = (ValueList*)rhs.GetObjectValueWithoutNull();
   const StlFriendlyValue& value = *static_cast<const StlFriendlyValue*>(this);
@@ -409,7 +409,7 @@ void Value::SetArrayElements(std::vector<Value> &args) const
   assert(m_valueType == VALUE_TYPE_ARRAY);
   ValueList* listOfValues = (ValueList*)GetObjectValue();
   // Assign each of the elements.
-  int ii = (int)args.size();
+  size_t ii = args.size();
   assert(ii == listOfValues->m_length);
   while (ii--) {
     listOfValues->m_values[ii] = args[ii];
@@ -430,7 +430,7 @@ Value Value::ItemAtIndex(int index) const
   assert(m_valueType == VALUE_TYPE_ARRAY);
   ValueList* listOfValues = (ValueList*)GetObjectValue();
   assert(index >= 0);
-  assert(index < listOfValues->m_length);
+  assert(index < (int) listOfValues->m_length);
   return listOfValues->m_values[index];
 }
 
@@ -669,12 +669,60 @@ int64_t Value::parseTimestampString(const std::string &str)
 }
 
 
-int warn_if(int condition, const char* message)
+int warn_if(int condition, __attribute__((unused)) const char* message)
 {
   if (condition) {
     //LogManager::GetThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
   }
   return condition;
 }
+
+// Get a string representation of this value
+std::ostream &operator<<(std::ostream &os, const Value &value) {
+  os << value.Debug();
+  return os;
+}
+
+Value Value::GetMinValue(ValueType type) {
+  switch (type) {
+    case (VALUE_TYPE_TINYINT):
+      return GetTinyIntValue(PELOTON_INT8_MIN);
+      break;
+    case (VALUE_TYPE_SMALLINT):
+      return GetSmallIntValue(PELOTON_INT16_MIN);
+      break;
+    case (VALUE_TYPE_INTEGER):
+      return GetIntegerValue(PELOTON_INT32_MIN);
+      break;
+      break;
+    case (VALUE_TYPE_BIGINT):
+      return GetBigIntValue(PELOTON_INT64_MIN);
+      break;
+    case (VALUE_TYPE_DOUBLE):
+      return GetDoubleValue(-DBL_MAX);
+      break;
+    case (VALUE_TYPE_VARCHAR):
+      return GetTempStringValue("", 2);
+      break;
+    case (VALUE_TYPE_TIMESTAMP):
+      return GetTimestampValue(PELOTON_INT64_MIN);
+      break;
+    case (VALUE_TYPE_DECIMAL):
+      return GetDecimalValue(DECIMAL_MIN);
+      break;
+    case (VALUE_TYPE_BOOLEAN):
+      return GetFalse();
+      break;
+
+    case (VALUE_TYPE_INVALID):
+    case (VALUE_TYPE_NULL):
+    case (VALUE_TYPE_ADDRESS):
+    case (VALUE_TYPE_VARBINARY):
+    default: {
+      throw UnknownTypeException((int)type, "Can't get min value for type");
+    }
+  }
+}
+
 
 }  // End peloton namespace

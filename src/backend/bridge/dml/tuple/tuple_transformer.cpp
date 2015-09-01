@@ -170,7 +170,7 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_VARCHAR: {
       char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
-      auto data_len = ValuePeeker::PeekObjectLength(value);
+      auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
       // NB: Peloton object don't have terminating-null's, so
       // we should use PG functions that take explicit length.
       datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
@@ -184,8 +184,8 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_DECIMAL: {
 
-      auto precision = Value::max_decimal_precision;
-      auto scale = Value::max_decimal_scale;
+      auto precision = Value::kMaxDecPrec;
+      auto scale = Value::kMaxDecScale;
 
       std::string str = ValuePeeker::PeekDecimalString(value);
 

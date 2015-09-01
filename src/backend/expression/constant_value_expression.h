@@ -28,13 +28,13 @@ class ConstantValueExpression : public AbstractExpression {
     }
 
     virtual ~ConstantValueExpression() {
-        value.free();
+        value.Free();
     }
 
     Value
     Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
     {
-        VOLT_TRACE ("returning constant value as Value:%s type:%d",
+        LOG_TRACE ("returning constant value as Value:%s type:%d",
                      value.Debug().c_str(), (int) this->m_type);
         return this->value;
     }
