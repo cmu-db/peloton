@@ -669,7 +669,7 @@ int64_t Value::parseTimestampString(const std::string &str)
 }
 
 
-int warn_if(int condition, __attribute__((unused)) const char* message)
+int WarnIf(int condition, __attribute__((unused)) const char* message)
 {
   if (condition) {
     //LogManager::GetThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);

@@ -42,9 +42,9 @@ class CmpEq {
 public:
     inline static const char* op_name() { return "CmpEq"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_equals_withoutNull(r);}
-    inline static bool implies_true_for_row(const Value& l, const Value& r) { return false; }
-    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
+    { return l.OpEqualsWithoutNull(r);}
+    inline static bool implies_true_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return false; }
+    inline static bool implies_false_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
     inline static bool implies_null_for_row() { return false; }
     inline static bool includes_equality() { return true; }
 };
@@ -53,9 +53,9 @@ class CmpNe {
 public:
     inline static const char* op_name() { return "CmpNe"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r);}
-    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
-    inline static bool implies_false_for_row(const Value& l, const Value& r) { return false; }
+    { return l.OpNotEqualsWithoutNull(r);}
+    inline static bool implies_true_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
+    inline static bool implies_false_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return false; }
     inline static bool implies_null_for_row() { return false; }
     inline static bool includes_equality() { return false; }
 };
@@ -64,10 +64,10 @@ class CmpLt {
 public:
     inline static const char* op_name() { return "CmpLt"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_lessThan_withoutNull(r);}
-    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
+    { return l.OpLessThanWithoutNull(r);}
+    inline static bool implies_true_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
     inline static bool implies_false_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).IsTrue(); }
+    { return l.OpNotEqualsWithoutNull(r).IsTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
 };
@@ -76,10 +76,10 @@ class CmpGt {
 public:
     inline static const char* op_name() { return "CmpGt"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_greaterThan_withoutNull(r);}
-    inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
+    { return l.OpGreaterThanWithoutNull(r);}
+    inline static bool implies_true_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
     inline static bool implies_false_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).IsTrue(); }
+    { return l.OpNotEqualsWithoutNull(r).IsTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
 };
@@ -88,10 +88,10 @@ class CmpLte {
 public:
     inline static const char* op_name() { return "CmpLte"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_lessThanOrEqual_withoutNull(r);}
+    { return l.OpLessThanOrEqualWithoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).IsTrue(); }
-    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
+    { return l.OpNotEqualsWithoutNull(r).IsTrue(); }
+    inline static bool implies_false_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
 };
@@ -100,10 +100,10 @@ class CmpGte {
 public:
     inline static const char* op_name() { return "CmpGte"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.op_greaterThanOrEqual_withoutNull(r);}
+    { return l.OpGreaterThanOrEqualWithoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).IsTrue(); }
-    inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
+    { return l.OpNotEqualsWithoutNull(r).IsTrue(); }
+    inline static bool implies_false_for_row(__attribute__((unused)) const Value& l, __attribute__((unused)) const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
 };
@@ -114,20 +114,20 @@ public:
 class CmpLike {
 public:
     inline static const char* op_name() { return "CmpLike"; }
-    inline static Value compare_withoutNull(const Value& l, const Value& r) { return l.like(r);}
+    inline static Value compare_withoutNull(const Value& l, const Value& r) { return l.Like(r);}
 };
 
 class CmpIn {
 public:
     inline static const char* op_name() { return "CmpIn"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.in.Ist(r) ? Value::GetTrue() : Value::getFalse(); }
+    { return l.InList(r) ? Value::GetTrue() : Value::GetFalse(); }
 };
 
 template <typename OP>
-class Compa.IsonExpression : public AbstractExpression {
+class ComparisonExpression : public AbstractExpression {
 public:
-    Compa.IsonExpression(ExpressionType type,
+    ComparisonExpression(ExpressionType type,
                                   AbstractExpression *left,
                                   AbstractExpression *right)
         : AbstractExpression(type, left, right)
@@ -136,23 +136,24 @@ public:
         m_right = right;
     };
 
-    inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
+    inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                          executor::ExecutorContext *context) const
     {
-        VOLT_TRACE("Evaluate %s. left %s, right %s. ret=%s",
+        LOG_TRACE("Evaluate %s. left %s, right %s. ret=%s",
                    OP::op_name(),
                    typeid(*(m_left)).name(),
                    typeid(*(m_right)).name(),
-                   traceEval(tuple1, tuple2));
+                   traceEval(tuple1, tuple2, context));
 
         assert(m_left != NULL);
         assert(m_right != NULL);
 
-        Value lnv = m_left->Evaluate(tuple1, tuple2);
+        Value lnv = m_left->Evaluate(tuple1, tuple2, context);
         if (lnv.IsNull()) {
             return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
         }
 
-        Value rnv = m_right->Evaluate(tuple1, tuple2);
+        Value rnv = m_right->Evaluate(tuple1, tuple2, context);
         if (rnv.IsNull()) {
             return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
         }
@@ -168,12 +169,13 @@ public:
         return OP::compare_withoutNull(lnv, rnv);
     }
 
-    inline const char* traceEval(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
+    inline const char* traceEval(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                                 executor::ExecutorContext *context) const
     {
         Value lnv;
         Value rnv;
-        return  (((lnv = m_left->Evaluate(tuple1, tuple2)).IsNull() ||
-                  (rnv = m_right->Evaluate(tuple1, tuple2)).IsNull()) ?
+        return  (((lnv = m_left->Evaluate(tuple1, tuple2, context)).IsNull() ||
+                  (rnv = m_right->Evaluate(tuple1, tuple2, context)).IsNull()) ?
                  "NULL" :
                  (OP::compare_withoutNull(lnv,
                                           rnv).IsTrue() ?
@@ -182,7 +184,7 @@ public:
     }
 
     std::string DebugInfo(const std::string &spacer) const {
-        return (spacer + "Compa.IsonExpression\n");
+        return (spacer + "ComparisonExpression\n");
     }
 
 private:
@@ -191,12 +193,12 @@ private:
 };
 
 template <typename C, typename L, typename R>
-class InlinedCompa.IsonExpression : public ComparisonExpression<C> {
+class InlinedComparisonExpression : public ComparisonExpression<C> {
 public:
-    InlinedCompa.IsonExpression(ExpressionType type,
+    InlinedComparisonExpression(ExpressionType type,
                                          AbstractExpression *left,
                                          AbstractExpression *right)
-        : Compa.IsonExpression<C>(type, left, right)
+        : ComparisonExpression<C>(type, left, right)
     {}
 };
 
