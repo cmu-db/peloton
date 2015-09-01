@@ -120,8 +120,8 @@ TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
  * Produce a debugging string describing an Value.
  */
 std::string Value::debug() const {
-  const ValueType type = getValueType();
-  if (isNull()) {
+  const ValueType type = GetValueType();
+  if (IsNull()) {
     return "<NULL>";
   }
   std::ostringstream buffer;
@@ -131,40 +131,40 @@ std::string Value::debug() const {
   buffer << ValueTypeToString(type) << "::";
   switch (type) {
     case VALUE_TYPE_BOOLEAN:
-      buffer << (getBoolean() ? "true" : "false");
+      buffer << (GetBoolean() ? "true" : "false");
       break;
     case VALUE_TYPE_TINYINT:
-      buffer << static_cast<int32_t>(getTinyInt());
+      buffer << static_cast<int32_t>(GetTinyInt());
       break;
     case VALUE_TYPE_SMALLINT:
-      buffer << getSmallInt();
+      buffer << GetSmallInt();
       break;
     case VALUE_TYPE_INTEGER:
-      buffer << getInteger();
+      buffer << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      buffer << getBigInt();
+      buffer << GetBigInt();
       break;
     case VALUE_TYPE_DOUBLE:
-      buffer << getDouble();
+      buffer << GetDouble();
       break;
     case VALUE_TYPE_VARCHAR:
-      ptr = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+      ptr = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
       addr = reinterpret_cast<int64_t>(ptr);
-      out_val = std::string(ptr, getObjectLength_withoutNull());
-      buffer << "[" << getObjectLength_withoutNull() << "]";
+      out_val = std::string(ptr, GetObjectLengthWithoutNull());
+      buffer << "[" << GetObjectLengthWithoutNull() << "]";
       buffer << "\"" << out_val << "\"[@" << addr << "]";
       break;
     case VALUE_TYPE_VARBINARY:
-      ptr = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+      ptr = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
       addr = reinterpret_cast<int64_t>(ptr);
-      out_val = std::string(ptr, getObjectLength_withoutNull());
-      buffer << "[" << getObjectLength_withoutNull() << "]";
+      out_val = std::string(ptr, GetObjectLengthWithoutNull());
+      buffer << "[" << GetObjectLengthWithoutNull() << "]";
       buffer << "-bin[@" << addr << "]";
       break;
     case VALUE_TYPE_DECIMAL:
-      buffer << createStringFromDecimal();
+      buffer << CreateStringFromDecimal();
       break;
     default:
       buffer << "(no details)";
@@ -178,10 +178,10 @@ std::string Value::debug() const {
 /**
  * Serialize sign and value using radix point (no exponent).
  */
-std::string Value::createStringFromDecimal() const {
-  assert(!isNull());
+std::string Value::CreateStringFromDecimal() const {
+  assert(!IsNull());
   std::ostringstream buffer;
-  TTInt scaledValue = getDecimal();
+  TTInt scaledValue = GetDecimal();
   if (scaledValue.IsSign()) {
     buffer << '-';
   }
@@ -209,7 +209,7 @@ std::string Value::createStringFromDecimal() const {
  *   Set a decimal value from a serialized representation
  *   This function does not handle scientific notation string, Java planner should convert that to plan string first.
  */
-void Value::createDecimalFromString(const std::string &txt) {
+void Value::CreateDecimalFromString(const std::string &txt) {
   if (txt.length() == 0) {
     throw SerializationException("Empty string provided");
   }
@@ -242,7 +242,7 @@ void Value::createDecimalFromString(const std::string &txt) {
       whole.SetSign();
     }
     whole *= kMaxScaleFactor;
-    getDecimal() = whole;
+    GetDecimal() = whole;
     return;
   }
 
@@ -315,15 +315,15 @@ void Value::createDecimalFromString(const std::string &txt) {
     whole.SetSign();
   }
 
-  getDecimal() = whole;
+  GetDecimal() = whole;
 }
 
 struct ValueList {
-  static int allocationSizeForLength(size_t length)
+  static int AllocationSizeForLength(size_t length)
   {
     //TODO: May want to consider extra allocation, here,
     // such as space for a sorted copy of the array.
-    // This allocation has the advantage of getting freed via Value::free.
+    // This allocation has the advantage of Getting freed via Value::free.
     return (int)(sizeof(ValueList) + length*sizeof(StlFriendlyValue));
   }
 
@@ -337,10 +337,10 @@ struct ValueList {
   ValueList(size_t length, ValueType elementType) : m_length(length), m_elementType(elementType)
   { }
 
-  void deserializeValues(SerializeInput &input, VarlenPool *dataPool)
+  void DeserializeValues(SerializeInputBE &input, VarlenPool *dataPool)
   {
     for (int ii = 0; ii < m_length; ++ii) {
-      m_values[ii].deserializeFromAllocateForStorage(m_elementType, input, dataPool);
+      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, dataPool);
     }
   }
 
@@ -357,24 +357,24 @@ struct ValueList {
  * @param rhs  a VALUE_TYPE_ARRAY Value whose referent must be an ValueList.
  *             The Value elements of the ValueList should be comparable to and ideally
  *             of exactly the same VALUE_TYPE as "this".
- * The planner and/or deserializer should have taken care of this with checks and
+ * The planner and/or Deserializer should have taken care of this with checks and
  * explicit cast operators and and/or constant promotions as needed.
  * @return a VALUE_TYPE_BOOLEAN Value.
  */
-bool Value::inList(const Value& rhs) const
+bool Value::InList(const Value& rhs) const
 {
   //TODO: research: does the SQL standard allow a null to match a null list element
   // vs. returning FALSE or NULL?
-  const bool lhsIsNull = isNull();
+  const bool lhsIsNull = IsNull();
   if (lhsIsNull) {
     return false;
   }
 
-  const ValueType rhsType = rhs.getValueType();
+  const ValueType rhsType = rhs.GetValueType();
   if (rhsType != VALUE_TYPE_ARRAY) {
-    throw Exception("rhs of IN expression is of a non-list type %s", rhs.getValueTypeString().c_str());
+    throw Exception("rhs of IN expression is of a non-list type %s", rhs.GetValueTypeString().c_str());
   }
-  const ValueList* listOfValues = (ValueList*)rhs.getObjectValue_withoutNull();
+  const ValueList* listOfValues = (ValueList*)rhs.GetObjectValueWithoutNull();
   const StlFriendlyValue& value = *static_cast<const StlFriendlyValue*>(this);
   //TODO: An O(ln(length)) implementation vs. the current O(length) implementation
   // such as binary search would likely require some kind of sorting/re-org of values
@@ -383,31 +383,31 @@ bool Value::inList(const Value& rhs) const
   return std::find(listOfValues->begin(), listOfValues->end(), value) != listOfValues->end();
 }
 
-void Value::deserializeIntoANewValueList(SerializeInput &input, VarlenPool *dataPool)
+void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool)
 {
   ValueType elementType = (ValueType)input.ReadByte();
   size_t length = input.ReadShort();
-  int trueSize = ValueList::allocationSizeForLength(length);
-  char* storage = allocateValueStorage(trueSize, dataPool);
+  int trueSize = ValueList::AllocationSizeForLength(length);
+  char* storage = AllocateValueStorage(trueSize, dataPool);
   ::memset(storage, 0, trueSize);
   ValueList* nvset = new (storage) ValueList(length, elementType);
-  nvset->deserializeValues(input, dataPool);
+  nvset->DeserializeValues(input, dataPool);
   //TODO: An O(ln(length)) implementation vs. the current O(length) implementation of Value::inList
   // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
 
-void Value::allocateANewValueList(size_t length, ValueType elementType)
+void Value::AllocateANewValueList(size_t length, ValueType elementType)
 {
-  int trueSize = ValueList::allocationSizeForLength(length);
-  char* storage = allocateValueStorage(trueSize, NULL);
+  int trueSize = ValueList::AllocationSizeForLength(length);
+  char* storage = AllocateValueStorage(trueSize, NULL);
   ::memset(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
 
-void Value::setArrayElements(std::vector<Value> &args) const
+void Value::SetArrayElements(std::vector<Value> &args) const
 {
   assert(m_valueType == VALUE_TYPE_ARRAY);
-  ValueList* listOfValues = (ValueList*)getObjectValue();
+  ValueList* listOfValues = (ValueList*)GetObjectValue();
   // Assign each of the elements.
   int ii = (int)args.size();
   assert(ii == listOfValues->m_length);
@@ -418,25 +418,25 @@ void Value::setArrayElements(std::vector<Value> &args) const
   // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
 
-int Value::arrayLength() const
+int Value::ArrayLength() const
 {
   assert(m_valueType == VALUE_TYPE_ARRAY);
-  ValueList* listOfValues = (ValueList*)getObjectValue();
+  ValueList* listOfValues = (ValueList*)GetObjectValue();
   return static_cast<int>(listOfValues->m_length);
 }
 
-Value Value::itemAtIndex(int index) const
+Value Value::ItemAtIndex(int index) const
 {
   assert(m_valueType == VALUE_TYPE_ARRAY);
-  ValueList* listOfValues = (ValueList*)getObjectValue();
+  ValueList* listOfValues = (ValueList*)GetObjectValue();
   assert(index >= 0);
   assert(index < listOfValues->m_length);
   return listOfValues->m_values[index];
 }
 
-void Value::castAndSortAndDedupArrayForInList(const ValueType outputType, std::vector<Value> &outList) const
+void Value::CastAndSortAndDedupArrayForInList(const ValueType outputType, std::vector<Value> &outList) const
 {
-  int size = arrayLength();
+  int size = ArrayLength();
 
   // make a set to eliminate unique values in O(nlogn) time
   std::set<StlFriendlyValue> uniques;
@@ -445,11 +445,11 @@ void Value::castAndSortAndDedupArrayForInList(const ValueType outputType, std::v
   // values that don't overflow or violate unique constaints
   // (n.b. sorted set means dups are removed)
   for (int i = 0; i < size; i++) {
-    Value value = itemAtIndex(i);
+    Value value = ItemAtIndex(i);
     // cast the value to the right type and catch overflow/cast problems
     try {
       StlFriendlyValue stlValue;
-      stlValue = value.castAs(outputType);
+      stlValue = value.CastAs(outputType);
       std::pair<std::set<StlFriendlyValue>::iterator, bool> ret;
       ret = uniques.insert(stlValue);
     }
@@ -468,7 +468,7 @@ void Value::castAndSortAndDedupArrayForInList(const ValueType outputType, std::v
 
 void Value::streamTimestamp(std::stringstream& value) const
 {
-  int64_t epoch_micros = getTimestamp();
+  int64_t epoch_micros = GetTimestamp();
   boost::gregorian::date as_date;
   boost::posix_time::time_duration as_time;
   micros_to_date_and_time(epoch_micros, as_date, as_time);
@@ -587,7 +587,7 @@ int64_t Value::parseTimestampString(const std::string &str)
       if (second > 59 || second < 0) {
         throwTimestampFormatError(str);
       }
-      // hack a '1' in the place if the decimal and use atoi to get a value that
+      // hack a '1' in the place if the decimal and use atoi to Get a value that
       // MUST be between 1 and 2 million if all 6 digits of micros were included.
       number_string = time_str.substr(8,7);
       number_string.at(0) = '1';
@@ -672,7 +672,7 @@ int64_t Value::parseTimestampString(const std::string &str)
 int warn_if(int condition, const char* message)
 {
   if (condition) {
-    //LogManager::getThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
+    //LogManager::GetThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
   }
   return condition;
 }

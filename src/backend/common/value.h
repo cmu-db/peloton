@@ -65,16 +65,16 @@ typedef ttmath::Int<2> TTInt;
 typedef ttmath::Int<4> TTLInt;
 
 template<typename T>
-void throwCastSQLValueOutOfRangeException(
+void ThrowCastSQLValueOutOfRangeException(
     const T value,
     const ValueType origType,
     const ValueType newType)
 {
-  throwCastSQLValueOutOfRangeException((const int64_t)value, origType, newType);
+  ThrowCastSQLValueOutOfRangeException((const int64_t)value, origType, newType);
 }
 
 template<>
-inline void throwCastSQLValueOutOfRangeException<double>(
+inline void ThrowCastSQLValueOutOfRangeException<double>(
     const double value,
     const ValueType origType,
     const ValueType newType)
@@ -90,7 +90,7 @@ inline void throwCastSQLValueOutOfRangeException<double>(
     }
 
 template<>
-inline void throwCastSQLValueOutOfRangeException<int64_t>(
+inline void ThrowCastSQLValueOutOfRangeException<int64_t>(
     const int64_t value,
     const ValueType origType,
     const ValueType newType)
@@ -111,7 +111,7 @@ inline void throwCastSQLValueOutOfRangeException<int64_t>(
     }
 
 template<>
-inline void throwCastSQLValueOutOfRangeException<TTInt>(
+inline void ThrowCastSQLValueOutOfRangeException<TTInt>(
     const TTInt value,
     const ValueType origType,
     const ValueType newType)
@@ -131,24 +131,24 @@ inline void throwCastSQLValueOutOfRangeException<TTInt>(
   throw NumericValueOutOfRangeException(msg, internalFlags);
     }
 
-int warn_if(int condition, const char* message);
+int WarnIf(int condition, const char* message);
 
 // This has been demonstrated to be more reliable than std::isinf
 // -- less sensitive on LINUX to the "g++ -ffast-math" option.
-inline int non_std_isinf( double x ) { return (x > DBL_MAX) || (x < -DBL_MAX); }
+inline int NonStdIsInf( double x ) { return (x > DBL_MAX) || (x < -DBL_MAX); }
 
-inline void throwDataExceptionIfInfiniteOrNaN(double value, const char* function)
+inline void ThrowDataExceptionIfInfiniteOrNaN(double value, const char* function)
 {
-  static int warned_once_no_nan = warn_if( ! std::isnan(sqrt(-1.0)),
+  static int warned_once_no_nan = WarnIf( ! std::isnan(sqrt(-1.0)),
                                            "The C++ configuration (e.g. \"g++ --fast-math\") "
                                            "does not support SQL standard handling of NaN errors.");
-  static int warned_once_no_inf = warn_if( ! non_std_isinf(std::pow(0.0, -1.0)),
+  static int warned_once_no_inf = WarnIf( ! NonStdIsInf(std::pow(0.0, -1.0)),
                                            "The C++ configuration (e.g. \"g++ --fast-math\") "
                                            "does not support SQL standard handling of numeric infinity errors.");
-  // This uses a standard test for NaN, even though that fails in some configurations like LINUX "g++ -ffast-math".
+  // This uses a standard test for NaN, even though that fails in some configurations Like LINUX "g++ -ffast-math".
   // If it is known to fail in the current config, a warning has been sent to the log,
   // so at this point, just relax the check.
-  if ((warned_once_no_nan || ! std::isnan(value)) && (warned_once_no_inf || ! non_std_isinf(value))) {
+  if ((warned_once_no_nan || ! std::isnan(value)) && (warned_once_no_inf || ! NonStdIsInf(value))) {
     return;
   }
   char msg[1024];
@@ -158,14 +158,14 @@ inline void throwDataExceptionIfInfiniteOrNaN(double value, const char* function
 
 
 /// Stream out a double value in SQL standard format, a specific variation of E-notation.
-/// TODO: it has been suggested that helper routines like this that are not specifically tied to
+/// TODO: it has been suggested that helper routines Like this that are not specifiCally tied to
 /// the Value representation should be defined in some other header to help reduce clutter, here.
-inline void streamSQLFloatFormat(std::stringstream& streamOut, double floatValue)
+inline void StreamSQLFloatFormat(std::stringstream& streamOut, double floatValue)
 {
   // Standard SQL wants capital E scientific notation.
   // Yet it differs in some detail from C/C++ E notation, even with all of its customization options.
 
-  // For starters, for 0, the standard explicitly calls for '0E0'.
+  // For starters, for 0, the standard explicitly Calls for '0E0'.
   // For across-the-board compatibility, the HSQL backend had to be patched it was using '0.0E0'.
   // C++ uses 0.000000E+00 by default. So override that explicitly.
   if (0.0 == floatValue) {
@@ -200,9 +200,9 @@ inline void streamSQLFloatFormat(std::stringstream& streamOut, double floatValue
       break; // from loop
     }
   }
-  // Bring the truncated pieces together.
+  // Bring the truncated pieces toGether.
   streamOut << fancyText.substr(0, endSignifMantissa)
-                                      << 'E' << optionalSign << fancyText.substr(startSignifExponent);
+                                          << 'E' << optionalSign << fancyText.substr(startSignifExponent);
 }
 
 /**
@@ -226,53 +226,53 @@ class Value {
   /* Create a default Value */
   Value();
 
-  // todo: free() should not really be const
+  // todo: Free() should not really be const
 
   /* Release memory associated to object type Values */
-  void free() const;
+  void Free() const;
 
   /* Release memory associated to object type tuple columns */
-  static void freeObjectsFromTupleStorage(std::vector<char*> const &oldObjects);
+  static void FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects);
 
   /* Set value to the correct SQL NULL representation. */
-  void setNull();
+  void SetNull();
 
   /* Reveal the contained pointer for type values  */
-  void* castAsAddress() const;
+  void* CastAsAddress() const;
 
   /* Create a boolean true Value */
-  static Value getTrue();
+  static Value GetTrue();
 
   /* Create a boolean false Value */
-  static Value getFalse();
+  static Value GetFalse();
 
   /* Create an Value with the null representation for valueType */
-  static Value getNullValue(ValueType);
+  static Value GetNullValue(ValueType);
 
   /* Create an Value promoted/demoted to type */
-  Value castAs(ValueType type) const;
+  Value CastAs(ValueType type) const;
 
   // todo: Why doesn't this return size_t? Also, this is a
   // quality of ValueType, not Value.
 
   /* Calculate the tuple storage size for an Value type. VARCHARs
        assume out-of-band tuple storage */
-  static uint16_t getTupleStorageSize(const ValueType type);
+  static uint16_t GetTupleStorageSize(const ValueType type);
 
   // todo: Could the isInlined argument be removed by have the
-  // caller dereference the pointer?
+  // Caller dereference the pointer?
 
   /* Deserialize a scalar of the specified type from the tuple
        storage area provided. If this is an Object type then the third
        argument indicates whether the object is stored in the tuple
        inline */
-  static Value initFromTupleStorage(const void *storage, ValueType type, bool isInlined);
+  static Value InitFromTupleStorage(const void *storage, ValueType type, bool isInlined);
 
   /* Serialize the scalar this Value represents to the provided
        storage area. If the scalar is an Object type that is not
        inlined then the provided data pool or the heap will be used to
        allocated storage for a copy of the object. */
-  void serializeToTupleStorageAllocateForObjects(
+  void SerializeToTupleStorageAllocateForObjects(
       void *storage, const bool isInlined, const int32_t maxLength,
       const bool isInBytes, VarlenPool *dataPool) const;
 
@@ -283,7 +283,7 @@ class Value {
        allocations needed (if this Value refers to inlined memory
        whereas the field in the tuple is not inlined), will be done in
        the temp string pool. */
-  void serializeToTupleStorage(
+  void SerializeToTupleStorage(
       void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes) const;
 
   /* Deserialize a scalar value of the specified type from the
@@ -292,124 +292,124 @@ class Value {
        Object types as necessary using the provided data pool or the
        heap. This is used to deserialize tables. */
   template <TupleSerializationFormat F, Endianess E>
-  static void deserializeFrom(
+  static void DeserializeFrom(
       SerializeInput<E> &input, VarlenPool *dataPool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
-  static void deserializeFrom(
+  static void DeserializeFrom(
       SerializeInputBE &input, VarlenPool *dataVarlenPool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
-  // TODO: no callers use the first form; Should combine these
+  // TODO: no Callers use the first form; Should combine these
   // eliminate the potential Value copy.
 
   /* Read a ValueType from the SerializeInput stream and deserialize
        a scalar value of the specified type into this Value from the provided
        SerializeInput and perform allocations as necessary. */
-  void deserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool);
-  void deserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *dataPool);
 
   /* Serialize this Value to a SerializeOutput */
-  void serializeTo(SerializeOutput &output) const;
+  void SerializeTo(SerializeOutput &output) const;
 
   /* Serialize this Value to an Export stream */
-  void serializeToExport_withoutNull(ExportSerializeOutput&) const;
+  void SerializeToExportWithoutNull(ExportSerializeOutput&) const;
 
   // See comment with inlined body, below.  If NULL is supplied for
   // the pool, use the temp string pool.
-  void allocateObjectFromInlinedValue(VarlenPool* pool);
+  void AllocateObjectFromInlinedValue(VarlenPool* pool);
 
-  void allocateObjectFromOutlinedValue();
+  void AllocateObjectFromOutlinedValue();
 
   /* Check if the value represents SQL NULL */
-  bool isNull() const;
+  bool IsNull() const;
 
   /* Check if the value represents IEEE 754 NaN */
-  bool isNaN() const;
+  bool IsNan() const;
 
   /* For boolean Values, convert to bool */
-  bool isTrue() const;
-  bool isFalse() const;
+  bool IsTrue() const;
+  bool IsFalse() const;
 
-  /* Tell caller if this Value's value refers back to VARCHAR or
+  /* Tell Caller if this Value's value refers back to VARCHAR or
        VARBINARY data internal to a TableTuple (and not a
        Varlen) */
-  bool getSourceInlined() const;
+  bool GetSourceInlined() const;
 
   /* For number values, check the number line. */
-  bool isZero() const;
+  bool IsZero() const;
 
   /* For boolean Values only, logical operators */
-  Value op_negate() const;
-  Value op_and(const Value rhs) const;
-  Value op_or(const Value rhs) const;
+  Value Opnegate() const;
+  Value Opand(const Value rhs) const;
+  Value Opor(const Value rhs) const;
 
   /* Evaluate the ordering relation against two Values. Promotes
        exact types to allow disparate type comparison. See also the
-       op_ functions which return boolean Values.
+       Op functions which return boolean Values.
    */
-  int compareNull(const Value rhs) const;
-  int compare(const Value rhs) const;
-  int compare_withoutNull(const Value rhs) const;
+  int CompareNull(const Value rhs) const;
+  int Compare(const Value rhs) const;
+  int CompareWithoutNull(const Value rhs) const;
 
   /* Return a boolean Value with the comparison result */
-  Value op_equals(const Value rhs) const;
-  Value op_notEquals(const Value rhs) const;
-  Value op_lessThan(const Value rhs) const;
-  Value op_lessThanOrEqual(const Value rhs) const;
-  Value op_greaterThan(const Value rhs) const;
-  Value op_greaterThanOrEqual(const Value rhs) const;
+  Value OpEquals(const Value rhs) const;
+  Value OpNotEquals(const Value rhs) const;
+  Value OpLessThan(const Value rhs) const;
+  Value OpLessThanOrEqual(const Value rhs) const;
+  Value OpGreaterThan(const Value rhs) const;
+  Value OpGreaterThanOrEqual(const Value rhs) const;
 
-  Value op_equals_withoutNull(const Value rhs) const;
-  Value op_notEquals_withoutNull(const Value rhs) const;
-  Value op_lessThan_withoutNull(const Value rhs) const;
-  Value op_lessThanOrEqual_withoutNull(const Value rhs) const;
-  Value op_greaterThan_withoutNull(const Value rhs) const;
-  Value op_greaterThanOrEqual_withoutNull(const Value rhs) const;
+  Value OpEqualsWithoutNull(const Value rhs) const;
+  Value OpNotEqualsWithoutNull(const Value rhs) const;
+  Value OpLessThanWithoutNull(const Value rhs) const;
+  Value OpLessThanOrEqualWithoutNull(const Value rhs) const;
+  Value OpGreaterThanWithoutNull(const Value rhs) const;
+  Value OpGreaterThanOrEqualWithoutNull(const Value rhs) const;
 
 
   /* Return a copy of MAX(this, rhs) */
-  Value op_max(const Value rhs) const;
+  Value OpMax(const Value rhs) const;
 
   /* Return a copy of MIN(this, rhs) */
-  Value op_min(const Value rhs) const;
+  Value OpMin(const Value rhs) const;
 
   /* For number Values, compute new Values for arithmetic operators */
-  Value op_increment() const;
-  Value op_decrement() const;
-  Value op_subtract(const Value rhs) const;
-  Value op_add(const Value rhs) const;
-  Value op_multiply(const Value rhs) const;
-  Value op_divide(const Value rhs) const;
+  Value OpIncrement() const;
+  Value OpDecrement() const;
+  Value OpSubtract(const Value rhs) const;
+  Value OpAdd(const Value rhs) const;
+  Value OpMultiple(const Value rhs) const;
+  Value OpDivide(const Value rhs) const;
   /*
    * This Value must be VARCHAR and the rhs must be VARCHAR.
    * This Value is the value and the rhs is the pattern
    */
-  Value like(const Value rhs) const;
+  Value Like(const Value rhs) const;
 
   //TODO: passing Value arguments by const reference SHOULD be standard practice
   // for the dozens of Value "operator" functions. It saves on needless Value copies.
-  //TODO: returning bool (vs. Value getTrue()/getFalse()) SHOULD be standard practice
+  //TODO: returning bool (vs. Value GetTrue()/GetFalse()) SHOULD be standard practice
   // for Value "logical operator" functions.
   // It saves on needless Value copies and makes unit tests more readable.
-  // Cases that need the Value -- for some actual purpose other than an immediate call to
-  // "isTrue()" -- are rare and getting rarer as optimizations like short-cut eval are introduced.
+  // Cases that need the Value -- for some actual purpose other than an immediate Call to
+  // "IsTrue()" -- are rare and Getting rarer as optimizations Like short-cut eval are introduced.
   /**
    * Return true if this Value is listed as a member of the IN LIST
    * represented as an ValueList* value cached in rhsList.
    */
-  bool inList(Value const& rhsList) const;
+  bool InList(Value const& rhsList) const;
 
   /**
-   * If this Value is an array value, get it's length.
+   * If this Value is an array value, Get it's length.
    * Undefined behavior if not an array (cassert fail in debug).
    */
-  int arrayLength() const;
+  int ArrayLength() const;
 
   /**
-   * If this Value is an array value, get a value.
+   * If this Value is an array value, Get a value.
    * Undefined behavior if not an array or if oob (cassert fail in debug).
    */
-  Value itemAtIndex(int index) const;
+  Value ItemAtIndex(int index) const;
 
   /**
    * Used for SQL-IN-LIST to cast all array values to a specific type,
@@ -420,17 +420,17 @@ class Value {
    *
    * Undefined behavior if not an array (cassert fail in debug).
    */
-  void castAndSortAndDedupArrayForInList(const ValueType outputType, std::vector<Value> &outList) const;
+  void CastAndSortAndDedupArrayForInList(const ValueType outputType, std::vector<Value> &outList) const;
 
   /*
    * Out must have space for 16 bytes
    */
-  int32_t murmurHash3() const;
+  int32_t MurmurHash3() const;
 
   /*
-   * callConstant, callUnary, and call are templates for arbitrary Value member functions that implement
+   * CallConstant, CallUnary, and Call are templates for arbitrary Value member functions that implement
    * SQL "column functions". They differ in how many arguments they accept:
-   * 0 for callConstant, 1 ("this") for callUnary, and any number (packaged in a vector) for call.
+   * 0 for CallConstant, 1 ("this") for CallUnary, and any number (packaged in a vector) for Call.
    * The main benefit of these functions being (always explicit) template instantiations for each
    * "FUNC_*" int value instead of a more normal named member function
    * of Value is that it allows them to be invoked from the default eval method of the
@@ -440,18 +440,18 @@ class Value {
    * and explicitly implement the eval method for every expression subclass template instantiation
    * (UnaryFunctionExpression<FUNC_ABS>::eval,
    * GeneralFunctionExpression<FUNC_LOG_SUBSTRING_FROM>::eval, etc.
-   * to call the corresponding Value member function.
+   * to Call the corresponding Value member function.
    * So, these member function templates save a bit of boilerplate for each SQL function and allow
-   * the function expression subclass templates to be implemented completely generically.
+   * the function expression subclass templates to be implemented completely generiCally.
    */
-  template <int F> // template for SQL functions returning constants (like pi)
-  static Value callConstant();
+  template <int F> // template for SQL functions returning constants (Like pi)
+  static Value CallConstant();
 
   template <int F> // template for SQL functions of one Value ("this")
-  Value callUnary() const;
+  Value CallUnary() const;
 
   template <int F> // template for SQL functions of multiple Values
-  static Value call(const std::vector<Value>& arguments);
+  static Value Call(const std::vector<Value>& arguments);
 
   /// Iterates over UTF8 strings one character "code point" at a time, being careful not to walk off the end.
   class UTF8Iterator {
@@ -463,7 +463,7 @@ class Value {
    // at least to the extent that multi-byte characters have a valid
    // prefix byte and continuation bytes that will not cause a read
    // off the end of the buffer.
-   // That done, extractCodePoint could be considerably simpler/faster.
+   // That done, ExtractCodePoint could be considerably simpler/faster.
    { assert(m_cursor <= m_end); }
 
     //Construct a one-off with an alternative current cursor position
@@ -472,18 +472,18 @@ class Value {
       m_end(other.m_end)
     { assert(m_cursor <= m_end); }
 
-    const char * getCursor() { return m_cursor; }
+    const char * GetCursor() { return m_cursor; }
 
-    bool atEnd() { return m_cursor >= m_end; }
+    bool AtEnd() { return m_cursor >= m_end; }
 
-    const char * skipCodePoints(int64_t skips) {
-      while (skips-- > 0 && ! atEnd()) {
+    const char * SkipCodePoints(int64_t skips) {
+      while (skips-- > 0 && ! AtEnd()) {
         // TODO: since the returned code point is ignored, it might be better
-        // to call a faster, simpler, skipCodePoint method -- maybe once that
+        // to Call a faster, simpler, skipCodePoint method -- maybe once that
         // becomes trivial due to up-front validation.
-        extractCodePoint();
+        ExtractCodePoint();
       }
-      if (atEnd()) {
+      if (AtEnd()) {
         return m_end;
       }
       return m_cursor;
@@ -495,11 +495,11 @@ class Value {
      * by copying the character data onto the stack.
      * That wouldn't be needed if we pre-validated the buffer.
      */
-    uint32_t extractCodePoint() {
-      assert(m_cursor < m_end); // Caller should have tested and handled atEnd() condition
+    uint32_t ExtractCodePoint() {
+      assert(m_cursor < m_end); // Caller should have tested and handled AtEnd() condition
       /*
        * Copy the next 6 bytes to a temp buffer and retrieve.
-       * We should only get 4 byte code points, and the library
+       * We should only Get 4 byte code points, and the library
        * should only accept 4 byte code points, but once upon a time there
        * were 6 byte code points in UTF-8 so be careful here.
        */
@@ -527,12 +527,12 @@ class Value {
 
 
   /* For boost hashing */
-  void hashCombine(std::size_t &seed) const;
+  void HashCombine(std::size_t &seed) const;
 
-  /* Functor comparator for use with std::set */
+  /* Functor comparator for use with std::Set */
   struct ltValue {
     bool operator()(const Value v1, const Value v2) const {
-      return v1.compare(v2) < 0;
+      return v1.Compare(v2) < 0;
     }
   };
 
@@ -542,7 +542,7 @@ class Value {
     bool operator()(Value const& x,
                     Value const& y) const
     {
-      return x.compare(y) == 0;
+      return x.Compare(y) == 0;
     }
   };
 
@@ -552,7 +552,7 @@ class Value {
     std::size_t operator()(Value const& x) const
     {
       std::size_t seed = 0;
-      x.hashCombine(seed);
+      x.HashCombine(seed);
       return seed;
     }
   };
@@ -577,14 +577,14 @@ class Value {
     return (TTInt(kMaxWholeFactor) <= ii / kMaxWholeDivisor);
   }
  public:
-  // setArrayElements is a const method since it doesn't actually mutate any Value state, just
+  // SetArrayElements is a const method since it doesn't actually mutate any Value state, just
   // the state of the contained Values which are referenced via the allocated object storage.
   // For example, it is not intended to ever "grow the array" which would require the Value's
   // object reference (in m_data) to be mutable.
-  // The array size is predetermined in allocateANewValueList.
-  void setArrayElements(std::vector<Value> &args) const;
+  // The array size is predetermined in AllocateANewValueList.
+  void SetArrayElements(std::vector<Value> &args) const;
 
-  static ValueType promoteForOp(ValueType vta, ValueType vtb) {
+  static ValueType PromoteForOp(ValueType vta, ValueType vtb) {
     ValueType rt;
     switch (vta) {
       case VALUE_TYPE_TINYINT:
@@ -615,7 +615,7 @@ class Value {
         break;
     }
     // There ARE rare but legitimate runtime type check exceptions in SQL, so
-    // unless/until those legitimate cases get re-routed to some other code path,
+    // unless/until those legitimate cases Get re-routed to some other code path,
     // it is not safe here to ...
     // assert(rt != VALUE_TYPE_INVALID);
     return rt;
@@ -624,7 +624,7 @@ class Value {
   // Declared public for cppunit test purposes .
   static int64_t parseTimestampString(const std::string &txt);
 
-  static inline int32_t getCharLength(const char *valueChars, const size_t length) {
+  static inline int32_t GetCharLength(const char *valueChars, const size_t length) {
     // very efficient code to count characters in UTF string and ASCII string
     int32_t j = 0;
     size_t i = length;
@@ -634,7 +634,7 @@ class Value {
     return j;
   }
 
-  static inline int32_t getIthCharIndex(const char *valueChars, const int64_t length, const int64_t ith) {
+  static inline int32_t GetIthCharIndex(const char *valueChars, const int64_t length, const int64_t ith) {
     if (ith <= 0) return -1;
     int32_t i = 0, j = 0;
 
@@ -649,9 +649,9 @@ class Value {
 
   // Return the beginning char * place of the ith char.
   // Return the end char* when ith is larger than it has, NULL if ith is less and equal to zero.
-  static inline const char* getIthCharPosition(const char *valueChars, const size_t length, const int32_t ith) {
+  static inline const char* GetIthCharPosition(const char *valueChars, const size_t length, const int32_t ith) {
     // very efficient code to count characters in UTF string and ASCII string
-    int32_t i = getIthCharIndex(valueChars,length, ith);
+    int32_t i = GetIthCharIndex(valueChars,length, ith);
     if (i < 0) return NULL;
     return &valueChars[i];
   }
@@ -664,7 +664,7 @@ class Value {
     if (m_sourceInlined) {
       // The Value storage is inlined (a pointer to the backing tuple storage) and needs
       // to be copied to a local storage
-      copy.allocateObjectFromInlinedValue(getTempStringPool());
+      copy.AllocateObjectFromInlinedValue(GetTempStringPool());
     }
     return copy;
   }
@@ -676,13 +676,13 @@ class Value {
    */
 
   // Function declarations for Value.cpp definitions.
-  void createDecimalFromString(const std::string &txt);
-  std::string createStringFromDecimal() const;
+  void CreateDecimalFromString(const std::string &txt);
+  std::string CreateStringFromDecimal() const;
 
-  // Helpers for inList.
+  // Helpers for InList.
   // These are purposely not inlines to avoid exposure of ValueList details.
-  void deserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool);
-  void allocateANewValueList(size_t elementCount, ValueType elementType);
+  void DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool);
+  void AllocateANewValueList(size_t elementCount, ValueType elementType);
 
   // Promotion Rules. Initialized in Value.cpp
   static ValueType s_intPromotionTable[];
@@ -711,7 +711,7 @@ class Value {
    */
   Value(const ValueType type) {
     ::memset( m_data, 0, 16);
-    setValueType(type);
+    SetValueType(type);
     m_sourceInlined = false;
   }
 
@@ -720,7 +720,7 @@ class Value {
    * The last of the 16 bytes of storage allocated in an Value
    * is used to store the type
    */
-  void setValueType(ValueType type) {
+  void SetValueType(ValueType type) {
     m_valueType = type;
   }
 
@@ -728,7 +728,7 @@ class Value {
    * Get the type of the value. This information is private
    * to prevent code outside of Value from branching based on the type of a value.
    */
-  ValueType getValueType() const {
+  ValueType GetValueType() const {
     return m_valueType;
   }
 
@@ -736,11 +736,11 @@ class Value {
    * Get the type of the value. This information is private
    * to prevent code outside of Value from branching based on the type of a value.
    */
-  std::string getValueTypeString() const {
+  std::string GetValueTypeString() const {
     return ValueTypeToString(m_valueType);
   }
 
-  void setSourceInlined(bool sourceInlined)
+  void SetSourceInlined(bool sourceInlined)
   {
     m_sourceInlined = sourceInlined;
   }
@@ -748,27 +748,27 @@ class Value {
   void tagAsNull() { m_data[13] = OBJECT_NULL_BIT; }
 
   /**
-   * An Object is something like a String that has a variable length
+   * An Object is something Like a String that has a variable length
    * (thus it is length preceded) and can potentially have indirect
    * storage (will always be indirect when referenced via an Value).
    * Values cache a decoded version of the length preceding value
    * in their data area after the pointer to the object storage area.
    *
    * Leverage private access and enforce strict requirements on
-   * calling correctness.
+   * Calling correctness.
    */
-  int32_t getObjectLength_withoutNull() const {
-    assert(isNull() == false);
-    assert(getValueType() == VALUE_TYPE_VARCHAR || getValueType() == VALUE_TYPE_VARBINARY);
+  int32_t GetObjectLengthWithoutNull() const {
+    assert(IsNull() == false);
+    assert(GetValueType() == VALUE_TYPE_VARCHAR || GetValueType() == VALUE_TYPE_VARBINARY);
     // now safe to read and return the length preceding value.
     return *reinterpret_cast<const int32_t *>(&m_data[8]);
   }
 
 
-  int8_t setObjectLength(int32_t length) {
+  int8_t SetObjectLength(int32_t length) {
     *reinterpret_cast<int32_t *>(&m_data[8]) = length;
-    int8_t lengthLength = getAppropriateObjectLengthLength(length);
-    setObjectLengthLength(lengthLength);
+    int8_t lengthLength = GetAppropriateObjectLengthLength(length);
+    SetObjectLengthLength(lengthLength);
     return lengthLength;
   }
 
@@ -777,7 +777,7 @@ class Value {
    * in the object's storage area. This value
    * is cached in the Value's 13th byte.
    */
-  int8_t getObjectLengthLength() const {
+  int8_t GetObjectLengthLength() const {
     return m_data[12];
   }
 
@@ -785,15 +785,15 @@ class Value {
    * Set the objects length preceding values length to
    * the specified value
    */
-  void setObjectLengthLength(int8_t length) {
+  void SetObjectLengthLength(int8_t length) {
     m_data[12] = length;
   }
 
   /*
-   * Based on the objects actual length value get the length of the
+   * Based on the objects actual length value Get the length of the
    * length preceding value to the appropriate length
    */
-  static int8_t getAppropriateObjectLengthLength(int32_t length) {
+  static int8_t GetAppropriateObjectLengthLength(int32_t length) {
     if (length <= OBJECT_MAX_LENGTH_SHORT_LENGTH) {
       return SHORT_OBJECT_LENGTHLENGTH;
     } else {
@@ -805,7 +805,7 @@ class Value {
    * Set the length preceding value using the short or long representation depending
    * on what is necessary to represent the length.
    */
-  static void setObjectLengthToLocation(int32_t length, char *location) {
+  static void SetObjectLengthToLocation(int32_t length, char *location) {
     int32_t beNumber = htonl(length);
     if (length < -1) {
       throw Exception("Object length cannot be < -1");
@@ -824,21 +824,21 @@ class Value {
   }
 
   /*
-   * Not truly symmetrical with getObjectValue which returns the actual object past
+   * Not truly symmetrical with GetObjectValue which returns the actual object past
    * the length preceding value
    */
-  void setObjectValue(void* object) {
+  void SetObjectValue(void* object) {
     *reinterpret_cast<void**>(m_data) = object;
   }
 
-  void* getObjectValue_withoutNull() const {
+  void* GetObjectValueWithoutNull() const {
     void* value;
     if (m_sourceInlined) {
-      value = *reinterpret_cast<char* const*>(m_data) + getObjectLengthLength();
+      value = *reinterpret_cast<char* const*>(m_data) + GetObjectLengthLength();
     }
     else {
       Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
-      value = sref->Get() + getObjectLengthLength();
+      value = sref->Get() + GetObjectLengthLength();
     }
     return value;
   }
@@ -846,106 +846,106 @@ class Value {
   /**
    * Get a pointer to the value of an Object that lies beyond the storage of the length information
    */
-  void* getObjectValue() const {
-    if (isNull()) {
+  void* GetObjectValue() const {
+    if (IsNull()) {
       return NULL;
     }
-    return getObjectValue_withoutNull();
+    return GetObjectValueWithoutNull();
   }
 
-  // getters
-  const int8_t& getTinyInt() const {
-    assert(getValueType() == VALUE_TYPE_TINYINT);
+  // Getters
+  const int8_t& GetTinyInt() const {
+    assert(GetValueType() == VALUE_TYPE_TINYINT);
     return *reinterpret_cast<const int8_t*>(m_data);
   }
 
-  int8_t& getTinyInt() {
-    assert(getValueType() == VALUE_TYPE_TINYINT);
+  int8_t& GetTinyInt() {
+    assert(GetValueType() == VALUE_TYPE_TINYINT);
     return *reinterpret_cast<int8_t*>(m_data);
   }
 
-  const int16_t& getSmallInt() const {
-    assert(getValueType() == VALUE_TYPE_SMALLINT);
+  const int16_t& GetSmallInt() const {
+    assert(GetValueType() == VALUE_TYPE_SMALLINT);
     return *reinterpret_cast<const int16_t*>(m_data);
   }
 
-  int16_t& getSmallInt() {
-    assert(getValueType() == VALUE_TYPE_SMALLINT);
+  int16_t& GetSmallInt() {
+    assert(GetValueType() == VALUE_TYPE_SMALLINT);
     return *reinterpret_cast<int16_t*>(m_data);
   }
 
-  const int32_t& getInteger() const {
-    assert(getValueType() == VALUE_TYPE_INTEGER);
+  const int32_t& GetInteger() const {
+    assert(GetValueType() == VALUE_TYPE_INTEGER);
     return *reinterpret_cast<const int32_t*>(m_data);
   }
 
-  int32_t& getInteger() {
-    assert(getValueType() == VALUE_TYPE_INTEGER);
+  int32_t& GetInteger() {
+    assert(GetValueType() == VALUE_TYPE_INTEGER);
     return *reinterpret_cast<int32_t*>(m_data);
   }
 
-  const int64_t& getBigInt() const {
-    assert((getValueType() == VALUE_TYPE_BIGINT) ||
-           (getValueType() == VALUE_TYPE_TIMESTAMP) ||
-           (getValueType() == VALUE_TYPE_ADDRESS));
+  const int64_t& GetBigInt() const {
+    assert((GetValueType() == VALUE_TYPE_BIGINT) ||
+           (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
+           (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<const int64_t*>(m_data);
   }
 
-  int64_t& getBigInt() {
-    assert((getValueType() == VALUE_TYPE_BIGINT) ||
-           (getValueType() == VALUE_TYPE_TIMESTAMP) ||
-           (getValueType() == VALUE_TYPE_ADDRESS));
+  int64_t& GetBigInt() {
+    assert((GetValueType() == VALUE_TYPE_BIGINT) ||
+           (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
+           (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<int64_t*>(m_data);
   }
 
-  const int64_t& getTimestamp() const {
-    assert(getValueType() == VALUE_TYPE_TIMESTAMP);
+  const int64_t& GetTimestamp() const {
+    assert(GetValueType() == VALUE_TYPE_TIMESTAMP);
     return *reinterpret_cast<const int64_t*>(m_data);
   }
 
-  int64_t& getTimestamp() {
-    assert(getValueType() == VALUE_TYPE_TIMESTAMP);
+  int64_t& GetTimestamp() {
+    assert(GetValueType() == VALUE_TYPE_TIMESTAMP);
     return *reinterpret_cast<int64_t*>(m_data);
   }
 
-  const double& getDouble() const {
-    assert(getValueType() == VALUE_TYPE_DOUBLE);
+  const double& GetDouble() const {
+    assert(GetValueType() == VALUE_TYPE_DOUBLE);
     return *reinterpret_cast<const double*>(m_data);
   }
 
-  double& getDouble() {
-    assert(getValueType() == VALUE_TYPE_DOUBLE);
+  double& GetDouble() {
+    assert(GetValueType() == VALUE_TYPE_DOUBLE);
     return *reinterpret_cast<double*>(m_data);
   }
 
-  const TTInt& getDecimal() const {
-    assert(getValueType() == VALUE_TYPE_DECIMAL);
+  const TTInt& GetDecimal() const {
+    assert(GetValueType() == VALUE_TYPE_DECIMAL);
     const void* retval = reinterpret_cast<const void*>(m_data);
     return *reinterpret_cast<const TTInt*>(retval);
   }
 
-  TTInt& getDecimal() {
-    assert(getValueType() == VALUE_TYPE_DECIMAL);
+  TTInt& GetDecimal() {
+    assert(GetValueType() == VALUE_TYPE_DECIMAL);
     void* retval = reinterpret_cast<void*>(m_data);
     return *reinterpret_cast<TTInt*>(retval);
   }
 
-  const bool& getBoolean() const {
-    assert(getValueType() == VALUE_TYPE_BOOLEAN);
+  const bool& GetBoolean() const {
+    assert(GetValueType() == VALUE_TYPE_BOOLEAN);
     return *reinterpret_cast<const bool*>(m_data);
   }
 
-  bool& getBoolean() {
-    assert(getValueType() == VALUE_TYPE_BOOLEAN);
+  bool& GetBoolean() {
+    assert(GetValueType() == VALUE_TYPE_BOOLEAN);
     return *reinterpret_cast<bool*>(m_data);
   }
 
-  bool isBooleanNULL() const ;
+  bool IsBooleanNULL() const ;
 
-  std::size_t getAllocationSizeForObject() const;
-  static std::size_t getAllocationSizeForObject(int32_t length);
+  std::size_t GetAllocationSizeForObject() const;
+  static std::size_t GetAllocationSizeForObject(int32_t length);
 
-  static void throwCastSQLException(const ValueType origType,
+  static void ThrowCastSQLException(const ValueType origType,
                                     const ValueType newType)
   {
     char msg[1024];
@@ -958,7 +958,7 @@ class Value {
   /** return the whole part of a TTInt*/
   static inline int64_t narrowDecimalToBigInt(TTInt &scaledValue) {
     if (scaledValue > Value::s_maxInt64AsDecimal || scaledValue < Value::s_minInt64AsDecimal) {
-      throwCastSQLValueOutOfRangeException<TTInt>(scaledValue, VALUE_TYPE_DECIMAL, VALUE_TYPE_BIGINT);
+      ThrowCastSQLValueOutOfRangeException<TTInt>(scaledValue, VALUE_TYPE_DECIMAL, VALUE_TYPE_BIGINT);
     }
     TTInt whole(scaledValue);
     whole /= kMaxScaleFactor;
@@ -966,7 +966,7 @@ class Value {
   }
 
   /** return the fractional part of a TTInt*/
-  static inline int64_t getFractionalPart(TTInt& scaledValue) {
+  static inline int64_t GetFractionalPart(TTInt& scaledValue) {
     TTInt fractional(scaledValue);
     fractional %= kMaxScaleFactor;
     return fractional.ToInt();
@@ -976,24 +976,24 @@ class Value {
    * Implicitly converting function to big integer type
    * DOUBLE, DECIMAL should not be handled here
    */
-  int64_t castAsBigIntAndGetValue() const {
-    assert(isNull() == false);
+  int64_t CastAsBigIntAndGetValue() const {
+    assert(IsNull() == false);
 
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     assert(type != VALUE_TYPE_NULL);
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        return static_cast<int64_t>(getTinyInt());
+        return static_cast<int64_t>(GetTinyInt());
       case VALUE_TYPE_SMALLINT:
-        return static_cast<int64_t>(getSmallInt());
+        return static_cast<int64_t>(GetSmallInt());
       case VALUE_TYPE_INTEGER:
-        return static_cast<int64_t>(getInteger());
+        return static_cast<int64_t>(GetInteger());
       case VALUE_TYPE_BIGINT:
-        return getBigInt();
+        return GetBigInt();
       case VALUE_TYPE_TIMESTAMP:
-        return getTimestamp();
+        return GetTimestamp();
       default:
-        throwCastSQLException(type, VALUE_TYPE_BIGINT);
+        ThrowCastSQLException(type, VALUE_TYPE_BIGINT);
         return 0; // NOT REACHED
     }
   }
@@ -1002,61 +1002,61 @@ class Value {
    * Implicitly converting function to integer type
    * DOUBLE, DECIMAL should not be handled here
    */
-  int32_t castAsIntegerAndGetValue() const {
-    assert(isNull() == false);
+  int32_t CastAsIntegerAndGetValue() const {
+    assert(IsNull() == false);
 
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_NULL:
         return INT32_NULL;
       case VALUE_TYPE_TINYINT:
-        return static_cast<int32_t>(getTinyInt());
+        return static_cast<int32_t>(GetTinyInt());
       case VALUE_TYPE_SMALLINT:
-        return static_cast<int32_t>(getSmallInt());
+        return static_cast<int32_t>(GetSmallInt());
       case VALUE_TYPE_INTEGER:
-        return getInteger();
+        return GetInteger();
       case VALUE_TYPE_BIGINT:
       {
-        const int64_t value = getBigInt();
+        const int64_t value = GetBigInt();
         if (value > (int64_t)INT32_MAX || value < (int64_t)PELOTON_INT32_MIN) {
-          throwCastSQLValueOutOfRangeException<int64_t>(value, VALUE_TYPE_BIGINT, VALUE_TYPE_INTEGER);
+          ThrowCastSQLValueOutOfRangeException<int64_t>(value, VALUE_TYPE_BIGINT, VALUE_TYPE_INTEGER);
         }
         return static_cast<int32_t>(value);
       }
       default:
-        throwCastSQLException(type, VALUE_TYPE_INTEGER);
+        ThrowCastSQLException(type, VALUE_TYPE_INTEGER);
         return 0; // NOT REACHED
     }
   }
 
-  double castAsDoubleAndGetValue() const {
-    assert(isNull() == false);
+  double CastAsDoubleAndGetValue() const {
+    assert(IsNull() == false);
 
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
 
     switch (type) {
       case VALUE_TYPE_NULL:
         return DOUBLE_MIN;
       case VALUE_TYPE_TINYINT:
-        return static_cast<double>(getTinyInt());
+        return static_cast<double>(GetTinyInt());
       case VALUE_TYPE_SMALLINT:
-        return static_cast<double>(getSmallInt());
+        return static_cast<double>(GetSmallInt());
       case VALUE_TYPE_INTEGER:
-        return static_cast<double>(getInteger());
+        return static_cast<double>(GetInteger());
       case VALUE_TYPE_ADDRESS:
-        return static_cast<double>(getBigInt());
+        return static_cast<double>(GetBigInt());
       case VALUE_TYPE_BIGINT:
-        return static_cast<double>(getBigInt());
+        return static_cast<double>(GetBigInt());
       case VALUE_TYPE_TIMESTAMP:
-        return static_cast<double>(getTimestamp());
+        return static_cast<double>(GetTimestamp());
       case VALUE_TYPE_DOUBLE:
-        return getDouble();
+        return GetDouble();
       case VALUE_TYPE_DECIMAL:
       {
-        TTInt scaledValue = getDecimal();
+        TTInt scaledValue = GetDecimal();
         // we only deal with the decimal number within int64_t range here
         int64_t whole = narrowDecimalToBigInt(scaledValue);
-        int64_t fractional = getFractionalPart(scaledValue);
+        int64_t fractional = GetFractionalPart(scaledValue);
         double retval;
         retval = static_cast<double>(whole) +
             (static_cast<double>(fractional)/static_cast<double>(kMaxScaleFactor));
@@ -1065,15 +1065,15 @@ class Value {
       case VALUE_TYPE_VARCHAR:
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_DOUBLE);
+        ThrowCastSQLException(type, VALUE_TYPE_DOUBLE);
         return 0; // NOT REACHED
     }
   }
 
-  TTInt castAsDecimalAndGetValue() const {
-    assert(isNull() == false);
+  TTInt CastAsDecimalAndGetValue() const {
+    assert(IsNull() == false);
 
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
 
     switch (type) {
       case VALUE_TYPE_TINYINT:
@@ -1081,19 +1081,19 @@ class Value {
       case VALUE_TYPE_INTEGER:
       case VALUE_TYPE_BIGINT:
       case VALUE_TYPE_TIMESTAMP: {
-        int64_t value = castAsBigIntAndGetValue();
+        int64_t value = CastAsBigIntAndGetValue();
         TTInt retval(value);
         retval *= kMaxScaleFactor;
         return retval;
       }
       case VALUE_TYPE_DECIMAL:
-        return getDecimal();
+        return GetDecimal();
       case VALUE_TYPE_DOUBLE: {
-        int64_t intValue = castAsBigIntAndGetValue();
+        int64_t intValue = CastAsBigIntAndGetValue();
         TTInt retval(intValue);
         retval *= kMaxScaleFactor;
 
-        double value = getDouble();
+        double value = GetDouble();
         value -= static_cast<double>(intValue); // isolate decimal part
         value *= static_cast<double>(kMaxScaleFactor); // scale up to integer.
         TTInt fracval((int64_t)value);
@@ -1103,7 +1103,7 @@ class Value {
       case VALUE_TYPE_VARCHAR:
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_DECIMAL);
+        ThrowCastSQLException(type, VALUE_TYPE_DECIMAL);
         return 0; // NOT REACHED
     }
   }
@@ -1111,14 +1111,14 @@ class Value {
   /**
    * This funciton does not check NULL value.
    */
-  double getNumberFromString() const
+  double GetNumberFromString() const
   {
-    assert(isNull() == false);
+    assert(IsNull() == false);
 
-    const int32_t strLength = getObjectLength_withoutNull();
+    const int32_t strLength = GetObjectLengthWithoutNull();
     // Guarantee termination at end of object -- or strtod might not stop there.
     char safeBuffer[strLength+1];
-    memcpy(safeBuffer, getObjectValue_withoutNull(), strLength);
+    memcpy(safeBuffer, GetObjectValueWithoutNull(), strLength);
     safeBuffer[strLength] = '\0';
     char * bufferEnd = safeBuffer;
     double result = strtod(safeBuffer, &bufferEnd);
@@ -1138,58 +1138,58 @@ class Value {
     throw Exception(oss.str());
   }
 
-  Value castAsBigInt() const {
-    assert(isNull() == false);
+  Value CastAsBigInt() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_BIGINT);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getBigInt() = static_cast<int64_t>(getTinyInt()); break;
+        retval.GetBigInt() = static_cast<int64_t>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        retval.getBigInt() = static_cast<int64_t>(getSmallInt()); break;
+        retval.GetBigInt() = static_cast<int64_t>(GetSmallInt()); break;
       case VALUE_TYPE_INTEGER:
-        retval.getBigInt() = static_cast<int64_t>(getInteger()); break;
+        retval.GetBigInt() = static_cast<int64_t>(GetInteger()); break;
       case VALUE_TYPE_ADDRESS:
-        retval.getBigInt() = getBigInt(); break;
+        retval.GetBigInt() = GetBigInt(); break;
       case VALUE_TYPE_BIGINT:
         return *this;
       case VALUE_TYPE_TIMESTAMP:
-        retval.getBigInt() = getTimestamp(); break;
+        retval.GetBigInt() = GetTimestamp(); break;
       case VALUE_TYPE_DOUBLE:
-        if (getDouble() > (double)INT64_MAX || getDouble() < (double)PELOTON_INT64_MIN) {
-          throwCastSQLValueOutOfRangeException<double>(getDouble(), VALUE_TYPE_DOUBLE, VALUE_TYPE_BIGINT);
+        if (GetDouble() > (double)INT64_MAX || GetDouble() < (double)PELOTON_INT64_MIN) {
+          ThrowCastSQLValueOutOfRangeException<double>(GetDouble(), VALUE_TYPE_DOUBLE, VALUE_TYPE_BIGINT);
         }
-        retval.getBigInt() = static_cast<int64_t>(getDouble()); break;
+        retval.GetBigInt() = static_cast<int64_t>(GetDouble()); break;
       case VALUE_TYPE_DECIMAL: {
-        TTInt scaledValue = getDecimal();
-        retval.getBigInt() = narrowDecimalToBigInt(scaledValue); break;
+        TTInt scaledValue = GetDecimal();
+        retval.GetBigInt() = narrowDecimalToBigInt(scaledValue); break;
       }
       case VALUE_TYPE_VARCHAR:
-        retval.getBigInt() = static_cast<int64_t>(getNumberFromString()); break;
+        retval.GetBigInt() = static_cast<int64_t>(GetNumberFromString()); break;
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_BIGINT);
+        ThrowCastSQLException(type, VALUE_TYPE_BIGINT);
     }
     return retval;
   }
 
-  Value castAsTimestamp() const {
-    assert(isNull() == false);
+  Value CastAsTimestamp() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_TIMESTAMP);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getTimestamp() = static_cast<int64_t>(getTinyInt()); break;
+        retval.GetTimestamp() = static_cast<int64_t>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        retval.getTimestamp() = static_cast<int64_t>(getSmallInt()); break;
+        retval.GetTimestamp() = static_cast<int64_t>(GetSmallInt()); break;
       case VALUE_TYPE_INTEGER:
-        retval.getTimestamp() = static_cast<int64_t>(getInteger()); break;
+        retval.GetTimestamp() = static_cast<int64_t>(GetInteger()); break;
       case VALUE_TYPE_BIGINT:
-        retval.getTimestamp() = getBigInt(); break;
+        retval.GetTimestamp() = GetBigInt(); break;
       case VALUE_TYPE_TIMESTAMP:
-        retval.getTimestamp() = getTimestamp(); break;
+        retval.GetTimestamp() = GetTimestamp(); break;
       case VALUE_TYPE_DOUBLE:
         // TODO: Consider just eliminating this switch case to throw a cast exception,
         // or explicitly throwing some other exception here.
@@ -1198,10 +1198,10 @@ class Value {
         // or may just be too far a stretch.
         // OR it might be a convenience for some obscure system-generated edge case?
 
-        if (getDouble() > (double)INT64_MAX || getDouble() < (double)PELOTON_INT64_MIN) {
-          throwCastSQLValueOutOfRangeException<double>(getDouble(), VALUE_TYPE_DOUBLE, VALUE_TYPE_BIGINT);
+        if (GetDouble() > (double)INT64_MAX || GetDouble() < (double)PELOTON_INT64_MIN) {
+          ThrowCastSQLValueOutOfRangeException<double>(GetDouble(), VALUE_TYPE_DOUBLE, VALUE_TYPE_BIGINT);
         }
-        retval.getTimestamp() = static_cast<int64_t>(getDouble()); break;
+        retval.GetTimestamp() = static_cast<int64_t>(GetDouble()); break;
       case VALUE_TYPE_DECIMAL: {
         // TODO: Consider just eliminating this switch case to throw a cast exception,
         // or explicitly throwing some other exception here.
@@ -1210,19 +1210,19 @@ class Value {
         // or may just be too far a stretch.
         // OR it might be a convenience for some obscure system-generated edge case?
 
-        TTInt scaledValue = getDecimal();
-        retval.getTimestamp() = narrowDecimalToBigInt(scaledValue); break;
+        TTInt scaledValue = GetDecimal();
+        retval.GetTimestamp() = narrowDecimalToBigInt(scaledValue); break;
       }
       case VALUE_TYPE_VARCHAR: {
-        const int32_t length = getObjectLength_withoutNull();
-        const char* bytes = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+        const int32_t length = GetObjectLengthWithoutNull();
+        const char* bytes = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
         const std::string value(bytes, length);
-        retval.getTimestamp() = parseTimestampString(value);
+        retval.GetTimestamp() = parseTimestampString(value);
         break;
       }
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_TIMESTAMP);
+        ThrowCastSQLException(type, VALUE_TYPE_TIMESTAMP);
     }
     return retval;
   }
@@ -1231,39 +1231,39 @@ class Value {
   void narrowToInteger(const T value, ValueType sourceType)
   {
     if (value > (T)INT32_MAX || value < (T)PELOTON_INT32_MIN) {
-      throwCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_INTEGER);
+      ThrowCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_INTEGER);
     }
-    getInteger() = static_cast<int32_t>(value);
+    GetInteger() = static_cast<int32_t>(value);
   }
 
-  Value castAsInteger() const {
+  Value CastAsInteger() const {
     Value retval(VALUE_TYPE_INTEGER);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getInteger() = static_cast<int32_t>(getTinyInt()); break;
+        retval.GetInteger() = static_cast<int32_t>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        retval.getInteger() = static_cast<int32_t>(getSmallInt()); break;
+        retval.GetInteger() = static_cast<int32_t>(GetSmallInt()); break;
       case VALUE_TYPE_INTEGER:
         return *this;
       case VALUE_TYPE_BIGINT:
-        retval.narrowToInteger(getBigInt(), type); break;
+        retval.narrowToInteger(GetBigInt(), type); break;
       case VALUE_TYPE_TIMESTAMP:
-        retval.narrowToInteger(getTimestamp(), type); break;
+        retval.narrowToInteger(GetTimestamp(), type); break;
       case VALUE_TYPE_DOUBLE:
-        retval.narrowToInteger(getDouble(), type); break;
+        retval.narrowToInteger(GetDouble(), type); break;
       case VALUE_TYPE_DECIMAL: {
-        TTInt scaledValue = getDecimal();
-        // get the whole part of the decimal
+        TTInt scaledValue = GetDecimal();
+        // Get the whole part of the decimal
         int64_t whole = narrowDecimalToBigInt(scaledValue);
         // try to convert the whole part, which is a int64_t
         retval.narrowToInteger(whole, VALUE_TYPE_BIGINT); break;
       }
       case VALUE_TYPE_VARCHAR:
-        retval.narrowToInteger(getNumberFromString(), type); break;
+        retval.narrowToInteger(GetNumberFromString(), type); break;
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_INTEGER);
+        ThrowCastSQLException(type, VALUE_TYPE_INTEGER);
     }
     return retval;
   }
@@ -1272,39 +1272,39 @@ class Value {
   void narrowToSmallInt(const T value, ValueType sourceType)
   {
     if (value > (T)INT16_MAX || value < (T)PELOTON_INT16_MIN) {
-      throwCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_SMALLINT);
+      ThrowCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_SMALLINT);
     }
-    getSmallInt() = static_cast<int16_t>(value);
+    GetSmallInt() = static_cast<int16_t>(value);
   }
 
-  Value castAsSmallInt() const {
-    assert(isNull() == false);
+  Value CastAsSmallInt() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_SMALLINT);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getSmallInt() = static_cast<int16_t>(getTinyInt()); break;
+        retval.GetSmallInt() = static_cast<int16_t>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        retval.getSmallInt() = getSmallInt(); break;
+        retval.GetSmallInt() = GetSmallInt(); break;
       case VALUE_TYPE_INTEGER:
-        retval.narrowToSmallInt(getInteger(), type); break;
+        retval.narrowToSmallInt(GetInteger(), type); break;
       case VALUE_TYPE_BIGINT:
-        retval.narrowToSmallInt(getBigInt(), type); break;
+        retval.narrowToSmallInt(GetBigInt(), type); break;
       case VALUE_TYPE_TIMESTAMP:
-        retval.narrowToSmallInt(getTimestamp(), type); break;
+        retval.narrowToSmallInt(GetTimestamp(), type); break;
       case VALUE_TYPE_DOUBLE:
-        retval.narrowToSmallInt(getDouble(), type); break;
+        retval.narrowToSmallInt(GetDouble(), type); break;
       case VALUE_TYPE_DECIMAL: {
-        TTInt scaledValue = getDecimal();
+        TTInt scaledValue = GetDecimal();
         int64_t whole = narrowDecimalToBigInt(scaledValue);
         retval.narrowToSmallInt(whole, VALUE_TYPE_BIGINT); break;
       }
       case VALUE_TYPE_VARCHAR:
-        retval.narrowToSmallInt(getNumberFromString(), type); break;
+        retval.narrowToSmallInt(GetNumberFromString(), type); break;
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_SMALLINT);
+        ThrowCastSQLException(type, VALUE_TYPE_SMALLINT);
     }
     return retval;
   }
@@ -1313,99 +1313,99 @@ class Value {
   void narrowToTinyInt(const T value, ValueType sourceType)
   {
     if (value > (T)INT8_MAX || value < (T)PELOTON_INT8_MIN) {
-      throwCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_TINYINT);
+      ThrowCastSQLValueOutOfRangeException(value, sourceType, VALUE_TYPE_TINYINT);
     }
-    getTinyInt() = static_cast<int8_t>(value);
+    GetTinyInt() = static_cast<int8_t>(value);
   }
 
-  Value castAsTinyInt() const {
-    assert(isNull() == false);
+  Value CastAsTinyInt() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_TINYINT);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getTinyInt() = getTinyInt(); break;
+        retval.GetTinyInt() = GetTinyInt(); break;
       case VALUE_TYPE_SMALLINT:
-        retval.narrowToTinyInt(getSmallInt(), type); break;
+        retval.narrowToTinyInt(GetSmallInt(), type); break;
       case VALUE_TYPE_INTEGER:
-        retval.narrowToTinyInt(getInteger(), type); break;
+        retval.narrowToTinyInt(GetInteger(), type); break;
       case VALUE_TYPE_BIGINT:
-        retval.narrowToTinyInt(getBigInt(), type); break;
+        retval.narrowToTinyInt(GetBigInt(), type); break;
       case VALUE_TYPE_TIMESTAMP:
-        retval.narrowToTinyInt(getTimestamp(), type); break;
+        retval.narrowToTinyInt(GetTimestamp(), type); break;
       case VALUE_TYPE_DOUBLE:
-        retval.narrowToTinyInt(getDouble(), type); break;
+        retval.narrowToTinyInt(GetDouble(), type); break;
       case VALUE_TYPE_DECIMAL: {
-        TTInt scaledValue = getDecimal();
+        TTInt scaledValue = GetDecimal();
         int64_t whole = narrowDecimalToBigInt(scaledValue);
         retval.narrowToTinyInt(whole, type); break;
       }
       case VALUE_TYPE_VARCHAR:
-        retval.narrowToTinyInt(getNumberFromString(), type); break;
+        retval.narrowToTinyInt(GetNumberFromString(), type); break;
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_TINYINT);
+        ThrowCastSQLException(type, VALUE_TYPE_TINYINT);
     }
     return retval;
   }
 
-  Value castAsDouble() const {
-    assert(isNull() == false);
+  Value CastAsDouble() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_DOUBLE);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
-        retval.getDouble() = static_cast<double>(getTinyInt()); break;
+        retval.GetDouble() = static_cast<double>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        retval.getDouble() = static_cast<double>(getSmallInt()); break;
+        retval.GetDouble() = static_cast<double>(GetSmallInt()); break;
       case VALUE_TYPE_INTEGER:
-        retval.getDouble() = static_cast<double>(getInteger()); break;
+        retval.GetDouble() = static_cast<double>(GetInteger()); break;
       case VALUE_TYPE_BIGINT:
-        retval.getDouble() = static_cast<double>(getBigInt()); break;
+        retval.GetDouble() = static_cast<double>(GetBigInt()); break;
       case VALUE_TYPE_TIMESTAMP:
-        retval.getDouble() = static_cast<double>(getTimestamp()); break;
+        retval.GetDouble() = static_cast<double>(GetTimestamp()); break;
       case VALUE_TYPE_DOUBLE:
-        retval.getDouble() = getDouble(); break;
+        retval.GetDouble() = GetDouble(); break;
       case VALUE_TYPE_DECIMAL:
-        retval.getDouble() = castAsDoubleAndGetValue(); break;
+        retval.GetDouble() = CastAsDoubleAndGetValue(); break;
       case VALUE_TYPE_VARCHAR:
-        retval.getDouble() = getNumberFromString(); break;
+        retval.GetDouble() = GetNumberFromString(); break;
       case VALUE_TYPE_VARBINARY:
       default:
-        throwCastSQLException(type, VALUE_TYPE_DOUBLE);
+        ThrowCastSQLException(type, VALUE_TYPE_DOUBLE);
     }
     return retval;
   }
 
   void streamTimestamp(std::stringstream& value) const;
 
-  Value castAsString() const {
-    assert(isNull() == false);
+  Value CastAsString() const {
+    assert(IsNull() == false);
 
     std::stringstream value;
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_TINYINT:
         // This cast keeps the tiny int from being confused for a char.
-        value << static_cast<int>(getTinyInt()); break;
+        value << static_cast<int>(GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        value << getSmallInt(); break;
+        value << GetSmallInt(); break;
       case VALUE_TYPE_INTEGER:
-        value << getInteger(); break;
+        value << GetInteger(); break;
       case VALUE_TYPE_BIGINT:
-        value << getBigInt(); break;
+        value << GetBigInt(); break;
         //case VALUE_TYPE_TIMESTAMP:
         //TODO: The SQL standard wants an actual date literal rather than a numeric value, here. See ENG-4284.
-        //value << static_cast<double>(getTimestamp()); break;
+        //value << static_cast<double>(GetTimestamp()); break;
       case VALUE_TYPE_DOUBLE:
         // Use the specific standard SQL formatting for float values,
         // which the C/C++ format options don't quite support.
-        streamSQLFloatFormat(value, getDouble());
+        StreamSQLFloatFormat(value, GetDouble());
         break;
       case VALUE_TYPE_DECIMAL:
-        value << createStringFromDecimal(); break;
+        value << CreateStringFromDecimal(); break;
       case VALUE_TYPE_VARCHAR:
       case VALUE_TYPE_VARBINARY: {
         // note: we allow binary conversion to strings to support
@@ -1420,39 +1420,39 @@ class Value {
         break;
       }
       default:
-        throwCastSQLException(type, VALUE_TYPE_VARCHAR);
+        ThrowCastSQLException(type, VALUE_TYPE_VARCHAR);
     }
-    return getTempStringValue(value.str().c_str(), value.str().length());
+    return GetTempStringValue(value.str().c_str(), value.str().length());
   }
 
-  Value castAsBinary() const {
-    assert(isNull() == false);
+  Value CastAsBinary() const {
+    assert(IsNull() == false);
 
     Value retval(VALUE_TYPE_VARBINARY);
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_VARBINARY:
         memcpy(retval.m_data, m_data, sizeof(m_data));
         break;
       default:
-        throwCastSQLException(type, VALUE_TYPE_VARBINARY);
+        ThrowCastSQLException(type, VALUE_TYPE_VARBINARY);
     }
     return retval;
   }
 
-  void createDecimalFromInt(int64_t rhsint)
+  void CreateDecimalFromInt(int64_t rhsint)
   {
     TTInt scaled(rhsint);
     scaled *= kMaxScaleFactor;
-    getDecimal() = scaled;
+    GetDecimal() = scaled;
   }
 
-  Value castAsDecimal() const {
-    assert(isNull() == false);
+  Value CastAsDecimal() const {
+    assert(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
-    const ValueType type = getValueType();
-    if (isNull()) {
-      retval.setNull();
+    const ValueType type = GetValueType();
+    if (IsNull()) {
+      retval.SetNull();
       return retval;
     }
     switch (type) {
@@ -1461,8 +1461,8 @@ class Value {
       case VALUE_TYPE_INTEGER:
       case VALUE_TYPE_BIGINT:
       {
-        int64_t rhsint = castAsBigIntAndGetValue();
-        retval.createDecimalFromInt(rhsint);
+        int64_t rhsint = CastAsBigIntAndGetValue();
+        retval.CreateDecimalFromInt(rhsint);
         break;
       }
       case VALUE_TYPE_DECIMAL:
@@ -1470,7 +1470,7 @@ class Value {
         break;
       case VALUE_TYPE_DOUBLE:
       {
-        const double& value = getDouble();
+        const double& value = GetDouble();
         if (value >= s_gtMaxDecimalAsDouble || value <= s_ltMinDecimalAsDouble) {
           char message[4096];
           snprintf(message, 4096, "Attempted to cast value %f causing overflow/underflow", value);
@@ -1480,25 +1480,25 @@ class Value {
         char decimalAsString[41]; // Large enough to account for digits, sign, decimal, and terminating null.
         snprintf(decimalAsString, sizeof(decimalAsString), "%.12f", value);
         // Shift the entire integer part 1 digit to the right, overwriting the decimal point.
-        // This effectively creates a potentially very large integer value
+        // This effectively Creates a potentially very large integer value
         //  equal to the original double scaled up by 10^12.
         for (char* intDigit = strchr(decimalAsString, '.'); intDigit > decimalAsString; --intDigit) {
           *intDigit = *(intDigit-1);
         }
         TTInt result(decimalAsString+1);
-        retval.getDecimal() = result;
+        retval.GetDecimal() = result;
         break;
       }
       case VALUE_TYPE_VARCHAR:
       {
-        const int32_t length = getObjectLength_withoutNull();
-        const char* bytes = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+        const int32_t length = GetObjectLengthWithoutNull();
+        const char* bytes = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
         const std::string value(bytes, length);
-        retval.createDecimalFromString(value);
+        retval.CreateDecimalFromString(value);
         break;
       }
       default:
-        throwCastSQLException(type, VALUE_TYPE_DECIMAL);
+        ThrowCastSQLException(type, VALUE_TYPE_DECIMAL);
     }
     return retval;
   }
@@ -1507,9 +1507,9 @@ class Value {
    * Copy the arbitrary size object that this value points to as an
    * inline object in the provided storage area
    */
-  void inlineCopyObject(void *storage, int32_t maxLength, bool isInBytes) const {
-    if (isNull()) {
-      // Always reset all the bits regardless of the actual length of the value
+  void InlineCopyyObject(void *storage, int32_t maxLength, bool isInBytes) const {
+    if (IsNull()) {
+      // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
       ::memset(storage, 0, maxLength + 1);
 
@@ -1520,24 +1520,24 @@ class Value {
       *reinterpret_cast<char*>(storage) = OBJECT_NULL_BIT;
     }
     else {
-      const int32_t objLength = getObjectLength_withoutNull();
-      const char* ptr = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+      const int32_t objLength = GetObjectLengthWithoutNull();
+      const char* ptr = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
       checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength, maxLength, isInBytes);
 
-      // Always reset all the bits regardless of the actual length of the value
+      // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
       ::memset(storage, 0, maxLength + 1);
 
       if (m_sourceInlined)
       {
-        ::memcpy( storage, *reinterpret_cast<char *const *>(m_data), getObjectLengthLength() + objLength);
+        ::memcpy( storage, *reinterpret_cast<char *const *>(m_data), GetObjectLengthLength() + objLength);
       }
       else
       {
         const Varlen* sref =
             *reinterpret_cast<Varlen* const*>(m_data);
         ::memcpy(storage, sref->Get(),
-                 getObjectLengthLength() + objLength);
+                 GetObjectLengthLength() + objLength);
       }
     }
 
@@ -1592,11 +1592,11 @@ class Value {
           throw ObjectSizeException(msg);
         }
       } else if (!validVarcharSize(ptr, objLength, maxLength)) {
-        const int32_t charLength = getCharLength(ptr, objLength);
+        const int32_t charLength = GetCharLength(ptr, objLength);
         char msg[1024];
         std::string inputValue;
         if (charLength > FULL_STRING_IN_MESSAGE_THRESHOLD) {
-          const char * end = getIthCharPosition(ptr, objLength, FULL_STRING_IN_MESSAGE_THRESHOLD+1);
+          const char * end = GetIthCharPosition(ptr, objLength, FULL_STRING_IN_MESSAGE_THRESHOLD+1);
           int32_t numBytes = (int32_t)(end - ptr);
           inputValue = std::string(ptr, numBytes) + std::string("...");
         } else {
@@ -1614,7 +1614,7 @@ class Value {
   }
 
   template<typename T>
-  int compareValue (const T lhsValue, const T rhsValue) const {
+  int CompareValue (const T lhsValue, const T rhsValue) const {
     if (lhsValue == rhsValue) {
       return VALUE_COMPARE_EQUAL;
     } else if (lhsValue > rhsValue) {
@@ -1624,7 +1624,7 @@ class Value {
     }
   }
 
-  int compareDoubleValue (const double lhsValue, const double rhsValue) const {
+  int CompareDoubleValue (const double lhsValue, const double rhsValue) const {
     // Treat NaN values as equals and also make them smaller than neagtive infinity.
     // This breaks IEEE754 for expressions slightly.
     if (std::isnan(lhsValue)) {
@@ -1644,124 +1644,124 @@ class Value {
     }
   }
 
-  int compareTinyInt (const Value rhs) const {
+  int CompareTinyInt (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_TINYINT);
 
-    // get the right hand side as a bigint
-    if (rhs.getValueType() == VALUE_TYPE_DOUBLE) {
-      return compareDoubleValue(static_cast<double>(getTinyInt()), rhs.getDouble());
-    } else if (rhs.getValueType() == VALUE_TYPE_DECIMAL) {
-      const TTInt rhsValue = rhs.getDecimal();
-      TTInt lhsValue(static_cast<int64_t>(getTinyInt()));
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetTinyInt()), rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(static_cast<int64_t>(GetTinyInt()));
       lhsValue *= kMaxScaleFactor;
-      return compareValue<TTInt>(lhsValue, rhsValue);
+      return CompareValue<TTInt>(lhsValue, rhsValue);
     } else {
       int64_t lhsValue, rhsValue;
-      lhsValue = static_cast<int64_t>(getTinyInt());
-      rhsValue = rhs.castAsBigIntAndGetValue();
-      return compareValue<int64_t>(lhsValue, rhsValue);
+      lhsValue = static_cast<int64_t>(GetTinyInt());
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
     }
   }
 
-  int compareSmallInt (const Value rhs) const {
+  int CompareSmallInt (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_SMALLINT);
 
-    // get the right hand side as a bigint
-    if (rhs.getValueType() == VALUE_TYPE_DOUBLE) {
-      return compareDoubleValue(static_cast<double>(getSmallInt()), rhs.getDouble());
-    } else if (rhs.getValueType() == VALUE_TYPE_DECIMAL) {
-      const TTInt rhsValue = rhs.getDecimal();
-      TTInt lhsValue(static_cast<int64_t>(getSmallInt()));
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetSmallInt()), rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(static_cast<int64_t>(GetSmallInt()));
       lhsValue *= kMaxScaleFactor;
-      return compareValue<TTInt>(lhsValue, rhsValue);
+      return CompareValue<TTInt>(lhsValue, rhsValue);
     } else {
       int64_t lhsValue, rhsValue;
-      lhsValue = static_cast<int64_t>(getSmallInt());
-      rhsValue = rhs.castAsBigIntAndGetValue();
-      return compareValue<int64_t>(lhsValue, rhsValue);
+      lhsValue = static_cast<int64_t>(GetSmallInt());
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
     }
   }
 
-  int compareInteger (const Value rhs) const {
+  int CompareInteger (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_INTEGER);
 
-    // get the right hand side as a bigint
-    if (rhs.getValueType() == VALUE_TYPE_DOUBLE) {
-      return compareDoubleValue(static_cast<double>(getInteger()), rhs.getDouble());
-    } else if (rhs.getValueType() == VALUE_TYPE_DECIMAL) {
-      const TTInt rhsValue = rhs.getDecimal();
-      TTInt lhsValue(static_cast<int64_t>(getInteger()));
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetInteger()), rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(static_cast<int64_t>(GetInteger()));
       lhsValue *= kMaxScaleFactor;
-      return compareValue<TTInt>(lhsValue, rhsValue);
+      return CompareValue<TTInt>(lhsValue, rhsValue);
     } else {
       int64_t lhsValue, rhsValue;
-      lhsValue = static_cast<int64_t>(getInteger());
-      rhsValue = rhs.castAsBigIntAndGetValue();
-      return compareValue<int64_t>(lhsValue, rhsValue);
+      lhsValue = static_cast<int64_t>(GetInteger());
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
     }
   }
 
-  int compareBigInt (const Value rhs) const {
+  int CompareBigInt (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_BIGINT);
 
-    // get the right hand side as a bigint
-    if (rhs.getValueType() == VALUE_TYPE_DOUBLE) {
-      return compareDoubleValue(static_cast<double>(getBigInt()), rhs.getDouble());
-    } else if (rhs.getValueType() == VALUE_TYPE_DECIMAL) {
-      const TTInt rhsValue = rhs.getDecimal();
-      TTInt lhsValue(getBigInt());
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetBigInt()), rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(GetBigInt());
       lhsValue *= kMaxScaleFactor;
-      return compareValue<TTInt>(lhsValue, rhsValue);
+      return CompareValue<TTInt>(lhsValue, rhsValue);
     } else {
       int64_t lhsValue, rhsValue;
-      lhsValue = getBigInt();
-      rhsValue = rhs.castAsBigIntAndGetValue();
-      return compareValue<int64_t>(lhsValue, rhsValue);
+      lhsValue = GetBigInt();
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
     }
   }
 
 
-  int compareTimestamp (const Value rhs) const {
+  int CompareTimestamp (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_TIMESTAMP);
 
-    // get the right hand side as a bigint
-    if (rhs.getValueType() == VALUE_TYPE_DOUBLE) {
-      return compareDoubleValue(static_cast<double>(getTimestamp()), rhs.getDouble());
-    } else if (rhs.getValueType() == VALUE_TYPE_DECIMAL) {
-      const TTInt rhsValue = rhs.getDecimal();
-      TTInt lhsValue(getTimestamp());
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetTimestamp()), rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(GetTimestamp());
       lhsValue *= kMaxScaleFactor;
-      return compareValue<TTInt>(lhsValue, rhsValue);
+      return CompareValue<TTInt>(lhsValue, rhsValue);
     } else {
       int64_t lhsValue, rhsValue;
-      lhsValue = getTimestamp();
-      rhsValue = rhs.castAsBigIntAndGetValue();
-      return compareValue<int64_t>(lhsValue, rhsValue);
+      lhsValue = GetTimestamp();
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
     }
   }
 
-  int compareDoubleValue (const Value rhs) const {
+  int CompareDoubleValue (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_DOUBLE);
 
-    const double lhsValue = getDouble();
+    const double lhsValue = GetDouble();
     double rhsValue;
 
-    switch (rhs.getValueType()) {
+    switch (rhs.GetValueType()) {
       case VALUE_TYPE_DOUBLE:
-        rhsValue = rhs.getDouble(); break;
+        rhsValue = rhs.GetDouble(); break;
       case VALUE_TYPE_TINYINT:
-        rhsValue = static_cast<double>(rhs.getTinyInt()); break;
+        rhsValue = static_cast<double>(rhs.GetTinyInt()); break;
       case VALUE_TYPE_SMALLINT:
-        rhsValue = static_cast<double>(rhs.getSmallInt()); break;
+        rhsValue = static_cast<double>(rhs.GetSmallInt()); break;
       case VALUE_TYPE_INTEGER:
-        rhsValue = static_cast<double>(rhs.getInteger()); break;
+        rhsValue = static_cast<double>(rhs.GetInteger()); break;
       case VALUE_TYPE_BIGINT:
-        rhsValue = static_cast<double>(rhs.getBigInt()); break;
+        rhsValue = static_cast<double>(rhs.GetBigInt()); break;
       case VALUE_TYPE_TIMESTAMP:
-        rhsValue = static_cast<double>(rhs.getTimestamp()); break;
+        rhsValue = static_cast<double>(rhs.GetTimestamp()); break;
       case VALUE_TYPE_DECIMAL:
       {
-        TTInt scaledValue = rhs.getDecimal();
+        TTInt scaledValue = rhs.GetDecimal();
         TTInt whole(scaledValue);
         TTInt fractional(scaledValue);
         whole /= kMaxScaleFactor;
@@ -1774,34 +1774,34 @@ class Value {
         char message[128];
         snprintf(message, 128,
                  "Type %s cannot be cast for comparison to type %s",
-                 ValueTypeToString(rhs.getValueType()).c_str(),
-                 ValueTypeToString(getValueType()).c_str());
-        throw TypeMismatchException(message, rhs.getValueType(), getValueType());
+                 ValueTypeToString(rhs.GetValueType()).c_str(),
+                 ValueTypeToString(GetValueType()).c_str());
+        throw TypeMismatchException(message, rhs.GetValueType(), GetValueType());
         // Not reached
     }
 
-    return compareDoubleValue(lhsValue, rhsValue);
+    return CompareDoubleValue(lhsValue, rhsValue);
   }
 
-  int compareStringValue (const Value rhs) const {
+  int CompareStringValue (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_VARCHAR);
 
-    ValueType rhsType = rhs.getValueType();
+    ValueType rhsType = rhs.GetValueType();
     if ((rhsType != VALUE_TYPE_VARCHAR) && (rhsType != VALUE_TYPE_VARBINARY)) {
       char message[128];
       snprintf(message, 128,
                "Type %s cannot be cast for comparison to type %s",
                ValueTypeToString(rhsType).c_str(),
                ValueTypeToString(m_valueType).c_str());
-      throw TypeMismatchException(message, rhs.getValueType(), getValueType());
+      throw TypeMismatchException(message, rhs.GetValueType(), GetValueType());
     }
 
     assert(m_valueType == VALUE_TYPE_VARCHAR);
 
-    const int32_t leftLength = getObjectLength_withoutNull();
-    const int32_t rightLength = rhs.getObjectLength_withoutNull();
-    const char* left = reinterpret_cast<const char*>(getObjectValue_withoutNull());
-    const char* right = reinterpret_cast<const char*>(rhs.getObjectValue_withoutNull());
+    const int32_t leftLength = GetObjectLengthWithoutNull();
+    const int32_t rightLength = rhs.GetObjectLengthWithoutNull();
+    const char* left = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
+    const char* right = reinterpret_cast<const char*>(rhs.GetObjectValueWithoutNull());
 
     const int result = ::strncmp(left, right, std::min(leftLength, rightLength));
     if (result == 0 && leftLength != rightLength) {
@@ -1821,22 +1821,22 @@ class Value {
     return VALUE_COMPARE_EQUAL;
   }
 
-  int compareBinaryValue (const Value rhs) const {
+  int CompareBinaryValue (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_VARBINARY);
 
-    if (rhs.getValueType() != VALUE_TYPE_VARBINARY) {
+    if (rhs.GetValueType() != VALUE_TYPE_VARBINARY) {
       char message[128];
       snprintf(message, 128,
                "Type %s cannot be cast for comparison to type %s",
-               ValueTypeToString(rhs.getValueType()).c_str(),
+               ValueTypeToString(rhs.GetValueType()).c_str(),
                ValueTypeToString(m_valueType).c_str());
-      throw TypeMismatchException(message, rhs.getValueType(), m_valueType);
+      throw TypeMismatchException(message, rhs.GetValueType(), m_valueType);
     }
-    const int32_t leftLength = getObjectLength_withoutNull();
-    const int32_t rightLength = rhs.getObjectLength_withoutNull();
+    const int32_t leftLength = GetObjectLengthWithoutNull();
+    const int32_t rightLength = rhs.GetObjectLengthWithoutNull();
 
-    const char* left = reinterpret_cast<const char*>(getObjectValue_withoutNull());
-    const char* right = reinterpret_cast<const char*>(rhs.getObjectValue_withoutNull());
+    const char* left = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
+    const char* right = reinterpret_cast<const char*>(rhs.GetObjectValueWithoutNull());
 
     const int result = ::memcmp(left, right, std::min(leftLength, rightLength));
     if (result == 0 && leftLength != rightLength) {
@@ -1856,17 +1856,17 @@ class Value {
     return VALUE_COMPARE_EQUAL;
   }
 
-  int compareDecimalValue (const Value rhs) const {
+  int CompareDecimalValue (const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_DECIMAL);
-    switch (rhs.getValueType()) {
+    switch (rhs.GetValueType()) {
       case VALUE_TYPE_DECIMAL:
       {
-        return compareValue<TTInt>(getDecimal(), rhs.getDecimal());
+        return CompareValue<TTInt>(GetDecimal(), rhs.GetDecimal());
       }
       case VALUE_TYPE_DOUBLE:
       {
-        const double rhsValue = rhs.getDouble();
-        TTInt scaledValue = getDecimal();
+        const double rhsValue = rhs.GetDouble();
+        TTInt scaledValue = GetDecimal();
         TTInt whole(scaledValue);
         TTInt fractional(scaledValue);
         whole /= kMaxScaleFactor;
@@ -1874,54 +1874,54 @@ class Value {
         const double lhsValue = static_cast<double>(whole.ToInt()) +
             (static_cast<double>(fractional.ToInt())/static_cast<double>(kMaxScaleFactor));
 
-        return compareValue<double>(lhsValue, rhsValue);
+        return CompareValue<double>(lhsValue, rhsValue);
       }
-      // create the equivalent decimal value
+      // Create the equivalent decimal value
       case VALUE_TYPE_TINYINT:
       {
-        TTInt rhsValue(static_cast<int64_t>(rhs.getTinyInt()));
+        TTInt rhsValue(static_cast<int64_t>(rhs.GetTinyInt()));
         rhsValue *= kMaxScaleFactor;
-        return compareValue<TTInt>(getDecimal(), rhsValue);
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
       case VALUE_TYPE_SMALLINT:
       {
-        TTInt rhsValue(static_cast<int64_t>(rhs.getSmallInt()));
+        TTInt rhsValue(static_cast<int64_t>(rhs.GetSmallInt()));
         rhsValue *= kMaxScaleFactor;
-        return compareValue<TTInt>(getDecimal(), rhsValue);
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
       case VALUE_TYPE_INTEGER:
       {
-        TTInt rhsValue(static_cast<int64_t>(rhs.getInteger()));
+        TTInt rhsValue(static_cast<int64_t>(rhs.GetInteger()));
         rhsValue *= kMaxScaleFactor;
-        return compareValue<TTInt>(getDecimal(), rhsValue);
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
       case VALUE_TYPE_BIGINT:
       {
-        TTInt rhsValue(rhs.getBigInt());
+        TTInt rhsValue(rhs.GetBigInt());
         rhsValue *= kMaxScaleFactor;
-        return compareValue<TTInt>(getDecimal(), rhsValue);
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
       case VALUE_TYPE_TIMESTAMP:
       {
-        TTInt rhsValue(rhs.getTimestamp());
+        TTInt rhsValue(rhs.GetTimestamp());
         rhsValue *= kMaxScaleFactor;
-        return compareValue<TTInt>(getDecimal(), rhsValue);
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
       default:
       {
         char message[128];
         snprintf(message, 128,
                  "Type %s cannot be cast for comparison to type %s",
-                 ValueTypeToString(rhs.getValueType()).c_str(),
-                 ValueTypeToString(getValueType()).c_str());
-        throw TypeMismatchException(message, rhs.getValueType(), getValueType());
+                 ValueTypeToString(rhs.GetValueType()).c_str(),
+                 ValueTypeToString(GetValueType()).c_str());
+        throw TypeMismatchException(message, rhs.GetValueType(), GetValueType());
         // Not reached
         return 0;
       }
     }
   }
 
-  Value opAddBigInts(const int64_t lhs, const int64_t rhs) const {
+  Value OpAddBigInts(const int64_t lhs, const int64_t rhs) const {
     //Scary overflow check from https://www.securecoding.cert.org/confluence/display/cplusplus/INT32-CPP.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
     if ( ((lhs^rhs)
         | (((lhs^(~(lhs^rhs)
@@ -1930,10 +1930,10 @@ class Value {
       snprintf(message, 4096, "Adding %jd and %jd will overflow BigInt storage", (intmax_t)lhs, (intmax_t)rhs);
       throw Exception(message);
     }
-    return getBigIntValue(lhs + rhs);
+    return GetBigIntValue(lhs + rhs);
   }
 
-  Value opSubtractBigInts(const int64_t lhs, const int64_t rhs) const {
+  Value OpSubtractBigInts(const int64_t lhs, const int64_t rhs) const {
     //Scary overflow check from https://www.securecoding.cert.org/confluence/display/cplusplus/INT32-CPP.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
     if ( ((lhs^rhs)
         & (((lhs ^ ((lhs^rhs)
@@ -1942,10 +1942,10 @@ class Value {
       snprintf(message, 4096, "Subtracting %jd from %jd will overflow BigInt storage", (intmax_t)lhs, (intmax_t)rhs);
       throw Exception(message);
     }
-    return getBigIntValue(lhs - rhs);
+    return GetBigIntValue(lhs - rhs);
   }
 
-  Value opMultiplyBigInts(const int64_t lhs, const int64_t rhs) const {
+  Value OpMultiplyBigInts(const int64_t lhs, const int64_t rhs) const {
     bool overflow = false;
     //Scary overflow check from https://www.securecoding.cert.org/confluence/display/cplusplus/INT32-CPP.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
     if (lhs > 0){  /* lhs is positive */
@@ -1985,10 +1985,10 @@ class Value {
       throw Exception(message);
     }
 
-    return getBigIntValue(result);
+    return GetBigIntValue(result);
   }
 
-  Value opDivideBigInts(const int64_t lhs, const int64_t rhs) const {
+  Value OpDivideBigInts(const int64_t lhs, const int64_t rhs) const {
     if (rhs == 0) {
       char message[4096];
       snprintf(message, 4096, "Attempted to divide %jd by 0", (intmax_t)lhs);
@@ -1999,92 +1999,92 @@ class Value {
      * Because the smallest int64 value is used to represent null (and this is checked for an handled above)
      * it isn't necessary to check for any kind of overflow since none is possible.
      */
-    return getBigIntValue(int64_t(lhs / rhs));
+    return GetBigIntValue(int64_t(lhs / rhs));
   }
 
-  Value opAddDoubles(const double lhs, const double rhs) const {
+  Value OpAddDoubles(const double lhs, const double rhs) const {
     const double result = lhs + rhs;
-    throwDataExceptionIfInfiniteOrNaN(result, "'+' operator");
-    return getDoubleValue(result);
+    ThrowDataExceptionIfInfiniteOrNaN(result, "'+' operator");
+    return GetDoubleValue(result);
   }
 
-  Value opSubtractDoubles(const double lhs, const double rhs) const {
+  Value OpSubtractDoubles(const double lhs, const double rhs) const {
     const double result = lhs - rhs;
-    throwDataExceptionIfInfiniteOrNaN(result, "'-' operator");
-    return getDoubleValue(result);
+    ThrowDataExceptionIfInfiniteOrNaN(result, "'-' operator");
+    return GetDoubleValue(result);
   }
 
-  Value opMultiplyDoubles(const double lhs, const double rhs) const {
+  Value OpMultiplyDoubles(const double lhs, const double rhs) const {
     const double result = lhs * rhs;
-    throwDataExceptionIfInfiniteOrNaN(result, "'*' operator");
-    return getDoubleValue(result);
+    ThrowDataExceptionIfInfiniteOrNaN(result, "'*' operator");
+    return GetDoubleValue(result);
   }
 
-  Value opDivideDoubles(const double lhs, const double rhs) const {
+  Value OpDivideDoubles(const double lhs, const double rhs) const {
     const double result = lhs / rhs;
-    throwDataExceptionIfInfiniteOrNaN(result, "'/' operator");
-    return getDoubleValue(result);
+    ThrowDataExceptionIfInfiniteOrNaN(result, "'/' operator");
+    return GetDoubleValue(result);
   }
 
-  Value opAddDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.isNull() == false);
-    assert(rhs.isNull() == false);
-    assert(lhs.getValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.getValueType() == VALUE_TYPE_DECIMAL);
+  Value OpAddDecimals(const Value &lhs, const Value &rhs) const {
+    assert(lhs.IsNull() == false);
+    assert(rhs.IsNull() == false);
+    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
-    TTInt retval(lhs.getDecimal());
-    if (retval.Add(rhs.getDecimal()) || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
+    TTInt retval(lhs.GetDecimal());
+    if (retval.Add(rhs.GetDecimal()) || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
       char message[4096];
       snprintf(message, 4096, "Attempted to add %s with %s causing overflow/underflow",
-               lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str());
+               lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str());
       throw Exception(message);
     }
 
-    return getDecimalValue(retval);
+    return GetDecimalValue(retval);
   }
 
-  Value opSubtractDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.isNull() == false);
-    assert(rhs.isNull() == false);
-    assert(lhs.getValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.getValueType() == VALUE_TYPE_DECIMAL);
+  Value OpSubtractDecimals(const Value &lhs, const Value &rhs) const {
+    assert(lhs.IsNull() == false);
+    assert(rhs.IsNull() == false);
+    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
-    TTInt retval(lhs.getDecimal());
-    if (retval.Sub(rhs.getDecimal()) || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
+    TTInt retval(lhs.GetDecimal());
+    if (retval.Sub(rhs.GetDecimal()) || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
       char message[4096];
       snprintf(message, 4096, "Attempted to subtract %s from %s causing overflow/underflow",
-               rhs.createStringFromDecimal().c_str(), lhs.createStringFromDecimal().c_str());
+               rhs.CreateStringFromDecimal().c_str(), lhs.CreateStringFromDecimal().c_str());
       throw Exception(message);
     }
 
-    return getDecimalValue(retval);
+    return GetDecimalValue(retval);
   }
 
   /*
    * Avoid scaling both sides if possible. E.g, don't turn dec * 2 into
    * (dec * 2*kMaxScale*E-12). Then the result of simple multiplication
-   * is a*b*E-24 and have to further multiply to get back to the assumed
+   * is a*b*E-24 and have to further multiply to Get back to the assumed
    * E-12, which can overflow unnecessarily at the middle step.
    */
-  Value opMultiplyDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.isNull() == false);
-    assert(rhs.isNull() == false);
-    assert(lhs.getValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.getValueType() == VALUE_TYPE_DECIMAL);
+  Value OpMultiplyDecimals(const Value &lhs, const Value &rhs) const {
+    assert(lhs.IsNull() == false);
+    assert(rhs.IsNull() == false);
+    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTLInt calc;
-    calc.FromInt(lhs.getDecimal());
-    calc *= rhs.getDecimal();
+    calc.FromInt(lhs.GetDecimal());
+    calc *= rhs.GetDecimal();
     calc /= kMaxScaleFactor;
     TTInt retval;
     if (retval.FromInt(calc)  || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
       char message[4096];
       snprintf(message, 4096, "Attempted to multiply %s by %s causing overflow/underflow. Unscaled result was %s",
-               lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+               lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
                calc.ToString(10).c_str());
       throw Exception(message);
     }
-    return getDecimalValue(retval);
+    return GetDecimalValue(retval);
   }
 
 
@@ -2100,170 +2100,170 @@ class Value {
    *   (7) construct the final decimal.
    */
 
-  Value opDivideDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.isNull() == false);
-    assert(rhs.isNull() == false);
-    assert(lhs.getValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.getValueType() == VALUE_TYPE_DECIMAL);
+  Value OpDivideDecimals(const Value &lhs, const Value &rhs) const {
+    assert(lhs.IsNull() == false);
+    assert(rhs.IsNull() == false);
+    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTLInt calc;
-    calc.FromInt(lhs.getDecimal());
+    calc.FromInt(lhs.GetDecimal());
     calc *= kMaxScaleFactor;
-    if (calc.Div(rhs.getDecimal())) {
+    if (calc.Div(rhs.GetDecimal())) {
       char message[4096];
       snprintf( message, 4096, "Attempted to divide %s by %s causing overflow/underflow (or divide by zero)",
-                lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str());
+                lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str());
       throw Exception(message);
     }
     TTInt retval;
     if (retval.FromInt(calc)  || retval > s_maxDecimalValue || retval < s_minDecimalValue) {
       char message[4096];
       snprintf( message, 4096, "Attempted to divide %s by %s causing overflow. Unscaled result was %s",
-                lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+                lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
                 calc.ToString(10).c_str());
       throw Exception(message);
     }
-    return getDecimalValue(retval);
+    return GetDecimalValue(retval);
   }
 
-  static Value getTinyIntValue(int8_t value) {
+  static Value GetTinyIntValue(int8_t value) {
     Value retval(VALUE_TYPE_TINYINT);
-    retval.getTinyInt() = value;
+    retval.GetTinyInt() = value;
     if (value == INT8_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getSmallIntValue(int16_t value) {
+  static Value GetSmallIntValue(int16_t value) {
     Value retval(VALUE_TYPE_SMALLINT);
-    retval.getSmallInt() = value;
+    retval.GetSmallInt() = value;
     if (value == INT16_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getIntegerValue(int32_t value) {
+  static Value GetIntegerValue(int32_t value) {
     Value retval(VALUE_TYPE_INTEGER);
-    retval.getInteger() = value;
+    retval.GetInteger() = value;
     if (value == INT32_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getBigIntValue(int64_t value) {
+  static Value GetBigIntValue(int64_t value) {
     Value retval(VALUE_TYPE_BIGINT);
-    retval.getBigInt() = value;
+    retval.GetBigInt() = value;
     if (value == INT64_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getTimestampValue(int64_t value) {
+  static Value GetTimestampValue(int64_t value) {
     Value retval(VALUE_TYPE_TIMESTAMP);
-    retval.getTimestamp() = value;
+    retval.GetTimestamp() = value;
     if (value == INT64_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getDoubleValue(double value) {
+  static Value GetDoubleValue(double value) {
     Value retval(VALUE_TYPE_DOUBLE);
-    retval.getDouble() = value;
+    retval.GetDouble() = value;
     if (value <= DOUBLE_NULL) {
       retval.tagAsNull();
     }
     return retval;
   }
 
-  static Value getBooleanValue(bool value) {
+  static Value GetBooleanValue(bool value) {
     Value retval(VALUE_TYPE_BOOLEAN);
-    retval.getBoolean() = value;
+    retval.GetBoolean() = value;
     return retval;
   }
 
-  static Value getDecimalValueFromString(const std::string &value) {
+  static Value GetDecimalValueFromString(const std::string &value) {
     Value retval(VALUE_TYPE_DECIMAL);
-    retval.createDecimalFromString(value);
+    retval.CreateDecimalFromString(value);
     return retval;
   }
 
-  static Value getAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
+  static Value GetAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
   {
     Value retval(VALUE_TYPE_ARRAY);
-    retval.allocateANewValueList(elementCount, elementType);
+    retval.AllocateANewValueList(elementCount, elementType);
     return retval;
   }
 
-  static VarlenPool* getTempStringPool();
+  static VarlenPool* GetTempStringPool();
 
-  static Value getTempStringValue(const char* value, size_t size) {
-    return getAllocatedValue(VALUE_TYPE_VARCHAR, value, size, getTempStringPool());
+  static Value GetTempStringValue(const char* value, size_t size) {
+    return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, GetTempStringPool());
   }
 
-  static Value getTempBinaryValue(const unsigned char* value, size_t size) {
-    return getAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, getTempStringPool());
+  static Value GetTempBinaryValue(const unsigned char* value, size_t size) {
+    return GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, GetTempStringPool());
   }
 
   /// Assumes hex-encoded input
-  static inline Value getTempBinaryValueFromHex(const std::string& value) {
+  static inline Value GetTempBinaryValueFromHex(const std::string& value) {
     size_t rawLength = value.length() / 2;
     unsigned char rawBuf[rawLength];
     HexDecodeToBinary(rawBuf, value.c_str());
-    return getTempBinaryValue(rawBuf, rawLength);
+    return GetTempBinaryValue(rawBuf, rawLength);
   }
 
-  static Value getAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
+  static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
     Value retval(type);
-    char* storage = retval.allocateValueStorage((int32_t)size, stringPool);
+    char* storage = retval.AllocateValueStorage((int32_t)size, stringPool);
     ::memcpy(storage, value, (int32_t)size);
     return retval;
   }
 
-  char* allocateValueStorage(int32_t length, VarlenPool* stringPool)
+  char* AllocateValueStorage(int32_t length, VarlenPool* stringPool)
   {
-    // This unsets the Value's null tag and returns the length of the length.
-    const int8_t lengthLength = setObjectLength(length);
+    // This unSets the Value's null tag and returns the length of the length.
+    const int8_t lengthLength = SetObjectLength(length);
     const int32_t minLength = length + lengthLength;
     Varlen* sref = Varlen::Create(minLength, stringPool);
     char* storage = sref->Get();
-    setObjectLengthToLocation(length, storage);
+    SetObjectLengthToLocation(length, storage);
     storage += lengthLength;
-    setObjectValue(sref);
+    SetObjectValue(sref);
     return storage;
   }
 
-  static Value getNullStringValue() {
+  static Value GetNullStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
     retval.tagAsNull();
     *reinterpret_cast<char**>(retval.m_data) = NULL;
     return retval;
   }
 
-  static Value getNullBinaryValue() {
+  static Value GetNullBinaryValue() {
     Value retval(VALUE_TYPE_VARBINARY);
     retval.tagAsNull();
     *reinterpret_cast<char**>(retval.m_data) = NULL;
     return retval;
   }
 
-  static Value getNullValue() {
+  static Value GetNullValue() {
     Value retval(VALUE_TYPE_NULL);
     retval.tagAsNull();
     return retval;
   }
 
-  static Value getDecimalValue(TTInt value) {
+  static Value GetDecimalValue(TTInt value) {
     Value retval(VALUE_TYPE_DECIMAL);
-    retval.getDecimal() = value;
+    retval.GetDecimal() = value;
     return retval;
   }
 
-  static Value getAddressValue(void *address) {
+  static Value GetAddressValue(void *address) {
     Value retval(VALUE_TYPE_ADDRESS);
     *reinterpret_cast<void**>(retval.m_data) = address;
     return retval;
@@ -2280,25 +2280,25 @@ class Value {
  */
 inline Value::Value() {
   ::memset( m_data, 0, 16);
-  setValueType(VALUE_TYPE_INVALID);
+  SetValueType(VALUE_TYPE_INVALID);
   m_sourceInlined = false;
 }
 
 /**
  * Retrieve a boolean Value that is true
  */
-inline Value Value::getTrue() {
+inline Value Value::GetTrue() {
   Value retval(VALUE_TYPE_BOOLEAN);
-  retval.getBoolean() = true;
+  retval.GetBoolean() = true;
   return retval;
 }
 
 /**
  * Retrieve a boolean Value that is false
  */
-inline Value Value::getFalse() {
+inline Value Value::GetFalse() {
   Value retval(VALUE_TYPE_BOOLEAN);
-  retval.getBoolean() = false;
+  retval.GetBoolean() = false;
   return retval;
 }
 
@@ -2306,39 +2306,39 @@ inline Value Value::getFalse() {
  * Returns C++ true if this Value is a boolean and is true
  * If it is NULL, return false.
  */
-inline bool Value::isTrue() const {
-  if (isBooleanNULL()) {
+inline bool Value::IsTrue() const {
+  if (IsBooleanNULL()) {
     return false;
   }
-  return getBoolean();
+  return GetBoolean();
 }
 
 /**
  * Returns C++ false if this Value is a boolean and is true
  * If it is NULL, return false.
  */
-inline bool Value::isFalse() const {
-  if (isBooleanNULL()) {
+inline bool Value::IsFalse() const {
+  if (IsBooleanNULL()) {
     return false;
   }
-  return !getBoolean();
+  return !GetBoolean();
 }
 
-inline bool Value::isBooleanNULL() const {
-  assert(getValueType() == VALUE_TYPE_BOOLEAN);
+inline bool Value::IsBooleanNULL() const {
+  assert(GetValueType() == VALUE_TYPE_BOOLEAN);
   return *reinterpret_cast<const int8_t*>(m_data) == INT8_NULL;
 }
 
-inline bool Value::getSourceInlined() const {
+inline bool Value::GetSourceInlined() const {
   return m_sourceInlined;
 }
 
 /**
- * Objects may have storage allocated for them. Calling free causes the Value to return the storage allocated for
+ * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
  * the object to the heap
  */
-inline void Value::free() const {
-  switch (getValueType())
+inline void Value::Free() const {
+  switch (GetValueType())
   {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
@@ -2357,7 +2357,7 @@ inline void Value::free() const {
   }
 }
 
-inline void Value::freeObjectsFromTupleStorage(std::vector<char*> const &oldObjects)
+inline void Value::FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects)
 {
 
   for (std::vector<char*>::const_iterator it = oldObjects.begin(); it != oldObjects.end(); ++it) {
@@ -2372,7 +2372,7 @@ inline void Value::freeObjectsFromTupleStorage(std::vector<char*> const &oldObje
  * Get the amount of storage necessary to store a value of the specified type
  * in a tuple
  */
-inline uint16_t Value::getTupleStorageSize(const ValueType type) {
+inline uint16_t Value::GetTupleStorageSize(const ValueType type) {
   switch (type) {
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
@@ -2394,7 +2394,7 @@ inline uint16_t Value::getTupleStorageSize(const ValueType type) {
       return sizeof(bool);
     default:
       char message[128];
-      snprintf(message, 128, "Value::getTupleStorageSize() unsupported type '%s'",
+      snprintf(message, 128, "Value::GetTupleStorageSize() unsupported type '%s'",
                ValueTypeToString(type).c_str());
       throw Exception(
           message);
@@ -2402,13 +2402,13 @@ inline uint16_t Value::getTupleStorageSize(const ValueType type) {
 }
 
 /**
- * This null compare function works for GROUP BY, ORDER BY, INDEX KEY, etc,
+ * This null Compare function works for GROUP BY, ORDER BY, INDEX KEY, etc,
  * except for comparison expression.
  * comparison expression has different logic for null.
  */
-inline int Value::compareNull(const Value rhs) const {
-  bool lnull = isNull();
-  bool rnull = rhs.isNull();
+inline int Value::CompareNull(const Value rhs) const {
+  bool lnull = IsNull();
+  bool rnull = rhs.IsNull();
 
   if (lnull) {
     if (rnull) {
@@ -2426,32 +2426,32 @@ inline int Value::compareNull(const Value rhs) const {
  * Assuming no nulls are in comparison.
  * Compare any two Values. Comparison is not guaranteed to
  * succeed if the values are incompatible.  Avoid use of
- * comparison in favor of op_*.
+ * comparison in favor of Op*.
  */
-inline int Value::compare_withoutNull(const Value rhs) const {
-  assert(isNull() == false && rhs.isNull() == false);
+inline int Value::CompareWithoutNull(const Value rhs) const {
+  assert(IsNull() == false && rhs.IsNull() == false);
 
   switch (m_valueType) {
     case VALUE_TYPE_VARCHAR:
-      return compareStringValue(rhs);
+      return CompareStringValue(rhs);
     case VALUE_TYPE_BIGINT:
-      return compareBigInt(rhs);
+      return CompareBigInt(rhs);
     case VALUE_TYPE_INTEGER:
-      return compareInteger(rhs);
+      return CompareInteger(rhs);
     case VALUE_TYPE_SMALLINT:
-      return compareSmallInt(rhs);
+      return CompareSmallInt(rhs);
     case VALUE_TYPE_TINYINT:
-      return compareTinyInt(rhs);
+      return CompareTinyInt(rhs);
     case VALUE_TYPE_TIMESTAMP:
-      return compareTimestamp(rhs);
+      return CompareTimestamp(rhs);
     case VALUE_TYPE_DOUBLE:
-      return compareDoubleValue(rhs);
+      return CompareDoubleValue(rhs);
     case VALUE_TYPE_VARBINARY:
-      return compareBinaryValue(rhs);
+      return CompareBinaryValue(rhs);
     case VALUE_TYPE_DECIMAL:
-      return compareDecimalValue(rhs);
+      return CompareDecimalValue(rhs);
     default: {
-      throw Exception("non comparable types :: " +  getValueTypeString() + rhs.getValueTypeString());
+      throw Exception("non comparable types :: " +  GetValueTypeString() + rhs.GetValueTypeString());
     }
     /* no break */
   }
@@ -2460,23 +2460,23 @@ inline int Value::compare_withoutNull(const Value rhs) const {
 /**
  * Compare any two Values. Comparison is not guaranteed to
  * succeed if the values are incompatible.  Avoid use of
- * comparison in favor of op_*.
+ * comparison in favor of Op*.
  */
-inline int Value::compare(const Value rhs) const {
-  int hasNullCompare = compareNull(rhs);
+inline int Value::Compare(const Value rhs) const {
+  int hasNullCompare = CompareNull(rhs);
   if (hasNullCompare != VALUE_COMPARE_INVALID) {
     return hasNullCompare;
   }
 
-  return compare_withoutNull(rhs);
+  return CompareWithoutNull(rhs);
 }
 
 /**
  * Set this Value to null.
  */
-inline void Value::setNull() {
-  tagAsNull(); // This gets overwritten for DECIMAL -- but that's OK.
-  switch (getValueType())
+inline void Value::SetNull() {
+  tagAsNull(); // This Gets overwritten for DECIMAL -- but that's OK.
+  switch (GetValueType())
   {
     case VALUE_TYPE_BOOLEAN:
       // HACK BOOL NULL
@@ -2486,32 +2486,32 @@ inline void Value::setNull() {
     case VALUE_TYPE_INVALID:
       return;
     case VALUE_TYPE_TINYINT:
-      getTinyInt() = INT8_NULL;
+      GetTinyInt() = INT8_NULL;
       break;
     case VALUE_TYPE_SMALLINT:
-      getSmallInt() = INT16_NULL;
+      GetSmallInt() = INT16_NULL;
       break;
     case VALUE_TYPE_INTEGER:
-      getInteger() = INT32_NULL;
+      GetInteger() = INT32_NULL;
       break;
     case VALUE_TYPE_TIMESTAMP:
-      getTimestamp() = INT64_NULL;
+      GetTimestamp() = INT64_NULL;
       break;
     case VALUE_TYPE_BIGINT:
-      getBigInt() = INT64_NULL;
+      GetBigInt() = INT64_NULL;
       break;
     case VALUE_TYPE_DOUBLE:
-      getDouble() = DOUBLE_MIN;
+      GetDouble() = DOUBLE_MIN;
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
       *reinterpret_cast<void**>(m_data) = NULL;
       break;
     case VALUE_TYPE_DECIMAL:
-      getDecimal().SetMin();
+      GetDecimal().SetMin();
       break;
     default: {
-      throw Exception("Value::setNull() called with unsupported ValueType " + std::to_string(getValueType()));
+      throw Exception("Value::SetNull() Called with unsupported ValueType " + std::to_string(GetValueType()));
     }
   }
 }
@@ -2521,23 +2521,23 @@ inline void Value::setNull() {
  * storage area provided. If this is an Object type then the third
  * argument indicates whether the object is stored in the tuple inline.
  */
-inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bool isInlined)
+inline Value Value::InitFromTupleStorage(const void *storage, ValueType type, bool isInlined)
 {
   Value retval(type);
   switch (type)
   {
     case VALUE_TYPE_INTEGER:
-      if ((retval.getInteger() = *reinterpret_cast<const int32_t*>(storage)) == INT32_NULL) {
+      if ((retval.GetInteger() = *reinterpret_cast<const int32_t*>(storage)) == INT32_NULL) {
         retval.tagAsNull();
       }
       break;
     case VALUE_TYPE_BIGINT:
-      if ((retval.getBigInt() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+      if ((retval.GetBigInt() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
         retval.tagAsNull();
       }
       break;
     case VALUE_TYPE_DOUBLE:
-      if ((retval.getDouble() = *reinterpret_cast<const double*>(storage)) <= DOUBLE_NULL) {
+      if ((retval.GetDouble() = *reinterpret_cast<const double*>(storage)) <= DOUBLE_NULL) {
         retval.tagAsNull();
       }
       break;
@@ -2550,7 +2550,7 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
         //to the storage area
         const char* inline_data = reinterpret_cast<const char*>(storage);
         *reinterpret_cast<const char**>(retval.m_data) = inline_data;
-        retval.setSourceInlined(true);
+        retval.SetSourceInlined(true);
         /**
          * If a string is inlined in its storage location there will be no pointer to
          * check for NULL. The length preceding value must be used instead.
@@ -2560,8 +2560,8 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
           break;
         }
         int length = inline_data[0];
-        //std::cout << "Value::initFromTupleStorage: length: " << length << std::endl;
-        retval.setObjectLength(length); // this unsets the null tag.
+        //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
+        retval.SetObjectLength(length); // this unSets the null tag.
         break;
       }
 
@@ -2570,7 +2570,7 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
       Varlen* sref = *reinterpret_cast<Varlen**>(const_cast<void*>(storage));
       *reinterpret_cast<Varlen**>(retval.m_data) = sref;
       // If the Varlen pointer is null, that's because this
-      // was a null value; otherwise get the right char* from the Varlen
+      // was a null value; otherwise Get the right char* from the Varlen
       if (sref == NULL) {
         retval.tagAsNull();
         break;
@@ -2583,7 +2583,7 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
        * to indicate that this is part of a long representation and that 3 bytes
        * follow. 6 bits are available to represent length for a maximum length
        * of 63 bytes representable with a single byte length. 30 bits are available
-       * when the continuation bit is set and 3 bytes follow.
+       * when the continuation bit is Set and 3 bytes follow.
        *
        * The value is converted to network byte order so that the code
        * will always know which byte contains the most signficant digits.
@@ -2608,22 +2608,22 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
         length = data[0] & mask;
       }
 
-      //std::cout << "Value::initFromTupleStorage: length: " << length << std::endl;
-      retval.setObjectLength(length); // this unsets the null tag.
+      //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
+      retval.SetObjectLength(length); // this unSets the null tag.
       break;
     }
     case VALUE_TYPE_TIMESTAMP:
-      if ((retval.getTimestamp() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+      if ((retval.GetTimestamp() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
         retval.tagAsNull();
       }
       break;
     case VALUE_TYPE_TINYINT:
-      if ((retval.getTinyInt() = *reinterpret_cast<const int8_t*>(storage)) == INT8_NULL) {
+      if ((retval.GetTinyInt() = *reinterpret_cast<const int8_t*>(storage)) == INT8_NULL) {
         retval.tagAsNull();
       }
       break;
     case VALUE_TYPE_SMALLINT:
-      if ((retval.getSmallInt() = *reinterpret_cast<const int16_t*>(storage)) == INT16_NULL) {
+      if ((retval.GetSmallInt() = *reinterpret_cast<const int16_t*>(storage)) == INT16_NULL) {
         retval.tagAsNull();
       }
       break;
@@ -2634,7 +2634,7 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
     }
     default:
       throw Exception(
-          "Value::initFromTupleStorage() invalid column type " +
+          "Value::InitFromTupleStorage() invalid column type " +
           ValueTypeToString(type));
       /* no break */
   }
@@ -2647,29 +2647,32 @@ inline Value Value::initFromTupleStorage(const void *storage, ValueType type, bo
  * inlined then the provided data pool or the heap will be used to
  * allocated storage for a copy of the object.
  */
-inline void Value::serializeToTupleStorageAllocateForObjects(void *storage, const bool isInlined,
-                                                             const int32_t maxLength, const bool isInBytes, VarlenPool *dataPool) const
+inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
+                                                             const bool isInlined,
+                                                             const int32_t maxLength,
+                                                             const bool isInBytes,
+                                                             VarlenPool *dataPool) const
 {
-  const ValueType type = getValueType();
+  const ValueType type = GetValueType();
 
   switch (type) {
     case VALUE_TYPE_TIMESTAMP:
-      *reinterpret_cast<int64_t*>(storage) = getTimestamp();
+      *reinterpret_cast<int64_t*>(storage) = GetTimestamp();
       break;
     case VALUE_TYPE_TINYINT:
-      *reinterpret_cast<int8_t*>(storage) = getTinyInt();
+      *reinterpret_cast<int8_t*>(storage) = GetTinyInt();
       break;
     case VALUE_TYPE_SMALLINT:
-      *reinterpret_cast<int16_t*>(storage) = getSmallInt();
+      *reinterpret_cast<int16_t*>(storage) = GetSmallInt();
       break;
     case VALUE_TYPE_INTEGER:
-      *reinterpret_cast<int32_t*>(storage) = getInteger();
+      *reinterpret_cast<int32_t*>(storage) = GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
-      *reinterpret_cast<int64_t*>(storage) = getBigInt();
+      *reinterpret_cast<int64_t*>(storage) = GetBigInt();
       break;
     case VALUE_TYPE_DOUBLE:
-      *reinterpret_cast<double*>(storage) = getDouble();
+      *reinterpret_cast<double*>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
       ::memcpy(storage, m_data, sizeof(TTInt));
@@ -2678,30 +2681,30 @@ inline void Value::serializeToTupleStorageAllocateForObjects(void *storage, cons
     case VALUE_TYPE_VARBINARY:
       //Potentially non-inlined type requires special handling
       if (isInlined) {
-        inlineCopyObject(storage, maxLength, isInBytes);
+        InlineCopyyObject(storage, maxLength, isInBytes);
       }
       else {
-        if (isNull()) {
+        if (IsNull()) {
           *reinterpret_cast<void**>(storage) = NULL;
         }
         else {
-          int32_t objLength = getObjectLength_withoutNull();
-          const char* ptr = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+          int32_t objLength = GetObjectLengthWithoutNull();
+          const char* ptr = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
           checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength, maxLength, isInBytes);
 
-          const int8_t lengthLength = getObjectLengthLength();
+          const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;
           Varlen* sref = Varlen::Create(minlength, dataPool);
           char *copy = sref->Get();
-          setObjectLengthToLocation(objLength, copy);
-          ::memcpy(copy + lengthLength, getObjectValue_withoutNull(), objLength);
+          SetObjectLengthToLocation(objLength, copy);
+          ::memcpy(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
           *reinterpret_cast<Varlen**>(storage) = sref;
         }
       }
       break;
     default: {
       throw Exception(
-          "Value::serializeToTupleStorageAllocateForObjects() unrecognized type " +
+          "Value::SerializeToTupleStorageAllocateForObjects() unrecognized type " +
           ValueTypeToString(type));
     }
   }
@@ -2715,28 +2718,28 @@ inline void Value::serializeToTupleStorageAllocateForObjects(void *storage, cons
  * needed (if this Value refers to inlined memory whereas the field
  * in the tuple is not inlined), will be done in the temp string pool.
  */
-inline void Value::serializeToTupleStorage(void *storage, const bool isInlined,
+inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
                                            const int32_t maxLength, const bool isInBytes) const
 {
-  const ValueType type = getValueType();
+  const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TIMESTAMP:
-      *reinterpret_cast<int64_t*>(storage) = getTimestamp();
+      *reinterpret_cast<int64_t*>(storage) = GetTimestamp();
       break;
     case VALUE_TYPE_TINYINT:
-      *reinterpret_cast<int8_t*>(storage) = getTinyInt();
+      *reinterpret_cast<int8_t*>(storage) = GetTinyInt();
       break;
     case VALUE_TYPE_SMALLINT:
-      *reinterpret_cast<int16_t*>(storage) = getSmallInt();
+      *reinterpret_cast<int16_t*>(storage) = GetSmallInt();
       break;
     case VALUE_TYPE_INTEGER:
-      *reinterpret_cast<int32_t*>(storage) = getInteger();
+      *reinterpret_cast<int32_t*>(storage) = GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
-      *reinterpret_cast<int64_t*>(storage) = getBigInt();
+      *reinterpret_cast<int64_t*>(storage) = GetBigInt();
       break;
     case VALUE_TYPE_DOUBLE:
-      *reinterpret_cast<double*>(storage) = getDouble();
+      *reinterpret_cast<double*>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
       ::memcpy( storage, m_data, sizeof(TTInt));
@@ -2745,20 +2748,20 @@ inline void Value::serializeToTupleStorage(void *storage, const bool isInlined,
     case VALUE_TYPE_VARBINARY:
       //Potentially non-inlined type requires special handling
       if (isInlined) {
-        inlineCopyObject(storage, maxLength, isInBytes);
+        InlineCopyyObject(storage, maxLength, isInBytes);
       }
       else {
-        if (!isNull()) {
-          int objLength = getObjectLength_withoutNull();
-          const char* ptr = reinterpret_cast<const char*>(getObjectValue_withoutNull());
+        if (!IsNull()) {
+          int objLength = GetObjectLengthWithoutNull();
+          const char* ptr = reinterpret_cast<const char*>(GetObjectValueWithoutNull());
           checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength, maxLength, isInBytes);
         }
 
         // copy the Varlen pointers, even for NULL case.
         if (m_sourceInlined) {
-          // create a non-const temp here for the outlined value
+          // Create a non-const temp here for the outlined value
           Value outlinedValue = *this;
-          outlinedValue.allocateObjectFromInlinedValue(getTempStringPool());
+          outlinedValue.AllocateObjectFromInlinedValue(GetTempStringPool());
           *reinterpret_cast<Varlen**>(storage) =
               *reinterpret_cast<Varlen* const*>(outlinedValue.m_data);
         }
@@ -2769,7 +2772,7 @@ inline void Value::serializeToTupleStorage(void *storage, const bool isInlined,
       break;
     default:
       char message[128];
-      snprintf(message, 128, "Value::serializeToTupleStorage() unrecognized type '%s'",
+      snprintf(message, 128, "Value::SerializeToTupleStorage() unrecognized type '%s'",
                ValueTypeToString(type).c_str());
       throw Exception(message);
   }
@@ -2783,12 +2786,12 @@ inline void Value::serializeToTupleStorage(void *storage, const bool isInlined,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline void Value::deserializeFrom(SerializeInputBE &input, VarlenPool *dataPool, char *storage,
+inline void Value::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool, char *storage,
                                    const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
-  deserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, dataPool, storage, type, isInlined, maxLength, isInBytes);
+  DeserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, dataPool, storage, type, isInlined, maxLength, isInBytes);
 }
 
-template <TupleSerializationFormat F, Endianess E> inline void Value::deserializeFrom(SerializeInput<E> &input, VarlenPool *dataPool,
+template <TupleSerializationFormat F, Endianess E> inline void Value::DeserializeFrom(SerializeInput<E> &input, VarlenPool *dataPool,
                                                                                       char *storage,
                                                                                       const ValueType type, bool isInlined,
                                                                                       int32_t maxLength, bool isInBytes) {
@@ -2815,13 +2818,13 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
     {
       const int32_t length = input.ReadInt();
 
-      const int8_t lengthLength = getAppropriateObjectLengthLength(length);
+      const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
       // the NULL SQL string is a NULL C pointer
       if (isInlined) {
-        // Always reset the bits regardless of how long the actual value is.
+        // Always reSet the bits regardless of how long the actual value is.
         ::memset(storage, 0, lengthLength + maxLength);
 
-        setObjectLengthToLocation(length, storage);
+        SetObjectLengthToLocation(length, storage);
         if (length == OBJECTLENGTH_NULL) {
           break;
         }
@@ -2840,7 +2843,7 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
         const int32_t minlength = lengthLength + length;
         Varlen* sref = Varlen::Create(minlength, dataPool);
         char* copy = sref->Get();
-        setObjectLengthToLocation( length, copy);
+        SetObjectLengthToLocation( length, copy);
         ::memcpy(copy + lengthLength, data, length);
         *reinterpret_cast<Varlen**>(storage) = sref;
       }
@@ -2851,10 +2854,10 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
         const int scale = input.ReadByte();
         const int precisionBytes = input.ReadByte();
         if (scale != kMaxDecScale) {
-          throw Exception("Unexpected scale %d", scale);
+          throw Exception("Unexpected scale %d" + std::to_string(scale));
         }
         if (precisionBytes != 16) {
-          throw Exception("Unexpected number of precision bytes %d", precisionBytes);
+          throw Exception("Unexpected number of precision bytes %d" + std::to_string(precisionBytes));
         }
       }
       uint64_t *longStorage = reinterpret_cast<uint64_t*>(storage);
@@ -2872,7 +2875,7 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
     }
     default:
       char message[128];
-      snprintf(message, 128, "Value::deserializeFrom() unrecognized type '%s'",
+      snprintf(message, 128, "Value::DeserializeFrom() unrecognized type '%s'",
                ValueTypeToString(type).c_str());
       throw Exception(
           message);
@@ -2882,54 +2885,54 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::deserializ
 /**
  * Deserialize a scalar value of the specified type from the
  * provided SerializeInput and perform allocations as necessary.
- * This is used to deserialize parameter sets.
+ * This is used to deserialize parameter Sets.
  */
-inline void Value::deserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool)
 {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
-  deserializeFromAllocateForStorage(type, input, dataPool);
+  DeserializeFromAllocateForStorage(type, input, dataPool);
 }
 
-inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *dataPool)
 {
-  setValueType(type);
-  // Parameter array Value elements are reused from one executor call to the next,
-  // so these Values need to forget they were ever null.
+  SetValueType(type);
+  // Parameter array Value elements are reused from one executor Call to the next,
+  // so these Values need to forGet they were ever null.
   m_data[13] = 0; // effectively, this is tagAsNonNull()
   switch (type) {
     case VALUE_TYPE_BIGINT:
-      getBigInt() = input.ReadLong();
-      if (getBigInt() == INT64_NULL) {
+      GetBigInt() = input.ReadLong();
+      if (GetBigInt() == INT64_NULL) {
         tagAsNull();
       }
       break;
     case VALUE_TYPE_TIMESTAMP:
-      getTimestamp() = input.ReadLong();
-      if (getTimestamp() == INT64_NULL) {
+      GetTimestamp() = input.ReadLong();
+      if (GetTimestamp() == INT64_NULL) {
         tagAsNull();
       }
       break;
     case VALUE_TYPE_TINYINT:
-      getTinyInt() = input.ReadByte();
-      if (getTinyInt() == INT8_NULL) {
+      GetTinyInt() = input.ReadByte();
+      if (GetTinyInt() == INT8_NULL) {
         tagAsNull();
       }
       break;
     case VALUE_TYPE_SMALLINT:
-      getSmallInt() = input.ReadShort();
-      if (getSmallInt() == INT16_NULL) {
+      GetSmallInt() = input.ReadShort();
+      if (GetSmallInt() == INT16_NULL) {
         tagAsNull();
       }
       break;
     case VALUE_TYPE_INTEGER:
-      getInteger() = input.ReadInt();
-      if (getInteger() == INT32_NULL) {
+      GetInteger() = input.ReadInt();
+      if (GetInteger() == INT32_NULL) {
         tagAsNull();
       }
       break;
     case VALUE_TYPE_DOUBLE:
-      getDouble() = input.ReadDouble();
-      if (getDouble() <= DOUBLE_NULL) {
+      GetDouble() = input.ReadDouble();
+      if (GetDouble() <= DOUBLE_NULL) {
         tagAsNull();
       }
       break;
@@ -2939,29 +2942,29 @@ inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeIn
       const int32_t length = input.ReadInt();
       // the NULL SQL string is a NULL C pointer
       if (length == OBJECTLENGTH_NULL) {
-        setNull();
+        SetNull();
         break;
       }
-      char* storage = allocateValueStorage(length, dataPool);
+      char* storage = AllocateValueStorage(length, dataPool);
       const char *str = (const char*) input.GetRawPointer(length);
       ::memcpy(storage, str, length);
       break;
     }
     case VALUE_TYPE_DECIMAL: {
-      getDecimal().table[1] = input.ReadLong();
-      getDecimal().table[0] = input.ReadLong();
+      GetDecimal().table[1] = input.ReadLong();
+      GetDecimal().table[0] = input.ReadLong();
       break;
     }
     case VALUE_TYPE_NULL: {
-      setNull();
+      SetNull();
       break;
     }
     case VALUE_TYPE_ARRAY: {
-      deserializeIntoANewValueList(input, dataPool);
+      DeserializeIntoANewValueList(input, dataPool);
       break;
     }
     default:
-      throw Exception("Value::deserializeFromAllocateForStorage() unrecognized type " +
+      throw Exception("Value::DeserializeFromAllocateForStorage() unrecognized type " +
                       ValueTypeToString(type));
   }
 }
@@ -2969,102 +2972,102 @@ inline void Value::deserializeFromAllocateForStorage(ValueType type, SerializeIn
 /**
  * Serialize this Value to the provided SerializeOutput
  */
-inline void Value::serializeTo(SerializeOutput &output) const {
-  const ValueType type = getValueType();
+inline void Value::SerializeTo(SerializeOutput &output) const {
+  const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     {
-      if (isNull()) {
+      if (IsNull()) {
         output.WriteInt(OBJECTLENGTH_NULL);
         break;
       }
-      const int32_t length = getObjectLength_withoutNull();
+      const int32_t length = GetObjectLengthWithoutNull();
       if (length <= OBJECTLENGTH_NULL) {
         throw Exception("Attempted to serialize an Value with a negative length");
       }
       output.WriteInt(static_cast<int32_t>(length));
 
       // Not a null string: write it out
-      output.WriteBytes(getObjectValue_withoutNull(), length);
+      output.WriteBytes(GetObjectValueWithoutNull(), length);
 
       break;
     }
     case VALUE_TYPE_TINYINT: {
-      output.WriteByte(getTinyInt());
+      output.WriteByte(GetTinyInt());
       break;
     }
     case VALUE_TYPE_SMALLINT: {
-      output.WriteShort(getSmallInt());
+      output.WriteShort(GetSmallInt());
       break;
     }
     case VALUE_TYPE_INTEGER: {
-      output.WriteInt(getInteger());
+      output.WriteInt(GetInteger());
       break;
     }
     case VALUE_TYPE_TIMESTAMP: {
-      output.WriteLong(getTimestamp());
+      output.WriteLong(GetTimestamp());
       break;
     }
     case VALUE_TYPE_BIGINT: {
-      output.WriteLong(getBigInt());
+      output.WriteLong(GetBigInt());
       break;
     }
     case VALUE_TYPE_DOUBLE: {
-      output.WriteDouble(getDouble());
+      output.WriteDouble(GetDouble());
       break;
     }
     case VALUE_TYPE_DECIMAL: {
-      output.WriteLong(getDecimal().table[1]);
-      output.WriteLong(getDecimal().table[0]);
+      output.WriteLong(GetDecimal().table[1]);
+      output.WriteLong(GetDecimal().table[0]);
       break;
     }
     default:
-      throw Exception( "Value::serializeTo() found a column "
-          "with ValueType '%s' that is not handled" + getValueTypeString());
+      throw Exception( "Value::SerializeTo() found a column "
+          "with ValueType '%s' that is not handled" + GetValueTypeString());
   }
 }
 
-inline void Value::serializeToExport_withoutNull(ExportSerializeOutput &io) const
+inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io) const
 {
-  assert(isNull() == false);
-  const ValueType type = getValueType();
+  assert(IsNull() == false);
+  const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     {
-      io.WriteBinaryString(getObjectValue_withoutNull(), getObjectLength_withoutNull());
+      io.WriteBinaryString(GetObjectValueWithoutNull(), GetObjectLengthWithoutNull());
       return;
     }
     case VALUE_TYPE_TINYINT: {
-      io.WriteByte(getTinyInt());
+      io.WriteByte(GetTinyInt());
       return;
     }
     case VALUE_TYPE_SMALLINT: {
-      io.WriteShort(getSmallInt());
+      io.WriteShort(GetSmallInt());
       return;
     }
     case VALUE_TYPE_INTEGER: {
-      io.WriteInt(getInteger());
+      io.WriteInt(GetInteger());
       return;
     }
     case VALUE_TYPE_TIMESTAMP: {
-      io.WriteLong(getTimestamp());
+      io.WriteLong(GetTimestamp());
       return;
     }
     case VALUE_TYPE_BIGINT: {
-      io.WriteLong(getBigInt());
+      io.WriteLong(GetBigInt());
       return;
     }
     case VALUE_TYPE_DOUBLE: {
-      io.WriteDouble(getDouble());
+      io.WriteDouble(GetDouble());
       return;
     }
     case VALUE_TYPE_DECIMAL: {
       io.WriteByte((int8_t)kMaxDecScale);
       io.WriteByte((int8_t)16);  //number of bytes in decimal
-      io.WriteLong(htonll(getDecimal().table[1]));
-      io.WriteLong(htonll(getDecimal().table[0]));
+      io.WriteLong(htonll(GetDecimal().table[1]));
+      io.WriteLong(htonll(GetDecimal().table[0]));
       return;
     }
     case VALUE_TYPE_INVALID:
@@ -3074,18 +3077,18 @@ inline void Value::serializeToExport_withoutNull(ExportSerializeOutput &io) cons
     case VALUE_TYPE_ARRAY:
     case VALUE_TYPE_FOR_DIAGNOSTICS_ONLY_NUMERIC:
       char message[128];
-      snprintf(message, sizeof(message), "Invalid type in serializeToExport: %s", ValueTypeToString(getValueType()).c_str());
+      snprintf(message, sizeof(message), "Invalid type in SerializeToExport: %s", ValueTypeToString(GetValueType()).c_str());
       throw Exception(message);
   }
 
-  throw Exception("Invalid type in serializeToExport");
+  throw Exception("Invalid type in SerializeToExport");
 }
 
 /** Reformat an object-typed value from its inlined form to its
  *  allocated out-of-line form, for use with a wider/widened tuple
- *  column.  Use the pool specified by the caller, or the temp string
+ *  column.  Use the pool specified by the Caller, or the temp string
  *  pool if none was supplied. **/
-inline void Value::allocateObjectFromInlinedValue(VarlenPool* pool = NULL)
+inline void Value::AllocateObjectFromInlinedValue(VarlenPool* pool = NULL)
 {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
@@ -3093,15 +3096,15 @@ inline void Value::allocateObjectFromInlinedValue(VarlenPool* pool = NULL)
   assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
   assert(m_sourceInlined);
 
-  if (isNull()) {
+  if (IsNull()) {
     *reinterpret_cast<void**>(m_data) = NULL;
-    // serializeToTupleStorage fusses about this inline flag being set, even for NULLs
-    setSourceInlined(false);
+    // SerializeToTupleStorage fusses about this inline flag being Set, even for NULLs
+    SetSourceInlined(false);
     return;
   }
 
   if (pool == NULL) {
-    pool = getTempStringPool();
+    pool = GetTempStringPool();
   }
 
   // When an object is inlined, m_data is a direct pointer into a tuple's inline storage area.
@@ -3110,23 +3113,23 @@ inline void Value::allocateObjectFromInlinedValue(VarlenPool* pool = NULL)
   // When it isn't inlined, m_data must contain a pointer to a Varlen object
   // that contains that same data in that same format.
 
-  int32_t length = getObjectLength_withoutNull();
+  int32_t length = GetObjectLengthWithoutNull();
   // inlined objects always have a minimal (1-byte) length field.
   Varlen* sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
   char* storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
   ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
-  setObjectValue(sref);
-  setSourceInlined(false);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
 }
 
 /** Deep copy an outline object-typed value from its current allocated pool,
  *  allocate the new outline object in the global temp string pool instead.
- *  The caller needs to deallocate the original outline space for the object,
+ *  The Caller needs to deallocate the original outline space for the object,
  *  probably by purging the pool that contains it.
  *  This function is used in the aggregate function for MIN/MAX functions.
  *  **/
-inline void Value::allocateObjectFromOutlinedValue()
+inline void Value::AllocateObjectFromOutlinedValue()
 {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
@@ -3134,124 +3137,124 @@ inline void Value::allocateObjectFromOutlinedValue()
   assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
   assert(!m_sourceInlined);
 
-  if (isNull()) {
+  if (IsNull()) {
     *reinterpret_cast<void**>(m_data) = NULL;
     return;
   }
-  VarlenPool* pool = getTempStringPool();
+  VarlenPool* pool = GetTempStringPool();
 
-  // get the outline data
+  // Get the outline data
   const char* source = (*reinterpret_cast<Varlen* const*>(m_data))->Get();
 
-  const int32_t length = getObjectLength_withoutNull() + getObjectLengthLength();
+  const int32_t length = GetObjectLengthWithoutNull() + GetObjectLengthLength();
   Varlen* sref = Varlen::Create(length, pool);
   char* storage = sref->Get();
   // Copy the value into the allocated out-of-line storage
   ::memcpy(storage, source, length);
-  setObjectValue(sref);
-  setSourceInlined(false);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
 }
 
-inline bool Value::isNull() const {
-  if (getValueType() == VALUE_TYPE_DECIMAL) {
+inline bool Value::IsNull() const {
+  if (GetValueType() == VALUE_TYPE_DECIMAL) {
     TTInt min;
     min.SetMin();
-    return getDecimal() == min;
+    return GetDecimal() == min;
   }
   return m_data[13] == OBJECT_NULL_BIT;
 }
 
-inline bool Value::isNaN() const {
-  if (getValueType() == VALUE_TYPE_DOUBLE) {
-    return std::isnan(getDouble());
+inline bool Value::IsNan() const {
+  if (GetValueType() == VALUE_TYPE_DOUBLE) {
+    return std::isnan(GetDouble());
   }
   return false;
 }
 
 // general full comparison
-inline Value Value::op_equals(const Value rhs) const {
-  return compare(rhs) == 0 ? getTrue() : getFalse();
+inline Value Value::OpEquals(const Value rhs) const {
+  return Compare(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_notEquals(const Value rhs) const {
-  return compare(rhs) != 0 ? getTrue() : getFalse();
+inline Value Value::OpNotEquals(const Value rhs) const {
+  return Compare(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_lessThan(const Value rhs) const {
-  return compare(rhs) < 0 ? getTrue() : getFalse();
+inline Value Value::OpLessThan(const Value rhs) const {
+  return Compare(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_lessThanOrEqual(const Value rhs) const {
-  return compare(rhs) <= 0 ? getTrue() : getFalse();
+inline Value Value::OpLessThanOrEqual(const Value rhs) const {
+  return Compare(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_greaterThan(const Value rhs) const {
-  return compare(rhs) > 0 ? getTrue() : getFalse();
+inline Value Value::OpGreaterThan(const Value rhs) const {
+  return Compare(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_greaterThanOrEqual(const Value rhs) const {
-  return compare(rhs) >= 0 ? getTrue() : getFalse();
+inline Value Value::OpGreaterThanOrEqual(const Value rhs) const {
+  return Compare(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
 // without null comparison
-inline Value Value::op_equals_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) == 0 ? getTrue() : getFalse();
+inline Value Value::OpEqualsWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_notEquals_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) != 0 ? getTrue() : getFalse();
+inline Value Value::OpNotEqualsWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_lessThan_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) < 0 ? getTrue() : getFalse();
+inline Value Value::OpLessThanWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_lessThanOrEqual_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) <= 0 ? getTrue() : getFalse();
+inline Value Value::OpLessThanOrEqualWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_greaterThan_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) > 0 ? getTrue() : getFalse();
+inline Value Value::OpGreaterThanWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_greaterThanOrEqual_withoutNull(const Value rhs) const {
-  return compare_withoutNull(rhs) >= 0 ? getTrue() : getFalse();
+inline Value Value::OpGreaterThanOrEqualWithoutNull(const Value rhs) const {
+  return CompareWithoutNull(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::op_max(const Value rhs) const {
-  if (compare(rhs) > 0) {
+inline Value Value::OpMax(const Value rhs) const {
+  if (Compare(rhs) > 0) {
     return *this;
   } else {
     return rhs;
   }
 }
 
-inline Value Value::op_min(const Value rhs) const {
-  if (compare(rhs) < 0) {
+inline Value Value::OpMin(const Value rhs) const {
+  if (Compare(rhs) < 0) {
     return *this;
   } else {
     return rhs;
   }
 }
 
-inline Value Value::getNullValue(ValueType type) {
+inline Value Value::GetNullValue(ValueType type) {
   Value retval(type);
-  retval.setNull();
+  retval.SetNull();
   return retval;
 }
 
-inline void Value::hashCombine(std::size_t &seed) const {
-  const ValueType type = getValueType();
+inline void Value::HashCombine(std::size_t &seed) const {
+  const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TINYINT:
-      boost::hash_combine( seed, getTinyInt()); break;
+      boost::hash_combine( seed, GetTinyInt()); break;
     case VALUE_TYPE_SMALLINT:
-      boost::hash_combine( seed, getSmallInt()); break;
+      boost::hash_combine( seed, GetSmallInt()); break;
     case VALUE_TYPE_INTEGER:
-      boost::hash_combine( seed, getInteger()); break;
+      boost::hash_combine( seed, GetInteger()); break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      boost::hash_combine( seed, getBigInt()); break;
+      boost::hash_combine( seed, GetBigInt()); break;
     case VALUE_TYPE_DOUBLE:
       // This method was observed to fail on Centos 5 / GCC 4.1.2, returning different hashes
       // for identical inputs, so the conditional was added,
@@ -3260,7 +3263,7 @@ inline void Value::hashCombine(std::size_t &seed) const {
       // one for int64 -- even if this may give sub-optimal hashes for typical collections of double.
       // This conditional can be dropped when Centos 5 support is dropped.
 #if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) && !defined(__GCCXML__))) && !defined(BOOST_CLANG)
-      boost::hash_combine( seed, getDouble()); break;
+      boost::hash_combine( seed, GetDouble()); break;
 #else
       {
         const int64_t proxyForDouble =  *reinterpret_cast<const int64_t*>(m_data);
@@ -3268,63 +3271,63 @@ inline void Value::hashCombine(std::size_t &seed) const {
       }
 #endif
     case VALUE_TYPE_VARCHAR: {
-      if (isNull()) {
+      if (IsNull()) {
         boost::hash_combine( seed, std::string(""));
       } else {
-        const int32_t length = getObjectLength_withoutNull();
-        boost::hash_combine( seed, std::string( reinterpret_cast<const char*>(getObjectValue_withoutNull()), length ));
+        const int32_t length = GetObjectLengthWithoutNull();
+        boost::hash_combine( seed, std::string( reinterpret_cast<const char*>(GetObjectValueWithoutNull()), length ));
       }
       break;
     }
     case VALUE_TYPE_VARBINARY: {
-      if (isNull()) {
+      if (IsNull()) {
         boost::hash_combine( seed, std::string(""));
       } else {
-        const int32_t length = getObjectLength_withoutNull();
-        char* data = reinterpret_cast<char*>(getObjectValue_withoutNull());
+        const int32_t length = GetObjectLengthWithoutNull();
+        char* data = reinterpret_cast<char*>(GetObjectValueWithoutNull());
         for (int32_t i = 0; i < length; i++)
           boost::hash_combine(seed, data[i]);
       }
       break;
     }
     case VALUE_TYPE_DECIMAL:
-      getDecimal().hash(seed); break;
+      GetDecimal().hash(seed); break;
     default:
-      throw Exception("Value::hashCombine unknown type " +  getValueTypeString());
+      throw Exception("Value::HashCombine unknown type " +  GetValueTypeString());
   }
 }
 
 
-inline Value Value::castAs(ValueType type) const {
+inline Value Value::CastAs(ValueType type) const {
   LOG_TRACE("Converting from %s to %s",
-            ValueTypeToString(getValueType()).c_str(),
+            ValueTypeToString(GetValueType()).c_str(),
             ValueTypeToString(type).c_str());
-  if (getValueType() == type) {
+  if (GetValueType() == type) {
     return *this;
   }
-  if (isNull()) {
-    return getNullValue(type);
+  if (IsNull()) {
+    return GetNullValue(type);
   }
 
   switch (type) {
     case VALUE_TYPE_TINYINT:
-      return castAsTinyInt();
+      return CastAsTinyInt();
     case VALUE_TYPE_SMALLINT:
-      return castAsSmallInt();
+      return CastAsSmallInt();
     case VALUE_TYPE_INTEGER:
-      return castAsInteger();
+      return CastAsInteger();
     case VALUE_TYPE_BIGINT:
-      return castAsBigInt();
+      return CastAsBigInt();
     case VALUE_TYPE_TIMESTAMP:
-      return castAsTimestamp();
+      return CastAsTimestamp();
     case VALUE_TYPE_DOUBLE:
-      return castAsDouble();
+      return CastAsDouble();
     case VALUE_TYPE_VARCHAR:
-      return castAsString();
+      return CastAsString();
     case VALUE_TYPE_VARBINARY:
-      return castAsBinary();
+      return CastAsBinary();
     case VALUE_TYPE_DECIMAL:
-      return castAsDecimal();
+      return CastAsDecimal();
     default:
       char message[128];
       snprintf(message, 128, "Type %d not a recognized type for casting",
@@ -3333,119 +3336,119 @@ inline Value Value::castAs(ValueType type) const {
   }
 }
 
-inline void* Value::castAsAddress() const {
-  const ValueType type = getValueType();
+inline void* Value::CastAsAddress() const {
+  const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_ADDRESS:
       return *reinterpret_cast<void* const*>(m_data);
     default:
       throw Exception(
-          "Type %s not a recognized type for casting as an address" + getValueTypeString());
+          "Type %s not a recognized type for casting as an address" + GetValueTypeString());
   }
 }
 
-inline Value Value::op_increment() const {
-  const ValueType type = getValueType();
+inline Value Value::OpIncrement() const {
+  const ValueType type = GetValueType();
   Value retval(type);
   switch(type) {
     case VALUE_TYPE_TINYINT:
-      if (getTinyInt() == INT8_MAX) {
+      if (GetTinyInt() == INT8_MAX) {
         throw Exception(
             "Incrementing this TinyInt results in a value out of range");
       }
-      retval.getTinyInt() = static_cast<int8_t>(getTinyInt() + 1); break;
+      retval.GetTinyInt() = static_cast<int8_t>(GetTinyInt() + 1); break;
     case VALUE_TYPE_SMALLINT:
-      if (getSmallInt() == INT16_MAX) {
+      if (GetSmallInt() == INT16_MAX) {
         throw Exception(
             "Incrementing this SmallInt results in a value out of range");
       }
-      retval.getSmallInt() = static_cast<int16_t>(getSmallInt() + 1); break;
+      retval.GetSmallInt() = static_cast<int16_t>(GetSmallInt() + 1); break;
     case VALUE_TYPE_INTEGER:
-      if (getInteger() == INT32_MAX) {
+      if (GetInteger() == INT32_MAX) {
         throw Exception(
             "Incrementing this Integer results in a value out of range");
       }
-      retval.getInteger() = getInteger() + 1; break;
+      retval.GetInteger() = GetInteger() + 1; break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      if (getBigInt() == INT64_MAX) {
+      if (GetBigInt() == INT64_MAX) {
         throw Exception(
             "Incrementing this BigInt/Timestamp results in a value out of range");
       }
-      retval.getBigInt() = getBigInt() + 1; break;
+      retval.GetBigInt() = GetBigInt() + 1; break;
     case VALUE_TYPE_DOUBLE:
-      retval.getDouble() = getDouble() + 1; break;
+      retval.GetDouble() = GetDouble() + 1; break;
     default:
-      throw Exception( "type %s is not incrementable " + getValueTypeString());
+      throw Exception( "type %s is not incrementable " + GetValueTypeString());
       break;
   }
   return retval;
 }
 
-inline Value Value::op_decrement() const {
-  const ValueType type = getValueType();
+inline Value Value::OpDecrement() const {
+  const ValueType type = GetValueType();
   Value retval(type);
   switch(type) {
     case VALUE_TYPE_TINYINT:
-      if (getTinyInt() == PELOTON_INT8_MIN) {
+      if (GetTinyInt() == PELOTON_INT8_MIN) {
         throw Exception(
             "Decrementing this TinyInt results in a value out of range");
       }
-      retval.getTinyInt() = static_cast<int8_t>(getTinyInt() - 1); break;
+      retval.GetTinyInt() = static_cast<int8_t>(GetTinyInt() - 1); break;
     case VALUE_TYPE_SMALLINT:
-      if (getSmallInt() == PELOTON_INT16_MIN) {
+      if (GetSmallInt() == PELOTON_INT16_MIN) {
         throw Exception(
             "Decrementing this SmallInt results in a value out of range");
       }
-      retval.getSmallInt() = static_cast<int16_t>(getSmallInt() - 1); break;
+      retval.GetSmallInt() = static_cast<int16_t>(GetSmallInt() - 1); break;
     case VALUE_TYPE_INTEGER:
-      if (getInteger() == PELOTON_INT32_MIN) {
+      if (GetInteger() == PELOTON_INT32_MIN) {
         throw Exception(
             "Decrementing this Integer results in a value out of range");
       }
-      retval.getInteger() = getInteger() - 1; break;
+      retval.GetInteger() = GetInteger() - 1; break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      if (getBigInt() == PELOTON_INT64_MIN) {
+      if (GetBigInt() == PELOTON_INT64_MIN) {
         throw Exception(
             "Decrementing this BigInt/Timestamp results in a value out of range");
       }
-      retval.getBigInt() = getBigInt() - 1; break;
+      retval.GetBigInt() = GetBigInt() - 1; break;
     case VALUE_TYPE_DOUBLE:
-      retval.getDouble() = getDouble() - 1; break;
+      retval.GetDouble() = GetDouble() - 1; break;
     default:
-      throw Exception( "type %s is not decrementable " + getValueTypeString());
+      throw Exception( "type %s is not decrementable " + GetValueTypeString());
       break;
   }
   return retval;
 }
 
-inline bool Value::isZero() const {
-  const ValueType type = getValueType();
+inline bool Value::IsZero() const {
+  const ValueType type = GetValueType();
   switch(type) {
     case VALUE_TYPE_TINYINT:
-      return getTinyInt() == 0;
+      return GetTinyInt() == 0;
     case VALUE_TYPE_SMALLINT:
-      return getSmallInt() == 0;
+      return GetSmallInt() == 0;
     case VALUE_TYPE_INTEGER:
-      return getInteger() == 0;
+      return GetInteger() == 0;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      return getBigInt() == 0;
+      return GetBigInt() == 0;
     case VALUE_TYPE_DECIMAL:
-      return getDecimal().IsZero();
+      return GetDecimal().IsZero();
     default:
       throw Exception(
-          "type %s is not a numeric type that implements isZero()" +
-          getValueTypeString());
+          "type %s is not a numeric type that implements IsZero()" +
+          GetValueTypeString());
   }
 }
 
-inline Value Value::op_subtract(const Value rhs) const {
-  ValueType vt = promoteForOp(getValueType(), rhs.getValueType());
-  if (isNull() || rhs.isNull()) {
-    return getNullValue(vt);
+inline Value Value::OpSubtract(const Value rhs) const {
+  ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
+  if (IsNull() || rhs.IsNull()) {
+    return GetNullValue(vt);
   }
 
   switch (vt) {
@@ -3454,29 +3457,29 @@ inline Value Value::op_subtract(const Value rhs) const {
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      return opSubtractBigInts(castAsBigIntAndGetValue(),
-                               rhs.castAsBigIntAndGetValue());
+      return OpSubtractBigInts(CastAsBigIntAndGetValue(),
+                               rhs.CastAsBigIntAndGetValue());
 
     case VALUE_TYPE_DOUBLE:
-      return opSubtractDoubles(castAsDoubleAndGetValue(),
-                               rhs.castAsDoubleAndGetValue());
+      return OpSubtractDoubles(CastAsDoubleAndGetValue(),
+                               rhs.CastAsDoubleAndGetValue());
 
     case VALUE_TYPE_DECIMAL:
-      return opSubtractDecimals(castAsDecimal(),
-                                rhs.castAsDecimal());
+      return OpSubtractDecimals(CastAsDecimal(),
+                                rhs.CastAsDecimal());
 
     default:
       break;
   }
-  throw TypeMismatchException("Promotion of %s and %s failed in op_subtract.",
-                              getValueType(),
-                              rhs.getValueType());
+  throw TypeMismatchException("Promotion of %s and %s failed in OpSubtract.",
+                              GetValueType(),
+                              rhs.GetValueType());
 }
 
-inline Value Value::op_add(const Value rhs) const {
-  ValueType vt = promoteForOp(getValueType(), rhs.getValueType());
-  if (isNull() || rhs.isNull()) {
-    return getNullValue(vt);
+inline Value Value::OpAdd(const Value rhs) const {
+  ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
+  if (IsNull() || rhs.IsNull()) {
+    return GetNullValue(vt);
   }
 
   switch (vt) {
@@ -3485,29 +3488,29 @@ inline Value Value::op_add(const Value rhs) const {
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      return opAddBigInts(castAsBigIntAndGetValue(),
-                          rhs.castAsBigIntAndGetValue());
+      return OpAddBigInts(CastAsBigIntAndGetValue(),
+                          rhs.CastAsBigIntAndGetValue());
 
     case VALUE_TYPE_DOUBLE:
-      return opAddDoubles(castAsDoubleAndGetValue(),
-                          rhs.castAsDoubleAndGetValue());
+      return OpAddDoubles(CastAsDoubleAndGetValue(),
+                          rhs.CastAsDoubleAndGetValue());
 
     case VALUE_TYPE_DECIMAL:
-      return opAddDecimals(castAsDecimal(),
-                           rhs.castAsDecimal());
+      return OpAddDecimals(CastAsDecimal(),
+                           rhs.CastAsDecimal());
 
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_add." +
-                  getValueTypeString() +
-                  rhs.getValueTypeString());
+  throw Exception("Promotion of %s and %s failed in OpAdd." +
+                  GetValueTypeString() +
+                  rhs.GetValueTypeString());
 }
 
-inline Value Value::op_multiply(const Value rhs) const {
-  ValueType vt = promoteForOp(getValueType(), rhs.getValueType());
-  if (isNull() || rhs.isNull()) {
-    return getNullValue(vt);
+inline Value Value::OpMultiple(const Value rhs) const {
+  ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
+  if (IsNull() || rhs.IsNull()) {
+    return GetNullValue(vt);
   }
 
   switch (vt) {
@@ -3516,29 +3519,29 @@ inline Value Value::op_multiply(const Value rhs) const {
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      return opMultiplyBigInts(castAsBigIntAndGetValue(),
-                               rhs.castAsBigIntAndGetValue());
+      return OpMultiplyBigInts(CastAsBigIntAndGetValue(),
+                               rhs.CastAsBigIntAndGetValue());
 
     case VALUE_TYPE_DOUBLE:
-      return opMultiplyDoubles(castAsDoubleAndGetValue(),
-                               rhs.castAsDoubleAndGetValue());
+      return OpMultiplyDoubles(CastAsDoubleAndGetValue(),
+                               rhs.CastAsDoubleAndGetValue());
 
     case VALUE_TYPE_DECIMAL:
-      return opMultiplyDecimals(castAsDecimal(),
-                                rhs.castAsDecimal());
+      return OpMultiplyDecimals(CastAsDecimal(),
+                                rhs.CastAsDecimal());
 
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_multiply." +
-                  getValueTypeString() +
-                  rhs.getValueTypeString());
+  throw Exception("Promotion of %s and %s failed in OpMultiple." +
+                  GetValueTypeString() +
+                  rhs.GetValueTypeString());
 }
 
-inline Value Value::op_divide(const Value rhs) const {
-  ValueType vt = promoteForOp(getValueType(), rhs.getValueType());
-  if (isNull() || rhs.isNull()) {
-    return getNullValue(vt);
+inline Value Value::OpDivide(const Value rhs) const {
+  ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
+  if (IsNull() || rhs.IsNull()) {
+    return GetNullValue(vt);
   }
 
   switch (vt) {
@@ -3547,30 +3550,30 @@ inline Value Value::op_divide(const Value rhs) const {
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      return opDivideBigInts(castAsBigIntAndGetValue(),
-                             rhs.castAsBigIntAndGetValue());
+      return OpDivideBigInts(CastAsBigIntAndGetValue(),
+                             rhs.CastAsBigIntAndGetValue());
 
     case VALUE_TYPE_DOUBLE:
-      return opDivideDoubles(castAsDoubleAndGetValue(),
-                             rhs.castAsDoubleAndGetValue());
+      return OpDivideDoubles(CastAsDoubleAndGetValue(),
+                             rhs.CastAsDoubleAndGetValue());
 
     case VALUE_TYPE_DECIMAL:
-      return opDivideDecimals(castAsDecimal(),
-                              rhs.castAsDecimal());
+      return OpDivideDecimals(CastAsDecimal(),
+                              rhs.CastAsDecimal());
 
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in op_divide." +
-                  getValueTypeString() +
-                  rhs.getValueTypeString());
+  throw Exception("Promotion of %s and %s failed in OpDivide." +
+                  GetValueTypeString() +
+                  rhs.GetValueTypeString());
 }
 
 /*
  * Out must have storage for 16 bytes
  */
-inline int32_t Value::murmurHash3() const {
-  const ValueType type = getValueType();
+inline int32_t Value::MurmurHash3() const {
+  const ValueType type = GetValueType();
   switch(type) {
     case VALUE_TYPE_TIMESTAMP:
     case VALUE_TYPE_DOUBLE:
@@ -3581,12 +3584,12 @@ inline int32_t Value::murmurHash3() const {
       return MurmurHash3_x64_128( m_data, 8, 0);
     case VALUE_TYPE_VARBINARY:
     case VALUE_TYPE_VARCHAR:
-      if (isNull()) {
-        // Use NULL check first to be able to get rid of checks inside of other functions.
+      if (IsNull()) {
+        // Use NULL check first to be able to Get rid of checks inside of other functions.
         // Maybe it is impossible to be null here. -xin
         throw Exception("Must not ask  for object length on sql null object.");
       }
-      return MurmurHash3_x64_128( getObjectValue_withoutNull(), getObjectLength_withoutNull(), 0);
+      return MurmurHash3_x64_128( GetObjectValueWithoutNull(), GetObjectLengthWithoutNull(), 0);
     default:
       throw Exception("Unknown type for murmur hashing %d" + std::to_string(type));
       break;
@@ -3594,45 +3597,45 @@ inline int32_t Value::murmurHash3() const {
 }
 
 /*
- * The LHS (this) should always be the string being compared
+ * The LHS (this) should always be the string being Compared
  * and the RHS should always be the LIKE expression.
  * The planner or EE needs to enforce this.
  *
  * Null check should have been handled already.
  */
-inline Value Value::like(const Value rhs) const {
+inline Value Value::Like(const Value rhs) const {
   /*
    * Validate that all params are VARCHAR
    */
-  const ValueType mType = getValueType();
+  const ValueType mType = GetValueType();
   if (mType != VALUE_TYPE_VARCHAR) {
     throw Exception(
         "lhs of LIKE expression is %s not %s" +
-        getValueTypeString() +
+        GetValueTypeString() +
         ValueTypeToString(VALUE_TYPE_VARCHAR));
   }
 
-  const ValueType rhsType = rhs.getValueType();
+  const ValueType rhsType = rhs.GetValueType();
   if (rhsType != VALUE_TYPE_VARCHAR) {
     throw Exception(
         "rhs of LIKE expression is %s not %s" +
-        rhs.getValueTypeString() +
+        rhs.GetValueTypeString() +
         ValueTypeToString(VALUE_TYPE_VARCHAR));
   }
 
-  const int32_t valueUTF8Length = getObjectLength_withoutNull();
-  const int32_t patternUTF8Length = rhs.getObjectLength_withoutNull();
+  const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
+  const int32_t patternUTF8Length = rhs.GetObjectLengthWithoutNull();
 
   if (0 == patternUTF8Length) {
     if (0 == valueUTF8Length) {
-      return getTrue();
+      return GetTrue();
     } else {
-      return getFalse();
+      return GetFalse();
     }
   }
 
-  char *valueChars = reinterpret_cast<char*>(getObjectValue_withoutNull());
-  char *patternChars = reinterpret_cast<char*>(rhs.getObjectValue_withoutNull());
+  char *valueChars = reinterpret_cast<char*>(GetObjectValueWithoutNull());
+  char *patternChars = reinterpret_cast<char*>(rhs.GetObjectValueWithoutNull());
   assert(valueChars);
   assert(patternChars);
 
@@ -3654,17 +3657,17 @@ inline Value Value::like(const Value rhs) const {
       m_pattern(patternChars, patternChars + patternUTF8Length)
    {}
 
-    bool like() {
-      while ( ! m_pattern.atEnd()) {
-        const uint32_t nextPatternCodePoint = m_pattern.extractCodePoint();
+    bool Like() {
+      while ( ! m_pattern.AtEnd()) {
+        const uint32_t nextPatternCodePoint = m_pattern.ExtractCodePoint();
         switch (nextPatternCodePoint) {
           case '%': {
-            if (m_pattern.atEnd()) {
+            if (m_pattern.AtEnd()) {
               return true;
             }
 
-            const char *postPercentPatternIterator = m_pattern.getCursor();
-            const uint32_t nextPatternCodePointAfterPercent = m_pattern.extractCodePoint();
+            const char *postPercentPatternIterator = m_pattern.GetCursor();
+            const uint32_t nextPatternCodePointAfterPercent = m_pattern.ExtractCodePoint();
             const bool nextPatternCodePointAfterPercentIsSpecial =
                 (nextPatternCodePointAfterPercent == '_') ||
                 (nextPatternCodePointAfterPercent == '%');
@@ -3678,12 +3681,12 @@ inline Value Value::like(const Value rhs) const {
              * For stacked _ it will recurse and demand the correct number of characters.
              *
              * For a regular character it will recurse if the value character matches the pattern character.
-             * This saves doing a function call per character and allows us to skip if there is no match.
+             * This saves doing a function Call per character and allows us to skip if there is no match.
              */
-            while ( ! m_value.atEnd()) {
+            while ( ! m_value.AtEnd()) {
 
-              const char *preExtractionValueIterator = m_value.getCursor();
-              const uint32_t nextValueCodePoint = m_value.extractCodePoint();
+              const char *preExtractionValueIterator = m_value.GetCursor();
+              const uint32_t nextValueCodePoint = m_value.ExtractCodePoint();
 
               const bool nextPatternCodePointIsSpecialOrItEqualsNextValueCodePoint =
                   (nextPatternCodePointAfterPercentIsSpecial ||
@@ -3691,7 +3694,7 @@ inline Value Value::like(const Value rhs) const {
 
               if ( nextPatternCodePointIsSpecialOrItEqualsNextValueCodePoint) {
                 Liker recursionContext( *this, preExtractionValueIterator, postPercentPatternIterator);
-                if (recursionContext.like()) {
+                if (recursionContext.Like()) {
                   return true;
                 }
               }
@@ -3699,18 +3702,18 @@ inline Value Value::like(const Value rhs) const {
             return false;
           }
           case '_': {
-            if ( m_value.atEnd()) {
+            if ( m_value.AtEnd()) {
               return false;
             }
             //Extract a code point to consume a character
-            m_value.extractCodePoint();
+            m_value.ExtractCodePoint();
             break;
           }
           default: {
-            if ( m_value.atEnd()) {
+            if ( m_value.AtEnd()) {
               return false;
             }
-            const uint32_t nextValueCodePoint = m_value.extractCodePoint();
+            const uint32_t nextValueCodePoint = m_value.ExtractCodePoint();
             if (nextPatternCodePoint != nextValueCodePoint) {
               return false;
             }
@@ -3719,7 +3722,7 @@ inline Value Value::like(const Value rhs) const {
         }
       }
       //A matching value ends exactly where the pattern ends (having already accounted for '%')
-      return m_value.atEnd();
+      return m_value.AtEnd();
     }
 
     UTF8Iterator m_value;
@@ -3728,7 +3731,7 @@ inline Value Value::like(const Value rhs) const {
 
   Liker liker(valueChars, patternChars, valueUTF8Length, patternUTF8Length);
 
-  return liker.like() ? getTrue() : getFalse();
+  return liker.Like() ? GetTrue() : GetFalse();
 }
 
 }  // End peloton namespace

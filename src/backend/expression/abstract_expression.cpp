@@ -53,48 +53,48 @@ AbstractExpression::~AbstractExpression()
 }
 
 bool
-AbstractExpression::hasParameter() const
+AbstractExpression::HasParameter() const
 {
-  if (m_left && m_left->hasParameter())
+  if (m_left && m_left->HasParameter())
     return true;
-  return (m_right && m_right->hasParameter());
+  return (m_right && m_right->HasParameter());
 }
 
 bool
-AbstractExpression::initParamShortCircuits()
+AbstractExpression::InitParamShortCircuits()
 {
-  return (m_hasParameter = hasParameter());
+  return (m_hasParameter = HasParameter());
 }
 
 std::string
-AbstractExpression::debug() const
+AbstractExpression::Debug() const
 {
   std::ostringstream buffer;
-  buffer << "Expression[" << ExpressionTypeToString(getExpressionType()) << ", " << getExpressionType() << "]";
+  buffer << "Expression[" << ExpressionTypeToString(GetExpressionType()) << ", " << GetExpressionType() << "]";
   return (buffer.str());
 }
 
 std::string
-AbstractExpression::debug(bool traverse) const
+AbstractExpression::Debug(bool traverse) const
 {
-  return (traverse ? debug(std::string("")) : debug());
+  return (traverse ? Debug(std::string("")) : Debug());
 }
 
 std::string
-AbstractExpression::debug(const std::string &spacer) const
+AbstractExpression::Debug(const std::string &spacer) const
 {
   std::ostringstream buffer;
-  buffer << spacer << "+ " << debug() << "\n";
+  buffer << spacer << "+ " << Debug() << "\n";
 
   std::string info_spacer = spacer + "   ";
-  buffer << debugInfo(info_spacer);
+  buffer << DebugInfo(info_spacer);
 
   // process children
   if (m_left != NULL || m_right != NULL) {
     buffer << info_spacer << "left:  " <<
-        (m_left != NULL  ? "\n" + m_left->debug(info_spacer)  : "<NULL>\n");
+        (m_left != NULL  ? "\n" + m_left->Debug(info_spacer)  : "<NULL>\n");
     buffer << info_spacer << "right: " <<
-        (m_right != NULL ? "\n" + m_right->debug(info_spacer) : "<NULL>\n");
+        (m_right != NULL ? "\n" + m_right->Debug(info_spacer) : "<NULL>\n");
   }
   return (buffer.str());
 }
