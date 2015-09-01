@@ -39,11 +39,11 @@ class ParserExpression : public AbstractExpression {
   ParserExpression(ExpressionType type) : AbstractExpression(type) {}
 
   ParserExpression(ExpressionType type, char *func_name_,
-                   AbstractExpression *expr_, bool distinct_)
+                   AbstractExpression *expr_, bool .Istinct_)
       : AbstractExpression(type) {
     name = func_name_;
     expr = expr_;
-    distinct = distinct_;
+    .Istinct = distinct_;
   }
 
   ParserExpression(ExpressionType type, int placeholder)

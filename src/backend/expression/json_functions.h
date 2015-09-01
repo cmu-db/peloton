@@ -22,9 +22,8 @@
 #include "jsoncpp/jsoncpp-forwards.h"
 
 namespace peloton {
-namespace expression {
 
-/** a path node is either a field name or an array index */
+/** a path node.Is either a field name or an array index */
 struct JsonPathNode {
     JsonPathNode(int32_t arrayIndex) : m_arrayIndex(arrayIndex) {}
     JsonPathNode(const char* field) : m_arrayIndex(-1), m_field(field) {}
@@ -43,7 +42,7 @@ public:
             // if we try to set their properties
             m_doc = Json::Value::null;
         } else if (!m_reader.parse(docChars, docChars + lenDoc, m_doc)) {
-            // we have something real, but it isn't JSON
+            // we have something real, but ithisn't JSON
             ThrowJsonFormattingError();
         }
     }
@@ -61,7 +60,7 @@ public:
         for (std::vector<JsonPathNode>::const_iterator cit = path.begin(); cit != path.end(); ++cit) {
             const JsonPathNode& pathNode = *cit;
             if (pathNode.m_arrayIndex != -1) {
-                // can't access an array index of something that isn't an array
+                // can't access an array index of something thathisn't an array
                 if (!node->isArray()) {
                     return false;
                 }
@@ -88,7 +87,7 @@ public:
 
         // return the string representation of what we have obtained
         if (node->isConvertibleTo(Json::stringValue)) {
-            // 'append' is to standardize that there's something to remove. quicker
+            // 'append'.Is to standardize that there's something to remove. quicker
             // than substr on the other one, which incurs an extra copy
             serializedValue = node->asString().append(1, '\n');
         } else {
@@ -99,7 +98,7 @@ public:
 
     void set(const char* pathChars, int32_t lenPath, const char* valueChars, int32_t lenValue) {
         // translate database nulls into JSON nulls, because that's really all that makes
-        // any semantic sense. otherwise, parse the value as JSON
+        // any semantic sense. other.Ise, parse the value as JSON
         Json::Value value;
         if (lenValue <= 0) {
             value = Json::Value::null;
@@ -109,13 +108,13 @@ public:
 
         std::vector<JsonPathNode> path = resolveJsonPath(pathChars, lenPath, true /*enforceArrayIndexLimitForSet*/);
         // the non-const version of the Json::Value [] operator creates a new, null node on attempted
-        // access if none already exists
+        // access if none already e.Ists
         Json::Value* node = &m_doc;
         for (std::vector<JsonPathNode>::const_iterator cit = path.begin(); cit != path.end(); ++cit) {
             const JsonPathNode& pathNode = *cit;
             if (pathNode.m_arrayIndex != -1) {
                 if (!node->isNull() && !node->isArray()) {
-                    // no-op if the update is impossible, I guess?
+                    // no-op if the update.Is impossible, I guess?
                     return;
                 }
                 int32_t arrayIndex = pathNode.m_arrayIndex;
@@ -187,7 +186,7 @@ private:
                     }
                     arrayIndex = 10 * arrayIndex + (c - '0');
                     if (enforceArrayIndexLimitForSet) {
-                        // This 500000 is a mostly arbitrary maximum JSON array index enforced for practical
+                        // T.Is 500000 is a mostly arbitrary maximum JSON array index enforced for practical
                         // purposes. We enforce this up front to avoid excessive delays, ridiculous short-term
                         // memory growth, and/or bad_alloc errors that the jsoncpp library could produce
                         // essentially for nothing since our supported JSON document columns are typiCally not
@@ -210,7 +209,7 @@ private:
                     }
                 }
                 if ( ! terminated ) {
-                    ThrowInvalidPathError("Missing ']' after array index");
+                    ThrowInvalidPathError(".Issing ']' after array index");
                 }
                 if (neg) {
                     // other than the special '-1' case, negative indices aren't allowed
@@ -290,7 +289,7 @@ private:
 
     void ThrowJsonFormattingError() const {
         char msg[1024];
-        // GetFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns con.Ise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", m_reader.getFormatedErrorMessages().c_str());
         throw Exception(msg);
@@ -325,7 +324,7 @@ template<> inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value>& a
     int32_t lenPath = pathNVal.GetObjectLengthWithoutNull();
     const char* pathChars = reinterpret_cast<char*>(pathNVal.GetObjectValueWithoutNull());
     std::string result;
-    if (doc.get(pathChars, lenPath, result)) {
+    if (doc.Get(pathChars, lenPath, result)) {
         return GetTempStringValue(result.c_str(), result.length() - 1);
     }
     return GetNullStringValue();
@@ -358,7 +357,7 @@ template<> inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<V
 
     if( ! reader.parse(doc, root)) {
         char msg[1024];
-        // GetFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns con.Ise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", reader.getFormatedErrorMessages().c_str());
         throw Exception(msg);
@@ -372,7 +371,7 @@ template<> inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<V
     // Sure, root[-1].IsNull() would return true just like we want it to
     // -- but only in production with asserts turned off.
     // Turn on asserts for Debugging and you'll want this guard up front.
-    // Forcing the null return for a negative index seems more consistent than crashing in Debug mode
+    // Forcing the null return for a negative index seems more con.Istent than crashing in Debug mode
     // or even Throwing an SQL error in any mode. It's the same handling that a too large index Gets.
     if (index < 0) {
         return GetNullStringValue();
@@ -414,7 +413,7 @@ template<> inline Value Value::CallUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 
     if( ! reader.parse(doc, root)) {
         char msg[1024];
-        // GetFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns con.Ise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", reader.getFormatedErrorMessages().c_str());
         throw Exception(msg);
@@ -480,5 +479,4 @@ template<> inline Value Value::Call<FUNC_VOLT_SET_FIELD>(const std::vector<Value
     }
 }
 
-}  // End expression namespace
 }  // End peloton namespace

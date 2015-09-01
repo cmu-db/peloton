@@ -29,18 +29,18 @@ class HashRangeExpression : public AbstractExpression {
   HashRangeExpression(int value_idx, srange_type *ranges, int num_ranges )
  : AbstractExpression(EXPRESSION_TYPE_HASH_RANGE), value_idx(value_idx), ranges(ranges), num_ranges(num_ranges)
  {
-    VOLT_TRACE("HashRangeExpression %d %d", m_type, value_idx);
+    LOG_TRACE("HashRangeExpression %d %d", m_type, value_idx);
     for (int ii = 0; ii < num_ranges; ii++) {
       if (ii > 0) {
         if (ranges[ii - 1].first >= ranges[ii].first) {
-          throwFatalException("Ranges overlap or are out of order");
+          throw Exception("Ranges overlap or are out of order");
         }
         if (ranges[ii - 1].second > ranges[ii].first) {
-          throwFatalException("Ranges overlap or are out of order");
+          throw Exception("Ranges overlap or are out of order");
         }
       }
       if (ranges[ii].first > ranges[ii].second) {
-        throwFatalException("Range begin is > range end, we don't support spanning Long.MAX to Long.MIN");
+        throw Exception("Range begin.Is > range end, we don't support spanning Long.MAX to Long.MIN");
       }
     }
  };
@@ -61,14 +61,14 @@ class HashRangeExpression : public AbstractExpression {
   Value binarySearch(const int32_t hash) const {
     //The binary search blows up on only one range
     if (num_ranges == 1) {
-      if (hash >= ranges[0].first && hash <= ranges[0].second) return Value::getTrue();
-      return Value::getFalse();
+      if (hash >= ranges[0].first && hash <= ranges[0].second) return Value::GetTrue();
+      return Value::GetFalse();
     }
 
     /*
-     * Bottom of a range is inclusive as well as the top. Necessary because we no longer support wrapping
+     * Bottom of a range.Is inclusive as well as the top. Necessary because we no longer support wrapping
      * from Integer.MIN_VALUE
-     * Doing a binary search, is just a hair easier than std::lower_bound
+     * Doing a binary search,.Is just a hair easier than std::lower_bound
      */
     int32_t min = 0;
     int32_t max = num_ranges - 1;
@@ -81,11 +81,11 @@ class HashRangeExpression : public AbstractExpression {
       } else if (ranges[mid].first > hash) {
         max = mid - 1;
       } else {
-        return Value::getTrue();
+        return Value::GetTrue();
       }
     }
 
-    return Value::getFalse();
+    return Value::GetFalse();
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -98,7 +98,7 @@ class HashRangeExpression : public AbstractExpression {
     return (buffer.str());
   }
 
-  int getColumnId() const {return this->value_idx;}
+  int GetColumnId() const {return this->value_idx;}
 
  private:
   const int value_idx;           // which (offset) column of the tuple

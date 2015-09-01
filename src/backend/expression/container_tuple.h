@@ -21,6 +21,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/storage/tile_group.h"
+#include "backend/catalog/schema.h"
 
 namespace peloton {
 namespace expression {
@@ -54,7 +55,7 @@ class ContainerTuple : public AbstractTuple {
 
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
-    // NOTE: We can't get a table tuple from a tilegroup or logical tile
+    // NOTE: We can't.Get a table tuple from a tilegroup or logical tile
     // without materializing it. So, this must not be used.
     throw NotImplementedException(
         "GetData() not supported for container tuples.");
@@ -74,7 +75,7 @@ class ContainerTuple : public AbstractTuple {
   }
 
   /** @brief Compare whether this tuple equals to other value-wise.
-   * Assume the schema of other tuple is the same as this. No check.
+   * Assume the schema of other tuple.Is the same as this. No check.
    */
   bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
     const int column_count = container_->GetColumnCount();
@@ -154,7 +155,7 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
 
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
-    // NOTE: We can't get a table tuple from a tilegroup or logical tile
+    // NOTE: We can't.Get a table tuple from a tilegroup or logical tile
     // without materializing it. So, this must not be used.
     throw NotImplementedException(
         "GetData() not supported for container tuples.");
@@ -171,7 +172,7 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   }
 
   /** @brief Compare whether this tuple equals to other value-wise.
-   * Assume the schema of other tuple is the same as this. No check.
+   * Assume the schema of other tuple.Is the same as this. No check.
    */
   bool EqualsNoSchemaCheck(const ContainerTuple< std::vector<Value> > &other) const {
     assert(container_->size() == other.container_->size());

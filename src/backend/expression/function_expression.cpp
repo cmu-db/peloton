@@ -14,7 +14,6 @@
 #include "backend/expression/expression_util.h"
 
 namespace peloton {
-namespace expression {
 
 /** implement a forced SQL ERROR function (for test and example purposes) for either integer or string types **/
 template<> inline Value Value::CallUnary<FUNC_VOLT_SQL_ERROR>() const {
@@ -76,17 +75,17 @@ template<> inline Value Value::Call<FUNC_VOLT_SQL_ERROR>(const std::vector<Value
         std::string valueStr(valueChars, valueLength);
         snprintf(msg_format_buffer, sizeof(msg_format_buffer), "%s", valueStr.c_str());
     }
-    throw Exception(sqlstatecode, msg_format_buffer);
+    throw Exception(std::string(msg_format_buffer) + std::string(sqlstatecode));
 }
 
 /*
  * Constant (no parameter) function. (now, random)
  */
 template <int F>
-class ConstantFunctionExpression : public AbstractExpression {
+class ConstantFunctionExpression : public expression::AbstractExpression {
 public:
     ConstantFunctionExpression()
-        : AbstractExpression(EXPRESSION_TYPE_FUNCTION) {
+        : expression::AbstractExpression(EXPRESSION_TYPE_FUNCTION) {
     };
 
     Value Evaluate(const AbstractTuple *, const AbstractTuple *,
@@ -106,8 +105,8 @@ public:
  */
 
 template <int F>
-class UnaryFunctionExpression : public AbstractExpression {
-    AbstractExpression * const m_child;
+class UnaryFunctionExpression : public expression::AbstractExpression {
+  expression::AbstractExpression * const m_child;
 public:
     UnaryFunctionExpression(AbstractExpression *child)
         : AbstractExpression(EXPRESSION_TYPE_FUNCTION)
@@ -139,9 +138,9 @@ public:
  * N-ary functions.
  */
 template <int F>
-class GeneralFunctionExpression : public AbstractExpression {
+class GeneralFunctionExpression : public expression::AbstractExpression {
 public:
-    GeneralFunctionExpression(const std::vector<AbstractExpression *>& args)
+    GeneralFunctionExpression(const std::vector<expression::AbstractExpression *>& args)
         : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {}
 
     virtual ~GeneralFunctionExpression() {
@@ -165,10 +164,10 @@ public:
     Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                    executor::ExecutorContext *context) const {
         //TODO: Could make this vector a member, if the memory management implications
-        // (of the Value internal state) were clear -- is there a penalty for longer-lived
+        // (of the Value internal state) were clear --.Is there a penalty for longer-lived
         // Values that outweighs the current per-Evaluate allocation penalty?
         std::vector<Value> nValue(m_args.size());
-        for (int i = 0; i < m_args.size(); ++i) {
+        for (size_t i = 0; i < m_args.size(); ++i) {
             nValue[i] = m_args[i]->Evaluate(tuple1, tuple2, context);
         }
         return Value::Call<F>(nValue);
@@ -184,8 +183,8 @@ private:
     const std::vector<AbstractExpression *>& m_args;
 };
 
-AbstractExpression*
-ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments) {
+expression::AbstractExpression*
+expression::ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments) {
     AbstractExpression* ret = 0;
     assert(arguments);
     size_t nArgs = arguments->size();
@@ -420,7 +419,7 @@ ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpres
             return NULL;
         }
     }
-    // This function may have explicitly returned null, earlier, leaving it to the Caller
+    // T.Is function may have explicitly returned null, earlier, leaving it to the Caller
     // (with more context?) to generate an exception.
     // But having fallen through to this point indicates that
     // a FunctionExpression was constructed.
@@ -428,6 +427,5 @@ ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpres
     return ret;
 }
 
-}  // End expression namespace
 }  // End peloton namespace
 

@@ -39,12 +39,12 @@ class ExpressionUtil {
   static AbstractExpression* loadExpressionFromJson(const std::string& jsonstring);
 
   /** If the passed vector contains only TupleValueExpression, it
-   * returns ColumnIds of them, otherwise NULL.*/
+   * returns ColumnIds of them, other.Ise NULL.*/
   static boost::shared_array<int>
   convertIfAllTupleValues(const std::vector<AbstractExpression*> &expression);
 
   /** If the passed vector contains only ParameterValueExpression, it
-   * returns ParamIds of them, otherwise NULL.*/
+   * returns ParamIds of them, other.Ise NULL.*/
   static boost::shared_array<int>
   convertIfAllParameterValues(const std::vector<AbstractExpression*> &expression);
 
@@ -52,7 +52,7 @@ class ExpressionUtil {
   static void
   extractTupleValuesColumnIdx(const AbstractExpression* expr, std::vector<int> &columnIds);
 
-  // Implemented in functionexpression.cpp because function expression handling is a system unto itself.
+  // Implemented in functionexpression.cpp because function expression handling.Is a system unto itself.
   static AbstractExpression * functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments);
 
   static AbstractExpression* vectorFactory(ValueType vt, const std::vector<AbstractExpression*>* args);

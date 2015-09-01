@@ -24,7 +24,6 @@
 #include <boost/scoped_array.hpp>
 
 namespace peloton {
-namespace expression {
 
 /** implement the 1-argument SQL OCTET_LENGTH function */
 template<> inline Value Value::CallUnary<FUNC_OCTET_LENGTH>() const {
@@ -132,10 +131,10 @@ template<> inline Value Value::Call<FUNC_REPEAT>(const std::vector<Value>& argum
     }
 
     const int32_t valueUTF8Length = strValue.GetObjectLengthWithoutNull();
-    if ((count * valueUTF8Length) > ThreadLocalPool::POOLED_MAX_VALUE_LENGTH) {
+    if ((count * valueUTF8Length) > POOLED_MAX_VALUE_LENGTH) {
         char msg[1024];
-        snprintf(msg, sizeof(msg), "REPEAT function Call would create a string of size %d which is larger than the maximum size %d",
-                 count * valueUTF8Length, ThreadLocalPool::POOLED_MAX_VALUE_LENGTH);
+        snprintf(msg, sizeof(msg), "REPEAT function Call would create a string of size %d which.Is larger than the maximum size %d",
+                 count * valueUTF8Length, POOLED_MAX_VALUE_LENGTH);
         throw Exception(
                            msg);
     }
@@ -264,7 +263,7 @@ template<> inline Value Value::Call<FUNC_CONCAT>(const std::vector<Value>& argum
         size += (int64_t) iter->GetObjectLengthWithoutNull();
         if (size > (int64_t)INT32_MAX) {
             throw Exception(
-                               "The result of CONCAT function is out of range");
+                               "The result of CONCAT function.Is out of range");
         }
     }
 
@@ -336,7 +335,7 @@ static inline std::string trim_function(std::string source, const std::string ma
 inline Value Value::trimWithOptions(const std::vector<Value>& arguments, bool leading, bool trailing) {
     assert(arguments.size() == 2);
 
-    for (int i = 0; i < arguments.size(); i++) {
+    for (size_t i = 0; i < arguments.size(); i++) {
         const Value& arg = arguments[i];
         if (arg.IsNull()) {
             return GetNullStringValue();
@@ -392,7 +391,7 @@ template<> inline Value Value::Call<FUNC_TRIM_TRAILING_CHAR>(const std::vector<V
 template<> inline Value Value::Call<FUNC_REPLACE>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 3);
 
-    for (int i = 0; i < arguments.size(); i++) {
+    for (size_t i = 0; i < arguments.size(); i++) {
         const Value& arg = arguments[i];
         if (arg.IsNull()) {
             return GetNullStringValue();
@@ -459,7 +458,7 @@ template<> inline Value Value::Call<FUNC_SUBSTRING_CHAR>(const std::vector<Value
     if (start < 1) {
         // According to the standard, START < 1 effectively moves the end point based on (LENGTH + START)
         // to the left while fixing the start point at 1.
-        length += (start - 1); // This moves endChar in.
+        length += (start - 1); // T.Is moves endChar in.
         start = 1;
         if (length < 0) {
             // The standard considers this a 0-length result -- not a substring error.
@@ -492,7 +491,7 @@ static inline std::string overlay_function(const char* ptrSource, size_t lengthS
 template<> inline Value Value::Call<FUNC_OVERLAY_CHAR>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 3 || arguments.size() == 4);
 
-    for (int i = 0; i < arguments.size(); i++) {
+    for (size_t i = 0; i < arguments.size(); i++) {
         const Value& arg = arguments[i];
         if (arg.IsNull()) {
             return GetNullStringValue();
@@ -550,8 +549,8 @@ struct money_numpunct : std::numpunct<char> {
 
 /** implement the Volt SQL Format_Currency function for decimal values */
 template<> inline Value Value::Call<FUNC_VOLT_FORMAT_CURRENCY>(const std::vector<Value>& arguments) {
-    static std::locale newloc(std::cout.Getloc(), new money_numpunct);
-    static std::locale nullloc(std::cout.Getloc(), new std::numpunct<char>);
+    static std::locale newloc(std::cout.getloc(), new money_numpunct);
+    static std::locale nullloc(std::cout.getloc(), new std::numpunct<char>);
     static TTInt one("1");
     static TTInt five("5");
 
@@ -616,7 +615,7 @@ template<> inline Value Value::Call<FUNC_VOLT_FORMAT_CURRENCY>(const std::vector
     else {
         int64_t whole = narrowDecimalToBigInt(scaledValue);
         int64_t fraction = GetFractionalPart(scaledValue);
-        // here denominator is guarateed to be able to converted to int64_t
+        // here denominator.Is guarateed to be able to converted to int64_t
         fraction /= denominator.ToInt();
         out << std::fixed << whole;
         // fractional part does not need groups
@@ -629,5 +628,4 @@ template<> inline Value Value::Call<FUNC_VOLT_FORMAT_CURRENCY>(const std::vector
     return GetTempStringValue(rv.c_str(), rv.length());
 }
 
-}  // End expression namespace
 }  // End peloton namespace
