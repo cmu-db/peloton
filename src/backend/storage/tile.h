@@ -155,9 +155,9 @@ class Tile {
   bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
                          int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInput &serialize_in,
+  void DeserializeTuplesFrom(SerializeInputBE &serialize_in,
                              VarlenPool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
+  void DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
                                           VarlenPool *pool = nullptr);
 
   VarlenPool *GetPool() { return (pool); }

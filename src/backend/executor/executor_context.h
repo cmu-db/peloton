@@ -42,7 +42,7 @@ class ExecutorContext {
 
   ~ExecutorContext(){
     for(int i=0; i < params_.GetSize(); i++){
-      params_[i].FreeUninlinedData();
+      params_[i].Free();
     }
   }
 
