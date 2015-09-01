@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// comparison_expression.h
+// compa.Ison_expression.h
 //
-// Identification: src/backend/expression/comparison_expression.h
+// Identification: src/backend/expression/compa.Ison_expression.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -26,17 +26,17 @@ namespace peloton {
 namespace expression {
 
 // Each of these OP classes implements a standard static function interface
-// for a different comparison operator assumed to apply to two non-null-valued
+// for a different compa.Ison operator assumed to apply to two non-null-valued
 // Values.
 // "compare_withoutNull" delegates to an Value method implementing the specific
-// comparison and returns either a true or false boolean Value.
+// compa.Ison and returns either a true or false boolean Value.
 // "implies_true_for_row" returns true if a prior true return from compare_withoutNull
-// applied to a row's prefix column implies a true result for the row comparison.
-// This may require a recheck for strict inequality.
+// applied to a row's prefix column implies a true result for the row compa.Ison.
+// T.Is may require a recheck for strict inequality.
 // "implies_false_for_row" returns true if a prior false return from compare_withoutNull
-// applied to a row's prefix column implies a false result for the row comparison.
-// This may require a recheck for strict inequality.
-// "includes_equality" returns true if the comparison is true for (rows of) equal values.
+// applied to a row's prefix column implies a false result for the row compa.Ison.
+// T.Is may require a recheck for strict inequality.
+// "includes_equality" returns true if the compa.Ison is true for (rows of) equal values.
 
 class CmpEq {
 public:
@@ -67,7 +67,7 @@ public:
     { return l.op_lessThan_withoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_false_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).isTrue(); }
+    { return l.op_notEquals_withoutNull(r).IsTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
 };
@@ -79,7 +79,7 @@ public:
     { return l.op_greaterThan_withoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_false_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).isTrue(); }
+    { return l.op_notEquals_withoutNull(r).IsTrue(); }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return false; }
 };
@@ -90,7 +90,7 @@ public:
     inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_lessThanOrEqual_withoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).isTrue(); }
+    { return l.op_notEquals_withoutNull(r).IsTrue(); }
     inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
@@ -102,15 +102,15 @@ public:
     inline static Value compare_withoutNull(const Value& l, const Value& r)
     { return l.op_greaterThanOrEqual_withoutNull(r);}
     inline static bool implies_true_for_row(const Value& l, const Value& r)
-    { return l.op_notEquals_withoutNull(r).isTrue(); }
+    { return l.op_notEquals_withoutNull(r).IsTrue(); }
     inline static bool implies_false_for_row(const Value& l, const Value& r) { return true; }
     inline static bool implies_null_for_row() { return true; }
     inline static bool includes_equality() { return true; }
 };
 
 // CmpLike and CmpIn are slightly special in that they can never be
-// instantiated in a row comparison context -- even "(a, b) IN (subquery)" is
-// decomposed into column-wise equality comparisons "(a, b) = ANY (subquery)".
+// instantiated in a row compa.Ison context -- even "(a, b) IN (subquery)" is
+// decomposed into column-.Ise equality comparisons "(a, b) = ANY (subquery)".
 class CmpLike {
 public:
     inline static const char* op_name() { return "CmpLike"; }
@@ -121,13 +121,13 @@ class CmpIn {
 public:
     inline static const char* op_name() { return "CmpIn"; }
     inline static Value compare_withoutNull(const Value& l, const Value& r)
-    { return l.inList(r) ? Value::getTrue() : Value::getFalse(); }
+    { return l.in.Ist(r) ? Value::GetTrue() : Value::getFalse(); }
 };
 
 template <typename OP>
-class ComparisonExpression : public AbstractExpression {
+class Compa.IsonExpression : public AbstractExpression {
 public:
-    ComparisonExpression(ExpressionType type,
+    Compa.IsonExpression(ExpressionType type,
                                   AbstractExpression *left,
                                   AbstractExpression *right)
         : AbstractExpression(type, left, right)
@@ -148,21 +148,21 @@ public:
         assert(m_right != NULL);
 
         Value lnv = m_left->Evaluate(tuple1, tuple2);
-        if (lnv.isNull()) {
-            return Value::getNullValue(VALUE_TYPE_BOOLEAN);
+        if (lnv.IsNull()) {
+            return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
         }
 
         Value rnv = m_right->Evaluate(tuple1, tuple2);
-        if (rnv.isNull()) {
-            return Value::getNullValue(VALUE_TYPE_BOOLEAN);
+        if (rnv.IsNull()) {
+            return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
         }
 
-        // comparisons with null or NaN are always false
-        // [This code is commented out because doing the right thing breaks voltdb atm.
+        // compa.Isons with null or NaN are always false
+        // [T.Is code is commented out because doing the right thing breaks voltdb atm.
         // We need to re-enable after we can verify that all plans in all configs give the
         // same answer.]
-        /*if (lnv.isNull() || lnv.isNaN() || rnv.isNull() || rnv.isNaN()) {
-            return Value::getFalse();
+        /*if (lnv.IsNull() || lnv.isNaN() || rnv.isNull() || rnv.isNaN()) {
+            return Value::GetFalse();
         }*/
 
         return OP::compare_withoutNull(lnv, rnv);
@@ -172,17 +172,17 @@ public:
     {
         Value lnv;
         Value rnv;
-        return  (((lnv = m_left->Evaluate(tuple1, tuple2)).isNull() ||
-                  (rnv = m_right->Evaluate(tuple1, tuple2)).isNull()) ?
+        return  (((lnv = m_left->Evaluate(tuple1, tuple2)).IsNull() ||
+                  (rnv = m_right->Evaluate(tuple1, tuple2)).IsNull()) ?
                  "NULL" :
                  (OP::compare_withoutNull(lnv,
-                                          rnv).isTrue() ?
+                                          rnv).IsTrue() ?
                   "TRUE" :
                   "FALSE"));
     }
 
     std::string DebugInfo(const std::string &spacer) const {
-        return (spacer + "ComparisonExpression\n");
+        return (spacer + "Compa.IsonExpression\n");
     }
 
 private:
@@ -191,12 +191,12 @@ private:
 };
 
 template <typename C, typename L, typename R>
-class InlinedComparisonExpression : public ComparisonExpression<C> {
+class InlinedCompa.IsonExpression : public ComparisonExpression<C> {
 public:
-    InlinedComparisonExpression(ExpressionType type,
+    InlinedCompa.IsonExpression(ExpressionType type,
                                          AbstractExpression *left,
                                          AbstractExpression *right)
-        : ComparisonExpression<C>(type, left, right)
+        : Compa.IsonExpression<C>(type, left, right)
     {}
 };
 

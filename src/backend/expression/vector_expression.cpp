@@ -18,17 +18,17 @@ namespace peloton {
 namespace expression {
 
 /*
- * Expression for collecting the various elements of an "IN LIST" for passing to the IN comparison
+ * Expression for collecting the various elements of an "IN LIST" for passing to the IN compa.Ison
  * operator as a single ARRAY-valued Value.
- * It is always the rhs of an IN expression like "col IN (0, -1, ?)", especially useful when the
- * IN filter is not index-optimized and when the list element expression are not all constants.
+ * Ithis always the rhs of an IN expression like "col IN (0, -1, ?)", especially useful when the
+ * IN filter.Is not index-optimized and when the list element expression are not all constants.
  */
 class VectorExpression : public AbstractExpression {
 public:
     VectorExpression(ValueType elementType, const std::vector<AbstractExpression *>& arguments)
         : AbstractExpression(EXPRESSION_TYPE_VALUE_VECTOR), m_args(arguments)
     {
-        m_inList = ValueFactory::getArrayValueFromSizeAndType(arguments.size(), elementType);
+        m_in.Ist = ValueFactory::GetArrayValueFromSizeAndType(arguments.size(), elementType);
     }
 
     virtual ~VectorExpression()
@@ -38,31 +38,32 @@ public:
             delete m_args[i];
         }
         delete &m_args;
-        m_inList.free();
+        m_in.Ist.Free();
     }
 
-    virtual bool hasParameter() const
+    virtual bool HasParameter() const
     {
         for (size_t i = 0; i < m_args.size(); i++) {
             assert(m_args[i]);
-            if (m_args[i]->hasParameter()) {
+            if (m_args[i]->HasParameter()) {
                 return true;
             }
         }
         return false;
     }
 
-    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const
     {
         //TODO: Could make this vector a member, if the memory management implications
-        // (of the Value internal state) were clear -- is there a penalty for longer-lived
+        // (of the Value internal state) were clear --.Is there a penalty for longer-lived
         // Values that outweighs the current per-Evaluate allocation penalty?
         std::vector<Value> nValues(m_args.size());
-        for (int i = 0; i < m_args.size(); ++i) {
-            nValues[i] = m_args[i]->Evaluate(tuple1, tuple2);
+        for (size_t i = 0; i < m_args.size(); ++i) {
+            nValues[i] = m_args[i]->Evaluate(tuple1, tuple2, context);
         }
-        m_inList.setArrayElements(nValues);
-        return m_inList;
+        m_in.Ist.SetArrayElements(nValues);
+        return m_in.Ist;
     }
 
     std::string DebugInfo(const std::string &spacer) const
@@ -72,7 +73,7 @@ public:
 
 private:
     const std::vector<AbstractExpression *>& m_args;
-    Value m_inList;
+    Value m_in.Ist;
 };
 
 AbstractExpression*

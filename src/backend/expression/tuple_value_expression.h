@@ -26,7 +26,7 @@ class TupleValueExpression : public AbstractExpression {
     TupleValueExpression(const int tableIdx, const int valueIdx)
         : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE), tuple_idx(tableIdx), value_idx(valueIdx)
     {
-        VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
+        LOG_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
     virtual Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
@@ -37,7 +37,7 @@ class TupleValueExpression : public AbstractExpression {
                                               "Evaluate:"
                                               " Couldn't find tuple 1 (possible index scan planning error)");
             }
-            return tuple1->getValue(value_idx);
+            return tuple1->GetValue(value_idx);
         }
         else {
             assert(tuple2);
@@ -46,7 +46,7 @@ class TupleValueExpression : public AbstractExpression {
                                               "Evaluate:"
                                               " Couldn't find tuple 2 (possible index scan planning error)");
             }
-            return tuple2->getValue(value_idx);
+            return tuple2->GetValue(value_idx);
         }
     }
 
@@ -56,7 +56,7 @@ class TupleValueExpression : public AbstractExpression {
         return (buffer.str());
     }
 
-    int getColumnId() const {return this->value_idx;}
+    int GetColumnId() const {return this->value_idx;}
 
   protected:
 

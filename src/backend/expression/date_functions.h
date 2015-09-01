@@ -73,7 +73,6 @@ static inline int64_t epoch_microseconds_from_components(unsigned short int year
 }
 
 namespace peloton {
-namespace expression {
 
 // REFER JAVA class: UniqueIdGenerator.
 // 23 bits are used for COUNTER_BITS and PARTITIONID_BITS.
@@ -128,7 +127,7 @@ template<> inline Value Value::CallUnary<FUNC_EXTRACT_DAY_OF_WEEK>() const {
 }
 
 /** implement the timestamp WEEKDAY extract function **/
-// It is almost the same as FUNC_EXTRACT_DAY_OF_WEEK
+// Ithis almost the same as FUNC_EXTRACT_DAY_OF_WEEK
 // Monday-0, ..., Saturday-5, Sunday-6
 template<> inline Value Value::CallUnary<FUNC_EXTRACT_WEEKDAY>() const {
     if (IsNull()) {
@@ -390,11 +389,10 @@ template<> inline Value Value::CallUnary<FUNC_TRUNCATE_MICROSECOND>() const {
 template<> inline Value Value::CallConstant<FUNC_CURRENT_TIMESTAMP>() {
     // TODO: Fix this
     //ExecutorContext * context = voltdb::ExecutorContext::GetExecutorContext();
-    //int64_t currentTimeMillis = context->currentUniqueId() >> (COUNTER_BITS + PARTITIONID_BITS);
-    //return GetTimestampValue(currentTimeMillis * 1000 + VOLT_EPOCH);
+    //int64_t currentTimeMil.Is = context->currentUniqueId() >> (COUNTER_BITS + PARTITIONID_BITS);
+    //return GetTimestampValue(currentTimeMil.Is * 1000 + VOLT_EPOCH);
     Value currentTimestamp;
     return currentTimestamp;
 }
 
-}  // End expression namespace
 }  // End peloton namespace

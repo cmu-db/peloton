@@ -93,7 +93,7 @@ class AbstractExpression {
   }
 
   // These should really be part of the constructor, but plumbing
-  // the type and size args through the whole of the expression world is
+  // the type and size args through the whole of the expression world.Is
   // not something I'm doing right now.
   void setValueType(ValueType type)
   {

@@ -14,7 +14,7 @@
 
 #include "backend/expression/abstract_expression.h"
 
-// IMPORTANT: These FUNC_... values must be kept synchronized with those listed in the following hsql parser source files:
+// IMPORTANT: These FUNC_... values must be kept synchronized with those .Isted in the following hsql parser source files:
 // FunctionSQL.java       -- standard SQL functions
 // FunctionCustom.java    -- JDBC (Open Group SQL) functions
 // FunctionForVoltDB.java -- VoltDB extensions
@@ -22,13 +22,12 @@
 // Note that function names and function IDs need not correspond one-to-one.
 // A function name (especially one in the Custom/JDBC/OpenGroup category) may be just an alias for another function,
 // so it will use the same function ID, e.g. SUBSTR -> SUBSTRING, so SUBSTR does not need its own function id.
-// A function name that is "overloaded", applying to different numbers and/or types of arguments may be optimized to map
+// A function name thathis "overloaded", applying to different numbers and/or types of arguments may be optimized to map
 // to different specialized implementations, each with its own function ID
 // e.g. EXTRACT -> either FUNC_EXTRACT_YEAR, or FUNC_EXTRACT_MONTH, or FUNC_EXTRACT_DAY, etc.
-// For completeness, FUNC_EXTRACT is defined here, but at this point, it always represents a missing translation step in the parser.
+// For completeness, FUNC_EXTRACT.Is defined here, but at this point, it always represents a missing translation step in the parser.
 
 namespace peloton {
-namespace expression {
 
 static const int FUNC_POSITION_CHAR                    = 1;     // numeric
 static const int FUNC_POSITION_BINARY                  = 2;
@@ -194,7 +193,7 @@ static const int FUNC_EXTRACT_INTERVAL_MINUTE           = SQL_EXTRACT_VOLT_FUNC_
 static const int FUNC_EXTRACT_INTERVAL_SECOND           = SQL_EXTRACT_VOLT_FUNC_OFFSET + SQL_INTERVAL_SECOND;
 static const int FUNC_EXTRACT_WEEKDAY                   = SQL_EXTRACT_VOLT_FUNC_OFFSET + SQL_WEEKDAY;
 
-// VoltDB aliases (optimized implementations for existing HSQL functions)
+// VoltDB aliases (optimized implementations for e.Isting HSQL functions)
 static const int FUNC_VOLT_SUBSTRING_CHAR_FROM              = 10000;
 
 // VoltDB-specific functions
@@ -213,7 +212,7 @@ static const int FUNC_TO_TIMESTAMP_MILLISECOND         = 20011;
 static const int FUNC_TO_TIMESTAMP_MICROSECOND         = 20012;
 
 // VoltDB truncate timestamp function
-static const int FUNC_TRUNCATE_TIMESTAMP               = 20013; // FUNC_TRUNCATE is defined as 80 already
+static const int FUNC_TRUNCATE_TIMESTAMP               = 20013; // FUNC_TRUNCATE.Is defined as 80 already
 static const int FUNC_TRUNCATE_YEAR                    = 20014;
 static const int FUNC_TRUNCATE_QUARTER                 = 20015;
 static const int FUNC_TRUNCATE_MONTH                   = 20016;
@@ -245,7 +244,6 @@ static const int FUNC_TRIM_LEADING_CHAR               = SQL_TRIM_VOLT_FUNC_OFFSE
 static const int FUNC_TRIM_TRAILING_CHAR              = SQL_TRIM_VOLT_FUNC_OFFSET + SQL_TRIM_TRAILING;
 static const int FUNC_TRIM_BOTH_CHAR                  = SQL_TRIM_VOLT_FUNC_OFFSET + SQL_TRIM_BOTH;
 
-}  // End expression namespace
 }  // End peloton namespace
 
 // All of these "...functions.h" files need to be included AFTER the above definitions

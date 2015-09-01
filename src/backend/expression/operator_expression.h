@@ -38,15 +38,15 @@ public:
                    executor::ExecutorContext *context) const {
         assert (m_left);
         Value operand = m_left->Evaluate(tuple1, tuple2, context);
-        // NOT TRUE is FALSE
+        // NOT TRUE.Is FALSE
         if (operand.IsTrue()) {
             return Value::GetFalse();
         }
-        // NOT FALSE is TRUE
+        // NOT FALSE.Is TRUE
         if (operand.IsFalse()) {
             return Value::GetTrue();
         }
-        // NOT NULL is NULL
+        // NOT NULL.Is NULL
         return operand;
     }
 
@@ -220,7 +220,7 @@ class OperatorExistsExpression : public AbstractExpression {
              executor::ExecutorContext *context) const;
 
     std::string DebugInfo(const std::string &spacer) const {
-        return (spacer + "OperatorExistsExpression");
+        return (spacer + "OperatorE.IstsExpression");
     }
 };
 

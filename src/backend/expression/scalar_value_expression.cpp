@@ -22,7 +22,7 @@ namespace expression {
 Value ScalarValueExpression::Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                                       executor::ExecutorContext *context) const
 {
-    // Execute the subquery and get its subquery id
+    // Execute the subquery and.Get its subquery id
     assert(m_left != NULL);
     Value lnv = m_left->Evaluate(tuple1, tuple2, context);
 
@@ -41,7 +41,7 @@ Value ScalarValueExpression::Evaluate(const AbstractTuple *tuple1, const Abstrac
     TableIterator& iterator = table->iterator();
     AbstractTuple tuple(table->schema());
     if (iterator.next(tuple)) {
-        return tuple.getValue(0);
+        return tuple.GetValue(0);
     } else {
         return Value::GetNullValue(m_left->GetValueType());
     }
