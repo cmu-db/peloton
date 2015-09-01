@@ -18,8 +18,8 @@
 #include <sstream>
 #include <algorithm>
 
-#include <jsoncpp/jsoncpp.h>
-#include <jsoncpp/jsoncpp-forwards.h>
+#include "jsoncpp/jsoncpp.h"
+#include "jsoncpp/jsoncpp-forwards.h"
 
 namespace peloton {
 namespace expression {
@@ -44,18 +44,18 @@ public:
             m_doc = Json::Value::null;
         } else if (!m_reader.parse(docChars, docChars + lenDoc, m_doc)) {
             // we have something real, but it isn't JSON
-            throwJsonFormattingError();
+            ThrowJsonFormattingError();
         }
     }
 
     std::string value() { return m_writer.write(m_doc); }
 
-    bool get(const char* pathChars, int32_t lenPath, std::string& serializedValue) {
+    bool Get(const char* pathChars, int32_t lenPath, std::string& serializedValue) {
         if (m_doc.isNull()) {
             return false;
         }
 
-        // get and traverse the path
+        // Get and traverse the path
         std::vector<JsonPathNode> path = resolveJsonPath(pathChars, lenPath);
         const Json::Value* node = &m_doc;
         for (std::vector<JsonPathNode>::const_iterator cit = path.begin(); cit != path.end(); ++cit) {
@@ -104,7 +104,7 @@ public:
         if (lenValue <= 0) {
             value = Json::Value::null;
         } else if (!m_reader.parse(valueChars, valueChars + lenValue, value)) {
-            throwJsonFormattingError();
+            ThrowJsonFormattingError();
         }
 
         std::vector<JsonPathNode> path = resolveJsonPath(pathChars, lenPath, true /*enforceArrayIndexLimitForSet*/);
@@ -122,7 +122,7 @@ public:
                 if (arrayIndex == ARRAY_TAIL) {
                     arrayIndex = node->size();
                 }
-                // get or create the specified node
+                // Get or create the specified node
                 node = &((*node)[arrayIndex]);
             } else {
                 if (!node->isNull() && !node->isObject()) {
@@ -169,11 +169,11 @@ private:
                 if (c == '-') {
                     neg = true;
                     if (!readChar(c)) {
-                        throwInvalidPathError("Unexpected termination (unterminated array access)");
+                        ThrowInvalidPathError("Unexpected termination (unterminated array access)");
                     }
                 }
                 if (c < '0' || c > '9') {
-                    throwInvalidPathError("Unexpected character in array index");
+                    ThrowInvalidPathError("Unexpected character in array index");
                 }
                 // atoi while advancing our pointer
                 int64_t arrayIndex = c - '0';
@@ -183,46 +183,46 @@ private:
                         terminated = true;
                         break;
                     } else if (c < '0' || c > '9') {
-                        throwInvalidPathError("Unexpected character in array index");
+                        ThrowInvalidPathError("Unexpected character in array index");
                     }
                     arrayIndex = 10 * arrayIndex + (c - '0');
                     if (enforceArrayIndexLimitForSet) {
                         // This 500000 is a mostly arbitrary maximum JSON array index enforced for practical
                         // purposes. We enforce this up front to avoid excessive delays, ridiculous short-term
                         // memory growth, and/or bad_alloc errors that the jsoncpp library could produce
-                        // essentially for nothing since our supported JSON document columns are typically not
+                        // essentially for nothing since our supported JSON document columns are typiCally not
                         // wide enough to hold the string representations of arrays this large.
                         if (arrayIndex > 500000) {
                             if (neg) {
                                 // other than the special '-1' case, negative indices aren't allowed
-                                throwInvalidPathError("Array index less than -1");
+                                ThrowInvalidPathError("Array index less than -1");
                             }
-                            throwInvalidPathError("Array index greater than the maximum allowed value of 500000");
+                            ThrowInvalidPathError("Array index greater than the maximum allowed value of 500000");
                         }
                     } else {
                         if (arrayIndex > static_cast<int64_t>(INT32_MAX)) {
                             if (neg) {
                                 // other than the special '-1' case, negative indices aren't allowed
-                                throwInvalidPathError("Array index less than -1");
+                                ThrowInvalidPathError("Array index less than -1");
                             }
-                            throwInvalidPathError("Array index greater than the maximum integer value");
+                            ThrowInvalidPathError("Array index greater than the maximum integer value");
                         }
                     }
                 }
                 if ( ! terminated ) {
-                    throwInvalidPathError("Missing ']' after array index");
+                    ThrowInvalidPathError("Missing ']' after array index");
                 }
                 if (neg) {
                     // other than the special '-1' case, negative indices aren't allowed
                     if (arrayIndex != 1) {
-                        throwInvalidPathError("Array index less than -1");
+                        ThrowInvalidPathError("Array index less than -1");
                     }
                     arrayIndex = ARRAY_TAIL;
                 }
                 path.push_back(static_cast<int32_t>(arrayIndex));
                 expectArrayIndex = false;
             } else if (c == '[') {
-                // handle the case of empty field names. for example, getting the first element of the array
+                // handle the case of empty field names. for example, Getting the first element of the array
                 // in { "a": { "": [ true, false ] } } would be the path 'a.[0]'
                 if (expectField) {
                     path.push_back(JsonPathNode(""));
@@ -242,7 +242,7 @@ private:
                 do {
                     if (c == '\\') {
                         if (!readChar(c) || (c != '[' && c != ']' && c != '.' && c != '\\')) {
-                            throwInvalidPathError("Unescaped backslash (double escaping required for path)");
+                            ThrowInvalidPathError("Unescaped backslash (double escaping required for path)");
                         }
                     } else if (c == '.') {
                         expectField = true;
@@ -260,7 +260,7 @@ private:
         }
         // trailing '['
         if (expectArrayIndex) {
-            throwInvalidPathError("Unexpected termination (unterminated array access)");
+            ThrowInvalidPathError("Unexpected termination (unterminated array access)");
         }
         // if we're either empty or ended on a trailing '.', add an empty field name
         if (expectField || first) {
@@ -282,137 +282,131 @@ private:
         return true;
     }
 
-    void throwInvalidPathError(const char* err) const {
+    void ThrowInvalidPathError(const char* err) const {
         char msg[1024];
         snprintf(msg, sizeof(msg), "Invalid JSON path: %s [position %d]", err, m_pos);
-        throw SQLException(SQLException::
-                           data_exception_invalid_parameter,
-                           msg);
+        throw Exception(msg);
     }
 
-    void throwJsonFormattingError() const {
+    void ThrowJsonFormattingError() const {
         char msg[1024];
-        // getFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns concise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", m_reader.getFormatedErrorMessages().c_str());
-        throw SQLException(SQLException::
-                           data_exception_invalid_parameter,
-                           msg);
+        throw Exception(msg);
     }
 };
 
 /** implement the 2-argument SQL FIELD function */
-template<> inline Value Value::call<FUNC_VOLT_FIELD>(const std::vector<Value>& arguments) {
+template<> inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
 
     const Value& docNVal = arguments[0];
     const Value& pathNVal = arguments[1];
 
-    if (docNVal.isNull()) {
+    if (docNVal.IsNull()) {
         return docNVal;
     }
-    if (pathNVal.isNull()) {
-        throw SQLException(SQLException::data_exception_invalid_parameter, "Invalid FIELD path argument (SQL null)");
+    if (pathNVal.IsNull()) {
+        throw Exception("Invalid FIELD path argument (SQL null)");
     }
 
-    if (docNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(docNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (docNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(docNVal.GetValueType(), VALUE_TYPE_VARCHAR);
     }
-    if (pathNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(pathNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (pathNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(pathNVal.GetValueType(), VALUE_TYPE_VARCHAR);
     }
 
-    int32_t lenDoc = docNVal.getObjectLength_withoutNull();
-    const char* docChars = reinterpret_cast<char*>(docNVal.getObjectValue_withoutNull());
+    int32_t lenDoc = docNVal.GetObjectLengthWithoutNull();
+    const char* docChars = reinterpret_cast<char*>(docNVal.GetObjectValueWithoutNull());
     JsonDocument doc(docChars, lenDoc);
 
-    int32_t lenPath = pathNVal.getObjectLength_withoutNull();
-    const char* pathChars = reinterpret_cast<char*>(pathNVal.getObjectValue_withoutNull());
+    int32_t lenPath = pathNVal.GetObjectLengthWithoutNull();
+    const char* pathChars = reinterpret_cast<char*>(pathNVal.GetObjectValueWithoutNull());
     std::string result;
     if (doc.get(pathChars, lenPath, result)) {
-        return getTempStringValue(result.c_str(), result.length() - 1);
+        return GetTempStringValue(result.c_str(), result.length() - 1);
     }
-    return getNullStringValue();
+    return GetNullStringValue();
 }
 
 /** implement the 2-argument SQL ARRAY_ELEMENT function */
-template<> inline Value Value::call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<Value>& arguments) {
+template<> inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
 
     const Value& docNVal = arguments[0];
-    if (docNVal.isNull()) {
-        return getNullStringValue();
+    if (docNVal.IsNull()) {
+        return GetNullStringValue();
     }
-    if (docNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(docNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (docNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(docNVal.GetValueType(), VALUE_TYPE_VARCHAR);
     }
 
     const Value& indexNVal = arguments[1];
-    if (indexNVal.isNull()) {
-        return getNullStringValue();
+    if (indexNVal.IsNull()) {
+        return GetNullStringValue();
     }
-    int32_t lenDoc = docNVal.getObjectLength_withoutNull();
-    char *docChars = reinterpret_cast<char*>(docNVal.getObjectValue_withoutNull());
+    int32_t lenDoc = docNVal.GetObjectLengthWithoutNull();
+    char *docChars = reinterpret_cast<char*>(docNVal.GetObjectValueWithoutNull());
     const std::string doc(docChars, lenDoc);
 
-    int32_t index = indexNVal.castAsIntegerAndGetValue();
+    int32_t index = indexNVal.CastAsIntegerAndGetValue();
 
     Json::Value root;
     Json::Reader reader;
 
     if( ! reader.parse(doc, root)) {
         char msg[1024];
-        // getFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns concise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", reader.getFormatedErrorMessages().c_str());
-        throw SQLException(SQLException::
-                           data_exception_invalid_parameter,
-                           msg);
+        throw Exception(msg);
     }
 
     // only array type contains elements. objects, primitives do not
     if( ! root.isArray()) {
-        return getNullStringValue();
+        return GetNullStringValue();
     }
 
-    // Sure, root[-1].isNull() would return true just like we want it to
+    // Sure, root[-1].IsNull() would return true just like we want it to
     // -- but only in production with asserts turned off.
-    // Turn on asserts for debugging and you'll want this guard up front.
-    // Forcing the null return for a negative index seems more consistent than crashing in debug mode
-    // or even throwing an SQL error in any mode. It's the same handling that a too large index gets.
+    // Turn on asserts for Debugging and you'll want this guard up front.
+    // Forcing the null return for a negative index seems more consistent than crashing in Debug mode
+    // or even Throwing an SQL error in any mode. It's the same handling that a too large index Gets.
     if (index < 0) {
-        return getNullStringValue();
+        return GetNullStringValue();
     }
 
     Json::Value fieldValue = root[index];
 
     if (fieldValue.isNull()) {
-        return getNullStringValue();
+        return GetNullStringValue();
     }
 
     if (fieldValue.isConvertibleTo(Json::stringValue)) {
         std::string stringValue(fieldValue.asString());
-        return getTempStringValue(stringValue.c_str(), stringValue.length());
+        return GetTempStringValue(stringValue.c_str(), stringValue.length());
     }
 
     Json::FastWriter writer;
     std::string serializedValue(writer.write(fieldValue));
     // writer always appends a trailing new line \n
-    return getTempStringValue(serializedValue.c_str(), serializedValue.length() -1);
+    return GetTempStringValue(serializedValue.c_str(), serializedValue.length() -1);
 }
 
 /** implement the 1-argument SQL ARRAY_LENGTH function */
-template<> inline Value Value::callUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
+template<> inline Value Value::CallUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 
-    if (isNull()) {
-        return getNullValue(VALUE_TYPE_INTEGER);
+    if (IsNull()) {
+        return GetNullValue(VALUE_TYPE_INTEGER);
     }
-    if (getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(getValueType(), VALUE_TYPE_VARCHAR);
+    if (GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
     }
 
-    int32_t lenDoc = getObjectLength_withoutNull();
-    char *docChars = reinterpret_cast<char*>(getObjectValue_withoutNull());
+    int32_t lenDoc = GetObjectLengthWithoutNull();
+    char *docChars = reinterpret_cast<char*>(GetObjectValueWithoutNull());
     const std::string doc(docChars, lenDoc);
 
     Json::Value root;
@@ -420,71 +414,69 @@ template<> inline Value Value::callUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 
     if( ! reader.parse(doc, root)) {
         char msg[1024];
-        // getFormatedErrorMessages returns concise message about location
+        // GetFormatedErrorMessages returns concise message about location
         // of the error rather than the malformed document itself
         snprintf(msg, sizeof(msg), "Invalid JSON %s", reader.getFormatedErrorMessages().c_str());
-        throw SQLException(SQLException::
-                           data_exception_invalid_parameter,
-                           msg);
+        throw Exception(msg);
     }
 
     // only array type contains indexed elements. objects, primitives do not
     if( ! root.isArray()) {
-        return getNullValue(VALUE_TYPE_INTEGER);
+        return GetNullValue(VALUE_TYPE_INTEGER);
     }
 
     Value result(VALUE_TYPE_INTEGER);
     int32_t size = static_cast<int32_t>(root.size());
-    result.getInteger() = size;
+    result.GetInteger() = size;
     return result;
 }
 
 /** implement the 3-argument SQL SET_FIELD function */
-template<> inline Value Value::call<FUNC_VOLT_SET_FIELD>(const std::vector<Value>& arguments) {
+template<> inline Value Value::Call<FUNC_VOLT_SET_FIELD>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 3);
 
     const Value& docNVal = arguments[0];
     const Value& pathNVal = arguments[1];
     const Value& valueNVal = arguments[2];
 
-    if (docNVal.isNull()) {
+    if (docNVal.IsNull()) {
         return docNVal;
     }
-    if (pathNVal.isNull()) {
-        throw SQLException(SQLException::data_exception_invalid_parameter, "Invalid SET_FIELD path argument (SQL null)");
+    if (pathNVal.IsNull()) {
+        throw Exception("Invalid SET_FIELD path argument (SQL null)");
     }
-    if (valueNVal.isNull()) {
-        throw SQLException(SQLException::data_exception_invalid_parameter, "Invalid SET_FIELD value argument (SQL null)");
-    }
-
-    if (docNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(docNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (valueNVal.IsNull()) {
+        throw Exception("Invalid SET_FIELD value argument (SQL null)");
     }
 
-    if (pathNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(pathNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (docNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(docNVal.GetValueType(), VALUE_TYPE_VARCHAR);
     }
 
-    if (valueNVal.getValueType() != VALUE_TYPE_VARCHAR) {
-        throwCastSQLException(valueNVal.getValueType(), VALUE_TYPE_VARCHAR);
+    if (pathNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(pathNVal.GetValueType(), VALUE_TYPE_VARCHAR);
     }
 
-    int32_t lenDoc = docNVal.getObjectLength_withoutNull();
-    const char* docChars = reinterpret_cast<char*>(docNVal.getObjectValue_withoutNull());
+    if (valueNVal.GetValueType() != VALUE_TYPE_VARCHAR) {
+        ThrowCastSQLException(valueNVal.GetValueType(), VALUE_TYPE_VARCHAR);
+    }
+
+    int32_t lenDoc = docNVal.GetObjectLengthWithoutNull();
+    const char* docChars = reinterpret_cast<char*>(docNVal.GetObjectValueWithoutNull());
     JsonDocument doc(docChars, lenDoc);
 
-    int32_t lenPath = pathNVal.getObjectLength_withoutNull();
-    const char* pathChars = reinterpret_cast<char*>(pathNVal.getObjectValue_withoutNull());
-    int32_t lenValue = valueNVal.getObjectLength_withoutNull();
-    const char* valueChars = reinterpret_cast<char*>(valueNVal.getObjectValue_withoutNull());
+    int32_t lenPath = pathNVal.GetObjectLengthWithoutNull();
+    const char* pathChars = reinterpret_cast<char*>(pathNVal.GetObjectValueWithoutNull());
+    int32_t lenValue = valueNVal.GetObjectLengthWithoutNull();
+    const char* valueChars = reinterpret_cast<char*>(valueNVal.GetObjectValueWithoutNull());
     try {
         doc.set(pathChars, lenPath, valueChars, lenValue);
         std::string value = doc.value();
-        return getTempStringValue(value.c_str(), value.length() - 1);
+        return GetTempStringValue(value.c_str(), value.length() - 1);
     } catch (std::bad_alloc& too_large) {
         std::string pathForDiagnostic(pathChars, lenPath);
-        throwDynamicSQLException("Insufficient memory for SET_FIELD operation with path argument: %s",
-                                 pathForDiagnostic.c_str());
+        throw Exception("Insufficient memory for SET_FIELD operation with path argument: %s" +
+                        pathForDiagnostic);
     }
 }
 

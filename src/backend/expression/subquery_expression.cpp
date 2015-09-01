@@ -15,11 +15,10 @@
 #include <sstream>
 
 #include "backend/common/logger.h"
-#include "backend/common/executor_context.h"
+#include "backend/executor/executor_context.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/storage/tuple.h"
-#include "backend/executor/executor_util.h"
 #include "backend/storage/data_table.h"
 
 namespace peloton {
@@ -37,7 +36,7 @@ SubqueryExpression::SubqueryExpression(
             m_otherParamIdxs(otherParamIdxs),
             m_tveParams(tveParams)
 {
-    VOLT_TRACE("SubqueryExpression %d", subqueryId);
+    LOG_TRACE("SubqueryExpression %d", subqueryId);
     assert((m_tveParams.get() == NULL && m_paramIdxs.empty()) ||
         (m_tveParams.get() != NULL && m_paramIdxs.size() == m_tveParams->size()));
 }
@@ -55,25 +54,26 @@ SubqueryExpression::~SubqueryExpression()
     }
 }
 
-Value SubqueryExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+Value SubqueryExpression::Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                                   __attribute__((unused)) const AbstractTuple *tuple2,
+                                   __attribute__((unused)) executor::ExecutorContext *exeContext) const
 {
-    // Get the subquery context with the last evaluation result and parameters used to obtain that result
-
-    ExecutorContext* exeContext = ExecutorContext::getExecutorContext();
-
+    // TODO: Get the subquery context
+    /*
+    // Get the subquery context with the last Evaluateuation result and parameters used to obtain that result
     SubqueryContext* context = exeContext->getSubqueryContext(m_subqueryId);
 
     bool hasPriorResult = (context != NULL) && context->hasValidResult();
     bool paramsChanged = false;
     ValueArray& parameterContainer = *(exeContext->getParameterContainer());
-    VOLT_TRACE ("Running subquery: %d", m_subqueryId);
+    LOG_TRACE ("Running subquery: %d", m_subqueryId);
 
     // Substitute parameters.
     if (m_tveParams.get() != NULL) {
         size_t paramsCnt = m_tveParams->size();
         for (size_t i = 0; i < paramsCnt; ++i) {
             AbstractExpression* tveParam = (*m_tveParams)[i];
-            Value param = tveParam->eval(tuple1, tuple2);
+            Value param = tveParam->Evaluate(tuple1, tuple2);
             // compare the new param value with the previous one. Since this parameter is set
             // by this subquery, no other subquery can change its value. So, we don't need to
             // save its value on the side for future comparisons.
@@ -132,13 +132,15 @@ Value SubqueryExpression::eval(const AbstractTuple *tuple1, const TableTuple *tu
     // Update the cached result for the current params. All params are already updated
     Value retval = ValueFactory::getIntegerValue(m_subqueryId);
     context->setResult(retval);
+    */
+    Value retval;
     return retval;
 }
 
-std::string SubqueryExpression::debugInfo(const std::string &spacer) const
+std::string SubqueryExpression::DebugInfo(const std::string &spacer) const
 {
     std::ostringstream buffer;
-    buffer << spacer << expressionToString(getExpressionType()) << ": subqueryId: " << m_subqueryId;
+    buffer << spacer << ExpressionTypeToString(GetExpressionType()) << ": subqueryId: " << m_subqueryId;
     return (buffer.str());
 }
 

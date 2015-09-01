@@ -32,16 +32,16 @@ class ConstantValueExpression : public AbstractExpression {
     }
 
     Value
-    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+    Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
     {
         VOLT_TRACE ("returning constant value as Value:%s type:%d",
-                     value.debug().c_str(), (int) this->m_type);
+                     value.Debug().c_str(), (int) this->m_type);
         return this->value;
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return spacer + "OptimizedConstantValueExpression:" +
-          value.debug() + "\n";
+          value.Debug() + "\n";
     }
 
   protected:

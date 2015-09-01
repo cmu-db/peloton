@@ -378,7 +378,7 @@ class Value {
   Value OpDecrement() const;
   Value OpSubtract(const Value rhs) const;
   Value OpAdd(const Value rhs) const;
-  Value OpMultiple(const Value rhs) const;
+  Value OpMultiply(const Value rhs) const;
   Value OpDivide(const Value rhs) const;
   /*
    * This Value must be VARCHAR and the rhs must be VARCHAR.
@@ -401,13 +401,13 @@ class Value {
 
   /**
    * If this Value is an array value, Get it's length.
-   * Undefined behavior if not an array (cassert fail in debug).
+   * Undefined behavior if not an array (cassert fail in Debug).
    */
   int ArrayLength() const;
 
   /**
    * If this Value is an array value, Get a value.
-   * Undefined behavior if not an array or if oob (cassert fail in debug).
+   * Undefined behavior if not an array or if oob (cassert fail in Debug).
    */
   Value ItemAtIndex(int index) const;
 
@@ -418,7 +418,7 @@ class Value {
    * they might return duplicate rows from the inner join.
    * See MaterializedScanPlanNode & MaterializedScanExecutor
    *
-   * Undefined behavior if not an array (cassert fail in debug).
+   * Undefined behavior if not an array (cassert fail in Debug).
    */
   void CastAndSortAndDedupArrayForInList(const ValueType outputType, std::vector<Value> &outList) const;
 
@@ -558,7 +558,7 @@ class Value {
   };
 
   /* Return a string full of arcana and wonder. */
-  std::string debug() const;
+  std::string Debug() const;
 
   // Constants for Decimal type
   // Precision and scale (inherent in the schema)
@@ -3507,7 +3507,7 @@ inline Value Value::OpAdd(const Value rhs) const {
                   rhs.GetValueTypeString());
 }
 
-inline Value Value::OpMultiple(const Value rhs) const {
+inline Value Value::OpMultiply(const Value rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3533,7 +3533,7 @@ inline Value Value::OpMultiple(const Value rhs) const {
     default:
       break;
   }
-  throw Exception("Promotion of %s and %s failed in OpMultiple." +
+  throw Exception("Promotion of %s and %s failed in OpMultiply." +
                   GetValueTypeString() +
                   rhs.GetValueTypeString());
 }

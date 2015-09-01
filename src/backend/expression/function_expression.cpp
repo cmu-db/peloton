@@ -17,47 +17,46 @@ namespace peloton {
 namespace expression {
 
 /** implement a forced SQL ERROR function (for test and example purposes) for either integer or string types **/
-template<> inline Value Value::callUnary<FUNC_VOLT_SQL_ERROR>() const {
-    const char* sqlstatecode;
+template<> inline Value Value::CallUnary<FUNC_VOLT_SQL_ERROR>() const {
+    //const char* sqlstatecode;
     const char* msgtext;
-    const ValueType type = getValueType();
+    const ValueType type = GetValueType();
     char msg_format_buffer[1024];
     char state_format_buffer[6];
     if (type == VALUE_TYPE_VARCHAR) {
-        if (isNull()) {
-             throw SQLException(SQLException::dynamic_sql_error,
-                                "Must not ask  for object length on sql null object.");
+        if (IsNull()) {
+             throw Exception("Must not ask  for object length on sql null object.");
         }
-        const int32_t valueLength = getObjectLength_withoutNull();
-        const char *valueChars = reinterpret_cast<char*>(getObjectValue_withoutNull());
+        const int32_t valueLength = GetObjectLengthWithoutNull();
+        const char *valueChars = reinterpret_cast<char*>(GetObjectValueWithoutNull());
         std::string valueStr(valueChars, valueLength);
         snprintf(msg_format_buffer, sizeof(msg_format_buffer), "%s", valueStr.c_str());
-        sqlstatecode = SQLException::nonspecific_error_code_for_error_forced_by_user;
+        //sqlstatecode = SQLException::nonspecific_error_code_for_error_forced_by_user;
         msgtext = msg_format_buffer;
     } else {
-        int64_t intValue = castAsBigIntAndGetValue(); // let cast throw if invalid
+        int64_t intValue = CastAsBigIntAndGetValue(); // let cast throw if invalid
         if (intValue == 0) {
             return *this;
         }
         snprintf(state_format_buffer, sizeof(state_format_buffer), "%05ld", (long) intValue);
-        sqlstatecode = state_format_buffer;
-        msgtext = SQLException::specific_error_specified_by_user;
+        //sqlstatecode = state_format_buffer;
+        msgtext = state_format_buffer;
     }
-    throw SQLException(sqlstatecode, msgtext);
+    throw Exception(msgtext);
 }
 
 /** implement the 2-argument forced SQL ERROR function (for test and example purposes) */
-template<> inline Value Value::call<FUNC_VOLT_SQL_ERROR>(const std::vector<Value>& arguments) {
+template<> inline Value Value::Call<FUNC_VOLT_SQL_ERROR>(const std::vector<Value>& arguments) {
     assert(arguments.size() == 2);
     const char* sqlstatecode;
     char msg_format_buffer[1024];
     char state_format_buffer[6];
 
     const Value& codeArg = arguments[0];
-    if (codeArg.isNull()) {
-        sqlstatecode = SQLException::nonspecific_error_code_for_error_forced_by_user;
+    if (codeArg.IsNull()) {
+        //sqlstatecode = SQLException::nonspecific_error_code_for_error_forced_by_user;
     } else {
-        int64_t intValue = codeArg.castAsBigIntAndGetValue(); // let cast throw if invalid
+        int64_t intValue = codeArg.CastAsBigIntAndGetValue(); // let cast throw if invalid
         if (intValue == 0) {
             return codeArg;
         }
@@ -66,21 +65,19 @@ template<> inline Value Value::call<FUNC_VOLT_SQL_ERROR>(const std::vector<Value
     }
 
     const Value& strValue = arguments[1];
-    if (strValue.isNull()) {
+    if (strValue.IsNull()) {
         msg_format_buffer[0] = '\0';
     } else {
-        if (strValue.getValueType() != VALUE_TYPE_VARCHAR) {
-            throwCastSQLException (strValue.getValueType(), VALUE_TYPE_VARCHAR);
+        if (strValue.GetValueType() != VALUE_TYPE_VARCHAR) {
+            ThrowCastSQLException (strValue.GetValueType(), VALUE_TYPE_VARCHAR);
         }
-        const int32_t valueLength = strValue.getObjectLength_withoutNull();
-        char *valueChars = reinterpret_cast<char*>(strValue.getObjectValue_withoutNull());
+        const int32_t valueLength = strValue.GetObjectLengthWithoutNull();
+        char *valueChars = reinterpret_cast<char*>(strValue.GetObjectValueWithoutNull());
         std::string valueStr(valueChars, valueLength);
         snprintf(msg_format_buffer, sizeof(msg_format_buffer), "%s", valueStr.c_str());
     }
-    throw SQLException(sqlstatecode, msg_format_buffer);
+    throw Exception(sqlstatecode, msg_format_buffer);
 }
-
-namespace functionexpression {
 
 /*
  * Constant (no parameter) function. (now, random)
@@ -92,11 +89,12 @@ public:
         : AbstractExpression(EXPRESSION_TYPE_FUNCTION) {
     };
 
-    Value eval(const AbstractTuple *, const TableTuple *) const {
-        return Value::callConstant<F>();
+    Value Evaluate(const AbstractTuple *, const AbstractTuple *,
+                   executor::ExecutorContext *) const {
+        return Value::CallConstant<F>();
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         std::stringstream buffer;
         buffer << spacer << "ConstantFunctionExpression " << F << std::endl;
         return (buffer.str());
@@ -121,15 +119,16 @@ public:
     }
 
     virtual bool hasParameter() const {
-        return m_child->hasParameter();
+        return m_child->HasParameter();
     }
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
         assert (m_child);
-        return (m_child->eval(tuple1, tuple2)).callUnary<F>();
+        return (m_child->Evaluate(tuple1, tuple2, context)).CallUnary<F>();
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         std::stringstream buffer;
         buffer << spacer << "UnaryFunctionExpression " << F << std::endl;
         return (buffer.str());
@@ -156,25 +155,26 @@ public:
     virtual bool hasParameter() const {
         for (size_t i = 0; i < m_args.size(); i++) {
             assert(m_args[i]);
-            if (m_args[i]->hasParameter()) {
+            if (m_args[i]->HasParameter()) {
                 return true;
             }
         }
         return false;
     }
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
         //TODO: Could make this vector a member, if the memory management implications
         // (of the Value internal state) were clear -- is there a penalty for longer-lived
-        // Values that outweighs the current per-eval allocation penalty?
+        // Values that outweighs the current per-Evaluate allocation penalty?
         std::vector<Value> nValue(m_args.size());
         for (int i = 0; i < m_args.size(); ++i) {
-            nValue[i] = m_args[i]->eval(tuple1, tuple2);
+            nValue[i] = m_args[i]->Evaluate(tuple1, tuple2, context);
         }
-        return Value::call<F>(nValue);
+        return Value::Call<F>(nValue);
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         std::stringstream buffer;
         buffer << spacer << "GeneralFunctionExpression " << F << std::endl;
         return (buffer.str());
@@ -183,10 +183,6 @@ public:
 private:
     const std::vector<AbstractExpression *>& m_args;
 };
-
-}
-
-using namespace functionexpression;
 
 AbstractExpression*
 ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments) {
@@ -424,7 +420,7 @@ ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpres
             return NULL;
         }
     }
-    // This function may have explicitly returned null, earlier, leaving it to the caller
+    // This function may have explicitly returned null, earlier, leaving it to the Caller
     // (with more context?) to generate an exception.
     // But having fallen through to this point indicates that
     // a FunctionExpression was constructed.
