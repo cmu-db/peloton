@@ -34,22 +34,23 @@ public:
         m_left = left;
     };
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
         assert (m_left);
-        Value operand = m_left->eval(tuple1, tuple2);
+        Value operand = m_left->Evaluate(tuple1, tuple2, context);
         // NOT TRUE is FALSE
-        if (operand.isTrue()) {
-            return Value::getFalse();
+        if (operand.IsTrue()) {
+            return Value::GetFalse();
         }
         // NOT FALSE is TRUE
-        if (operand.isFalse()) {
-            return Value::getTrue();
+        if (operand.IsFalse()) {
+            return Value::GetTrue();
         }
         // NOT NULL is NULL
         return operand;
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "OperatorNotExpression");
     }
 };
@@ -61,18 +62,19 @@ class OperatorIsNullExpression : public AbstractExpression {
             m_left = left;
     };
 
-   Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                  executor::ExecutorContext *context) const {
        assert(m_left);
-       Value tmp = m_left->eval(tuple1, tuple2);
-       if (tmp.isNull()) {
-           return Value::getTrue();
+       Value tmp = m_left->Evaluate(tuple1, tuple2, context);
+       if (tmp.IsNull()) {
+           return Value::GetTrue();
        }
        else {
-           return Value::getFalse();
+           return Value::GetFalse();
        }
    }
 
-   std::string debugInfo(const std::string &spacer) const {
+   std::string DebugInfo(const std::string &spacer) const {
        return (spacer + "OperatorIsNullExpression");
    }
 };
@@ -86,12 +88,13 @@ public:
         m_left = left;
     };
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
         assert (m_left);
-        return m_left->eval(tuple1, tuple2).castAs(m_targetType);
+        return m_left->Evaluate(tuple1, tuple2, context).CastAs(m_targetType);
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "CastExpression");
     }
 private:
@@ -107,11 +110,13 @@ public:
         assert (m_right);
     };
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
-        throwFatalException("OperatorAlternativeExpression::eval function has no implementation.");
+    Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                   __attribute__((unused)) const AbstractTuple *tuple2,
+                   __attribute__((unused)) executor::ExecutorContext *context) const {
+        throw Exception("OperatorAlternativeExpression::Evaluate function has no implementation.");
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "Operator ALTERNATIVE Expression");
     }
 
@@ -125,19 +130,20 @@ public:
     {
     };
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
         assert (m_left);
         assert (m_right);
-        Value thenClause = m_left->eval(tuple1, tuple2);
+        Value thenClause = m_left->Evaluate(tuple1, tuple2, context);
 
-        if (thenClause.isTrue()) {
-            return m_right->getLeft()->eval(tuple1, tuple2).castAs(m_returnType);
+        if (thenClause.IsTrue()) {
+            return m_right->GetLeft()->Evaluate(tuple1, tuple2, context).CastAs(m_returnType);
         } else {
-            return m_right->getRight()->eval(tuple1, tuple2).castAs(m_returnType);
+            return m_right->GetRight()->Evaluate(tuple1, tuple2, context).CastAs(m_returnType);
         }
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "Operator CASE WHEN Expression");
     }
 private:
@@ -152,22 +158,22 @@ private:
 
 class OpPlus {
 public:
-    inline Value op(Value left, Value right) const { return left.op_add(right); }
+    inline Value op(Value left, Value right) const { return left.OpAdd(right); }
 };
 
 class OpMinus {
 public:
-    inline Value op(Value left, Value right) const { return left.op_subtract(right); }
+    inline Value op(Value left, Value right) const { return left.OpSubtract(right); }
 };
 
 class OpMultiply {
 public:
-    inline Value op(Value left, Value right) const { return left.op_multiply(right); }
+    inline Value op(Value left, Value right) const { return left.OpMultiply(right); }
 };
 
 class OpDivide {
 public:
-    inline Value op(Value left, Value right) const { return left.op_divide(right); }
+    inline Value op(Value left, Value right) const { return left.OpDivide(right); }
 };
 
 
@@ -186,15 +192,16 @@ class OperatorExpression : public AbstractExpression {
     }
 
     Value
-    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+    Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+             executor::ExecutorContext *context) const
     {
         assert(m_left);
         assert(m_right);
-        return oper.op(m_left->eval(tuple1, tuple2),
-                       m_right->eval(tuple1, tuple2));
+        return oper.op(m_left->Evaluate(tuple1, tuple2, context),
+                       m_right->Evaluate(tuple1, tuple2, context));
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "OptimizedOperatorExpression");
     }
 private:
@@ -209,9 +216,10 @@ class OperatorExistsExpression : public AbstractExpression {
     }
 
     Value
-    eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
+    Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+             executor::ExecutorContext *context) const;
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "OperatorExistsExpression");
     }
 };

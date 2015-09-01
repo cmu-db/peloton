@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "backend/common/logger.h"
-#include "backend/common/executor_context.h"
+#include "backend/executor/executor_context.h"
 #include "backend/common/value.h"
 #include "backend/common/value_peeker.h"
 
@@ -25,20 +25,19 @@
 namespace peloton {
 namespace expression {
 
-Value OperatorExistsExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+Value OperatorExistsExpression::Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                                         executor::ExecutorContext *context) const
 {
     // Execute the subquery and get its subquery id
     assert(m_left != NULL);
-    Value lnv = m_left->eval(tuple1, tuple2);
-    int subqueryId = ValuePeeker::peekInteger(lnv);
+    Value lnv = m_left->Evaluate(tuple1, tuple2, context);
+    //int subqueryId = ValuePeeker::PeekInteger(lnv);
 
-    // Get the subquery context
-
-    ExecutorContext* exeContext = ExecutorContext::getExecutorContext();
-
-    // The EXISTS (SELECT inner_expr ...) evaluates as follows:
+    // TODO: Get the subquery context
+    // The EXISTS (SELECT inner_expr ...) Evaluateuates as follows:
     // The subquery produces a row => TRUE
     // The subquery produces an empty result set => FALSE
+    /*
     Table* outputTable = exeContext->getSubqueryOutputTable(subqueryId);
     assert(outputTable != NULL);
     if (outputTable->activeTupleCount() > 0) {
@@ -46,6 +45,8 @@ Value OperatorExistsExpression::eval(const AbstractTuple *tuple1, const TableTup
     } else {
         return Value::getFalse();
     }
+    */
+    return lnv;
 }
 
 }  // End expression namespace

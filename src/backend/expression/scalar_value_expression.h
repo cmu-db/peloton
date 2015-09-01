@@ -25,9 +25,10 @@ class ScalarValueExpression : public AbstractExpression {
         : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, lc, NULL)
     {};
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const;
 
-    std::string debugInfo(const std::string &spacer) const;
+    std::string DebugInfo(const std::string &spacer) const;
 
 };
 

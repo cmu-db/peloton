@@ -90,8 +90,8 @@ public:
         return 0;
     }
 
-    std::string debug() const;
-    std::string debug(int columnCount) const;
+    std::string Debug() const;
+    std::string Debug(int columnCount) const;
 
 private:
     int size_;
@@ -129,18 +129,18 @@ GenericValueArray<Value>::operator=(const GenericValueArray<Value> &rhs) {
     return *this;
 }
 
-template<> inline std::string GenericValueArray<Value>::debug() const {
+template<> inline std::string GenericValueArray<Value>::Debug() const {
     std::string out("[ ");
     for (int i = 0; i < size_; i++) {
-        out += data_[i].debug() + " "; // how to do with this...
+        out += data_[i].Debug() + " "; // how to do with this...
     }
     return out + "]";
 }
 
-template<> inline std::string GenericValueArray<Value>::debug(int columnCount) const {
+template<> inline std::string GenericValueArray<Value>::Debug(int columnCount) const {
     std::string out("[ ");
     for (int i = 0; i < columnCount; i++) {
-        out += data_[i].debug() + " "; // how to do with this...
+        out += data_[i].Debug() + " "; // how to do with this...
     }
     return out + "]";
 }
