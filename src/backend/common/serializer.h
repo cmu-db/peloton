@@ -314,7 +314,7 @@ class SerializeOutput {
   // as std::string's implicit construction is unsafe!
   inline void WriteBinaryString(const void* value, size_t length) {
     int32_t stringLength = static_cast<int32_t>(length);
-    assureExpand(length + sizeof(stringLength));
+    AssureExpand(length + sizeof(stringLength));
 
     // do a newtork order conversion
     int32_t networkOrderLen = htonl(stringLength);
@@ -335,20 +335,20 @@ class SerializeOutput {
   }
 
   inline void WriteBytes(const void *value, size_t length) {
-    assureExpand(length);
+    AssureExpand(length);
     memcpy(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
-    assureExpand(length);
+    AssureExpand(length);
     memset(buffer_ + position_, 0, length);
     position_ += length;
   }
 
   /** Reserves length bytes of space for writing. Returns the offset to the bytes. */
   size_t ReserveBytes(size_t length) {
-    assureExpand(length);
+    AssureExpand(length);
     size_t offset = position_;
     position_ += length;
     return offset;
@@ -387,7 +387,7 @@ class SerializeOutput {
  private:
   template <typename T>
   void WritePrimitive(T value) {
-    assureExpand(sizeof(value));
+    AssureExpand(sizeof(value));
     memcpy(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
@@ -397,7 +397,7 @@ class SerializeOutput {
     return WriteBytesAt(Position, &value, sizeof(value));
   }
 
-  inline void assureExpand(size_t next_Write) {
+  inline void AssureExpand(size_t next_Write) {
     size_t minimum_desired = position_ + next_Write;
     if (minimum_desired > capacity_) {
       Expand(minimum_desired);
@@ -776,7 +776,7 @@ class ExportSerializeOutput {
     // as std::string's implicit construction is unsafe!
     inline void WriteBinaryString(const void* value, size_t length) {
         int32_t stringLength = static_cast<int32_t>(length);
-        assureExpand(length + sizeof(stringLength));
+        AssureExpand(length + sizeof(stringLength));
 
         char* current = buffer_ + position_;
         memcpy(current, &stringLength, sizeof(stringLength));
@@ -790,20 +790,20 @@ class ExportSerializeOutput {
     }
 
     inline void WriteBytes(const void *value, size_t length) {
-        assureExpand(length);
+        AssureExpand(length);
         memcpy(buffer_ + position_, value, length);
         position_ += length;
     }
 
     inline void WriteZeros(size_t length) {
-        assureExpand(length);
+        AssureExpand(length);
         memset(buffer_ + position_, 0, length);
         position_ += length;
     }
 
     /** Reserves length bytes of space for writing. Returns the offset to the bytes. */
-    size_t reserveBytes(size_t length) {
-        assureExpand(length);
+    size_t ReserveBytes(size_t length) {
+        AssureExpand(length);
         size_t offset = position_;
         position_ += length;
         return offset;
@@ -820,7 +820,7 @@ class ExportSerializeOutput {
 private:
     template <typename T>
     void WritePrimitive(T value) {
-        assureExpand(sizeof(value));
+        AssureExpand(sizeof(value));
         memcpy(buffer_ + position_, &value, sizeof(value));
         position_ += sizeof(value);
     }
@@ -830,7 +830,7 @@ private:
         return WriteBytesAt(Position, &value, sizeof(value));
     }
 
-    inline void assureExpand(size_t next_Write) {
+    inline void AssureExpand(size_t next_Write) {
         size_t minimum_desired = position_ + next_Write;
         if (minimum_desired > capacity_) {
             // TODO: die

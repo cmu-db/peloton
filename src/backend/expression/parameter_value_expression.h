@@ -33,34 +33,39 @@ public:
     ParameterValueExpression(int value_idx);
 
     // Constructor to use for testing purposes
-    ParameterValueExpression(int value_idx, Value* paramValue) :
+    ParameterValueExpression(int value_idx, Value paramValue) :
         m_valueIdx(value_idx), m_paramValue(paramValue) {
     }
 
-    Value eval(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
-        assert(m_paramValue != NULL);
-        return *m_paramValue;
+    Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                   __attribute__((unused)) const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const {
+
+      auto params = context->GetParams();
+      assert(m_valueIdx < params.GetSize());
+
+      return params[m_valueIdx];
     }
 
-    bool hasParameter() const {
+    bool HasParameter() const {
         // this class represents a parameter.
         return true;
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         std::ostringstream buffer;
         buffer << spacer << "OptimizedParameter[" << this->m_valueIdx << "]\n";
         return (buffer.str());
     }
 
-    int getParameterId() const {
+    int GetParameterId() const {
         return this->m_valueIdx;
     }
 
   private:
     int m_valueIdx;
 
-    Value *m_paramValue;
+    Value m_paramValue;
 };
 
 }  // End expression namespace
