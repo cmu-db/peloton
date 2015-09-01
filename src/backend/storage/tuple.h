@@ -183,8 +183,8 @@ class Tuple : public AbstractTuple {
                          uint8_t *null_array);
   void SerializeWithHeaderTo(SerializeOutput &output);
 
-  void DeserializeFrom(SerializeInput &input, VarlenPool *pool);
-  int64_t DeserializeWithHeaderFrom(SerializeInput &input);
+  void DeserializeFrom(SerializeInputBE &input, VarlenPool *pool);
+  int64_t DeserializeWithHeaderFrom(SerializeInputBE &input);
 
   size_t HashCode(size_t seed) const;
   size_t HashCode() const;

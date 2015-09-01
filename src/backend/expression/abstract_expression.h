@@ -16,10 +16,16 @@
 #include <vector>
 
 #include "backend/common/value.h"
+#include "backend/common/value_vector.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
+#include "backend/executor/executor_context.h"
 
+#include "postgres.h"
+#include "common/fe_memutils.h"
+
+#include <json_spirit.h>
 #include "boost/shared_ptr.hpp"
 
 namespace peloton {
@@ -48,40 +54,40 @@ class AbstractExpression {
   // destroy this node and all children
   virtual ~AbstractExpression();
 
-  virtual Value eval(const AbstractTuple *tuple1 = NULL,
-                     const AbstractTuple *tuple2 = NULL,
-                     executor::ExecutorContext *context /* = nullptr */) const = 0;
+  virtual Value Evaluate(const AbstractTuple *tuple1,
+                     const AbstractTuple *tuple2,
+                     executor::ExecutorContext *context) const = 0;
 
   /** return true if self or descendent should be substitute()'d */
-  virtual bool hasParameter() const;
+  virtual bool HasParameter() const;
 
-  /* debugging methods - some various ways to create a sring
+  /* Debugging methods - some various ways to create a sring
        describing the expression tree */
-  std::string debug() const;
-  std::string debug(bool traverse) const;
-  std::string debug(const std::string &spacer) const;
-  virtual std::string debugInfo(const std::string &spacer) const = 0;
+  std::string Debug() const;
+  std::string Debug(bool traverse) const;
+  std::string Debug(const std::string &spacer) const;
+  virtual std::string DebugInfo(const std::string &spacer) const = 0;
 
   /* serialization methods. expression are serialized in java and
        deserialized in the execution engine during startup. */
 
 
   /** accessors */
-  ExpressionType getExpressionType() const {
+  ExpressionType GetExpressionType() const {
     return m_type;
   }
 
-  ValueType getValueType() const
+  ValueType GetValueType() const
   {
     return m_valueType;
   }
 
-  int getValueSize() const
+  int GetValueSize() const
   {
     return m_valueSize;
   }
 
-  bool getInBytes() const
+  bool GetInBytes() const
   {
     return m_inBytes;
   }
@@ -104,11 +110,11 @@ class AbstractExpression {
     m_valueSize = size;
   }
 
-  const AbstractExpression *getLeft() const {
+  const AbstractExpression *GetLeft() const {
     return m_left;
   }
 
-  const AbstractExpression *getRight() const {
+  const AbstractExpression *GetRight() const {
     return m_right;
   }
 
@@ -120,11 +126,13 @@ class AbstractExpression {
                      AbstractExpression *right);
 
  private:
-  bool initParamShortCircuits();
+  bool InitParamShortCircuits();
 
  protected:
 
-  AbstractExpression *m_left, *m_right;
+  AbstractExpression *m_left = nullptr;
+
+  AbstractExpression *m_right = nullptr;
 
   ExpressionType m_type;
 

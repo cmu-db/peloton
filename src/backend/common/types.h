@@ -216,8 +216,21 @@ enum ExpressionType {
     // Subquery IN/EXISTS
     // -----------------------------
     EXPRESSION_TYPE_ROW_SUBQUERY                       = 400,
-    EXPRESSION_TYPE_SELECT_SUBQUERY                    = 401
+    EXPRESSION_TYPE_SELECT_SUBQUERY                    = 401,
 
+    //===--------------------------------------------------------------------===//
+    // Parser
+    //===--------------------------------------------------------------------===//
+
+    EXPRESSION_TYPE_STAR                               = 700,
+    EXPRESSION_TYPE_PLACEHOLDER                        = 701,
+    EXPRESSION_TYPE_COLUMN_REF                         = 702,
+    EXPRESSION_TYPE_FUNCTION_REF                       = 703,
+
+    //===--------------------------------------------------------------------===//
+    // Misc
+    //===--------------------------------------------------------------------===//
+    EXPRESSION_TYPE_CAST                               = 900
 };
 
 //===--------------------------------------------------------------------===//
