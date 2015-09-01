@@ -39,9 +39,6 @@ Agg *GetAggInstance(ExpressionType agg_type) {
     case EXPRESSION_TYPE_AGGREGATE_AVG:
       aggregator = new AvgAgg(false);
       break;
-    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG:
-      aggregator = new AvgAgg(true);
-      break;
     case EXPRESSION_TYPE_AGGREGATE_MIN:
       aggregator = new MinAgg();
       break;
@@ -62,7 +59,7 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 Agg::~Agg() {
   if (is_distinct_) {
     for (auto val : distinct_set_) {
-      val.FreeUninlinedData();
+      val.Free();
     }
   }
 }
@@ -175,7 +172,7 @@ HashAggregator::~HashAggregator() {
     delete[] entry.second->aggregates;
 
     for (auto &v : entry.second->first_tuple_values) {
-      v.FreeUninlinedData();
+      v.Free();
     }
     delete entry.second;
   }
@@ -280,7 +277,7 @@ SortedAggregator::~SortedAggregator() {
 
   // Clean current group keys
   for(auto value : delegate_tuple_values_){
-    value.FreeUninlinedData();
+    value.Free();
   }
 }
 
@@ -332,7 +329,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
 
     // Update delegate tuple values
     for(auto value : delegate_tuple_values_){
-      value.FreeUninlinedData();
+      value.Free();
     }
     delegate_tuple_values_.clear();
 

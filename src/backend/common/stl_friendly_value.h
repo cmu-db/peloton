@@ -31,7 +31,7 @@ struct StlFriendlyValue : public Value {
 
   bool operator==(const StlFriendlyValue& other) const
             {
-    return compare(other) == VALUE_COMPARE_EQUAL;
+    return Compare(other) == VALUE_COMPARE_EQUAL;
             }
 
   const StlFriendlyValue& operator=(const Value& other)
@@ -43,7 +43,7 @@ struct StlFriendlyValue : public Value {
 
   bool operator<(const StlFriendlyValue& other) const
   {
-    return compare(other) < VALUE_COMPARE_EQUAL;
+    return Compare(other) < VALUE_COMPARE_EQUAL;
   }
 
 };

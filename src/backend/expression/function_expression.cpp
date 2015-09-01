@@ -184,7 +184,7 @@ private:
 };
 
 expression::AbstractExpression*
-expression::ExpressionUtil::functionFactory(int functionId, const std::vector<AbstractExpression*>* arguments) {
+expression::FunctionFactory(int functionId, const std::vector<AbstractExpression*>* arguments) {
     AbstractExpression* ret = 0;
     assert(arguments);
     size_t nArgs = arguments->size();
