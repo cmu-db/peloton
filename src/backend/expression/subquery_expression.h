@@ -23,8 +23,8 @@ namespace expression {
 
 /**
  * An expression that produces a temp table from a subquery.
- * Note that this expression type's eval method is a little
- * different from the others: eval will return a subquery id,
+ * Note that this expression type's Evaluate method is a little
+ * different from the others: Evaluate will return a subquery id,
  * which can then be retrieved from the executor context
  * by invoking its getSubqueryOutputTable method.
  */
@@ -38,15 +38,16 @@ class SubqueryExpression : public AbstractExpression {
 
     ~SubqueryExpression();
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                   executor::ExecutorContext *context) const;
 
-    std::string debugInfo(const std::string &spacer) const;
+    std::string DebugInfo(const std::string &spacer) const;
 
   private:
     const int m_subqueryId;
 
     // The list of parameter indexes that need to be set by this subquery
-    // before the expression can be evaluated.
+    // before the expression can be Evaluateuated.
     std::vector<int> m_paramIdxs;
 
     // The list of non-set parameter indexes that this subquery depends on,

@@ -52,20 +52,20 @@ public:
         return false;
     }
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
     {
         //TODO: Could make this vector a member, if the memory management implications
         // (of the Value internal state) were clear -- is there a penalty for longer-lived
-        // Values that outweighs the current per-eval allocation penalty?
+        // Values that outweighs the current per-Evaluate allocation penalty?
         std::vector<Value> nValues(m_args.size());
         for (int i = 0; i < m_args.size(); ++i) {
-            nValues[i] = m_args[i]->eval(tuple1, tuple2);
+            nValues[i] = m_args[i]->Evaluate(tuple1, tuple2);
         }
         m_inList.setArrayElements(nValues);
         return m_inList;
     }
 
-    std::string debugInfo(const std::string &spacer) const
+    std::string DebugInfo(const std::string &spacer) const
     {
         return spacer + "VectorExpression\n";
     }

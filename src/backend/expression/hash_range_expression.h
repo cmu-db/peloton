@@ -45,12 +45,12 @@ class HashRangeExpression : public AbstractExpression {
     }
  };
 
-  virtual Value eval(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  virtual Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
     assert(tuple1);
     if ( ! tuple1 ) {
       throw Exception(
           "TupleValueExpression::"
-          "eval:"
+          "Evaluate:"
           " Couldn't find tuple 1 (possible index scan planning error)");
     }
     const int32_t hash = tuple1->GetValue(this->value_idx).murmurHash3();
@@ -88,7 +88,7 @@ class HashRangeExpression : public AbstractExpression {
     return Value::getFalse();
   }
 
-  std::string debugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
     buffer << spacer << "Hash range expression on column[" << this->value_idx << "]\n";
     buffer << "ranges \n";

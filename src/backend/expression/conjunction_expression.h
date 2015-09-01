@@ -39,9 +39,9 @@ class ConjunctionExpression : public AbstractExpression
         this->m_right = right;
     }
 
-    Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
+    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const;
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "ConjunctionExpression\n");
     }
 
@@ -50,17 +50,17 @@ class ConjunctionExpression : public AbstractExpression
 };
 
 template<> inline Value
-ConjunctionExpression<ConjunctionAnd>::eval(const AbstractTuple *tuple1,
+ConjunctionExpression<ConjunctionAnd>::Evaluate(const AbstractTuple *tuple1,
                                             const AbstractTuple *tuple2) const
 {
-    Value leftBool = m_left->eval(tuple1, tuple2);
+    Value leftBool = m_left->Evaluate(tuple1, tuple2);
     // False False -> False
     // False True  -> False
     // False NULL  -> False
     if (leftBool.isFalse()) {
         return leftBool;
     }
-    Value rightBool = m_right->eval(tuple1, tuple2);
+    Value rightBool = m_right->Evaluate(tuple1, tuple2);
     // True  False -> False
     // True  True  -> True
     // True  NULL  -> NULL
@@ -74,17 +74,17 @@ ConjunctionExpression<ConjunctionAnd>::eval(const AbstractTuple *tuple1,
 }
 
 template<> inline Value
-ConjunctionExpression<ConjunctionOr>::eval(const AbstractTuple *tuple1,
+ConjunctionExpression<ConjunctionOr>::Evaluate(const AbstractTuple *tuple1,
                                            const AbstractTuple *tuple2) const
 {
-    Value leftBool = m_left->eval(tuple1, tuple2);
+    Value leftBool = m_left->Evaluate(tuple1, tuple2);
     // True True  -> True
     // True False -> True
     // True NULL  -> True
     if (leftBool.isTrue()) {
         return leftBool;
     }
-    Value rightBool = m_right->eval(tuple1, tuple2);
+    Value rightBool = m_right->Evaluate(tuple1, tuple2);
     // False True  -> True
     // False False -> False
     // False NULL  -> NULL

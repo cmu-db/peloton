@@ -31,11 +31,11 @@ class TupleAddressExpression : public AbstractExpression {
     ~TupleAddressExpression();
 
 
-    inline Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2)  const {
+    inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2)  const {
         return ValueFactory::getAddressValue(tuple1->address());
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return spacer + "TupleAddressExpression\n";
     }
 };
