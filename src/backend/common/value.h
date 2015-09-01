@@ -351,6 +351,53 @@ class Value {
   int Compare(const Value rhs) const;
   int CompareWithoutNull(const Value rhs) const;
 
+  ////////////////////////////////////////////////////////////
+  // TODO: Peloton Changes
+  ////////////////////////////////////////////////////////////
+
+  inline bool operator==(const Value &other) const {
+     if (this->Compare(other) == 0) {
+       return true;
+     }
+
+     return false;
+  }
+
+  inline bool operator!=(const Value &other) const { return !(*this == other); }
+
+  /**
+   * @brief Do a deep copy of the given value.
+   * Uninlined data will be allocated in the provided memory pool.
+   */
+  static Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
+    Value rv = src;  // Shallow copy first
+    auto value_type = src.GetValueType();
+
+    switch (value_type) {
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+        break;  // "real" deep copy is needed only for these types
+
+      default:
+        return rv;
+    }
+
+    if (src.m_sourceInlined || src.IsNull()) {
+      return rv;  // also, shallow copy for inlined or null data
+    }
+
+    Varlen *src_sref = *reinterpret_cast<Varlen *const *>(src.m_data);
+    Varlen *new_sref = Varlen::Clone(*src_sref, dataPool);
+
+    rv.SetObjectValue(new_sref);
+    return rv;
+  }
+
+  // Get min value
+  static Value GetMinValue(ValueType);
+
+  ////////////////////////////////////////////////////////////
+
   /* Return a boolean Value with the comparison result */
   Value OpEquals(const Value rhs) const;
   Value OpNotEquals(const Value rhs) const;
@@ -528,6 +575,9 @@ class Value {
 
   /* For boost hashing */
   void HashCombine(std::size_t &seed) const;
+
+  // Get a string representation of this value
+  friend std::ostream &operator<<(std::ostream &os, const Value &value);
 
   /* Functor comparator for use with std::Set */
   struct ltValue {
@@ -724,6 +774,8 @@ class Value {
     m_valueType = type;
   }
 
+ public:
+
   /**
    * Get the type of the value. This information is private
    * to prevent code outside of Value from branching based on the type of a value.
@@ -731,6 +783,8 @@ class Value {
   ValueType GetValueType() const {
     return m_valueType;
   }
+
+ private:
 
   /**
    * Get the type of the value. This information is private

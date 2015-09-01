@@ -33,7 +33,7 @@ bool TransactionRecord::Serialize(){
  * @brief Deserialize LogRecordHeader
  * @param input  
  */
-void TransactionRecord::Deserialize(CopySerializeInput& input){
+void TransactionRecord::Deserialize(CopySerializeInputBE& input){
   input.ReadInt();
   txn_id = (txn_id_t)(input.ReadLong());
 }
