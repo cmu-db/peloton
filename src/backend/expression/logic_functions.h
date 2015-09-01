@@ -22,10 +22,10 @@ template<> inline Value Value::call<FUNC_DECODE>(const std::vector<Value>& argum
     int size = (int)arguments.size();
     assert(size>=3);
     int loopnum = ( size - 1 )/2;
-    const Value& baseval = arguments[0];
+    const Value& basEvaluate = arguments[0];
     for ( int i = 0; i < loopnum; i++ ) {
         const Value& condval = arguments[2*i+1];
-        if ( condval.compare(baseval) == VALUE_COMPARE_EQUAL ) {
+        if ( condval.compare(basEvaluate) == VALUE_COMPARE_EQUAL ) {
             return arguments[2*i+2];
         }
     }

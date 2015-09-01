@@ -29,7 +29,7 @@ namespace expression {
 
 // Compares two tuples column by column using lexicographical compare.
 template<typename OP>
-NValue compare_tuple(const AbstractTuple& tuple1, const TableTuple& tuple2)
+NValue compare_tuple(const AbstractTuple& tuple1, const AbstractTuple& tuple2)
 {
     assert(tuple1.getSchema()->columnCount() == tuple2.getSchema()->columnCount());
     NValue fallback_result = OP::includes_equality() ? NValue::getTrue() : NValue::getFalse();
@@ -84,9 +84,9 @@ public:
         assert(right != NULL);
     };
 
-    NValue eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const;
+    NValue Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const;
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "VectorComparisonExpression\n");
     }
 
@@ -142,9 +142,9 @@ struct NValueExtractor
         return OP::compare_withoutNull(m_value, nvalue);
     }
 
-    std::string debug() const
+    std::string Debug() const
     {
-        return m_value.isNull() ? "NULL" : m_value.debug();
+        return m_value.isNull() ? "NULL" : m_value.Debug();
     }
 
     ValueType m_value;
@@ -211,9 +211,9 @@ struct TupleExtractor
         return OP::compare_withoutNull(lvalue, nvalue);
     }
 
-    std::string debug() const
+    std::string Debug() const
     {
-        return m_tuple.isNullTuple() ? "NULL" : m_tuple.debug("TEMP");
+        return m_tuple.isNullTuple() ? "NULL" : m_tuple.Debug("TEMP");
     }
 
 private:
@@ -233,19 +233,19 @@ private:
 };
 
 template <typename OP, typename ValueExtractorOuter, typename ValueExtractorInner>
-NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
 {
     // Outer and inner expressions can be either a row (expr1, expr2, expr3...) or a single expr
     // The quantifier is expected on the right side of the expression "outer_expr OP ANY/ALL(inner_expr )"
 
-    // The outer_expr OP ANY inner_expr evaluates as follows:
+    // The outer_expr OP ANY inner_expr Evaluateuates as follows:
     // There is an exact match OP (outer_expr, inner_expr) == true => TRUE
     // There no match and the inner_expr produces a row where inner_expr is NULL => NULL
     // There no match and the inner_expr produces only non- NULL rows or empty => FALSE
     // The outer_expr is NULL or empty and the inner_expr is empty => FALSE
     // The outer_expr is NULL or empty and the inner_expr produces any row => NULL
 
-    // The outer_expr OP ALL inner_expr evaluates as follows:
+    // The outer_expr OP ALL inner_expr Evaluateuates as follows:
     // If inner_expr is empty => TRUE
     // If outer_expr OP inner_expr is TRUE for all inner_expr values => TRUE
     // If inner_expr contains NULL and outer_expr OP inner_expr is TRUE for all other inner values => NULL
@@ -253,7 +253,7 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
     // The outer_expr is NULL or empty and the inner_expr is empty => TRUE
     // The outer_expr is NULL or empty and the inner_expr produces any row => NULL
 
-    // The outer_expr OP inner_expr evaluates as follows:
+    // The outer_expr OP inner_expr Evaluateuates as follows:
     // If inner_expr is NULL or empty => NULL
     // If outer_expr is NULL or empty => NULL
     // If outer_expr/inner_expr has more than 1 result => runtime exception
@@ -261,7 +261,7 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
 
     // Evaluate the outer_expr. The return value can be either the value itself or a subquery id
     // in case of the row expression on the left side
-    NValue lvalue = m_left->eval(tuple1, tuple2);
+    NValue lvalue = m_left->Evaluate(tuple1, tuple2);
     ValueExtractorOuter outerExtractor(lvalue);
     if (outerExtractor.resultSize() > 1) {
         // throw runtime exception
@@ -271,7 +271,7 @@ NValue VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>:
     }
 
     // Evaluate the inner_expr. The return value is a subquery id or a value as well
-    NValue rvalue = m_right->eval(tuple1, tuple2);
+    NValue rvalue = m_right->Evaluate(tuple1, tuple2);
     ValueExtractorInner innerExtractor(rvalue);
     if (m_quantifier == QUANTIFIER_TYPE_NONE && innerExtractor.resultSize() > 1) {
         // throw runtime exception

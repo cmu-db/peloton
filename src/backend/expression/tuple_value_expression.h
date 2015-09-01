@@ -29,12 +29,12 @@ class TupleValueExpression : public AbstractExpression {
         VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
-    virtual Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const {
+    virtual Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
         if (tuple_idx == 0) {
             assert(tuple1);
             if ( ! tuple1 ) {
                 throw Exception("TupleValueExpression::"
-                                              "eval:"
+                                              "Evaluate:"
                                               " Couldn't find tuple 1 (possible index scan planning error)");
             }
             return tuple1->getValue(value_idx);
@@ -43,14 +43,14 @@ class TupleValueExpression : public AbstractExpression {
             assert(tuple2);
             if ( ! tuple2 ) {
                 throw Exception("TupleValueExpression::"
-                                              "eval:"
+                                              "Evaluate:"
                                               " Couldn't find tuple 2 (possible index scan planning error)");
             }
             return tuple2->getValue(value_idx);
         }
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         std::ostringstream buffer;
         buffer << spacer << "Optimized Column Reference[" << tuple_idx << ", " << value_idx << "]\n";
         return (buffer.str());

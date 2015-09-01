@@ -136,9 +136,9 @@ public:
         m_right = right;
     };
 
-    inline Value eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+    inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
     {
-        VOLT_TRACE("eval %s. left %s, right %s. ret=%s",
+        VOLT_TRACE("Evaluate %s. left %s, right %s. ret=%s",
                    OP::op_name(),
                    typeid(*(m_left)).name(),
                    typeid(*(m_right)).name(),
@@ -147,12 +147,12 @@ public:
         assert(m_left != NULL);
         assert(m_right != NULL);
 
-        Value lnv = m_left->eval(tuple1, tuple2);
+        Value lnv = m_left->Evaluate(tuple1, tuple2);
         if (lnv.isNull()) {
             return Value::getNullValue(VALUE_TYPE_BOOLEAN);
         }
 
-        Value rnv = m_right->eval(tuple1, tuple2);
+        Value rnv = m_right->Evaluate(tuple1, tuple2);
         if (rnv.isNull()) {
             return Value::getNullValue(VALUE_TYPE_BOOLEAN);
         }
@@ -168,12 +168,12 @@ public:
         return OP::compare_withoutNull(lnv, rnv);
     }
 
-    inline const char* traceEval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+    inline const char* traceEval(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const
     {
         Value lnv;
         Value rnv;
-        return  (((lnv = m_left->eval(tuple1, tuple2)).isNull() ||
-                  (rnv = m_right->eval(tuple1, tuple2)).isNull()) ?
+        return  (((lnv = m_left->Evaluate(tuple1, tuple2)).isNull() ||
+                  (rnv = m_right->Evaluate(tuple1, tuple2)).isNull()) ?
                  "NULL" :
                  (OP::compare_withoutNull(lnv,
                                           rnv).isTrue() ?
@@ -181,7 +181,7 @@ public:
                   "FALSE"));
     }
 
-    std::string debugInfo(const std::string &spacer) const {
+    std::string DebugInfo(const std::string &spacer) const {
         return (spacer + "ComparisonExpression\n");
     }
 

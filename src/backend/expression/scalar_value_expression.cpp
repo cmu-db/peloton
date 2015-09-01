@@ -19,35 +19,39 @@
 namespace peloton {
 namespace expression {
 
-Value ScalarValueExpression::eval(const AbstractTuple *tuple1, const TableTuple *tuple2) const
+Value ScalarValueExpression::Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                                      executor::ExecutorContext *context) const
 {
     // Execute the subquery and get its subquery id
     assert(m_left != NULL);
-    Value lnv = m_left->eval(tuple1, tuple2);
-    int subqueryId = ValuePeeker::peekInteger(lnv);
+    Value lnv = m_left->Evaluate(tuple1, tuple2, context);
 
-    // Get the subquery context
-    ExecutorContext* exeContext = ExecutorContext::getExecutorContext();
-    Table* table = exeContext->getSubqueryOutputTable(subqueryId);
+    // TODO: Get the subquery context
+    //int subqueryId = ValuePeeker::PeekInteger(lnv);
+    /*
+    Table* table = context->GetSubqueryOutputTable(subqueryId);
     assert(table != NULL);
     if (table->activeTupleCount() > 1) {
         // throw runtime exception
         char message[256];
         snprintf(message, 256, "More than one row returned by a scalar/row subquery");
-        throw Exception(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+        throw Exception(message);
     }
+
     TableIterator& iterator = table->iterator();
     AbstractTuple tuple(table->schema());
     if (iterator.next(tuple)) {
         return tuple.getValue(0);
     } else {
-        return Value::getNullValue(m_left->getValueType());
+        return Value::GetNullValue(m_left->GetValueType());
     }
+    */
 
+    return lnv;
 }
 
-std::string ScalarValueExpression::debugInfo(const std::string &spacer) const {
-    return "ScalarValueExpression";
+std::string ScalarValueExpression::DebugInfo(const std::string &spacer) const {
+  return spacer + "ScalarValueExpression";
 }
 
 }  // End expression namespace
