@@ -78,15 +78,15 @@ NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 PGPROC	   *PreparedXactProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
-static LOCALLOCK *lockAwaited = NULL;
+thread_local static LOCALLOCK *lockAwaited = NULL;
 
-static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
+thread_local static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
 
 /* Is a deadlock check pending? */
-static volatile sig_atomic_t got_deadlock_timeout;
+thread_local static volatile sig_atomic_t got_deadlock_timeout;
 
 static void RemoveProcFromArray(int code, Datum arg);
-static __attribute__((unused)) void ProcKill(int code, Datum arg);
+static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
 static void CheckDeadLock(void);
 
@@ -403,8 +403,7 @@ InitProcess(void)
 	/*
 	 * Arrange to clean up at backend exit.
 	 */
-	// TODO: Peloton Changes
-	//on_shmem_exit(ProcKill, 0);
+	on_shmem_exit(ProcKill, 0);
 
 	/*
 	 * Now that we have a PGPROC, we could try to acquire locks, so initialize
