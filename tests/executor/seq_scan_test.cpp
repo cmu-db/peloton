@@ -148,13 +148,13 @@ expression::AbstractExpression *CreatePredicate(
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
-        expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ,
+        expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
                                       tuple_value_expr, constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
                                                predicate, equality_expr);
-    constant_value.FreeUninlinedData();
+    constant_value.Free();
   }
 
   return predicate;
@@ -226,7 +226,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       Value string_value(ValueFactory::GetStringValue(std::to_string(val2)));
       EXPECT_EQ(string_value,
                 result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
-      string_value.FreeUninlinedData();
+      string_value.Free();
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }

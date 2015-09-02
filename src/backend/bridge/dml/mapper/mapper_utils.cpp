@@ -24,7 +24,7 @@ namespace bridge {
 const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
   ValueArray params;
   if (param_list != nullptr) {
-    params.Reset(param_list->numParams);
+    params.reset(param_list->numParams);
     ParamExternData *postgres_param = param_list->params;
     for (int i = 0; i < params.GetSize(); ++i, ++postgres_param) {
       params[i] = TupleTransformer::GetValue(postgres_param->value,

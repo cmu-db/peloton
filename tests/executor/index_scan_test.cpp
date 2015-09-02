@@ -53,7 +53,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::vector<expression::AbstractExpression *>runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
   values.push_back(ValueFactory::GetIntegerValue(110));
 
   // Create index scan desc
@@ -117,8 +117,8 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
   values.push_back(ValueFactory::GetIntegerValue(50));
   values.push_back(ValueFactory::GetIntegerValue(70));
 
