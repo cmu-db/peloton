@@ -72,7 +72,7 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        LOG_INFO("Evaluated runtime scan key: %s", value.Debug().c_str());
         values_.push_back(value);
       }
 
