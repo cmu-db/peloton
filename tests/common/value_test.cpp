@@ -49,13 +49,13 @@ TEST(ValueTest, CloneString) {
   Value v2 = ValueFactory::Clone(v1);
 
   ASSERT_TRUE(v1 == v2);
-  ASSERT_TRUE(ValuePeeker::PeekObjectLength(v1) ==
-              ValuePeeker::PeekObjectLength(v2));
+  ASSERT_TRUE(ValuePeeker::PeekObjectLengthWithoutNull(v1) ==
+              ValuePeeker::PeekObjectLengthWithoutNull(v2));
   ASSERT_FALSE(ValuePeeker::PeekObjectValue(v1) ==
                ValuePeeker::PeekObjectValue(v2));
 
-  v1.FreeUninlinedData();
-  v2.FreeUninlinedData();
+  v1.Free();
+  v2.Free();
 }
 
 TEST(ValueTest, DeserializeDecimal) {
@@ -287,7 +287,7 @@ TEST(ValueTest, TestCastToBigInt) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToInteger) {
@@ -379,7 +379,7 @@ TEST(ValueTest, TestCastToInteger) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToSmallInt) {
@@ -498,7 +498,7 @@ TEST(ValueTest, TestCastToSmallInt) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToTinyInt) {
@@ -637,7 +637,7 @@ TEST(ValueTest, TestCastToTinyInt) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToDouble) {
@@ -689,7 +689,7 @@ TEST(ValueTest, TestCastToDouble) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToString) {
@@ -756,7 +756,7 @@ TEST(ValueTest, TestCastToString) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToDecimal) {
@@ -797,7 +797,7 @@ TEST(ValueTest, TestCastToDecimal) {
   EXPECT_TRUE(caught);
 
   // Make valgrind happy
-  stringValue.FreeUninlinedData();
+  stringValue.Free();
 
   // Now run a series of tests to make sure that out of range casts fail
   // For Decimal only a double, BigInt, and Integer can be out of range.
@@ -1707,21 +1707,21 @@ TEST(ValueTest, SerializeToExport) {
 
   // tinyint
   nv = ValueFactory::GetTinyIntValue(-50);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(-50, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetTinyIntValue(0);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(0, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetTinyIntValue(50);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(50, sin.ReadLong());
   sin.Unread(out.Position());
@@ -1729,21 +1729,21 @@ TEST(ValueTest, SerializeToExport) {
 
   // smallint
   nv = ValueFactory::GetSmallIntValue(-128);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(-128, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetSmallIntValue(0);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(0, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetSmallIntValue(128);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(128, sin.ReadLong());
   sin.Unread(out.Position());
@@ -1751,21 +1751,21 @@ TEST(ValueTest, SerializeToExport) {
 
   // int
   nv = ValueFactory::GetIntegerValue(-4999999);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(-4999999, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetIntegerValue(0);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(0, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetIntegerValue(128);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(128, sin.ReadLong());
   sin.Unread(out.Position());
@@ -1773,21 +1773,21 @@ TEST(ValueTest, SerializeToExport) {
 
   // bigint
   nv = ValueFactory::GetBigIntValue(-4999999);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(-4999999, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetBigIntValue(0);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(0, sin.ReadLong());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetBigIntValue(128);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(128, sin.ReadLong());
   sin.Unread(out.Position());
@@ -1795,7 +1795,7 @@ TEST(ValueTest, SerializeToExport) {
 
   // timestamp
   nv = ValueFactory::GetTimestampValue(99999999);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(99999999, sin.ReadLong());
   sin.Unread(out.Position());
@@ -1803,21 +1803,21 @@ TEST(ValueTest, SerializeToExport) {
 
   // double
   nv = ValueFactory::GetDoubleValue(-5.5555);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(-5.5555, sin.ReadDouble());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetDoubleValue(0.0);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(0.0, sin.ReadDouble());
   sin.Unread(out.Position());
   out.Position(0);
 
   nv = ValueFactory::GetDoubleValue(128.256);
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(8, out.Position());
   EXPECT_EQ(128.256, sin.ReadDouble());
   sin.Unread(out.Position());
@@ -1825,8 +1825,8 @@ TEST(ValueTest, SerializeToExport) {
 
   // varchar
   nv = ValueFactory::GetStringValue("ABCDEFabcdef");
-  nv.SerializeToExport(out);
-  nv.FreeUninlinedData();
+  nv.SerializeToExportWithoutNull(out);
+  nv.Free();
   EXPECT_EQ(12 + 4, out.Position());  // chardata plus prefix
   EXPECT_EQ(12, sin.ReadInt());       // 32 bit length prefix
   EXPECT_EQ('A', sin.ReadChar());
@@ -1846,7 +1846,7 @@ TEST(ValueTest, SerializeToExport) {
 
   // decimal
   nv = ValueFactory::GetDecimalValueFromString("-1234567890.456123000000");
-  nv.SerializeToExport(out);
+  nv.SerializeToExportWithoutNull(out);
   EXPECT_EQ(24 + 4, out.Position());
   EXPECT_EQ(24, sin.ReadInt());  // 32 bit length prefix
   EXPECT_EQ('-', sin.ReadChar());

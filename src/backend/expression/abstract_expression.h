@@ -122,6 +122,10 @@ class AbstractExpression {
   // stream positioned at the root expression node
   static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
 
+  /// Get a string representation for debugging
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const AbstractExpression &expr);
+
  protected:
   AbstractExpression();
   AbstractExpression(ExpressionType type);

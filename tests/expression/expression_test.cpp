@@ -18,10 +18,13 @@
 #include "harness.h"
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression.h"
 #include "backend/common/types.h"
 #include "backend/common/value_peeker.h"
 #include "backend/storage/tuple.h"
+
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
 
 namespace peloton {
 namespace test {
@@ -304,14 +307,13 @@ TEST(ExpressionTest, SimpleFilter) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"),
-                                           std::string("colname"));
+      new expression::TupleValueExpression(0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *equal =
       new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+          EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   // TUPLE
 
@@ -338,64 +340,6 @@ TEST(ExpressionTest, SimpleFilter) {
 
   // delete the root to destroy the full tree.
   delete equal;
-
-  delete schema;
-  delete tuple;
-}
-
-TEST(ExpressionTest, OrFilter) {
-  // WHERE id = 20 OR id=30
-
-  expression::TupleValueExpression *tup_val_a =
-      new expression::TupleValueExpression(0, 1, std::string("tablename"),
-                                           std::string("colname"));
-  expression::ConstantValueExpression *const_val_a =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(20));
-  expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQ, tup_val_a, const_val_a);
-
-  expression::TupleValueExpression *tup_val_b =
-      new expression::TupleValueExpression(0, 1, std::string("tablename"),
-                                           std::string("colname"));
-  expression::ConstantValueExpression *const_val_b =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(30));
-  expression::ComparisonExpression<expression::CmpEq> *comp_b =
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQ, tup_val_b, const_val_b);
-
-  expression::ConjunctionExpression<expression::ConjunctionOr> *predicate =
-      new expression::ConjunctionExpression<expression::ConjunctionOr>(
-          EXPRESSION_TYPE_CONJUNCTION_OR, comp_a, comp_b);
-
-  std::cout << (*predicate);
-
-  // TUPLE
-
-  std::vector<catalog::Column> columns;
-
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                          "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                          "B", true);
-  columns.push_back(column1);
-  columns.push_back(column2);
-  catalog::Schema *schema(new catalog::Schema(columns));
-
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
-
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(45));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(20));
-
-  EXPECT_EQ(predicate->Evaluate(tuple, NULL, NULL).IsTrue(), true);
-
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(30));
-  EXPECT_EQ(predicate->Evaluate(tuple, NULL, NULL).IsTrue(), true);
-
-  // delete the root to cleanup the full tree
-  delete predicate;
 
   delete schema;
   delete tuple;
