@@ -37,9 +37,10 @@ namespace storage {
  *
  * Layout :
  *
- * 	----------------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | Data |
- * 	----------------------------------------------------------------------------------
+ * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
+ *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
+ * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
+>>>>>>> master
  *
  */
 
@@ -57,6 +58,8 @@ class TileGroupHeader {
 
     // allocate storage space for header
     data = (char *) backend->Allocate(header_size);
+    // initialize data with zero
+    memset(data, 0, header_size);
     assert(data != nullptr);
 
     // Set MVCC Initial Value
@@ -111,7 +114,24 @@ class TileGroupHeader {
     }
 
     return tuple_slot_id;
+  }
 
+  /**
+   * Used by logging
+   */
+  bool GetEmptyTupleSlot(oid_t tuple_slot_id) {
+    {
+      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
+
+      if (tuple_slot_id < num_tuple_slots) {
+        if (next_tuple_slot <= tuple_slot_id) {
+          next_tuple_slot = tuple_slot_id + 1;
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 
   oid_t GetNextTupleSlot() const {
@@ -151,6 +171,26 @@ class TileGroupHeader {
   }
 
   // Setters
+  inline bool GetInsertCommit(const oid_t tuple_slot_id) const {
+    return *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+  }
+
+  inline bool GetDeleteCommit(const oid_t tuple_slot_id) const {
+    return *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(bool)));
+  }
+
+  inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
+    return *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(bool)));
+  }
+
+  // Getters for addresses
+
+  inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
+    return ((txn_id_t *) (data + (tuple_slot_id * header_entry_size)));
+  }
 
   inline bool LatchTupleSlot(const oid_t tuple_slot_id,
                              txn_id_t transaction_id) {
@@ -191,7 +231,26 @@ class TileGroupHeader {
         + sizeof(cid_t))) = end_cid;
   }
 
+  inline void SetInsertCommit(const oid_t tuple_slot_id,
+                              bool commit) const {
+    *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t))) = commit;
+  }
+
+  inline void SetDeleteCommit(const oid_t tuple_slot_id,
+                              bool commit) const {
+    *((bool *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(bool))) = commit;
+  }
+
+  inline void SetPrevItemPointer(const oid_t tuple_slot_id,
+                                 ItemPointer item) const {
+    *((ItemPointer *) (data + (tuple_slot_id * header_entry_size)
+        + sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(bool))) = item;
+  }
+
   // Visibility check
+  //TODO 
 
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
@@ -257,6 +316,7 @@ class TileGroupHeader {
     return deletable;
   }
 
+  //TODO 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   //===--------------------------------------------------------------------===//
@@ -269,7 +329,8 @@ class TileGroupHeader {
 
  private:
   // header entry size is the size of the layout described above
-  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t);
+  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t)
+      + sizeof(ItemPointer) + 2 * sizeof(bool);
 
   //===--------------------------------------------------------------------===//
   // Data members

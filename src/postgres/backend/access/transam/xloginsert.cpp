@@ -60,21 +60,21 @@ typedef struct
 	char		compressed_page[PGLZ_MAX_BLCKSZ];
 }	registered_buffer;
 
-static registered_buffer *registered_buffers;
-static int	max_registered_buffers;		/* allocated size */
-static int	max_registered_block_id = 0;		/* highest block_id + 1
+thread_local static registered_buffer *registered_buffers;
+thread_local static int	max_registered_buffers;		/* allocated size */
+thread_local static int	max_registered_block_id = 0;		/* highest block_id + 1
 												 * currently registered */
 
 /*
  * A chain of XLogRecDatas to hold the "main data" of a WAL record, registered
  * with XLogRegisterData(...).
  */
-static XLogRecData *mainrdata_head;
-static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
-static uint32 mainrdata_len;	/* total # of bytes in chain */
+thread_local static XLogRecData *mainrdata_head;
+thread_local static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
+thread_local static uint32 mainrdata_len;	/* total # of bytes in chain */
 
 /* Should te in-progress insertion log the origin */
-static bool include_origin = false;
+thread_local static bool include_origin = false;
 
 /*
  * These are used to hold the record header while constructing a record.
@@ -84,8 +84,8 @@ static bool include_origin = false;
  * For simplicity, it's allocated large enough to hold the headers for any
  * WAL record.
  */
-static XLogRecData hdr_rdt;
-static char *hdr_scratch = NULL;
+thread_local static XLogRecData hdr_rdt;
+thread_local static char *hdr_scratch = NULL;
 
 #define SizeOfXlogOrigin	(sizeof(RepOriginId) + sizeof(char))
 
@@ -97,14 +97,14 @@ static char *hdr_scratch = NULL;
 /*
  * An array of XLogRecData structs, to hold registered data.
  */
-static XLogRecData *rdatas;
-static int	num_rdatas;			/* entries currently used */
-static int	max_rdatas;			/* allocated size */
+thread_local static XLogRecData *rdatas;
+thread_local static int	num_rdatas;			/* entries currently used */
+thread_local static int	max_rdatas;			/* allocated size */
 
-static bool begininsert_called = false;
+thread_local static bool begininsert_called = false;
 
 /* Memory context to hold the registered buffer and data references. */
-static MemoryContext xloginsert_cxt;
+thread_local static MemoryContext xloginsert_cxt;
 
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,

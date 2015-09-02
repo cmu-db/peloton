@@ -40,15 +40,15 @@ typedef struct timeout_params
 /*
  * List of possible timeout reasons in the order of enum TimeoutId.
  */
-static timeout_params all_timeouts[MAX_TIMEOUTS];
-static bool all_timeouts_initialized = false;
+thread_local static timeout_params all_timeouts[MAX_TIMEOUTS];
+thread_local static bool all_timeouts_initialized = false;
 
 /*
  * List of active timeouts ordered by their fin_time and priority.
  * This list is subject to change by the interrupt handler, so it's volatile.
  */
-static volatile int num_active_timeouts = 0;
-static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
+thread_local static volatile int num_active_timeouts = 0;
+thread_local static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
 
 /*
  * Flag controlling whether the signal handler is allowed to do anything.
@@ -59,7 +59,7 @@ static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
  * since the probability of the interrupt actually occurring while we have
  * it disabled is low.  See comments in schedule_alarm() about that.
  */
-static volatile sig_atomic_t alarm_enabled = false;
+thread_local static volatile sig_atomic_t alarm_enabled = false;
 
 #define disable_alarm() (alarm_enabled = false)
 #define enable_alarm()	(alarm_enabled = true)
@@ -271,7 +271,9 @@ handle_sig_alarm(SIGNAL_ARGS)
 	 * SIGALRM is always cause for waking anything waiting on the process
 	 * latch.
 	 */
-	SetLatch(MyLatch);
+  // TODO: Peloton Changes
+	if(MyLatch)
+	  SetLatch(MyLatch);
 
 	/*
 	 * Fire any pending timeouts, but only if we're enabled to do so.
@@ -302,7 +304,8 @@ handle_sig_alarm(SIGNAL_ARGS)
 				this_timeout->indicator = true;
 
 				/* And call its handler function */
-				(*this_timeout->timeout_handler) ();
+				if(this_timeout->timeout_handler)
+				  (*this_timeout->timeout_handler) ();
 
 				/*
 				 * The handler might not take negligible time (CheckDeadLock

@@ -24,7 +24,7 @@ namespace bridge {
 const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
   ValueArray params;
   if (param_list != nullptr) {
-    params.Reset(param_list->numParams);
+    params.reset(param_list->numParams);
     ParamExternData *postgres_param = param_list->params;
     for (int i = 0; i < params.GetSize(); ++i, ++postgres_param) {
       params[i] = TupleTransformer::GetValue(postgres_param->value,
@@ -251,7 +251,8 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
     }
 
     LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
-              peloton_expr->DebugInfo().c_str());
+
+    peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -270,7 +271,7 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
   expression::AbstractExpression *predicate = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(qual));
   LOG_INFO("Predicate:\n%s \n",
-            (nullptr == predicate) ? "NULL" : predicate->DebugInfo().c_str());
+            (nullptr == predicate) ? "NULL" : predicate->DebugInfo(" ").c_str());
 
   return predicate;
 }

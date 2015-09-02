@@ -46,6 +46,8 @@ namespace test {
 /** @brief Helper function for defining schema */
 catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
+  std::string not_null_constraint_name = "not_null";
+  catalog::Column dummy_column;
 
   switch (index) {
     case 0: {
@@ -53,7 +55,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -62,7 +65,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -71,7 +75,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
                           "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -81,15 +86,18 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
                                     "COL_D",
                                     !is_inlined);  // inlined.
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
-    default:
+    default: {
       throw ExecutorException("Invalid column index : " +
                               std::to_string(index));
-      break;
+    }
   }
+
+  return dummy_column;
 }
 
 /**
@@ -194,7 +202,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
 
-    string_value.FreeUninlinedData();
+    string_value.Free();
   }
 
   txn_manager.CommitTransaction(txn);
@@ -236,7 +244,7 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
     tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
 
-    string_value.FreeUninlinedData();
+    string_value.Free();
   }
 
   txn_manager.CommitTransaction(txn);

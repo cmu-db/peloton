@@ -867,14 +867,14 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
-static CatCache *SysCache[
+thread_local static CatCache *SysCache[
 						  lengthof(cacheinfo)];
-static int	SysCacheSize = lengthof(cacheinfo);
-static bool CacheInitialized = false;
+thread_local static int	SysCacheSize = lengthof(cacheinfo);
+thread_local static bool CacheInitialized = false;
 
-static Oid	SysCacheRelationOid[
+thread_local static Oid	SysCacheRelationOid[
 								lengthof(cacheinfo)];
-static int	SysCacheRelationOidSize;
+thread_local static int	SysCacheRelationOidSize;
 
 static int	oid_compare(const void *a, const void *b);
 

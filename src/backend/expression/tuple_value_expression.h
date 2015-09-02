@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
+#include "backend/storage/tuple.h"
 
 #include <string>
 #include <sstream>
@@ -20,66 +21,49 @@
 namespace peloton {
 namespace expression {
 
-class SerializeInput;
-class SerializeOutput;
+class TupleValueExpression : public AbstractExpression {
+  public:
+    TupleValueExpression(const int tableIdx, const int valueIdx)
+        : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE), tuple_idx(tableIdx), value_idx(valueIdx)
+    {
+        LOG_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
+    };
 
-//===--------------------------------------------------------------------===//
-// Tuple Value Expression
-//===--------------------------------------------------------------------===//
-
-class TupleValueExpressionMarker {
- public:
-  virtual ~TupleValueExpressionMarker() {}
-  virtual int GetColumnId() const = 0;
-};
-
-class TupleValueExpression : public AbstractExpression,
-                             public TupleValueExpressionMarker {
- public:
-  TupleValueExpression(int tuple_idx, int value_idx, std::string table_name,
-                       std::string col_name)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE) {
-    this->tuple_idx = tuple_idx;
-    this->value_idx = value_idx;
-    this->table_name = table_name;
-    this->column_name = col_name;
-  };
-
-  inline Value Evaluate(const AbstractTuple *tuple1,
-                        const AbstractTuple *tuple2,
-                        __attribute__((unused))
-                        executor::ExecutorContext *) const {
-    if (tuple_idx == 0) {
-      return tuple1->GetValue(this->value_idx);
+    virtual Value Evaluate(const AbstractTuple *tuple1,
+                           const AbstractTuple *tuple2,
+                           __attribute__((unused)) executor::ExecutorContext *context) const {
+        if (tuple_idx == 0) {
+            assert(tuple1);
+            if ( ! tuple1 ) {
+                throw Exception("TupleValueExpression::"
+                                              "Evaluate:"
+                                              " Couldn't find tuple 1 (possible index scan planning error)");
+            }
+            return tuple1->GetValue(value_idx);
+        }
+        else {
+            assert(tuple2);
+            if ( ! tuple2 ) {
+                throw Exception("TupleValueExpression::"
+                                              "Evaluate:"
+                                              " Couldn't find tuple 2 (possible index scan planning error)");
+            }
+            return tuple2->GetValue(value_idx);
+        }
     }
-    else {
-      return tuple2->GetValue(this->value_idx);
+
+    std::string DebugInfo(const std::string &spacer) const {
+        std::ostringstream buffer;
+        buffer << spacer << "Optimized Column Reference[" << tuple_idx << ", " << value_idx << "]\n";
+        return (buffer.str());
     }
-  }
 
-  std::string DebugInfo(const std::string &spacer) const {
-    std::ostringstream buffer;
-    buffer << spacer + "TupleValueReference[" << this->tuple_idx << " , "
-           << this->value_idx << "]\n";
-    return (buffer.str());
-  }
+    int GetColumnId() const {return this->value_idx;}
 
-  int GetColumnId() const { return this->value_idx; }
+  protected:
 
-  std::string GetTableName() { return table_name; }
-
-  // Don't know this index until the executor examines the expression.
-  void SetTupleIndex(int idx) { tuple_idx = idx; }
-
- protected:
-  // which tuple. defaults to tuple1
-  int tuple_idx;
-
-  // which (offset) column of the tuple
-  int value_idx;
-
-  std::string table_name;
-  std::string column_name;
+    const int tuple_idx;           // which tuple. defaults to tuple1
+    const int value_idx;           // which (offset) column of the tuple
 };
 
 }  // End expression namespace

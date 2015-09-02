@@ -12,12 +12,29 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 N: Joy Arulraj
 E: jarulraj@cs.cmu.edu
 W: https://www.cs.cmu.edu/~jarulraj/
-D: Working on it 
+D: Working on it
+
+N: Ming Fang
+E: mingf@cs.cmu.edu
+D: Porting, Bridge, MVCC 
+
+N: Ziqiang Feng
+E: csfzq2009@gmail.com 
+D: Execution Engine, Bridge, MVCC 
+
+N: Jinwoong Kim
+E: aragnom@gmail.com 
+D: Catalog, DDL, Bootstrap, Logging 
 
 N: Andrew Pavlo  
 E: pavlo@cs.cmu.edu
-D: Provider of much wisdom, and motivator for Peloton
+W: https://www.cs.cmu.edu/~pavlo/
+D: Provider of much wisdom and motivator for Peloton
+
+N: Vivek Sengupta
+E: sviveksengupta@gmail.com 
+D: Bridge, Wiki, Refactoring
 
 N: Edward Yeo 
 E: eddy.yeo@gmail.com 
-D: Execution engine work 
+D: Execution Engine

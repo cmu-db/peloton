@@ -1184,7 +1184,10 @@ test_config_settings(void)
 				 backend_exec, boot_options,
 				 test_conns, test_buffs,
 				 DEVNULL, DEVNULL);
-		status = system(cmd);
+
+		// TODO: Peloton Changes
+		//status = system(cmd);
+		status = 0;
 		if (status == 0)
 		{
 			ok_buffers = test_buffs;
@@ -1219,7 +1222,10 @@ test_config_settings(void)
 				 backend_exec, boot_options,
 				 n_connections, test_buffs,
 				 DEVNULL, DEVNULL);
-		status = system(cmd);
+
+    // TODO: Peloton Changes
+		//status = system(cmd);
+		status = 0;
 		if (status == 0)
 			break;
 	}
@@ -3324,7 +3330,7 @@ initialize_data_directory(void)
 
 	create_xlog_symlink();
 
-	/* Create required subdirectories */
+	// Create required subdirectories
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
@@ -3336,26 +3342,23 @@ initialize_data_directory(void)
 
 	check_ok();
 
-	/* Top level PG_VERSION is checked by bootstrapper, so make it first */
+	// Top level PG_VERSION is checked by bootstrapper, so make it first
 	write_version_file(NULL);
 
-	/* Select suitable configuration settings */
+	// Select suitable configuration settings
 	set_null_conf();
 	test_config_settings();
 
-	/* Now create all the text config files */
+	// Now create all the text config files
 	setup_config();
 
-	/* Bootstrap template1 */
+	// Bootstrap template1
 	bootstrap_template1();
 
-	/*
-	 * Make the per-database PG_VERSION for template1 only after init'ing it
-	 */
+	// Make the per-database PG_VERSION for template1 only after init'ing it
 	write_version_file("base/1");
 
-	/* Create the stuff we don't need to use bootstrap mode for */
-
+	// Create the stuff we don't need to use bootstrap mode for
 	setup_auth();
 	if (pwprompt || pwfilename)
 		get_set_pwd();

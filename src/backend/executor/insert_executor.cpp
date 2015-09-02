@@ -12,6 +12,8 @@
 
 #include "backend/executor/insert_executor.h"
 
+#include "../logging/log_manager.h"
+#include "../logging/records/tuple_record.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
@@ -91,7 +93,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
       transaction_->RecordInsert(location);
-    }
+   }
 
     executor_context_->num_processed += 1; // insert one
     return true;
@@ -126,6 +128,23 @@ bool InsertExecutor::DExecute() {
       return false;
     }
     transaction_->RecordInsert(location);
+
+    // Logging 
+    {
+      auto& logManager = logging::LogManager::GetInstance();
+
+      if(logManager.IsInLoggingMode()){
+        auto logger = logManager.GetBackendLogger();
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+                                             transaction_->GetTransactionId(), 
+                                             target_table_->GetOid(),
+                                             location,
+                                             INVALID_ITEMPOINTER,
+                                             tuple.get());
+
+        logger->Log(record);
+      }
+    }
 
     executor_context_->num_processed += 1; // insert one
     done_ = true;
