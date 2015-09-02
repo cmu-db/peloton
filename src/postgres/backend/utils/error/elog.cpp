@@ -86,9 +86,9 @@ static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */
-ErrorContextCallback *error_context_stack = NULL;
+thread_local ErrorContextCallback *error_context_stack = NULL;
 
-sigjmp_buf *PG_exception_stack = NULL;
+thread_local sigjmp_buf *PG_exception_stack = NULL;
 
 extern bool redirection_done;
 
@@ -120,9 +120,9 @@ char	   *Log_destination_string = NULL;
 #define PG_SYSLOG_LIMIT 900
 #endif
 
-static bool openlog_done = false;
-static char *syslog_ident = NULL;
-static int	syslog_facility = LOG_LOCAL0;
+thread_local static bool openlog_done = false;
+thread_local static char *syslog_ident = NULL;
+thread_local static int	syslog_facility = LOG_LOCAL0;
 
 static void write_syslog(int level, const char *line);
 #endif
@@ -137,19 +137,19 @@ static void write_eventlog(int level, const char *line, int len);
 /* We provide a small stack of ErrorData records for re-entrant cases */
 #define ERRORDATA_STACK_SIZE  5
 
-static ErrorData errordata[ERRORDATA_STACK_SIZE];
+thread_local static ErrorData errordata[ERRORDATA_STACK_SIZE];
 
-static int	errordata_stack_depth = -1; /* index of topmost active frame */
+thread_local static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
-static int	recursion_depth = 0;	/* to detect actual recursion */
+thread_local static int	recursion_depth = 0;	/* to detect actual recursion */
 
 /* buffers for formatted timestamps that might be used by both
  * log_line_prefix and csv logs.
  */
 
 #define FORMATTED_TS_LEN 128
-static char formatted_start_time[FORMATTED_TS_LEN];
-static char formatted_log_time[FORMATTED_TS_LEN];
+thread_local static char formatted_start_time[FORMATTED_TS_LEN];
+thread_local static char formatted_log_time[FORMATTED_TS_LEN];
 
 
 /* Macro for checking errordata_stack_depth is reasonable */

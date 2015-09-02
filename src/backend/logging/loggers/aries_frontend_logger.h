@@ -80,7 +80,7 @@ class AriesFrontendLogger : public FrontendLogger{
   bool ReadTupleRecordHeader(TupleRecord& tuple_record);
 
   storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
-                                      Pool *pool);
+                                      VarlenPool *pool);
 
   // Wrappers
   storage::DataTable* GetTable(TupleRecord tupleRecord);

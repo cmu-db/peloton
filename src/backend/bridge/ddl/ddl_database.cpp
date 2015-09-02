@@ -41,10 +41,10 @@ bool DDLDatabase::ExecCreatedbStmt(Node *parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(__attribute__((unused)) Node *parsetree, DDL_Info* ddl_info) {
-  const Database_Info* database_info = 
-    reinterpret_cast<const Database_Info *>(ddl_info);
-  DDLDatabase::DropDatabase(database_info->database_oid);
+bool DDLDatabase::ExecDropdbStmt(Node *parsetree){
+  DropdbStmt *stmt = (DropdbStmt*)parsetree;
+  auto database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  DDLDatabase::DropDatabase(database_oid);
   return true;
 }
 
@@ -53,29 +53,29 @@ bool DDLDatabase::ExecDropdbStmt(__attribute__((unused)) Node *parsetree, DDL_In
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
-  VacuumStmt *vacuum = (VacuumStmt *)parsetree;
+bool DDLDatabase::ExecVacuumStmt(Node *parsetree) {
+  VacuumStmt* vacuum = (VacuumStmt*) parsetree;
   std::string relation_name;
 
-  if (vacuum->relation != NULL) relation_name = vacuum->relation->relname;
+  if( vacuum->relation != NULL )
+    relation_name = vacuum->relation->relname;
 
   // Get database oid
-  oid_t database_oid = Bridge::GetCurrentDatabaseOid();
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
 
   // Get data table based on dabase oid and table name
-  auto &manager = catalog::Manager::GetInstance();
+  auto& manager = catalog::Manager::GetInstance();
   auto db = manager.GetDatabaseWithOid(database_oid);
 
   // Update every table and index
-  if (relation_name.empty()) {
-    db->UpdateStats(status, true);
+  if(relation_name.empty()){
+    db->UpdateStats();
   }
   // Otherwise, update the specific table
-  else {
+  else{
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    db->UpdateStatsWithOid(status, relation_oid);
+    db->UpdateStatsWithOid(relation_oid);
   }
-
   return true;
 }
 

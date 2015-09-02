@@ -73,19 +73,18 @@ typedef struct StandardChunkHeader
  * Only TopMemoryContext and ErrorContext are initialized by
  * MemoryContextInit() itself.
  */
-extern PGDLLIMPORT MemoryContext TopMemoryContext;
-extern PGDLLIMPORT MemoryContext ErrorContext;
-extern PGDLLIMPORT MemoryContext PostmasterContext;
-extern PGDLLIMPORT MemoryContext CacheMemoryContext;
-extern PGDLLIMPORT MemoryContext MessageContext;
-extern PGDLLIMPORT MemoryContext TopTransactionContext;
-extern PGDLLIMPORT MemoryContext CurTransactionContext;
+extern thread_local PGDLLIMPORT MemoryContext TopMemoryContext;
+extern thread_local PGDLLIMPORT MemoryContext ErrorContext;
+extern thread_local PGDLLIMPORT MemoryContext PostmasterContext;
+extern thread_local PGDLLIMPORT MemoryContext CacheMemoryContext;
+extern thread_local PGDLLIMPORT MemoryContext MessageContext;
+extern thread_local PGDLLIMPORT MemoryContext TopTransactionContext;
+extern thread_local PGDLLIMPORT MemoryContext CurTransactionContext;
 
 extern PGDLLIMPORT MemoryContext TopSharedMemoryContext;
-extern PGDLLIMPORT thread_local MemoryContext SHMQueryContext;
 
 /* This is a transient link to the active portal's memory context: */
-extern PGDLLIMPORT MemoryContext PortalContext;
+extern thread_local PGDLLIMPORT MemoryContext PortalContext;
 
 /* Backwards compatibility macro */
 #define MemoryContextResetAndDeleteChildren(ctx) MemoryContextReset(ctx)

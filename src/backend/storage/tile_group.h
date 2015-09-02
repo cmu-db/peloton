@@ -133,7 +133,7 @@ class TileGroup {
     return tiles[tile_id]->GetTileId();
   }
 
-  peloton::Pool *GetTilePool(const oid_t tile_id) const {
+  peloton::VarlenPool *GetTilePool(const oid_t tile_id) const {
     Tile *tile = GetTile(tile_id);
 
     if (tile != nullptr) return tile->GetPool();

@@ -120,7 +120,7 @@ typedef struct
 	pg_locale_t locale;			/* locale_t struct, or 0 if not valid */
 } collation_cache_entry;
 
-static HTAB *collation_cache = NULL;
+thread_local static HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)

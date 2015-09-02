@@ -127,8 +127,6 @@
 #include "storage/spin.h"
 #endif
 
-#include "postmaster/peloton.h"
-
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
@@ -182,9 +180,8 @@ static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 static Backend *ShmemBackendArray;
 #endif
 
-BackgroundWorker *MyBgworkerEntry = NULL;
 
-
+thread_local BackgroundWorker *MyBgworkerEntry = NULL;
 
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
@@ -240,7 +237,7 @@ char	   *bonjour_name;
 bool		restart_after_crash = true;
 
 /* PIDs of special child processes; 0 when not running */
-static pid_t StartupPID = 0,
+thread_local static pid_t StartupPID = 0,
     BgWriterPID = 0,
     CheckpointerPID = 0,
     WalWriterPID = 0,
@@ -248,17 +245,13 @@ static pid_t StartupPID = 0,
     AutoVacPID = 0,
     PgArchPID = 0,
     PgStatPID = 0,
-    SysLoggerPID = 0,
-    PelotonPID = 0;
+    SysLoggerPID = 0;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
 #define			SmartShutdown	1
 #define			FastShutdown	2
 #define			ImmediateShutdown	3
-
-/* Peloton Port */
-Port *PelotonPort = NULL;
 
 static int	Shutdown = NoShutdown;
 
@@ -335,7 +328,7 @@ static time_t AbortStartTime;
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;		/* T during new___-client
+thread_local bool		ClientAuthInProgress = false;		/* T during new___-client
  * authentication */
 
 bool		redirection_done = false;	/* stderr redirected for syslogger? */
@@ -362,9 +355,8 @@ static struct timeval random_start_time;
 static DNSServiceRef bonjour_sdref = NULL;
 #endif
 
-// Peloton Test Mode
+// TODO: Peloton Changes
 bool PelotonTestMode = false;
-bool PelotonDualMode = false;
 
 /*
  * postmaster.c - function prototypes
@@ -390,7 +382,7 @@ static void LogChildExit(int lev, const char *procname,
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
-static void ExitPostmaster(int status) pg_attribute_noreturn();
+static void ExitPostmaster(int status);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
@@ -617,7 +609,7 @@ PostmasterMain(int argc, char *argv[])
    * tcop/postgres.c (the option sets should not conflict) and with the
    * common help() function in main/main.c.
    */
-  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:YZ-:")) != -1)
+  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:Z-:")) != -1)
   {
     switch (opt)
     {
@@ -783,17 +775,9 @@ PostmasterMain(int argc, char *argv[])
       }
 
       // TODO: Peloton Changes
-      case 'Y':
-      {
-        // Run DML queries using both Peloton and PG executors
-        PelotonDualMode = true;
-        elog(LOG, "Enabled dual mode\n");
-        break;
-      }
-
+      // Run the Peloton bridge tests if enabled
       case 'Z':
       {
-        // Runs the Peloton bridge tests, if set to true
         PelotonTestMode = true;
         break;
       }
@@ -1205,11 +1189,6 @@ PostmasterMain(int argc, char *argv[])
    * Initialize the autovacuum subsystem (again, no process start yet)
    */
   autovac_init();
-
-  /*
-   * Initialize peloton subsystem (again, no process start yet)
-   */
-  peloton_init();
 
   /*
    * Load configuration files for client authentication.
@@ -1627,8 +1606,9 @@ ServerLoop(void)
              * We no longer need the open socket or port structure
              * in this process
              */
-            StreamClose(port->sock);
-            ConnFree(port);
+            // TODO: Peloton Changes
+            //StreamClose(port->sock);
+            //ConnFree(port);
           }
         }
       }
@@ -2357,7 +2337,6 @@ processCancelRequest(Port *port, void *pkt)
 #endif
   }
 
-
   /*
    * reset_shared -- reset shared memory and semaphores
    */
@@ -2411,8 +2390,6 @@ processCancelRequest(Port *port, void *pkt)
         signal_child(SysLoggerPID, SIGHUP);
       if (PgStatPID != 0)
         signal_child(PgStatPID, SIGHUP);
-      if (PelotonPID != 0)
-        signal_child(PelotonPID, SIGHUP);
 
       /* Reload authentication config files too */
       if (!load_hba())
@@ -2481,9 +2458,6 @@ processCancelRequest(Port *port, void *pkt)
           /* and the walwriter too */
           if (WalWriterPID != 0)
             signal_child(WalWriterPID, SIGTERM);
-          /* and peloton too */
-          if (PelotonPID != 0)
-            signal_child(PelotonPID, SIGTERM);
 
           /*
            * If we're in recovery, we can't kill the startup process
@@ -2526,8 +2500,6 @@ processCancelRequest(Port *port, void *pkt)
           signal_child(BgWriterPID, SIGTERM);
         if (WalReceiverPID != 0)
           signal_child(WalReceiverPID, SIGTERM);
-        if (PelotonPID != 0)
-          signal_child(PelotonPID, SIGTERM);
         SignalUnconnectedWorkers(SIGTERM);
         if (pmState == PM_RECOVERY)
         {
@@ -2710,8 +2682,6 @@ processCancelRequest(Port *port, void *pkt)
           PgArchPID = pgarch_start();
         if (PgStatPID == 0)
           PgStatPID = pgstat_start();
-        if (PelotonPID == 0)
-          PelotonPID = peloton_start();
 
         /* workers may be scheduled to start now */
         maybe_start_bgworker();
@@ -2882,19 +2852,6 @@ processCancelRequest(Port *port, void *pkt)
         continue;
       }
 
-      /* Was it the peloton process?  If so, try to start a new one */
-      if (pid == PelotonPID)
-      {
-        PelotonPID = 0;
-        if (!EXIT_STATUS_0(exitstatus))
-          LogChildExit(LOG, _("peloton process"),
-                       pid, exitstatus);
-        // TODO: Disable automatic restart
-        //if (pmState == PM_RUN)
-        //  PelotonPID = peloton_start();
-        continue;
-      }
-
       /* Was it one of our background workers? */
       if (CleanupBackgroundWorker(pid, exitstatus))
       {
@@ -3026,6 +2983,18 @@ processCancelRequest(Port *port, void *pkt)
   }
 
   /*
+   * GetBackendThreadID
+   *
+   */
+  int
+  GetBackendThreadId(void) {
+    std::hash<std::thread::id> hasher;
+    uint16_t thread_id = hasher(std::this_thread::get_id());
+
+    return thread_id;
+  }
+
+  /*
    * CleanupBackend -- cleanup after terminated backend.
    *
    * Remove all local state associated with backend.
@@ -3108,6 +3077,8 @@ processCancelRequest(Port *port, void *pkt)
       }
     }
   }
+
+
 
   /*
    * HandleChildCrash -- cleanup after failed backend, bgwriter, checkpointer,
@@ -3315,18 +3286,6 @@ processCancelRequest(Port *port, void *pkt)
       signal_child(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
     }
 
-    /* Take care of peloton too */
-    if (pid == PelotonPID)
-      PelotonPID = 0;
-    else if (PelotonPID != 0 && take_action)
-    {
-      ereport(DEBUG2,
-              (errmsg_internal("sending %s to process %d",
-                               (SendStop ? "SIGSTOP" : "SIGQUIT"),
-                               (int) PelotonPID)));
-      signal_child(PelotonPID, (SendStop ? SIGSTOP : SIGQUIT));
-    }
-
     /*
      * Force a power-cycle of the pgarch process too.  (This isn't absolutely
      * necessary, but it seems like a good idea for robustness, and it
@@ -3511,7 +3470,6 @@ processCancelRequest(Port *port, void *pkt)
           StartupPID == 0 &&
           WalReceiverPID == 0 &&
           BgWriterPID == 0 &&
-          PelotonPID == 0 &&
           (CheckpointerPID == 0 ||
               (!FatalError && Shutdown < ImmediateShutdown)) &&
               WalWriterPID == 0 &&
@@ -3613,7 +3571,6 @@ processCancelRequest(Port *port, void *pkt)
         Assert(CheckpointerPID == 0);
         Assert(WalWriterPID == 0);
         Assert(AutoVacPID == 0);
-        Assert(PelotonPID == 0);
         /* syslogger is not considered here */
         pmState = PM_NO_CHILDREN;
       }
@@ -3830,9 +3787,35 @@ processCancelRequest(Port *port, void *pkt)
       signal_child(PgArchPID, signal);
     if (PgStatPID != 0)
       signal_child(PgStatPID, signal);
-    if (PelotonPID != 0)
-      signal_child(PelotonPID, signal);
     SignalUnconnectedWorkers(signal);
+  }
+
+  // TODO: Peloton Changes
+  static void BackendTask(Backend  *bn, Port *port) {
+    free(bn);
+
+    IsBackend = true;
+
+    MemoryContextInit();
+    MemoryContextSwitchTo(TopMemoryContext);
+
+    InitLockMethodLocalHash();
+
+    InitializeMaxBackends();
+
+    InitializeGUCOptions(false);
+
+    /* Detangle from postmaster */
+    InitPostmasterChild();
+
+    /* Close the postmaster's sockets */
+    //ClosePostmasterPorts(false);
+
+    /* Perform additional initialization and collect startup packet */
+    BackendInitialize(port);
+
+    /* And run the backend */
+    BackendRun(port);
   }
 
   /*
@@ -3888,23 +3871,13 @@ processCancelRequest(Port *port, void *pkt)
 #ifdef EXEC_BACKEND
     pid = backend_forkexec(port);
 #else							/* !EXEC_BACKEND */
-    pid = fork_process();
-    if (pid == 0)				/* child */
-    {
-      free(bn);
 
-      /* Detangle from postmaster */
-      InitPostmasterChild();
+    // TODO: Peloton Changes
+    //pid = fork_process();
+    pid = 0;
+    std::thread backend(BackendTask, bn, port);
+    backend.detach();
 
-      /* Close the postmaster's sockets */
-      ClosePostmasterPorts(false);
-
-      /* Perform additional initialization and collect startup packet */
-      BackendInitialize(port);
-
-      /* And run the backend */
-      BackendRun(port);
-    }
 #endif   /* EXEC_BACKEND */
 
     if (pid < 0)
@@ -4016,6 +3989,9 @@ processCancelRequest(Port *port, void *pkt)
     /* set these to empty in case they are needed before we set them up */
     port->remote_host = "";
     port->remote_port = "";
+
+    int thread_id = GetBackendThreadId();
+    elog(INFO, "Initializing backend :: TID :: %d ", thread_id);
 
     /*
      * Initialize libpq and enable reporting of ereport errors to the client.
@@ -4845,12 +4821,6 @@ processCancelRequest(Port *port, void *pkt)
                   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
 #endif
 
-    /* should cleanup shared memory and kill all backends */
-
-    // TODO: Peloton Changes
-    SHMContextShutdown();
-    Assert(TopSharedMemoryContext == NULL);
-
     /*
      * Not sure of the semantics here.  When the Postmaster dies, should the
      * backends all be killed? probably not.
@@ -4921,10 +4891,6 @@ processCancelRequest(Port *port, void *pkt)
        */
       Assert(PgStatPID == 0);
       PgStatPID = pgstat_start();
-
-      // TODO: Disable auto restart
-      //Assert(PelotonPID == 0);
-      //PelotonPID = peloton_start();
 
       ereport(LOG,
               (errmsg("database system is ready to accept read only connections")));
@@ -5140,10 +5106,16 @@ processCancelRequest(Port *port, void *pkt)
   {
     dlist_iter	iter;
     int			cnt = 0;
+    Backend    *bp = NULL;
+    Backend    *prev_bp = NULL;
 
     dlist_foreach(iter, &BackendList)
     {
-      Backend    *bp = dlist_container(Backend, elem, iter.cur);
+      prev_bp = bp;
+      bp = dlist_container(Backend, elem, iter.cur);
+
+      if(prev_bp == bp)
+        break;
 
       if (bp->dead_end)
         continue;
@@ -5219,6 +5191,7 @@ processCancelRequest(Port *port, void *pkt)
 
       /* Release postmaster's working memory context */
       MemoryContextSwitchTo(TopMemoryContext);
+
       MemoryContextDelete(PostmasterContext);
       PostmasterContext = NULL;
 

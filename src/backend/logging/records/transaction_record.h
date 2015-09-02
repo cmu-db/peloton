@@ -28,7 +28,7 @@ class TransactionRecord : public LogRecord {
 
   bool Serialize();
 
-  void Deserialize(CopySerializeInput& input);
+  void Deserialize(CopySerializeInputBE& input);
 
   static size_t GetTransactionRecordSize(void) ;
 

@@ -15,7 +15,7 @@
 namespace peloton {
 
 /// Allocate a continous block of memory of the specified size.
-void *Pool::Allocate(std::size_t size) {
+void *VarlenPool::Allocate(std::size_t size) {
   void *retval = nullptr;
 
   // Protect using pool lock
@@ -70,11 +70,11 @@ void *Pool::Allocate(std::size_t size) {
 
 /// Allocate a continous block of memory of the specified size conveniently
 /// initialized to 0s
-void *Pool::AllocateZeroes(std::size_t size) {
+void *VarlenPool::AllocateZeroes(std::size_t size) {
   return ::memset(Allocate(size), 0, size);
 }
 
-void Pool::Purge() {
+void VarlenPool::Purge() {
   // Protect using pool lock
   {
     std::lock_guard<std::mutex> pool_lock(pool_mutex);
@@ -105,7 +105,7 @@ void Pool::Purge() {
   }
 }
 
-int64_t Pool::GetAllocatedMemory() {
+int64_t VarlenPool::GetAllocatedMemory() {
   int64_t total = 0;
   total += chunks.size() * allocation_size;
   for (uint32_t i = 0; i < oversize_chunks.size(); i++) {

@@ -15,7 +15,6 @@
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/catalog/schema.h"
-#include "backend/bridge/ddl/ddl_raw_structures.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -35,12 +34,6 @@ class DDLUtils {
   DDLUtils &operator=(const DDLUtils &) = delete;
   DDLUtils(DDLUtils &&) = delete;
   DDLUtils &operator=(DDLUtils &&) = delete;
-
-  static DDL_Info* peloton_prepare_data(Node *parsetree);
-
-  static Database_Info* PrepareCreatedbStmt(Database_Info* parsetree);
-
-  static Database_Info* PrepareDropdbStmt(Database_Info* parsetree);
 
   static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
