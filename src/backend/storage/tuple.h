@@ -82,7 +82,7 @@ class Tuple : public AbstractTuple {
   // Assignment operator
   Tuple &operator=(const Tuple &rhs);
 
-  void Copy(const void *source, Pool *pool = NULL);
+  void Copy(const void *source, VarlenPool *pool = NULL);
 
   /**
    * Set the tuple to point toward a given address in a table's
@@ -119,7 +119,7 @@ class Tuple : public AbstractTuple {
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValueAllocate(const oid_t column_id, Value value, Pool *dataPool);
+  void SetValueAllocate(const oid_t column_id, Value value, VarlenPool *dataPool);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
@@ -183,8 +183,8 @@ class Tuple : public AbstractTuple {
                          uint8_t *null_array);
   void SerializeWithHeaderTo(SerializeOutput &output);
 
-  void DeserializeFrom(SerializeInput &input, Pool *pool);
-  int64_t DeserializeWithHeaderFrom(SerializeInput &input);
+  void DeserializeFrom(SerializeInputBE &input, VarlenPool *pool);
+  void DeserializeWithHeaderFrom(SerializeInputBE &input);
 
   size_t HashCode(size_t seed) const;
   size_t HashCode() const;

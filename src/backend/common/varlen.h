@@ -16,7 +16,7 @@
 
 namespace peloton {
 
-class Pool;
+class VarlenPool;
 
 //===--------------------------------------------------------------------===//
 // Storage space for variable length fields
@@ -38,7 +38,7 @@ class Varlen {
   /// allocated, intended for temporary strings. If no Pool
   /// object is provided, the Varlen and the string memory will be
   /// allocated out of the ThreadLocalPool.
-  static Varlen *Create(std::size_t size, Pool *dataPool = NULL);
+  static Varlen *Create(std::size_t size, VarlenPool *data_pool = NULL);
 
   /// Destroy the given Varlen object and free any memory, if
   /// any, allocated from pools to store the object.
@@ -50,14 +50,14 @@ class Varlen {
   /**
    * @brief Clone (deep copy) the source Varlen in the provided data pool.
    */
-  static Varlen *Clone(const Varlen &src, Pool *dataPool = NULL);
+  static Varlen *Clone(const Varlen &src, VarlenPool *data_pool = NULL);
 
   char *Get();
   const char *Get() const;
 
  private:
   Varlen(std::size_t size);
-  Varlen(std::size_t size, Pool *dataPool);
+  Varlen(std::size_t size, VarlenPool *data_pool);
   ~Varlen();
 
   /// Callback used via the back-pointer in order to update the

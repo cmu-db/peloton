@@ -19,6 +19,7 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "postmaster/peloton.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"
@@ -34,100 +35,6 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // DDL Utils
 //===--------------------------------------------------------------------===//
-
-
-Database_Info* DDLUtils::PrepareCreatedbStmt(Database_Info* parsetree){
-  CreatedbStmt *stmt = (CreatedbStmt*)parsetree;
-  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
-  db_info->type = nodeTag(parsetree);
-  // FIXME : failed
-  db_info->database_oid = get_database_oid(stmt->dbname, false);
-  return db_info;
-}
-
-Database_Info* DDLUtils::PrepareDropdbStmt(Database_Info* parsetree){
-  DropdbStmt *stmt = (DropdbStmt *)parsetree;
-  Database_Info* db_info = (Database_Info*)palloc(sizeof(Database_Info));
-  db_info->type = nodeTag(parsetree);
-  db_info->database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
-  return db_info;
-}
-
-/**
- * @brief preparing data
- * @param parsetree
- */
-DDL_Info* DDLUtils::peloton_prepare_data(Node *parsetree) {
-  DDL_Info* ddl_info = nullptr;
-  switch (nodeTag(parsetree)) {
-
-//    case T_CreatedbStmt: {
-//      ddl_info = PrepareCreatedbStmt(
-//                 reinterpret_cast<Database_Info*>(parsetree));
-//      break;
-//    }
-
-    case T_DropdbStmt: {
-      ddl_info = PrepareDropdbStmt(
-                 reinterpret_cast<Database_Info*>(parsetree));
-      break;
-    }
-
-    case T_CreateStmt:
-    case T_CreateForeignTableStmt: {
-      List *stmts = ((CreateStmt *)parsetree)->stmts;
-      oid_t relation_oid = ((CreateStmt *)parsetree)->relation_id;
-      ListCell *l;
-
-      foreach (l, stmts) {
-        Node *stmt = (Node *)lfirst(l);
-        if (IsA(stmt, CreateStmt)) {
-          CreateStmt *Cstmt = (CreateStmt *)stmt;
-
-          // Get the column list from the create statement
-          List *ColumnList = (List *)(Cstmt->tableElts);
-
-          // Parse the CreateStmt and construct ColumnInfo
-          ListCell *entry;
-          int column_itr = 1;
-          foreach (entry, ColumnList) {
-            ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
-
-            Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-            int32 typemod;
-            typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
-
-            // Get type length
-            Type tup = typeidType(typeoid);
-            int typelen = typeLen(tup);
-            ReleaseSysCache(tup);
-
-            // For a fixed-size type, typlen is the number of bytes in the
-            // internal
-            // representation of the type. But for a variable-length type,
-            // typlen
-            // is
-            // negative.
-            if (typelen == -1) typelen = typemod;
-
-            // Use existing TypeName structure
-            coldef->typeName->type_oid = typeoid;
-            coldef->typeName->type_len = typelen;
-
-            if (coldef->raw_default != NULL || coldef->cooked_default != NULL)
-              SetDefaultConstraint(coldef, column_itr++, relation_oid);
-          }
-        }
-      }
-      break;
-    }
-    default:
-      // Don't need to prepare for other cases
-      break;
-      break;
-  }
-  return ddl_info;
-}
 
 /**
  * @brief setting default constraint
@@ -171,12 +78,21 @@ void DDLUtils::ParsingCreateStmt(
   foreach (entry, ColumnList) {
     ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
-    // Get the type oid and type mod with given typeName
-    Oid typeoid = coldef->typeName->type_oid;
-    int typelen = coldef->typeName->type_len;
+    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+    int32 typemod;
+    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
+    // Get type length
+    Type tup = typeidType(typeoid);
+    int typelen = typeLen(tup);
+    ReleaseSysCache(tup);
 
-    PostgresValueFormat postgresValueFormat( typeoid, typelen, typelen);
+    // For a fixed-size type, typlen is the number of bytes in the internal
+    // representation of the type. But for a variable-length type, typlen
+    // is negative.
+    if (typelen == -1) typelen = typemod;
+
+    PostgresValueFormat postgresValueFormat(typeoid, typelen, typelen);
     PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
 
     ValueType column_valueType = pelotonValueFormat.GetType();
@@ -198,17 +114,15 @@ void DDLUtils::ParsingCreateStmt(
         Constraint *ConstraintNode =
             static_cast<Constraint *>(lfirst(constNodeEntry));
         ConstraintType contype;
-        std::string conname;
 
         // CONSTRAINT TYPE
         contype = PostgresConstraintTypeToPelotonConstraintType(
             (PostgresConstraintType)ConstraintNode->contype);
 
         // CONSTRAINT NAME
+        std::string conname;
         if (ConstraintNode->conname != NULL) {
-          conname = ConstraintNode->conname;
-        } else {
-          conname = "";
+          conname = std::string(ConstraintNode->conname);
         }
 
         switch (contype) {

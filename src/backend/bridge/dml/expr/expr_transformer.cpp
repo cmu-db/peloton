@@ -127,7 +127,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 
   // A Const Expr has no children.
   auto rv = expression::ConstantValueFactory(value);
-  value.FreeUninlinedData();
+  value.Free();
   return rv;
 }
 
@@ -382,12 +382,12 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
   auto plt_exprtype = func_meta.exprtype;
 
   switch (plt_exprtype) {
-    case EXPRESSION_TYPE_COMPARE_EQ:
-    case EXPRESSION_TYPE_COMPARE_NE:
-    case EXPRESSION_TYPE_COMPARE_GT:
-    case EXPRESSION_TYPE_COMPARE_LT:
-    case EXPRESSION_TYPE_COMPARE_GTE:
-    case EXPRESSION_TYPE_COMPARE_LTE:
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
       return expression::ComparisonFactory(plt_exprtype, lc, rc);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:

@@ -177,19 +177,19 @@ typedef struct vfd
  * needed.  'File' values are indexes into this array.
  * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
-static Vfd *VfdCache;
-static Size SizeVfdCache = 0;
+thread_local static Vfd *VfdCache;
+thread_local static Size SizeVfdCache = 0;
 
 /*
  * Number of file descriptors known to be in use by VFD entries.
  */
-static int	nfile = 0;
+thread_local static int	nfile = 0;
 
 /*
  * Flag to tell whether it's worth scanning VfdCache looking for temp files
  * to close
  */
-static bool have_xact_temporary_files = false;
+thread_local static bool have_xact_temporary_files = false;
 
 /*
  * Tracks the total size of all temporary files.  Note: when temp_file_limit
@@ -197,7 +197,7 @@ static bool have_xact_temporary_files = false;
  * than INT_MAX kilobytes.  When not enforcing, it could theoretically
  * overflow, but we don't care.
  */
-static uint64 temporary_files_size = 0;
+thread_local static uint64 temporary_files_size = 0;
 
 /*
  * List of OS handles opened with AllocateFile, AllocateDir and
@@ -223,23 +223,23 @@ typedef struct
 	}			desc;
 } AllocateDesc;
 
-static int	numAllocatedDescs = 0;
-static int	maxAllocatedDescs = 0;
-static AllocateDesc *allocatedDescs = NULL;
+thread_local static int	numAllocatedDescs = 0;
+thread_local static int	maxAllocatedDescs = 0;
+thread_local static AllocateDesc *allocatedDescs = NULL;
 
 /*
  * Number of temporary files opened during the current session;
  * this is used in generation of tempfile names.
  */
-static long tempFileCounter = 0;
+thread_local static long tempFileCounter = 0;
 
 /*
  * Array of OIDs of temp tablespaces.  When numTempTableSpaces is -1,
  * this has not been set in the current transaction.
  */
-static Oid *tempTableSpaces = NULL;
-static int	numTempTableSpaces = -1;
-static int	nextTempTableSpace = 0;
+thread_local static Oid *tempTableSpaces = NULL;
+thread_local static int	numTempTableSpaces = -1;
+thread_local static int	nextTempTableSpace = 0;
 
 
 /*--------------------

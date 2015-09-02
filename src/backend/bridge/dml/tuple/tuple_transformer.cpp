@@ -75,7 +75,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *bpcharptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(bpcharptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(bpcharptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , bpchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
@@ -86,7 +86,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *varlenptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(varlenptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(varlenptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , varchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
@@ -96,7 +96,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       struct varlena *textptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(textptr) - VARHDRSZ;
       char *varchar = static_cast<char *>(VARDATA(textptr));
-      Pool *data_pool = nullptr;
+      VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
       LOG_TRACE("len = %d , text = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
@@ -170,7 +170,7 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_VARCHAR: {
       char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
-      auto data_len = ValuePeeker::PeekObjectLength(value);
+      auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
       // NB: Peloton object don't have terminating-null's, so
       // we should use PG functions that take explicit length.
       datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
@@ -184,8 +184,8 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_DECIMAL: {
 
-      auto precision = Value::max_decimal_precision;
-      auto scale = Value::max_decimal_scale;
+      auto precision = Value::kMaxDecPrec;
+      auto scale = Value::kMaxDecScale;
 
       std::string str = ValuePeeker::PeekDecimalString(value);
 

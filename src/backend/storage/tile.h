@@ -16,6 +16,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/storage/backend_vm.h"
+#include "backend/storage/backend_nvm.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
 
@@ -155,12 +156,12 @@ class Tile {
   bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
                          int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInput &serialize_in,
-                             Pool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                          Pool *pool = nullptr);
+  void DeserializeTuplesFrom(SerializeInputBE &serialize_in,
+                             VarlenPool *pool = nullptr);
+  void DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
+                                          VarlenPool *pool = nullptr);
 
-  peloton::Pool *GetPool() { return (pool); }
+  VarlenPool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
@@ -188,7 +189,7 @@ class Tile {
   TileGroup *tile_group;
 
   // storage pool for uninlined data
-  Pool *pool;
+  VarlenPool *pool;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;
@@ -261,7 +262,7 @@ class TileFactory {
     // These temporary tiles don't belong to any tile group.
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
-    AbstractBackend *backend = new VMBackend();
+    AbstractBackend *backend = new NVMBackend();
 
     Tile *tile = GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
                          header, backend, schema, tile_group, tuple_count);

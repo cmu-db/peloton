@@ -273,8 +273,12 @@ class NumericValueOutOfRangeException : public Exception {
   NumericValueOutOfRangeException() = delete;
 
  public:
-  NumericValueOutOfRangeException(std::string msg)
-      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE, msg) {}
+  // internal flags
+  static const int TYPE_UNDERFLOW = 1;
+  static const int TYPE_OVERFLOW = 2;
+
+  NumericValueOutOfRangeException(std::string msg, int type)
+      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE, msg + " " + std::to_string(type)) {}
 };
 
 class DivideByZeroException : public Exception {

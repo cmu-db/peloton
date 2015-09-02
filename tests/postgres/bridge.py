@@ -80,14 +80,14 @@ if __name__ == '__main__':
     exec_cmd(cmd)
 
     LOG.info("Starting the Peloton server in TEST MODE")    
-    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l bridge_test_logfile -o -Z start'
+    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/bridge_test_logfile -o -Z start'
     exec_cmd(cmd)
     
     LOG.info("Waiting for the server to start")    
     time.sleep(10)
 
     LOG.info("Stopping the Peloton server")        
-    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l bridge_test_logfile stop'
+    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/bridge_test_logfile stop'
     exec_cmd(cmd)
     
     LOG.info("Cleaning up the data dir")    

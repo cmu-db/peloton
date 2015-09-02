@@ -155,29 +155,29 @@ static void BuildScanKey(
     LOG_TRACE("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_TRACE("key < %s", value.GetInfo().c_str());
+        LOG_INFO("key < %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_TRACE("key <= %s", value.GetInfo().c_str());
+        LOG_INFO("key <= %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
       case BTEqualStrategyNumber:
-        LOG_TRACE("key = %s", value.GetInfo().c_str());
+        LOG_INFO("key = %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
+            ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
         break;
       case BTGreaterEqualStrategyNumber:
-        LOG_TRACE("key >= %s", value.GetInfo().c_str());
+        LOG_INFO("key >= %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
         break;
       case BTGreaterStrategyNumber:
-        LOG_TRACE("key > %s", value.GetInfo().c_str());
+        LOG_INFO("key > %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
         break;
       default:
         LOG_ERROR("Invalid strategy num %d", scan_key->sk_strategy);

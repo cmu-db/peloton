@@ -36,16 +36,16 @@
 #include "utils/typcache.h"
 
 
-uint32		SPI_processed = 0;
-Oid			SPI_lastoid = InvalidOid;
-SPITupleTable *SPI_tuptable = NULL;
-int			SPI_result;
+thread_local uint32		SPI_processed = 0;
+thread_local Oid			SPI_lastoid = InvalidOid;
+thread_local SPITupleTable *SPI_tuptable = NULL;
+thread_local int			SPI_result;
 
-static _SPI_connection *_SPI_stack = NULL;
-static _SPI_connection *_SPI_current = NULL;
-static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
-static int	_SPI_connected = -1;
-static int	_SPI_curid = -1;
+thread_local static _SPI_connection *_SPI_stack = NULL;
+thread_local static _SPI_connection *_SPI_current = NULL;
+thread_local static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
+thread_local static int	_SPI_connected = -1;
+thread_local static int	_SPI_curid = -1;
 
 static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 						 ParamListInfo paramLI, bool read_only);

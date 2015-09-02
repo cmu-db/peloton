@@ -66,6 +66,9 @@ class TransactionManager {
   // validity checks
   bool IsValid(txn_id_t txn_id);
 
+  // used by recovery testing
+  void ResetStates(void);
+
   // COMMIT
 
   void BeginCommitPhase(Transaction *txn);

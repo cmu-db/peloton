@@ -42,9 +42,8 @@ TEST(ContainerTupleTest, VectorValue) {
   }
 
   for(auto v : values){
-    v.FreeUninlinedData();
+    v.Free();
   }
-
 
 }
 
