@@ -19,10 +19,10 @@
 
 
 /* Static variables representing various special snapshot semantics */
-extern PGDLLIMPORT SnapshotData SnapshotSelfData;
-extern PGDLLIMPORT SnapshotData SnapshotAnyData;
-extern PGDLLIMPORT SnapshotData SnapshotToastData;
-extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
+extern thread_local PGDLLIMPORT SnapshotData SnapshotSelfData;
+extern thread_local PGDLLIMPORT SnapshotData SnapshotAnyData;
+extern thread_local PGDLLIMPORT SnapshotData SnapshotToastData;
+extern thread_local PGDLLIMPORT SnapshotData CatalogSnapshotData;
 
 #define SnapshotSelf		(&SnapshotSelfData)
 #define SnapshotAny			(&SnapshotAnyData)

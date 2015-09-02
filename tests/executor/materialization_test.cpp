@@ -158,7 +158,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
     Value string_value(ValueFactory::GetStringValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value, result_base_tile->GetValue(i, 0));
-    string_value.FreeUninlinedData();
+    string_value.Free();
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),

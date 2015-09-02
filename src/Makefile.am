@@ -23,12 +23,15 @@ include $(srcdir)/backend/main/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
+include $(srcdir)/backend/logging/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
+
+include $(top_srcdir)/third_party/Makefile.am
 
 bin_peloton_PROGRAMS = peloton
 
@@ -43,19 +46,19 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-						$(brain_FILES) \
-						$(catalog_FILES) \
-						$(backend_FILES) \
-						$(bridge_FILES) \
-						$(common_FILES) \
-						$(concurrency_FILES) \
-						$(executor_FILES) \
-						$(expression_FILES) \
-						$(index_FILES) \
-						$(planner_FILES) \
-						$(scheduler_FILES) \
-						$(storage_FILES)
-
+			$(expression_FILES) \
+			$(brain_FILES) \
+			$(catalog_FILES) \
+			$(backend_FILES) \
+			$(bridge_FILES) \
+			$(common_FILES) \
+			$(concurrency_FILES) \
+			$(executor_FILES) \
+			$(index_FILES) \
+			$(planner_FILES) \
+			$(scheduler_FILES) \
+			$(storage_FILES) \
+			$(logging_FILES)			
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
@@ -82,7 +85,8 @@ libpelotonpg_la_SOURCES = \
 			$(postgres_backend_FILES) \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
-			$(postgres_timezone_FILES)
+			$(postgres_timezone_FILES) \
+			$(third_party_FILES)
 
 libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
@@ -95,7 +99,7 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-unused-variable -Wno-unused-but-set-variable \
 			  -Wno-unused-parameter -Wno-missing-field-initializers \
 			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
-			  -Wno-sign-compare -Wno-write-strings -Wno-bool-compare \
+			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
 
 libpelotonpg_la_LIBADD = libpeloton.la
@@ -108,9 +112,3 @@ peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS) 
 peloton_LDADD = libpeloton.la libpelotonpg.la
-
-######################################################################
-# THIRD-PARTY INCLUDES
-######################################################################
-
-third_party_INCLUDES = -I$(top_srcdir)/third_party 

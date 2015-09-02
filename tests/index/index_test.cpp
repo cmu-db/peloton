@@ -54,15 +54,15 @@ TEST(IndexTests, BtreeIndexTest) {
 
   catalog::Schema *tuple_schema = new catalog::Schema(columns);
 
-  // BTREE MULTI INDEX
-
+  // BTREE Multi INDEX
   bool unique_keys = false;
+
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  peloton::Pool *pool = new peloton::Pool(backend);
+  peloton::VarlenPool *pool = new peloton::VarlenPool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -102,22 +102,24 @@ TEST(IndexTests, BtreeIndexTest) {
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
 
-  auto location = index->Exists(keynonce, INVALID_ITEMPOINTER);
-  EXPECT_EQ(location.block, INVALID_OID);
-  location = index->Exists(key0, item0);
-  EXPECT_EQ(location.block, item0.block);
+  auto locations = index->Scan(keynonce);
+  EXPECT_EQ(locations.size(), 0);
+  locations = index->Scan(key0);
+  EXPECT_EQ(locations.size(), 1);
+
+  //EXPECT_EQ(location.block, item0.block);
 
   LOG_TRACE("Delete \n");
 
   index->DeleteEntry(key0, item0);
   index->DeleteEntry(key1, item1);
-  index->DeleteEntry(key1, item2);
-  index->DeleteEntry(key2, item1);
+  index->DeleteEntry(key2, item2);
   index->DeleteEntry(key3, item1);
-  // index->DeleteEntry(key4, item1);
+  index->DeleteEntry(key4, item1);
 
-  location = index->Exists(key0, INVALID_ITEMPOINTER);
-  EXPECT_EQ(location.block, INVALID_OID);
+  locations = index->Scan(key0);
+  EXPECT_EQ(locations.size(), 0);
+  //EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;
   delete key1;
@@ -133,6 +135,7 @@ TEST(IndexTests, BtreeIndexTest) {
 
   delete index;
 }
+
 
 }  // End test namespace
 }  // End peloton namespace

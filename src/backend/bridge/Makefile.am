@@ -14,7 +14,12 @@ bridge_FILES = \
 			   backend/bridge/ddl/ddl.cpp \
 			   backend/bridge/ddl/bridge.cpp \
 			   backend/bridge/ddl/bootstrap.cpp \
-			   backend/bridge/ddl/bootstrap_utils.cpp \
+			   backend/bridge/ddl/raw_database_info.cpp \
+			   backend/bridge/ddl/raw_table_info.cpp \
+			   backend/bridge/ddl/raw_index_info.cpp \
+			   backend/bridge/ddl/raw_foreign_key_info.cpp \
+			   backend/bridge/ddl/raw_column_info.cpp \
+			   backend/bridge/ddl/raw_constraint_info.cpp \
 			   backend/bridge/ddl/schema_transformer.cpp \
 			   backend/bridge/ddl/format_transformer.cpp \
 			   backend/bridge/ddl/tests/bridge_test_main.cpp \

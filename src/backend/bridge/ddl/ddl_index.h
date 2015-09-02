@@ -18,6 +18,8 @@
 #include "c.h"
 #include "nodes/parsenodes.h"
 
+#include <vector>
+
 namespace peloton {
 namespace bridge {
 

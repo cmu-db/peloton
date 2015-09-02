@@ -318,26 +318,5 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   heap_close(pg_class_rel, RowExclusiveLock);
 }
 
-//===--------------------------------------------------------------------===//
-// Wrapper
-//===--------------------------------------------------------------------===//
-
-void Bridge::PelotonStartTransactionCommand() {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
-  StartTransactionCommand();
-}
-
-void Bridge::PelotonCommitTransactionCommand() {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
-  CommitTransactionCommand();
-  SetCurrentResourceOwner();
-}
-
-void Bridge::SetCurrentResourceOwner() {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
-  // Set the resource owner
-  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
-}
-
 }  // namespace bridge
 }  // namespace peloton

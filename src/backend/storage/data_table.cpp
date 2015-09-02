@@ -15,10 +15,9 @@
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
-
 #include "backend/common/exception.h"
-#include "backend/index/index.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace storage {
@@ -54,10 +53,10 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
 }
 
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
-                     std::string table_name, oid_t table_oid,
+                     std::string table_name, oid_t database_oid, oid_t table_oid,
                      size_t tuples_per_tilegroup,
                      bool own_schema)
-    : AbstractTable(table_oid, table_name, schema, own_schema),
+    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
       backend(backend),
       tuples_per_tilegroup(tuples_per_tilegroup) {
   // Create a tile group.
@@ -445,6 +444,38 @@ oid_t DataTable::AddDefaultTileGroup() {
       delete tile_group;
       return INVALID_OID;
     }
+
+    LOG_TRACE("Added a tile group \n");
+    tile_groups.push_back(tile_group->GetTileGroupId());
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+  }
+
+  return tile_group_id;
+}
+
+oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
+  assert(tile_group_id);
+
+  std::vector<catalog::Schema> schemas;
+  schemas.push_back(*schema);
+
+  column_map_type column_map;
+  // default column map
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    column_map[col_itr] = std::make_pair(0, col_itr);
+  }
+
+  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
+      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      column_map, tuples_per_tilegroup);
+
+  LOG_TRACE("Trying to add a tile group \n");
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
 
     LOG_TRACE("Added a tile group \n");
     tile_groups.push_back(tile_group->GetTileGroupId());

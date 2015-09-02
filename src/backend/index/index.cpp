@@ -39,14 +39,14 @@ bool Index::Compare(const AbstractTuple &index_key,
 
     if (diff == VALUE_COMPARE_EQUAL) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_EQ:
-        case EXPRESSION_TYPE_COMPARE_LTE:
-        case EXPRESSION_TYPE_COMPARE_GTE:
+        case EXPRESSION_TYPE_COMPARE_EQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_NE:
-        case EXPRESSION_TYPE_COMPARE_LT:
-        case EXPRESSION_TYPE_COMPARE_GT:
+        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
           return false;
 
         default:
@@ -55,14 +55,14 @@ bool Index::Compare(const AbstractTuple &index_key,
       }
     } else if (diff == VALUE_COMPARE_LESSTHAN) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_NE:
-        case EXPRESSION_TYPE_COMPARE_LT:
-        case EXPRESSION_TYPE_COMPARE_LTE:
+        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_EQ:
-        case EXPRESSION_TYPE_COMPARE_GT:
-        case EXPRESSION_TYPE_COMPARE_GTE:
+        case EXPRESSION_TYPE_COMPARE_EQUAL:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
           return false;
 
         default:
@@ -71,14 +71,14 @@ bool Index::Compare(const AbstractTuple &index_key,
       }
     } else if (diff == VALUE_COMPARE_GREATERTHAN) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_NE:
-        case EXPRESSION_TYPE_COMPARE_GT:
-        case EXPRESSION_TYPE_COMPARE_GTE:
+        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_EQ:
-        case EXPRESSION_TYPE_COMPARE_LT:
-        case EXPRESSION_TYPE_COMPARE_LTE:
+        case EXPRESSION_TYPE_COMPARE_EQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
           return false;
 
         default:
@@ -109,7 +109,7 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
 
     if (key_column_itr != key_column_ids.end()) {
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
-      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQ) {
+      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
         placeholder = true;
         value = values[offset];
       } else {

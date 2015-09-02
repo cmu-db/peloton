@@ -13,6 +13,7 @@
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/value_factory.h"
 
 #include <sstream>
 #include <cstring>
@@ -25,7 +26,98 @@ ItemPointer INVALID_ITEMPOINTER;
 // Type utilities
 //===--------------------------------------------------------------------===//
 
-/// Works only for fixed-length types
+/** Testing utility */
+bool IsNumeric(ValueType type) {
+    switch (type) {
+      case (VALUE_TYPE_TINYINT):
+      case (VALUE_TYPE_SMALLINT):
+      case (VALUE_TYPE_INTEGER):
+      case (VALUE_TYPE_BIGINT):
+      case (VALUE_TYPE_DECIMAL):
+      case (VALUE_TYPE_DOUBLE):
+        return true;
+      break;
+      case (VALUE_TYPE_VARCHAR):
+      case (VALUE_TYPE_VARBINARY):
+      case (VALUE_TYPE_TIMESTAMP):
+      case (VALUE_TYPE_NULL):
+      case (VALUE_TYPE_INVALID):
+      case (VALUE_TYPE_ARRAY):
+        return false;
+      default:
+          throw Exception("IsNumeric");
+    }
+    throw Exception("IsNumeric");
+}
+
+/** Used in index optimization **/
+bool IsIntegralType(ValueType type) {
+    switch (type) {
+      case (VALUE_TYPE_TINYINT):
+      case (VALUE_TYPE_SMALLINT):
+      case (VALUE_TYPE_INTEGER):
+      case (VALUE_TYPE_BIGINT):
+        return true;
+      break;
+      case (VALUE_TYPE_DOUBLE):
+      case (VALUE_TYPE_VARCHAR):
+      case (VALUE_TYPE_VARBINARY):
+      case (VALUE_TYPE_TIMESTAMP):
+      case (VALUE_TYPE_NULL):
+      case (VALUE_TYPE_DECIMAL):
+      case (VALUE_TYPE_ARRAY):
+        return false;
+      default:
+          throw Exception("IsIntegralType");
+    }
+    throw Exception("IsIntegralType");
+}
+
+Value GetRandomValue(ValueType type) {
+    switch (type) {
+        case VALUE_TYPE_TIMESTAMP:
+            return ValueFactory::GetTimestampValue(static_cast<int64_t>(time(NULL)));
+        case VALUE_TYPE_TINYINT:
+            return ValueFactory::GetTinyIntValue(static_cast<int8_t>(rand() % 128));
+        case VALUE_TYPE_SMALLINT:
+            return ValueFactory::GetSmallIntValue(static_cast<int16_t>(rand() % 32768));
+        case VALUE_TYPE_INTEGER:
+            return ValueFactory::GetIntegerValue(rand() % (1 << 31));
+        case VALUE_TYPE_BIGINT:
+            return ValueFactory::GetBigIntValue(rand());
+        case VALUE_TYPE_DOUBLE:
+            return ValueFactory::GetDoubleValue((rand() % 10000) / (double)(rand() % 10000));
+        case VALUE_TYPE_VARCHAR: {
+            int length = (rand() % 10);
+            char characters[11];
+            for (int ii = 0; ii < length; ii++) {
+                characters[ii] = (char)(32 + (rand() % 94)); //printable characters
+            }
+            characters[length] = '\0';
+            //printf("Characters are \"%s\"\n", characters);
+            return ValueFactory::GetStringValue(std::string(characters));
+        }
+        case VALUE_TYPE_VARBINARY: {
+            int length = (rand() % 16);
+            unsigned char bytes[17];
+            for (int ii = 0; ii < length; ii++) {
+                bytes[ii] = (unsigned char)rand() % 256; //printable characters
+            }
+            bytes[length] = '\0';
+            //printf("Characters are \"%s\"\n", characters);
+            return ValueFactory::GetBinaryValue(bytes, length);
+        }
+            break;
+        case VALUE_TYPE_ARRAY:
+        default: {
+            throw Exception("Attempted to get a random value of unsupported value type %d" + std::to_string(type));
+        }
+    }
+    throw Exception("GetRandomValue");
+}
+
+
+// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
@@ -57,6 +149,7 @@ std::size_t GetTypeSize(ValueType type) {
 //===--------------------------------------------------------------------===//
 // BackendType <--> String Utilities
 //===--------------------------------------------------------------------===//
+
 std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
@@ -186,184 +279,252 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ExpressionTypeToString(ExpressionType type) {
-  switch (type) {
+std::string ExpressionTypeToString(ExpressionType type)
+{
+    switch (type) {
     case EXPRESSION_TYPE_INVALID: {
-      return "INVALID";
+        return "INVALID";
     }
     case EXPRESSION_TYPE_OPERATOR_PLUS: {
-      return "OPERATOR_PLUS";
+        return "OPERATOR_PLUS";
     }
     case EXPRESSION_TYPE_OPERATOR_MINUS: {
-      return "OPERATOR_MINUS";
+        return "OPERATOR_MINUS";
     }
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
-      return "OPERATOR_MULTIPLY";
+        return "OPERATOR_MULTIPLY";
     }
     case EXPRESSION_TYPE_OPERATOR_DIVIDE: {
-      return "OPERATOR_DIVIDE";
+        return "OPERATOR_DIVIDE";
     }
     case EXPRESSION_TYPE_OPERATOR_CONCAT: {
-      return "OPERATOR_CONCAT";
+        return "OPERATOR_CONCAT";
     }
     case EXPRESSION_TYPE_OPERATOR_MOD: {
-      return "OPERATOR_MOD";
+        return "OPERATOR_MOD";
     }
     case EXPRESSION_TYPE_OPERATOR_CAST: {
-      return "OPERATOR_CAST";
+        return "OPERATOR_CAST";
     }
     case EXPRESSION_TYPE_OPERATOR_NOT: {
-      return "OPERATOR_NOT";
+        return "OPERATOR_NOT";
     }
-    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
-      return "OPERATOR_UNARY_MINUS";
+    case EXPRESSION_TYPE_OPERATOR_IS_NULL: {
+        return "OPERATOR_IS_NULL";
     }
-    case EXPRESSION_TYPE_COMPARE_EQ: {
-      return "COMPARE_EQUAL";
+    case EXPRESSION_TYPE_OPERATOR_EXISTS: {
+        return "OPERATOR_EXISTS";
     }
-    case EXPRESSION_TYPE_COMPARE_NE: {
-      return "COMPARE_NOT_EQUAL";
+    case EXPRESSION_TYPE_COMPARE_EQUAL: {
+        return "COMPARE_EQUAL";
     }
-    case EXPRESSION_TYPE_COMPARE_LT: {
-      return "COMPARE_LESSTHAN";
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL: {
+        return "COMPARE_NOT_EQUAL";
     }
-    case EXPRESSION_TYPE_COMPARE_GT: {
-      return "COMPARE_GREATERTHAN";
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN: {
+        return "COMPARE_LESSTHAN";
     }
-    case EXPRESSION_TYPE_COMPARE_LTE: {
-      return "COMPARE_LESSTHANOREQUALTO";
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN: {
+        return "COMPARE_GREATERTHAN";
     }
-    case EXPRESSION_TYPE_COMPARE_GTE: {
-      return "COMPARE_GREATERTHANOREQUALTO";
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
+        return "COMPARE_LESSTHANOREQUALTO";
+    }
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO: {
+        return "COMPARE_GREATERTHANOREQUALTO";
     }
     case EXPRESSION_TYPE_COMPARE_LIKE: {
-      return "COMPARE_LIKE";
+        return "COMPARE_LIKE";
+    }
+    case EXPRESSION_TYPE_COMPARE_IN: {
+        return "COMPARE_IN";
     }
     case EXPRESSION_TYPE_CONJUNCTION_AND: {
-      return "CONJUNCTION_AND";
+        return "CONJUNCTION_AND";
     }
     case EXPRESSION_TYPE_CONJUNCTION_OR: {
-      return "CONJUNCTION_OR";
+        return "CONJUNCTION_OR";
     }
     case EXPRESSION_TYPE_VALUE_CONSTANT: {
-      return "VALUE_CONSTANT";
+        return "VALUE_CONSTANT";
     }
     case EXPRESSION_TYPE_VALUE_PARAMETER: {
-      return "VALUE_PARAMETER";
+        return "VALUE_PARAMETER";
     }
     case EXPRESSION_TYPE_VALUE_TUPLE: {
-      return "VALUE_TUPLE";
+        return "VALUE_TUPLE";
     }
     case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: {
-      return "VALUE_TUPLE_ADDRESS";
+        return "VALUE_TUPLE_ADDRESS";
+    }
+    case EXPRESSION_TYPE_VALUE_SCALAR: {
+        return "VALUE_SCALAR";
     }
     case EXPRESSION_TYPE_VALUE_NULL: {
-      return "VALUE_NULL";
+        return "VALUE_NULL";
     }
     case EXPRESSION_TYPE_AGGREGATE_COUNT: {
-      return "AGGREGATE_COUNT";
+        return "AGGREGATE_COUNT";
     }
     case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR: {
-      return "AGGREGATE_COUNT_STAR";
+        return "AGGREGATE_COUNT_STAR";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT: {
+        return "AGGREGATE_APPROX_COUNT_DISTINCT";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG: {
+        return "AGGREGATE_VALS_TO_HYPERLOGLOG";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD: {
+        return "AGGREGATE_HYPERLOGLOGS_TO_CARD";
     }
     case EXPRESSION_TYPE_AGGREGATE_SUM: {
-      return "AGGREGATE_SUM";
+        return "AGGREGATE_SUM";
     }
     case EXPRESSION_TYPE_AGGREGATE_MIN: {
-      return "AGGREGATE_MIN";
+        return "AGGREGATE_MIN";
     }
     case EXPRESSION_TYPE_AGGREGATE_MAX: {
-      return "AGGREGATE_MAX";
+        return "AGGREGATE_MAX";
     }
     case EXPRESSION_TYPE_AGGREGATE_AVG: {
-      return "AGGREGATE_AVG";
+        return "AGGREGATE_AVG";
     }
-    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG: {
-      return "AGGREGATE_WEIGHTED_AVG";
+    case EXPRESSION_TYPE_FUNCTION: {
+        return "FUNCTION";
     }
-    case EXPRESSION_TYPE_STAR: {
-      return "STAR";
+    case EXPRESSION_TYPE_VALUE_VECTOR: {
+        return "VALUE_VECTOR";
     }
-    case EXPRESSION_TYPE_PLACEHOLDER: {
-      return "PLACEHOLDER";
+    case EXPRESSION_TYPE_HASH_RANGE: {
+        return "HASH_RANGE";
     }
-    case EXPRESSION_TYPE_COLUMN_REF: {
-      return "COLUMN_REF";
+    case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
+        return "OPERATOR_CASE_WHEN";
     }
-    case EXPRESSION_TYPE_FUNCTION_REF: {
-      return "FUNCTION_REF";
+    case EXPRESSION_TYPE_OPERATOR_ALTERNATIVE: {
+        return "OPERATOR_ALTERNATIVE";
     }
-    case EXPRESSION_TYPE_CAST: {
-      return "CAST";
+    case EXPRESSION_TYPE_ROW_SUBQUERY: {
+        return "ROW_SUBQUERY";
     }
-  }
-  return "INVALID";
+    case EXPRESSION_TYPE_SELECT_SUBQUERY: {
+        return "SELECT_SUBQUERY";
+    }
+
+    // TODO: Added by us
+    case EXPRESSION_TYPE_PLACEHOLDER : {
+        return "PLACEHOLDER";
+    }
+    case EXPRESSION_TYPE_COLUMN_REF : {
+        return "COLUMN_REF";
+    }
+    case EXPRESSION_TYPE_FUNCTION_REF : {
+        return "FUNCTION_REF";
+    }
+    case EXPRESSION_TYPE_CAST : {
+        return "CAST";
+    }
+    case EXPRESSION_TYPE_STAR : {
+        return "STAR";
+    }
+
+    }
+    return "INVALID";
 }
 
-ExpressionType StringToExpressionType(std::string str) {
-  if (str == "INVALID") {
-    return EXPRESSION_TYPE_INVALID;
-  } else if (str == "OPERATOR_PLUS") {
-    return EXPRESSION_TYPE_OPERATOR_PLUS;
-  } else if (str == "OPERATOR_MINUS") {
-    return EXPRESSION_TYPE_OPERATOR_MINUS;
-  } else if (str == "OPERATOR_MULTIPLY") {
-    return EXPRESSION_TYPE_OPERATOR_MULTIPLY;
-  } else if (str == "OPERATOR_DIVIDE") {
-    return EXPRESSION_TYPE_OPERATOR_DIVIDE;
-  } else if (str == "OPERATOR_CONCAT") {
-    return EXPRESSION_TYPE_OPERATOR_CONCAT;
-  } else if (str == "OPERATOR_MOD") {
-    return EXPRESSION_TYPE_OPERATOR_MOD;
-  } else if (str == "OPERATOR_CAST") {
-    return EXPRESSION_TYPE_OPERATOR_CAST;
-  } else if (str == "OPERATOR_NOT") {
-    return EXPRESSION_TYPE_OPERATOR_NOT;
-  } else if (str == "COMPARE_EQUAL") {
-    return EXPRESSION_TYPE_COMPARE_EQ;
-  } else if (str == "COMPARE_NOTEQUAL") {
-    return EXPRESSION_TYPE_COMPARE_NE;
-  } else if (str == "COMPARE_LESSTHAN") {
-    return EXPRESSION_TYPE_COMPARE_LT;
-  } else if (str == "COMPARE_GREATERTHAN") {
-    return EXPRESSION_TYPE_COMPARE_GT;
-  } else if (str == "COMPARE_LESSTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_LTE;
-  } else if (str == "COMPARE_GREATERTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_GTE;
-  } else if (str == "COMPARE_LIKE") {
-    return EXPRESSION_TYPE_COMPARE_LIKE;
-  } else if (str == "CONJUNCTION_AND") {
-    return EXPRESSION_TYPE_CONJUNCTION_AND;
-  } else if (str == "CONJUNCTION_OR") {
-    return EXPRESSION_TYPE_CONJUNCTION_OR;
-  } else if (str == "VALUE_CONSTANT") {
-    return EXPRESSION_TYPE_VALUE_CONSTANT;
-  } else if (str == "VALUE_PARAMETER") {
-    return EXPRESSION_TYPE_VALUE_PARAMETER;
-  } else if (str == "VALUE_TUPLE") {
-    return EXPRESSION_TYPE_VALUE_TUPLE;
-  } else if (str == "VALUE_TUPLE_ADDRESS") {
-    return EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS;
-  } else if (str == "VALUE_NULL") {
-    return EXPRESSION_TYPE_VALUE_NULL;
-  } else if (str == "AGGREGATE_COUNT") {
-    return EXPRESSION_TYPE_AGGREGATE_COUNT;
-  } else if (str == "AGGREGATE_COUNT_STAR") {
-    return EXPRESSION_TYPE_AGGREGATE_COUNT_STAR;
-  } else if (str == "AGGREGATE_SUM") {
-    return EXPRESSION_TYPE_AGGREGATE_SUM;
-  } else if (str == "AGGREGATE_MIN") {
-    return EXPRESSION_TYPE_AGGREGATE_MIN;
-  } else if (str == "AGGREGATE_MAX") {
-    return EXPRESSION_TYPE_AGGREGATE_MAX;
-  } else if (str == "AGGREGATE_AVG") {
-    return EXPRESSION_TYPE_AGGREGATE_AVG;
-  } else if (str == "AGGREGATE_WEIGHTED_AVG") {
-    return EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG;
-  }
+ExpressionType StringToExpressionType(std::string str )
+{
+    if (str == "INVALID") {
+        return EXPRESSION_TYPE_INVALID;
+    } else if (str == "OPERATOR_PLUS") {
+        return EXPRESSION_TYPE_OPERATOR_PLUS;
+    } else if (str == "OPERATOR_MINUS") {
+        return EXPRESSION_TYPE_OPERATOR_MINUS;
+    } else if (str == "OPERATOR_MULTIPLY") {
+        return EXPRESSION_TYPE_OPERATOR_MULTIPLY;
+    } else if (str == "OPERATOR_DIVIDE") {
+        return EXPRESSION_TYPE_OPERATOR_DIVIDE;
+    } else if (str == "OPERATOR_CONCAT") {
+        return EXPRESSION_TYPE_OPERATOR_CONCAT;
+    } else if (str == "OPERATOR_MOD") {
+        return EXPRESSION_TYPE_OPERATOR_MOD;
+    } else if (str == "OPERATOR_CAST") {
+        return EXPRESSION_TYPE_OPERATOR_CAST;
+    } else if (str == "OPERATOR_NOT") {
+        return EXPRESSION_TYPE_OPERATOR_NOT;
+    } else if (str == "OPERATOR_IS_NULL") {
+        return EXPRESSION_TYPE_OPERATOR_IS_NULL;
+    } else if (str == "OPERATOR_EXISTS") {
+        return EXPRESSION_TYPE_OPERATOR_EXISTS;
+    } else if (str == "COMPARE_EQUAL") {
+        return EXPRESSION_TYPE_COMPARE_EQUAL;
+    } else if (str == "COMPARE_NOTEQUAL") {
+        return EXPRESSION_TYPE_COMPARE_NOTEQUAL;
+    } else if (str == "COMPARE_LESSTHAN") {
+        return EXPRESSION_TYPE_COMPARE_LESSTHAN;
+    } else if (str == "COMPARE_GREATERTHAN") {
+        return EXPRESSION_TYPE_COMPARE_GREATERTHAN;
+    } else if (str == "COMPARE_LESSTHANOREQUALTO") {
+        return EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
+    } else if (str == "COMPARE_GREATERTHANOREQUALTO") {
+        return EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
+    } else if (str == "COMPARE_LIKE") {
+        return EXPRESSION_TYPE_COMPARE_LIKE;
+    } else if (str == "COMPARE_IN") {
+        return EXPRESSION_TYPE_COMPARE_IN;
+    } else if (str == "CONJUNCTION_AND") {
+        return EXPRESSION_TYPE_CONJUNCTION_AND;
+    } else if (str == "CONJUNCTION_OR") {
+        return EXPRESSION_TYPE_CONJUNCTION_OR;
+    } else if (str == "VALUE_CONSTANT") {
+        return EXPRESSION_TYPE_VALUE_CONSTANT;
+    } else if (str == "VALUE_PARAMETER") {
+        return EXPRESSION_TYPE_VALUE_PARAMETER;
+    } else if (str == "VALUE_TUPLE") {
+        return EXPRESSION_TYPE_VALUE_TUPLE;
+    } else if (str == "VALUE_TUPLE_ADDRESS") {
+        return EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS;
+    } else if (str == "VALUE_SCALAR") {
+        return EXPRESSION_TYPE_VALUE_SCALAR;
+    } else if (str == "VALUE_NULL") {
+        return EXPRESSION_TYPE_VALUE_NULL;
+    } else if (str == "AGGREGATE_COUNT") {
+        return EXPRESSION_TYPE_AGGREGATE_COUNT;
+    } else if (str == "AGGREGATE_COUNT_STAR") {
+        return EXPRESSION_TYPE_AGGREGATE_COUNT_STAR;
+    } else if (str == "AGGREGATE_APPROX_COUNT_DISTINCT") {
+        return EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT;
+    } else if (str == "AGGREGATE_VALS_TO_HYPERLOGLOG") {
+        return EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG;
+    } else if (str == "AGGREGATE_HYPERLOGLOGS_TO_CARD") {
+        return EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD;
+    } else if (str == "AGGREGATE_SUM") {
+        return EXPRESSION_TYPE_AGGREGATE_SUM;
+    } else if (str == "AGGREGATE_MIN") {
+        return EXPRESSION_TYPE_AGGREGATE_MIN;
+    } else if (str == "AGGREGATE_MAX") {
+        return EXPRESSION_TYPE_AGGREGATE_MAX;
+    } else if (str == "AGGREGATE_AVG") {
+        return EXPRESSION_TYPE_AGGREGATE_AVG;
+    } else if (str == "FUNCTION") {
+        return EXPRESSION_TYPE_FUNCTION;
+    } else if (str == "VALUE_VECTOR") {
+        return EXPRESSION_TYPE_VALUE_VECTOR;
+    } else if (str == "HASH_RANGE") {
+        return EXPRESSION_TYPE_HASH_RANGE;
+    } else if (str == "OPERATOR_CASE_WHEN") {
+        return EXPRESSION_TYPE_OPERATOR_CASE_WHEN;
+    } else if (str == "OPERATOR_ALTERNATIVE") {
+        return EXPRESSION_TYPE_OPERATOR_ALTERNATIVE;
+    } else if (str == "ROW_SUBQUERY") {
+        return EXPRESSION_TYPE_ROW_SUBQUERY;
+    } else if (str == "SELECT_SUBQUERY") {
+        return EXPRESSION_TYPE_SELECT_SUBQUERY;
+    }
 
-  return EXPRESSION_TYPE_INVALID;
+
+    return EXPRESSION_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//
@@ -614,6 +775,118 @@ ConstraintType StringToConstraintType(std::string str) {
   return CONSTRAINT_TYPE_INVALID;
 }
 
+//===--------------------------------------------------------------------===//
+// Log Types - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LoggingTypeToString(LoggingType type) {
+  switch (type) {
+    case LOGGING_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGING_TYPE_ARIES: {
+      return "LOGGING_TYPE_ARIES";
+    }
+    case LOGGING_TYPE_PELOTON: {
+      return "LOGGING_TYPE_PELOTON";
+    }
+  }
+  return "INVALID";
+}
+
+std::string LoggingStatusToString(LoggingStatus type) {
+  switch (type) {
+    case LOGGING_STATUS_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGING_STATUS_TYPE_STANDBY: {
+      return "LOGGING_STATUS_TYPE_STANDBY";
+    }
+    case LOGGING_STATUS_TYPE_RECOVERY: {
+      return "LOGGING_STATUS_TYPE_RECOVERY";
+    }
+    case LOGGING_STATUS_TYPE_LOGGING: {
+      return "LOGGING_STATUS_TYPE_ONGOING";
+    }
+    case LOGGING_STATUS_TYPE_TERMINATE: {
+      return "LOGGING_STATUS_TYPE_TERMINATE";
+    }
+    case LOGGING_STATUS_TYPE_SLEEP: {
+      return "LOGGING_STATUS_TYPE_SLEEP";
+    }
+  }
+  return "INVALID";
+}
+
+
+
+std::string LoggerTypeToString(LoggerType type) {
+  switch (type) {
+    case LOGGER_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGGER_TYPE_FRONTEND: {
+      return "LOGGER_TYPE_FRONTEND";
+    }
+    case LOGGER_TYPE_BACKEND: {
+      return "LOGGER_TYPE_BACKEND";
+    }
+  }
+  return "INVALID";
+}
+
+std::string LogRecordTypeToString(LogRecordType type) {
+  switch (type) {
+    case LOGRECORD_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
+      return "LOGRECORD_TYPE_TRANSACTION_BEGIN";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+      return "LOGRECORD_TYPE_TRANSACTION_COMMIT";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_END: {
+      return "LOGRECORD_TYPE_TRANSACTION_END";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_ABORT: {
+      return "LOGRECORD_TYPE_TRANSACTION_ABORT";
+    }
+    case LOGRECORD_TYPE_TRANSACTION_DONE: {
+      return "LOGRECORD_TYPE_TRANSACTION_DONE";
+    }
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_TUPLE_INSERT";
+    }
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_TUPLE_DELETE";
+    }
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_TUPLE_UPDATE";
+    }
+    case LOGRECORD_TYPE_ARIES_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_ARIES_TUPLE_INSERT";
+    }
+    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_ARIES_TUPLE_DELETE";
+    }
+    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_ARIES_TUPLE_UPDATE";
+    }
+    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_PELOTON_TUPLE_INSERT";
+    }
+    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_PELOTON_TUPLE_DELETE";
+    }
+    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE";
+    }
+ 
+  }
+  return "INVALID";
+}
+
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType) {
   ValueType valueType = VALUE_TYPE_INVALID;
@@ -710,6 +983,32 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
   }
   return constraintType;
+}
+
+std::string QuantifierTypeToString(QuantifierType type)
+{
+    switch (type) {
+    case QUANTIFIER_TYPE_NONE: {
+        return "NONE";
+    }
+    case QUANTIFIER_TYPE_ANY: {
+        return "ANY";
+    }
+    case QUANTIFIER_TYPE_ALL: {
+        return "ALL";
+    }
+    }
+    return "INVALID";
+}
+
+QuantifierType StringToQuantifierType(std::string str)
+{
+    if (str == "ANY") {
+        return QUANTIFIER_TYPE_ANY;
+    } else if (str == "ALL") {
+        return QUANTIFIER_TYPE_ALL;
+    }
+    return QUANTIFIER_TYPE_NONE;
 }
 
 }  // End peloton namespace

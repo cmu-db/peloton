@@ -54,9 +54,13 @@ class Manager {
 
   oid_t GetCurrentOid() { return oid; }
 
+  void SetNextOid(oid_t next_oid) { oid = next_oid; }
+
   void SetTileGroup(const oid_t oid, storage::TileGroup *location);
 
   storage::TileGroup *GetTileGroup(const oid_t oid) const;
+
+  void ClearTileGroup(void);
 
   //===--------------------------------------------------------------------===//
   // DATABASE
