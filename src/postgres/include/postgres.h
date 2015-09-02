@@ -719,4 +719,12 @@ extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 			   const char *fileName, int lineNumber) pg_attribute_noreturn();
 
+/* ----------------------------------------------------------------
+ *        Section 4: peloton stuff
+ * ----------------------------------------------------------------
+ */
+
+// Defined in postmaster.cpp
+extern int GetBackendThreadId(void);
+
 #endif   /* POSTGRES_H */

@@ -469,8 +469,8 @@ TEST(TileGroupTests, TileCopyTest) {
 
   // 1. Pools
   bool intended_behavior = true;
-  peloton::Pool *old_pool = tile->GetPool();
-  peloton::Pool *new_pool = new_tile->GetPool();
+  peloton::VarlenPool *old_pool = tile->GetPool();
+  peloton::VarlenPool *new_pool = new_tile->GetPool();
 
   int is_pool_same = old_pool == new_pool;
   if (is_pool_same) intended_behavior = false;
@@ -493,7 +493,7 @@ TEST(TileGroupTests, TileCopyTest) {
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
       uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
       uninlined_col_object_len =
-          ValuePeeker::PeekObjectLength(uninlined_col_value);
+          ValuePeeker::PeekObjectLengthWithoutNull(uninlined_col_value);
       uninlined_col_object_ptr = static_cast<unsigned char *>(
           ValuePeeker::PeekObjectValue(uninlined_col_value));
       std::string uninlined_varchar_str(
@@ -503,7 +503,7 @@ TEST(TileGroupTests, TileCopyTest) {
       new_uninlined_col_value =
           new_tile->GetValue(tup_itr, uninlined_col_index);
       new_uninlined_col_object_len =
-          ValuePeeker::PeekObjectLength(new_uninlined_col_value);
+          ValuePeeker::PeekObjectLengthWithoutNull(new_uninlined_col_value);
       new_uninlined_col_object_ptr = static_cast<unsigned char *>(
           ValuePeeker::PeekObjectValue(new_uninlined_col_value));
       std::string new_uninlined_varchar_str(

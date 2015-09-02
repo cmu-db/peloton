@@ -70,6 +70,11 @@ class TileGroup {
   // insert tuple at next available slot in tile if a slot exists
   oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
+  // insert tuple at specific tuple slot
+  // used by recovery mode
+  oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const Tuple *tuple);
+
+
   // returns tuple at given slot in tile if it exists
   Tuple *SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
 
@@ -128,7 +133,7 @@ class TileGroup {
     return tiles[tile_id]->GetTileId();
   }
 
-  peloton::Pool *GetTilePool(const oid_t tile_id) const {
+  peloton::VarlenPool *GetTilePool(const oid_t tile_id) const {
     Tile *tile = GetTile(tile_id);
 
     if (tile != nullptr) return tile->GetPool();

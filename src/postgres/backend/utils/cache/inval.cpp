@@ -166,11 +166,11 @@ typedef struct TransInvalidationInfo
 	bool		RelcacheInitFileInval;
 } TransInvalidationInfo;
 
-static TransInvalidationInfo *transInvalInfo = NULL;
+thread_local static TransInvalidationInfo *transInvalInfo = NULL;
 
-static SharedInvalidationMessage *SharedInvalidMessagesArray;
-static int	numSharedInvalidMessagesArray;
-static int	maxSharedInvalidMessagesArray;
+thread_local static SharedInvalidationMessage *SharedInvalidMessagesArray;
+thread_local static int	numSharedInvalidMessagesArray;
+thread_local static int	maxSharedInvalidMessagesArray;
 
 
 /*
@@ -181,22 +181,22 @@ static int	maxSharedInvalidMessagesArray;
 #define MAX_SYSCACHE_CALLBACKS 32
 #define MAX_RELCACHE_CALLBACKS 10
 
-static struct SYSCACHECALLBACK
+thread_local static struct SYSCACHECALLBACK
 {
 	int16		id;				/* cache number */
 	SyscacheCallbackFunction function;
 	Datum		arg;
 }	syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
 
-static int	syscache_callback_count = 0;
+thread_local static int	syscache_callback_count = 0;
 
-static struct RELCACHECALLBACK
+thread_local static struct RELCACHECALLBACK
 {
 	RelcacheCallbackFunction function;
 	Datum		arg;
 }	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
-static int	relcache_callback_count = 0;
+thread_local static int	relcache_callback_count = 0;
 
 /* ----------------------------------------------------------------
  *				Invalidation list support functions

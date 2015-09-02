@@ -12,7 +12,9 @@
 
 #include "backend/executor/update_executor.h"
 
-#include "../planner/update_plan.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
@@ -109,8 +111,29 @@ bool UpdateExecutor::DExecute() {
       return false;
     }
 
+
     executor_context_->num_processed += 1; // updated one
+
     transaction_->RecordInsert(location);
+
+   // Logging 
+   {
+      auto& logManager = logging::LogManager::GetInstance();
+
+      if(logManager.IsInLoggingMode()){
+        auto logger = logManager.GetBackendLogger();
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+                                             transaction_->GetTransactionId(), 
+                                             target_table_->GetOid(),
+                                             location,
+                                             delete_location, 
+                                             new_tuple);
+
+
+        logger->Log(record);
+      }
+    }
+
     delete new_tuple;
   }
 

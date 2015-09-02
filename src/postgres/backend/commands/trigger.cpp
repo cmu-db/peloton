@@ -63,7 +63,7 @@
 int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
 /* How many levels deep into trigger execution are we? */
-static int	MyTriggerDepth = 0;
+thread_local static int	MyTriggerDepth = 0;
 
 /*
  * Note that similar macros also exist in executor/execMain.c.  There does not
@@ -3207,7 +3207,7 @@ typedef struct AfterTriggersData
 	int			maxtransdepth;	/* allocated len of above arrays */
 } AfterTriggersData;
 
-static AfterTriggersData afterTriggers;
+thread_local static AfterTriggersData afterTriggers;
 
 static void AfterTriggerExecute(AfterTriggerEvent event,
 					Relation rel, TriggerDesc *trigdesc,
