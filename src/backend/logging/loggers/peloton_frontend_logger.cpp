@@ -311,7 +311,7 @@ LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
   if( ret <= 0 ){
     return LOGRECORD_TYPE_INVALID;
   }
-  CopySerializeInput input(&buffer, sizeof(char));
+  CopySerializeInputBE input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
   return log_record_type;
 }
@@ -325,7 +325,7 @@ bool PelotonFrontendLogger::DoWeNeedRecovery(void){
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread(%d)", ret);
   }
-  CopySerializeInput input(&buffer, sizeof(char));
+  CopySerializeInputBE input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
 
   std::cout << "Log Record Type : " << LogRecordTypeToString(log_record_type) << std::endl;
@@ -389,7 +389,7 @@ size_t PelotonFrontendLogger::GetNextFrameSize(){
   }
 
   // Read next 4 bytes as an integer
-  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
+  CopySerializeInputBE frameCheck(buffer, sizeof(int32_t));
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   /* go back 4 bytes */
@@ -424,7 +424,7 @@ bool PelotonFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txnRe
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
-  CopySerializeInput logTxnRecord(txn_record,txn_record_size);
+  CopySerializeInputBE logTxnRecord(txn_record,txn_record_size);
   txnRecord.Deserialize(logTxnRecord);
 
   return true;
@@ -459,7 +459,7 @@ bool PelotonFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput logHeader(header,header_size);
+  CopySerializeInputBE logHeader(header,header_size);
   tupleRecord.DeserializeHeader(logHeader);
 
   return true;

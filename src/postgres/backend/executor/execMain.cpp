@@ -67,8 +67,6 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
-extern bool PelotonDualMode;
-
 static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 CmdType operation,
                                 bool sendTuples,
@@ -351,8 +349,11 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  // PG Query
-	  if(queryDesc->plannedstmt->pelotonQuery == false)
+    elog(DEBUG3, "DML Query :: Type :: %d", operation);
+
+    // PG Query
+    //if(true)
+    if(queryDesc->plannedstmt->pelotonQuery == false)
 	  {
 	    ExecutePlan(estate,
 	                queryDesc->planstate,
@@ -374,7 +375,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                        dest,
 	                        queryDesc->tupDesc);
 	  }
-
 
 	}
 
@@ -1561,11 +1561,13 @@ ExecutePlan(EState *estate,
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
+  long    result_tuple_count;
 
 	/*
 	 * initialize local variables
 	 */
 	current_tuple_count = 0;
+	result_tuple_count = 0;
 
 	/*
 	 * Set the direction.
@@ -1610,6 +1612,8 @@ ExecutePlan(EState *estate,
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
 
+		result_tuple_count++;
+
 		/*
 		 * check our tuple count.. if we've processed the proper number then
 		 * quit, else loop again and process more tuples.  Zero numberTuples
@@ -1619,6 +1623,8 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+
+	elog(DEBUG3, "Result Tuple Count :: %ld", result_tuple_count);
 }
 
 /* ----------------------------------------------------------------
@@ -1645,10 +1651,9 @@ peloton_ExecutePlan(EState *estate,
       TupleDesc tupDesc)
 {
 
-  peloton_send_dml(planstate,
-                   sendTuples,
-                   dest,
-                   tupDesc);
+  // TODO: Peloton Changes
+  //peloton_dml(planstate, sendTuples, dest, tupDesc);
+
 }
 
 /*

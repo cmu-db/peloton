@@ -78,9 +78,9 @@ static const int NSmgr = lengthof(smgrsw);
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
  * In addition, "unowned" SMgrRelation objects are chained together in a list.
  */
-static HTAB *SMgrRelationHash = NULL;
+thread_local static HTAB *SMgrRelationHash = NULL;
 
-static SMgrRelation first_unowned_reln = NULL;
+thread_local static SMgrRelation first_unowned_reln = NULL;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);

@@ -15,11 +15,11 @@
 
 namespace peloton {
 
-Varlen *Varlen::Create(size_t size, Pool *dataPool) {
+Varlen *Varlen::Create(size_t size, VarlenPool *data_pool) {
   Varlen *retval;
 
-  if (dataPool != NULL) {
-    retval = new (dataPool->Allocate(sizeof(Varlen))) Varlen(size, dataPool);
+  if (data_pool != NULL) {
+    retval = new (data_pool->Allocate(sizeof(Varlen))) Varlen(size, data_pool);
   } else {
     retval = new Varlen(size);
   }
@@ -29,9 +29,9 @@ Varlen *Varlen::Create(size_t size, Pool *dataPool) {
 
 void Varlen::Destroy(Varlen *varlen) { delete varlen; }
 
-Varlen *Varlen::Clone(const Varlen &src, Pool *dataPool) {
+Varlen *Varlen::Clone(const Varlen &src, VarlenPool *data_pool) {
   // Create a new instance, back pointer is set inside
-  Varlen *rv = Create(src.varlen_size - sizeof(Varlen *), dataPool);
+  Varlen *rv = Create(src.varlen_size - sizeof(Varlen *), data_pool);
 
   // copy the meat (excluding back pointer)
   ::memcpy(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen *)));
@@ -46,11 +46,11 @@ Varlen::Varlen(size_t size) {
   SetBackPtr();
 }
 
-Varlen::Varlen(std::size_t size, Pool *dataPool) {
+Varlen::Varlen(std::size_t size, VarlenPool *data_pool) {
   varlen_size = size + sizeof(Varlen *);
   varlen_temp_pool = true;
   varlen_string_ptr =
-      reinterpret_cast<char *>(dataPool->Allocate(varlen_size));
+      reinterpret_cast<char *>(data_pool->Allocate(varlen_size));
   SetBackPtr();
 }
 

@@ -393,7 +393,7 @@ static LWLock *ScratchPartitionLock;
  * The local hash table used to determine when to combine multiple fine-
  * grained locks into a single courser-grained lock.
  */
-static HTAB *LocalPredicateLockHash = NULL;
+thread_local static HTAB *LocalPredicateLockHash = NULL;
 
 /*
  * Keep a pointer to the currently-running serializable transaction (if any)

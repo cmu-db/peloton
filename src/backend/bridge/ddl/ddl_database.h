@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include "backend/bridge/ddl/ddl_raw_structures.h"
 #include "backend/common/types.h"
 
-struct Peloton_Status;
+#include "nodes/nodes.h"
+
+struct peloton_status;
 
 namespace peloton {
 namespace bridge {
@@ -33,9 +34,9 @@ class DDLDatabase {
 
   static bool ExecCreatedbStmt(Node *parsetree);
 
-  static bool ExecDropdbStmt(Node *parsetree, DDL_Info* ddl_info);
+  static bool ExecDropdbStmt(Node *parsetree);
 
-  static bool ExecVacuumStmt(Node *parsetree, Peloton_Status *status);
+  static bool ExecVacuumStmt(Node *parsetree);
 
   static bool CreateDatabase(oid_t database_oid);
 

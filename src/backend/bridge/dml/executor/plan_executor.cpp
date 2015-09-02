@@ -220,18 +220,21 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
-                               ParamListInfo param_list, TupleDesc tuple_desc,
-                               Peloton_Status *pstatus, TransactionId txn_id) {
+peloton_status
+PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
+                          ParamListInfo param_list,
+                          TupleDesc tuple_desc,
+                          TransactionId txn_id) {
+  peloton_status p_status;
+
   if (plan == nullptr)
-    return;
+    return p_status;
 
   LOG_TRACE("PlanExecutor Start \n");
 
   bool status;
   bool init_failure = false;
   bool single_statement_txn = false;
-  MemoryContext oldContext;
   List *slots = NULL;
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -293,9 +296,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     storage::TupleIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
-    // Switch to query context to construct list and slots
-    oldContext = MemoryContextSwitchTo(SHMQueryContext);
-
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
@@ -307,13 +307,11 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
       }
     }
 
-    // Go back to previous context
-    MemoryContextSwitchTo(oldContext);
   }
 
   // Set the result
-  pstatus->m_processed = executor_context->num_processed;
-  pstatus->m_result_slots = slots;
+  p_status.m_processed = executor_context->num_processed;
+  p_status.m_result_slots = slots;
 
 // final cleanup
   cleanup:
@@ -349,8 +347,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   // Clean executor context
   delete executor_context;
 
-  pstatus->m_result = txn->GetResult();
-  return;
+  p_status.m_result = txn->GetResult();
+  return p_status;
 }
 
 }  // namespace bridge

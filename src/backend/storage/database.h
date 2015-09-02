@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-struct Peloton_Status;
+struct peloton_status;
 struct dirty_table_info;
 struct dirty_index_info;
 
@@ -61,27 +61,13 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void UpdateStats(Peloton_Status *status, bool dirty_care);
+  void UpdateStats(void) const;
 
-  void UpdateStatsWithOid(Peloton_Status *status, const oid_t table_oid);
+  void UpdateStatsWithOid(const oid_t table_oid) const;
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
-
-  static dirty_table_info **CreateDirtyTables(
-      std::vector<dirty_table_info *> dirty_tables_vec);
-
-  static dirty_index_info **CreateDirtyIndexes(
-      std::vector<dirty_index_info *> dirty_indexes_vec);
-
-  static dirty_table_info *CreateDirtyTable(oid_t table_oid,
-                                            float number_of_tuples,
-                                            dirty_index_info **dirty_indexes,
-                                            oid_t index_count);
-
-  static dirty_index_info *CreateDirtyIndex(oid_t index_oid,
-                                            float number_of_tuples);
 
   // Get a string representation of this database
   friend std::ostream &operator<<(std::ostream &os, const Database &database);
