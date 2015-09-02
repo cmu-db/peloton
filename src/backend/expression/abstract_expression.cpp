@@ -206,5 +206,10 @@ AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
   }
 }
 
+std::ostream &operator<<(std::ostream &os, const AbstractExpression &expr) {
+  os << expr.Debug();
+  return os;
+}
+
 }  // End expression namespace
 }  // End peloton namespace
