@@ -226,7 +226,6 @@ TEST(ValueTest, TestCastToBigInt) {
   Value bigInt = ValueFactory::GetBigIntValue(2323325432453);
   Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
   Value stringValue = ValueFactory::GetStringValue("dude");
-  Value decimalValue = ValueFactory::GetDecimalValueFromString("10.22");
 
   Value bigIntCastToBigInt = ValueFactory::CastAsBigInt(bigInt);
   EXPECT_EQ(ValuePeeker::PeekBigInt(bigIntCastToBigInt), 2323325432453);
@@ -244,15 +243,6 @@ TEST(ValueTest, TestCastToBigInt) {
   EXPECT_EQ(ValuePeeker::PeekBigInt(doubleCastToBigInt), 244643);
 
   bool caught = false;
-  try {
-    Value decimalCastToBigInt = ValueFactory::CastAsBigInt(decimalValue);
-    std::cout << decimalCastToBigInt << "\n";
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
-
-  caught = false;
   try {
     Value stringCastToBigInt = ValueFactory::CastAsBigInt(stringValue);
     std::cout << stringCastToBigInt << std::endl;
@@ -297,7 +287,6 @@ TEST(ValueTest, TestCastToInteger) {
   Value bigInt = ValueFactory::GetBigIntValue(232332);
   Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
   Value stringValue = ValueFactory::GetStringValue("dude");
-  Value decimalValue = ValueFactory::GetDecimalValueFromString("10.22");
 
   Value bigIntCastToInteger = ValueFactory::CastAsInteger(bigInt);
   EXPECT_EQ(ValuePeeker::PeekInteger(bigIntCastToInteger), 232332);
@@ -315,15 +304,6 @@ TEST(ValueTest, TestCastToInteger) {
   EXPECT_EQ(ValuePeeker::PeekInteger(doubleCastToInteger), 244643);
 
   bool caught = false;
-  try {
-    Value decimalCast = ValueFactory::CastAsInteger(decimalValue);
-    std::cout << decimalCast << std::endl;
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
-
-  caught = false;
   try {
     Value stringCast = ValueFactory::CastAsInteger(stringValue);
     std::cout << stringCast << std::endl;
@@ -389,7 +369,6 @@ TEST(ValueTest, TestCastToSmallInt) {
   Value bigInt = ValueFactory::GetBigIntValue(2332);
   Value doubleValue = ValueFactory::GetDoubleValue(4643.1236);
   Value stringValue = ValueFactory::GetStringValue("dude");
-  Value decimalValue = ValueFactory::GetDecimalValueFromString("10.22");
 
   Value bigIntCastToSmallInt = ValueFactory::CastAsSmallInt(bigInt);
   EXPECT_EQ(ValuePeeker::PeekSmallInt(bigIntCastToSmallInt), 2332);
@@ -407,15 +386,6 @@ TEST(ValueTest, TestCastToSmallInt) {
   EXPECT_EQ(ValuePeeker::PeekSmallInt(doubleCastToSmallInt), 4643);
 
   bool caught = false;
-  try {
-    Value decimalCast = ValueFactory::CastAsSmallInt(decimalValue);
-    std::cout << decimalCast << std::endl;
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
-
-  caught = false;
   try {
     Value stringCast = ValueFactory::CastAsSmallInt(stringValue);
     std::cout << stringCast << std::endl;
@@ -508,7 +478,6 @@ TEST(ValueTest, TestCastToTinyInt) {
   Value bigInt = ValueFactory::GetBigIntValue(-64);
   Value doubleValue = ValueFactory::GetDoubleValue(-32);
   Value stringValue = ValueFactory::GetStringValue("dude");
-  Value decimalValue = ValueFactory::GetDecimalValueFromString("10.22");
 
   Value bigIntCastToTinyInt = ValueFactory::CastAsTinyInt(bigInt);
   EXPECT_EQ(ValuePeeker::PeekTinyInt(bigIntCastToTinyInt), -64);
@@ -526,15 +495,6 @@ TEST(ValueTest, TestCastToTinyInt) {
   EXPECT_EQ(ValuePeeker::PeekTinyInt(doubleCastToTinyInt), -32);
 
   bool caught = false;
-  try {
-    Value decimalCast = ValueFactory::CastAsTinyInt(decimalValue);
-    std::cout << decimalCast << std::endl;
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
-
-  caught = false;
   try {
     Value stringCast = ValueFactory::CastAsTinyInt(stringValue);
     std::cout << stringCast << std::endl;
@@ -697,63 +657,47 @@ TEST(ValueTest, TestCastToString) {
   Value smallInt = ValueFactory::GetSmallIntValue(120);
   Value integer = ValueFactory::GetIntegerValue(120);
   Value bigInt = ValueFactory::GetBigIntValue(-64);
-  Value doubleValue = ValueFactory::GetDoubleValue(-32);
   Value stringValue = ValueFactory::GetStringValue("dude");
-  Value decimalValue = ValueFactory::GetDecimalValueFromString("10.22");
 
   bool caught = false;
   try {
     Value cast = ValueFactory::CastAsString(tinyInt);
     std::cout << cast << std::endl;
+    cast.Free();
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(smallInt);
     std::cout << cast << std::endl;
+    cast.Free();
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(integer);
     std::cout << cast << std::endl;
+    cast.Free();
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(bigInt);
     std::cout << cast << std::endl;
+    cast.Free();
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
-
-  caught = false;
-  try {
-    Value cast = ValueFactory::CastAsString(doubleValue);
-    std::cout << cast << std::endl;
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
-
-  caught = false;
-  try {
-    Value cast = ValueFactory::CastAsString(decimalValue);
-    std::cout << cast << std::endl;
-  } catch (...) {
-    caught = true;
-  }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 
   // Make valgrind happy
   stringValue.Free();
@@ -813,7 +757,7 @@ TEST(ValueTest, TestCastToDecimal) {
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 
   caught = false;
   try {
@@ -822,7 +766,7 @@ TEST(ValueTest, TestCastToDecimal) {
   } catch (...) {
     caught = true;
   }
-  EXPECT_TRUE(caught);
+  EXPECT_FALSE(caught);
 }
 
 // Adding can only overflow BigInt since they are all cast to BigInt before
@@ -1573,7 +1517,7 @@ TEST(ValueTest, DecimalProducts) {
   } catch (...) {
     caughtException = true;
   }
-  ASSERT_FALSE(caughtException);
+  ASSERT_TRUE(caughtException);
 
   // Underflow
   rhs = ValueFactory::GetDecimalValueFromString(
@@ -1589,7 +1533,7 @@ TEST(ValueTest, DecimalProducts) {
   } catch (...) {
     caughtException = true;
   }
-  ASSERT_FALSE(caughtException);
+  ASSERT_TRUE(caughtException);
 }
 
 TEST(ValueTest, DecimalQuotients) {
@@ -1691,190 +1635,6 @@ TEST(ValueTest, DecimalQuotients) {
   } catch (...) {
     ASSERT_EQ(1, 1);
   }
-}
-
-TEST(ValueTest, SerializeToExport) {
-  // test basic nvalue elt serialization. Note that
-  // NULL values and buffer length checking are done
-  // before this primitive function.
-
-  Value nv;
-
-  // a plenty-large-buffer(tm)
-  char buf[1024];
-  ExportSerializeInput sin(buf, 1024);
-  ExportSerializeOutput out(buf, 1024);
-
-  // tinyint
-  nv = ValueFactory::GetTinyIntValue(-50);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(-50, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetTinyIntValue(0);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(0, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetTinyIntValue(50);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(50, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // smallint
-  nv = ValueFactory::GetSmallIntValue(-128);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(-128, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetSmallIntValue(0);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(0, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetSmallIntValue(128);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(128, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // int
-  nv = ValueFactory::GetIntegerValue(-4999999);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(-4999999, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetIntegerValue(0);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(0, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetIntegerValue(128);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(128, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // bigint
-  nv = ValueFactory::GetBigIntValue(-4999999);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(-4999999, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetBigIntValue(0);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(0, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetBigIntValue(128);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(128, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // timestamp
-  nv = ValueFactory::GetTimestampValue(99999999);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(99999999, sin.ReadLong());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // double
-  nv = ValueFactory::GetDoubleValue(-5.5555);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(-5.5555, sin.ReadDouble());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetDoubleValue(0.0);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(0.0, sin.ReadDouble());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  nv = ValueFactory::GetDoubleValue(128.256);
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(8, out.Position());
-  EXPECT_EQ(128.256, sin.ReadDouble());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // varchar
-  nv = ValueFactory::GetStringValue("ABCDEFabcdef");
-  nv.SerializeToExportWithoutNull(out);
-  nv.Free();
-  EXPECT_EQ(12 + 4, out.Position());  // chardata plus prefix
-  EXPECT_EQ(12, sin.ReadInt());       // 32 bit length prefix
-  EXPECT_EQ('A', sin.ReadChar());
-  EXPECT_EQ('B', sin.ReadChar());
-  EXPECT_EQ('C', sin.ReadChar());
-  EXPECT_EQ('D', sin.ReadChar());
-  EXPECT_EQ('E', sin.ReadChar());
-  EXPECT_EQ('F', sin.ReadChar());
-  EXPECT_EQ('a', sin.ReadChar());
-  EXPECT_EQ('b', sin.ReadChar());
-  EXPECT_EQ('c', sin.ReadChar());
-  EXPECT_EQ('d', sin.ReadChar());
-  EXPECT_EQ('e', sin.ReadChar());
-  EXPECT_EQ('f', sin.ReadChar());
-  sin.Unread(out.Position());
-  out.Position(0);
-
-  // decimal
-  nv = ValueFactory::GetDecimalValueFromString("-1234567890.456123000000");
-  nv.SerializeToExportWithoutNull(out);
-  EXPECT_EQ(24 + 4, out.Position());
-  EXPECT_EQ(24, sin.ReadInt());  // 32 bit length prefix
-  EXPECT_EQ('-', sin.ReadChar());
-  EXPECT_EQ('1', sin.ReadChar());
-  EXPECT_EQ('2', sin.ReadChar());
-  EXPECT_EQ('3', sin.ReadChar());
-  EXPECT_EQ('4', sin.ReadChar());
-  EXPECT_EQ('5', sin.ReadChar());
-  EXPECT_EQ('6', sin.ReadChar());
-  EXPECT_EQ('7', sin.ReadChar());
-  EXPECT_EQ('8', sin.ReadChar());
-  EXPECT_EQ('9', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('.', sin.ReadChar());
-  EXPECT_EQ('4', sin.ReadChar());
-  EXPECT_EQ('5', sin.ReadChar());
-  EXPECT_EQ('6', sin.ReadChar());
-  EXPECT_EQ('1', sin.ReadChar());
-  EXPECT_EQ('2', sin.ReadChar());
-  EXPECT_EQ('3', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  EXPECT_EQ('0', sin.ReadChar());
-  sin.Unread(out.Position());
-  out.Position(0);
 }
 
 }  // End test namespace
