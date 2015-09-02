@@ -144,11 +144,11 @@ typedef struct LWLockHandle
 	LWLockMode	mode;
 } LWLockHandle;
 
-static int	num_held_lwlocks = 0;
-static LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
+thread_local static int	num_held_lwlocks = 0;
+thread_local static LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
 
-static int	lock_addin_request = 0;
-static bool lock_addin_request_allowed = true;
+thread_local static int	lock_addin_request = 0;
+thread_local static bool lock_addin_request_allowed = true;
 
 static inline bool LWLockAcquireCommon(LWLock *l, LWLockMode mode,
 					uint64 *valptr, uint64 val);

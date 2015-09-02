@@ -156,12 +156,12 @@ class Tile {
   bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
                          int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInput &serialize_in,
-                             Pool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                          Pool *pool = nullptr);
+  void DeserializeTuplesFrom(SerializeInputBE &serialize_in,
+                             VarlenPool *pool = nullptr);
+  void DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
+                                          VarlenPool *pool = nullptr);
 
-  Pool *GetPool() { return (pool); }
+  VarlenPool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
@@ -189,7 +189,7 @@ class Tile {
   TileGroup *tile_group;
 
   // storage pool for uninlined data
-  Pool *pool;
+  VarlenPool *pool;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

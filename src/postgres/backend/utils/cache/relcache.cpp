@@ -111,19 +111,19 @@ typedef struct relidcacheent
 	Relation	reldesc;
 } RelIdCacheEnt;
 
-static HTAB *RelationIdCache;
+thread_local static HTAB *RelationIdCache;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
  * that are needed to do indexscans on the tables read by relcache building.
  */
-bool		criticalRelcachesBuilt = false;
+thread_local bool		criticalRelcachesBuilt = false;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
  * for shared catalogs (which are the tables needed for login).
  */
-bool		criticalSharedRelcachesBuilt = false;
+thread_local bool		criticalSharedRelcachesBuilt = false;
 
 /*
  * This counter counts relcache inval events received since backend startup
@@ -131,7 +131,7 @@ bool		criticalSharedRelcachesBuilt = false;
  * to detect whether data about to be written by write_relcache_init_file()
  * might already be obsolete.
  */
-static long relcacheInvalsReceived = 0L;
+thread_local static long relcacheInvalsReceived = 0L;
 
 /*
  * This list remembers the OIDs of the non-shared relations cached in the
@@ -139,7 +139,7 @@ static long relcacheInvalsReceived = 0L;
  * list for the shared relcache init file, for reasons explained in the
  * comments for RelationCacheInitFileRemove.
  */
-static List *initFileRelationIds = NIL;
+thread_local static List *initFileRelationIds = NIL;
 
 /*
  * eoxact_list[] stores the OIDs of relations that (might) need AtEOXact
@@ -152,9 +152,9 @@ static List *initFileRelationIds = NIL;
  * cleanup processing must be idempotent.
  */
 #define MAX_EOXACT_LIST 32
-static Oid	eoxact_list[MAX_EOXACT_LIST];
-static int	eoxact_list_len = 0;
-static bool eoxact_list_overflowed = false;
+thread_local static Oid	eoxact_list[MAX_EOXACT_LIST];
+thread_local static int	eoxact_list_len = 0;
+thread_local static bool eoxact_list_overflowed = false;
 
 #define EOXactListAdd(rel) \
 	do { \
@@ -169,9 +169,9 @@ static bool eoxact_list_overflowed = false;
  * cleanup work.  The array expands as needed; there is no hashtable because
  * we don't need to access individual items except at EOXact.
  */
-static TupleDesc *EOXactTupleDescArray;
-static int	NextEOXactTupleDescNum = 0;
-static int	EOXactTupleDescArrayLen = 0;
+thread_local static TupleDesc *EOXactTupleDescArray;
+thread_local static int	NextEOXactTupleDescNum = 0;
+thread_local static int	EOXactTupleDescArrayLen = 0;
 
 /*
  *		macros to manipulate the lookup hashtable
@@ -238,7 +238,7 @@ typedef struct opclasscacheent
 	RegProcedure *supportProcs; /* OIDs of support procedures */
 } OpClassCacheEnt;
 
-static HTAB *OpClassCache = NULL;
+thread_local static HTAB *OpClassCache = NULL;
 
 
 /* non-export function prototypes */

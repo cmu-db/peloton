@@ -704,7 +704,7 @@ typedef struct
 static const char *memory_units_hint =
 	gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
 
-static const unit_conversion memory_unit_conversion_table[] =
+thread_local static const unit_conversion memory_unit_conversion_table[] =
 {
 	{ "TB",		GUC_UNIT_KB,	 	1024*1024*1024 },
 	{ "GB",		GUC_UNIT_KB,	 	1024*1024 },
@@ -729,10 +729,10 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{ "" }		/* end of table marker */
 };
 
-static const char *time_units_hint =
+thread_local static const char *time_units_hint =
 	gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
 
-static const unit_conversion time_unit_conversion_table[] =
+thread_local static const unit_conversion time_unit_conversion_table[] =
 {
 	{ "d",		GUC_UNIT_MS,	1000 * 60 * 60 * 24 },
 	{ "h",		GUC_UNIT_MS,	1000 * 60 * 60 },
@@ -785,8 +785,6 @@ static const unit_conversion time_unit_conversion_table[] =
 
 /******** option records follow ********/
 
-// TODO: Peloton Changes
-// made it non-static
 struct config_bool ConfigureNamesBool[] =
 {
 	{
@@ -1230,7 +1228,7 @@ struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&autovacuum_start_daemon,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 
@@ -3696,7 +3694,7 @@ struct config_enum ConfigureNamesEnum[] =
  * should be mapped to a new___ one only if the new___ variable has very similar
  * semantics to the old.
  */
-static const char *const map_old_guc_names[] = {
+thread_local static const char *const map_old_guc_names[] = {
 	"sort_mem", "work_mem",
 	"vacuum_mem", "maintenance_work_mem",
 	NULL
@@ -3706,10 +3704,10 @@ static const char *const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
+thread_local static struct config_generic **guc_variables;
 
 /* Current number of variables contained in the vector */
-static int	num_guc_variables;
+thread_local static int	num_guc_variables;
 
 /*
  * Lookup of variables for pg_file_settings view.
@@ -3722,20 +3720,20 @@ typedef struct ConfigFileVariable
 	char	*filename;
 	int		sourceline;
 } ConfigFileVariable;
-static struct ConfigFileVariable *guc_file_variables;
+thread_local static struct ConfigFileVariable *guc_file_variables;
 
 /* Number of file variables */
-static int	num_guc_file_variables;
+thread_local static int	num_guc_file_variables;
 
 /* Vector capacity */
-static int	size_guc_variables;
+thread_local static int	size_guc_variables;
 
 
-static bool guc_dirty;			/* TRUE if need to do commit/abort work */
+thread_local static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
-static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
+thread_local static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
-static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+thread_local static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -4254,7 +4252,7 @@ guc_name_compare(const char *namea, const char *nameb)
  * processed command-line switches.
  */
 void
-InitializeGUCOptions(void)
+InitializeGUCOptions(bool send_messages)
 {
 	int			i;
 
@@ -4269,29 +4267,32 @@ InitializeGUCOptions(void)
 	 */
 	build_guc_variables();
 
-	/*
-	 * Load all variables with their compiled-in defaults, and initialize
-	 * status fields as needed.
-	 */
-	for (i = 0; i < num_guc_variables; i++)
+	if(send_messages == true)
 	{
-		InitializeOneGUCOption(guc_variables[i]);
+	  /*
+	   * Load all variables with their compiled-in defaults, and initialize
+	   * status fields as needed.
+	   */
+	  for (i = 0; i < num_guc_variables; i++)
+	  {
+	    InitializeOneGUCOption(guc_variables[i]);
+	  }
+
+	  guc_dirty = false;
+
+	  reporting_enabled = false;
+
+	  /*
+	   * Prevent any attempt to override the transaction modes from
+	   * non-interactive sources.
+	   */
+	  SetConfigOption("transaction_isolation", "default",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_read_only", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_deferrable", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
 	}
-
-	guc_dirty = false;
-
-	reporting_enabled = false;
-
-	/*
-	 * Prevent any attempt to override the transaction modes from
-	 * non-interactive sources.
-	 */
-	SetConfigOption("transaction_isolation", "default",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_read_only", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_deferrable", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from

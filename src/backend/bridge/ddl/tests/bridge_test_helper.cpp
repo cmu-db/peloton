@@ -239,7 +239,8 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
   List *parsetree_list;
   ListCell *parsetree_item;
 
-  Bridge::PelotonStartTransactionCommand();
+  //FIXME Do we need now? 
+  //StartTransactionCommand();
 
   parsetree_list = pg_parse_query(queryString.c_str());
   foreach (parsetree_item, parsetree_list) {
@@ -262,7 +263,8 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
     }
   }
 
-  Bridge::PelotonCommitTransactionCommand();
+  //FIXME Do we need now? 
+  //CommitTransactionCommand();
 
   return address.objectId;
 }
@@ -273,7 +275,8 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
  * @return true if we drop the table
  */
 bool BridgeTest::DropTableInPostgres(std::string table_name) {
-  Bridge::PelotonStartTransactionCommand();
+  //FIXME Do we need now? 
+  //StartTransactionCommand();
 
   std::string queryString = "drop table " + table_name + ";";
 
@@ -292,7 +295,8 @@ bool BridgeTest::DropTableInPostgres(std::string table_name) {
     PelotonRemoveRelations(stmt);
   }
 
-  Bridge::PelotonCommitTransactionCommand();
+  //FIXME Do we need now? 
+  //CommitTransactionCommand();
 
   return true;
 }

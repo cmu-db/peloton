@@ -64,20 +64,22 @@
 #include "utils/timestamp.h"
 #include "pg_trace.h"
 
+// TODO: Peloton Changes
+#include "backend/common/stack_trace.h"
 
 /*
  *	User-tweakable parameters
  */
-int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
-int			XactIsoLevel;
+thread_local int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
+thread_local int			XactIsoLevel;
 
-bool		DefaultXactReadOnly = false;
-bool		XactReadOnly;
+thread_local bool		DefaultXactReadOnly = false;
+thread_local bool		XactReadOnly;
 
-bool		DefaultXactDeferrable = false;
-bool		XactDeferrable;
+thread_local bool		DefaultXactDeferrable = false;
+thread_local bool		XactDeferrable;
 
-int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
+thread_local int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
 
 /*
  * When running as a parallel worker, we place only a single
@@ -102,16 +104,16 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * The XIDs are stored sorted in numerical order (not logical order) to make
  * lookups as fast as possible.
  */
-TransactionId	XactTopTransactionId = InvalidTransactionId;
-int				nParallelCurrentXids = 0;
-TransactionId  *ParallelCurrentXids;
+thread_local TransactionId	XactTopTransactionId = InvalidTransactionId;
+thread_local int				nParallelCurrentXids = 0;
+thread_local TransactionId  *ParallelCurrentXids;
 
 /*
  * MyXactAccessedTempRel is set when a temporary relation is accessed.
  * We don't allow PREPARE TRANSACTION in that case.  (This is global
  * so that it can be set from heapam.c.)
  */
-bool		MyXactAccessedTempRel = false;
+thread_local bool		MyXactAccessedTempRel = false;
 
 
 /*
@@ -195,7 +197,7 @@ typedef TransactionStateData *TransactionState;
  * block.  It will point to TopTransactionStateData when not in a
  * transaction at all, or when in a top-level transaction.
  */
-static TransactionStateData TopTransactionStateData = {
+thread_local static TransactionStateData TopTransactionStateData = {
 	0,							/* transaction id */
 	0,							/* subtransaction id */
 	NULL,						/* savepoint name */
@@ -223,18 +225,18 @@ static TransactionStateData TopTransactionStateData = {
  * unreportedXids holds XIDs of all subtransactions that have not yet been
  * reported in an XLOG_XACT_ASSIGNMENT record.
  */
-static int	nUnreportedXids;
-static TransactionId unreportedXids[PGPROC_MAX_CACHED_SUBXIDS];
+thread_local static int	nUnreportedXids;
+thread_local static TransactionId unreportedXids[PGPROC_MAX_CACHED_SUBXIDS];
 
-static TransactionState CurrentTransactionState = &TopTransactionStateData;
+thread_local static TransactionState CurrentTransactionState = &TopTransactionStateData;
 
 /*
  * The subtransaction ID and command ID assignment counters are global
  * to a whole transaction, so we do not keep them in the state stack.
  */
-static SubTransactionId currentSubTransactionId;
-static CommandId currentCommandId;
-static bool currentCommandIdUsed;
+thread_local static SubTransactionId currentSubTransactionId;
+thread_local static CommandId currentCommandId;
+thread_local static bool currentCommandIdUsed;
 
 /*
  * xactStartTimestamp is the value of transaction_timestamp().
@@ -243,27 +245,27 @@ static bool currentCommandIdUsed;
  * These do not change as we enter and exit subtransactions, so we don't
  * keep them inside the TransactionState stack.
  */
-static TimestampTz xactStartTimestamp;
-static TimestampTz stmtStartTimestamp;
-static TimestampTz xactStopTimestamp;
+thread_local static TimestampTz xactStartTimestamp;
+thread_local static TimestampTz stmtStartTimestamp;
+thread_local static TimestampTz xactStopTimestamp;
 
 /*
  * GID to be used for preparing the current transaction.  This is also
  * global to a whole transaction, so we don't keep it in the state stack.
  */
-static char *prepareGID;
+thread_local static char *prepareGID;
 
 /*
  * Some commands want to force synchronous commit.
  */
-static bool forceSyncCommit = false;
+thread_local static bool forceSyncCommit = false;
 
 /*
  * Private context for transaction-abort work --- we reserve space for this
  * at startup to ensure that AbortTransaction and AbortSubTransaction can work
  * when we've run out of memory.
  */
-static MemoryContext TransactionAbortContext = NULL;
+thread_local static MemoryContext TransactionAbortContext = NULL;
 
 /*
  * List of add-on start- and end-of-xact callbacks
@@ -275,7 +277,7 @@ typedef struct XactCallbackItem
 	void	   *arg;
 } XactCallbackItem;
 
-static XactCallbackItem *Xact_callbacks = NULL;
+thread_local static XactCallbackItem *Xact_callbacks = NULL;
 
 /*
  * List of add-on start- and end-of-subxact callbacks
@@ -287,7 +289,7 @@ typedef struct SubXactCallbackItem
 	void	   *arg;
 } SubXactCallbackItem;
 
-static SubXactCallbackItem *SubXact_callbacks = NULL;
+thread_local static SubXactCallbackItem *SubXact_callbacks = NULL;
 
 
 /* local function prototypes */

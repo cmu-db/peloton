@@ -27,8 +27,9 @@
 #include "backend/executor/update_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/table_factory.h"
 
@@ -126,13 +127,12 @@ void UpdateTuple(storage::DataTable *table) {
 
   // WHERE ATTR_0 < 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"),
-                                           std::string("colname"));
+      new expression::TupleValueExpression(0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(60));
   auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
-      EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
@@ -165,13 +165,12 @@ void DeleteTuple(storage::DataTable *table) {
 
   // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"),
-                                           std::string("colname"));
+      new expression::TupleValueExpression(0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(60));
   auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
-      EXPRESSION_TYPE_COMPARE_GT, tup_val_exp, const_val_exp);
+      EXPRESSION_TYPE_COMPARE_GREATERTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};

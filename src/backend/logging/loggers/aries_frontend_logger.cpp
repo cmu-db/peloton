@@ -368,7 +368,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tuple_record);
   // TODO: Remove per-record backend construction
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
  
   // Read off the tuple record body from the log
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
@@ -465,7 +465,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   // TODO: Remove per-record backend construction
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
 
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
@@ -570,7 +570,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   }
 
   // Read next 4 bytes as an integer
-  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
+  CopySerializeInputBE frameCheck(buffer, sizeof(int32_t));
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   // Check if the frame is broken
@@ -614,7 +614,7 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
     return LOGRECORD_TYPE_INVALID;
   }
 
-  CopySerializeInput input(&buffer, sizeof(char));
+  CopySerializeInputBE input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
 
   return log_record_type;
@@ -639,7 +639,7 @@ bool AriesFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txn_rec
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput txn_header(header, header_size);
+  CopySerializeInputBE txn_header(header, header_size);
   txn_record.Deserialize(txn_header);
 
   return true;
@@ -664,7 +664,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tuple_record){
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput tuple_header(header,header_size);
+  CopySerializeInputBE tuple_header(header,header_size);
   tuple_record.DeserializeHeader(tuple_header);
 
   return true;
@@ -677,7 +677,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tuple_record){
  * @return tuple
  */
 storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema,
-                                                         Pool *pool){
+                                                         VarlenPool *pool){
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize();
   if( body_size == 0 ){
@@ -691,7 +691,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput tuple_body(body, body_size);
+  CopySerializeInputBE tuple_body(body, body_size);
 
   // We create a tuple based on the message
   storage::Tuple *tuple = new storage::Tuple(schema, true);
