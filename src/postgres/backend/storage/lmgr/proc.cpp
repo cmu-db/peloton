@@ -60,8 +60,8 @@ int			LockTimeout = 0;
 bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC and PGXACT structs, if any */
-PGPROC	   *MyProc = NULL;
-PGXACT	   *MyPgXact = NULL;
+thread_local PGPROC	   *MyProc = NULL;
+thread_local PGXACT	   *MyPgXact = NULL;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -86,7 +86,7 @@ static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
 static volatile sig_atomic_t got_deadlock_timeout;
 
 static void RemoveProcFromArray(int code, Datum arg);
-static void ProcKill(int code, Datum arg);
+static __attribute__((unused)) void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
 static void CheckDeadLock(void);
 
@@ -403,7 +403,8 @@ InitProcess(void)
 	/*
 	 * Arrange to clean up at backend exit.
 	 */
-	on_shmem_exit(ProcKill, 0);
+	// TODO: Peloton Changes
+	//on_shmem_exit(ProcKill, 0);
 
 	/*
 	 * Now that we have a PGPROC, we could try to acquire locks, so initialize

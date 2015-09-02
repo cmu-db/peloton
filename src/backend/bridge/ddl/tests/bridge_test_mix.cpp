@@ -57,7 +57,8 @@ void BridgeTest::DDL_MIX_TEST_1() {
   catalog::Schema *schema = table->GetSchema();
 
   // Create the constrains
-  catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL);
+  std::string constraint_name = "not_null_constraint";
+  catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL, constraint_name);
 
   // Add one constraint to the one column
   schema->AddConstraint("id", notnull_constraint);

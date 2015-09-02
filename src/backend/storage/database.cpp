@@ -82,121 +82,34 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateStats(Peloton_Status *status, bool dirty_care) {
-  if (dirty_care) {
-    LOG_INFO("Update only dirty tables in Database(%u)", database_oid);
-  } else {
-    LOG_INFO("Update All Stats in Database(%u)", database_oid);
-  }
+void Database::UpdateStats() const{
+  LOG_INFO("Update All Stats in Database(%u)", database_oid);
+  for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
+    auto table = GetTable(table_offset);
+    bridge::Bridge::SetNumberOfTuples(table->GetOid(), table->GetNumberOfTuples());
 
-  std::vector<dirty_table_info *> dirty_tables;
-
-  for (int table_itr = 0; table_itr < GetTableCount(); table_itr++) {
-    auto table = GetTable(table_itr);
-    if (dirty_care && !table->IsDirty()) continue;
-
-    std::vector<dirty_index_info *> dirty_indexes;
-    for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
-      auto index = table->GetIndex(index_itr);
-      if (dirty_care && !index->IsDirty()) continue;
-
-      auto dirty_index =
-          CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
-      index->ResetDirty();
-      dirty_indexes.push_back(dirty_index);
+    for( int index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+      auto index = table->GetIndex(index_offset);
+      bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
     }
-    auto dirty_table = CreateDirtyTable(
-        table->GetOid(), table->GetNumberOfTuples(),
-        CreateDirtyIndexes(dirty_indexes), dirty_indexes.size());
-    table->ResetDirty();
-
-    dirty_tables.push_back(dirty_table);
   }
-
-  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
-  status->m_dirty_count = dirty_tables.size();
 }
 
-void Database::UpdateStatsWithOid(Peloton_Status *status,
-                                  const oid_t table_oid) {
+void Database::UpdateStatsWithOid(const oid_t table_oid) const{
   LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid, database_oid);
 
-  std::vector<dirty_table_info *> dirty_tables;
   auto table = GetTableWithOid(table_oid);
+  bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
 
-  std::vector<dirty_index_info *> dirty_indexes;
-  for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
-    auto index = table->GetIndex(index_itr);
-    if (!index->IsDirty()) continue;
-
-    auto dirty_index =
-        CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
-    index->ResetDirty();
-    dirty_indexes.push_back(dirty_index);
+  for( int index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+    auto index = table->GetIndex(index_offset);
+    bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
   }
-  auto dirty_table =
-      CreateDirtyTable(table->GetOid(), table->GetNumberOfTuples(),
-                       CreateDirtyIndexes(dirty_indexes), dirty_indexes.size());
-  table->ResetDirty();
-  dirty_tables.push_back(dirty_table);
-
-  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
-  status->m_dirty_count = dirty_tables.size();
 }
 
 //===--------------------------------------------------------------------===//
 // UTILITIES
 //===--------------------------------------------------------------------===//
-
-dirty_table_info **Database::CreateDirtyTables(
-    std::vector<dirty_table_info *> dirty_tables_vec) {
-  dirty_table_info **dirty_tables = (dirty_table_info **)
-      palloc(sizeof(dirty_table_info *) * dirty_tables_vec.size());
-
-  oid_t table_itr = 0;
-  for (auto dirty_table : dirty_tables_vec)
-    dirty_tables[table_itr++] = dirty_table;
-
-  return dirty_tables;
-}
-
-dirty_index_info **Database::CreateDirtyIndexes(
-    std::vector<dirty_index_info *> dirty_indexes_vec) {
-  dirty_index_info **dirty_indexes = (dirty_index_info **)
-      palloc(sizeof(dirty_index_info *) * dirty_indexes_vec.size());
-
-  oid_t index_itr = 0;
-  for (auto dirty_index : dirty_indexes_vec)
-    dirty_indexes[index_itr++] = dirty_index;
-
-  return dirty_indexes;
-}
-
-dirty_table_info *Database::CreateDirtyTable(oid_t table_oid,
-                                             float number_of_tuples,
-                                             dirty_index_info **dirty_indexes,
-                                             oid_t index_count) {
-  dirty_table_info *dirty_table = (dirty_table_info *)
-      palloc(sizeof(dirty_table_info));
-
-  dirty_table->table_oid = table_oid;
-  dirty_table->number_of_tuples = number_of_tuples;
-  dirty_table->dirty_indexes = dirty_indexes;
-  dirty_table->dirty_index_count = index_count;
-
-  return dirty_table;
-}
-
-dirty_index_info *Database::CreateDirtyIndex(oid_t index_oid,
-                                             float number_of_tuples) {
-  dirty_index_info *dirty_index = (dirty_index_info *)
-      palloc(sizeof(dirty_index_info));
-
-  dirty_index->index_oid = index_oid;
-  dirty_index->number_of_tuples = number_of_tuples;
-
-  return dirty_index;
-}
 
 std::ostream &operator<<(std::ostream &os, const Database &database) {
   os << "=====================================================\n";

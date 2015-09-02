@@ -69,6 +69,8 @@
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
 #include "backend/common/logger.h"
+#include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/ddl_utils.h"
 
 void peloton_ProcessUtility(Node *parsetree, const char *queryString,
                             ProcessUtilityContext context, ParamListInfo params,
@@ -340,13 +342,16 @@ ProcessUtility(Node *parsetree,
                 dest, completionTag);
   else
   {
+    elog(DEBUG3, "DDL Query :: %s Type :: %d",
+         queryString, nodeTag(parsetree));
+
     standard_ProcessUtility(parsetree, queryString,
                 context, params,
                 dest, completionTag);
 
-    if(IsPostmasterEnvironment == true)
+    // TODO: Peloton Changes
+    if(IsBackend == true)
     {
-      // TODO: Peloton Changes
       peloton_ProcessUtility(parsetree, queryString,
                              context, params,
                              dest, completionTag);
@@ -935,9 +940,10 @@ peloton_ProcessUtility(Node *parsetree,
             DestReceiver *dest,
             char *completionTag)
 {
+  elog(DEBUG3, "DDL Query : %s", queryString);
 
   // TODO: Peloton Changes
-  peloton_send_ddl(parsetree);
+  peloton_ddl(parsetree);
 
 }
 

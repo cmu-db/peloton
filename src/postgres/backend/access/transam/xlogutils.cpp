@@ -49,7 +49,7 @@ typedef struct xl_invalid_page
 	bool		present;		/* page existed but contained zeroes */
 } xl_invalid_page;
 
-static HTAB *invalid_page_tab = NULL;
+thread_local static HTAB *invalid_page_tab = NULL;
 
 
 /* Report a reference to an invalid page */

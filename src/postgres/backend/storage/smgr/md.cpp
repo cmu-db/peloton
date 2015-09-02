@@ -115,7 +115,7 @@ typedef struct _MdfdVec
 	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 } MdfdVec;
 
-static MemoryContext MdCxt;		/* context for all MdfdVec objects */
+thread_local static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /*
@@ -155,12 +155,12 @@ typedef struct
 	CycleCtr	cycle_ctr;		/* mdckpt_cycle_ctr when request was made */
 } PendingUnlinkEntry;
 
-static HTAB *pendingOpsTable = NULL;
-static List *pendingUnlinks = NIL;
-static MemoryContext pendingOpsCxt;		/* context for the above  */
+thread_local static HTAB *pendingOpsTable = NULL;
+thread_local static List *pendingUnlinks = NIL;
+thread_local static MemoryContext pendingOpsCxt;		/* context for the above  */
 
-static CycleCtr mdsync_cycle_ctr = 0;
-static CycleCtr mdckpt_cycle_ctr = 0;
+thread_local static CycleCtr mdsync_cycle_ctr = 0;
+thread_local static CycleCtr mdckpt_cycle_ctr = 0;
 
 
 typedef enum					/* behavior for mdopen & _mdfd_getseg */
@@ -206,7 +206,7 @@ mdinit(void)
 	 * it if we are standalone (not under a postmaster) or if we are a startup
 	 * or checkpointer auxiliary process.
 	 */
-	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
+	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess() || IsBackend)
 	{
 		HASHCTL		hash_ctl;
 
