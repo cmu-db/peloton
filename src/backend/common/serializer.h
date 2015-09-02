@@ -181,7 +181,7 @@ template <Endianess E> class SerializeInput {
     currently unverified and could result in Reading before the
     beginning of the buffer. */
   // TODO(evanj): Change the implementation to validate this?
-  void UnRead(size_t bytes) {
+  void Unread(size_t bytes) {
     current_ -= bytes;
   }
 
@@ -579,49 +579,49 @@ class ExportSerializeInput {
 
     virtual ~ExportSerializeInput() {};
 
-    inline char readChar() {
-        return readPrimitive<char>();
+    inline char ReadChar() {
+        return ReadPrimitive<char>();
     }
 
-    inline int8_t readByte() {
-        return readPrimitive<int8_t>();
+    inline int8_t ReadByte() {
+        return ReadPrimitive<int8_t>();
     }
 
-    inline int16_t readShort() {
-        return readPrimitive<int16_t>();
+    inline int16_t ReadShort() {
+        return ReadPrimitive<int16_t>();
     }
 
-    inline int32_t readInt() {
-        return readPrimitive<int32_t>();
+    inline int32_t ReadInt() {
+        return ReadPrimitive<int32_t>();
     }
 
-    inline bool readBool() {
-        return readByte();
+    inline bool ReadBool() {
+        return ReadByte();
     }
 
-    inline char readEnumInSingleByte() {
-        return readByte();
+    inline char ReadEnumInSingleByte() {
+        return ReadByte();
     }
 
-    inline int64_t readLong() {
-        return readPrimitive<int64_t>();
+    inline int64_t ReadLong() {
+        return ReadPrimitive<int64_t>();
     }
 
-    inline float readFloat() {
-        int32_t value = readPrimitive<int32_t>();
+    inline float ReadFloat() {
+        int32_t value = ReadPrimitive<int32_t>();
         float retval;
         memcpy(&retval, &value, sizeof(retval));
         return retval;
     }
 
-    inline double readDouble() {
-        int64_t value = readPrimitive<int64_t>();
+    inline double ReadDouble() {
+        int64_t value = ReadPrimitive<int64_t>();
         double retval;
         memcpy(&retval, &value, sizeof(retval));
         return retval;
     }
 
-    /** Returns a pointer to the internal Data buffer, advancing the read Position by length. */
+    /** Returns a pointer to the internal Data buffer, advancing the Read Position by length. */
     const void* getRawPointer(size_t length) {
         const void* result = current_;
         current_ += length;
@@ -630,36 +630,36 @@ class ExportSerializeInput {
     }
 
     /** Copy a string from the buffer. */
-    inline std::string readTextString() {
-        int32_t stringLength = readInt();
+    inline std::string ReadTextString() {
+        int32_t stringLength = ReadInt();
         assert(stringLength >= 0);
         return std::string(reinterpret_cast<const char*>(getRawPointer(stringLength)),
                 stringLength);
     };
 
     /** Copy the next length bytes from the buffer to destination. */
-    inline void readBytes(void* destination, size_t length) {
+    inline void ReadBytes(void* destination, size_t length) {
         ::memcpy(destination, getRawPointer(length), length);
     };
 
-    /** Move the read Position back by bytes. Warning: this method is
-    currently unverified and could result in reading before the
+    /** Move the Read Position back by bytes. Warning: this method is
+    currently unverified and could result in Reading before the
     beginning of the buffer. */
     // TODO(evanj): Change the implementation to validate this?
-    void unread(size_t bytes) {
+    void Unread(size_t bytes) {
         current_ -= bytes;
     }
 
 private:
     template <typename T>
-    T readPrimitive() {
+    T ReadPrimitive() {
         T value;
         ::memcpy(&value, current_, sizeof(value));
         current_ += sizeof(value);
         return value;
     }
 
-    // Current read Position.
+    // Current Read Position.
     const char* current_;
 
     // End of the buffer. Valid byte range: current_ <= validPointer < end_.
@@ -684,7 +684,7 @@ class ExportSerializeOutput {
         // the serialization wrapper never owns its Data buffer
     };
 
-    /** Returns a pointer to the beginning of the buffer, for reading the serialized Data. */
+    /** Returns a pointer to the beginning of the buffer, for Reading the serialized Data. */
     const char* Data() const { return buffer_; }
 
     /** Returns the number of bytes written in to the buffer. */

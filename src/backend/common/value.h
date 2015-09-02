@@ -396,6 +396,8 @@ class Value {
   // Get min value
   static Value GetMinValue(ValueType);
 
+  int GetIntegerForTestsOnly() { return GetInteger(); }
+
   ////////////////////////////////////////////////////////////
 
   /* Return a boolean Value with the comparison result */
