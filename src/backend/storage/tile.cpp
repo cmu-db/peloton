@@ -58,7 +58,7 @@ Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
   std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false) pool = new Pool(backend);
+  if (schema.IsInlined() == false) pool = new VarlenPool(backend);
 }
 
 Tile::~Tile() {
@@ -125,7 +125,7 @@ Value Tile::GetValue(const oid_t tuple_slot_id, const oid_t column_id) {
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
-  return Value::Deserialize(field_location, column_type, is_inlined);
+  return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
 }
 
 /**
@@ -147,8 +147,13 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
     column_length = schema.GetVariableLength(column_id);
   }
 
-  value.SerializeWithAllocation(field_location, is_inlined, column_length,
-                                pool);
+  // TODO: Not sure about the argument
+  const bool is_in_bytes = false;
+  value.SerializeToTupleStorageAllocateForObjects(field_location,
+                                                  is_inlined,
+                                                  column_length,
+                                                  is_in_bytes,
+                                                  pool);
 }
 
 Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
@@ -359,7 +364,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
  * Used for initial data loading.
  * @param allow_export if false, export enabled is overriden for this load.
  */
-void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
+void Tile::DeserializeTuplesFrom(SerializeInputBE &input, VarlenPool *pool) {
   /*
    * Directly receives a Tile buffer.
    * [00 01]   [02 03]   [04 .. 0x]
@@ -424,8 +429,8 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
  * Used for recovery where the schema is not sent.
  * @param allow_export if false, export enabled is overriden for this load.
  */
-void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                              Pool *pool) {
+void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
+                                              VarlenPool *pool) {
   oid_t tuple_count = input.ReadInt();
   assert(tuple_count > 0);
 

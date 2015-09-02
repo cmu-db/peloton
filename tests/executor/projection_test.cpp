@@ -19,10 +19,8 @@
 #include "gtest/gtest.h"
 
 #include "backend/planner/projection_plan.h"
-
-
-#include "backend/expression/expression.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/constant_value_expression.h"
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"

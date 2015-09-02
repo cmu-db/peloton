@@ -23,8 +23,11 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/nested_loop_join_executor.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression.h"
 #include "backend/storage/data_table.h"
+
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
 
 #include "mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -44,24 +47,24 @@ expression::AbstractExpression *CreateJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1, "left_table", "attr1");
+      new expression::TupleValueExpression(0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1, "right_table", "attr1");
+      new expression::TupleValueExpression(1, 1);
 
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
       new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQ, left_table_attr_1, right_table_attr_1);
+          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(0, 1, "left_table", "attr3");
+      new expression::TupleValueExpression(0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
           ValueFactory::GetDoubleValue(50.0));
   expression::ComparisonExpression<expression::CmpGt> *comp_b =
       new expression::ComparisonExpression<expression::CmpGt>(
-          EXPRESSION_TYPE_COMPARE_GT, left_table_attr_3, const_val_1);
+          EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
 
   predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd>(
       EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);

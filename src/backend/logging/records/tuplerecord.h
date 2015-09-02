@@ -72,7 +72,7 @@ public:
 
   void SerializeHeader(CopySerializeOutput& output);
 
-  void DeserializeHeader(CopySerializeInput& input);
+  void DeserializeHeader(CopySerializeInputBE& input);
 
   //===--------------------------------------------------------------------===//
   // Accessor
