@@ -78,7 +78,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
     LOG_INFO(
         "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, numDistinctCols = %d",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
-        agg_expr ? agg_expr->DebugInfo().c_str() : "<NULL>",
+        agg_expr ? agg_expr->Debug().c_str() : "<NULL>",
         peragg[aggno].numDistinctCols);
 
     for (int i = 0; i < peragg[aggno].numDistinctCols; i++) {

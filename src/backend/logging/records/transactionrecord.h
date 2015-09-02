@@ -30,7 +30,7 @@ public:
 
   bool Serialize();
 
-  void Deserialize(CopySerializeInput& input);
+  void Deserialize(CopySerializeInputBE& input);
 
   //===--------------------------------------------------------------------===//
   // Accessor

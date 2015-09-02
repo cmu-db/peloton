@@ -62,7 +62,7 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
       tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  peloton::Pool *pool = new peloton::Pool(backend);
+  peloton::VarlenPool *pool = new peloton::VarlenPool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -167,7 +167,7 @@ TEST(IndexTests, BtreeMultiIndexTest) {
       tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  peloton::Pool *pool = new peloton::Pool(backend);
+  peloton::VarlenPool *pool = new peloton::VarlenPool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 

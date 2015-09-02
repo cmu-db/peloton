@@ -241,7 +241,7 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
   if( ret <= 0 ){
     return LOGRECORD_TYPE_INVALID;
   }
-  CopySerializeInput input(&buffer, sizeof(char));
+  CopySerializeInputBE input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
   return log_record_type;
 }
@@ -280,7 +280,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   }
 
   // Read next 4 bytes as an integer
-  CopySerializeInput frameCheck(buffer, sizeof(int32_t));
+  CopySerializeInputBE frameCheck(buffer, sizeof(int32_t));
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   /* go back 4 bytes */
@@ -323,7 +323,7 @@ bool AriesFrontendLogger::ReadTxnRecord(TransactionRecord &txnRecord){
   if( ret <= 0 ){
     LOG_ERROR("Error occured in fread ");
   }
-  CopySerializeInput logTxnRecord(txn_record,txn_record_size);
+  CopySerializeInputBE logTxnRecord(txn_record,txn_record_size);
   txnRecord.Deserialize(logTxnRecord);
 
   return true;
@@ -358,7 +358,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput logHeader(header,header_size);
+  CopySerializeInputBE logHeader(header,header_size);
   tupleRecord.DeserializeHeader(logHeader);
 
   return true;
@@ -371,7 +371,7 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tupleRecord){
  * @return tuple
  */
 storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema, 
-                                                         Pool *pool){
+                                                         VarlenPool *pool){
   // Measure the body size of LogRecord
   size_t body_size = GetNextFrameSize();
   if( body_size == 0 ){
@@ -386,7 +386,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInput logBody(body, body_size);
+  CopySerializeInputBE logBody(body, body_size);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
 
@@ -508,7 +508,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tupleRecord);
 
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
  
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
@@ -598,7 +598,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tupleRecord);
 
   storage::AbstractBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  VarlenPool *pool = new VarlenPool(backend);
 
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
