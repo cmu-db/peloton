@@ -399,25 +399,17 @@ TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
 
   tile_group_id = catalog::Manager::GetInstance().GetNextOid();
 
-  std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
-  oid_t tile_count = 0;
-
   // Figure out the columns in each tile in new layout
+  std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
   for(auto entry : partitioning) {
     tile_column_map[entry.second] = entry.first;
-    tile_count = std::max(tile_count, entry.second.first);
   }
-
-  tile_count += 1;
-  std::cout << "Tile count ::" << tile_count << "\n";
 
   // Build the schema tile at a time
   std::map<oid_t, std::vector<catalog::Column> > tile_schemas;
-
   for(auto entry : tile_column_map) {
     tile_schemas[entry.first.first].push_back(schema->GetColumn(entry.second));
   }
-
   for(auto entry: tile_schemas){
     catalog::Schema tile_schema(entry.second);
     schemas.push_back(tile_schema);
