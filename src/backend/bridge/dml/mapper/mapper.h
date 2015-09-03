@@ -48,7 +48,10 @@ class PlanTransformer {
     return TransformPlan(planstate, DefaultOptions);
   }
 
-  static void AnalyzePlan(planner::AbstractPlan *plan);
+  // Analyze the columns in the plan
+  static void AnalyzePlan(planner::AbstractPlan *plan,
+                          std::vector<oid_t> &target_list,
+                          std::vector<oid_t> &qual);
 
   static bool CleanPlan(planner::AbstractPlan *root);
 

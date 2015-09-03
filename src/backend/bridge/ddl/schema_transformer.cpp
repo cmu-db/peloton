@@ -81,9 +81,6 @@ catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
 
   schema = new catalog::Schema(columns);
 
-  LOG_INFO("Schema converted to Peloton: \n ");
-  std::cout << *schema << std::endl;
-
   return schema;
 }
 
