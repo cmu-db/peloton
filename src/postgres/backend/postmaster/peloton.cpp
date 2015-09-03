@@ -26,6 +26,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/message_queue.h"
+#include "backend/common/stack_trace.h"
 #include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -281,7 +282,6 @@ peloton_send_output(const peloton_status& status,
     // Clean up list
     list_free(status.m_result_slots);
   }
-
 }
 
 static void

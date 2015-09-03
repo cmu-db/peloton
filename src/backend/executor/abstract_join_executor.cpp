@@ -55,8 +55,8 @@ bool AbstractJoinExecutor::DInit() {
  * @ brief Build the schema of the joined tile based on the projection info
  */
 std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
-    std::vector<LogicalTile::ColumnInfo> left,
-    std::vector<LogicalTile::ColumnInfo> right) {
+    std::vector<LogicalTile::ColumnInfo> &left,
+    std::vector<LogicalTile::ColumnInfo> &right) {
   std::vector<LogicalTile::ColumnInfo> schema;
   if (proj_info_ == nullptr) {
     // no projection
@@ -66,6 +66,9 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
     assert(!proj_info_->isNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
+
+    LOG_INFO("left size: %lu, right size: %lu", left.size(), right.size());
+    LOG_INFO("Projection: %s", proj_info_->Debug().c_str());
     for (auto &entry : direct_map_list) {
       if (entry.second.first == 0) {
         assert(entry.second.second < left.size());

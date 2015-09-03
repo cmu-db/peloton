@@ -141,10 +141,21 @@ bool AggregateExecutor::DExecute() {
   }
 
   LOG_INFO("Finalizing..");
-  if (!aggregator || !aggregator->Finalize()) {
-    done = true;
+  if (!aggregator.get() || !aggregator->Finalize()) {
 
-    return false;
+    // If there's no tuples in the table and only if no group-by in the query,
+    // we should return a NULL tuple
+    // this is required by SQL
+    if(!aggregator.get() && node.GetGroupbyColIds().empty()){
+      LOG_INFO("No tuples received and no group-by. Should insert a NULL tuple here.");
+      std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(output_table->GetSchema(), true));
+      tuple->SetAllNulls();
+      output_table->InsertTuple(executor_context_->GetTransaction(), tuple.get());
+    }
+    else{
+      done = true;
+      return false;
+    }
   }
 
   // Transform output table into result

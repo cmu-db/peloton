@@ -27,12 +27,11 @@
 namespace peloton {
 namespace bridge {
 
-executor::ExecutorContext *BuildExecutorContext(PlanState *planstate, concurrency::Transaction *txn);
-executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              planner::AbstractPlan *plan,
-                                              PlanState *planstate,
-                                              executor::ExecutorContext *executor_context);
-
+executor::ExecutorContext *BuildExecutorContext(PlanState *planstate,
+                                                concurrency::Transaction *txn);
+executor::AbstractExecutor *BuildExecutorTree(
+    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    PlanState *planstate, executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -60,12 +59,12 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 /**
  * @brief Build Executor Context
  */
-executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list, concurrency::Transaction *txn) {
+executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
+                                                concurrency::Transaction *txn) {
   ValueArray params = PlanTransformer::BuildParams(param_list);
 
   return new executor::ExecutorContext(txn, params);
 }
-
 
 /**
  * @brief Build the executor tree.
@@ -74,9 +73,9 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list, c
  * @param Transation context
  * @return The updated executor tree.
  */
-executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              planner::AbstractPlan *plan,
-                                              executor::ExecutorContext *executor_context) {
+executor::AbstractExecutor *BuildExecutorTree(
+    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr)
     return root;
@@ -249,13 +248,12 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-
   auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
 
-  executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, executor_context);
+  executor::AbstractExecutor *executor_tree = BuildExecutorTree(
+      nullptr, plan, executor_context);
 
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
@@ -315,16 +313,15 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 // final cleanup
   cleanup:
 
-  LOG_TRACE("About to commit %d, %d", single_statement_txn, init_failure);
+  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());
 
   // should we commit or abort ?
-  if (single_statement_txn == true || init_failure == true)
-  {
+  if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
     switch (status) {
       case Result::RESULT_SUCCESS:
-        LOG_TRACE("Committing txn_id : %lu , cid : %lu\n",
-                  txn->GetTransactionId(), txn->GetCommitId());
+        LOG_INFO("Committing txn_id : %lu , cid : %lu\n",
+                 txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
 
@@ -332,14 +329,12 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_TRACE("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
-                  txn->GetCommitId());
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
+                 txn->GetCommitId());
         // Abort
         txn_manager.AbortTransaction(txn);
     }
   }
-
-
   // clean up executor tree
   CleanExecutorTree(executor_tree);
 
