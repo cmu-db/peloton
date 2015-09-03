@@ -449,53 +449,45 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromTargetList(
   return rv;
 }
 
-void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan) {
+void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
+                                  std::vector<oid_t> &target_list,
+                                  std::vector<oid_t> &qual) {
   if(plan == NULL)
     return;
 
-  std::vector<oid_t> target_list;
-  std::vector<oid_t> qual;
-
   auto plan_node_type = plan->GetPlanNodeType();
+
   switch (plan_node_type) {
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-      target_list = ((planner::AbstractScan *)plan)->GetColumnIds();
+      // TARGET LIST
+      if(target_list.empty())
+        target_list = ((planner::AbstractScan *)plan)->GetColumnIds();
+
+      // QUAL
       BuildColumnListFromExpr(qual, ((planner::AbstractScan *)plan)->GetPredicate());
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
-      target_list = ((planner::ProjectionPlan *)plan)->GetColumnIds();
+      // TARGET LIST
+      if(target_list.empty())
+        target_list = ((planner::ProjectionPlan *)plan)->GetColumnIds();
       break;
 
     case PLAN_NODE_TYPE_AGGREGATE_V2:
-      target_list = ((planner::AggregatePlan *)plan)->GetColumnIds();
+      // TARGET LIST
+      if(target_list.empty())
+        target_list = ((planner::AggregatePlan *)plan)->GetColumnIds();
       break;
 
     default:
       break;
   }
 
-  // Target list
-  if(target_list.empty() == false) {
-    std::cout << "TARGET LIST :: ";
-    for(auto col : target_list)
-      std::cout << col << " ";
-    std::cout << "\n";
-  }
-
-  // Qual
-  if(qual.empty() == false) {
-    std::cout << "QUAL :: ";
-    for(auto col : qual)
-      std::cout << col << " ";
-    std::cout << "\n";
-  }
-
   // Recurse through children
   auto children = plan->GetChildren();
   for(auto child : children)
-    AnalyzePlan(child);
+    AnalyzePlan(child, target_list, qual);
 
 }
 
