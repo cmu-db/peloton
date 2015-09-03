@@ -11,9 +11,9 @@ bin_peloton_PROGRAMS = initdb pg_ctl psql \
 					   createdb createuser dropdb dropuser             
 bin_pelotondir = /usr/local/peloton/bin
 if BUILD_OS_IS_DARWIN
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpeloton -lpelotonpg -lpq $(TBB_LIBS) -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq $(TBB_LIBS) -lm -lreadline
 else
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpeloton -lpelotonpg -lpq $(TBB_LIBS) -lrt -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq $(TBB_LIBS) -lrt -lm -lreadline
 endif
 
 pg_common_cxxflags = $(AM_CXXFLAGS) \
@@ -21,6 +21,8 @@ pg_common_cxxflags = $(AM_CXXFLAGS) \
 					 -Wno-unused-parameter -Wno-missing-field-initializers \
 					 -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow					 
 
+pg_common_ldadd = $(top_builddir)/src/libpelotonpg.la \
+				  $(top_builddir)/src/libpeloton.la
 
 ######################################################################
 # INITDB
@@ -37,7 +39,7 @@ initdb_CPPFLAGS = \
 				  -I$(top_srcdir)/src/postgres/timezone
 
 initdb_LDFLAGS = $(pg_common_ldflags)
-
+initdb_LDADD = $(pg_common_ldadd)
 initdb_CXXFLAGS = $(pg_common_cxxflags)
 
 ######################################################################
@@ -73,7 +75,7 @@ psql_CPPFLAGS = \
 				-I$(top_srcdir)/src/postgres/interfaces/libpq
 
 psql_LDFLAGS = $(pg_common_ldflags)
-
+psql_LDADD = $(pg_common_ldadd)
 psql_CXXFLAGS = $(pg_common_cxxflags)
 
 ######################################################################
@@ -101,7 +103,7 @@ pg_ctl_SOURCES = \
 pg_ctl_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 pg_ctl_LDFLAGS = $(pg_common_ldflags)
-
+pg_ctl_LDADD = $(pg_common_ldadd)
 pg_ctl_CXXFLAGS = $(pg_common_cxxflags)
 
 
@@ -113,7 +115,7 @@ createdb_SOURCES = \
 createdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 createdb_LDFLAGS = $(pg_common_ldflags)
-
+createdb_LDADD = $(pg_common_ldadd)
 createdb_CXXFLAGS = $(pg_common_cxxflags)
 
 
@@ -125,7 +127,7 @@ createuser_SOURCES = \
 createuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 createuser_LDFLAGS = $(pg_common_ldflags)
-
+createuser_LDADD = $(pg_common_ldadd)
 createuser_CXXFLAGS = $(pg_common_cxxflags)
 
 
@@ -137,7 +139,7 @@ dropdb_SOURCES = \
 dropdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 dropdb_LDFLAGS = $(pg_common_ldflags)
-
+dropdb_LDADD = $(pg_common_ldadd)
 dropdb_CXXFLAGS = $(pg_common_cxxflags)
 
 
@@ -149,7 +151,7 @@ dropuser_SOURCES = \
 dropuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 dropuser_LDFLAGS = $(pg_common_ldflags)
-
+dropuser_LDADD = $(pg_common_ldadd)
 dropuser_CXXFLAGS = $(pg_common_cxxflags)
 
 
