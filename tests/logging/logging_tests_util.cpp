@@ -426,7 +426,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
   auto tuples = GetTuple(table->GetSchema(), 1);
 
   for( auto tuple : tuples){
-    ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
+    ItemPointer location = table->InsertTuple(txn, tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
       continue;

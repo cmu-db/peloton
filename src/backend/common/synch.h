@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include <thread>
 #include <atomic>
 
 #include <pthread.h>
 #include <immintrin.h>
-
-#pragma once
 
 //===--------------------------------------------------------------------===//
 // Synchronization utilities
@@ -78,20 +78,20 @@ struct RecursiveLock {
   mutable pthread_mutex_t recursive_mutex;
 };
 
-struct SharedLock {
+struct PelotonReadLock {
   const RWLock &shared_lock;
 
-  SharedLock(const RWLock &mtx) : shared_lock(mtx) { mtx.ReadLock(); }
+  PelotonReadLock(const RWLock &mtx) : shared_lock(mtx) { mtx.ReadLock(); }
 
-  ~SharedLock() { shared_lock.Unlock(); }
+  ~PelotonReadLock() { shared_lock.Unlock(); }
 };
 
-struct ExclusiveLock {
+struct PelotonWriteLock {
   const RWLock &exclusive_lock;
 
-  ExclusiveLock(const RWLock &mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
+  PelotonWriteLock(const RWLock &mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
 
-  ~ExclusiveLock() { exclusive_lock.Unlock(); }
+  ~PelotonWriteLock() { exclusive_lock.Unlock(); }
 };
 
 //===--------------------------------------------------------------------===//

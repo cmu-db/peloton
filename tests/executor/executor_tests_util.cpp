@@ -242,7 +242,7 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
     tuple.SetValue(3, string_value);
 
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
-    tile_group->CommitInsertedTuple(tuple_slot_id, commit_id);
+    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
 
     string_value.Free();
   }

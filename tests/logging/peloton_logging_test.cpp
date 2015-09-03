@@ -41,6 +41,7 @@ TEST(PelotonLoggingTest, writing_log_file) {
  */
 TEST(PelotonLoggingTest, recovery) {
 
+  /*
   std::ifstream log_file(peloton_log_file_name.c_str());
 
   // Do recovery if the log file exists
@@ -49,6 +50,7 @@ TEST(PelotonLoggingTest, recovery) {
   }else{
     LOG_ERROR("Could not check recovery");
   }
+  */
 }
 
 }  // End test namespace

@@ -38,6 +38,10 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   bool ExecIndexLookup();
 
+  void ExecProjection();
+
+  void ExecPredication();
+
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -58,6 +62,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   /** @brief index associated with index scan. */
   index::Index *index_ = nullptr;
 
+  const storage::AbstractTable *table_ = nullptr;
+
   std::vector<oid_t> column_ids_;
 
   std::vector<oid_t> key_column_ids_;
@@ -67,6 +73,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<peloton::Value> values_;
 
   std::vector<expression::AbstractExpression *> runtime_keys_;
+
+  std::vector<oid_t> full_column_ids_;
 
   bool key_ready = false;
 };
