@@ -13,6 +13,9 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/planner/projection_plan.h"
+#include "backend/planner/aggregate_plan.h"
+#include "backend/planner/abstract_scan_plan.h"
+#include "backend/expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -81,7 +84,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     project_info.reset(BuildProjectInfoFromTLSkipJunk(sstate->targetlist));
   }
 
-  LOG_TRACE("project_info : %s",
+  LOG_INFO("project_info : %s",
             project_info.get() ? project_info->Debug().c_str() : "<NULL>\n");
 
   /*
@@ -90,29 +93,31 @@ void PlanTransformer::GetGenericInfoFromScanState(
    * on top, or simply pushed in an output column list.
    */
   if (nullptr == project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
-    LOG_TRACE("No projections (all pass through)");
+    LOG_INFO("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
   } else if (project_info->GetTargetList().size() > 0) {  // Have non-trivial projection, add a plan node
-    LOG_TRACE(
+    LOG_INFO(
         "Non-trivial projections are found. Projection node will be " "created. \n");
 
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         sstate->tts_tupleDescriptor);
 
+    auto column_ids = BuildColumnListFromTargetList(project_info->GetTargetList());
+
     parent = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
 
+    ((planner::ProjectionPlan *)parent)->SetColumnIds(column_ids);
   }
 
   else {  // Pure direct map
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_TRACE("Pure direct map projection.\n");
+    LOG_INFO("Pure direct map projection.\n");
 
-    std::vector<oid_t> column_ids;
-    column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
+    auto column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
     out_col_list = std::move(column_ids);
 
     //assert(out_col_list.size() == out_column_count);
@@ -232,7 +237,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
     AttrNumber resind = tle->resno - 1;
 
     if (!(resind < column_count && AttributeNumberIsValid(tle->resno)
-        && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
+    && AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
       LOG_TRACE(
           "Invalid / Junk attribute. Skipped.  resno : %u , resjunk : %u \n",
           tle->resno, tle->resjunk);
@@ -284,8 +289,8 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
   std::sort(dmlist.begin(), dmlist.end(),
             [](const planner::ProjectInfo::DirectMap &a,
                 const planner::ProjectInfo::DirectMap &b) {
-              return a.first < b.first;
-            });
+    return a.first < b.first;
+  });
 
   assert(dmlist.front().first == 0);
   assert(dmlist.back().first == dmlist.size() - 1);
@@ -396,6 +401,104 @@ PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
       return JOIN_TYPE_INVALID;
   }
 }
+
+/**
+ * @brief Transform a expr to a one-dimensional column list.
+ */
+void PlanTransformer::BuildColumnListFromExpr(
+    std::vector<oid_t> &col_ids,
+    const expression::AbstractExpression *expression) {
+  if(expression == nullptr)
+    return;
+
+  auto type = expression->GetExpressionType();
+  switch(type) {
+    case EXPRESSION_TYPE_VALUE_TUPLE:
+    {
+      auto col_id = ((expression::TupleValueExpression *)expression)->GetColumnId();
+      LOG_INFO("Col Id :: %d", col_id);
+      col_ids.push_back(col_id);
+    }
+    break;
+
+    default:
+      break;
+  }
+
+  // Recurse
+  BuildColumnListFromExpr(col_ids, expression->GetLeft());
+  BuildColumnListFromExpr(col_ids, expression->GetRight());
+}
+
+/**
+ * @brief Transform a TargetList to a one-dimensional column list.
+ */
+const std::vector<oid_t> PlanTransformer::BuildColumnListFromTargetList(
+    planner::ProjectInfo::TargetList target_list) {
+  std::vector<oid_t> rv;
+
+  for (auto target : target_list) {
+    auto expr = target.second;
+
+    std::vector<oid_t> col_ids;
+    BuildColumnListFromExpr(col_ids, expr);
+
+    rv.insert(rv.end(), col_ids.begin(), col_ids.end());
+  }
+
+  return rv;
+}
+
+void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan) {
+  if(plan == NULL)
+    return;
+
+  std::vector<oid_t> target_list;
+  std::vector<oid_t> qual;
+
+  auto plan_node_type = plan->GetPlanNodeType();
+  switch (plan_node_type) {
+    case PLAN_NODE_TYPE_SEQSCAN:
+    case PLAN_NODE_TYPE_INDEXSCAN:
+      target_list = ((planner::AbstractScan *)plan)->GetColumnIds();
+      BuildColumnListFromExpr(qual, ((planner::AbstractScan *)plan)->GetPredicate());
+      break;
+
+    case PLAN_NODE_TYPE_PROJECTION:
+      target_list = ((planner::ProjectionPlan *)plan)->GetColumnIds();
+      break;
+
+    case PLAN_NODE_TYPE_AGGREGATE_V2:
+      target_list = ((planner::AggregatePlan *)plan)->GetColumnIds();
+      break;
+
+    default:
+      break;
+  }
+
+  // Target list
+  if(target_list.empty() == false) {
+    std::cout << "TARGET LIST :: ";
+    for(auto col : target_list)
+      std::cout << col << " ";
+    std::cout << "\n";
+  }
+
+  // Qual
+  if(qual.empty() == false) {
+    std::cout << "QUAL :: ";
+    for(auto col : qual)
+      std::cout << col << " ";
+    std::cout << "\n";
+  }
+
+  // Recurse through children
+  auto children = plan->GetChildren();
+  for(auto child : children)
+    AnalyzePlan(child);
+
+}
+
 
 }  // namespace bridge
 }  // namespace peloton
