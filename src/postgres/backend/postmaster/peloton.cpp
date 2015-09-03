@@ -186,24 +186,6 @@ peloton_dml(PlanState *planstate,
   // Analyze the plan
   peloton::bridge::PlanTransformer::AnalyzePlan(plan, target_list, qual);
 
-  // Target list
-  if(target_list.empty() == false) {
-    std::cout << "TARGET LIST :: ";
-    for(auto col : target_list)
-      std::cout << col << " ";
-    std::cout << "\n";
-    std::cout << "Plan Startup Cost :: " << planstate->plan->startup_cost << "\n";
-    std::cout << "Plan Total Cost :: " << planstate->plan->startup_cost << "\n";
-  }
-
-  // Qual
-  if(qual.empty() == false) {
-    std::cout << "QUAL :: ";
-    for(auto col : qual)
-      std::cout << col << " ";
-    std::cout << "\n";
-  }
-
   // Execute the plantree
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(plan,
