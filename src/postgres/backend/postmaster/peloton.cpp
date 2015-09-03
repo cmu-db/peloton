@@ -33,6 +33,8 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
+#include "backend/logging/log_manager.h"
+
 #include "postgres.h"
 #include "c.h"
 #include "access/xact.h"
@@ -57,7 +59,6 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/peloton.h"
 
-#include "../../../backend/logging/log_manager.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -179,8 +180,30 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
+  std::vector<peloton::oid_t> target_list;
+  std::vector<peloton::oid_t> qual;
+
   // Analyze the plan
-  peloton::bridge::PlanTransformer::AnalyzePlan(plan);
+  peloton::bridge::PlanTransformer::AnalyzePlan(plan, target_list, qual);
+
+  // Target list
+  if(target_list.empty() == false) {
+    std::cout << "TARGET LIST :: ";
+    for(auto col : target_list)
+      std::cout << col << " ";
+    std::cout << "\n";
+  }
+
+  // Qual
+  if(qual.empty() == false) {
+    std::cout << "QUAL :: ";
+    for(auto col : qual)
+      std::cout << col << " ";
+    std::cout << "\n";
+  }
+
+  std::cout << "Plan Startup Cost :: " << planstate->plan->startup_cost << "\n";
+  std::cout << "Plan Total Cost :: " << planstate->plan->startup_cost << "\n";
 
   // Execute the plantree
   try {
