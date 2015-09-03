@@ -246,8 +246,8 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   }
   assert(txn);
 
-  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_INFO("Building the executor tree");
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_TRACE("Building the executor tree");
 
 
   auto executor_context = BuildExecutorContext(param_list, txn);
@@ -260,7 +260,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
-  LOG_INFO("Initializing the executor tree");
+  LOG_TRACE("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -272,7 +272,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_INFO("Running the executor tree");
+  LOG_TRACE("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
@@ -302,7 +302,6 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        LOG_INFO("1 slot");
         //print_slot(slot);
       }
     }
@@ -316,7 +315,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 // final cleanup
   cleanup:
 
-  LOG_INFO("About to commit %d, %d", single_statement_txn, init_failure);
+  LOG_TRACE("About to commit %d, %d", single_statement_txn, init_failure);
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true)
