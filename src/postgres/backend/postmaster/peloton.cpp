@@ -192,6 +192,8 @@ peloton_dml(PlanState *planstate,
     for(auto col : target_list)
       std::cout << col << " ";
     std::cout << "\n";
+    std::cout << "Plan Startup Cost :: " << planstate->plan->startup_cost << "\n";
+    std::cout << "Plan Total Cost :: " << planstate->plan->startup_cost << "\n";
   }
 
   // Qual
@@ -201,9 +203,6 @@ peloton_dml(PlanState *planstate,
       std::cout << col << " ";
     std::cout << "\n";
   }
-
-  std::cout << "Plan Startup Cost :: " << planstate->plan->startup_cost << "\n";
-  std::cout << "Plan Total Cost :: " << planstate->plan->startup_cost << "\n";
 
   // Execute the plantree
   try {
