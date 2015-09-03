@@ -27,7 +27,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_TRACE("proj_info : \n%s", proj_info->Debug().c_str());
+  LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
@@ -122,11 +122,19 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       break;
   }
 
+  auto column_ids = BuildColumnListFromTargetList(proj_info->GetTargetList());
+
+  for(auto agg_term : unique_agg_terms){
+    LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
+  }
+
   auto retval = new planner::AggregatePlan(proj_info.release(),
                                            predicate.release(),
                                            std::move(unique_agg_terms),
                                            std::move(groupby_col_ids),
                                            output_schema.release(), agg_type);
+
+  ((planner::AggregatePlan *)retval)->SetColumnIds(column_ids);
 
   // Find children
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
