@@ -302,20 +302,29 @@ bool IsPelotonQuery(List *relationOids) {
   bool peloton_query = false;
 
   // Check if we are in Postmaster environment */
-  if(IsPostmasterEnvironment == false)
+  if(IsPostmasterEnvironment == false && IsBackend == false) {
     return false;
+  }
 
   if(relationOids != NULL) {
     ListCell   *lc;
 
     // Go over each relation on which the plan depends
     foreach(lc, relationOids) {
-      Oid relationOid = lfirst_oid(lc);
-      // Fast check to determine if the relation is a peloton relation
-      if(relationOid >= FirstNormalObjectId) {
+      Oid relation_id = lfirst_oid(lc);
+
+      // Check if relation in public namespace
+      Relation target_table = relation_open(relation_id, AccessShareLock);
+      Oid target_table_namespace = target_table->rd_rel->relnamespace;
+
+      if(target_table_namespace == PG_PUBLIC_NAMESPACE) {
         peloton_query = true;
-        break;
       }
+
+      relation_close(target_table, AccessShareLock);
+
+      if(peloton_query == true)
+        break;
     }
   }
 
