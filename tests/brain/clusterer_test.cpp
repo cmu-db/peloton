@@ -71,7 +71,8 @@ TEST(ClustererTests, BasicTest) {
             << " TILE"
             << "\n";
   for (auto entry : partitioning1)
-    std::cout << entry.first << "\t" << entry.second << "\n";
+    std::cout << entry.first << "\t"
+    << entry.second.first << " : " << entry.second.second << "\n";
 
   auto partitioning2 = clusterer.GetPartitioning(4);
   std::cout << "COLUMN "
@@ -79,7 +80,8 @@ TEST(ClustererTests, BasicTest) {
             << " TILE"
             << "\n";
   for (auto entry : partitioning2)
-    std::cout << entry.first << "\t" << entry.second << "\n";
+    std::cout << entry.first << "\t"
+    << entry.second.first << " : " << entry.second.second << "\n";
 }
 
 }  // End test namespace
