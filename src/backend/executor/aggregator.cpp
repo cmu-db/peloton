@@ -135,7 +135,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
                                    aggref_tuple.get(), econtext);
 
   LOG_TRACE("Tuple to Output :");
-  std::cout << "GROUP TUPLE :: " << *(tuple.get());
+  LOG_TRACE("GROUP TUPLE :: %s", tuple->GetInfo().c_str());
 
   auto location = output_table->InsertTuple(econtext->GetTransaction(),
                                             tuple.get());
