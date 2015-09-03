@@ -75,16 +75,14 @@ void PlanTransformer::GetGenericInfoFromScanState(
   /* Transform predicate */
   predicate = BuildPredicateFromQual(qual);
 
-  LOG_TRACE("out_column_count = %d", out_column_count);
-
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   if (use_projInfo) {
     project_info.reset(BuildProjectInfoFromTLSkipJunk(sstate->targetlist));
   }
 
-  LOG_INFO("project_info : %s",
-           project_info.get() ? project_info->Debug().c_str() : "<NULL>\n");
+  LOG_TRACE("project_info : %s",
+            project_info.get() ? project_info->Debug().c_str() : "<NULL>\n");
 
   /*
    * Based on project_info, see whether we should create a functional projection
@@ -251,8 +249,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
     }
 
     LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
-
-    peloton_expr->DebugInfo().c_str());
+              peloton_expr->Debug().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
