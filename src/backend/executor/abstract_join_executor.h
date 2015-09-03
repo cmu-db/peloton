@@ -29,6 +29,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   explicit AbstractJoinExecutor(planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
+  virtual ~AbstractJoinExecutor(){}
+
  protected:
   bool DInit();
 
@@ -39,8 +41,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   // Helper
   //===--------------------------------------------------------------------===//
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
-      std::vector<LogicalTile::ColumnInfo> left,
-      std::vector<LogicalTile::ColumnInfo> right);
+      std::vector<LogicalTile::ColumnInfo> &left,
+      std::vector<LogicalTile::ColumnInfo> &right);
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -49,8 +51,6 @@ class AbstractJoinExecutor : public AbstractExecutor {
   /** @brief Result of  join. */
   std::vector<LogicalTile *> result;
 
-  /** @brief Starting left table scan. */
-  bool left_scan_start = false;
 
   //===--------------------------------------------------------------------===//
   // Plan Info

@@ -95,7 +95,7 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
-  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
+  LOG_INFO("Finishing mapping Merge join, JoinType: %d", join_type);
   return result;
 }
 
