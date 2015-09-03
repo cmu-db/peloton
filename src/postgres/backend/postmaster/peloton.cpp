@@ -179,6 +179,9 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
+  // Analyze the plan
+  peloton::bridge::PlanTransformer::AnalyzePlan(plan);
+
   // Execute the plantree
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(plan,

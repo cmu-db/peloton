@@ -48,6 +48,8 @@ class PlanTransformer {
     return TransformPlan(planstate, DefaultOptions);
   }
 
+  static void AnalyzePlan(planner::AbstractPlan *plan);
+
   static bool CleanPlan(planner::AbstractPlan *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
@@ -173,6 +175,12 @@ class PlanTransformer {
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
       planner::ProjectInfo::DirectMapList dmlist);
+
+  static const std::vector<oid_t> BuildColumnListFromTargetList(
+      planner::ProjectInfo::TargetList target_list);
+
+  static void BuildColumnListFromExpr(std::vector<oid_t> &col_ids,
+                                      const expression::AbstractExpression *expression);
 
   static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
 
