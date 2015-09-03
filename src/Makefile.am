@@ -37,7 +37,10 @@ bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpeloton.la libpelotonpg.la
+# The order matters here
+
+lib_LTLIBRARIES += libpeloton.la 
+lib_LTLIBRARIES += libpelotonpg.la
 
 DEFAULT_INCLUDES =
 
@@ -102,13 +105,12 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
 
-libpelotonpg_la_LIBADD = libpeloton.la
-
 ######################################################################
 # PELOTON
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
-peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS) 
-peloton_LDADD = libpeloton.la libpelotonpg.la
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
+
+peloton_LDADD = libpelotonpg.la libpeloton.la
