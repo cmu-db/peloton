@@ -143,8 +143,6 @@ bool SeqScanExecutor::DExecute() {
 
       // Construct logical tile.
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-      const bool own_base_tile = false;
-      const int position_list_idx = 0;
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
@@ -152,15 +150,7 @@ bool SeqScanExecutor::DExecute() {
         continue;
       }
 
-      for (oid_t origin_column_id : column_ids_) {
-        oid_t base_tile_offset, tile_column_id;
-
-        tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
-                                        tile_column_id);
-
-        logical_tile->AddColumn(tile_group->GetTile(base_tile_offset),
-                                own_base_tile, tile_column_id, position_list_idx);
-      }
+      logical_tile->AddColumns(tile_group, column_ids_);
 
       SetOutput(logical_tile.release());
       return true;

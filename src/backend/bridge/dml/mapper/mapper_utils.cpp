@@ -37,7 +37,7 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
     assert(params.GetSize() > 0);
   }
 
-  LOG_TRACE("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
+  LOG_INFO("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
   return params;
 }
 
@@ -272,8 +272,8 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
   expression::AbstractExpression *predicate = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(qual));
-  LOG_TRACE("Predicate:\n%s \n",
-            (nullptr == predicate) ? "NULL" : predicate->DebugInfo().c_str());
+  LOG_INFO("Predicate:\n%s \n",
+            (nullptr == predicate) ? "NULL" : predicate->DebugInfo(" ").c_str());
 
   return predicate;
 }
