@@ -56,12 +56,12 @@ void FrontendLogger::MainLoop(void) {
 
   LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
-  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_STANDBY ){
+  while(logManager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_STANDBY ){
     sleep(1);
   }
 
   // Do recovery if we can, otherwise terminate
-  switch(logManager.GetStatus(LOGGING_TYPE_PELOTON)){
+  switch(logManager.GetStatus()){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
 
@@ -73,7 +73,7 @@ void FrontendLogger::MainLoop(void) {
       DoRecovery();
 
       // Now, enable active logging
-      logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, LOGGING_STATUS_TYPE_LOGGING);
+      logManager.SetLoggingStatus(GetLoggingType(), LOGGING_STATUS_TYPE_LOGGING);
 
       break;
     }
@@ -92,7 +92,7 @@ void FrontendLogger::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
 
   // Periodically, wake up and do logging
-  while(logManager.GetStatus(LOGGING_TYPE_PELOTON) == LOGGING_STATUS_TYPE_LOGGING){
+  while(logManager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_LOGGING){
     sleep(1);
 
     // Collect LogRecords from all backend loggers
@@ -118,7 +118,7 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger] Sleep Mode");
 
   //Setting frontend logger status to sleep
-  logManager.SetLoggingStatus(LOGGING_TYPE_PELOTON, 
+  logManager.SetLoggingStatus(GetLoggingType(), 
                               LOGGING_STATUS_TYPE_SLEEP);
 }
 
