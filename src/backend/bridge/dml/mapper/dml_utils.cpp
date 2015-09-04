@@ -604,9 +604,9 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   info->numphases = agg_plan_state->numphases;
 
   /* Target list and qual */
-  elog(INFO, "PrepareAggState : copying targetlist");
+  LOG_INFO("PrepareAggState : copying targetlist");
   info->ps_targetlist = CopyExprStateList(agg_plan_state->ss.ps.targetlist);
-  elog(INFO, "PrepareAggState : copying qual");
+  LOG_INFO("PrepareAggState : copying qual");
   info->ps_qual = CopyExprStateList(agg_plan_state->ss.ps.qual);
 
   /* Peraggs */
@@ -615,7 +615,7 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
   info->peragg = (AggStatePerAgg) palloc(
       sizeof(struct AggStatePerAggData) * info->numaggs);
   for (int i = 0; i < info->numaggs; i++) {
-    elog(INFO, "PrepareAggState : copying AggrefState");
+    LOG_INFO("PrepareAggState : copying AggrefState");
 
     info->peragg[i] = agg_plan_state->peragg[i];  // Shallow copy
     info->peragg[i].aggrefstate = (AggrefExprState*) CopyExprState(

@@ -394,27 +394,50 @@ void DataTable::ResetDirty() {
 // TILE GROUP
 //===--------------------------------------------------------------------===//
 
-oid_t DataTable::AddDefaultTileGroup() {
-  oid_t tile_group_id = INVALID_OID;
+TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
 
   std::vector<catalog::Schema> schemas;
-  column_map_type column_map;
+  oid_t tile_group_id = INVALID_OID;
 
   tile_group_id = catalog::Manager::GetInstance().GetNextOid();
-  schemas.push_back(*schema);
 
-  // default column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(0, col_itr);
+  // Figure out the columns in each tile in new layout
+  std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
+  for(auto entry : partitioning) {
+    tile_column_map[entry.second] = entry.first;
   }
 
-  TileGroup *tile_group = TileGroupFactory::GetTileGroup(database_oid,
-                                                         table_oid,
-                                                         tile_group_id, this,
-                                                         backend, schemas,
-                                                         column_map,
-                                                         tuples_per_tilegroup);
+  // Build the schema tile at a time
+  std::map<oid_t, std::vector<catalog::Column> > tile_schemas;
+  for(auto entry : tile_column_map) {
+    tile_schemas[entry.first.first].push_back(schema->GetColumn(entry.second));
+  }
+  for(auto entry: tile_schemas){
+    catalog::Schema tile_schema(entry.second);
+    schemas.push_back(tile_schema);
+  }
+
+  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
+      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      partitioning, tuples_per_tilegroup);
+
+  return tile_group;
+}
+
+oid_t DataTable::AddDefaultTileGroup() {
+
+  column_map_type column_map;
+  oid_t tile_group_id = INVALID_OID;
+
+  // pure column map
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    column_map[col_itr] = std::make_pair(col_itr, 0);
+  }
+
+  TileGroup *tile_group = GetTileGroupWithLayout(column_map);
+  assert(tile_group);
+  tile_group_id = tile_group->GetTileGroupId();
 
   LOG_TRACE("Trying to add a tile group \n");
   {
