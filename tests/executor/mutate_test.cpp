@@ -315,15 +315,18 @@ TEST(MutateTests, InsertTest) {
       .WillOnce(Return(true))
       .WillOnce(Return(false));
 
-  auto physical_tile = source_data_table->GetTileGroup(0)->GetTile(0);
+  // Construct input logical tile
+  auto physical_tile_group = source_data_table->GetTileGroup(0);
+  auto tile_count = physical_tile_group->GetTileCount();
   std::vector<storage::Tile *> physical_tiles;
-  physical_tiles.push_back(physical_tile);
+  for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
+    physical_tiles.push_back(physical_tile_group->GetTile(tile_itr));
 
-  std::unique_ptr<executor::LogicalTile> source_logical_tile1(
+  std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles(physical_tiles, false));
 
   EXPECT_CALL(child_executor, GetOutput())
-      .WillOnce(Return(source_logical_tile1.release()));
+      .WillOnce(Return(source_logical_tile.release()));
 
   EXPECT_TRUE(executor.Init());
 

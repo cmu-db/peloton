@@ -300,7 +300,6 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        LOG_TRACE("1 slot");
         //print_slot(slot);
       }
     }
@@ -314,7 +313,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
 // final cleanup
   cleanup:
 
-  LOG_INFO("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());
+  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {

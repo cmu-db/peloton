@@ -27,7 +27,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_TRACE("proj_info : \n%s", proj_info->Debug().c_str());
+  LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
@@ -56,7 +56,9 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
     if (arguments) {
       GenericExprState *gstate = (GenericExprState *) lfirst(
           list_head(arguments));
+      LOG_INFO("Creating Agg Expr");
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
+      LOG_INFO("Done creating Agg Expr");
     }
 
     /*
@@ -122,11 +124,19 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       break;
   }
 
+  std::vector<oid_t> column_ids;
+  for(auto agg_term : unique_agg_terms){
+    LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
+    BuildColumnListFromExpr(column_ids, agg_term.expression);
+  }
+
   auto retval = new planner::AggregatePlan(proj_info.release(),
                                            predicate.release(),
                                            std::move(unique_agg_terms),
                                            std::move(groupby_col_ids),
                                            output_schema.release(), agg_type);
+
+  ((planner::AggregatePlan *)retval)->SetColumnIds(column_ids);
 
   // Find children
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
