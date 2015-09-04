@@ -12,13 +12,14 @@
 
 #include "backend/executor/insert_executor.h"
 
-#include "../logging/log_manager.h"
-#include "../logging/records/tuple_record.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/tuple_iterator.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/expression/container_tuple.h"
 
 namespace peloton {
 namespace executor {
@@ -68,34 +69,29 @@ bool InsertExecutor::DExecute() {
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
     assert(logical_tile.get() != nullptr);
+    auto target_table_schema = target_table_->GetSchema();
+    auto column_count = target_table_schema->GetColumnCount();
 
-    // Get the underlying physical tile
-    storage::Tile *physical_tile = logical_tile.get()->GetBaseTile(0);
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(target_table_schema, true));
 
-    // Next, check logical tile schema against table schema
-    auto schema = target_table_->GetSchema();
-    const catalog::Schema *tile_schema = physical_tile->GetSchema();
+    // Go over the logical tile
+    for (oid_t tuple_id : *logical_tile) {
+      expression::ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
 
-    if (*schema != *tile_schema) {
-      LOG_ERROR(
-          "Insert executor :: table schema and logical tile schema don't match "
-          "\n");
-      return false;
-    }
+      // Materialize the logical tile tuple
+      for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
+        tuple.get()->SetValue(column_itr, cur_tuple.GetValue(column_itr));
 
-    storage::TupleIterator tile_iterator = physical_tile->GetIterator();
-    storage::Tuple tuple(physical_tile->GetSchema());
-
-    while (tile_iterator.Next(tuple)) {
-      peloton::ItemPointer location = target_table_->InsertTuple(transaction_, &tuple);
+      peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
       transaction_->RecordInsert(location);
-   }
 
-    executor_context_->num_processed += 1; // insert one
+      executor_context_->num_processed += 1; // insert one
+    }
+
     return true;
   }
   // Inserting a collection of tuples from plan node
@@ -131,10 +127,10 @@ bool InsertExecutor::DExecute() {
 
     // Logging 
     {
-      auto& logManager = logging::LogManager::GetInstance();
+      auto& log_manager = logging::LogManager::GetInstance();
 
-      if(logManager.IsInLoggingMode()){
-        auto logger = logManager.GetBackendLogger();
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),

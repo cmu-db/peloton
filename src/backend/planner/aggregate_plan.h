@@ -89,6 +89,14 @@ class AggregatePlan : public AbstractPlan {
     }
   }
 
+  void SetColumnIds(const std::vector<oid_t>& column_ids) {
+    column_ids_ = column_ids;
+  }
+
+  const std::vector<oid_t>& GetColumnIds() const {
+    return column_ids_;
+  }
+
  private:
 
   /* For projection */
@@ -108,6 +116,9 @@ class AggregatePlan : public AbstractPlan {
 
   /* Aggregate Strategy */
   const PelotonAggType agg_strategy_;
+
+  /** @brief Columns involved */
+  std::vector<oid_t> column_ids_;
 
 };
 
