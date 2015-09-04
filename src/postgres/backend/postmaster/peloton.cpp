@@ -185,7 +185,7 @@ peloton_dml(PlanState *planstate,
   std::vector<peloton::oid_t> qual;
 
   // Analyze the plan
-  peloton::bridge::PlanTransformer::AnalyzePlan(plan, target_list, qual);
+  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
   // Execute the plantree
   try {
