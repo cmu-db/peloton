@@ -459,7 +459,8 @@ void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
 
   // First, figure out table and columns accessed
   GetColumnsAccessed(plan, target_list, qual, database_oid, table_oid);
-  assert(table_oid != INVALID_OID);
+  if(table_oid == INVALID_OID)
+    return;
 
   // Grab the target table
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
@@ -485,13 +486,12 @@ void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
       columns_accessed.push_back(0);
   }
 
-  // Cost
   double cost = planstate->plan->startup_cost +
       planstate->plan->total_cost;
 
+  // Add the sample to the table
   brain::Sample sample(columns_accessed, cost);
-
-  std::cout << "SAMPLE :: " << sample;
+  target_table->RecordSample(sample);
 }
 
 void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
@@ -506,20 +506,22 @@ void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
 
   switch (plan_node_type) {
     case PLAN_NODE_TYPE_SEQSCAN:
-    case PLAN_NODE_TYPE_INDEXSCAN:
+    case PLAN_NODE_TYPE_INDEXSCAN: {
+      planner::AbstractScan *abstract_scan_plan = (planner::AbstractScan *)plan;
+
       // TARGET LIST
       if(target_list.empty()) {
-        planner::AbstractScan *abstract_scan_plan = (planner::AbstractScan *)plan;
         target_list = abstract_scan_plan->GetColumnIds();
-
-        auto target_table = abstract_scan_plan->GetTable();
-        database_oid = target_table->GetDatabaseOid();
-        table_oid = target_table->GetOid();
       }
+
+      auto target_table = abstract_scan_plan->GetTable();
+      database_oid = target_table->GetDatabaseOid();
+      table_oid = target_table->GetOid();
 
       // QUAL
       BuildColumnListFromExpr(qual, ((planner::AbstractScan *)plan)->GetPredicate());
-      break;
+    }
+    break;
 
     case PLAN_NODE_TYPE_PROJECTION:
       // TARGET LIST
