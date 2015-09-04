@@ -1651,12 +1651,8 @@ peloton_ExecutePlan(EState *estate,
       TupleDesc tupDesc)
 {
 
-  //peloton_send_dml(planstate,
-  //                sendTuples,
-  //                 dest,
-  //                 tupDesc,
-  //                 estate);
-  //peloton_dml(planstate, sendTuples, dest, tupDesc);
+  // TODO: Peloton Changes
+  peloton_dml(planstate, sendTuples, dest, tupDesc);
 
 }
 

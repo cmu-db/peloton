@@ -33,6 +33,7 @@
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/common/stack_trace.h"
 #include "backend/logging/log_manager.h"
 
 #include "postgres.h"
@@ -180,6 +181,12 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
+  std::vector<peloton::oid_t> target_list;
+  std::vector<peloton::oid_t> qual;
+
+  // Analyze the plan
+  peloton::bridge::PlanTransformer::AnalyzePlan(plan, target_list, qual);
+
   // Execute the plantree
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(plan,
@@ -302,20 +309,29 @@ bool IsPelotonQuery(List *relationOids) {
   bool peloton_query = false;
 
   // Check if we are in Postmaster environment */
-  if(IsPostmasterEnvironment == false)
+  if(IsPostmasterEnvironment == false && IsBackend == false) {
     return false;
+  }
 
   if(relationOids != NULL) {
     ListCell   *lc;
 
     // Go over each relation on which the plan depends
     foreach(lc, relationOids) {
-      Oid relationOid = lfirst_oid(lc);
-      // Fast check to determine if the relation is a peloton relation
-      if(relationOid >= FirstNormalObjectId) {
+      Oid relation_id = lfirst_oid(lc);
+
+      // Check if relation in public namespace
+      Relation target_table = relation_open(relation_id, AccessShareLock);
+      Oid target_table_namespace = target_table->rd_rel->relnamespace;
+
+      if(target_table_namespace == PG_PUBLIC_NAMESPACE) {
         peloton_query = true;
-        break;
       }
+
+      relation_close(target_table, AccessShareLock);
+
+      if(peloton_query == true)
+        break;
     }
   }
 

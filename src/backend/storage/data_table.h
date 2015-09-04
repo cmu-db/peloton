@@ -94,6 +94,9 @@ class DataTable : public AbstractTable {
 
   size_t GetTileGroupCount() const;
 
+  // Get a tile group with given layout
+  TileGroup *GetTileGroupWithLayout(column_map_type partitioning);
+
   //===--------------------------------------------------------------------===//
   // INDEX
   //===--------------------------------------------------------------------===//
