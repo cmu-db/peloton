@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/index/index.h"
@@ -222,6 +223,20 @@ class DataTable : public AbstractTable {
 
   // dirty flag
   bool dirty = false;
+
+  //===--------------------------------------------------------------------===//
+  // Clustering
+  //===--------------------------------------------------------------------===//
+
+  // clustering mutex
+  std::mutex clustering_mutex;
+
+  // default partition map for table
+  column_map_type default_partition;
+
+  // samples for clustering
+  std::vector<brain::Sample> samples;
+
 };
 
 }  // End storage namespace

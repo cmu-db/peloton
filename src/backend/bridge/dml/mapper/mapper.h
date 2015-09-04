@@ -48,10 +48,9 @@ class PlanTransformer {
     return TransformPlan(planstate, DefaultOptions);
   }
 
-  // Analyze the columns in the plan
+  // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan,
-                          std::vector<oid_t> &target_list,
-                          std::vector<oid_t> &qual);
+                          PlanState *planstate);
 
   static bool CleanPlan(planner::AbstractPlan *root);
 
@@ -160,6 +159,13 @@ class PlanTransformer {
   //===--------------------------------------------------------------------===//
   // Common utility functions for Scans
   //===--------------------------------------------------------------------===//
+
+  // Analyze the columns in the plan
+  static void GetColumnsAccessed(planner::AbstractPlan *plan,
+                                 std::vector<oid_t> &target_list,
+                                 std::vector<oid_t> &qual,
+                                 oid_t &database_oid,
+                                 oid_t &table_id);
 
   static void GetGenericInfoFromScanState(
       planner::AbstractPlan *&parent,

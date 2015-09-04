@@ -65,7 +65,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
+  planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -130,7 +130,7 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
+  planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
