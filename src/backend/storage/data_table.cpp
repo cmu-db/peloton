@@ -13,6 +13,7 @@
 #include <mutex>
 #include <utility>
 
+#include "backend/brain/clusterer.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
 #include "backend/common/exception.h"
@@ -777,6 +778,47 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   return new_tile_group;
 }
+
+void DataTable::RecordSample(const brain::Sample& sample) {
+
+  // Add sample
+  {
+    std::lock_guard<std::mutex> lock(clustering_mutex);
+    samples.push_back(sample);
+  }
+
+  if(rand() % 10 < 2)
+    UpdateDefaultPartition();
+
+}
+
+void DataTable::UpdateDefaultPartition() {
+
+  oid_t cluster_count = 4;
+  oid_t column_count = GetSchema()->GetColumnCount();
+
+  brain::Clusterer clusterer(cluster_count, column_count);
+
+  // Process all samples
+  {
+    std::lock_guard<std::mutex> lock(clustering_mutex);
+
+    for(auto sample : samples)
+      clusterer.ProcessSample(sample);
+  }
+
+  auto partitioning = clusterer.GetPartitioning(2);
+
+  std::cout << "UPDATED PARTITIONING \n";
+  std::cout << "COLUMN "
+            << "\t"
+            << " TILE"
+            << "\n";
+  for (auto entry : partitioning)
+     std::cout << entry.first << "\t"
+     << entry.second.first << " : " << entry.second.second << "\n";
+}
+
 
 }  // End storage namespace
 }  // End peloton namespace

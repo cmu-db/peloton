@@ -185,7 +185,8 @@ peloton_dml(PlanState *planstate,
   std::vector<peloton::oid_t> qual;
 
   // Analyze the plan
-  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
+  if(rand() % 100 < 5)
+    peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
   // Execute the plantree
   try {

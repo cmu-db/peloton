@@ -149,6 +149,14 @@ class DataTable : public AbstractTable {
   void ResetDirty();
 
   //===--------------------------------------------------------------------===//
+  // Clustering
+  //===--------------------------------------------------------------------===//
+
+  void RecordSample(const brain::Sample& sample);
+
+  void UpdateDefaultPartition();
+
+  //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
@@ -224,10 +232,6 @@ class DataTable : public AbstractTable {
   // dirty flag
   bool dirty = false;
 
-  //===--------------------------------------------------------------------===//
-  // Clustering
-  //===--------------------------------------------------------------------===//
-
   // clustering mutex
   std::mutex clustering_mutex;
 
@@ -236,7 +240,6 @@ class DataTable : public AbstractTable {
 
   // samples for clustering
   std::vector<brain::Sample> samples;
-
 };
 
 }  // End storage namespace
