@@ -450,8 +450,55 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromTargetList(
 }
 
 void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
-                                  std::vector<oid_t> &target_list,
-                                  std::vector<oid_t> &qual) {
+                                  PlanState *planstate) {
+
+  std::vector<oid_t> target_list;
+  std::vector<oid_t> qual;
+  oid_t database_oid = INVALID_OID;
+  oid_t table_oid = INVALID_OID;
+
+  // First, figure out table and columns accessed
+  GetColumnsAccessed(plan, target_list, qual, database_oid, table_oid);
+  assert(table_oid != INVALID_OID);
+
+  // Grab the target table
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+
+  auto schema = target_table->GetSchema();
+  oid_t column_count = schema->GetColumnCount();
+
+  // Now, build the sample
+  std::map<oid_t, oid_t> columns_accessed_map;
+  for(auto col : target_list)
+    columns_accessed_map[col] = 1;
+  for(auto col : qual)
+    columns_accessed_map[col] = 1;
+
+  std::vector<double> columns_accessed;
+  for(oid_t column_itr = 0 ; column_itr < column_count; column_itr++){
+    auto location = columns_accessed_map.find(column_itr);
+    auto end = columns_accessed_map.end();
+    if(location != end)
+      columns_accessed.push_back(1);
+    else
+      columns_accessed.push_back(0);
+  }
+
+  // Cost
+  double cost = planstate->plan->startup_cost +
+      planstate->plan->total_cost;
+
+  brain::Sample sample(columns_accessed, cost);
+
+  std::cout << "SAMPLE :: " << sample;
+}
+
+void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
+                                         std::vector<oid_t> &target_list,
+                                         std::vector<oid_t> &qual,
+                                         oid_t &database_oid,
+                                         oid_t &table_oid) {
   if(plan == NULL)
     return;
 
@@ -461,8 +508,14 @@ void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
       // TARGET LIST
-      if(target_list.empty())
-        target_list = ((planner::AbstractScan *)plan)->GetColumnIds();
+      if(target_list.empty()) {
+        planner::AbstractScan *abstract_scan_plan = (planner::AbstractScan *)plan;
+        target_list = abstract_scan_plan->GetColumnIds();
+
+        auto target_table = abstract_scan_plan->GetTable();
+        database_oid = target_table->GetDatabaseOid();
+        table_oid = target_table->GetOid();
+      }
 
       // QUAL
       BuildColumnListFromExpr(qual, ((planner::AbstractScan *)plan)->GetPredicate());
@@ -487,7 +540,7 @@ void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
   // Recurse through children
   auto children = plan->GetChildren();
   for(auto child : children)
-    AnalyzePlan(child, target_list, qual);
+    GetColumnsAccessed(child, target_list, qual, database_oid, table_oid);
 
 }
 
