@@ -255,7 +255,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(
       nullptr, plan, executor_context);
 
-  // Add materialization if the root if seqscan or limit
+  // Add materialization on top of the root if needed
   executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
@@ -288,7 +288,6 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
       continue;
     }
 
-/*
     // Get result base tile and iterate over it
     auto base_tile = tile.get()->GetBaseTile(0);
     assert(base_tile);
@@ -304,7 +303,6 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
         //print_slot(slot);
       }
     }
-*/
 
   }
 
@@ -312,7 +310,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   p_status.m_processed = executor_context->num_processed;
   p_status.m_result_slots = slots;
 
-// final cleanup
+  // final cleanup
   cleanup:
 
   LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());
