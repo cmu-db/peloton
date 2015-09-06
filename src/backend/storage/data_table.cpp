@@ -432,6 +432,8 @@ column_map_type DataTable::GetTileGroupLayout(PelotonTileGroupLayoutType layout_
 
   auto col_count = schema->GetColumnCount();
 
+  std::cout << "Tile Group Layout :: " << layout_type << "\n";
+
   // pure row layout map
   if(layout_type == PelotonTileGroupLayoutType::PELOTON_TILEGROUP_LAYOUT_ROW) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {

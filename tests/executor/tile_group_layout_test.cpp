@@ -54,9 +54,10 @@ namespace test {
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TileGroupLayoutTest, BasicTest) {
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP/100;
-  const int tile_group_count = 10;
+void RunTest() {
+
+  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+  const int tile_group_count = 20;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
   const oid_t col_count = 250;
   const bool is_inlined = true;
@@ -111,9 +112,6 @@ TEST(TileGroupLayoutTest, BasicTest) {
   // Load in the data
   /////////////////////////////////////////////////////////
 
-  // Ensure that the tile group is as expected.
-  assert(table_schema->GetColumnCount() == 4);
-
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
@@ -146,28 +144,67 @@ TEST(TileGroupLayoutTest, BasicTest) {
       new executor::ExecutorContext(txn));
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids({0, 1, 3});
+  std::vector<oid_t> column_ids({0, 198, 206});
 
-  // Create plan node
-  planner::SeqScanPlan node(table.get(), nullptr, column_ids);
+  // Create and set up seq scan executor
+  planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
   int expected_num_tiles = tile_group_count;
 
-  executor::SeqScanExecutor executor(&node, context.get());
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
-  EXPECT_TRUE(executor.Init());
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for(auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "FIELD" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                        physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  EXPECT_TRUE(seq_scan_executor.Init());
 
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
   for (int i = 0; i < expected_num_tiles; i++) {
-    EXPECT_TRUE(executor.Execute());
-    std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
+    EXPECT_TRUE(mat_executor.Execute());
+    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
     EXPECT_THAT(result_tile, NotNull());
+
+    auto base_physical_tile = result_tile.get()->GetBaseTile(0);
     result_tiles.emplace_back(result_tile.release());
   }
 
-  EXPECT_FALSE(executor.Execute());
+  EXPECT_FALSE(mat_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
+}
 
+TEST(TileGroupLayoutTest, ColumnLayout) {
+  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_COLUMN;
+  RunTest();
+}
+
+TEST(TileGroupLayoutTest, RowLayout) {
+  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_ROW;
+  RunTest();
+}
+
+TEST(TileGroupLayoutTest, HybridLayout) {
+  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_HYBRID;
+  RunTest();
 }
 
 }  // namespace test
