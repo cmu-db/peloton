@@ -22,7 +22,16 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
 
-#include <string>
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum PelotonTileGroupLayoutType
+{
+  PELOTON_TILEGROUP_LAYOUT_ROW,   /* Pure row layout */
+  PELOTON_TILEGROUP_LAYOUT_COLUMN, /* Pure column layout */
+  PELOTON_TILEGROUP_LAYOUT_HYBRID /* Hybrid layout */
+} PelotonTileGroupLayoutType;
+
+/* GUC variable */
+extern PelotonTileGroupLayoutType peloton_tilegroup_layout;
 
 namespace peloton {
 namespace storage {
@@ -76,9 +85,6 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
-
-  // add a default unpartitioned tile group to table
-  oid_t AddDefaultTileGroup();
 
   // coerce into adding a new tile group with a tile group id
   oid_t AddTileGroupWithOid(oid_t tile_group_id);
@@ -183,6 +189,12 @@ class DataTable : public AbstractTable {
   // Claim a tuple slot in a tile group
   ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
                            const storage::Tuple *tuple);
+
+  // add a default unpartitioned tile group to table
+  oid_t AddDefaultTileGroup();
+
+  // get a partitioning with given layout type
+  column_map_type GetTileGroupLayout(PelotonTileGroupLayoutType layout_type);
 
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
