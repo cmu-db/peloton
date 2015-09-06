@@ -14,6 +14,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
+#include <iostream>
+#include <ctime>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -55,9 +58,10 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 void RunTest() {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
-  const int tile_group_count = 20;
+  const int tuples_per_tilegroup_count = 10000;
+  const int tile_group_count = 5;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
   const oid_t col_count = 250;
   const bool is_inlined = true;
@@ -139,12 +143,18 @@ void RunTest() {
   // Do a seq scan with predicate on top of the table
   /////////////////////////////////////////////////////////
 
+  start = std::chrono::system_clock::now();
+
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids({0, 198, 206});
+  std::vector<oid_t> column_ids;
+  for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
+  //std::vector<oid_t> column_ids({0, 198, 206, 169, 119, 9, 220});
 
   // Create and set up seq scan executor
   planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
@@ -190,20 +200,15 @@ void RunTest() {
   EXPECT_FALSE(mat_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+
+  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 TEST(TileGroupLayoutTest, ColumnLayout) {
   peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_COLUMN;
-  RunTest();
-}
-
-TEST(TileGroupLayoutTest, RowLayout) {
-  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_ROW;
-  RunTest();
-}
-
-TEST(TileGroupLayoutTest, HybridLayout) {
-  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_HYBRID;
   RunTest();
 }
 
