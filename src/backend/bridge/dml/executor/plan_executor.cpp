@@ -288,6 +288,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
       continue;
     }
 
+/*
     // Get result base tile and iterate over it
     auto base_tile = tile.get()->GetBaseTile(0);
     assert(base_tile);
@@ -303,6 +304,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
         //print_slot(slot);
       }
     }
+*/
 
   }
 
