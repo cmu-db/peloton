@@ -110,20 +110,29 @@ Tuple *Tile::GetTuple(const oid_t tuple_slot_id) {
 
 /**
  * Returns value present at slot
- * TODO We might want to write an iterator class to amortize the schema
- * lookups when reading values of entire columns.
  */
 Value Tile::GetValue(const oid_t tuple_slot_id, const oid_t column_id) {
   assert(tuple_slot_id < GetAllocatedTupleCount());
   assert(column_id < schema.GetColumnCount());
-  // NOTE: same logic used here as that used in
-  // "Tuple::GetValue(const oid_t column_id)"
 
-  const char *tuple_location = GetTupleLocation(tuple_slot_id);
   const ValueType column_type = schema.GetType(column_id);
 
+  const char *tuple_location = GetTupleLocation(tuple_slot_id);
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
+
+  return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
+}
+
+// Faster way to access value
+// By amortizing schema lookups
+Value Tile::GetValueFast(const oid_t tuple_slot_id,
+                         const size_t column_offset,
+                         const ValueType column_type,
+                         const bool is_inlined) {
+
+  const char *tuple_location = GetTupleLocation(tuple_slot_id);
+  const char *field_location = tuple_location + column_offset;
 
   return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
 }
@@ -140,12 +149,25 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
   char *tuple_location = GetTupleLocation(tuple_slot_id);
   char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
-  int column_length;
-  if (is_inlined) {
-    column_length = schema.GetLength(column_id);
-  } else {
-    column_length = schema.GetVariableLength(column_id);
-  }
+  size_t column_length = schema.GetAppropriateLength(column_id);
+
+  // TODO: Not sure about the argument
+  const bool is_in_bytes = false;
+  value.SerializeToTupleStorageAllocateForObjects(field_location,
+                                                  is_inlined,
+                                                  column_length,
+                                                  is_in_bytes,
+                                                  pool);
+}
+
+void Tile::SetValueFast(Value value, const oid_t tuple_slot_id,
+                        const size_t column_offset,
+                        const ValueType column_type,
+                        const bool is_inlined,
+                        const size_t column_length) {
+
+  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *field_location = tuple_location + column_offset;
 
   // TODO: Not sure about the argument
   const bool is_in_bytes = false;

@@ -79,6 +79,20 @@ class Schema {
     return columns[column_id].column_type;
   }
 
+  // Return appropriate length based on whether column is inlined
+  inline size_t GetAppropriateLength(const oid_t column_id) const {
+    auto is_inlined = columns[column_id].is_inlined;
+    size_t column_length;
+
+    if (is_inlined) {
+      column_length = GetLength(column_id);
+    } else {
+      column_length = GetVariableLength(column_id);
+    }
+
+    return column_length;
+  }
+
   // Returns fixed length
   inline size_t GetLength(const oid_t column_id) const {
     return columns[column_id].fixed_length;
