@@ -60,8 +60,8 @@ namespace test {
 void RunTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  const int tuples_per_tilegroup_count = 10000;
-  const int tile_group_count = 5;
+  const int tuples_per_tilegroup_count = 1000;
+  const int tile_group_count = 50;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
   const oid_t col_count = 250;
   const bool is_inlined = true;
@@ -145,61 +145,62 @@ void RunTest() {
 
   start = std::chrono::system_clock::now();
 
-  txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
+  for(oid_t exec_itr = 0 ; exec_itr < 5 ; exec_itr++ ) {
 
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
-    column_ids.push_back(col_itr);
+    txn = txn_manager.BeginTransaction();
+    std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(txn));
+
+    // Column ids to be added to logical tile after scan.
+    //std::vector<oid_t> column_ids;
+    //for(oid_t col_itr = 0 ; col_itr <= 200; col_itr++) {
+    //  column_ids.push_back(col_itr);
+    //}
+    std::vector<oid_t> column_ids({198, 206});
+
+    // Create and set up seq scan executor
+    planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
+    int expected_num_tiles = tile_group_count;
+
+    executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+    // Create and set up materialization executor
+    std::vector<catalog::Column> output_columns;
+    std::unordered_map<oid_t, oid_t> old_to_new_cols;
+    oid_t col_itr = 0;
+    for(auto column_id : column_ids) {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "FIELD" + std::to_string(column_id), is_inlined);
+      output_columns.push_back(column);
+
+      old_to_new_cols[col_itr] = col_itr;
+      col_itr++;
+    }
+
+    std::unique_ptr<catalog::Schema> output_schema(
+        new catalog::Schema(output_columns));
+    bool physify_flag = true;  // is going to create a physical tile
+    planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                          physify_flag);
+
+    executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+    mat_executor.AddChild(&seq_scan_executor);
+
+    EXPECT_TRUE(mat_executor.Init());
+
+    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+    for (int i = 0; i < expected_num_tiles; i++) {
+      EXPECT_TRUE(mat_executor.Execute());
+      std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
+      EXPECT_THAT(result_tile, NotNull());
+      result_tiles.emplace_back(result_tile.release());
+    }
+
+    EXPECT_FALSE(mat_executor.Execute());
+
+    txn_manager.CommitTransaction(txn);
   }
-  //std::vector<oid_t> column_ids({0, 198, 206, 169, 119, 9, 220});
-
-  // Create and set up seq scan executor
-  planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
-  int expected_num_tiles = tile_group_count;
-
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
-
-  // Create and set up materialization executor
-  std::vector<catalog::Column> output_columns;
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "FIELD" + std::to_string(column_id), is_inlined);
-    output_columns.push_back(column);
-
-    old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
-  }
-
-  std::unique_ptr<catalog::Schema> output_schema(
-      new catalog::Schema(output_columns));
-  bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
-
-  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&seq_scan_executor);
-
-  EXPECT_TRUE(seq_scan_executor.Init());
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-  for (int i = 0; i < expected_num_tiles; i++) {
-    EXPECT_TRUE(mat_executor.Execute());
-    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
-    EXPECT_THAT(result_tile, NotNull());
-
-    auto base_physical_tile = result_tile.get()->GetBaseTile(0);
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  EXPECT_FALSE(mat_executor.Execute());
-
-  txn_manager.CommitTransaction(txn);
 
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
@@ -207,8 +208,18 @@ void RunTest() {
   std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
+TEST(TileGroupLayoutTest, RowLayout) {
+  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_ROW;
+  RunTest();
+}
+
 TEST(TileGroupLayoutTest, ColumnLayout) {
   peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_COLUMN;
+  RunTest();
+}
+
+TEST(TileGroupLayoutTest, HybridLayout) {
+  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_HYBRID;
   RunTest();
 }
 

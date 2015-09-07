@@ -81,27 +81,71 @@ void MaterializationExecutor::MaterializeByTiles(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
     storage::Tile *dest_tile) {
-  // Copy over all data from each base tile.
 
+  ///////////////////////////
+  // EACH PHYSICAL TILE
+  ///////////////////////////
+  // Copy over all data from each base tile.
   for (const auto &kv : tile_to_cols) {
     const std::vector<oid_t> &old_column_ids = kv.second;
 
+    ///////////////////////////
+    // EACH COLUMN
+    ///////////////////////////
     // Go over each column in given base physical tile
     for (oid_t old_col_id : old_column_ids) {
-      oid_t new_tuple_id = 0;
+      auto &cp = source_tile->GetColumnInfo(old_col_id);
 
+      // Amortize schema lookups once per column
+      storage::Tile *old_tile = cp.base_tile;
+      auto old_schema = old_tile->GetSchema();
+
+      // Get old column information
+      oid_t old_column_id = cp.origin_column_id;
+      const size_t old_column_offset = old_schema->GetOffset(old_column_id);
+      const ValueType old_column_type = old_schema->GetType(old_column_id);
+      const bool old_is_inlined = old_schema->IsInlined(old_column_id);
+
+      // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
       assert(it != old_to_new_cols.end());
-      oid_t new_col_id = it->second;
+
+      // Get new column information
+      oid_t new_column_id = it->second;
+      auto new_schema = dest_tile->GetSchema();
+      const size_t new_column_offset = new_schema->GetOffset(new_column_id);
+      const ValueType new_column_type = new_schema->GetType(new_column_id);
+      const bool new_is_inlined = new_schema->IsInlined(new_column_id);
+      const size_t new_column_length = new_schema->GetAppropriateLength(new_column_id);
+
+      // Get the position list
+      auto& column_position_list = source_tile->GetPositionList(cp.position_list_idx);
+      oid_t new_tuple_id = 0;
 
       // Copy all values in the column to the physical tile
+      // This uses fast getter and setter functions
+      ///////////////////////////
+      // EACH TUPLE
+      ///////////////////////////
       for (oid_t old_tuple_id : *source_tile) {
-        peloton::Value value = source_tile->GetValue(old_tuple_id, old_col_id);
+        oid_t base_tuple_id = column_position_list[old_tuple_id];
+        auto value = old_tile->GetValueFast(base_tuple_id,
+                                             old_column_offset,
+                                             old_column_type,
+                                             old_is_inlined);
+
         LOG_TRACE("Old Tuple : %u Column : %u \n", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_col_id);
-        dest_tile->SetValue(value, new_tuple_id++, new_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_column_id);
+
+        dest_tile->SetValueFast(value, new_tuple_id++,
+                                new_column_offset,
+                                new_column_type,
+                                new_is_inlined,
+                                new_column_length);
       }
+
     }
+
   }
 }
 
