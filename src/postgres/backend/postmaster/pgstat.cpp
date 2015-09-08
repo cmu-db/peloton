@@ -128,7 +128,7 @@ PgStat_MsgBgWriter BgWriterStats;
  * Local data
  * ----------
  */
-NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
+thread_local NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
 
 static struct sockaddr_storage pgStatAddr;
 

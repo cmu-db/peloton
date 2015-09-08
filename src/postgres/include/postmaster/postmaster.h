@@ -35,7 +35,7 @@ extern bool restart_after_crash;
 #ifdef WIN32
 extern HANDLE PostmasterHandle;
 #else
-extern int	postmaster_alive_fds[2];
+thread_local extern int	postmaster_alive_fds[2];
 
 /*
  * Constants that represent which of postmaster_alive_fds is held by
@@ -59,10 +59,11 @@ extern bool PostmasterMarkPIDForWorkerNotify(int);
 #ifdef EXEC_BACKEND
 extern pid_t postmaster_forkexec(int argc, char *argv[]);
 extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
-
+#endif  //TODO: peloton changes
 extern Size ShmemBackendArraySize(void);
 extern void ShmemBackendArrayAllocation(void);
-#endif
+//TODO: peloton changes
+//#endif
 
 /*
  * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
