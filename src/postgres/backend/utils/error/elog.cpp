@@ -90,7 +90,7 @@ thread_local ErrorContextCallback *error_context_stack = NULL;
 
 thread_local sigjmp_buf *PG_exception_stack = NULL;
 
-extern bool redirection_done;
+thread_local extern bool redirection_done;
 
 /*
  * Hook for intercepting messages before they are sent to the server log.

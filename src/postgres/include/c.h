@@ -645,6 +645,8 @@ typedef NameData *Name;
  * just calls the standard assert, if it's available. If use of assertions is
  * not configured, it does nothing.
  */
+
+//#define USE_ASSERT_CHECKING
 #ifndef USE_ASSERT_CHECKING
 
 #define Assert(condition)	((void)true)
@@ -664,7 +666,6 @@ typedef NameData *Name;
 #define AssertState(condition) assert(condition)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
-
 /*
  * Trap
  *		Generates an exception if the given condition is true.
@@ -724,9 +725,12 @@ typedef NameData *Name;
  * helpful error message, but it beats not getting an error at all.
  */
 #define StaticAssertStmt(condition, errmessage) \
-	((void) Assert(condition))
+	(void(true))
+  //((void) Assert(condition))
+
 #define StaticAssertExpr(condition, errmessage) \
-	StaticAssertStmt(condition, errmessage)
+	(void(true))
+	//StaticAssertStmt(condition, errmessage)
 
 
 /*
@@ -1092,11 +1096,12 @@ extern int	fdatasync(int fildes);
 #endif
 
 /* EXEC_BACKEND defines */
-#ifdef EXEC_BACKEND
+//TODO: Peloton changes
+//#ifdef EXEC_BACKEND
 #define NON_EXEC_STATIC
-#else
-#define NON_EXEC_STATIC static
-#endif
+//#else
+//#define NON_EXEC_STATIC static
+//#endif
 
 /* /port compatibility functions */
 #include "port.h"

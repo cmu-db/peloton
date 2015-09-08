@@ -75,16 +75,16 @@
 
 /* shared memory global variables */
 
-static PGShmemHeader *ShmemSegHdr;		/* shared mem segment header */
+thread_local static PGShmemHeader *ShmemSegHdr;		/* shared mem segment header */
 
-static void *ShmemBase;			/* start address of shared memory */
+thread_local static void *ShmemBase;			/* start address of shared memory */
 
-static void *ShmemEnd;			/* end+1 address of shared memory */
+thread_local static void *ShmemEnd;			/* end+1 address of shared memory */
 
-slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
+thread_local slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
 								 * allocation */
 
-static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
+thread_local static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 
 /*
@@ -215,6 +215,7 @@ ShmemAlloc(Size size)
 bool
 ShmemAddrIsValid(const void *addr)
 {
+  elog(DEBUG3, "Base: %p, addr: %p, End: %p :: TID %d", ShmemBase, addr, ShmemEnd, GetBackendThreadId());
 	return (addr >= ShmemBase) && (addr < ShmemEnd);
 }
 
