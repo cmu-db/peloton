@@ -16,7 +16,7 @@
 #include <memory>
 #include <utility>
 
-#include "../planner/materialization_plan.h"
+#include "backend/planner/materialization_plan.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/tile.h"
