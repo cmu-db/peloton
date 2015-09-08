@@ -150,11 +150,11 @@ void RunTest() {
       new executor::ExecutorContext(txn));
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= 200; col_itr++) {
-    column_ids.push_back(col_itr);
-  }
-  //std::vector<oid_t> column_ids({198, 206});
+  //std::vector<oid_t> column_ids;
+  //for(oid_t col_itr = 0 ; col_itr <= 200; col_itr++) {
+  //  column_ids.push_back(col_itr);
+  //}
+  std::vector<oid_t> column_ids({198, 206});
 
   // Create and set up seq scan executor
   planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
@@ -219,5 +219,6 @@ TEST(TileGroupLayoutTest, HybridLayout) {
   peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_HYBRID;
   RunTest();
 }
+
 }  // namespace test
 }  // namespace peloton
