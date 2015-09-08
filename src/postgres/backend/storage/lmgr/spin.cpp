@@ -31,7 +31,7 @@
 
 
 #ifndef HAVE_SPINLOCKS
-PGSemaphore SpinlockSemaArray;
+thread_locak PGSemaphore SpinlockSemaArray;
 #endif
 
 /*
