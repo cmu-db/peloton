@@ -436,7 +436,8 @@ dsm_backend_startup(void)
 	dsm_init_done = true;
 }
 
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 /*
  * When running under EXEC_BACKEND, we get a callback here when the main
  * shared memory segment is re-attached, so that we can record the control
@@ -448,7 +449,7 @@ dsm_set_control_handle(dsm_handle h)
 	Assert(dsm_control_handle == 0 && h != 0);
 	dsm_control_handle = h;
 }
-#endif
+//#endif
 
 /*
  * Create a new___ dynamic shared memory segment.
