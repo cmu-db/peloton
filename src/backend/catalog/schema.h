@@ -106,35 +106,35 @@ class Schema {
     return columns[column_id].is_inlined;
   }
 
-  const Column GetColumn(const oid_t column_id) const {
+  inline const Column GetColumn(const oid_t column_id) const {
     return columns[column_id];
   }
 
-  oid_t GetUninlinedColumn(const oid_t column_id) const {
+  inline oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
 
-  std::vector<Column> GetColumns() const { return columns; }
+  inline std::vector<Column> GetColumns() const { return columns; }
 
   // Return the number of columns in the schema for the tuple.
   inline oid_t GetColumnCount() const { return column_count; }
 
-  oid_t GetUninlinedColumnCount() const { return uninlined_column_count; }
+  inline oid_t GetUninlinedColumnCount() const { return uninlined_column_count; }
 
   // Return the number of bytes used by one tuple.
   inline oid_t GetLength() const { return length; }
 
   // Returns a flag indicating whether all columns are inlined
-  bool IsInlined() const { return tuple_is_inlined; }
+  inline bool IsInlined() const { return tuple_is_inlined; }
 
-  void SetIndexedColumns(const std::vector<oid_t> &indexed_columns) {
+  inline void SetIndexedColumns(const std::vector<oid_t> &indexed_columns) {
     indexed_columns_ = indexed_columns;
   }
 
-  std::vector<oid_t> GetIndexedColumns() const { return indexed_columns_; }
+  inline std::vector<oid_t> GetIndexedColumns() const { return indexed_columns_; }
 
   // Get the nullability of the column at a given index.
-  bool AllowNull(const oid_t column_id) const {
+  inline bool AllowNull(const oid_t column_id) const {
     for (auto constraint : columns[column_id].constraints) {
       if (constraint.GetType() == CONSTRAINT_TYPE_NOTNULL) return false;
     }
@@ -142,12 +142,12 @@ class Schema {
   }
 
   // Add constraint for column by id
-  void AddConstraint(oid_t column_id, const catalog::Constraint &constraint) {
+  inline void AddConstraint(oid_t column_id, const catalog::Constraint &constraint) {
     columns[column_id].AddConstraint(constraint);
   }
 
   // Add constraint for column by name
-  void AddConstraint(std::string column_name,
+  inline void AddConstraint(std::string column_name,
                      const catalog::Constraint &constraint) {
     for (size_t column_itr = 0; column_itr < columns.size(); column_itr++) {
       if (columns[column_itr].column_name == column_name) {
