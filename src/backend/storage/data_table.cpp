@@ -100,7 +100,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   assert(schema->GetColumnCount() == tuple->GetColumnCount());
 
   oid_t column_count = schema->GetColumnCount();
-  for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
           "%d th attribute in the tuple was NULL. It is non-nullable " "attribute.",
