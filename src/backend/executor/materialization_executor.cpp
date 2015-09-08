@@ -20,9 +20,22 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace executor {
+
+// Row-oriented materialization
+void MaterializeRowAtAtATime(LogicalTile *source_tile,
+                             const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+                             const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+                             storage::Tile *dest_tile);
+
+// Column-oriented materialization
+void MaterializeColumnAtATime(LogicalTile *source_tile,
+                              const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+                              const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+                              storage::Tile *dest_tile);
 
 /**
  * @brief Constructor for the materialization executor.
@@ -30,7 +43,7 @@ namespace executor {
  */
 MaterializationExecutor::MaterializationExecutor(
     planner::AbstractPlan *node, ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -57,7 +70,7 @@ void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-        cols_in_physical_tile) {
+    cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -82,6 +95,147 @@ void MaterializationExecutor::MaterializeByTiles(
     const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
     storage::Tile *dest_tile) {
 
+  auto dest_tile_column_count = dest_tile->GetColumnCount();
+  // TODO: Make this a parameter
+  oid_t column_count_threshold = 20;
+  bool row_wise_materialization = false;
+
+  if(peloton_tilegroup_layout == PELOTON_TILEGROUP_LAYOUT_COLUMN)
+    row_wise_materialization = true;
+
+  if(peloton_tilegroup_layout == PELOTON_TILEGROUP_LAYOUT_HYBRID &&
+      dest_tile_column_count > column_count_threshold)
+    row_wise_materialization = true;
+
+  // Materialize as needed
+  if(row_wise_materialization == true) {
+    MaterializeRowAtAtATime(source_tile, old_to_new_cols, tile_to_cols, dest_tile);
+  }
+  else {
+    MaterializeColumnAtATime(source_tile, old_to_new_cols, tile_to_cols, dest_tile);
+  }
+
+}
+
+void MaterializeRowAtAtATime(LogicalTile *source_tile,
+                             const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+                             const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+                             storage::Tile *dest_tile) {
+
+  ///////////////////////////
+  // EACH PHYSICAL TILE
+  ///////////////////////////
+  // Copy over all data from each base tile.
+  for (const auto &kv : tile_to_cols) {
+    const std::vector<oid_t> &old_column_ids = kv.second;
+
+    auto &schema = source_tile->GetSchema();
+    oid_t new_tuple_id = 0;
+
+    auto& column_position_lists = source_tile->GetPositionLists();
+
+    // Get old column information
+    std::vector<oid_t> old_column_position_idxs;
+    std::vector<size_t> old_column_offsets;
+    std::vector<ValueType> old_column_types;
+    std::vector<bool> old_is_inlineds;
+    std::vector<storage::Tile*> old_tiles;
+
+    // Get new column information
+    std::vector<size_t> new_column_offsets;
+    std::vector<ValueType> new_column_types;
+    std::vector<bool> new_is_inlineds;
+    std::vector<size_t> new_column_lengths;
+
+    // Amortize schema lookups once per column
+    for (oid_t old_col_id : old_column_ids) {
+      auto& column_info = schema[old_col_id];
+
+      // Get the position list
+      old_column_position_idxs.push_back(column_info.position_list_idx);
+
+      // Get old column information
+      storage::Tile *old_tile = column_info.base_tile;
+      old_tiles.push_back(old_tile);
+      auto old_schema = old_tile->GetSchema();
+      oid_t old_column_id = column_info.origin_column_id;
+      const size_t old_column_offset = old_schema->GetOffset(old_column_id);
+      old_column_offsets.push_back(old_column_offset);
+      const ValueType old_column_type = old_schema->GetType(old_column_id);
+      old_column_types.push_back(old_column_type);
+      const bool old_is_inlined = old_schema->IsInlined(old_column_id);
+      old_is_inlineds.push_back(old_is_inlined);
+
+      // Old to new column mapping
+      auto it = old_to_new_cols.find(old_col_id);
+      assert(it != old_to_new_cols.end());
+
+      // Get new column information
+      oid_t new_column_id = it->second;
+      auto new_schema = dest_tile->GetSchema();
+      const size_t new_column_offset = new_schema->GetOffset(new_column_id);
+      new_column_offsets.push_back(new_column_offset);
+      const ValueType new_column_type = new_schema->GetType(new_column_id);
+      new_column_types.push_back(new_column_type);
+      const bool new_is_inlined = new_schema->IsInlined(new_column_id);
+      new_is_inlineds.push_back(new_is_inlined);
+      const size_t new_column_length = new_schema->GetAppropriateLength(new_column_id);
+      new_column_lengths.push_back(new_column_length);
+    }
+
+    assert(new_column_offsets.size() == old_column_ids.size());
+
+    ///////////////////////////
+    // EACH TUPLE
+    ///////////////////////////
+    // Copy all values in the tuple to the physical tile
+    // This uses fast getter and setter functions
+    for (oid_t old_tuple_id : *source_tile) {
+
+      ///////////////////////////
+      // EACH COLUMN
+      ///////////////////////////
+      // Go over each column in given base physical tile
+      oid_t col_itr = 0;
+
+      for (oid_t old_col_id : old_column_ids) {
+
+        auto& column_info = schema[old_col_id];
+        auto& column_position_list = column_position_lists[old_column_position_idxs[col_itr]];
+
+        oid_t base_tuple_id = column_position_list[old_tuple_id];
+
+        auto value = old_tiles[col_itr]->GetValueFast(base_tuple_id,
+                                                      old_column_offsets[col_itr],
+                                                      old_column_types[col_itr],
+                                                      old_is_inlineds[col_itr]);
+
+        LOG_TRACE("Old Tuple : %u Column : %u \n", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_column_id);
+
+        dest_tile->SetValueFast(value, new_tuple_id,
+                                new_column_offsets[col_itr],
+                                new_column_types[col_itr],
+                                new_is_inlineds[col_itr],
+                                new_column_lengths[col_itr]);
+
+        // Go to next column
+        col_itr++;
+      }
+
+      // Go to next tuple
+      new_tuple_id++;
+    }
+
+  }
+
+}
+
+void MaterializeColumnAtATime(LogicalTile *source_tile,
+                              const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+                              const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+                              storage::Tile *dest_tile) {
+
   ///////////////////////////
   // EACH PHYSICAL TILE
   ///////////////////////////
@@ -94,14 +248,14 @@ void MaterializationExecutor::MaterializeByTiles(
     ///////////////////////////
     // Go over each column in given base physical tile
     for (oid_t old_col_id : old_column_ids) {
-      auto &cp = source_tile->GetColumnInfo(old_col_id);
+      auto &column_info = source_tile->GetColumnInfo(old_col_id);
 
       // Amortize schema lookups once per column
-      storage::Tile *old_tile = cp.base_tile;
+      storage::Tile *old_tile = column_info.base_tile;
       auto old_schema = old_tile->GetSchema();
 
       // Get old column information
-      oid_t old_column_id = cp.origin_column_id;
+      oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       const ValueType old_column_type = old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
@@ -119,7 +273,7 @@ void MaterializationExecutor::MaterializeByTiles(
       const size_t new_column_length = new_schema->GetAppropriateLength(new_column_id);
 
       // Get the position list
-      auto& column_position_list = source_tile->GetPositionList(cp.position_list_idx);
+      auto& column_position_list = source_tile->GetPositionList(column_info.position_list_idx);
       oid_t new_tuple_id = 0;
 
       // Copy all values in the column to the physical tile
@@ -130,23 +284,27 @@ void MaterializationExecutor::MaterializeByTiles(
       for (oid_t old_tuple_id : *source_tile) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
         auto value = old_tile->GetValueFast(base_tuple_id,
-                                             old_column_offset,
-                                             old_column_type,
-                                             old_is_inlined);
+                                            old_column_offset,
+                                            old_column_type,
+                                            old_is_inlined);
 
         LOG_TRACE("Old Tuple : %u Column : %u \n", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_column_id);
 
-        dest_tile->SetValueFast(value, new_tuple_id++,
+        dest_tile->SetValueFast(value, new_tuple_id,
                                 new_column_offset,
                                 new_column_type,
                                 new_is_inlined,
                                 new_column_length);
+
+        // Go to next tuple
+        new_tuple_id++;
       }
 
     }
 
   }
+
 }
 
 std::unordered_map<oid_t, oid_t> MaterializationExecutor::BuildIdentityMapping(
