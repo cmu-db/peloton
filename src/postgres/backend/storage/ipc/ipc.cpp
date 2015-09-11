@@ -150,8 +150,8 @@ proc_exit(int code)
 	     code, getpid(), GetBackendThreadId(),
 	     MyBackendId, PostmasterPid);
 
-  // Exit the process only if not postmaster
-	if(PostmasterPid != 0) {
+  // Exit the process only if not backend
+	if(!IsBackend) {
 	  exit(code);
 	}
 
