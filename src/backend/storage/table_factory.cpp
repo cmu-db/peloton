@@ -27,14 +27,15 @@ DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
                                       catalog::Schema *schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count,
-                                      bool own_schema) {
+                                      bool own_schema,
+                                      bool adapt_table) {
   // create a new backend
   // FIXME: We need a better way of managing these. Why not just embed it in
   //        directly inside of the table object?
   AbstractBackend *backend = new VMBackend();
 
   DataTable *table = new DataTable(schema, backend, table_name, database_id, relation_id,
-                                   tuples_per_tilegroup_count, own_schema);
+                                   tuples_per_tilegroup_count, own_schema, adapt_table);
 
   return table;
 }

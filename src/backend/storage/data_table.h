@@ -62,7 +62,8 @@ class DataTable : public AbstractTable {
   DataTable(catalog::Schema *schema, AbstractBackend *backend,
             std::string table_name, oid_t database_oid, oid_t table_oid,
             size_t tuples_per_tilegroup,
-            bool own_schema);
+            bool own_schema,
+            bool adapt_table);
 
   ~DataTable();
 
@@ -246,6 +247,9 @@ class DataTable : public AbstractTable {
 
   // clustering mutex
   std::mutex clustering_mutex;
+
+  // adapt table
+  bool adapt_table = true;
 
   // default partition map for table
   column_map_type default_partition;
