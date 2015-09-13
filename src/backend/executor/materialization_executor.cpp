@@ -143,7 +143,6 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
 
     // Get new column information
     std::vector<size_t> new_column_offsets;
-    std::vector<ValueType> new_column_types;
     std::vector<bool> new_is_inlineds;
     std::vector<size_t> new_column_lengths;
 
@@ -175,8 +174,6 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
       auto new_schema = dest_tile->GetSchema();
       const size_t new_column_offset = new_schema->GetOffset(new_column_id);
       new_column_offsets.push_back(new_column_offset);
-      const ValueType new_column_type = new_schema->GetType(new_column_id);
-      new_column_types.push_back(new_column_type);
       const bool new_is_inlined = new_schema->IsInlined(new_column_id);
       new_is_inlineds.push_back(new_is_inlined);
       const size_t new_column_length = new_schema->GetAppropriateLength(new_column_id);
@@ -198,10 +195,9 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
       // Go over each column in given base physical tile
       oid_t col_itr = 0;
 
-      for (oid_t old_col_id : old_column_ids) {
+      for (oid_t old_col_id : old_column_position_idxs) {
 
-        auto& column_info = schema[old_col_id];
-        auto& column_position_list = column_position_lists[old_column_position_idxs[col_itr]];
+        auto& column_position_list = column_position_lists[old_col_id];
 
         oid_t base_tuple_id = column_position_list[old_tuple_id];
 
@@ -215,7 +211,6 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
 
         dest_tile->SetValueFast(value, new_tuple_id,
                                 new_column_offsets[col_itr],
-                                new_column_types[col_itr],
                                 new_is_inlineds[col_itr],
                                 new_column_lengths[col_itr]);
 
@@ -268,7 +263,6 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
       oid_t new_column_id = it->second;
       auto new_schema = dest_tile->GetSchema();
       const size_t new_column_offset = new_schema->GetOffset(new_column_id);
-      const ValueType new_column_type = new_schema->GetType(new_column_id);
       const bool new_is_inlined = new_schema->IsInlined(new_column_id);
       const size_t new_column_length = new_schema->GetAppropriateLength(new_column_id);
 
@@ -293,7 +287,6 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
 
         dest_tile->SetValueFast(value, new_tuple_id,
                                 new_column_offset,
-                                new_column_type,
                                 new_is_inlined,
                                 new_column_length);
 
