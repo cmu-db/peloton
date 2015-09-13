@@ -113,7 +113,7 @@ static int	gmt_is_set = 0;
  * Thanks to Paul Eggert for noting this.
  */
 
-static struct pg_tm tm;
+thread_local static struct pg_tm tm;
 
 
 static long
@@ -1025,8 +1025,9 @@ localsub(const pg_time_t *timep, long offset,
 		tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
 		++tcycles;
 		icycles = tcycles;
-		if (tcycles - icycles >= 1 || icycles - tcycles >= 1)
-			return NULL;
+		if (tcycles - icycles >= 1 || icycles - tcycles >= 1) {
+		  return NULL;
+		}
 		seconds = icycles;
 		seconds *= YEARSPERREPEAT;
 		seconds *= AVGSECSPERYEAR;
@@ -1035,8 +1036,9 @@ localsub(const pg_time_t *timep, long offset,
 		else
 			newt -= seconds;
 		if (newt < sp->ats[0] ||
-			newt > sp->ats[sp->timecnt - 1])
+			newt > sp->ats[sp->timecnt - 1]) {
 			return NULL;		/* "cannot happen" */
+		}
 		result = localsub(&newt, offset, tmp, tz);
 		if (result == tmp)
 		{
