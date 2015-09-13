@@ -3705,7 +3705,7 @@ PostgresMain(int argc, char *argv[],
 //TODO: peloton changes:
 //#ifdef EXEC_BACKEND
   if (!IsUnderPostmaster)
-    InitProcess();
+    InitProcess();  //Doen this in BackendTask
 //#else
 //  InitProcess();
 //#endif

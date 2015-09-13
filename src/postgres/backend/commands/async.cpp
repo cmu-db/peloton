@@ -256,7 +256,7 @@ typedef struct AsyncQueueControl
 	/* backend[0] is not used; used entries are from [1] to [MaxBackends] */
 } AsyncQueueControl;
 
-static AsyncQueueControl *asyncQueueControl;
+thread_local static AsyncQueueControl *asyncQueueControl;
 
 #define QUEUE_HEAD					(asyncQueueControl->head)
 #define QUEUE_TAIL					(asyncQueueControl->tail)

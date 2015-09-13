@@ -56,7 +56,7 @@ extern bool track_io_timing;
 extern int	target_prefetch_pages;
 
 /* in buf_init.c */
-extern PGDLLIMPORT char *BufferBlocks;
+thread_local extern PGDLLIMPORT char *BufferBlocks;
 
 /* in localbuf.c */
 extern thread_local PGDLLIMPORT int NLocBuffer;

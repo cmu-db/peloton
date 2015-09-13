@@ -73,7 +73,7 @@ thread_local PGXACT	   *MyPgXact = NULL;
 thread_local NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
-thread_local PROC_HDR   *ProcGlobal = NULL;
+PROC_HDR   *ProcGlobal = NULL;
 thread_local NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 thread_local PGPROC	   *PreparedXactProcs = NULL;
 
@@ -243,7 +243,7 @@ InitProcGlobal(void)
 			/* PGPROC for normal backend, add to freeProcs list */
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 			ProcGlobal->freeProcs = &procs[i];
-			elog(DEBUG3, "freeProcs %d = %p", i, ProcGlobal->freeProcs);
+			//elog(DEBUG3, "freeProcs %d = %p", i, ProcGlobal->freeProcs);
 			//Assert(ShmemAddrIsValid(ProcGlobal->freeProcs));
 		}
 		else if (i < MaxConnections + autovacuum_max_workers + 1)

@@ -215,7 +215,7 @@ ShmemAlloc(Size size)
 bool
 ShmemAddrIsValid(const void *addr)
 {
-  elog(DEBUG3, "Base: %p, addr: %p, End: %p :: TID %d", ShmemBase, addr, ShmemEnd, GetBackendThreadId());
+  //elog(DEBUG3, "Base: %p, addr: %p, End: %p :: TID %d", ShmemBase, addr, ShmemEnd, GetBackendThreadId());
 	return (addr >= ShmemBase) && (addr < ShmemEnd);
 }
 
