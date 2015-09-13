@@ -58,10 +58,12 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t database_oid, oid_t table_oid,
                      size_t tuples_per_tilegroup,
-                     bool own_schema)
+                     bool own_schema,
+                     bool adapt_table)
 : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
   backend(backend),
-  tuples_per_tilegroup(tuples_per_tilegroup) {
+  tuples_per_tilegroup(tuples_per_tilegroup),
+  adapt_table(adapt_table){
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -431,21 +433,23 @@ column_map_type DataTable::GetTileGroupLayout(PelotonTileGroupLayoutType layout_
   column_map_type column_map;
 
   auto col_count = schema->GetColumnCount();
+  if(adapt_table == false)
+    layout_type = PELOTON_TILEGROUP_LAYOUT_ROW;
 
   // pure row layout map
-  if(layout_type == PelotonTileGroupLayoutType::PELOTON_TILEGROUP_LAYOUT_ROW) {
+  if(layout_type == PELOTON_TILEGROUP_LAYOUT_ROW) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
   // pure column layout map
-  else if(layout_type == PelotonTileGroupLayoutType::PELOTON_TILEGROUP_LAYOUT_COLUMN) {
+  else if(layout_type == PELOTON_TILEGROUP_LAYOUT_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
   // hybrid layout map
-  else if(layout_type == PelotonTileGroupLayoutType::PELOTON_TILEGROUP_LAYOUT_HYBRID){
+  else if(layout_type == PELOTON_TILEGROUP_LAYOUT_HYBRID){
     // TODO: Fallback option for regular tables
     if(col_count < 10) {
       for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {

@@ -59,10 +59,11 @@ bool AggregateExecutor::DInit() {
   result_itr = START_OID;
 
   bool own_schema = false;
+  bool adapt_table = false;
   output_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
       DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema);
+      own_schema, adapt_table);
 
   return true;
 }
