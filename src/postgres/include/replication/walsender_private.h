@@ -91,7 +91,7 @@ typedef struct
 	WalSnd		walsnds[FLEXIBLE_ARRAY_MEMBER];
 } WalSndCtlData;
 
-extern WalSndCtlData *WalSndCtl;
+thread_local extern WalSndCtlData *WalSndCtl;
 
 
 extern void WalSndSetState(WalSndState state);

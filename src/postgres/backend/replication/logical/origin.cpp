@@ -159,8 +159,8 @@ TimestampTz	replorigin_sesssion_origin_timestamp = 0;
  * XXX: Should we use a separate variable to size this rather than
  * max_replication_slots?
  */
-static ReplicationState *replication_states;
-static ReplicationStateCtl *replication_states_ctl;
+thread_local static ReplicationState *replication_states;
+thread_local static ReplicationStateCtl *replication_states_ctl;
 
 /*
  * Backend-local, cached element from ReplicationStates for use in a backend

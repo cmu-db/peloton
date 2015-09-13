@@ -419,7 +419,7 @@ dsm_backend_startup(void)
 		dsm_impl_op(DSM_OP_ATTACH, dsm_control_handle, 0,
 					&dsm_control_impl_private, &control_address,
 					&dsm_control_mapped_size, ERROR);
-		dsm_control = control_address;
+		dsm_control = (dsm_control_header*)control_address;
 		/* If control segment doesn't look sane, something is badly wrong. */
 		if (!dsm_control_segment_sane(dsm_control, dsm_control_mapped_size))
 		{

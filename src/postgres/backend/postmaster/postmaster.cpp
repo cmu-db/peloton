@@ -1201,6 +1201,7 @@ void PostmasterMain(int argc, char *argv[]) {
    * We're ready to rock and roll...
    */
   StartupPID = StartupDataBase();
+  elog(DEBUG3, "StartupPID: %d :: PID %d", StartupPID, getpid());
   Assert(StartupPID != 0);
   pmState = PM_STARTUP;
 
@@ -3524,7 +3525,6 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
   /* Perform additional initialization and collect startup packet */
   int thread_id = GetBackendThreadId();
   BackendInitialize(port);
-  elog(DEBUG3, "Backend Initialized :: TID : %d", thread_id);
 
   InitShmemAccess(AnonymousShmem);  // TRICKY! NOT UsedShmemSegAddr
   elog(DEBUG3, "ShmemAccess Initialized :: TID : %d", thread_id);
@@ -3540,13 +3540,14 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
 }
 
 //TODO: Peloton Changes
-static void LaunchBeckendTask(Backend *bn, Port *port) {
+static void LaunchBackendTask(Backend *bn, Port *port) {
   static unsigned long tmpBackendFileNum = 0;
   char tmpfilename[MAXPGPATH];
   BackendParameters *param = (BackendParameters *) malloc(sizeof(BackendParameters));
 
   save_backend_variables(param, port);
 
+  elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(), GetBackendThreadId());
   std::thread backend(BackendTask, bn, port, param);
   backend.detach();
   return;
@@ -3608,7 +3609,7 @@ static int BackendStartup(Port *port) {
   pid = 0;
   //std::thread backend(BackendTask, bn, port);
   //backend.detach();
-  LaunchBeckendTask(bn, port);  // new thread created
+  LaunchBackendTask(bn, port);  // new thread created
 
 #endif   /* EXEC_BACKEND */
 
@@ -5307,9 +5308,10 @@ static void maybe_start_bgworker(void) {
 
       if (rw->rw_backend) {
         dlist_push_head(&BackendList, &rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
         ShmemBackendArrayAdd(rw->rw_backend);
-#endif
+//#endif
       }
 
       /*
