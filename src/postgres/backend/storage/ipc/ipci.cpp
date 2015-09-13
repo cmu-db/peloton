@@ -193,15 +193,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * needed for InitShmemIndex.
 	 */
 	int thread_id = GetBackendThreadId();
+	int pid = MyProcPid;
 	CreateLWLocks();
-	elog(DEBUG3, "LWLocks Created :: TID : %d", thread_id);
+	elog(DEBUG3, "LWLocks Created :: PID: %d, TID : %d", pid, thread_id);
 
 
 	/*
 	 * Set up shmem.c index hashtable
 	 */
 	InitShmemIndex();
-	elog(DEBUG3, "Shmem index init'ed :: TID : %d", thread_id);
+	elog(DEBUG3, "Shmem index init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up xlog, clog, and buffers
@@ -212,19 +213,19 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	SUBTRANSShmemInit();
 	MultiXactShmemInit();
 	InitBufferPool();
-	elog(DEBUG3, "xlog clog and buffers init'ed :: TID : %d", thread_id);
+	elog(DEBUG3, "xlog clog and buffers init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up lock manager
 	 */
 	InitLocks();
-	elog(DEBUG3, "Lock mgr init'ed :: TID : %d", thread_id);
+	elog(DEBUG3, "Lock mgr init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up predicate lock manager
 	 */
 	InitPredicateLocks();
-	elog(DEBUG3, "Predicate Lock mgr init'ed :: TID : %d", thread_id);
+	elog(DEBUG3, "Predicate Lock mgr init'ed :: PID : %d,  TID : %d", pid, thread_id);
 
 
 	/*
@@ -232,18 +233,18 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	if (!IsUnderPostmaster)
 		InitProcGlobal();
-	CreateSharedProcArray();
-	CreateSharedBackendStatus();
+	CreateSharedProcArray();  // sth in this are not thread_local
+	CreateSharedBackendStatus(); // sth in this are not thread_local
 	TwoPhaseShmemInit();
 	BackgroundWorkerShmemInit();
-	elog(DEBUG3, "process table craeted :: TID : %d", thread_id);
+	elog(DEBUG3, "process table created :: PID: %d, TID : %d", pid, thread_id);
 
 
 	/*
 	 * Set up shared-inval messaging
 	 */
 	CreateSharedInvalidationState();
-	elog(DEBUG3, "Set up shared-inval messaging :: TID : %d", thread_id);
+	elog(DEBUG3, "Set up shared-inval messaging :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up interprocess signaling mechanisms
@@ -256,7 +257,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	ReplicationOriginShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
-	elog(DEBUG3, "Set up interprocess signal mechanisms :: TID : %d", thread_id);
+	elog(DEBUG3, "Set up interprocess signal mechanisms :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up other modules that need some shared memory space
@@ -264,7 +265,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	BTreeShmemInit();
 	SyncScanShmemInit();
 	AsyncShmemInit();
-	elog(DEBUG3, "Other modules set up :: TID : %d", thread_id);
+	elog(DEBUG3, "Other modules set up :: PID: %d, TID : %d", pid, thread_id);
 
 //TODO: Peloton Changes
 //#ifdef EXEC_BACKEND
