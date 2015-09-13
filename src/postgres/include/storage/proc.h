@@ -208,7 +208,7 @@ typedef struct PROC_HDR
 	int			startupBufferPinWaitBufId;
 } PROC_HDR;
 
-thread_local extern PROC_HDR *ProcGlobal;
+extern PROC_HDR *ProcGlobal;
 
 thread_local extern PGPROC *PreparedXactProcs;
 

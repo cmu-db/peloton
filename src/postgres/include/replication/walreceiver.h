@@ -119,7 +119,7 @@ typedef struct
 	Latch		latch;
 } WalRcvData;
 
-extern WalRcvData *WalRcv;
+thread_local extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
 typedef void (*walrcv_connect_type) (char *conninfo);
