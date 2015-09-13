@@ -32,7 +32,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   raw_database.CollectRawForeignKeys();
 
   // create the database with current database id
-  elog(LOG, "Initializing database %s(%u) in Peloton",
+  elog(DEBUG5, "Initializing database %s(%u) in Peloton",
        raw_database.GetDbName().c_str(), raw_database.GetDbOid());
 
   bool status = raw_database.CreateDatabase();
@@ -53,7 +53,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   // Verbose mode
   //std::cout << "Print db :: \n"<<*db << std::endl;
 
-  elog(LOG, "Finished initializing Peloton");
+  elog(DEBUG5, "Finished initializing Peloton");
   return true;
 }
 
