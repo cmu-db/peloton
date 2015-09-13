@@ -162,7 +162,6 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
 
 void Tile::SetValueFast(Value value, const oid_t tuple_slot_id,
                         const size_t column_offset,
-                        const ValueType column_type,
                         const bool is_inlined,
                         const size_t column_length) {
 
