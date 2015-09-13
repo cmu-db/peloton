@@ -85,9 +85,12 @@ void RunTest() {
   // Create table.
   /////////////////////////////////////////////////////////
 
+  bool own_schema = true;
+  bool adapt_table = true;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count));
+      tuples_per_tilegroup_count,
+      own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (indexes == true) {
