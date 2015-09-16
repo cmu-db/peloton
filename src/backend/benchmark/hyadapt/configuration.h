@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// hyadapt.cpp
+// configuration.h
 //
-// Identification: benchmark/hyadapt/hyadapt.h
+// Identification: benchmark/hyadapt/configuration.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,27 @@
 
 #pragma once
 
-#include "backend/benchmark/hyadapt/configuration.h"
+#include <string>
+#include <getopt.h>
+#include <vector>
+#include <sys/time.h>
+#include <iostream>
 
 namespace peloton {
 namespace benchmark {
 namespace hyadapt{
 
-extern configuration state;
+class configuration {
+ public:
+
+  int num_keys;
+  int num_txns;
+
+};
+
+void usage_exit(FILE *out);
+
+void parse_arguments(int argc, char* argv[], configuration& state);
 
 }  // namespace hyadapt
 }  // namespace benchmark
