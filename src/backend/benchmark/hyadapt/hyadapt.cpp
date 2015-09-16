@@ -4,7 +4,7 @@
 //
 // hyadapt.cpp
 //
-// Identification: benchmark/hyadapt.cpp
+// Identification: benchmark/hyadapt/hyadapt.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -23,6 +23,8 @@
 #include "backend/planner/seq_scan_plan.h"
 
 #include "backend/benchmark/hyadapt/hyadapt.h"
+#include "backend/benchmark/hyadapt/configuration.h"
+
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -45,13 +47,19 @@
 
 namespace peloton {
 namespace benchmark {
+namespace hyadapt{
+
+configuration state;
 
 
-
+}  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
 
 int main(int argc, char **argv) {
+
+  peloton::benchmark::hyadapt::parse_arguments(argc, argv,
+                                               peloton::benchmark::hyadapt::state);
 
   return 0;
 }
