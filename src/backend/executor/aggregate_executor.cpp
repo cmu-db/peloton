@@ -56,7 +56,15 @@ bool AggregateExecutor::DInit() {
 
   assert(output_table_schema->GetColumnCount() >= 1);
 
+  // clean up result
   result_itr = START_OID;
+  result.clear();
+
+  // reset done
+  done = false;
+
+  // clean up temporary aggregation table
+  delete output_table;
 
   bool own_schema = false;
   bool adapt_table = false;
