@@ -27,6 +27,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/executor/abstract_executor.h"
+#include "backend/executor/aggregate_executor.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -37,6 +38,7 @@
 #include "backend/expression/constant_value_expression.h"
 #include "backend/index/index_factory.h"
 #include "backend/planner/abstract_plan.h"
+#include "backend/planner/aggregate_plan.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/planner/projection_plan.h"
@@ -302,7 +304,153 @@ void RunDirectTest() {
 }
 
 void RunAggregateTest() {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
 
+  std::cout << "LAYOUT :: " << peloton_layout << "\n";
+
+  std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
+
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  const int tile_group_count = state.scale_factor;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  start = std::chrono::system_clock::now();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  // We need all columns because projection can require any column
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count;
+
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr] - 1);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
+  int expected_num_tiles = tile_group_count;
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // AGGREGATION
+  /////////////////////////////////////////////////////////
+
+  // Resize column ids to contain only columns over which we compute aggregates
+  column_count = state.projectivity * state.column_count;
+  column_ids.resize(column_count);
+
+  // (1-5) Setup plan node
+
+  // 1) Set up group-by columns
+  std::vector<oid_t> group_by_columns;
+
+  // 2) Set up project info
+  planner::ProjectInfo::DirectMapList direct_map_list;
+  oid_t col_itr = 0;
+  oid_t tuple_idx = 1; // tuple2
+  for (auto column_id : column_ids) {
+    direct_map_list.push_back({col_itr, {tuple_idx, col_itr} });
+    col_itr++;
+  }
+
+  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                                            std::move(direct_map_list));
+
+  // 3) Set up aggregates
+  std::vector<planner::AggregatePlan::AggTerm> agg_terms;
+  for (auto column_id : column_ids) {
+    planner::AggregatePlan::AggTerm max_column_agg(
+        EXPRESSION_TYPE_AGGREGATE_MAX,
+        expression::TupleValueFactory(0, column_id),
+        false);
+    agg_terms.push_back(max_column_agg);
+  }
+
+  // 4) Set up predicate (empty)
+  expression::AbstractExpression* aggregate_predicate = nullptr;
+
+  // 5) Create output table schema
+  auto data_table_schema = table.get()->GetSchema();
+  std::vector<catalog::Column> columns;
+  for (auto column_id : column_ids) {
+    columns.push_back(data_table_schema->GetColumn(column_id));
+  }
+  auto output_table_schema = new catalog::Schema(columns);
+
+  // OK) Create the plan node
+  planner::AggregatePlan aggregation_node(proj_info, aggregate_predicate,
+                                          std::move(agg_terms),
+                                          std::move(group_by_columns),
+                                          output_table_schema,
+                                          AGGREGATE_TYPE_PLAIN);
+
+  executor::AggregateExecutor aggregation_executor(&aggregation_node, context.get());
+  aggregation_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  col_itr = 0;
+  for(auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "MAX " + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                        physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&aggregation_executor);
+  bool status = false;
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  status = mat_executor.Init();
+  assert(status == true);
+
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+  while(mat_executor.Execute() == true) {
+    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
+    assert(result_tile != nullptr);
+    result_tiles.emplace_back(result_tile.release());
+  }
+
+  status = mat_executor.Execute();
+  assert(status == false);
+
+  txn_manager.CommitTransaction(txn);
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+
+  std::cout << "logical tile count :: " << result_tiles.size() << "\n";
+  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 void RunArithmeticTest() {
