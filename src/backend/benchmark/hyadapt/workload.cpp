@@ -60,6 +60,31 @@ std::vector<oid_t> hyadapt_column_ids = {
     14, 132, 135, 168, 176, 28, 245, 11, 184, 131, 161, 5, 21, 242, 87, 44, 45, 205, 57, 19, 33, 90, 240, 79, 82
 };
 
+expression::AbstractExpression *CreatePredicate( const int lower_bound) {
+
+  // ATTR0 > LOWER_BOUND
+
+  // First, create tuple value expression.
+  expression::AbstractExpression *tuple_value_expr =
+      expression::TupleValueFactory(0, 0);
+
+  // Second, create constant value expression.
+  Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
+  expression::AbstractExpression *constant_value_expr =
+      expression::ConstantValueFactory(constant_value);
+
+  // Finally, link them together using an greater than expression.
+  expression::AbstractExpression *predicate =
+      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+                                    tuple_value_expr,
+                                    constant_value_expr);
+
+  constant_value.Free();
+
+  return predicate;
+}
+
+
 void RunDirectTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -69,6 +94,8 @@ void RunDirectTest() {
   const int tile_group_count = state.scale_factor;
 
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
+  const int lower_bound = (1 - state.selectivity) * tuple_count;
+
   const oid_t col_count = state.column_count;
   const bool is_inlined = true;
   const bool indexes = false;
@@ -167,7 +194,8 @@ void RunDirectTest() {
   }
 
   // Create and set up seq scan executor
-  planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
   int expected_num_tiles = tile_group_count;
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
@@ -200,10 +228,8 @@ void RunDirectTest() {
   assert(status == true);
 
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-  for (int i = 0; i < expected_num_tiles; i++) {
-    status = mat_executor.Execute();
-    assert(status == true);
 
+  while(mat_executor.Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
     assert(result_tile != nullptr);
     result_tiles.emplace_back(result_tile.release());
@@ -217,6 +243,7 @@ void RunDirectTest() {
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
 
+  std::cout << "logical tile count :: " << result_tiles.size() << "\n";
   std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
