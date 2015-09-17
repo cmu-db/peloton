@@ -12,11 +12,13 @@
 
 #pragma once
 
-#include <cassert>
+#include "backend/benchmark/hyadapt/configuration.h"
 
 namespace peloton {
 namespace benchmark {
 namespace hyadapt{
+
+extern configuration state;
 
 void RunDirectTest();
 
