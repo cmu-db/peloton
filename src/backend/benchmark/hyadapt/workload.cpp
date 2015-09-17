@@ -219,7 +219,6 @@ void RunDirectTest() {
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  const int tile_group_count = state.scale_factor;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   start = std::chrono::system_clock::now();
@@ -244,7 +243,6 @@ void RunDirectTest() {
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
   planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
-  int expected_num_tiles = tile_group_count;
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -312,7 +310,6 @@ void RunAggregateTest() {
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  const int tile_group_count = state.scale_factor;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   start = std::chrono::system_clock::now();
@@ -338,7 +335,6 @@ void RunAggregateTest() {
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
   planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
-  int expected_num_tiles = tile_group_count;
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -359,7 +355,7 @@ void RunAggregateTest() {
   planner::ProjectInfo::DirectMapList direct_map_list;
   oid_t col_itr = 0;
   oid_t tuple_idx = 1; // tuple2
-  for (auto column_id : column_ids) {
+  for (col_itr = 0; col_itr < column_count; col_itr++) {
     direct_map_list.push_back({col_itr, {tuple_idx, col_itr} });
     col_itr++;
   }
@@ -462,7 +458,6 @@ void RunArithmeticTest() {
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  const int tile_group_count = state.scale_factor;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   start = std::chrono::system_clock::now();
@@ -488,7 +483,6 @@ void RunArithmeticTest() {
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
   planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
-  int expected_num_tiles = tile_group_count;
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -539,16 +533,12 @@ void RunArithmeticTest() {
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
-  column_ids = { 0 };
-  for(auto column_id : column_ids) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "SUM", is_inlined);
-    output_columns.push_back(column);
 
-    old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
-  }
+  auto column =
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                      "SUM", is_inlined);
+  output_columns.push_back(column);
+  old_to_new_cols[col_itr] = col_itr;
 
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
