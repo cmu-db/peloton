@@ -89,8 +89,17 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
   return predicate;
 }
 
-static storage::DataTable* CreateTable() {
+static void WriteOutput(double duration) {
 
+  std::cout << "time :: " << duration << " s\n";
+
+  std::ofstream out("outputfile.summary");
+  out << duration << "\n";
+  out.close();
+
+}
+
+static storage::DataTable* CreateTable() {
   const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
   const oid_t col_count = state.column_count;
   const bool is_inlined = true;
@@ -168,7 +177,7 @@ static void LoadTable(storage::DataTable *table) {
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
 
-  std::cout << "TUPLE COUNT :: " << tuple_count << "\n";
+  std::cout << "tuple count : " << tuple_count << "\n";
 
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
@@ -209,19 +218,43 @@ static int GetLowerBound() {
   return lower_bound;
 }
 
-
-void RunDirectTest() {
+static void ExecuteTest(executor::MaterializationExecutor& mat_executor) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  std::cout << "LAYOUT :: " << peloton_layout << "\n";
+  auto txn_count = state.transactions;
+  bool status = false;
+  start = std::chrono::system_clock::now();
 
+  // Run these many transactions
+  for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+    status = mat_executor.Init();
+    assert(status == true);
+
+    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+    while(mat_executor.Execute() == true) {
+      std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
+      assert(result_tile != nullptr);
+      result_tiles.emplace_back(result_tile.release());
+    }
+
+    status = mat_executor.Execute();
+    assert(status == false);
+  }
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+
+  WriteOutput(time_per_transaction);
+}
+
+void RunDirectTest() {
   std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
-  start = std::chrono::system_clock::now();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -278,41 +311,19 @@ void RunDirectTest() {
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  status = mat_executor.Init();
-  assert(status == true);
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  while(mat_executor.Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
-    assert(result_tile != nullptr);
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  status = mat_executor.Execute();
-  assert(status == false);
+  ExecuteTest(mat_executor);
 
   txn_manager.CommitTransaction(txn);
-
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
-
-  std::cout << "logical tile count :: " << result_tiles.size() << "\n";
-  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 void RunAggregateTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  std::cout << "LAYOUT :: " << peloton_layout << "\n";
 
   std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
-  start = std::chrono::system_clock::now();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -426,41 +437,19 @@ void RunAggregateTest() {
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  status = mat_executor.Init();
-  assert(status == true);
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  while(mat_executor.Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
-    assert(result_tile != nullptr);
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  status = mat_executor.Execute();
-  assert(status == false);
+  ExecuteTest(mat_executor);
 
   txn_manager.CommitTransaction(txn);
-
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
-
-  std::cout << "logical tile count :: " << result_tiles.size() << "\n";
-  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 void RunArithmeticTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  std::cout << "LAYOUT :: " << peloton_layout << "\n";
 
   std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
 
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
-  start = std::chrono::system_clock::now();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -554,27 +543,9 @@ void RunArithmeticTest() {
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  status = mat_executor.Init();
-  assert(status == true);
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  while(mat_executor.Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
-    assert(result_tile != nullptr);
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  status = mat_executor.Execute();
-  assert(status == false);
+  ExecuteTest(mat_executor);
 
   txn_manager.CommitTransaction(txn);
-
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
-
-  std::cout << "logical tile count :: " << result_tiles.size() << "\n";
-  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 }  // namespace hyadapt
