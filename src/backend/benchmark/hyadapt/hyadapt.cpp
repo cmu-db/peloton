@@ -10,41 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <chrono>
 #include <iostream>
-#include <ctime>
-
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/materialization_plan.h"
-#include "backend/planner/seq_scan_plan.h"
 
 #include "backend/benchmark/hyadapt/hyadapt.h"
 #include "backend/benchmark/hyadapt/configuration.h"
 #include "backend/benchmark/hyadapt/workload.h"
-
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/materialization_executor.h"
-#include "backend/storage/backend_vm.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/storage/table_factory.h"
-#include "backend/index/index_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -52,6 +22,28 @@ namespace hyadapt{
 
 configuration state;
 
+// Main Entry Point
+void RunBenchmark(){
+
+  switch(state.operator_type) {
+    case OPERATOR_TYPE_DIRECT:
+      RunDirectTest();
+      break;
+
+    case OPERATOR_TYPE_AGGREGATE:
+      RunAggregateTest();
+      break;
+
+    case OPERATOR_TYPE_ARITHMETIC:
+      RunArithmeticTest();
+      break;
+
+    default:
+      std::cout << "Unsupported test type : " << state.operator_type << "\n";
+      break;
+  }
+
+}
 
 }  // namespace hyadapt
 }  // namespace benchmark
@@ -62,7 +54,7 @@ int main(int argc, char **argv) {
   peloton::benchmark::hyadapt::parse_arguments(argc, argv,
                                                peloton::benchmark::hyadapt::state);
 
-  peloton::benchmark::hyadapt::RunDirectTest();
+  peloton::benchmark::hyadapt::RunBenchmark();
 
   return 0;
 }

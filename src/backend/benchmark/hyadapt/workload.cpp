@@ -49,7 +49,7 @@ namespace hyadapt{
 void RunDirectTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  std::cout << "LAYOUT :: " << peloton_tilegroup_layout << "\n";
+  std::cout << "LAYOUT :: " << peloton_layout << "\n";
 
   const int tuples_per_tilegroup_count = 1000;
   const int tile_group_count = 100;
@@ -202,6 +202,14 @@ void RunDirectTest() {
   std::chrono::duration<double> elapsed_seconds = end-start;
 
   std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
+}
+
+void RunAggregateTest() {
+
+}
+
+void RunArithmeticTest() {
+
 }
 
 }  // namespace hyadapt

@@ -429,27 +429,27 @@ TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
   return tile_group;
 }
 
-column_map_type DataTable::GetTileGroupLayout(PelotonTileGroupLayoutType layout_type) {
+column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   column_map_type column_map;
 
   auto col_count = schema->GetColumnCount();
   if(adapt_table == false)
-    layout_type = PELOTON_TILEGROUP_LAYOUT_ROW;
+    layout_type = LAYOUT_ROW;
 
   // pure row layout map
-  if(layout_type == PELOTON_TILEGROUP_LAYOUT_ROW) {
+  if(layout_type == LAYOUT_ROW) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
   // pure column layout map
-  else if(layout_type == PELOTON_TILEGROUP_LAYOUT_COLUMN) {
+  else if(layout_type == LAYOUT_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
   // hybrid layout map
-  else if(layout_type == PELOTON_TILEGROUP_LAYOUT_HYBRID){
+  else if(layout_type == LAYOUT_HYBRID){
     // TODO: Fallback option for regular tables
     if(col_count < 10) {
       for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -472,7 +472,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // First, figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout(peloton_tilegroup_layout);
+  column_map = GetTileGroupLayout(peloton_layout);
 
   TileGroup *tile_group = GetTileGroupWithLayout(column_map);
   assert(tile_group);
