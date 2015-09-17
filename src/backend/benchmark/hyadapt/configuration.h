@@ -47,6 +47,9 @@ class configuration {
 
   double projectivity;
 
+  // column count
+  int column_count;
+
   // # of times to run operator
   int transactions;
 
