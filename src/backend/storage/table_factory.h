@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * table_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// table_factory.h
+//
+// Identification: src/backend/storage/table_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -26,27 +28,21 @@ namespace storage {
  * Magic Table Factory!!
  */
 class TableFactory {
-    
-public:
+ public:
+  /**
+   * For a given Schema, instantiate a DataTable object and return it
+   */
+  static DataTable *GetDataTable(
+      oid_t database_id, oid_t relation_id, catalog::Schema *schema,
+      std::string table_name,
+      size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP,
+      bool own_schema = true);
 
-    /**
-     * For a given Schema, instantiate a DataTable object and return it
-     */
-    static DataTable* GetDataTable(oid_t database_id,
-                                   oid_t relation_id,
-                                   catalog::Schema *schema,
-                                   std::string table_name,
-                                   size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP);
-
-    /**
-     * For a given table name, drop the table from database
-     */
-    static bool DropDataTable(oid_t database_oid, oid_t table_oid);
-
-
+  /**
+   * For a given table name, drop the table from database
+   */
+  static bool DropDataTable(oid_t database_oid, oid_t table_oid);
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

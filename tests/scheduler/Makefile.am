@@ -7,9 +7,3 @@
 check_PROGRAMS += scheduler_test
 
 scheduler_test_SOURCES = scheduler/scheduler_test.cpp
-
-scheduler_test_LDADD = \
-					   $(obj_DIR)/catalog/libpeloton_la-manager.lo \
-					   $(obj_DIR)/main/libpeloton_la-kernel.lo \
-					   $(obj_DIR)/scheduler/libpeloton_la-tbb_scheduler.lo \
-					   $(top_builddir)/src/libpeloton.la

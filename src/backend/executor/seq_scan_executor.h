@@ -1,27 +1,33 @@
-/**
- * @brief Header file for sequential scan executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// seq_scan_executor.h
+//
+// Identification: src/backend/executor/seq_scan_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include "../planner/seq_scan_plan.h"
 #include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/seq_scan_node.h"
+#include "backend/executor/abstract_scan_executor.h"
 
 namespace peloton {
 namespace executor {
 
-class SeqScanExecutor : public AbstractExecutor {
+class SeqScanExecutor : public AbstractScanExecutor {
  public:
   SeqScanExecutor(const SeqScanExecutor &) = delete;
-  SeqScanExecutor& operator=(const SeqScanExecutor &) = delete;
+  SeqScanExecutor &operator=(const SeqScanExecutor &) = delete;
   SeqScanExecutor(SeqScanExecutor &&) = delete;
-  SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
+  SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
 
-  explicit SeqScanExecutor(planner::AbstractPlanNode *node,
-                           concurrency::Transaction *transaction);
+  explicit SeqScanExecutor(planner::AbstractPlan *node,
+                           ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -29,13 +35,12 @@ class SeqScanExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
 
   /** @brief Keeps track of current tile group id being scanned. */
-  oid_t current_tile_group_id_ = INVALID_OID;
+  oid_t current_tile_group_offset_ = INVALID_OID;
 
   /** @brief Keeps track of the number of tile groups to scan. */
   oid_t table_tile_group_count_ = INVALID_OID;
@@ -45,15 +50,8 @@ class SeqScanExecutor : public AbstractExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief Pointer to table to scan from. */
-  const storage::DataTable *table_ = nullptr;
-
-  /** @brief Selection predicate. */
-  const expression::AbstractExpression *predicate_ = nullptr;
-
-  /** @brief Columns from tile group to be added to logical tile output. */
-  std::vector<oid_t> column_ids_;
-
+  storage::DataTable *target_table_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

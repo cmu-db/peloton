@@ -1,73 +1,119 @@
-/*-------------------------------------------------------------------------
- *
- * column.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// column.h
+//
+// Identification: src/backend/catalog/column.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/catalog/abstract_catalog_object.h"
+#include "backend/catalog/constraint.h"
 
 namespace peloton {
 namespace catalog {
 
-/**
- * Column Catalog Object 
- */
-class Column : public AbstractCatalogObject {
+//===--------------------------------------------------------------------===//
+// Column
+//===--------------------------------------------------------------------===//
 
-public:
-    Column(std::string name, ValueType type, oid_t offset, size_t size, bool not_null)
-        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
-          type(type),
-          offset(offset),
-          size(size),
-          not_null(not_null) {
+class Column {
+  friend class Constraint;
+
+ public:
+  Column(){};
+
+  Column(ValueType value_type, oid_t column_length, std::string column_name,
+         bool is_inlined = false, oid_t column_offset = INVALID_OID)
+      : column_type(value_type),
+        column_name(column_name),
+        is_inlined(is_inlined),
+        column_offset(column_offset) {
+    SetInlined();
+
+    SetLength(column_length);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
+  // Set inlined
+  void SetInlined();
+
+  // Set the appropriate column length
+  void SetLength(oid_t column_length);
+
+  oid_t GetOffset() const { return column_offset; }
+
+  std::string GetName() const { return column_name; }
+
+  oid_t GetLength() const {
+    if (is_inlined)
+      return fixed_length;
+    else
+      return variable_length;
+  }
+
+  oid_t GetFixedLength() const { return fixed_length; }
+
+  oid_t GetVariableLength() const { return variable_length; }
+
+  ValueType GetType() const { return column_type; }
+
+  bool IsInlined() const { return is_inlined; }
+
+  // Add a constraint to the column
+  void AddConstraint(const catalog::Constraint &constraint) {
+    constraints.push_back(constraint);
+  }
+
+  const std::vector<Constraint> &GetConstraints() const { return constraints; }
+
+  // Compare two column objects
+  bool operator==(const Column &other) const {
+    if (other.column_type != column_type || other.is_inlined != is_inlined) {
+      return false;
     }
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
+    return true;
+  }
 
-    ValueType GetType() const {
-        return type;
-    }
+  bool operator!=(const Column &other) const { return !(*this == other); }
 
-    oid_t GetOffset() const {
-        return offset;
-    }
+  // Get a string representation for debugging
+  friend std::ostream &operator<<(std::ostream &os, const Column &column);
 
-    size_t GetSize() const {
-        return size;
-    }
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    bool IsNotNullable() const {
-        return not_null;
-    }
+  // value type of column
+  ValueType column_type = VALUE_TYPE_INVALID;
 
-    // Get a string representation of this column
-    friend std::ostream& operator<<(std::ostream& os, const Column& column);
+  // if the column is not inlined, this is set to pointer size
+  // else, it is set to length of the fixed length column
+  oid_t fixed_length = INVALID_OID;
 
-private:
+  // if the column is inlined, this is set to 0
+  // else, it is set to length of the variable length column
+  oid_t variable_length = INVALID_OID;
 
-    // The data type of the column
-    ValueType type = VALUE_TYPE_INVALID;
+  // name of the column
+  std::string column_name;
 
-    // The column's order in the table
-    oid_t offset = 0;
+  // is the column inlined ?
+  bool is_inlined = false;
 
-    // Size of the column
-    size_t size = 0;
+  // offset of column in tuple
+  oid_t column_offset = INVALID_OID;
 
-    // Is it not nullable ?
-    bool not_null = false;
-
+  // Constraints
+  std::vector<Constraint> constraints;
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

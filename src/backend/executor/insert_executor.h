@@ -1,8 +1,14 @@
-/**
- * @brief Header file for insert executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// insert_executor.h
+//
+// Identification: src/backend/executor/insert_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -14,15 +20,14 @@ namespace peloton {
 namespace executor {
 
 class InsertExecutor : public AbstractExecutor {
-
  public:
   InsertExecutor(const InsertExecutor &) = delete;
-  InsertExecutor& operator=(const InsertExecutor &) = delete;
+  InsertExecutor &operator=(const InsertExecutor &) = delete;
   InsertExecutor(InsertExecutor &&) = delete;
-  InsertExecutor& operator=(InsertExecutor &&) = delete;
+  InsertExecutor &operator=(InsertExecutor &&) = delete;
 
-  explicit InsertExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+  explicit InsertExecutor(planner::AbstractPlan *node,
+                          ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -30,8 +35,8 @@ class InsertExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
+  bool done_ = false;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

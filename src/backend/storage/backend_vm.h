@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* volatile_backend.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// backend_vm.h
+//
+// Identification: src/backend/storage/backend_vm.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -19,30 +21,22 @@ namespace storage {
 // VM Backend
 //===--------------------------------------------------------------------===//
 
-
 class VMBackend : public AbstractBackend {
+ public:
+  virtual ~VMBackend(){};
 
-public:
-	virtual ~VMBackend(){};
+  void *Allocate(size_t size) { return ::operator new(size); }
 
-	void* Allocate(size_t size) {
-		return ::operator new(size);
-	}
+  void Free(void *ptr) { ::operator delete(ptr); }
 
-	void Free(void* ptr) {
-		::operator delete(ptr);
-	}
+  void Sync(void *ptr __attribute__((unused))) {
+    // does nothing
+  }
 
-	void Sync(void* ptr __attribute__((unused)))  {
-		// does nothing
-	}
-
-	std::string GetBackendType() const{
-		return BackendTypeToString(BACKEND_TYPE_VM);
-	}
-
+  std::string GetBackendType() const {
+    return BackendTypeToString(BACKEND_TYPE_VM);
+  }
 };
 
-} // End storage namespace
-} // End peloton namespace
-
+}  // End storage namespace
+}  // End peloton namespace

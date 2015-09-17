@@ -1,8 +1,14 @@
-/**
- * @brief Executor for index scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_scan_executor.cpp
+//
+// Identification: src/backend/executor/index_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/index_scan_executor.h"
 
@@ -27,35 +33,59 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
-}
+IndexScanExecutor::IndexScanExecutor(planner::AbstractPlan *node,
+                                     ExecutorContext *executor_context)
+    : AbstractScanExecutor(node, executor_context) {}
 
 /**
- * @brief Nothing to init at the moment.
+ * @brief Let base class Dinit() first, then do my job.
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DInit() {
-  assert(children_.size() == 0);
-  assert(transaction_);
+  auto status = AbstractScanExecutor::DInit();
 
-  LOG_TRACE("Index Scan executor :: 0 child \n");
+  if (!status) return false;
+
+  assert(children_.size() == 0);
 
   // Grab info from plan node and check it
-  const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
   index_ = node.GetIndex();
   assert(index_ != nullptr);
 
-  column_ids_ = node.GetColumnIds();
-  assert(column_ids_.size() > 0);
-
-  start_key_ = node.GetStartKey();
-  end_key_ = node.GetEndKey();
-  start_inclusive_ = node.IsStartInclusive();
-  end_inclusive_ = node.IsEndInclusive();
-
   result_itr = START_OID;
+  done_ = false;
+
+  column_ids_ = node.GetColumnIds();
+  key_column_ids_ = node.GetKeyColumnIds();
+  expr_types_ = node.GetExprTypes();
+  values_ = node.GetValues();
+  runtime_keys_ = node.GetRunTimeKeys();
+  predicate_ = node.GetPredicate();
+
+  if (runtime_keys_.size() != 0) {
+    assert(runtime_keys_.size() == values_.size());
+
+    if (!key_ready) {
+      values_.clear();
+
+      for (auto expr : runtime_keys_) {
+        auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
+        LOG_INFO("Evaluated runtime scan key: %s", value.Debug().c_str());
+        values_.push_back(value);
+      }
+
+      key_ready = true;
+    }
+  }
+
+  table_ = node.GetTable();
+
+  if (table_ != nullptr) {
+      full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
+      std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
+  }
 
   return true;
 }
@@ -65,71 +95,91 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
+  LOG_INFO("Index Scan executor :: 0 child");
+
+  if (!done_) {
+    auto status = ExecIndexLookup();
+    if (status == false) return false;
+    ExecPredication();
+    ExecProjection();
+  }
 
   // Already performed the index lookup
-  if(done) {
-    if(result_itr == result.size()) {
-      return false;
-    }
-    else {
-      // Return appropriate tile and go to next tile
+  assert(done_);
+
+  while (result_itr < result.size()) {  // Avoid returning empty tiles
+    if (result[result_itr]->GetTupleCount() == 0) {
+      result_itr++;
+      continue;
+    } else {
       SetOutput(result[result_itr]);
       result_itr++;
       return true;
     }
+
+  }  // end while
+
+  return false;
+}
+
+void IndexScanExecutor::ExecPredication() {
+  if (nullptr == predicate_)
+    return;
+  unsigned int removed_count = 0;
+  for (auto tile : result) {
+    for (auto tuple_id : *tile) {
+        expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                .IsFalse()) {
+          removed_count++;
+          tile->RemoveVisibility(tuple_id);
+        }
+    }
+  }
+  LOG_INFO("predicate removed %d row", removed_count);
+}
+
+void IndexScanExecutor::ExecProjection() {
+
+  if (column_ids_.size() == 0)
+    return;
+
+  for (auto tile : result) {
+    tile->ProjectColumns(full_column_ids_, column_ids_);
   }
 
-  // Else, need to do the index lookup
+}
+
+bool IndexScanExecutor::ExecIndexLookup() {
+  assert(!done_);
+
   std::vector<ItemPointer> tuple_locations;
 
-  if(start_key_ == nullptr && end_key_ == nullptr) {
-    return false;
-  }
-  else if(start_key_ == nullptr) {
-    // < END_KEY
-    if(end_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyLT(end_key_);
-    }
-    // <= END_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyLTE(end_key_);
-    }
-  }
-  else if(end_key_ == nullptr) {
-    // > START_KEY
-    if(start_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyGT(start_key_);
-    }
-    // >= START_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyGTE(start_key_);
-    }
-  }
-  else {
-    // START_KEY < .. < END_KEY
-    tuple_locations = index_->GetLocationsForKeyBetween(start_key_, end_key_);
+  if (0 == key_column_ids_.size()) {
+    tuple_locations = index_->Scan();
+  } else {
+    tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
   }
 
-  LOG_TRACE("Tuple locations : %lu \n", tuple_locations.size());
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
-  if(tuple_locations.size() == 0)
-    return false;
+  if (tuple_locations.size() == 0) return false;
 
+  auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
   cid_t commit_id = transaction_->GetLastCommitId();
 
+
   // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTileGroups(tuple_locations, column_ids_,
-                                                  txn_id, commit_id);
-  done = true;
+  result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
+                                              txn_id, commit_id);
 
-  LOG_TRACE("Result tiles : %lu \n", result.size());
+  done_ = true;
 
-  SetOutput(result[result_itr]);
-  result_itr++;
+  LOG_TRACE("Result tiles : %lu", result.size());
 
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

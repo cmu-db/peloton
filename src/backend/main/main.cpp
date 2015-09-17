@@ -1,18 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * peloton.cpp
- *  Stub main() routine for the peloton executable.
- *
- * This does some essential startup tasks.
- *
- * Copyright(c) 2015, CMU
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * src/backend/peloton.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// main.cpp
+//
+// Identification: src/backend/main/main.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <unistd.h>
 
@@ -40,13 +36,11 @@ static void check_root(const char *progname);
 /*
  * Any Postgres server process begins execution here.
  */
-int
-main(int argc, char *argv[])
-{
-  bool    do_check_root = true;
+int main(int argc, char *argv[]) {
+  bool do_check_root = true;
 
   progname = "peloton";
-  //progname = get_progname(argv[0]);
+  // progname = get_progname(argv[0]);
 
   /*
    * Platform-specific startup hacks
@@ -66,10 +60,10 @@ main(int argc, char *argv[])
    */
   argv = save_ps_display_args(argc, argv);
 
-  /*
-   * If supported on the current platform, set up a handler to be called if
-   * the backend/postmaster crashes with a fatal signal or exception.
-   */
+/*
+ * If supported on the current platform, set up a handler to be called if
+ * the backend/postmaster crashes with a fatal signal or exception.
+ */
 #if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
   pgwin32_install_crashdump_handler();
 #endif
@@ -83,9 +77,6 @@ main(int argc, char *argv[])
    */
   MemoryContextInit();
 
-  // TODO: Peloton Changes
-  SHMContextInit();
-
   /*
    * Set up locale information from environment.  Note that LC_CTYPE and
    * LC_COLLATE will be overridden later from pg_control if we are in an
@@ -96,7 +87,6 @@ main(int argc, char *argv[])
    */
 
   set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
-
 
   init_locale(LC_COLLATE, "");
   init_locale(LC_CTYPE, "");
@@ -124,15 +114,12 @@ main(int argc, char *argv[])
    * Catch standard options before doing much else, in particular before we
    * insist on not being root.
    */
-  if (argc > 1)
-  {
-    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-    {
+  if (argc > 1) {
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0) {
       help(progname);
       exit(0);
     }
-    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-    {
+    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0) {
       puts("postgres (PostgreSQL) " PG_VERSION);
       exit(0);
     }
@@ -157,32 +144,28 @@ main(int argc, char *argv[])
    * Make sure we are not running as root, unless it's safe for the selected
    * option.
    */
-  if (do_check_root)
-    check_root(progname);
+  if (do_check_root) check_root(progname);
 
-  /*
-   * Dispatch to one of various subprograms depending on first argument.
-   */
+/*
+ * Dispatch to one of various subprograms depending on first argument.
+ */
 
 #ifdef EXEC_BACKEND
   if (argc > 1 && strncmp(argv[1], "--fork", 6) == 0)
-    SubPostmasterMain(argc, argv);  /* does not return */
+    SubPostmasterMain(argc, argv); /* does not return */
 #endif
 
   if (argc > 1 && strcmp(argv[1], "--boot") == 0)
-    AuxiliaryProcessMain(argc, argv);   /* does not return */
+    AuxiliaryProcessMain(argc, argv); /* does not return */
   else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
-    GucInfoMain();      /* does not return */
+    GucInfoMain(); /* does not return */
   else if (argc > 1 && strcmp(argv[1], "--single") == 0)
-    PostgresMain(argc, argv,
-           NULL,    /* no dbname */
-           strdup(get_user_name_or_exit(progname)));  /* does not return */
+    PostgresMain(argc, argv, NULL,                         /* no dbname */
+                 strdup(get_user_name_or_exit(progname))); /* does not return */
   else
-    PostmasterMain(argc, argv);   /* does not return */
-  abort();          /* should not get here */
+    PostmasterMain(argc, argv); /* does not return */
+  abort();                      /* should not get here */
 }
-
-
 
 /*
  * Place platform-specific startup hacks here.  This is the right
@@ -195,17 +178,13 @@ main(int argc, char *argv[])
  * is too brain-dead to provide a standard C execution environment
  * without help.  Avoid adding more here, if you can.
  */
-static void
-startup_hacks(const char *progname __attribute__((unused)))
-{
-
+static void startup_hacks(const char *progname __attribute__((unused))) {
   /*
    * Initialize dummy_spinlock, in case we are on a platform where we have
    * to use the fallback implementation of pg_memory_barrier().
    */
   SpinLockInit(&dummy_spinlock);
 }
-
 
 /*
  * Make the initial permanent setting for a locale category.  If that fails,
@@ -214,15 +193,11 @@ startup_hacks(const char *progname __attribute__((unused)))
  * When this returns, we are guaranteed to have a setting for the given
  * category's environment variable.
  */
-static void
-init_locale(int category, const char *locale)
-{
+static void init_locale(int category, const char *locale) {
   if (pg_perm_setlocale(category, locale) == NULL &&
-    pg_perm_setlocale(category, "C") == NULL)
+      pg_perm_setlocale(category, "C") == NULL)
     elog(FATAL, "could not adopt C locale");
 }
-
-
 
 /*
  * Help display should match the options accepted by PostmasterMain()
@@ -232,15 +207,14 @@ init_locale(int category, const char *locale)
  * correctly if the console output code page covers the necessary characters.
  * Messages emitted in write_console() do not exhibit this problem.
  */
-static void
-help(const char *progname)
-{
+static void help(const char *progname) {
   printf(_("%s is the PostgreSQL server.\n\n"), progname);
   printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
   printf(_("Options:\n"));
   printf(_("  -B NBUFFERS        number of shared buffers\n"));
   printf(_("  -c NAME=VALUE      set run-time parameter\n"));
-  printf(_("  -C NAME            print value of run-time parameter, then exit\n"));
+  printf(
+      _("  -C NAME            print value of run-time parameter, then exit\n"));
   printf(_("  -d 1-5             debugging level\n"));
   printf(_("  -D DATADIR         database directory\n"));
   printf(_("  -e                 use European date input format (DMY)\n"));
@@ -252,54 +226,69 @@ help(const char *progname)
   printf(_("  -l                 enable SSL connections\n"));
 #endif
   printf(_("  -N MAX-CONNECT     maximum number of allowed connections\n"));
-  printf(_("  -o OPTIONS         pass \"OPTIONS\" to each server process (obsolete)\n"));
+  printf(
+      _("  -o OPTIONS         pass \"OPTIONS\" to each server process "
+        "(obsolete)\n"));
   printf(_("  -p PORT            port number to listen on\n"));
   printf(_("  -s                 show statistics after each query\n"));
   printf(_("  -S WORK-MEM        set amount of memory for sorts (in kB)\n"));
   printf(_("  -V, --version      output version information, then exit\n"));
   printf(_("  --NAME=VALUE       set run-time parameter\n"));
-  printf(_("  --describe-config  describe configuration parameters, then exit\n"));
+  printf(
+      _("  --describe-config  describe configuration parameters, then exit\n"));
   printf(_("  -?, --help         show this help, then exit\n"));
 
   printf(_("\nDeveloper options:\n"));
   printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));
-  printf(_("  -n                 do not reinitialize shared memory after abnormal exit\n"));
+  printf(
+      _("  -n                 do not reinitialize shared memory after abnormal "
+        "exit\n"));
   printf(_("  -O                 allow system table structure changes\n"));
   printf(_("  -P                 disable system indexes\n"));
   printf(_("  -t pa|pl|ex        show timings after each query\n"));
-  printf(_("  -T                 send SIGSTOP to all backend processes if one dies\n"));
-  printf(_("  -W NUM             wait NUM seconds to allow attach from a debugger\n"));
+  printf(
+      _("  -T                 send SIGSTOP to all backend processes if one "
+        "dies\n"));
+  printf(
+      _("  -W NUM             wait NUM seconds to allow attach from a "
+        "debugger\n"));
 
   printf(_("\nOptions for single-user mode:\n"));
-  printf(_("  --single           selects single-user mode (must be first argument)\n"));
+  printf(
+      _("  --single           selects single-user mode (must be first "
+        "argument)\n"));
   printf(_("  DBNAME             database name (defaults to user name)\n"));
   printf(_("  -d 0-5             override debugging level\n"));
   printf(_("  -E                 echo statement before execution\n"));
-  printf(_("  -j                 do not use newline as interactive query delimiter\n"));
+  printf(
+      _("  -j                 do not use newline as interactive query "
+        "delimiter\n"));
   printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
 
   printf(_("\nOptions for bootstrapping mode:\n"));
-  printf(_("  --boot             selects bootstrapping mode (must be first argument)\n"));
-  printf(_("  DBNAME             database name (mandatory argument in bootstrapping mode)\n"));
+  printf(
+      _("  --boot             selects bootstrapping mode (must be first "
+        "argument)\n"));
+  printf(
+      _("  DBNAME             database name (mandatory argument in "
+        "bootstrapping mode)\n"));
   printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
   printf(_("  -x NUM             internal use\n"));
 
-  printf(_("\nPlease read the documentation for the complete list of run-time\n"
-   "configuration settings and how to set them on the command line or in\n"
-       "the configuration file.\n\n"
-       "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+  printf(
+      _("\nPlease read the documentation for the complete list of run-time\n"
+        "configuration settings and how to set them on the command line or in\n"
+        "the configuration file.\n\n"
+        "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
-
-
-static void
-check_root(const char *progname)
-{
+static void check_root(const char *progname) {
   if (geteuid() == 0) {
-    write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
-           "The server must be started under an unprivileged user ID to prevent\n"
-      "possible system security compromise.  See the documentation for\n"
-          "more information on how to properly start the server.\n");
+    write_stderr(
+        "\"root\" execution of the PostgreSQL server is not permitted.\n"
+        "The server must be started under an unprivileged user ID to prevent\n"
+        "possible system security compromise.  See the documentation for\n"
+        "more information on how to properly start the server.\n");
     exit(1);
   }
 
@@ -311,14 +300,8 @@ check_root(const char *progname)
    * trying to actively fix this situation seems more trouble than it's
    * worth; we'll just expend the effort to check for it.)
    */
-  if (getuid() != geteuid())
-  {
-    write_stderr("%s: real and effective user IDs must match\n",
-           progname);
+  if (getuid() != geteuid()) {
+    write_stderr("%s: real and effective user IDs must match\n", progname);
     exit(1);
   }
-
 }
-
-
-

@@ -1,19 +1,27 @@
-/**
- * @brief Test cases for sequential scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_scan_test.cpp
+//
+// Identification: tests/executor/index_scan_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/index_scan_plan.h"
+
+
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/index_scan_executor.h"
-#include "backend/planner/index_scan_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -27,45 +35,51 @@ namespace test {
 
 // Index scan of table with index predicate.
 TEST(IndexScanTests, IndexPredicateTest) {
-
   // First, generate the table with index
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateAndPopulateTable());
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids( { 0, 1, 3 });
+  std::vector<oid_t> column_ids({0, 1, 3});
 
   //===--------------------------------------------------------------------===//
-  // Start <= Tuple
+  // ATTR 0 <= 110
   //===--------------------------------------------------------------------===//
 
-  // Set start key
   auto index = data_table->GetIndex(0);
-  const catalog::Schema *index_key_schema = index->GetKeySchema();
-  std::unique_ptr<storage::Tuple> start_key(new storage::Tuple(index_key_schema, true));
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *>runtime_keys;
 
-  start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+  values.push_back(ValueFactory::GetIntegerValue(110));
 
-  std::unique_ptr<storage::Tuple> end_key(nullptr);
-  bool start_inclusive = true;
-  bool end_inclusive = true;
+  // Create index scan desc
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
+                                                        expr_types, values, runtime_keys);
+
+
+  expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(
-      data_table.get(),
-      data_table->GetIndex(0),
-      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
-      column_ids);
+  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
+                              index_scan_desc);
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // Run the executor
-  executor::IndexScanExecutor executor(&node, txn);
+  executor::IndexScanExecutor executor(&node, context.get());
   int expected_num_tiles = 3;
 
   EXPECT_TRUE(executor.Init());
 
-  std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
   for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_TRUE(executor.Execute());
@@ -77,53 +91,74 @@ TEST(IndexScanTests, IndexPredicateTest) {
   EXPECT_FALSE(executor.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
   EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 5);
-
-  std::cout << *(result_tiles[0].get());
+  EXPECT_EQ(result_tiles[1].get()->GetTupleCount(), 5);
+  EXPECT_EQ(result_tiles[2].get()->GetTupleCount(), 2);
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
+}
+
+TEST(IndexScanTests, MultiColumnPredicateTest) {
+  // First, generate the table with index
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateAndPopulateTable());
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids({0, 1, 3});
 
   //===--------------------------------------------------------------------===//
-  // Start <= Tuple <= End
+  // ATTR 1 > 50 & ATTR 0 < 70
   //===--------------------------------------------------------------------===//
 
-  // Set end key
-  end_key.reset(new storage::Tuple(index_key_schema, true));
-  end_key->SetValue(0, ValueFactory::GetIntegerValue(20));
+  auto index = data_table->GetIndex(1);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *>runtime_keys;
 
-  // Create another plan node.
-  planner::IndexScanNode node2(
-      data_table.get(),
-      data_table->GetIndex(0),
-      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
-      column_ids);
+  key_column_ids.push_back(1);
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  values.push_back(ValueFactory::GetIntegerValue(50));
+  values.push_back(ValueFactory::GetIntegerValue(70));
 
-  auto txn2 = txn_manager.BeginTransaction();
+  // Create index scan desc
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(index, key_column_ids,
+                                                        expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Create plan node.
+  planner::IndexScanPlan node(predicate, column_ids, data_table.get(),
+                              index_scan_desc);
+
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // Run the executor
-  executor::IndexScanExecutor executor2(&node2, txn2);
-  expected_num_tiles = 1;
+  executor::IndexScanExecutor executor(&node, context.get());
+  int expected_num_tiles = 1;
 
-  result_tiles.clear();
-  EXPECT_TRUE(executor2.Init());
+  EXPECT_TRUE(executor.Init());
+
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
   for (int i = 0; i < expected_num_tiles; i++) {
-    EXPECT_TRUE(executor2.Execute());
-    std::unique_ptr<executor::LogicalTile> result_tile(executor2.GetOutput());
+    EXPECT_TRUE(executor.Execute());
+    std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
     EXPECT_THAT(result_tile, NotNull());
     result_tiles.emplace_back(result_tile.release());
   }
 
-  EXPECT_FALSE(executor2.Execute());
+  EXPECT_FALSE(executor.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 3);
+  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 2);
 
-  std::cout << *(result_tiles[0].get());
-
-  txn_manager.CommitTransaction(txn2);
-  txn_manager.EndTransaction(txn2);
-
+  txn_manager.CommitTransaction(txn);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

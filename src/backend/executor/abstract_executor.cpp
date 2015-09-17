@@ -1,8 +1,14 @@
-/**
- * @brief Base class for all executors.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_executor.cpp
+//
+// Identification: src/backend/executor/abstract_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/abstract_executor.h"
 #include "backend/common/logger.h"
@@ -14,20 +20,14 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
-: node_(node) {
-}
+AbstractExecutor::AbstractExecutor(planner::AbstractPlan *node,
+                                   ExecutorContext *executor_context)
+    : node_(node), executor_context_(executor_context) {}
 
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
-: transaction_(transaction), node_(node) {
-}
-
-void AbstractExecutor::SetOutput(LogicalTile* table) {
-  output.reset(table);
-}
+void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
-LogicalTile* AbstractExecutor::GetOutput() {
+LogicalTile *AbstractExecutor::GetOutput() {
   // assert(output.get() != nullptr);
   return output.release();
 }
@@ -40,7 +40,7 @@ void AbstractExecutor::AddChild(AbstractExecutor *child) {
   children_.push_back(child);
 }
 
-const std::vector<AbstractExecutor*>& AbstractExecutor::GetChildren() const {
+const std::vector<AbstractExecutor *> &AbstractExecutor::GetChildren() const {
   return children_;
 }
 
@@ -58,15 +58,17 @@ bool AbstractExecutor::Init() {
 
   for (auto child : children_) {
     status = child->Init();
-    if(status == false) {
-      LOG_ERROR("Initialization failed in child executor with plan id : %d\n", child->node_->GetPlanNodeId());
+    if (status == false) {
+      LOG_ERROR("Initialization failed in child executor with plan id : %s\n",
+                child->node_->GetInfo().c_str());
       return false;
     }
   }
 
   status = DInit();
-  if(status == false) {
-    LOG_ERROR("Initialization failed in executor with plan id : %d\n", node_->GetPlanNodeId());
+  if (status == false) {
+    LOG_ERROR("Initialization failed in executor with plan id : %s\n",
+              node_->GetInfo().c_str());
     return false;
   }
 
@@ -82,7 +84,7 @@ bool AbstractExecutor::Init() {
  * @return Pointer to the logical tile processed by this executor.
  */
 bool AbstractExecutor::Execute() {
-  //TODO In the future, we might want to pass some kind of executor state to
+  // TODO In the future, we might want to pass some kind of executor state to
   // GetNextTile. e.g. params for prepared plans.
 
   bool status = DExecute();
@@ -90,5 +92,5 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

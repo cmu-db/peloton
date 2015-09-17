@@ -11,6 +11,7 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
+include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
@@ -22,19 +23,24 @@ include $(srcdir)/backend/main/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
+include $(srcdir)/backend/logging/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
-include $(srcdir)/postgres/bridge/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
 
+include $(top_srcdir)/third_party/Makefile.am
+
 bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpeloton.la
+# The order matters here
+
+lib_LTLIBRARIES += libpeloton.la 
+lib_LTLIBRARIES += libpelotonpg.la
 
 DEFAULT_INCLUDES =
 
@@ -43,41 +49,61 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(expression_FILES) \
+			$(brain_FILES) \
+			$(catalog_FILES) \
 			$(backend_FILES) \
 			$(bridge_FILES) \
-			$(catalog_FILES) \
 			$(common_FILES) \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
-			$(expression_FILES) \
 			$(index_FILES) \
 			$(planner_FILES) \
 			$(scheduler_FILES) \
 			$(storage_FILES) \
-			$(postgres_backend_FILES) \
-			$(postgres_bridge_FILES) \
-			$(postgres_common_FILES) \
-			$(postgres_port_FILES) \
-			$(postgres_timezone_FILES)
+			$(logging_FILES)			
 
-## HACK: To make use of different include flags for peloton and postgres.
+## Use different compiler flags for Peloton and pelotonpg.
 
-libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
+######################################################################
+# LIBPELOTON
+######################################################################
+
+libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
 
-libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2 \
-						 -Wno-write-strings -Wno-sign-compare \
-						 -Wno-unused-parameter -Wno-missing-field-initializers
+libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-if BUILD_OS_IS_DARWIN
-libpeloton_la_LDFLAGS = -lm
-## if build os is not darwin
-else
-libpeloton_la_LDFLAGS = -lm
-endif
+libpeloton_la_LDFLAGS = -lm -ldw $(TBB_LIBS)
+
+######################################################################
+# LIBPELOTONPG
+######################################################################
+
+libpelotonpg_la_SOURCES = \
+			$(postgres_backend_FILES) \
+			$(postgres_common_FILES) \
+			$(postgres_port_FILES) \
+			$(postgres_timezone_FILES) \
+			$(third_party_FILES)
+
+libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 $(third_party_INCLUDES)
+
+libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
+			  -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
+			  -Wno-sign-compare -Wno-write-strings \
+			  -msse4.2
 
 ######################################################################
 # PELOTON
@@ -85,11 +111,6 @@ endif
 
 peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
-peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
-peloton_LDADD = libpeloton.la $(TBB_LIBS)
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
-######################################################################
-# THIRD-PARTY INCLUDES
-######################################################################
-
-third_party_INCLUDES = -I$(top_srcdir)/third_party 
+peloton_LDADD = libpelotonpg.la libpeloton.la

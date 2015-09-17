@@ -44,9 +44,9 @@ typedef struct
 	List	   *triggerlist;
 } EventTriggerCacheEntry;
 
-static HTAB *EventTriggerCache;
-static MemoryContext EventTriggerCacheContext;
-static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
+thread_local static HTAB *EventTriggerCache;
+thread_local static MemoryContext EventTriggerCacheContext;
+thread_local static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
@@ -103,12 +103,11 @@ BuildEventTriggerCache(void)
 		if (CacheMemoryContext == NULL)
 			CreateCacheMemoryContext();
 		EventTriggerCacheContext =
-		    SHMAllocSetContextCreate(CacheMemoryContext,
-		                             "EventTriggerCache",
-		                             ALLOCSET_DEFAULT_MINSIZE,
-		                             ALLOCSET_DEFAULT_INITSIZE,
-		                             ALLOCSET_DEFAULT_MAXSIZE,
-		                             SHM_DEFAULT_SEGMENT);
+		    AllocSetContextCreate(CacheMemoryContext,
+		                          "EventTriggerCache",
+		                          ALLOCSET_DEFAULT_MINSIZE,
+		                          ALLOCSET_DEFAULT_INITSIZE,
+		                          ALLOCSET_DEFAULT_MAXSIZE);
 		CacheRegisterSyscacheCallback(EVENTTRIGGEROID,
 									  InvalidateEventCacheCallback,
 									  (Datum) 0);

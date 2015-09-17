@@ -1,58 +1,51 @@
-/*-------------------------------------------------------------------------
- *
- * nested_loop_join.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/nested_loop_join_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// nested_loop_join_executor.h
+//
+// Identification: src/backend/executor/nested_loop_join_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/catalog/schema.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/nested_loop_join_node.h"
+#include "backend/executor/abstract_join_executor.h"
 
 #include <vector>
 
 namespace peloton {
 namespace executor {
 
-class NestedLoopJoinExecutor : public AbstractExecutor {
-    NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
-    NestedLoopJoinExecutor& operator=(const NestedLoopJoinExecutor &) = delete;
+class NestedLoopJoinExecutor : public AbstractJoinExecutor {
+  NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
+  NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;
 
-public:
-    explicit NestedLoopJoinExecutor(planner::AbstractPlanNode *node);
+ public:
+  explicit NestedLoopJoinExecutor(planner::AbstractPlan *node,
+                                  ExecutorContext *executor_context);
 
-protected:
-    bool DInit();
+  ~NestedLoopJoinExecutor();
 
-    bool DExecute();
+ protected:
+  bool DInit();
 
-private:
+  bool DExecute();
 
-    //===--------------------------------------------------------------------===//
-    // Executor State
-    //===--------------------------------------------------------------------===//
+ private:
 
-    /** @brief Result of nested loop join. */
-    std::vector<LogicalTile *> result;
+  /* Buffer to store right child's result tiles */
+  std::vector<executor::LogicalTile*> right_result_tiles_;
+  bool right_child_done_ = false;
+  size_t right_result_itr_ = 0;
 
-    /** @brief Starting left table scan. */
-    bool left_scan_start = false;
-
-    //===--------------------------------------------------------------------===//
-    // Plan Info
-    //===--------------------------------------------------------------------===//
-
-    /** @brief Join predicate. */
-    const expression::AbstractExpression *predicate_ = nullptr;
+  /* Buffer to store left child's result tiles */
+  std::vector<executor::LogicalTile*> left_result_tiles_;
+  /* No need for an iterator because only the back (last) element is active */
 
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

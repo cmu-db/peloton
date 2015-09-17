@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_group_factory.h
+//
+// Identification: src/backend/storage/tile_group_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,21 +25,17 @@ namespace storage {
  * Super Awesome TileGroupFactory!!
  */
 class TileGroupFactory {
-public:
-    TileGroupFactory();
-    virtual ~TileGroupFactory();
+ public:
+  TileGroupFactory();
+  virtual ~TileGroupFactory();
 
-    static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                                   AbstractTable* table,
-                                   AbstractBackend* backend,
-                                   const std::vector<catalog::Schema>& schemas,
-                                   int tuple_count);
-
-
-
+  static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id,
+                                 oid_t tile_group_id, AbstractTable *table,
+                                 AbstractBackend *backend,
+                                 const std::vector<catalog::Schema> &schemas,
+                                 const column_map_type &column_map,
+                                 int tuple_count);
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

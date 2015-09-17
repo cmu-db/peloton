@@ -2432,6 +2432,7 @@ keep_going:						/* We will come back to here until there is
 					return PGRES_POLLING_READING;
 				}
 
+
 				/* Get the password salt if there is one. */
 				if (areq == AUTH_REQ_MD5)
 				{
@@ -2486,7 +2487,6 @@ keep_going:						/* We will come back to here until there is
 				conn->inStart = conn->inCursor;
 
 				/* Respond to the request if necessary. */
-
 				/*
 				 * Note that conn->pghost must be non-NULL if we are going to
 				 * avoid the Kerberos code doing a hostname look-up.

@@ -12,6 +12,8 @@
 #ifndef FORK_PROCESS_H
 #define FORK_PROCESS_H
 
+#include <thread>
+
 extern pid_t fork_process(void);
 
 #endif   /* FORK_PROCESS_H */
