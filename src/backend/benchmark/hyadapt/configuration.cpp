@@ -16,16 +16,16 @@ namespace peloton {
 namespace benchmark {
 namespace hyadapt{
 
-void usage_exit(FILE *out) {
+void Usage(FILE *out) {
   fprintf(out, "Command line options : hyadapt <options> \n"
           "   -h --help              :  Print help message \n"
           "   -o --operator-type     :  Operator type \n"
           "   -k --scale-factor      :  Scale factor \n"
-          "   -t --transactions      :  # of Transactions \n"
           "   -s --selectivity       :  Selectivity \n"
           "   -p --projectivity      :  Projectivity \n"
           "   -l --layout            :  Layout \n"
-          );
+          "   -t --transactions      :  # of Transactions \n"
+  );
   exit(EXIT_FAILURE);
 }
 
@@ -39,12 +39,56 @@ static struct option opts[] = {
     { NULL, 0, NULL, 0 }
 };
 
-void parse_arguments(int argc, char* argv[], configuration& state) {
+static void ValidateOperator(const configuration& state) {
+  if(state.operator_type < 1 || state.operator_type > 3) {
+    std::cout << "Invalid operator type :: " << state.layout << "\n";
+    exit(EXIT_FAILURE);
+  }
+  else {
+    switch(state.operator_type) {
+      case OPERATOR_TYPE_DIRECT:
+        std::cout << "operator_type: " << "DIRECT" << std::endl;
+        break;
+      case OPERATOR_TYPE_AGGREGATE:
+        std::cout << "operator_type: " << "AGGREGATE" << std::endl;
+        break;
+      case OPERATOR_TYPE_ARITHMETIC:
+        std::cout << "operator_type: " << "ARITHMETIC" << std::endl;
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+static void ValidateLayout(const configuration& state) {
+  if(state.layout < 0 || state.layout > 2) {
+    std::cout << "Invalid layout :: " << state.layout << "\n";
+    exit(EXIT_FAILURE);
+  }
+  else {
+    switch(state.layout) {
+      case LAYOUT_ROW:
+        std::cout << "layout: " << "ROW" << std::endl;
+        break;
+      case LAYOUT_COLUMN:
+        std::cout << "layout: " << "COLUMN" << std::endl;
+        break;
+      case LAYOUT_HYBRID:
+        std::cout << "layout: " << "HYBRID" << std::endl;
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
   state.operator_type = OPERATOR_TYPE_INVALID;
 
-  state.scale_factor = 1.0;
+  state.scale_factor = 100.0;
   state.transactions = 1;
   state.selectivity = 1.0;
   state.projectivity = 1.0;
@@ -63,7 +107,7 @@ void parse_arguments(int argc, char* argv[], configuration& state) {
     switch (c) {
       case 'o':
         state.operator_type  = (OperatorType) atoi(optarg);
-        std::cout << "operator_type: " << state.operator_type << std::endl;
+        ValidateOperator(state);
         break;
       case 'k':
         state.scale_factor  = atoi(optarg);
@@ -79,7 +123,7 @@ void parse_arguments(int argc, char* argv[], configuration& state) {
         break;
       case 'l':
         state.layout  = (LayoutType) atoi(optarg);
-        std::cout << "layout: " << state.layout << std::endl;
+        ValidateLayout(state);
         break;
       case 't':
         state.transactions  = atoi(optarg);
@@ -87,12 +131,12 @@ void parse_arguments(int argc, char* argv[], configuration& state) {
         break;
 
       case 'h':
-        usage_exit(stderr);
+        Usage(stderr);
         break;
 
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        usage_exit(stderr);
+        Usage(stderr);
     }
   }
 }

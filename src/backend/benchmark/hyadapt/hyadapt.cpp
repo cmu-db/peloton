@@ -25,6 +25,9 @@ configuration state;
 // Main Entry Point
 void RunBenchmark(){
 
+  // Set layout
+  peloton_layout = state.layout;
+
   switch(state.operator_type) {
     case OPERATOR_TYPE_DIRECT:
       RunDirectTest();
@@ -51,7 +54,7 @@ void RunBenchmark(){
 
 int main(int argc, char **argv) {
 
-  peloton::benchmark::hyadapt::parse_arguments(argc, argv,
+  peloton::benchmark::hyadapt::ParseArguments(argc, argv,
                                                peloton::benchmark::hyadapt::state);
 
   peloton::benchmark::hyadapt::RunBenchmark();
