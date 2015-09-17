@@ -52,9 +52,9 @@ class configuration {
 
 };
 
-void usage_exit(FILE *out);
+void Usage(FILE *out);
 
-void parse_arguments(int argc, char* argv[], configuration& state);
+void ParseArguments(int argc, char* argv[], configuration& state);
 
 }  // namespace hyadapt
 }  // namespace benchmark

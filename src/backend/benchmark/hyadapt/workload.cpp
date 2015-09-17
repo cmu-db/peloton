@@ -17,30 +17,31 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
+#include <cassert>
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/materialization_plan.h"
-#include "backend/planner/seq_scan_plan.h"
-
+#include "backend/benchmark/hyadapt/workload.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/executor/abstract_executor.h"
+#include "backend/executor/seq_scan_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression_util.h"
+#include "backend/index/index_factory.h"
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/materialization_plan.h"
+#include "backend/planner/seq_scan_plan.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
 #include "backend/storage/table_factory.h"
-#include "backend/index/index_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -51,8 +52,9 @@ void RunDirectTest() {
 
   std::cout << "LAYOUT :: " << peloton_layout << "\n";
 
-  const int tuples_per_tilegroup_count = 1000;
-  const int tile_group_count = 100;
+  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+  const int tile_group_count = state.scale_factor;
+
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
   const oid_t col_count = 250;
   const bool is_inlined = true;
