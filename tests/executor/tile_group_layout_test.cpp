@@ -60,8 +60,8 @@ namespace test {
 void RunTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  const int tuples_per_tilegroup_count = 1000;
-  const int tile_group_count = 50;
+  const int tuples_per_tilegroup_count = 10;
+  const int tile_group_count = 5;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
   const oid_t col_count = 250;
   const bool is_inlined = true;

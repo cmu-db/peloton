@@ -25,9 +25,6 @@ configuration state;
 // Main Entry Point
 void RunBenchmark(){
 
-  // Set layout
-  peloton_layout = state.layout;
-
   switch(state.operator_type) {
     case OPERATOR_TYPE_DIRECT:
       RunDirectTest();

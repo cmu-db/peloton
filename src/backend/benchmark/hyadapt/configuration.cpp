@@ -41,19 +41,19 @@ static struct option opts[] = {
 
 static void ValidateOperator(const configuration& state) {
   if(state.operator_type < 1 || state.operator_type > 3) {
-    std::cout << "Invalid operator type :: " << state.layout << "\n";
+    std::cout << "Invalid operator type :: " << state.operator_type << "\n";
     exit(EXIT_FAILURE);
   }
   else {
     switch(state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        std::cout << "operator_type: " << "DIRECT" << std::endl;
+        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "DIRECT" << std::endl;
         break;
       case OPERATOR_TYPE_AGGREGATE:
-        std::cout << "operator_type: " << "AGGREGATE" << std::endl;
+        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "AGGREGATE" << std::endl;
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        std::cout << "operator_type: " << "ARITHMETIC" << std::endl;
+        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "ARITHMETIC" << std::endl;
         break;
       default:
         break;
@@ -69,13 +69,13 @@ static void ValidateLayout(const configuration& state) {
   else {
     switch(state.layout) {
       case LAYOUT_ROW:
-        std::cout << "layout: " << "ROW" << std::endl;
+        std::cout << std::setw(20) << std::left << "layout " << " : " << "ROW" << std::endl;
         break;
       case LAYOUT_COLUMN:
-        std::cout << "layout: " << "COLUMN" << std::endl;
+        std::cout << std::setw(20) << std::left << "layout " << " : " << "COLUMN" << std::endl;
         break;
       case LAYOUT_HYBRID:
-        std::cout << "layout: " << "HYBRID" << std::endl;
+        std::cout << std::setw(20) << std::left << "layout " << " : " << "HYBRID" << std::endl;
         break;
       default:
         break;
@@ -89,7 +89,7 @@ static void ValidateProjectivity(const configuration& state) {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << "projectivity: " << state.projectivity << std::endl;
+  std::cout << std::setw(20) << std::left << "projectivity " << " : " << state.projectivity << std::endl;
 }
 
 static void ValidateSelectivity(const configuration& state) {
@@ -98,7 +98,7 @@ static void ValidateSelectivity(const configuration& state) {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << "selectivity: " << state.selectivity << std::endl;
+  std::cout << std::setw(20) << std::left << "selectivity " << " : " << state.selectivity << std::endl;
 }
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
@@ -126,27 +126,21 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     switch (c) {
       case 'o':
         state.operator_type  = (OperatorType) atoi(optarg);
-        ValidateOperator(state);
         break;
       case 'k':
         state.scale_factor  = atoi(optarg);
-        std::cout << "scale_factor: " << state.scale_factor << std::endl;
         break;
       case 's':
         state.selectivity  = atof(optarg);
-        ValidateSelectivity(state);
         break;
       case 'p':
         state.projectivity  = atof(optarg);
-        ValidateProjectivity(state);
         break;
       case 'l':
         state.layout  = (LayoutType) atoi(optarg);
-        ValidateLayout(state);
         break;
       case 't':
         state.transactions  = atoi(optarg);
-        std::cout << "transactions: " << state.transactions << std::endl;
         break;
 
       case 'h':
@@ -158,6 +152,19 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         Usage(stderr);
     }
   }
+
+  // Print configuration
+  ValidateOperator(state);
+
+  peloton_layout = state.layout;
+  ValidateLayout(state);
+
+  ValidateSelectivity(state);
+  ValidateProjectivity(state);
+
+  std::cout << std::setw(20) << std::left << "scale_factor " << " : " << state.scale_factor << std::endl;
+  std::cout << std::setw(20) << std::left << "transactions " << " : " << state.transactions << std::endl;
+
 }
 
 
