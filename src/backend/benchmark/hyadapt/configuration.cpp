@@ -83,6 +83,24 @@ static void ValidateLayout(const configuration& state) {
   }
 }
 
+static void ValidateProjectivity(const configuration& state) {
+  if(state.projectivity < 0 || state.projectivity > 1) {
+    std::cout << "Invalid projectivity :: " <<  state.projectivity << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << "projectivity: " << state.projectivity << std::endl;
+}
+
+static void ValidateSelectivity(const configuration& state) {
+  if(state.selectivity < 0 || state.selectivity > 1) {
+    std::cout << "Invalid selectivity :: " <<  state.selectivity << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << "selectivity: " << state.selectivity << std::endl;
+}
+
 void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
@@ -93,6 +111,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.selectivity = 1.0;
   state.projectivity = 1.0;
 
+  state.column_count = 250;
   state.layout = LAYOUT_ROW;
 
   // Parse args
@@ -115,11 +134,11 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 's':
         state.selectivity  = atof(optarg);
-        std::cout << "selectivity: " << state.selectivity << std::endl;
+        ValidateSelectivity(state);
         break;
       case 'p':
         state.projectivity  = atof(optarg);
-        std::cout << "projectivity: " << state.projectivity << std::endl;
+        ValidateProjectivity(state);
         break;
       case 'l':
         state.layout  = (LayoutType) atoi(optarg);
