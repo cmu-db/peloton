@@ -20,6 +20,10 @@ namespace hyadapt{
 
 void RunDirectTest();
 
+void RunAggregateTest();
+
+void RunArithmeticTest();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton

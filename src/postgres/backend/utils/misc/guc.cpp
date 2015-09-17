@@ -412,17 +412,17 @@ static const struct config_enum_entry peloton_mode_options[] = {
 };
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum PelotonTileGroupLayoutType
+typedef enum LayoutType
 {
-  PELOTON_TILEGROUP_LAYOUT_ROW,   /* Pure row layout */
-  PELOTON_TILEGROUP_LAYOUT_COLUMN, /* Pure column layout */
-  PELOTON_TILEGROUP_LAYOUT_HYBRID /* Hybrid layout */
-} PelotonTileGroupLayoutType;
+  LAYOUT_ROW,   /* Pure row layout */
+  LAYOUT_COLUMN, /* Pure column layout */
+  LAYOUT_HYBRID /* Hybrid layout */
+} LayoutType;
 
 static const struct config_enum_entry peloton_tilegroup_layout_options[] = {
-  {"row", PELOTON_TILEGROUP_LAYOUT_ROW, false},
-  {"column", PELOTON_TILEGROUP_LAYOUT_COLUMN, false},
-  {"hybrid", PELOTON_TILEGROUP_LAYOUT_HYBRID, false},
+  {"row", LAYOUT_ROW, false},
+  {"column", LAYOUT_COLUMN, false},
+  {"hybrid", LAYOUT_HYBRID, false},
   {NULL, 0, false}
 };
 
@@ -487,7 +487,7 @@ int			row_security;
 
 // TODO: Peloton Changes
 int			peloton_mode;
-int     peloton_tilegroup_layout;
+int     peloton_layout;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -3705,8 +3705,8 @@ struct config_enum ConfigureNamesEnum[] =
       gettext_noop("Change peloton tilegroup layout"),
       gettext_noop("This determines the tilegroup layout.")
     },
-    &peloton_tilegroup_layout,
-    PELOTON_TILEGROUP_LAYOUT_ROW, peloton_tilegroup_layout_options,
+    &peloton_layout,
+    LAYOUT_ROW, peloton_tilegroup_layout_options,
     // the constant 0 can be replaced by an enum
     NULL, NULL, NULL
   },
