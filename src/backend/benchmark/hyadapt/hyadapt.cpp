@@ -24,6 +24,7 @@
 
 #include "backend/benchmark/hyadapt/hyadapt.h"
 #include "backend/benchmark/hyadapt/configuration.h"
+#include "backend/benchmark/hyadapt/workload.h"
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -60,6 +61,8 @@ int main(int argc, char **argv) {
 
   peloton::benchmark::hyadapt::parse_arguments(argc, argv,
                                                peloton::benchmark::hyadapt::state);
+
+  peloton::benchmark::hyadapt::RunDirectTest();
 
   return 0;
 }
