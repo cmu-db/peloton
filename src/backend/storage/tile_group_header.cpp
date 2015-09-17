@@ -1,19 +1,20 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group_header.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_group_header.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_group_header.cpp
+//
+// Identification: src/backend/storage/tile_group_header.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/storage/tile_group_header.h"
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 namespace peloton {
 namespace storage {
@@ -22,104 +23,134 @@ namespace storage {
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
-std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_header) {
+std::ostream &operator<<(std::ostream &os,
+                         const TileGroupHeader &tile_group_header) {
+  os << "\t-----------------------------------------------------------\n";
+  os << "\tTILE GROUP HEADER \n";
 
-	os << "\t-----------------------------------------------------------\n";
-	os << "\tTILE GROUP HEADER \n";
+  oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
+  peloton::ItemPointer item;
 
-	oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
-  ItemPointer item;
-
-	for(oid_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
-
+  for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
     txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
     cid_t beg_commit_id = tile_group_header.GetBeginCommitId(header_itr);
     cid_t end_commit_id = tile_group_header.GetEndCommitId(header_itr);
+    bool insert_commit= tile_group_header.GetInsertCommit(header_itr);
+    bool delete_commit= tile_group_header.GetDeleteCommit(header_itr);
 
     int width = 10;
     os << "\t txn id : ";
-    if(txn_id == MAX_TXN_ID)
+    if (txn_id == MAX_TXN_ID)
       os << std::setw(width) << "MAX_TXN_ID";
     else
       os << std::setw(width) << txn_id;
 
     os << " beg cid : ";
-    if(beg_commit_id == MAX_CID)
+    if (beg_commit_id == MAX_CID)
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << beg_commit_id;
 
     os << " end cid : ";
-    if(end_commit_id == MAX_CID)
+    if (end_commit_id == MAX_CID)
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
 
-    ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
-    os << " prev : " << "[ " << location.block << " , " << location.offset << " ]\n";
+    os << " insert commit : ";
+    if (insert_commit == true)
+      os << "O";
+    else
+      os << "X";
 
-	}
+    os << " delete commit : ";
+    if (delete_commit == true)
+      os << "O";
+    else
+      os << "X";
 
-	os << "\t-----------------------------------------------------------\n";
+    peloton::ItemPointer location =
+        tile_group_header.GetPrevItemPointer(header_itr);
+    os << " prev : "
+       << "[ " << location.block << " , " << location.offset << " ]\n";
+  }
 
-	return os;
+  os << "\t-----------------------------------------------------------\n";
+
+  return os;
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
+  oid_t active_tuple_slots = GetNextTupleSlot();
+  std::stringstream os;
 
-	oid_t active_tuple_slots = GetNextTupleSlot();
+  os << "\t-----------------------------------------------------------\n";
 
-	std::cout << "\t-----------------------------------------------------------\n";
+  for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
+    bool own = (txn_id == GetTransactionId(header_itr));
+    bool activated = (at_cid >= GetBeginCommitId(header_itr));
+    bool invalidated = (at_cid >= GetEndCommitId(header_itr));
 
-	for(oid_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
-
-		bool own = (txn_id == GetTransactionId(header_itr));
-		bool activated = (at_cid >= GetBeginCommitId(header_itr));
-		bool invalidated = (at_cid >= GetEndCommitId(header_itr));
-
-		txn_id_t txn_id = GetTransactionId(header_itr);
-		cid_t beg_commit_id = GetBeginCommitId(header_itr);
+    txn_id_t txn_id = GetTransactionId(header_itr);
+    cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
+    bool insert_commit= GetInsertCommit(header_itr);
+    bool delete_commit= GetDeleteCommit(header_itr);
 
     int width = 10;
 
-		std::cout << "\tslot :: " << std::setw(width) << header_itr;
+    os << "\tslot :: " << std::setw(width) << header_itr;
 
-    std::cout << " txn id : ";
-    if(txn_id == MAX_TXN_ID)
-      std::cout << std::setw(width) << "MAX_TXN_ID";
+    os << " txn id : ";
+    if (txn_id == MAX_TXN_ID)
+      os << std::setw(width) << "MAX_TXN_ID";
     else
-      std::cout << std::setw(width) << txn_id;
+      os << std::setw(width) << txn_id;
 
-		std::cout << " beg cid : ";
-		if(beg_commit_id == MAX_CID)
-		  std::cout << std::setw(width) << "MAX_CID";
-		else
-		  std::cout << std::setw(width) << beg_commit_id;
-
-    std::cout << " end cid : ";
-    if(end_commit_id == MAX_CID)
-      std::cout << std::setw(width) << "MAX_CID";
+    os << " beg cid : ";
+    if (beg_commit_id == MAX_CID)
+      os << std::setw(width) << "MAX_CID";
     else
-      std::cout << std::setw(width) << end_commit_id;
+      os << std::setw(width) << beg_commit_id;
 
-    ItemPointer location = GetPrevItemPointer(header_itr);
-    std::cout << " prev : " << "[ " << location.block << " , " << location.offset << " ]"; //<<
+    os << " end cid : ";
+    if (end_commit_id == MAX_CID)
+      os << std::setw(width) << "MAX_CID";
+    else
+      os << std::setw(width) << end_commit_id;
 
-    std::cout << " own : " << own;
-		std::cout << " activated : " << activated;
-		std::cout << " invalidated : " << invalidated << " ";
+    os << " insert commit : ";
+    if (insert_commit == true)
+      os << "O";
+    else
+      os << "X";
 
-		// Visible iff past Insert || Own Insert
-		if((!own && activated && !invalidated) || (own && !activated && !invalidated))
-			std::cout << "\t\t[ true  ]\n";
-		else
-			std::cout << "\t\t[ false ]\n";
+    os << " delete commit : ";
+    if (delete_commit == true)
+      os << "O";
+    else
+      os << "X";
 
-	}
+    peloton::ItemPointer location = GetPrevItemPointer(header_itr);
+    os << " prev : "
+       << "[ " << location.block << " , " << location.offset << " ]";  //<<
 
-	std::cout << "\t-----------------------------------------------------------\n";
+    os << " own : " << own;
+    os << " activated : " << activated;
+    os << " invalidated : " << invalidated << " ";
+
+    // Visible iff past Insert || Own Insert
+    if ((!own && activated && !invalidated) ||
+        (own && !activated && !invalidated))
+      os << "\t\t[ true  ]\n";
+    else
+      os << "\t\t[ false ]\n";
+  }
+
+  os << "\t-----------------------------------------------------------\n";
+
+  LOG_INFO("%s", os.str().c_str());
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

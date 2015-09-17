@@ -827,18 +827,24 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 
 			/* report estimated # pages */
 			*pages = curpages;
-			/* quick exit if rel is clearly empty */
-			if (curpages == 0)
-			{
-				*tuples = 0;
-				*allvisfrac = 0;
-				break;
-			}
+
 			/* coerce values in pg_class to more desirable types */
 			relpages = (BlockNumber) rel->rd_rel->relpages;
 			reltuples = (double) rel->rd_rel->reltuples;
 			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
 
+			/* quick exit if rel is clearly empty */
+			if (curpages == 0)
+			{
+                          //TODO :: Peloton Modification
+                          if( relpages == 1 ){
+                            *tuples = reltuples;
+                            break;
+                          }
+				*tuples = 0;
+				*allvisfrac = 0;
+				break;
+			}
 			/*
 			 * If it's an index, discount the metapage while estimating the
 			 * number of tuples.  This is a kluge because it assumes more than

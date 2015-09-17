@@ -1,14 +1,20 @@
-/**
- * @brief Header file for append executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// append_executor.h
+//
+// Identification: src/backend/executor/append_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
-
 
 namespace peloton {
 namespace executor {
@@ -21,12 +27,12 @@ namespace executor {
 class AppendExecutor : public AbstractExecutor {
  public:
   AppendExecutor(const AppendExecutor &) = delete;
-  AppendExecutor& operator=(const AppendExecutor &) = delete;
+  AppendExecutor &operator=(const AppendExecutor &) = delete;
   AppendExecutor(const AppendExecutor &&) = delete;
-  AppendExecutor& operator=(const AppendExecutor &&) = delete;
+  AppendExecutor &operator=(const AppendExecutor &&) = delete;
 
-  explicit AppendExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+  explicit AppendExecutor(planner::AbstractPlan *node,
+                          ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -35,7 +41,5 @@ class AppendExecutor : public AbstractExecutor {
  private:
   size_t cur_child_id_ = 0;
 };
-
-
 }
 }

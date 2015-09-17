@@ -19,12 +19,15 @@ LT_INIT([disable-static])
 # Check for pthreads 
 ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs0-dev])])
 
+# Do not allow AC_PROG_CXX set a default CXXFLAGS
+: ${CXXFLAGS=""}
+
 AC_LANG([C++])
 AC_PROG_CXX([g++])
-AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 AC_PROG_YACC
 AC_PROG_LEX
+AM_PATH_PYTHON
 
 ######################################################################
 # LIBRARIES : MM, DL, RT, and M
@@ -41,6 +44,9 @@ AC_CHECK_LIB([dl], [dlsym], ,
 
 AC_CHECK_LIB([rt], [clock_gettime], ,
              AC_MSG_ERROR([Please install librt library], 1))
+
+AC_CHECK_LIB([dw], [dwarf_filesrc], ,
+             AC_MSG_ERROR([Please install libdw library : libdw-dev], 1))
 
 ######################################################################
 # OS X Support
@@ -121,6 +127,33 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
+
+######################################################################
+# Debug Compliation Support
+######################################################################
+AC_MSG_CHECKING([whether to build with debug information])
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--enable-debug],
+        [enable debug data generation (def=no)])],
+    [debugit="$enableval"],
+    [debugit=no])
+AC_MSG_RESULT([$debugit])
+
+if test x"$debugit" = x"yes"; then
+    AC_DEFINE([DEBUG],[],[Debug Mode])
+    DEBUG_CXXFLAGS="-g -O0 -Wall -Wextra -Werror"
+    DEBUG_CPPFLAGS=""
+else
+    AC_DEFINE([NDEBUG],[],[No-debug Mode])
+    DEBUG_CXXFLAGS="-O2 "
+    DEBUG_CPPFLAGS="-DNDEBUG"
+fi
+
+AC_SUBST([DEBUG_CXXFLAGS])
+AC_SUBST([DEBUG_CPPFLAGS])
+
+
+
 #####################################################################
 # Workaround for Code Coverage
 #####################################################################
@@ -151,9 +184,8 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-C Flags        : ${CFLAGS}
-CPP Flags      : ${CPPFLAGS}
-C++ Flags      : ${CXXFLAGS}
+CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS} 
+C++ Flags      : ${CXXFLAGS} ${DEBUG_CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS
 

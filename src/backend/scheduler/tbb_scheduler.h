@@ -1,19 +1,20 @@
-/*-------------------------------------------------------------------------
- *
- * tbb_scheduler.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/scheduler/tbb_scheduler.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tbb_scheduler.h
+//
+// Identification: src/backend/scheduler/tbb_scheduler.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "backend/scheduler/abstract_scheduler.h"
-#include "backend/scheduler/tbb_task.h"
+#include "backend/common/logger.h"
+
 #include "tbb/task_scheduler_init.h"
 
 namespace peloton {
@@ -26,34 +27,32 @@ class TBBSchedulerState {
   tbb::task *root;
 
  public:
-
   TBBSchedulerState() {
     // Start root task
-    root = new(tbb::task::allocate_root()) tbb::empty_task;
+    root = new (tbb::task::allocate_root()) tbb::empty_task;
     root->increment_ref_count();
   }
 
   ~TBBSchedulerState() {
-    // Destroy root task
+    LOG_TRACE("Destroying root task \n");
     root->set_ref_count(0);
     root->destroy(*root);
+    LOG_TRACE("Destroyed root task \n");
   }
-
 };
 
-
 //===--------------------------------------------------------------------===//
-// TBB Scheduler
+// Scheduler
 //===--------------------------------------------------------------------===//
 
 class TBBScheduler : public AbstractScheduler {
-
  public:
-
   TBBScheduler();
   ~TBBScheduler();
 
-  void Run(AbstractTask *task);
+  // add task to queue
+  void Run(handler function_pointer, void *args,
+           TaskPriorityType priority = TASK_PRIORTY_TYPE_NORMAL);
 
   // wait for all tasks
   void Wait();
@@ -64,5 +63,5 @@ class TBBScheduler : public AbstractScheduler {
   TBBSchedulerState *state = nullptr;
 };
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

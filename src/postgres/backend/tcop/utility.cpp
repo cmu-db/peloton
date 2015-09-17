@@ -68,6 +68,13 @@
 
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
+#include "backend/common/logger.h"
+#include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/ddl_utils.h"
+
+void peloton_ProcessUtility(Node *parsetree, const char *queryString,
+                            ProcessUtilityContext context, ParamListInfo params,
+                            DestReceiver *dest, char *completionTag);
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -334,9 +341,22 @@ ProcessUtility(Node *parsetree,
                 context, params,
                 dest, completionTag);
   else
+  {
+    elog(DEBUG3, "DDL Query :: %s Type :: %d",
+         queryString, nodeTag(parsetree));
+
     standard_ProcessUtility(parsetree, queryString,
                 context, params,
                 dest, completionTag);
+
+    // TODO: Peloton Changes
+    if(IsBackend == true)
+    {
+      peloton_ProcessUtility(parsetree, queryString,
+                             context, params,
+                             dest, completionTag);
+    }
+  }
 }
 
 /*
@@ -359,7 +379,6 @@ standard_ProcessUtility(Node *parsetree,
             char *completionTag)
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-  Peloton_Status *status;
 
   check_xact_readonly(parsetree);
 
@@ -574,12 +593,11 @@ standard_ProcessUtility(Node *parsetree,
       {
       /* no event triggers for global objects */
       PreventTransactionChain(isTopLevel, "CREATE DATABASE");
-      createdb((CreatedbStmt *) parsetree);
+      Oid db_oid = createdb((CreatedbStmt *) parsetree);
 
       // TODO: Peloton Changes
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
-      CdbStmt->database_id = get_database_oid( CdbStmt->dbname, true );
-
+      CdbStmt->database_id = db_oid;
       }
       break;
 
@@ -656,13 +674,17 @@ standard_ProcessUtility(Node *parsetree,
 
     case T_VacuumStmt:
       {
-        VacuumStmt *stmt = (VacuumStmt *) parsetree;
+        // TODO :: Peloton Changes
+        // Disabled Vacuumming in Postgres
+        if(false){
+          VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
-        /* we choose to allow this during "read only" transactions */
-        PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
-                       "VACUUM" : "ANALYZE");
-        /* forbidden in parallel mode due to CommandIsReadOnly */
-        ExecVacuum(stmt, isTopLevel);
+          /* we choose to allow this during "read only" transactions */
+          PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
+              "VACUUM" : "ANALYZE");
+          /* forbidden in parallel mode due to CommandIsReadOnly */
+          ExecVacuum(stmt, isTopLevel);
+        }
       }
       break;
 
@@ -908,16 +930,21 @@ standard_ProcessUtility(Node *parsetree,
       break;
   }
 
-  status = peloton_create_status();
+}
+
+void
+peloton_ProcessUtility(Node *parsetree,
+            const char *queryString,
+            ProcessUtilityContext context,
+            ParamListInfo params,
+            DestReceiver *dest,
+            char *completionTag)
+{
+  elog(DEBUG3, "DDL Query : %s", queryString);
 
   // TODO: Peloton Changes
-  
-  peloton_send_ddl(status, parsetree, queryString,
-                 TopTransactionContext,
-                 CurTransactionContext);
+  peloton_ddl(parsetree);
 
-  peloton_get_status(status);
-  peloton_destroy_status(status);
 }
 
 /*
@@ -974,6 +1001,9 @@ ProcessUtilitySlow(Node *parsetree,
           /* Run parse analysis ... */
           stmts = transformCreateStmt((CreateStmt *) parsetree,
                         queryString);
+          // TODO: Peloton Changes
+          // Store transformedCreateStmt because we don't want to do this again in Peloton
+          ((CreateStmt *)parsetree)->stmts = stmts;
 
           /* ... and do it */
           foreach(l, stmts)
@@ -1076,14 +1106,15 @@ ProcessUtilitySlow(Node *parsetree,
           lockmode = AlterTableGetLockLevel(atstmt->cmds);
           relid = AlterTableLookupRelation(atstmt, lockmode);
 
-          // TODO: Peloton Changes
-          ((AlterTableStmt *)parsetree)->relation_id = relid;
-
           if (OidIsValid(relid))
           {
             /* Run parse analysis ... */
             stmts = transformAlterTableStmt(relid, atstmt,
                             queryString);
+
+            // TODO: Peloton Changes
+            ((AlterTableStmt *)parsetree)->relation_id = relid;
+            ((AlterTableStmt *)parsetree)->stmts = stmts;
 
             /* ... ensure we have an event trigger context ... */
             EventTriggerAlterTableStart(parsetree);
@@ -1305,7 +1336,8 @@ ProcessUtilitySlow(Node *parsetree,
           EventTriggerAlterTableEnd();
 
           // TODO: Peloton Changes
-          ((IndexStmt *)parsetree)->index_id = address.objectId;
+          ((IndexStmt *)parsetree)->index_id =  address.objectId;
+
         }
         break;
 

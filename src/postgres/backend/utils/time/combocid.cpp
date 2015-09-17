@@ -51,7 +51,7 @@
 
 
 /* Hash table to lookup combo cids by cmin and cmax */
-static HTAB *comboHash = NULL;
+thread_local static HTAB *comboHash = NULL;
 
 /* Key and entry structures for the hash table */
 typedef struct

@@ -22,12 +22,13 @@
 /* see palloc.h.  Must be before postgres.h */
 #define MCXT_INCLUDE_DEFINITIONS
 
+#include <signal.h>
+
 #include "postgres.h"
 
 #include "miscadmin.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-
 
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
@@ -37,32 +38,22 @@
  * CurrentMemoryContext
  *		Default memory context for allocations.
  */
-MemoryContext CurrentMemoryContext = NULL;
+thread_local MemoryContext CurrentMemoryContext = NULL;
 
 /*
  * Standard top-level contexts. For a description of the purpose of each
  * of these contexts, refer to src/backend/utils/mmgr/README
  */
-MemoryContext TopMemoryContext = NULL;
-MemoryContext ErrorContext = NULL;
-MemoryContext PostmasterContext = NULL;
-MemoryContext CacheMemoryContext = NULL;
-MemoryContext MessageContext = NULL;
+thread_local MemoryContext TopMemoryContext = NULL;
+thread_local MemoryContext ErrorContext = NULL;
+thread_local MemoryContext PostmasterContext = NULL;
+thread_local MemoryContext CacheMemoryContext = NULL;
+thread_local MemoryContext MessageContext = NULL;
 thread_local MemoryContext TopTransactionContext = NULL;
 thread_local MemoryContext CurTransactionContext = NULL;
 
-// TODO: Peloton Changes
-/*
- * The Shared memory context is a copy of the memory context routimes.
- * Calls to malloc and friends replaced with calls to the OSSP MM shared
- * memory library.  The TopSharedMemoryContext must be initialized
- * prior to fork (i.e. by the postmaster) via a call to SHMContextInit
- * and can be destroyed at postmaster exit via a call to SHMContextShutdown
- */
-MemoryContext TopSharedMemoryContext = NULL;
-
 /* This is a transient link to the active portal's memory context: */
-MemoryContext PortalContext = NULL;
+thread_local MemoryContext PortalContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level);
@@ -688,7 +679,10 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+		raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -723,7 +717,10 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -760,7 +757,10 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -831,7 +831,10 @@ palloc(Size size)
 	AssertNotInCriticalSection(CurrentMemoryContext);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -860,7 +863,10 @@ palloc0(Size size)
 	AssertNotInCriticalSection(CurrentMemoryContext);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -892,7 +898,10 @@ palloc_extended(Size size, int flags)
 
 	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
 		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -958,7 +967,10 @@ repalloc(void *pointer, Size size)
 	void	   *ret;
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
@@ -1007,7 +1019,10 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocHugeSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -1038,7 +1053,10 @@ repalloc_huge(void *pointer, Size size)
 	void	   *ret;
 
 	if (!AllocHugeSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
@@ -1109,3 +1127,5 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
+
+

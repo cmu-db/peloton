@@ -39,7 +39,6 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -76,18 +75,23 @@
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
 
-
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
+
+// TODO: Peloton Changes
+#include "backend/logging/log_manager.h"
+#include "backend/common/message_queue.h"
+#include "backend/common/stack_trace.h"
+
 
 /* ----------------
  *		global variables
  * ----------------
  */
-const char *debug_query_string; /* client-supplied query string */
+thread_local const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebug;
+thread_local CommandDest whereToSendOutput = DestDebug;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -108,7 +112,7 @@ int			PostAuthDelay = 0;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static long max_stack_depth_bytes = 100 * 1024L;
+thread_local static long max_stack_depth_bytes = 100 * 1024L;
 
 /*
  * Stack base pointer -- initialized by PostmasterMain and inherited by
@@ -116,7 +120,7 @@ static long max_stack_depth_bytes = 100 * 1024L;
  * it directly. Newer versions use set_stack_base(), but we want to stay
  * binary-compatible for the time being.
  */
-char	   *stack_base_ptr = NULL;
+thread_local char	   *stack_base_ptr = NULL;
 
 /*
  * On IA64 we also have to remember the register stack base.
@@ -130,54 +134,54 @@ char	   *register_stack_base_ptr = NULL;
  * will reread the configuration file. (Better than doing the
  * reading in the signal handler, ey?)
  */
-static volatile sig_atomic_t got_SIGHUP = false;
+thread_local static volatile sig_atomic_t got_SIGHUP = false;
 
 /*
  * Flag to keep track of whether we have started a transaction.
  * For extended query protocol this has to be remembered across messages.
  */
-static bool xact_started = false;
+thread_local static bool xact_started = false;
 
 /*
  * Flag to indicate that we are doing the outer loop's read-from-client,
  * as opposed to any random read from client that might happen within
  * commands like COPY FROM STDIN.
  */
-static bool DoingCommandRead = false;
+thread_local static bool DoingCommandRead = false;
 
 /*
  * Flags to implement skip-till-Sync-after-error behavior for messages of
  * the extended query protocol.
  */
-static bool doing_extended_query_message = false;
-static bool ignore_till_sync = false;
+thread_local static bool doing_extended_query_message = false;
+thread_local static bool ignore_till_sync = false;
 
 /*
  * If an unnamed prepared statement exists, it's stored here.
  * We keep it separate from the hashtable kept by commands/prepare.c
  * in order to reduce overhead for short-lived queries.
  */
-static CachedPlanSource *unnamed_stmt_psrc = NULL;
+thread_local static CachedPlanSource *unnamed_stmt_psrc = NULL;
 
 /* assorted command-line switches */
-static const char *userDoption = NULL;	/* -D switch */
+thread_local static const char *userDoption = NULL;	/* -D switch */
 
-static bool EchoQuery = false;	/* -E switch */
+thread_local static bool EchoQuery = false;	/* -E switch */
 
 /*
  * people who want to use EOF should #define DONTUSENEWLINE in
  * tcop/tcopdebug.h
  */
 #ifndef TCOP_DONTUSENEWLINE
-static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
+thread_local static int	UseNewLine = 1;		/* Use newlines query delimiters (the default) */
 #else
-static int	UseNewLine = 0;		/* Use EOF as query delimiters */
+thread_local static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 #endif   /* TCOP_DONTUSENEWLINE */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
-static bool RecoveryConflictPending = false;
-static bool RecoveryConflictRetryable = true;
-static ProcSignalReason RecoveryConflictReason;
+thread_local static bool RecoveryConflictPending = false;
+thread_local static bool RecoveryConflictRetryable = true;
+thread_local static ProcSignalReason RecoveryConflictReason;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -814,9 +818,7 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
   // TODO: Peloton Changes
   /* figure out if catalog query or user query */
   plan->pelotonQuery = IsPelotonQuery(plan->relationOids);
-
-  fprintf(stdout, "IsPelotonQuery : %d \n", plan->pelotonQuery);
-
+  elog(INFO, "Peloton query : %d \n", plan->pelotonQuery);
 
   if (log_planner_stats)
     ShowUsage("PLANNER STATISTICS");
@@ -1100,20 +1102,12 @@ exec_simple_query(const char *query_string)
      */
     MemoryContextSwitchTo(oldcontext);
 
-    // TODO: Peloton Changes
-    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
-
     /*
      * Now we can create the destination receiver object.
      */
     receiver = CreateDestReceiver(dest);
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
-
-    /*
-     * Switch back to transaction context for execution.
-     */
-    MemoryContextSwitchTo(oldcontext);
 
     /*
      * Run the portal to completion, and then drop it (and the receiver).
@@ -1278,12 +1272,11 @@ exec_parse_message(const char *query_string,	/* string to execute */
     drop_unnamed_stmt();
     /* Create context for parsing */
     unnamed_stmt_context =
-        SHMAllocSetContextCreate(MessageContext,
-                                 "unnamed prepared statement",
-                                 ALLOCSET_DEFAULT_MINSIZE,
-                                 ALLOCSET_DEFAULT_INITSIZE,
-                                 ALLOCSET_DEFAULT_MAXSIZE,
-                                 SHM_DEFAULT_SEGMENT);
+        AllocSetContextCreate(MessageContext,
+                              "unnamed prepared statement",
+                              ALLOCSET_DEFAULT_MINSIZE,
+                              ALLOCSET_DEFAULT_INITSIZE,
+                              ALLOCSET_DEFAULT_MAXSIZE);
     oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
   }
 
@@ -3120,6 +3113,9 @@ check_stack_depth(void)
   if (stack_depth < 0)
     stack_depth = -stack_depth;
 
+  // TODO: Peloton Changes
+  return;
+
   /*
    * Trouble?
    *
@@ -3714,6 +3710,9 @@ PostgresMain(int argc, char *argv[],
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
+  elog(DEBUG1, "PostgresMain :: TopMemoryContext : %p CurrentMemoryContext : %p",
+       TopMemoryContext, CurrentMemoryContext);
+
   /*
    * General initialization.
    *
@@ -3722,6 +3721,13 @@ PostgresMain(int argc, char *argv[],
    * involves database access should be there, not here.
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
+
+  // TODO: Peloton Changes
+  if(IsBackend == true){
+    StartTransactionCommand();
+    peloton_bootstrap();
+    CommitTransactionCommand();
+  }
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
@@ -3786,12 +3792,11 @@ PostgresMain(int argc, char *argv[],
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
-                                            "MessageContext",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+  MessageContext = AllocSetContextCreate(TopMemoryContext,
+                                         "MessageContext",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
 
   /*
    * Remember stand-alone backend startup time
@@ -3943,12 +3948,13 @@ PostgresMain(int argc, char *argv[],
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
     //MemoryContextStats(TopSharedMemoryContext);
+    //MemoryContextStats(TopMemoryContext);
 
     initStringInfo(&input_message);
 
     /*
      * (1) If we've reached idle state, tell the frontend we're ready for
-     * a new___ query.
+     * a new query.
      *
      * Note: this includes fflush()'ing the last of the prior output.
      *
@@ -4250,8 +4256,11 @@ PostgresMain(int argc, char *argv[],
       case EOF:
 
         // TODO: Peloton Changes
-        MemoryContextDelete(MessageContext);
-        MemoryContextDelete(CacheMemoryContext);
+        if(IsPostmasterEnvironment == true)
+        {
+          MemoryContextDelete(MessageContext);
+          MemoryContextDelete(CacheMemoryContext);
+        }
 
         /*
          * Reset whereToSendOutput to prevent ereport from attempting

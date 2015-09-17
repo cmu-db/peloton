@@ -1,8 +1,14 @@
-/**
- * @brief Header file for limit executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// limit_executor.h
+//
+// Identification: src/backend/executor/limit_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -17,23 +23,22 @@ namespace executor {
  * Postgres also allows stand-alone LIMIT and stand-alone OFFSET.
  * Need further change to accommodate it.
  */
-class LimitExecutor: public AbstractExecutor {
-public:
+class LimitExecutor : public AbstractExecutor {
+ public:
   LimitExecutor(const LimitExecutor &) = delete;
-  LimitExecutor& operator=(const LimitExecutor &) = delete;
+  LimitExecutor &operator=(const LimitExecutor &) = delete;
   LimitExecutor(const LimitExecutor &&) = delete;
-  LimitExecutor& operator=(const LimitExecutor &&) = delete;
+  LimitExecutor &operator=(const LimitExecutor &&) = delete;
 
-  explicit LimitExecutor(planner::AbstractPlanNode *node,
-                         concurrency::Transaction *transaction);
+  explicit LimitExecutor(planner::AbstractPlan *node,
+                         ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
-
+ private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -43,7 +48,6 @@ private:
 
   /** @brief Number of tuples returned. */
   size_t num_returned_ = 0;
-
 };
 
 } /* namespace executor */

@@ -1,74 +1,75 @@
-/*-------------------------------------------------------------------------
- *
- * task.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/scheduler/task.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_task.h
+//
+// Identification: src/backend/scheduler/abstract_task.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <iostream>
+
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/scheduler/abstract_task.h"
 
-#include <iostream>
+#include "tbb/tbb.h"
 
 namespace peloton {
 namespace scheduler {
 
-typedef  ResultType (*handler)(void*);
-
 //===--------------------------------------------------------------------===//
-// Abstract Task
+// Task
 //===--------------------------------------------------------------------===//
 
-class AbstractTask {
+typedef Result (*handler)(void *);
 
+class AbstractTask : public tbb::task {
  public:
-  AbstractTask(handler function_pointer, void *args)
- : function_pointer(function_pointer),
-   args(args),
-   output(RESULT_TYPE_INVALID){
-
+  AbstractTask(handler function_pointer, void *args, TaskPriorityType priority)
+      : function_pointer(function_pointer),
+        args(args),
+        output(RESULT_INVALID),
+        priority(priority) {
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
-
   }
 
-  oid_t GetTaskId() {
-    return task_id;
+  tbb::task *execute() {
+    LOG_TRACE("Starting task \n");
+    output = (*function_pointer)(args);
+    LOG_TRACE("Stopping task \n");
+
+    return nullptr;
   }
 
-  ResultType GetOuput() {
-    return output;
-  }
+  oid_t GetTaskId() { return task_id; }
 
-  void *GetArgs() {
-    return args;
-  }
+  Result GetOuput() { return output; }
 
-  handler GetTask() {
-    return function_pointer;
-  }
+  void *GetArgs() { return args; }
 
-  TaskPriorityType GetPriority() {
-    return priority;
-  }
+  handler GetTask() { return function_pointer; }
+
+  TaskPriorityType GetPriority() { return priority; }
 
  protected:
   oid_t task_id;
 
   handler function_pointer;
+
   void *args;
-  ResultType output;
+
+  Result output;
 
   TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL;
 };
 
-
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

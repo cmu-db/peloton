@@ -1,23 +1,22 @@
-/*-------------------------------------------------------------------------
- *
- * scheduler_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/scheduler/scheduler_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// scheduler_test.cpp
+//
+// Identification: tests/scheduler/scheduler_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "backend/scheduler/tbb_scheduler.h"
 #include "backend/main/kernel.h"
-#include "backend/catalog/catalog.h"
 
 #include <sstream>
+#include "backend/scheduler/tbb_scheduler.h"
 
 namespace peloton {
 namespace test {
@@ -29,18 +28,15 @@ namespace test {
 TEST(SchedulerTests, KernelTest) {
   auto kernel_func = &backend::Kernel::Handler;
 
-  std::unique_ptr<scheduler::TBBTask> task1(new scheduler::TBBTask(reinterpret_cast<scheduler::handler>(kernel_func),
-                                                                   const_cast<char*>("CREATE DATABASE TESTDB;")));
+  std::unique_ptr<scheduler::TBBScheduler> tbb_scheduler(
+      new scheduler::TBBScheduler());
 
-  std::unique_ptr<scheduler::TBBScheduler> tbb_scheduler(new scheduler::TBBScheduler());
-
-  tbb_scheduler->Run(task1.get());
+  tbb_scheduler->Run(reinterpret_cast<scheduler::handler>(kernel_func),
+                     const_cast<char *>("CREATE DATABASE TESTDB;"));
 
   // final wait
   tbb_scheduler->Wait();
-
 }
 
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

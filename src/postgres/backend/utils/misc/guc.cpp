@@ -392,6 +392,20 @@ static const struct config_enum_entry row_security_options[] = {
 	{NULL, 0, false}
 };
 
+// TODO: Peloton Changes
+/*
+ * Peloton mode options can take values 0,1,2
+ * Range of values may be changed
+ * Values have to be defined as enum
+ */
+static const struct config_enum_entry peloton_mode_options[] = {
+	{"peloton_mode_0", 0, false},
+	{"peloton_mode_1", 1, false},
+	{"peloton_mode_2", 2, false},
+	{NULL, 0, false}
+};
+
+
 /*
  * Options for enum values stored in other modules
  */
@@ -450,6 +464,9 @@ int			tcp_keepalives_interval;
 int			tcp_keepalives_count;
 
 int			row_security;
+
+// TODO: Peloton Changes
+int			peloton_mode = 0;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -687,7 +704,7 @@ typedef struct
 static const char *memory_units_hint =
 	gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
 
-static const unit_conversion memory_unit_conversion_table[] =
+thread_local static const unit_conversion memory_unit_conversion_table[] =
 {
 	{ "TB",		GUC_UNIT_KB,	 	1024*1024*1024 },
 	{ "GB",		GUC_UNIT_KB,	 	1024*1024 },
@@ -712,10 +729,10 @@ static const unit_conversion memory_unit_conversion_table[] =
 	{ "" }		/* end of table marker */
 };
 
-static const char *time_units_hint =
+thread_local static const char *time_units_hint =
 	gettext_noop("Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\".");
 
-static const unit_conversion time_unit_conversion_table[] =
+thread_local static const unit_conversion time_unit_conversion_table[] =
 {
 	{ "d",		GUC_UNIT_MS,	1000 * 60 * 60 * 24 },
 	{ "h",		GUC_UNIT_MS,	1000 * 60 * 60 },
@@ -768,7 +785,7 @@ static const unit_conversion time_unit_conversion_table[] =
 
 /******** option records follow ********/
 
-static struct config_bool ConfigureNamesBool[] =
+struct config_bool ConfigureNamesBool[] =
 {
 	{
 		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -1211,7 +1228,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&autovacuum_start_daemon,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 
@@ -1622,7 +1639,7 @@ static struct config_bool ConfigureNamesBool[] =
 };
 
 
-static struct config_int ConfigureNamesInt[] =
+struct config_int ConfigureNamesInt[] =
 {
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
@@ -2677,7 +2694,7 @@ static struct config_int ConfigureNamesInt[] =
 };
 
 
-static struct config_real ConfigureNamesReal[] =
+struct config_real ConfigureNamesReal[] =
 {
 	{
 		{"seq_page_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2818,7 +2835,7 @@ static struct config_real ConfigureNamesReal[] =
 };
 
 
-static struct config_string ConfigureNamesString[] =
+struct config_string ConfigureNamesString[] =
 {
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
@@ -3400,7 +3417,7 @@ static struct config_string ConfigureNamesString[] =
 };
 
 
-static struct config_enum ConfigureNamesEnum[] =
+struct config_enum ConfigureNamesEnum[] =
 {
 	{
 		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -3649,6 +3666,19 @@ static struct config_enum ConfigureNamesEnum[] =
 		NULL, NULL, NULL
 	},
 
+	// TODO: Peloton Changes
+  // Refer guc_tables.h for PELOTON_MODE_OPTIONS declaration
+	{
+		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
+			gettext_noop("Change peloton mode"),
+			gettext_noop("System behavior will be modified depending on the specific peloton mode")
+		},
+		&peloton_mode,
+		0, peloton_mode_options,
+		// the constant 0 can be replaced by an enum
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0, NULL, NULL, NULL, NULL
@@ -3664,7 +3694,7 @@ static struct config_enum ConfigureNamesEnum[] =
  * should be mapped to a new___ one only if the new___ variable has very similar
  * semantics to the old.
  */
-static const char *const map_old_guc_names[] = {
+thread_local static const char *const map_old_guc_names[] = {
 	"sort_mem", "work_mem",
 	"vacuum_mem", "maintenance_work_mem",
 	NULL
@@ -3674,10 +3704,10 @@ static const char *const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
+thread_local static struct config_generic **guc_variables;
 
 /* Current number of variables contained in the vector */
-static int	num_guc_variables;
+thread_local static int	num_guc_variables;
 
 /*
  * Lookup of variables for pg_file_settings view.
@@ -3690,20 +3720,20 @@ typedef struct ConfigFileVariable
 	char	*filename;
 	int		sourceline;
 } ConfigFileVariable;
-static struct ConfigFileVariable *guc_file_variables;
+thread_local static struct ConfigFileVariable *guc_file_variables;
 
 /* Number of file variables */
-static int	num_guc_file_variables;
+thread_local static int	num_guc_file_variables;
 
 /* Vector capacity */
-static int	size_guc_variables;
+thread_local static int	size_guc_variables;
 
 
-static bool guc_dirty;			/* TRUE if need to do commit/abort work */
+thread_local static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
-static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
+thread_local static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
-static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+thread_local static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -4222,7 +4252,7 @@ guc_name_compare(const char *namea, const char *nameb)
  * processed command-line switches.
  */
 void
-InitializeGUCOptions(void)
+InitializeGUCOptions(bool send_messages)
 {
 	int			i;
 
@@ -4237,29 +4267,32 @@ InitializeGUCOptions(void)
 	 */
 	build_guc_variables();
 
-	/*
-	 * Load all variables with their compiled-in defaults, and initialize
-	 * status fields as needed.
-	 */
-	for (i = 0; i < num_guc_variables; i++)
+	if(send_messages == true)
 	{
-		InitializeOneGUCOption(guc_variables[i]);
+	  /*
+	   * Load all variables with their compiled-in defaults, and initialize
+	   * status fields as needed.
+	   */
+	  for (i = 0; i < num_guc_variables; i++)
+	  {
+	    InitializeOneGUCOption(guc_variables[i]);
+	  }
+
+	  guc_dirty = false;
+
+	  reporting_enabled = false;
+
+	  /*
+	   * Prevent any attempt to override the transaction modes from
+	   * non-interactive sources.
+	   */
+	  SetConfigOption("transaction_isolation", "default",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_read_only", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
+	  SetConfigOption("transaction_deferrable", "no",
+	          PGC_POSTMASTER, PGC_S_OVERRIDE);
 	}
-
-	guc_dirty = false;
-
-	reporting_enabled = false;
-
-	/*
-	 * Prevent any attempt to override the transaction modes from
-	 * non-interactive sources.
-	 */
-	SetConfigOption("transaction_isolation", "default",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_read_only", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
-	SetConfigOption("transaction_deferrable", "no",
-					PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from

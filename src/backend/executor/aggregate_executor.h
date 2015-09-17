@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * aggregate_executor.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/aggregate_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// aggregate_executor.h
+//
+// Identification: src/backend/executor/aggregate_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -35,12 +35,12 @@ namespace executor {
 class AggregateExecutor : public AbstractExecutor {
  public:
   AggregateExecutor(const AggregateExecutor &) = delete;
-  AggregateExecutor& operator=(const AggregateExecutor &) = delete;
+  AggregateExecutor &operator=(const AggregateExecutor &) = delete;
   AggregateExecutor(AggregateExecutor &&) = delete;
-  AggregateExecutor& operator=(AggregateExecutor &&) = delete;
+  AggregateExecutor &operator=(AggregateExecutor &&) = delete;
 
-  AggregateExecutor(planner::AbstractPlanNode *node,
-                    concurrency::Transaction *transaction);
+  AggregateExecutor(planner::AbstractPlan *node,
+                    ExecutorContext *executor_context);
 
   ~AggregateExecutor();
 
@@ -66,5 +66,5 @@ class AggregateExecutor : public AbstractExecutor {
   storage::DataTable *output_table = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

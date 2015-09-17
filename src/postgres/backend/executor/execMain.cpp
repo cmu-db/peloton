@@ -64,7 +64,16 @@
 #include "nodes/pprint.h"
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
-#include "backend/bridge/plan_transformer.h"
+
+#include "backend/bridge/dml/mapper/mapper.h"
+
+static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
+                                CmdType operation,
+                                bool sendTuples,
+                                long numberTuples,
+                                ScanDirection direction,
+                                DestReceiver *dest,
+                                TupleDesc tupDesc);
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -85,8 +94,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			TupleDesc tupDesc);
+			DestReceiver *dest);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
@@ -340,14 +348,35 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * run plan
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					operation,
-					sendTuples,
-					count,
-					direction,
-					dest,
-          queryDesc->tupDesc);
+	{
+    elog(DEBUG3, "DML Query :: Type :: %d", operation);
+
+    // PG Query
+    //if(true)
+    if(queryDesc->plannedstmt->pelotonQuery == false)
+	  {
+	    ExecutePlan(estate,
+	                queryDesc->planstate,
+	                operation,
+	                sendTuples,
+	                count,
+	                direction,
+	                dest);
+	  }
+	  // Peloton Query
+	  else
+	  {
+	    peloton_ExecutePlan(estate,
+	                        queryDesc->planstate,
+	                        operation,
+	                        sendTuples,
+	                        count,
+	                        direction,
+	                        dest,
+	                        queryDesc->tupDesc);
+	  }
+
+	}
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1528,17 +1557,17 @@ ExecutePlan(EState *estate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			TupleDesc tupDesc)
+			DestReceiver *dest)
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
-	Peloton_Status *status;
+  long    result_tuple_count;
 
 	/*
 	 * initialize local variables
 	 */
 	current_tuple_count = 0;
+	result_tuple_count = 0;
 
 	/*
 	 * Set the direction.
@@ -1583,6 +1612,8 @@ ExecutePlan(EState *estate,
 		if (sendTuples)
 			(*dest->receiveSlot) (slot, dest);
 
+		result_tuple_count++;
+
 		/*
 		 * check our tuple count.. if we've processed the proper number then
 		 * quit, else loop again and process more tuples.  Zero numberTuples
@@ -1593,49 +1624,37 @@ ExecutePlan(EState *estate,
 			break;
 	}
 
-  // TODO: Peloton Changes
-	status = peloton_create_status();
-
-  peloton_send_dml(status, planstate,
-                   tupDesc,
-                   TopTransactionContext,
-                   CurTransactionContext);
-
-  // Go over any result slots
-  if(status->m_result_slots != NULL)
-  {
-    ListCell   *lc;
-
-    foreach(lc, status->m_result_slots)
-    {
-      TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
-
-      /*
-       * if the tuple is null, then we assume there is nothing more to
-       * process so we just end the loop...
-       */
-      if (TupIsNull(slot))
-        break;
-
-      /*
-       * If we are supposed to send the tuple somewhere, do so. (In
-       * practice, this is probably always the case at this point.)
-       */
-      if (sendTuples)
-        (*dest->receiveSlot) (slot, dest);
-
-      // Clean up slot
-      pfree(slot);
-    }
-
-    // Clean up list
-    pfree(status->m_result_slots);
-  }
-
-  peloton_get_status(status);
-  peloton_destroy_status(status);
+	elog(DEBUG3, "Result Tuple Count :: %ld", result_tuple_count);
 }
 
+/* ----------------------------------------------------------------
+ *    peloton_ExecutePlan
+ *
+ *    Processes the query plan using Peloton executors.
+ *    Until we have retrieved 'numberTuples' tuples,
+ *    moving in the specified direction.
+ *
+ *    Runs to completion if numberTuples is 0
+ *
+ * Note: the ctid attribute is a 'junk' attribute that is removed before the
+ * user can see it
+ * ----------------------------------------------------------------
+ */
+static void
+peloton_ExecutePlan(EState *estate,
+      PlanState *planstate,
+      CmdType operation,
+      bool sendTuples,
+      long numberTuples,
+      ScanDirection direction,
+      DestReceiver *dest,
+      TupleDesc tupDesc)
+{
+
+  // TODO: Peloton Changes
+  peloton_dml(planstate, sendTuples, dest, tupDesc);
+
+}
 
 /*
  * ExecRelCheck --- check that tuple meets constraints for result relation

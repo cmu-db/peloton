@@ -1,8 +1,14 @@
-/**
- * @brief Header for logical tile.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// logical_tile.h
+//
+// Identification: src/backend/executor/logical_tile.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -13,6 +19,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 
@@ -38,20 +45,25 @@ namespace executor {
  */
 class LogicalTile {
   friend class LogicalTileFactory;
-  struct ColumnInfo;
 
  public:
+  struct ColumnInfo;
+
   LogicalTile(const LogicalTile &) = delete;
-  LogicalTile& operator=(const LogicalTile &) = delete;
+  LogicalTile &operator=(const LogicalTile &) = delete;
   LogicalTile(LogicalTile &&) = delete;
-  LogicalTile& operator=(LogicalTile &&) = delete;
+  LogicalTile &operator=(LogicalTile &&) = delete;
 
   ~LogicalTile();
 
-  void AddColumn(const ColumnInfo& cp, bool own_base_tile);
+  void AddColumn(const ColumnInfo &cp, bool own_base_tile);
 
   void AddColumn(storage::Tile *base_tile, bool own_base_tile,
-      oid_t origin_column_id, oid_t position_list_idx);
+                 oid_t origin_column_id, oid_t position_list_idx);
+
+  void AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids);
+
+  void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
   int AddPositionList(std::vector<oid_t> &&position_list);
 
@@ -65,15 +77,25 @@ class LogicalTile {
 
   size_t GetColumnCount();
 
-  const std::vector<ColumnInfo>& GetSchema() const;
+  const std::vector<ColumnInfo> &GetSchema() const;
 
-  catalog::Schema* GetPhysicalSchema() const;
+  catalog::Schema *GetPhysicalSchema() const;
 
-  void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
+  void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  const std::vector<std::vector<oid_t> >& GetPositionLists() const;
+  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
 
-  void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
+  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
+
+  void SetPositionListsAndVisibility(
+      std::vector<std::vector<oid_t>> &&position_lists);
+
+  void TransferOwnershipTo(LogicalTile *other);
+
+  std::unordered_set<storage::Tile *> &GetOwnedBaseTiles();
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const LogicalTile &logical_tile);
 
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator
@@ -89,7 +111,7 @@ class LogicalTile {
     friend class LogicalTile;
 
    public:
-    iterator& operator++();
+    iterator &operator++();
 
     iterator operator++(int);
 
@@ -113,25 +135,29 @@ class LogicalTile {
 
   iterator end();
 
-  friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
-
-  private:
+  //===--------------------------------------------------------------------===//
+  // Column Info
+  //===--------------------------------------------------------------------===//
 
   /** @brief Column metadata for logical tile */
   struct ColumnInfo {
-    /** @brief Position list in logical tile that will correspond to this column. */
+    /** @brief Position list in logical tile that will correspond to this
+     * column. */
     oid_t position_list_idx;
 
     /**
      * @brief Pointer to base tile that column is from.
-     * IMPORTANT: We use a pointer instead of the oid of the tile to minimize indirection.
+     * IMPORTANT: We use a pointer instead of the oid of the tile to minimize
+     * indirection.
      */
     storage::Tile *base_tile;
 
-    /** @brief Original column id of this logical tile column in its associated base tile. */
+    /** @brief Original column id of this logical tile column in its associated
+     * base tile. */
     oid_t origin_column_id;
   };
 
+ private:
   // Dummy default constructor
   LogicalTile(){};
 
@@ -145,7 +171,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<oid_t> > position_lists_;
+  std::vector<std::vector<oid_t>> position_lists_;
 
   /**
    * @brief Bit-vector storing visibility of each row in the position lists.
@@ -158,10 +184,7 @@ class LogicalTile {
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;
-
 };
 
-
-} // namespace executor
-} // namespace peloton
-
+}  // namespace executor
+}  // namespace peloton

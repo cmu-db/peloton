@@ -4,8 +4,3 @@
     ...
     obj:*/libtbb.so.*
 }
-{
-   Ignore tbb task
-   Memcheck:Addr1
-   fun:_ZN3tbb4taskC1Ev
-}
