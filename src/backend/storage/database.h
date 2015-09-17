@@ -1,111 +1,90 @@
-/*-------------------------------------------------------------------------
- *
-l* database.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// database.h
+//
+// Identification: src/backend/storage/database.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "tbb/concurrent_unordered_map.h"
-#include "backend/common/types.h"
 #include "backend/storage/data_table.h"
-#include "backend/common/logger.h"
 
 #include <iostream>
+
+struct peloton_status;
+struct dirty_table_info;
+struct dirty_index_info;
 
 namespace peloton {
 namespace storage {
 
-class Database;
-
-typedef tbb::concurrent_unordered_map<oid_t, Database*> oid_t_to_database_ptr;
-typedef tbb::concurrent_unordered_map<std::string, oid_t> string_to_oid_t;
-typedef tbb::concurrent_unordered_map<oid_t, std::string> oid_t_to_string;
-typedef tbb::concurrent_unordered_map<oid_t, storage::DataTable*> oid_t_to_datatable_ptr;
-
-// database oid -> database address
-static oid_t_to_database_ptr database_oid_to_address;
-
 //===--------------------------------------------------------------------===//
-// DataBase
+// DATABASE
 //===--------------------------------------------------------------------===//
 
-class Database{
+class Database {
+ public:
+  Database(Database const &) = delete;
 
-public:
-    Database(Database const&) = delete;  
+  Database(oid_t database_oid) : database_oid(database_oid) {}
 
-    // Constructor
-    Database( oid_t database_oid ) 
-    : database_oid(database_oid) { }
+  ~Database();
 
-    ~Database(){
-      //drop all tables in current db
-      DeleteAllTables();
-    };
+  //===--------------------------------------------------------------------===//
+  // OPERATIONS
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
-    
-    // Create a new database 
-    static Database* GetDatabaseById( oid_t database_oid );
-    static bool DeleteDatabaseById( oid_t database_oid );
+  oid_t GetOid() const { return database_oid; }
 
-    bool AddTable( storage::DataTable* table );
+  //===--------------------------------------------------------------------===//
+  // TABLE
+  //===--------------------------------------------------------------------===//
 
-    bool DeleteTableById( oid_t table_oid );
-    bool DeleteTableByName( std::string table_name );
-    bool DeleteAllTables();
+  void AddTable(storage::DataTable *table);
 
-    storage::DataTable* GetTableByName( const std::string table_name ) const;
-    storage::DataTable* GetTableById( const oid_t table_oid ) const;
-    storage::DataTable* GetTableByPosition( const oid_t table_position ) const;
+  storage::DataTable *GetTable(const oid_t table_offset) const;
 
-    oid_t GetTableIdByName( const std::string table_name ) const;
-    std::string GetTableNameById( const oid_t table_oid ) const;
+  storage::DataTable *GetTableWithOid(const oid_t table_oid) const;
 
+  storage::DataTable *GetTableWithName(const std::string table_name) const;
 
-    inline size_t GetTableCount() const {
-      return table_oid_to_address.size();
-    }
+  oid_t GetTableCount() const;
 
-    inline size_t GetDatabaseOid() const {
-      return database_oid;
-    }
+  void DropTableWithOid(const oid_t table_oid);
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
 
-    // Get a string representation of this database
-    friend std::ostream& operator<<(std::ostream& os, const Database& database);
+  void UpdateStats(void) const;
 
-protected:
+  void UpdateStatsWithOid(const oid_t table_oid) const;
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // UTILITIES
+  //===--------------------------------------------------------------------===//
 
-    // database oid
-    oid_t database_oid;
+  // Get a string representation of this database
+  friend std::ostream &operator<<(std::ostream &os, const Database &database);
 
-    // table name -> table oid
-    string_to_oid_t table_name_to_oid;
+ protected:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    // table oid -> table name
-    oid_t_to_string table_oid_to_name;
+  // database oid
+  oid_t database_oid;
 
-    // table oid -> table address
-    oid_t_to_datatable_ptr table_oid_to_address;
+  // TABLES
+  std::vector<storage::DataTable *> tables;
+
+  std::mutex database_mutex;
 };
 
-
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

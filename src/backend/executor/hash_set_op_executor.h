@@ -1,8 +1,15 @@
-/**
- * @brief Header file for hash-based set operation executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// hash_set_op_executor.h
+//
+// Identification: src/backend/executor/hash_set_op_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <unordered_map>
@@ -11,7 +18,6 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/expression/container_tuple.h"
-
 
 namespace peloton {
 namespace executor {
@@ -35,32 +41,29 @@ namespace executor {
 class HashSetOpExecutor : public AbstractExecutor {
  public:
   HashSetOpExecutor(const HashSetOpExecutor &) = delete;
-  HashSetOpExecutor& operator=(const HashSetOpExecutor &) = delete;
+  HashSetOpExecutor &operator=(const HashSetOpExecutor &) = delete;
   HashSetOpExecutor(const HashSetOpExecutor &&) = delete;
-  HashSetOpExecutor& operator=(const HashSetOpExecutor &&) = delete;
+  HashSetOpExecutor &operator=(const HashSetOpExecutor &&) = delete;
 
-  explicit HashSetOpExecutor(planner::AbstractPlanNode *node,
-                             concurrency::Transaction *transaction);
+  explicit HashSetOpExecutor(planner::AbstractPlan *node,
+                             ExecutorContext *executor_context);
 
  protected:
   bool DInit();
   bool DExecute();
 
  private:
-
-
   /** @brief Counter-pair type for binary set-op */
   typedef struct {
     size_t left = 0;
     size_t right = 0;
-  }  counter_pair_t;
+  } counter_pair_t;
 
   /** @brief Type definitions for hash table */
-  typedef std::unordered_map<expression::ContainerTuple<LogicalTile>,
-                             counter_pair_t,
-                             expression::ContainerTupleHasher<LogicalTile>,
-                             expression::ContainerTupleComparator<LogicalTile> >
-  HashSetOpMapType;
+  typedef std::unordered_map<
+      expression::ContainerTuple<LogicalTile>, counter_pair_t,
+      expression::ContainerTupleHasher<LogicalTile>,
+      expression::ContainerTupleComparator<LogicalTile>> HashSetOpMapType;
 
   /* Helper functions */
 
@@ -83,7 +86,6 @@ class HashSetOpExecutor : public AbstractExecutor {
 
   /** @brief Next tile Id in the vector to return */
   size_t next_tile_to_return_ = 0;
-
 };
 
 } /* namespace executor */

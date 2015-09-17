@@ -1,18 +1,19 @@
-/*-------------------------------------------------------------------------
- *
- * index_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/index/index_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_test.cpp
+//
+// Identification: tests/index/index_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 #include "harness.h"
 
+#include "backend/common/logger.h"
 #include "backend/index/index_factory.h"
 
 namespace peloton {
@@ -22,41 +23,46 @@ namespace test {
 // Index Tests
 //===--------------------------------------------------------------------===//
 
-TEST(IndexTests, BtreeMultimapIndexTest) {
+void PrintSlots(const std::vector<ItemPointer> &slots) {
+  std::cout << "SLOTS :: " << slots.size() << "\n";
+  for (auto item : slots) std::cout << item.block << " " << item.offset << "\n";
+}
 
-  std::vector<std::vector<std::string> > column_names;
-  std::vector<catalog::ColumnInfo> columns;
-  std::vector<catalog::Schema*> schemas;
+TEST(IndexTests, BtreeIndexTest) {
+  std::vector<std::vector<std::string>> column_names;
+  std::vector<catalog::Column> columns;
+  std::vector<catalog::Schema *> schemas;
 
   // SCHEMA
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, "B", true);
-  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", true);
-  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 25, "B", true);
+  catalog::Column column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "C", true);
+  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "D", true);
 
   columns.push_back(column1);
   columns.push_back(column2);
 
   catalog::Schema *key_schema = new catalog::Schema(columns);
+  key_schema->SetIndexedColumns({0, 1});
 
   columns.push_back(column3);
   columns.push_back(column4);
 
   catalog::Schema *tuple_schema = new catalog::Schema(columns);
 
+  // BTREE Multi INDEX
+  bool unique_keys = false;
 
-  // BTREE INDEX
-
-  index::IndexMetadata *index_metadata = new index::IndexMetadata("btree_index",
-                                                                  INDEX_METHOD_TYPE_BTREE_MULTIMAP,
-                                                                  tuple_schema,
-                                                                  key_schema,
-                                                                  true);
-
+  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+      "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  peloton::VarlenPool *pool = new peloton::VarlenPool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -96,31 +102,24 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
 
-  EXPECT_EQ(false, index->Exists(keynonce));
-  EXPECT_EQ(true, index->Exists(key0));
+  auto locations = index->Scan(keynonce);
+  EXPECT_EQ(locations.size(), 0);
+  locations = index->Scan(key0);
+  EXPECT_EQ(locations.size(), 1);
 
-  index->GetLocationsForKey(key1);
-  index->GetLocationsForKey(key0);
+  //EXPECT_EQ(location.block, item0.block);
 
-  index->GetLocationsForKeyBetween(key1, key3);
+  LOG_TRACE("Delete \n");
 
-  index->GetLocationsForKeyLT(key3);
-  index->GetLocationsForKeyLTE(key3);
+  index->DeleteEntry(key0, item0);
+  index->DeleteEntry(key1, item1);
+  index->DeleteEntry(key2, item2);
+  index->DeleteEntry(key3, item1);
+  index->DeleteEntry(key4, item1);
 
-  index->GetLocationsForKeyGT(key1);
-  index->GetLocationsForKeyGTE(key1);
-
-  index->Scan();
-
-  index->DeleteEntry(key0);
-  index->DeleteEntry(key1);
-  index->DeleteEntry(key2);
-  index->DeleteEntry(key3);
-  index->DeleteEntry(key4);
-
-  EXPECT_EQ(false, index->Exists(key0));
-
-  index->Scan();
+  locations = index->Scan(key0);
+  EXPECT_EQ(locations.size(), 0);
+  //EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;
   delete key1;
@@ -138,8 +137,5 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 }
 
 
-} // End test namespace
-} // End peloton namespace
-
-
-
+}  // End test namespace
+}  // End peloton namespace

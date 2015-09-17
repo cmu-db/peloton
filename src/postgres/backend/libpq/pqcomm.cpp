@@ -103,7 +103,7 @@ int			Unix_socket_permissions;
 char	   *Unix_socket_group;
 
 /* Where the Unix socket files are (list of palloc'd strings) */
-static List *sock_paths = NIL;
+thread_local static List *sock_paths = NIL;
 
 /*
  * Buffers for low-level I/O.
@@ -115,21 +115,21 @@ static List *sock_paths = NIL;
 #define PQ_SEND_BUFFER_SIZE 8192
 #define PQ_RECV_BUFFER_SIZE 8192
 
-static char *PqSendBuffer;
-static int	PqSendBufferSize;	/* Size send buffer */
-static int	PqSendPointer;		/* Next index to store a byte in PqSendBuffer */
-static int	PqSendStart;		/* Next index to send a byte in PqSendBuffer */
+static thread_local char *PqSendBuffer;
+static thread_local int	PqSendBufferSize;	/* Size send buffer */
+static thread_local int	PqSendPointer;		/* Next index to store a byte in PqSendBuffer */
+static thread_local int	PqSendStart;		/* Next index to send a byte in PqSendBuffer */
 
-static char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
-static int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
-static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
+static thread_local char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
+static thread_local int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
+static thread_local int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
 /*
  * Message status
  */
-static bool PqCommBusy;			/* busy sending data to the client */
-static bool PqCommReadingMsg;	/* in the middle of reading a message */
-static bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
+static thread_local bool PqCommBusy;			/* busy sending data to the client */
+static thread_local bool PqCommReadingMsg;	/* in the middle of reading a message */
+static thread_local bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
 
 
 /* Internal functions */
@@ -152,7 +152,7 @@ static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
 static int	Setup_AF_UNIX(char *sock_path);
 #endif   /* HAVE_UNIX_SOCKETS */
 
-static PQcommMethods PqCommSocketMethods = {
+thread_local static PQcommMethods PqCommSocketMethods = {
 	socket_comm_reset,
 	socket_flush,
 	socket_flush_if_writable,

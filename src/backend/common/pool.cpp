@@ -1,23 +1,21 @@
-/*-------------------------------------------------------------------------
- *
- * pool.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/pool.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// pool.cpp
+//
+// Identification: src/backend/common/pool.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/common/pool.h"
 
 namespace peloton {
 
-
 /// Allocate a continous block of memory of the specified size.
-void* Pool::Allocate(std::size_t size) {
-
+void *VarlenPool::Allocate(std::size_t size) {
   void *retval = nullptr;
 
   // Protect using pool lock
@@ -28,12 +26,10 @@ void* Pool::Allocate(std::size_t size) {
     /// See if there is space in the current chunk
     Chunk *current_chunk = &chunks[current_chunk_index];
     if (size > current_chunk->size - current_chunk->offset) {
-
       /// Not enough space. Check if it is greater than our allocation size.
       if (size > allocation_size) {
-
         /// Allocate an oversize chunk that will not be reused.
-        char *storage = (char *) backend->Allocate(size);
+        char *storage = (char *)backend->Allocate(size);
         oversize_chunks.push_back(Chunk(nexthigher(size), storage));
         Chunk &newChunk = oversize_chunks.back();
         newChunk.offset = size;
@@ -47,10 +43,9 @@ void* Pool::Allocate(std::size_t size) {
         current_chunk = &chunks[current_chunk_index];
         current_chunk->offset = size;
         return current_chunk->chunk_data;
-      }
-      else {
+      } else {
         /// Need to allocate a new chunk
-        char *storage = (char *) backend->Allocate(allocation_size);
+        char *storage = (char *)backend->Allocate(allocation_size);
         chunks.push_back(Chunk(allocation_size, storage));
         Chunk &new_chunk = chunks.back();
         new_chunk.offset = size;
@@ -68,19 +63,18 @@ void* Pool::Allocate(std::size_t size) {
     if (current_chunk->offset > current_chunk->size) {
       current_chunk->offset = current_chunk->size;
     }
-
   }
 
   return retval;
 }
 
-/// Allocate a continous block of memory of the specified size conveniently initialized to 0s
-void* Pool::AllocateZeroes(std::size_t size) {
+/// Allocate a continous block of memory of the specified size conveniently
+/// initialized to 0s
+void *VarlenPool::AllocateZeroes(std::size_t size) {
   return ::memset(Allocate(size), 0, size);
 }
 
-void Pool::Purge() {
-
+void VarlenPool::Purge() {
   // Protect using pool lock
   {
     std::lock_guard<std::mutex> pool_lock(pool_mutex);
@@ -108,24 +102,16 @@ void Pool::Purge() {
     for (std::size_t ii = 0; ii < num_chunks; ii++) {
       chunks[ii].offset = 0;
     }
-
   }
-
 }
 
-int64_t Pool::GetAllocatedMemory() {
+int64_t VarlenPool::GetAllocatedMemory() {
   int64_t total = 0;
   total += chunks.size() * allocation_size;
-  for (uint32_t i = 0; i < oversize_chunks.size(); i++)
-  {
+  for (uint32_t i = 0; i < oversize_chunks.size(); i++) {
     total += oversize_chunks[i].getSize();
   }
   return total;
 }
 
-
-} // End peloton namespace
-
-
-
-
+}  // End peloton namespace

@@ -49,7 +49,7 @@ typedef struct portalhashent
 	Portal		portal;
 } PortalHashEnt;
 
-static HTAB *PortalHashTable = NULL;
+thread_local static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 do { \
@@ -86,7 +86,7 @@ do { \
 		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)
 
-static MemoryContext PortalMemory = NULL;
+thread_local static MemoryContext PortalMemory = NULL;
 
 
 /* ----------------------------------------------------------------
@@ -219,7 +219,8 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
 	/* initialize portal heap context; typically it won't store much */
-	portal->heap = AllocSetContextCreate(PortalMemory,
+	// TODO: Peloton Changes
+	portal->heap = AllocSetContextCreate(TopMemoryContext,
 	                                     "PortalHeapMemory",
 	                                     ALLOCSET_SMALL_MINSIZE,
 	                                     ALLOCSET_SMALL_INITSIZE,

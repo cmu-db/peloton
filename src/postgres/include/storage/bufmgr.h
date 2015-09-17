@@ -59,9 +59,9 @@ extern int	target_prefetch_pages;
 extern PGDLLIMPORT char *BufferBlocks;
 
 /* in localbuf.c */
-extern PGDLLIMPORT int NLocBuffer;
-extern PGDLLIMPORT Block *LocalBufferBlockPointers;
-extern PGDLLIMPORT int32 *LocalRefCount;
+extern thread_local PGDLLIMPORT int NLocBuffer;
+extern thread_local PGDLLIMPORT Block *LocalBufferBlockPointers;
+extern thread_local PGDLLIMPORT int32 *LocalRefCount;
 
 /* special block number for ReadBuffer() */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new___ page */

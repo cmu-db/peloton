@@ -6,9 +6,7 @@
 
 index_FILES = \
 			  backend/index/index.cpp \
-			  backend/index/index_factory.cpp \
-			  backend/index/concurrent_btree.cpp \
-			  backend/index/btree_index.cpp
+			  backend/index/index_factory.cpp
 
 index_INCLUDES = \
 				 -I$(srcdir)/backend/common    

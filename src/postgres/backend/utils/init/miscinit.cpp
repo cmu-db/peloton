@@ -51,12 +51,12 @@
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
 
-ProcessingMode Mode = InitProcessing;
+thread_local ProcessingMode Mode = InitProcessing;
 
 /* List of lock files to be removed at proc exit */
-static List *lock_files = NIL;
+thread_local static List *lock_files = NIL;
 
-static Latch LocalLatchData;
+thread_local static Latch LocalLatchData;
 
 /* ----------------------------------------------------------------
  *		ignoring system indexes support stuff
@@ -68,7 +68,7 @@ static Latch LocalLatchData;
  * ----------------------------------------------------------------
  */
 
-bool		IgnoreSystemIndexes = false;
+thread_local bool		IgnoreSystemIndexes = false;
 
 
 /* ----------------------------------------------------------------
@@ -150,19 +150,19 @@ ChangeToDataDir(void)
  * convenient way to do it.
  * ----------------------------------------------------------------
  */
-static Oid	AuthenticatedUserId = InvalidOid;
-static Oid	SessionUserId = InvalidOid;
-static Oid	OuterUserId = InvalidOid;
-static Oid	CurrentUserId = InvalidOid;
+thread_local static Oid	AuthenticatedUserId = InvalidOid;
+thread_local static Oid	SessionUserId = InvalidOid;
+thread_local static Oid	OuterUserId = InvalidOid;
+thread_local static Oid	CurrentUserId = InvalidOid;
 
 /* We also have to remember the superuser state of some of these levels */
-static bool AuthenticatedUserIsSuperuser = false;
-static bool SessionUserIsSuperuser = false;
+thread_local static bool AuthenticatedUserIsSuperuser = false;
+thread_local static bool SessionUserIsSuperuser = false;
 
-static int	SecurityRestrictionContext = 0;
+thread_local static int	SecurityRestrictionContext = 0;
 
 /* We also remember if a SET ROLE is currently active */
-static bool SetRoleIsActive = false;
+thread_local static bool SetRoleIsActive = false;
 
 /*
  * Initialize the basic environment for a postmaster child
@@ -203,8 +203,9 @@ InitPostmasterChild(void)
 	 * postmaster child processes do this.
 	 */
 #ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
+	// TODO: Peloton Changes
+	//if (setsid() < 0)
+	//	elog(FATAL, "setsid() failed: %m");
 #endif
 }
 

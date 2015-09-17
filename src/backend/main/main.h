@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * peloton.h
- * Configuration for n-store
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/peloton.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// main.h
+//
+// Identification: src/backend/main/main.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,16 +23,10 @@
 namespace peloton {
 
 class configuration {
-
-public:
-
-	std::string filesystem_path;
-
+ public:
+  std::string filesystem_path;
 };
 
 // sample test helper
-int SampleFunc(int a, int b) {
-	return a+b;
-}
-
+int SampleFunc(int a, int b) { return a + b; }
 }

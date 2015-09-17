@@ -59,13 +59,13 @@
 #define MAXDICTSPERTT	100
 
 
-static HTAB *TSParserCacheHash = NULL;
+thread_local static HTAB *TSParserCacheHash = NULL;
 static TSParserCacheEntry *lastUsedParser = NULL;
 
-static HTAB *TSDictionaryCacheHash = NULL;
+thread_local static HTAB *TSDictionaryCacheHash = NULL;
 static TSDictionaryCacheEntry *lastUsedDictionary = NULL;
 
-static HTAB *TSConfigCacheHash = NULL;
+thread_local static HTAB *TSConfigCacheHash = NULL;
 static TSConfigCacheEntry *lastUsedConfig = NULL;
 
 /*
@@ -293,12 +293,11 @@ lookup_ts_dictionary_cache(Oid dictId)
 			Assert(!found);		/* it wasn't there a moment ago */
 
 			/* Create private___ memory context the first time through */
-			saveCtx = SHMAllocSetContextCreate(CacheMemoryContext,
-			                                   NameStr(dict->dictname),
-			                                   ALLOCSET_SMALL_MINSIZE,
-			                                   ALLOCSET_SMALL_INITSIZE,
-			                                   ALLOCSET_SMALL_MAXSIZE,
-			                                   SHM_DEFAULT_SEGMENT);
+			saveCtx = AllocSetContextCreate(CacheMemoryContext,
+			                                NameStr(dict->dictname),
+			                                ALLOCSET_SMALL_MINSIZE,
+			                                ALLOCSET_SMALL_INITSIZE,
+			                                ALLOCSET_SMALL_MAXSIZE);
 		}
 		else
 		{

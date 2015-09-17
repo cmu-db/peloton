@@ -101,7 +101,7 @@ static bool dsm_control_segment_sane(dsm_control_header *control,
 static uint64 dsm_control_bytes_needed(uint32 nitems);
 
 /* Has this backend initialized the dynamic shared memory system yet? */
-static bool dsm_init_done = false;
+thread_local static bool dsm_init_done = false;
 
 /*
  * List of dynamic shared memory segments used by this backend.
@@ -129,10 +129,10 @@ static dlist_head dsm_segment_list = DLIST_STATIC_INIT(dsm_segment_list);
  * reference counted; instead, it lasts for the postmaster's entire
  * life cycle.  For simplicity, it doesn't have a dsm_segment object either.
  */
-static dsm_handle dsm_control_handle;
-static dsm_control_header *dsm_control;
-static Size dsm_control_mapped_size = 0;
-static void *dsm_control_impl_private = NULL;
+thread_local static dsm_handle dsm_control_handle;
+thread_local static dsm_control_header *dsm_control;
+thread_local static Size dsm_control_mapped_size = 0;
+thread_local static void *dsm_control_impl_private = NULL;
 
 /*
  * Start up the dynamic shared memory system.

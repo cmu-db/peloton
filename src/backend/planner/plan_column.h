@@ -1,9 +1,14 @@
-/**
- * @brief Header for plan column
- *
- * Copyright(c) 2015, CMU
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// plan_column.h
+//
+// Identification: src/backend/planner/plan_column.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -25,7 +30,7 @@ namespace planner {
  */
 class PlanColumn {
  public:
-  PlanColumn(json_spirit::Object& col_object);
+  PlanColumn(json_spirit::Object &col_object);
 
   int GetGuid() const;
 
@@ -40,13 +45,13 @@ class PlanColumn {
   // Lazily evaluates the expression in the JSON object because some expressions
   // (namely aggregates) are currently unhappy, so we only actually do this from
   // places where we know it will succeed.
-  expression::AbstractExpression* GetExpression();
+  expression::AbstractExpression *GetExpression();
 
   // produce a string describing pnf's content
-  friend std::ostream& operator<<(std::ostream& os, const PlanColumn& column);
+  friend std::ostream &operator<<(std::ostream &os, const PlanColumn &column);
 
  private:
-  const json_spirit::Object& m_col_object;
+  const json_spirit::Object &m_col_object;
 
   oid_t m_guid;
 
@@ -59,7 +64,5 @@ class PlanColumn {
   std::string m_inputColumnName;
 };
 
-} // namespace planner
-} // namespace peloton
-
-
+}  // namespace planner
+}  // namespace peloton

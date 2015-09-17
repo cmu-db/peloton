@@ -1,10 +1,14 @@
-/**
- * @brief Implementation of mock executor.
- *
- * See executor tests for usage.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mock_executor.h
+//
+// Identification: tests/executor/mock_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -22,15 +26,14 @@ namespace test {
 
 class MockExecutor : public executor::AbstractExecutor {
  public:
-  MockExecutor() : executor::AbstractExecutor(nullptr) {
-  }
+  MockExecutor() : executor::AbstractExecutor(nullptr, nullptr) {}
 
   MOCK_METHOD0(DInit, bool());
 
   MOCK_METHOD0(DExecute, bool());
 
-  MOCK_METHOD0(GetOutput, executor::LogicalTile*());
+  MOCK_METHOD0(GetOutput, executor::LogicalTile *());
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

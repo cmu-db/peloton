@@ -109,7 +109,7 @@ typedef struct {
   const Pg_finfo_record *inforec; /* address of its info record */
 } CFuncHashTabEntry;
 
-static HTAB *CFuncHash = NULL;
+thread_local static HTAB *CFuncHash = NULL;
 
 static void fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo,
                                    MemoryContext mcxt, bool ignore_security);

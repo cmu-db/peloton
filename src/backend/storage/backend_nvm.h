@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* persistent_backend.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/storage/persistent_backend.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// backend_nvm.h
+//
+// Identification: src/backend/storage/backend_nvm.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -21,32 +21,22 @@ namespace storage {
 // NVM Backend (Non-volatile memory)
 //===--------------------------------------------------------------------===//
 
-
 class NVMBackend : public AbstractBackend {
+ public:
+  virtual ~NVMBackend(){};
 
-public:
-	virtual ~NVMBackend(){};
+  void *Allocate(size_t size) { return ::operator new(size); }
 
-	void* Allocate(size_t size) {
-		return ::operator new(size);
-	}
+  void Free(void *ptr) { ::operator delete(ptr); }
 
-	void Free(void* ptr) {
-		::operator delete(ptr);
-	}
+  void Sync(void *ptr __attribute__((unused))) {
+    // does nothing
+  }
 
-	void Sync(void* ptr)  {
-		// does nothing
-	}
-
-	std::string GetBackendType() const{
-		return BackendTypeToString(BACKEND_TYPE_NVM);
-	}
-
+  std::string GetBackendType() const {
+    return BackendTypeToString(BACKEND_TYPE_NVM);
+  }
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
-
+}  // End storage namespace
+}  // End peloton namespace

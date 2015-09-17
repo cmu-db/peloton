@@ -1,21 +1,20 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_table.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_table.h
+//
+// Identification: src/backend/storage/abstract_table.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
 #include "backend/common/types.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/backend_vm.h"
-
-#include "backend/index/index.h"
 
 #include <string>
 
@@ -26,108 +25,66 @@ namespace storage {
  * Base class for all tables
  */
 class AbstractTable {
-    friend class TileGroup;
-    friend class TableFactory;
+ public:
+  virtual ~AbstractTable();
 
-public:
-    
-    virtual ~AbstractTable();
-    
-protected:
-        
-    // Table constructor
-    AbstractTable(catalog::Schema *schema,
-                  AbstractBackend *backend,
-                  size_t tuples_per_tilegroup);
+ protected:
+  // Table constructor
+  AbstractTable(oid_t database_oid, oid_t table_oid, std::string table_name,
+                catalog::Schema *schema, bool own_schema);
 
-public:    
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
-    
-    void SetSchema(catalog::Schema* given_schema) {
-      schema = given_schema;
-    }
+ public:
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-    const catalog::Schema *GetSchema() const {
-        return schema;
-    }
+  std::string GetName() const {
+    return table_name;
+  }
 
-    catalog::Schema *GetSchema() {
-        return schema;
-    }
+  oid_t GetOid() const {
+    return table_oid;
+  }
 
-    AbstractBackend *GetBackend() const {
-        return backend;
-    }
-    
-    oid_t GetDatabaseId() const {
-        return database_id;
-    }
-    
-    oid_t GetTableId() const {
-        return table_id;
-    }
+  void SetSchema(catalog::Schema *given_schema) {
+    schema = given_schema;
+  }
 
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
+  const catalog::Schema *GetSchema() const {
+    return schema;
+  }
 
-    // add a default unpartitioned tile group to table
-    oid_t AddDefaultTileGroup();
+  catalog::Schema *GetSchema() {
+    return schema;
+  }
 
-    // add a customized tile group to table
-    void AddTileGroup(TileGroup *tile_group);
+  // Get a string representation of this table
+  friend std::ostream &operator<<(std::ostream &os, const AbstractTable &table);
 
-    // NOTE: This must go through the manager's locator
-    // This allows us to "TRANSFORM" tile groups atomically
-    TileGroup *GetTileGroup(oid_t tile_group_id) const;
+ protected:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    size_t GetTileGroupCount() const;
+  // Catalog information
+  oid_t database_oid;
 
-    // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  oid_t table_oid;
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
-    
-    bool CheckNulls(const storage::Tuple *tuple) const;
+  // table name
+  std::string table_name;
 
-    // Get a string representation of this table
-    friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);
+  // table schema
+  catalog::Schema *schema;
 
-protected:
-
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
-
-    // Catalog information
-    oid_t database_id;
-    oid_t table_id;
-
-    // backend
-    AbstractBackend *backend;
-
-    // table schema
-    catalog::Schema *schema;
-
-    // set of tile groups
-    std::vector<oid_t> tile_groups;
-
-    // TODO need some policy ?
-    // number of tuples allocated per tilegroup for this table
-    size_t tuples_per_tilegroup;
-    
-    std::mutex table_mutex;
-    std::mutex table_unique_index_mutex;
-    std::mutex table_reference_table_mutex;
-
+  /**
+   * @brief Should this table own the schema?
+   * Usually true.
+   * Will be false if the table is for intermediate results within a query,
+   * where the scheme may live longer.
+   */
+  bool own_schema_;
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

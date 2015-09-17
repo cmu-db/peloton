@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * multithreaded_tester.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/test/multithreaded_tester.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// harness.h
+//
+// Identification: tests/harness.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -36,8 +36,8 @@ extern std::atomic<oid_t> tile_group_id_counter;
 
 uint64_t GetThreadId();
 
-template<typename... Args>
-void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
+template <typename... Args>
+void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
   std::vector<std::thread> thread_group;
 
   // Launch a group of threads
@@ -45,18 +45,13 @@ void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
     thread_group.push_back(std::thread(args...));
   }
 
-  //Join the threads with the main thread
+  // Join the threads with the main thread
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 }
 
-inline oid_t GetNextTileGroupId(){
-  return ++tile_group_id_counter;
-}
+inline oid_t GetNextTileGroupId() { return ++tile_group_id_counter; }
 
-} // End test namespace
-} // End peloton namespace
-
-
-
+}  // End test namespace
+}  // End peloton namespace
