@@ -91,7 +91,7 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
 static void WriteOutput(double duration) {
 
-  std::cout << "time :: " << duration << " s\n";
+  std::cout << std::setw(20) << std::left << "time " << " : " << duration << " s\n";
 
   std::ofstream out("outputfile.summary");
   out << duration << "\n";
@@ -177,7 +177,7 @@ static void LoadTable(storage::DataTable *table) {
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
 
-  std::cout << "tuple count : " << tuple_count << "\n";
+  std::cout << std::setw(20) << std::left << "tuple count : " << " : " << tuple_count << "\n";
 
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
@@ -305,7 +305,6 @@ void RunDirectTest() {
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
-  bool status = false;
 
   /////////////////////////////////////////////////////////
   // EXECUTE
@@ -431,7 +430,6 @@ void RunAggregateTest() {
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&aggregation_executor);
-  bool status = false;
 
   /////////////////////////////////////////////////////////
   // EXECUTE
@@ -537,7 +535,6 @@ void RunArithmeticTest() {
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&projection_executor);
-  bool status = false;
 
   /////////////////////////////////////////////////////////
   // EXECUTE
