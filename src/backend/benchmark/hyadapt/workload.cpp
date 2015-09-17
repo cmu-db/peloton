@@ -84,22 +84,14 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
   return predicate;
 }
 
-
-void RunDirectTest() {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  std::cout << "LAYOUT :: " << peloton_layout << "\n";
+static storage::DataTable* CreateTable() {
 
   const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
-  const int tile_group_count = state.scale_factor;
-
-  const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
-  const int lower_bound = (1 - state.selectivity) * tuple_count;
-
   const oid_t col_count = state.column_count;
   const bool is_inlined = true;
   const bool indexes = false;
 
+  // Create schema first
   std::vector<catalog::Column> columns;
 
   for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
@@ -113,6 +105,7 @@ void RunDirectTest() {
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("TEST_TABLE");
+
 
   /////////////////////////////////////////////////////////
   // Create table.
@@ -148,6 +141,19 @@ void RunDirectTest() {
     table->AddIndex(pkey_index);
   }
 
+  return table.release();
+}
+
+static void LoadTable(storage::DataTable *table) {
+
+  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+  const int tile_group_count = state.scale_factor;
+  const oid_t col_count = state.column_count;
+
+  const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
+
+  auto table_schema = table->GetSchema();
+
   /////////////////////////////////////////////////////////
   // Load in the data
   /////////////////////////////////////////////////////////
@@ -175,13 +181,47 @@ void RunDirectTest() {
 
   txn_manager.CommitTransaction(txn);
 
-  /////////////////////////////////////////////////////////
-  // Do a seq scan with predicate on top of the table
-  /////////////////////////////////////////////////////////
+}
+
+static storage::DataTable *CreateAndLoadTable() {
+
+  auto table = CreateTable();
+
+  LoadTable(table);
+
+  return table;
+}
+
+static int GetLowerBound() {
+  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+  const int tile_group_count = state.scale_factor;
+
+  const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
+  const int lower_bound = (1 - state.selectivity) * tuple_count;
+
+  return lower_bound;
+}
+
+
+void RunDirectTest() {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+
+  std::cout << "LAYOUT :: " << peloton_layout << "\n";
+
+  std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
+
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  const int tile_group_count = state.scale_factor;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   start = std::chrono::system_clock::now();
 
-  txn = txn_manager.BeginTransaction();
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -199,6 +239,10 @@ void RunDirectTest() {
   int expected_num_tiles = tile_group_count;
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
 
   // Create and set up materialization executor
   std::vector<catalog::Column> output_columns;
@@ -223,6 +267,10 @@ void RunDirectTest() {
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
   bool status = false;
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
 
   status = mat_executor.Init();
   assert(status == true);
