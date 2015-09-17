@@ -18,15 +18,37 @@
 #include <sys/time.h>
 #include <iostream>
 
+#include "backend/storage/data_table.h"
+
 namespace peloton {
 namespace benchmark {
 namespace hyadapt{
 
+enum OperatorType{
+  OPERATOR_TYPE_INVALID = 0,         /* invalid */
+
+  OPERATOR_TYPE_DIRECT = 1,          /* direct */
+  OPERATOR_TYPE_AGGREGATE = 2,       /* aggregate */
+  OPERATOR_TYPE_ARITHMETIC = 3       /* arithmetic */
+};
+
 class configuration {
  public:
 
-  int num_keys;
-  int num_txns;
+  OperatorType operator_type;
+
+  // size of the table
+  int scale_factor;
+
+  // tile group layout
+  LayoutType layout;
+
+  double selectivity;
+
+  double projectivity;
+
+  // # of times to run operator
+  int transactions;
 
 };
 

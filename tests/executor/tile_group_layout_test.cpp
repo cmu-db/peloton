@@ -209,17 +209,17 @@ void RunTest() {
 }
 
 TEST(TileGroupLayoutTest, RowLayout) {
-  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_ROW;
+  peloton_layout = LAYOUT_ROW;
   RunTest();
 }
 
 TEST(TileGroupLayoutTest, ColumnLayout) {
-  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_COLUMN;
+  peloton_layout = LAYOUT_COLUMN;
   RunTest();
 }
 
 TEST(TileGroupLayoutTest, HybridLayout) {
-  peloton_tilegroup_layout = PELOTON_TILEGROUP_LAYOUT_HYBRID;
+  peloton_layout = LAYOUT_HYBRID;
   RunTest();
 }
 

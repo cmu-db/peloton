@@ -23,15 +23,15 @@
 #include "backend/concurrency/transaction.h"
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum PelotonTileGroupLayoutType
+typedef enum LayoutType
 {
-  PELOTON_TILEGROUP_LAYOUT_ROW,   /* Pure row layout */
-  PELOTON_TILEGROUP_LAYOUT_COLUMN, /* Pure column layout */
-  PELOTON_TILEGROUP_LAYOUT_HYBRID /* Hybrid layout */
-} PelotonTileGroupLayoutType;
+  LAYOUT_ROW,   /* Pure row layout */
+  LAYOUT_COLUMN, /* Pure column layout */
+  LAYOUT_HYBRID /* Hybrid layout */
+} LayoutType;
 
 /* GUC variable */
-extern PelotonTileGroupLayoutType peloton_tilegroup_layout;
+extern LayoutType peloton_layout;
 
 namespace peloton {
 namespace storage {
@@ -195,7 +195,7 @@ class DataTable : public AbstractTable {
   oid_t AddDefaultTileGroup();
 
   // get a partitioning with given layout type
-  column_map_type GetTileGroupLayout(PelotonTileGroupLayoutType layout_type);
+  column_map_type GetTileGroupLayout(LayoutType layout_type);
 
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
