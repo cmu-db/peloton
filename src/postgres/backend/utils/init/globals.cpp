@@ -23,22 +23,24 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 
+// TODO: Peloton Changes
+#include "backend/common/message_queue.h"
 
-ProtocolVersion FrontendProtocol;
+thread_local ProtocolVersion FrontendProtocol;
 
-volatile bool InterruptPending = false;
-volatile bool QueryCancelPending = false;
-volatile bool ProcDiePending = false;
-volatile bool ClientConnectionLost = false;
-volatile uint32 InterruptHoldoffCount = 0;
-volatile uint32 QueryCancelHoldoffCount = 0;
-volatile uint32 CritSectionCount = 0;
+thread_local volatile bool InterruptPending = false;
+thread_local volatile bool QueryCancelPending = false;
+thread_local volatile bool ProcDiePending = false;
+thread_local volatile bool ClientConnectionLost = false;
+thread_local volatile uint32 InterruptHoldoffCount = 0;
+thread_local volatile uint32 QueryCancelHoldoffCount = 0;
+thread_local volatile uint32 CritSectionCount = 0;
 
-int			MyProcPid;
-pg_time_t	MyStartTime;
-struct Port *MyProcPort;
-long		MyCancelKey;
-int			MyPMChildSlot;
+thread_local int			MyProcPid;
+thread_local pg_time_t	MyStartTime;
+thread_local struct Port *MyProcPort;
+thread_local long		MyCancelKey;
+thread_local int			MyPMChildSlot;
 
 /*
  * MyLatch points to the latch that should be used for signal handling by the
@@ -47,7 +49,7 @@ int			MyPMChildSlot;
  * PGPROC->procLatch if it has. Thus it can always be used in signal handlers,
  * without checking for its existence.
  */
-struct Latch *MyLatch;
+thread_local struct Latch *MyLatch;
 
 /*
  * DataDir is the absolute path to the top level of the PGDATA directory tree.
@@ -55,12 +57,12 @@ struct Latch *MyLatch;
  * most code therefore can simply use relative paths and not reference DataDir
  * explicitly.
  */
-char	   *DataDir = NULL;
+thread_local char	   *DataDir = NULL;
 
-char		OutputFileName[MAXPGPATH];	/* debugging output file */
+thread_local char		OutputFileName[MAXPGPATH];	/* debugging output file */
 
-char		my_exec_path[MAXPGPATH];	/* full path to my executable */
-char		pkglib_path[MAXPGPATH];		/* full path to lib directory */
+thread_local char		my_exec_path[MAXPGPATH];	/* full path to my executable */
+thread_local char		pkglib_path[MAXPGPATH];		/* full path to lib directory */
 
 #ifdef EXEC_BACKEND
 char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
@@ -68,19 +70,21 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 /* note: currently this is not valid in backend processes */
 #endif
 
-BackendId	MyBackendId = InvalidBackendId;
+thread_local BackendId	MyBackendId = InvalidBackendId;
 
-Oid			MyDatabaseId = InvalidOid;
+thread_local mqd_t MyBackendQueue = InvalidBackendId;
 
-Oid			MyDatabaseTableSpace = InvalidOid;
+thread_local Oid  MyDatabaseId = InvalidOid;
+
+thread_local Oid			MyDatabaseTableSpace = InvalidOid;
 
 /*
  * DatabasePath is the path (relative to DataDir) of my database's
  * primary directory, ie, its directory in the default tablespace.
  */
-char	   *DatabasePath = NULL;
+thread_local char	   *DatabasePath = NULL;
 
-pid_t		PostmasterPid = 0;
+thread_local pid_t		PostmasterPid = 0;
 
 /*
  * IsPostmasterEnvironment is true in a postmaster process and any postmaster
@@ -93,12 +97,13 @@ pid_t		PostmasterPid = 0;
  *
  * These are initialized for the bootstrap/standalone case.
  */
-bool		IsPostmasterEnvironment = false;
-bool		IsUnderPostmaster = false;
-bool		IsBinaryUpgrade = false;
-bool		IsBackgroundWorker = false;
+thread_local bool		IsPostmasterEnvironment = false;
+thread_local bool		IsUnderPostmaster = false;
+thread_local bool		IsBinaryUpgrade = false;
+thread_local bool		IsBackgroundWorker = false;
+thread_local bool   IsBackend = false;
 
-bool		ExitOnAnyError = false;
+thread_local bool		ExitOnAnyError = false;
 
 int			DateStyle = USE_ISO_DATES;
 int			DateOrder = DATEORDER_MDY;
@@ -118,7 +123,7 @@ int			maintenance_work_mem = 16384;
 int			NBuffers = 1000;
 int			MaxConnections = 90;
 int			max_worker_processes = 8;
-int			MaxBackends = 0;
+thread_local int			MaxBackends = 0;
 
 int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;

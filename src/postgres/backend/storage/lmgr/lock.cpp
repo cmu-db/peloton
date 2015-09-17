@@ -250,13 +250,13 @@ static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
  */
 static HTAB *LockMethodLockHash;
 static HTAB *LockMethodProcLockHash;
-static HTAB *LockMethodLocalHash;
+thread_local static HTAB *LockMethodLocalHash;
 
 
 /* private___ state for error cleanup */
-static LOCALLOCK *StrongLockInProgress;
-static LOCALLOCK *awaitedLock;
-static ResourceOwner awaitedOwner;
+thread_local static LOCALLOCK *StrongLockInProgress;
+thread_local static LOCALLOCK *awaitedLock;
+thread_local static ResourceOwner awaitedOwner;
 
 
 #ifdef LOCK_DEBUG
@@ -448,6 +448,23 @@ InitLocks(void)
 									  HASH_ELEM | HASH_BLOBS);
 }
 
+
+void
+InitLockMethodLocalHash() {
+  HASHCTL   info;
+
+  if (LockMethodLocalHash)
+    hash_destroy(LockMethodLocalHash);
+
+  info.keysize = sizeof(LOCALLOCKTAG);
+  info.entrysize = sizeof(LOCALLOCK);
+
+  LockMethodLocalHash = hash_create("LOCALLOCK hash",
+                    16,
+                    &info,
+                    HASH_ELEM | HASH_BLOBS);
+
+}
 
 /*
  * Fetch the lock method table associated with a given lock

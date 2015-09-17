@@ -60,8 +60,8 @@ int			LockTimeout = 0;
 bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC and PGXACT structs, if any */
-PGPROC	   *MyProc = NULL;
-PGXACT	   *MyPgXact = NULL;
+thread_local PGPROC	   *MyProc = NULL;
+thread_local PGXACT	   *MyPgXact = NULL;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -78,12 +78,12 @@ NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 PGPROC	   *PreparedXactProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
-static LOCALLOCK *lockAwaited = NULL;
+thread_local static LOCALLOCK *lockAwaited = NULL;
 
-static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
+thread_local static DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
 
 /* Is a deadlock check pending? */
-static volatile sig_atomic_t got_deadlock_timeout;
+thread_local static volatile sig_atomic_t got_deadlock_timeout;
 
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);

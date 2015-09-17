@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for logical tile.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// logical_tile_test.cpp
+//
+// Identification: tests/executor/logical_tile_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 #include <utility>
@@ -59,7 +65,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
 
@@ -68,7 +74,6 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tile_group->InsertTuple(txn_id, &tuple1);
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (1 BASE TILE)
@@ -79,11 +84,11 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   storage::Tile *base_tile = tile_group->GetTile(1);
 
-  std::vector<oid_t> position_list1 = { 0, 1 };
-  std::vector<oid_t> position_list2 = { 0, 1 };
+  std::vector<oid_t> position_list1 = {0, 1};
+  std::vector<oid_t> position_list2 = {0, 1};
 
   std::unique_ptr<executor::LogicalTile> logical_tile(
-    executor::LogicalTileFactory::GetTile());
+      executor::LogicalTileFactory::GetTile());
 
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
@@ -92,7 +97,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Schema *schema1 = &tile_schemas[0];
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();
-  for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     logical_tile->AddColumn(base_tile, own_base_tile, column_itr, column_itr);
   }
 
@@ -118,17 +123,14 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   logical_tile->AddPositionList(std::move(position_list4));
 
   oid_t column_count1 = schema1->GetColumnCount();
-  for(oid_t column_itr = 0 ; column_itr < column_count1; column_itr++) {
+  for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
     logical_tile->AddColumn(base_tile1, own_base_tile, column_itr, column_itr);
   }
 
   oid_t column_count2 = schema2->GetColumnCount();
-  for(oid_t column_itr = 0 ; column_itr < column_count2; column_itr++) {
-    logical_tile->AddColumn(
-        base_tile2,
-        own_base_tile,
-        column_itr,
-        column_count1 + column_itr);
+  for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
+    logical_tile->AddColumn(base_tile2, own_base_tile, column_itr,
+                            column_count1 + column_itr);
   }
 
   std::cout << (*logical_tile) << "\n";
@@ -145,8 +147,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::cout << "Value : " << logical_tile->GetValue(1, 1) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 2) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 3) << "\n";
-
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

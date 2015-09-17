@@ -53,11 +53,11 @@ typedef enum
 }	HugePagesType;
 
 #ifndef WIN32
-extern unsigned long UsedShmemSegID;
+extern thread_local unsigned long UsedShmemSegID;
 #else
 extern HANDLE UsedShmemSegID;
 #endif
-extern void *UsedShmemSegAddr;
+extern thread_local void *UsedShmemSegAddr;
 
 #ifdef EXEC_BACKEND
 extern void PGSharedMemoryReAttach(void);

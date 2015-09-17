@@ -1,8 +1,14 @@
-/**
- * @brief Header file for order by executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// order_by_executor.h
+//
+// Identification: src/backend/executor/order_by_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -24,12 +30,12 @@ namespace executor {
 class OrderByExecutor : public AbstractExecutor {
  public:
   OrderByExecutor(const OrderByExecutor &) = delete;
-  OrderByExecutor& operator=(const OrderByExecutor &) = delete;
+  OrderByExecutor &operator=(const OrderByExecutor &) = delete;
   OrderByExecutor(const OrderByExecutor &&) = delete;
-  OrderByExecutor& operator=(const OrderByExecutor &&) = delete;
+  OrderByExecutor &operator=(const OrderByExecutor &&) = delete;
 
-  explicit OrderByExecutor(planner::AbstractPlanNode *node,
-                           concurrency::Transaction *transaction);
+  explicit OrderByExecutor(planner::AbstractPlan *node,
+                           ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -45,28 +51,26 @@ class OrderByExecutor : public AbstractExecutor {
    * IMPORTANT This type must be move-constructible and move-assignable
    * in order to be correctly sorted by STL sort
    */
-  struct sort_buffer_entry_t{
+  struct sort_buffer_entry_t {
     ItemPointer item_pointer;
     std::unique_ptr<storage::Tuple> tuple;
 
     sort_buffer_entry_t(ItemPointer ipt, std::unique_ptr<storage::Tuple> &&tp)
-      : item_pointer(ipt),
-        tuple(std::move(tp)){
-    }
+        : item_pointer(ipt), tuple(std::move(tp)) {}
 
     sort_buffer_entry_t(sort_buffer_entry_t &&rhs) {
       item_pointer = rhs.item_pointer;
       tuple = std::move(rhs.tuple);
     }
 
-    sort_buffer_entry_t& operator=(sort_buffer_entry_t &&rhs) {
+    sort_buffer_entry_t &operator=(sort_buffer_entry_t &&rhs) {
       item_pointer = rhs.item_pointer;
       tuple = std::move(rhs.tuple);
       return *this;
     }
 
     sort_buffer_entry_t(const sort_buffer_entry_t &) = delete;
-    sort_buffer_entry_t& operator=(const sort_buffer_entry_t &) = delete;
+    sort_buffer_entry_t &operator=(const sort_buffer_entry_t &) = delete;
   };
 
   /** A backend is required to allocate physical tiles */
@@ -76,20 +80,19 @@ class OrderByExecutor : public AbstractExecutor {
   std::vector<std::unique_ptr<LogicalTile>> input_tiles_;
 
   /** Physical (not logical) schema of input tiles */
-  std::unique_ptr<catalog::Schema>  input_schema_;
+  std::unique_ptr<catalog::Schema> input_schema_;
 
   /** All valid tuples in sorted order */
-  std::vector<sort_buffer_entry_t>  sort_buffer_;
+  std::vector<sort_buffer_entry_t> sort_buffer_;
 
   /** Tuples in sort_buffer only contains the sort keys */
-  std::unique_ptr<catalog::Schema>  sort_key_tuple_schema_;
+  std::unique_ptr<catalog::Schema> sort_key_tuple_schema_;
 
   /** ASC/DESC flags */
   std::vector<bool> descend_flags_;
 
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
-
 };
 
 } /* namespace executor */

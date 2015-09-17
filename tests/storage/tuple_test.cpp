@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* tuple_test.cpp
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/test/tuple_test.cpp
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_test.cpp
+//
+// Identification: tests/storage/tuple_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 
@@ -26,85 +26,89 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(TupleTests, BasicTest) {
+  std::vector<catalog::Column> columns;
 
-	std::vector<catalog::ColumnInfo> columns;
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
+  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+                          "C", true);
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
 
-	columns.push_back(column1);
-	columns.push_back(column2);
-	columns.push_back(column3);
+  catalog::Schema *schema(new catalog::Schema(columns));
 
-	catalog::Schema *schema(new catalog::Schema(columns));
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
 
-	storage::Tuple *tuple(new storage::Tuple(schema, true));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
-	tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
-	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
-	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
+  EXPECT_EQ(tuple->GetValue(0), ValueFactory::GetIntegerValue(23));
+  EXPECT_EQ(tuple->GetValue(1), ValueFactory::GetIntegerValue(45));
+  EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(1));
 
-	EXPECT_EQ(tuple->GetValue(0), ValueFactory::GetIntegerValue(23));
-	EXPECT_EQ(tuple->GetValue(1), ValueFactory::GetIntegerValue(45));
-	EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(1));
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(2));
 
-	tuple->SetValue(2, ValueFactory::GetTinyIntValue(2));
+  EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
 
-	EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
+  std::cout << (*tuple);
 
-	std::cout << (*tuple);
-
-	tuple->FreeUninlinedData();
-	delete tuple;
-	delete schema;
+  tuple->FreeUninlinedData();
+  delete tuple;
+  delete schema;
 }
 
 TEST(TupleTests, VarcharTest) {
-	std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
+  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+                          "C", true);
+  catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
 
-	columns.push_back(column1);
-	columns.push_back(column2);
-	columns.push_back(column3);
-	columns.push_back(column4);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
+  columns.push_back(column4);
 
-	catalog::Schema *schema(new catalog::Schema(columns));
+  catalog::Schema *schema(new catalog::Schema(columns));
 
-	storage::Tuple *tuple(new storage::Tuple(schema, true));
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
 
-	tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
-	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
-	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
-	storage::AbstractBackend *backend = new storage::VMBackend();
-	Pool *pool = new Pool(backend);
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  auto pool = new peloton::VarlenPool(backend);
 
-	Value val = ValueFactory::GetStringValue("hello hello world", pool);
-	tuple->SetValue(3, val);
-	EXPECT_EQ(tuple->GetValue(3), val);
+  Value val = ValueFactory::GetStringValue("hello hello world", pool);
+  tuple->SetValue(3, val);
+  EXPECT_EQ(tuple->GetValue(3), val);
 
-	std::cout << (*tuple);
+  std::cout << (*tuple);
 
-	Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
-	tuple->SetValue(3, val2);
+  Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
+  tuple->SetValue(3, val2);
 
-	EXPECT_NE(tuple->GetValue(3), val);
+  EXPECT_NE(tuple->GetValue(3), val);
   EXPECT_EQ(tuple->GetValue(3), val2);
 
-	std::cout << (*tuple);
+  std::cout << (*tuple);
 
-	delete tuple;
-	delete schema;
+  delete tuple;
+  delete schema;
 
-	delete pool;
-	delete backend;
+  delete pool;
+  delete backend;
 }
 
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

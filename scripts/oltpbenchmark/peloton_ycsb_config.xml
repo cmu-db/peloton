@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://localhost:57721/ycsb/</DBUrl>
+    <DBName>ycsb</DBName>
+    <username>parallels</username>
+    <password>parallels</password>
+    
+    <!-- Scalefactor in YCSB is *1000 the number of rows in the USERTABLE-->
+    <scalefactor>5</scalefactor>
+    
+    <!-- The workload -->
+    <terminals>10</terminals>
+    <works>
+        <work>
+          <time>10</time>
+          <rate>unlimited</rate>
+          <weights>50,50,0,0,0,0</weights>
+        </work>
+    </works>
+
+    <!-- YCSB Procedures declaration -->
+    <transactiontypes>
+        <transactiontype>
+                <name>ReadRecord</name>
+        </transactiontype>
+        <transactiontype>
+                <name>InsertRecord</name>
+        </transactiontype>
+        <transactiontype>
+                <name>ScanRecord</name>
+        </transactiontype>
+        <transactiontype>
+                <name>UpdateRecord</name>
+        </transactiontype>
+        <transactiontype>
+                <name>DeleteRecord</name>
+        </transactiontype>
+        <transactiontype>
+                <name>ReadModifyWriteRecord</name>
+        </transactiontype>
+    </transactiontypes>
+</parameters>

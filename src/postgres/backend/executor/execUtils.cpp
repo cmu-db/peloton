@@ -79,12 +79,11 @@ CreateExecutorState(void)
 	 * Create the per-query context for this Executor run.
 	 */
 	// TODO: Peloton Changes
-  qcontext = SHMAllocSetContextCreate(CurrentMemoryContext,
-                                   "ExecutorState",
-                                   ALLOCSET_DEFAULT_MINSIZE,
-                                   ALLOCSET_DEFAULT_INITSIZE,
-                                   ALLOCSET_DEFAULT_MAXSIZE,
-                                   SHM_DEFAULT_SEGMENT);
+	qcontext = AllocSetContextCreate(CurrentMemoryContext,
+	                                 "ExecutorState",
+	                                 ALLOCSET_DEFAULT_MINSIZE,
+	                                 ALLOCSET_DEFAULT_INITSIZE,
+	                                 ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't

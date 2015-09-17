@@ -1,19 +1,19 @@
-/*-------------------------------------------------------------------------
- *
- * parser_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/parser/parser_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// planner_test.cpp
+//
+// Identification: tests/planner/planner_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
+#include "backend/planner/abstract_plan.h"
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace test {
@@ -22,11 +22,7 @@ namespace test {
 // Planner Tests
 //===--------------------------------------------------------------------===//
 
-TEST(PlannerTests, BasicTest) {
+TEST(PlannerTests, BasicTest) {}
 
-
-}
-
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

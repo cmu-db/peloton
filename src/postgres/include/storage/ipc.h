@@ -62,9 +62,10 @@ typedef void (*shmem_startup_hook_type) (void);
 
 
 /* ipc.c */
-extern PGDLLIMPORT bool proc_exit_inprogress;
+extern thread_local PGDLLIMPORT bool proc_exit_inprogress;
 
-extern void proc_exit(int code) pg_attribute_noreturn();
+//extern void proc_exit(int code) pg_attribute_noreturn();
+extern void proc_exit(int code);
 extern void shmem_exit(int code);
 extern void on_proc_exit(pg_on_exit_callback function, Datum arg);
 extern void on_shmem_exit(pg_on_exit_callback function, Datum arg);
@@ -73,7 +74,7 @@ extern void cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg);
 extern void on_exit_reset(void);
 
 /* ipci.c */
-extern PGDLLIMPORT shmem_startup_hook_type shmem_startup_hook;
+extern thread_local PGDLLIMPORT shmem_startup_hook_type shmem_startup_hook;
 
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate, int port);
 

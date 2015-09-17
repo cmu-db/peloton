@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * pool.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/varlen_pool.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// pool.h
+//
+// Identification: src/backend/common/pool.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -25,39 +25,33 @@
 
 namespace peloton {
 
-static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
+static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024;  // 1 MB
 
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap
 //===--------------------------------------------------------------------===//
 
 class Chunk {
-public:
-	Chunk(): offset(0), size(0), chunk_data(NULL){
-	}
+ public:
+  Chunk() : offset(0), size(0), chunk_data(NULL) {}
 
-	inline Chunk(uint64_t size, void *chunkData)
-	: offset(0), size(size), chunk_data(static_cast<char*>(chunkData))	{
-	}
+  inline Chunk(uint64_t size, void *chunkData)
+      : offset(0), size(size), chunk_data(static_cast<char *>(chunkData)) {}
 
-	int64_t getSize() const	{
-		return static_cast<int64_t>(size);
-	}
+  int64_t getSize() const { return static_cast<int64_t>(size); }
 
-	uint64_t offset;
-	uint64_t size;
-	char *chunk_data;
+  uint64_t offset;
+  uint64_t size;
+  char *chunk_data;
 };
 
 /// Find next higher power of two
 template <class T>
 inline T nexthigher(T k) {
-	if (k == 0)
-		return 1;
-	k--;
-	for (uint i=1; i<sizeof(T)*CHAR_BIT; i<<=1)
-		k = k | k >> i;
-	return k+1;
+  if (k == 0) return 1;
+  k--;
+  for (uint i = 1; i < sizeof(T) * CHAR_BIT; i <<= 1) k = k | k >> i;
+  return k + 1;
 }
 
 //===--------------------------------------------------------------------===//
@@ -69,70 +63,67 @@ inline T nexthigher(T k) {
  * only way to release memory is to free all memory in the pool by
  * calling purge.
  */
-class Pool {
-	Pool() = delete;
-	Pool(const Pool&) = delete;
-	Pool& operator=(const Pool&) = delete;
+class VarlenPool {
+  VarlenPool() = delete;
+  VarlenPool(const VarlenPool &) = delete;
+  VarlenPool &operator=(const VarlenPool &) = delete;
 
-public:
+ public:
+  VarlenPool(storage::AbstractBackend *_backend)
+      : backend(_backend),
+        allocation_size(TEMP_POOL_CHUNK_SIZE),
+        max_chunk_count(1),
+        current_chunk_index(0) {
+    Init();
+  }
 
-	Pool(storage::AbstractBackend *_backend) :
-		backend(_backend),
-		allocation_size(TEMP_POOL_CHUNK_SIZE),
-		max_chunk_count(1),
-		current_chunk_index(0){
-		Init();
-	}
+  VarlenPool(storage::AbstractBackend *_backend, uint64_t allocation_size,
+       uint64_t max_chunk_count)
+      : backend(_backend),
+        allocation_size(allocation_size),
+        max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
+        current_chunk_index(0) {
+    Init();
+  }
 
-	Pool(storage::AbstractBackend *_backend, uint64_t allocation_size, uint64_t max_chunk_count) :
-		backend(_backend),
-		allocation_size(allocation_size),
-		max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
-		current_chunk_index(0){
-		Init();
-	}
+  void Init() {
+    char *storage = (char *)backend->Allocate(allocation_size);
+    chunks.push_back(Chunk(allocation_size, storage));
+  }
 
-	void Init() {
-		char *storage = (char *) backend->Allocate(allocation_size);
-		chunks.push_back(Chunk(allocation_size, storage));
-	}
+  ~VarlenPool() {
+    for (std::size_t ii = 0; ii < chunks.size(); ii++) {
+      backend->Free(chunks[ii].chunk_data);
+    }
+    for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
+      backend->Free(oversize_chunks[ii].chunk_data);
+    }
+  }
 
-	~Pool() {
-		for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-			backend->Free(chunks[ii].chunk_data);
-		}
-		for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-			backend->Free(oversize_chunks[ii].chunk_data);
-		}
-	}
+  /// Allocate a continous block of memory of the specified size.
+  void *Allocate(std::size_t size);
 
-	/// Allocate a continous block of memory of the specified size.
-	void* Allocate(std::size_t size);
+  /// Allocate a continous block of memory of the specified size conveniently
+  /// initialized to 0s
+  void *AllocateZeroes(std::size_t size);
 
-	/// Allocate a continous block of memory of the specified size conveniently initialized to 0s
-	void* AllocateZeroes(std::size_t size);
+  void Purge();
 
-	void Purge();
+  int64_t GetAllocatedMemory();
 
-	int64_t GetAllocatedMemory();
+ private:
+  /// Location of pool on storage
+  storage::AbstractBackend *backend;
 
-private:
+  const uint64_t allocation_size;
+  std::size_t max_chunk_count;
+  std::size_t current_chunk_index;
+  std::vector<Chunk> chunks;
 
-	/// Location of pool on storage
-	storage::AbstractBackend *backend;
+  /// Oversize chunks that will be freed and not reused.
+  std::vector<Chunk> oversize_chunks;
 
-	const uint64_t allocation_size;
-	std::size_t max_chunk_count;
-	std::size_t current_chunk_index;
-	std::vector<Chunk> chunks;
-
-	/// Oversize chunks that will be freed and not reused.
-	std::vector<Chunk> oversize_chunks;
-
-	std::mutex pool_mutex;
+  std::mutex pool_mutex;
 };
 
-} // End peloton namespace
-
-
-
+}  // End peloton namespace

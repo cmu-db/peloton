@@ -10,12 +10,10 @@
 CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*" "*/postgres/*" "*/build/*"
 
 ## Global CFLAGS
-AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
+AM_CPPFLAGS = $(DEBUG_CPPFLAGS)
 
-AM_CXXFLAGS = -std=c++11 \
-              -Wall -Wextra -Werror \
+AM_CXXFLAGS = $(DEBUG_CXXFLAGS) -std=c++11 \
               -fPIC -fpermissive -fno-strict-aliasing \
-              $(CODE_COVERAGE_CFLAGS) 
+              $(CODE_COVERAGE_CFLAGS)
 
-AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@ 
-
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@

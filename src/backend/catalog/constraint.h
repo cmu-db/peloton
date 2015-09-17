@@ -1,156 +1,83 @@
-/*-------------------------------------------------------------------------
- *
- * constraint.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/constraint.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// constraint.h
+//
+// Identification: src/backend/catalog/constraint.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-
-#include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
-
 #include <string>
 #include <vector>
-#include <iostream>
+
+#include "backend/common/types.h"
+
+#include "nodes/nodes.h"
 
 namespace peloton {
-
-namespace index {
-class Index;
-}
-namespace storage {
-class DataTable;
-}
-
 namespace catalog {
-
-class ReferenceTableInfo;
 
 //===--------------------------------------------------------------------===//
 // Constraint Class
 //===--------------------------------------------------------------------===//
 
-class Constraint
-{
+class Constraint {
+ public:
+  Constraint(ConstraintType type,
+             std::string constraint_name,
+             Node *raw_expr = nullptr)
+      : constraint_type(type),
+        constraint_name(constraint_name),
+        expr(raw_expr) {
+  }
 
-public:
-    // Configure ( type [, name] )
-    Constraint( ConstraintType type, std::string name = "", Node* raw_expr = nullptr )
-                : type(type), name(name) { raw_expr = (Node*) copyObject((void*) raw_expr ); }
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
+  ConstraintType GetType() const { return constraint_type; }
 
-    ConstraintType GetType() const {
-        return type;
-    }
+  // Offset into the list of "reference tables" in the Table.
+  void SetForeignKeyListOffset(oid_t offset) { fk_list_offset = offset; }
 
-    std::string GetName() const {
-        return name;
-    }
+  // Offset into the list of "unique indices" in the Table.
+  void SetUniqueIndexOffset(oid_t offset) { unique_index_list_offset = offset; }
 
-    inline void SetReferenceTablePosition( int position ) {
-      if( position < 0 ){
-        LOG_ERROR(" ReferenceTable position can be negative !!");
-      }
-      reference_table_position = position;
-    }
+  // Get the offset
+  oid_t GetForeignKeyListOffset() const { return fk_list_offset; }
 
-    inline void SetUniqueIndexPosition( int position ) {
-      if( position < 0 ){
-        LOG_ERROR(" Unique Index position can be negative !!");
-      }
-      unique_index_position = position;
-    }
+  // Get the offset
+  oid_t GetUniqueIndexOffset() const { return unique_index_list_offset; }
 
-    // Get a string representation of this constraint
-    // TODO Print out 
-    friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
+  std::string GetName() const { return constraint_name; }
 
-private:
-    
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
-    
-    // The type of constraint
-    ConstraintType type = CONSTRAINT_TYPE_INVALID;
+  // Get a string representation of this constraint
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const Constraint &constraint);
 
-    // Constraint name ( if needed )
-    std::string name = "";
+ private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    // FIXME :: Cooked expr
-    // Raw_default_expr ( if needed )
-    Node* raw_expr = nullptr;
+  // The type of constraint
+  ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
 
-    // Unique index and reference table position in Table
-    int reference_table_position = -1;
-    int unique_index_position = -1;
+  // Offsets into the Unique index and reference table lists in Table
+  oid_t fk_list_offset = INVALID_OID;
 
+  oid_t unique_index_list_offset = INVALID_OID;
+
+  std::string constraint_name;
+
+  // Default_expr
+  Node *expr = nullptr;
 };
 
-
-//===--------------------------------------------------------------------===//
-// ReferenceTable Class
-//===--------------------------------------------------------------------===//
-
-class ReferenceTableInfo {
-
-  public:
-  ReferenceTableInfo( oid_t PrimaryKeyTableId,
-                      std::vector<std::string> pk_column_names,
-                      std::vector<std::string> fk_column_names,
-                      char fk_update_action,
-                      char fk_delete_action,
-                      std::string name ) 
-
-                      : PrimaryKeyTableId(PrimaryKeyTableId),
-                      pk_column_names(pk_column_names),
-                      fk_column_names(fk_column_names),
-                      fk_update_action(fk_update_action),
-                      fk_delete_action(fk_delete_action),
-                      name(name)
-                      { }
-
-  std::vector<std::string> GetFKColumnNames()
-  {
-    return fk_column_names;
-  }
-
-  oid_t GetPrimaryKeyTableId()
-  {
-    return PrimaryKeyTableId;
-  }
-
-  std::string GetName()
-  {
-    return name;
-  }
-
-  private:
-
-  oid_t PrimaryKeyTableId = INVALID_OID;
-
-  std::vector<std::string> pk_column_names;
-  std::vector<std::string> fk_column_names;
-
-  char fk_update_action;
-  char fk_delete_action;
-
-  std::string name;
-
-};
-
-
-
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

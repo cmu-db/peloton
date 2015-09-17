@@ -579,8 +579,6 @@ postgres_backend_FILES = \
 						 postgres/backend/utils/mmgr/aset.cpp \
 						 postgres/backend/utils/mmgr/mcxt.cpp \
 						 postgres/backend/utils/mmgr/portalmem.cpp \
-						 postgres/backend/utils/mmgr/shmctx.cpp \
-						 postgres/backend/utils/mmgr/shmset.cpp \
 						 postgres/backend/utils/resowner/resowner.cpp \
 						 postgres/backend/utils/sort/logtape.cpp \
 						 postgres/backend/utils/sort/sortsupport.cpp \
@@ -598,3 +596,4 @@ postgres_backend_INCLUDES = \
 
 BUILT_SOURCES = postgres/backend/parser/gram.h
 AM_YFLAGS = -d 
+

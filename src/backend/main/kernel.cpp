@@ -1,24 +1,23 @@
-/*-------------------------------------------------------------------------
- *
- * kernel.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/kernel.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// kernel.cpp
+//
+// Identification: src/backend/main/kernel.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
+#include <iostream>
+#include <cstdio>
 
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
-#include "backend/executor/executors.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
-
-#include <stdio.h>
 
 namespace peloton {
 namespace backend {
@@ -35,18 +34,13 @@ int *data;
 
 class table_iterator_task {
  public:
+  table_iterator_task(int l) : num_tilegroups(l), next_tilegroup(0) {}
 
-  table_iterator_task(int l) :
-    num_tilegroups(l),
-    next_tilegroup(0) {
-  }
-
-  bool operator()( int &v ) {
-    if ( next_tilegroup < num_tilegroups ) {
+  bool operator()(int &v) {
+    if (next_tilegroup < num_tilegroups) {
       v = next_tilegroup++;
       return true;
-    }
-    else {
+    } else {
       return false;
     }
   }
@@ -58,8 +52,7 @@ class table_iterator_task {
 
 int predicate() {
   int sum = 0;
-  for(auto ii = 0 ; ii < 1000 ; ii++)
-    sum += ii;
+  for (auto ii = 0; ii < 1000; ii++) sum += ii;
   return sum;
 }
 
@@ -71,9 +64,8 @@ class seq_scanner_task {
     int offset = v * chunk_size;
     int end = offset + chunk_size;
 
-    for(auto ii = offset; ii < end ; ii++)
-      if(data[ii] % 5 == 0 && predicate())
-        matching.push_back(ii);
+    for (auto ii = offset; ii < end; ii++)
+      if (data[ii] % 5 == 0 && predicate()) matching.push_back(ii);
 
     return matching;
   }
@@ -81,11 +73,9 @@ class seq_scanner_task {
 
 class summer_task {
  public:
-  int operator()(const std::vector<int>& matching) const {
-
+  int operator()(const std::vector<int> &matching) const {
     long local_sum = 0;
-    for(auto ii : matching)
-      local_sum += data[ii];
+    for (auto ii : matching) local_sum += data[ii];
 
     return local_sum;
   }
@@ -95,16 +85,14 @@ long long sum = 0;
 
 class aggregator_task {
  public:
-  int operator()(const int& local_sum) const {
+  int operator()(const int &local_sum) const {
     sum += local_sum;
     return sum;
   }
 };
 
-ResultType Kernel::Handler(const char* query) {
-  ResultType status = RESULT_TYPE_INVALID;
-
-  std::cout << query << "\n";
+Result Kernel::Handler(__attribute__((unused)) const char *query) {
+  Result status = RESULT_INVALID;
 
   /*
   int num_chunks = size/chunk_size;
@@ -114,22 +102,23 @@ ResultType Kernel::Handler(const char* query) {
 
   graph g;
   function_node< int, int > aggregator( g, 1, aggregator_task() );
-  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited, summer_task());
-  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited, seq_scanner_task());
-  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false );
+  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited,
+  summer_task());
+  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited,
+  seq_scanner_task());
+  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false
+  );
 
   make_edge(table_iterator, seq_scanner);
   make_edge(seq_scanner, summer);
   make_edge(summer, aggregator);
   table_iterator.activate();
   g.wait_for_all();
-
-  std::cout << "Parallel Sum is    : " << sum << "\n";
   */
 
-  status = RESULT_TYPE_SUCCESS;
+  status = RESULT_SUCCESS;
   return status;
 }
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

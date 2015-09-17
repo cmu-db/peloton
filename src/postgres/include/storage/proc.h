@@ -148,8 +148,8 @@ struct PGPROC
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
 
 
-extern PGDLLIMPORT PGPROC *MyProc;
-extern PGDLLIMPORT struct PGXACT *MyPgXact;
+extern thread_local PGDLLIMPORT PGPROC *MyProc;
+extern thread_local PGDLLIMPORT struct PGXACT *MyPgXact;
 
 /*
  * Prior to PostgreSQL 9.2, the fields below were stored as part of the

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * kernel.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/backend/kernel.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// kernel.h
+//
+// Identification: src/backend/main/kernel.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,12 +23,9 @@ namespace backend {
 
 // Main handler for query
 class Kernel {
-
  public:
-
-  static ResultType Handler(const char* query);
-
+  static Result Handler(const char *query);
 };
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

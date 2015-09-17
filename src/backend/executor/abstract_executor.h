@@ -1,8 +1,14 @@
-/**
- * @brief Header file for abstract executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_executor.h
+//
+// Identification: src/backend/executor/abstract_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -10,24 +16,22 @@
 #include <memory>
 #include <vector>
 
+#include "../planner/abstract_plan.h"
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/concurrency/transaction.h"
+#include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
-#include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace executor {
 
 class AbstractExecutor {
-
  public:
   AbstractExecutor(const AbstractExecutor &) = delete;
-  AbstractExecutor& operator=(const AbstractExecutor &) = delete;
+  AbstractExecutor &operator=(const AbstractExecutor &) = delete;
   AbstractExecutor(AbstractExecutor &&) = delete;
-  AbstractExecutor& operator=(AbstractExecutor &&) = delete;
+  AbstractExecutor &operator=(AbstractExecutor &&) = delete;
 
-  virtual ~AbstractExecutor() {
-  }
+  virtual ~AbstractExecutor() {}
 
   bool Init();
 
@@ -39,7 +43,7 @@ class AbstractExecutor {
 
   void AddChild(AbstractExecutor *child);
 
-  const std::vector<AbstractExecutor*>& GetChildren() const;
+  const std::vector<AbstractExecutor *> &GetChildren() const;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -49,14 +53,14 @@ class AbstractExecutor {
   // in test cases.
   virtual LogicalTile *GetOutput();
 
-  const planner::AbstractPlanNode *GetRawNode() const {
-    return node_;
-  }
+  const planner::AbstractPlan *GetRawNode() const { return node_; }
 
  protected:
-  explicit AbstractExecutor(planner::AbstractPlanNode *node);
-  explicit AbstractExecutor(planner::AbstractPlanNode *node,
-                            concurrency::Transaction *context);
+  // NOTE: The reason why we keep the plan node separate from the executor
+  // context is because we might want to reuse the plan multiple times
+  // with different executor contexts
+  explicit AbstractExecutor(planner::AbstractPlan *node,
+                            ExecutorContext *executor_context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;
@@ -64,7 +68,7 @@ class AbstractExecutor {
   /** @brief Workhorse function to be overriden by derived class. */
   virtual bool DExecute() = 0;
 
-  void SetOutput(LogicalTile* val);
+  void SetOutput(LogicalTile *val);
 
   /**
    * @brief Convenience method to return plan node corresponding to this
@@ -72,26 +76,27 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template<class T> inline const T& GetPlanNode() {
+  template <class T>
+  inline const T &GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
   }
 
   /** @brief Children nodes of this executor in the executor tree. */
-  std::vector<AbstractExecutor*> children_;
-
-  // Transaction context
-  concurrency::Transaction *transaction_ = nullptr;
+  std::vector<AbstractExecutor *> children_;
 
  private:
-
   // Output logical tile
   // This is where we will write the results of the plan node's execution
   std::unique_ptr<LogicalTile> output;
 
   /** @brief Plan node corresponding to this executor. */
-  const planner::AbstractPlanNode *node_ = nullptr;
+  const planner::AbstractPlan *node_ = nullptr;
+
+ protected:
+  // Executor context
+  ExecutorContext *executor_context_ = nullptr;
 };
 
 }  // namespace executor

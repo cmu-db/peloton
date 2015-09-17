@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for ORDER BY node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// order_by_test.cpp
+//
+// Identification: tests/executor/order_by_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 #include <set>
@@ -12,12 +18,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "backend/planner/order_by_plan.h"
+
+
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/planner/order_by_node.h"
 #include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
@@ -32,20 +40,18 @@ namespace test {
 
 namespace {
 
-void RunTest(executor::OrderByExecutor &executor,
-             size_t   expected_num_tuples,
-             const std::vector<oid_t>&  sort_keys,
-             const std::vector<bool>&   descend_flags){
-
+void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
+             const std::vector<oid_t> &sort_keys,
+             const std::vector<bool> &descend_flags) {
   EXPECT_TRUE(executor.Init());
 
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-  while(executor.Execute()){
+  while (executor.Execute()) {
     result_tiles.emplace_back(executor.GetOutput());
   }
 
   size_t actual_num_tuples_returned = 0;
-  for(auto &tile : result_tiles){
+  for (auto &tile : result_tiles) {
     actual_num_tuples_returned += tile->GetTupleCount();
   }
 
@@ -56,10 +62,10 @@ void RunTest(executor::OrderByExecutor &executor,
 
   // Verify:
   // Lazy here: just print it out and see it by yourself.
-  for(auto & tile : result_tiles){
-    for(oid_t tuple_id : *tile){
+  for (auto &tile : result_tiles) {
+    for (oid_t tuple_id : *tile) {
       std::cout << "<";
-      for(size_t sk = 0; sk < sort_keys.size(); sk++){
+      for (size_t sk = 0; sk < sort_keys.size(); sk++) {
         std::cout << tile->GetValue(tuple_id, sort_keys[sk]) << ",";
       }
       std::cout << ">";
@@ -67,37 +73,35 @@ void RunTest(executor::OrderByExecutor &executor,
   }
 
   std::cout << std::endl;
-
 }
 
-TEST(OrderByTests, IntAscTest){
+TEST(OrderByTests, IntAscTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({false});
-  std::vector<oid_t> output_columns({0,1,2,3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  std::vector<oid_t> output_columns({0, 1, 2, 3});
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
+                                   random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -106,44 +110,40 @@ TEST(OrderByTests, IntAscTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
-  RunTest(executor, tile_size*2, sort_keys, descend_flags);
+  RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
-  delete backend;
 }
 
-TEST(OrderByTests, IntDescTest){
+TEST(OrderByTests, IntDescTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({true});
-  std::vector<oid_t> output_columns({0,1,2,3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  std::vector<oid_t> output_columns({0, 1, 2, 3});
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
+                                   random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -152,44 +152,40 @@ TEST(OrderByTests, IntDescTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
-  RunTest(executor, tile_size*2, sort_keys, descend_flags);
+  RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
-  delete backend;
 }
 
-TEST(OrderByTests, StringDescTest){
+TEST(OrderByTests, StringDescTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({3});
   std::vector<bool> descend_flags({true});
-  std::vector<oid_t> output_columns({0,1,2,3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  std::vector<oid_t> output_columns({0, 1, 2, 3});
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
+                                   random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -198,44 +194,40 @@ TEST(OrderByTests, StringDescTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
-  RunTest(executor, tile_size*2, sort_keys, descend_flags);
+  RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
-  delete backend;
 }
 
-TEST(OrderByTests, IntAscStringDescTest){
+TEST(OrderByTests, IntAscStringDescTest) {
   // Create the plan node
-  std::vector<oid_t> sort_keys({1,3});
+  std::vector<oid_t> sort_keys({1, 3});
   std::vector<bool> descend_flags({false, true});
-  std::vector<oid_t> output_columns({0,1,2,3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  std::vector<oid_t> output_columns({0, 1, 2, 3});
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
+                                   random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -244,47 +236,42 @@ TEST(OrderByTests, IntAscStringDescTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
-  RunTest(executor, tile_size*2, sort_keys, descend_flags);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
-  delete backend;
+  RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 }
 
 /**
  * Switch the order of sort keys of the previous test case
  */
-TEST(OrderByTests, StringDescIntAscTest){
+TEST(OrderByTests, StringDescIntAscTest) {
   // Create the plan node
-  std::vector<oid_t> sort_keys({3,1});
+  std::vector<oid_t> sort_keys({3, 1});
   std::vector<bool> descend_flags({true, false});
-  std::vector<oid_t> output_columns({0,1,2,3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
-  planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
+  std::vector<oid_t> output_columns({0, 1, 2, 3});
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  planner::OrderByPlan node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
+                                   random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -293,17 +280,13 @@ TEST(OrderByTests, StringDescIntAscTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
-  RunTest(executor, tile_size*2, sort_keys, descend_flags);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
-  delete backend;
-}
+  RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 
 }
+}
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton
