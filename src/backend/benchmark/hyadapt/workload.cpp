@@ -89,13 +89,18 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
   return predicate;
 }
 
+std::ofstream out("outputfile.summary");
+
 static void WriteOutput(double duration) {
 
   std::cout << std::setw(20) << std::left << "time " << " : " << duration << " s\n";
 
-  std::ofstream out("outputfile.summary");
+  out << state.layout << " ";
+  out << state.operator_type << " ";
+  out << state.selectivity << " ";
+  out << state.projectivity << " ";
   out << duration << "\n";
-  out.close();
+  out.flush();
 
 }
 
@@ -176,10 +181,12 @@ static void LoadTable(storage::DataTable *table) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
+  int mark = tuple_count/10;
 
   std::cout << std::setw(20) << std::left << "tuple count : " << " : " << tuple_count << "\n";
 
-  for (int rowid = 0; rowid < tuple_count; rowid++) {
+  int rowid;
+  for (rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
 
     storage::Tuple tuple(table_schema, allocate);
@@ -193,13 +200,23 @@ static void LoadTable(storage::DataTable *table) {
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
+
+    if(rowid % mark == 0){
+      std::cout << "\r" << "Loading :: " << (100 * rowid/tuple_count) << "%" << std::flush;
+    }
   }
+
+  if(rowid % mark == 0){
+    std::cout << "\r" << "Loading :: " << (100 * rowid/tuple_count) << "%" << std::flush;
+  }
+
+  std::cout << "\n";
 
   txn_manager.CommitTransaction(txn);
 
 }
 
-static storage::DataTable *CreateAndLoadTable() {
+storage::DataTable *CreateAndLoadTable() {
 
   auto table = CreateTable();
 
@@ -249,9 +266,7 @@ static void ExecuteTest(executor::MaterializationExecutor& mat_executor) {
   WriteOutput(time_per_transaction);
 }
 
-void RunDirectTest() {
-  std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
-
+void RunDirectTest(storage::DataTable *table) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -275,7 +290,7 @@ void RunDirectTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -315,11 +330,7 @@ void RunDirectTest() {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunAggregateTest() {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
-
+void RunAggregateTest(storage::DataTable *table) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -344,7 +355,7 @@ void RunAggregateTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -387,7 +398,7 @@ void RunAggregateTest() {
   expression::AbstractExpression* aggregate_predicate = nullptr;
 
   // 5) Create output table schema
-  auto data_table_schema = table.get()->GetSchema();
+  auto data_table_schema = table->GetSchema();
   std::vector<catalog::Column> columns;
   for (auto column_id : column_ids) {
     columns.push_back(data_table_schema->GetColumn(column_id));
@@ -440,11 +451,7 @@ void RunAggregateTest() {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunArithmeticTest() {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  std::unique_ptr<storage::DataTable> table(CreateAndLoadTable());
-
+void RunArithmeticTest(storage::DataTable *table) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -469,7 +476,7 @@ void RunArithmeticTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table.get(), predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -482,7 +489,7 @@ void RunArithmeticTest() {
 
   // Construct schema of projection
   std::vector<catalog::Column> columns;
-  auto orig_schema = table.get()->GetSchema();
+  auto orig_schema = table->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   auto projection_schema = new catalog::Schema(columns);
 
@@ -543,6 +550,51 @@ void RunArithmeticTest() {
   ExecuteTest(mat_executor);
 
   txn_manager.CommitTransaction(txn);
+}
+
+/////////////////////////////////////////////////////////
+// EXPERIMENTS
+/////////////////////////////////////////////////////////
+
+std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+
+std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
+
+std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
+
+std::vector<double> projectivity = {0.1, 0.3, 0.5, 0.7, 0.9};
+
+void RunProjectivityExperiment() {
+
+  state.selectivity = 1.0;
+
+  // Go over all layouts
+  for(auto layout : layouts) {
+    // Set layout
+    state.layout = layout;
+
+    // Load in the table with layout
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+
+    for(auto proj : projectivity) {
+      // Set proj
+      state.projectivity = proj;
+
+      // Go over all ops
+      state.operator_type = OPERATOR_TYPE_DIRECT;
+      RunDirectTest(table.get());
+
+      state.operator_type = OPERATOR_TYPE_AGGREGATE;
+      RunAggregateTest(table.get());
+
+      state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+      RunArithmeticTest(table.get());
+    }
+
+  }
+
+  out.close();
+
 }
 
 }  // namespace hyadapt

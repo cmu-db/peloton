@@ -25,6 +25,7 @@ void Usage(FILE *out) {
           "   -p --projectivity      :  Projectivity \n"
           "   -l --layout            :  Layout \n"
           "   -t --transactions      :  # of Transactions \n"
+          "   -e --experiment_type   :  Experiment Type \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -36,6 +37,7 @@ static struct option opts[] = {
     { "projectivity", optional_argument, NULL, 'p' },
     { "layout", optional_argument, NULL, 'l' },
     { "transactions", optional_argument, NULL, 't' },
+    { "experiment-type", optional_argument, NULL, 'e' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -101,6 +103,15 @@ static void ValidateSelectivity(const configuration& state) {
   std::cout << std::setw(20) << std::left << "selectivity " << " : " << state.selectivity << std::endl;
 }
 
+static void ValidateExperiment(const configuration& state) {
+  if(state.experiment_type <= 0 || state.experiment_type > 2) {
+    std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
+}
+
 void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
@@ -114,10 +125,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.column_count = 251;
   state.layout = LAYOUT_ROW;
 
+  state.experiment_type = EXPERIMENT_TYPE_INVALID;
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ho:k:s:p:l:t:", opts,
+    int c = getopt_long(argc, argv, "aho:k:s:p:l:t:e:", opts,
                         &idx);
 
     if (c == -1)
@@ -142,6 +155,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 't':
         state.transactions  = atoi(optarg);
         break;
+      case 'e':
+        state.experiment_type = (ExperimentType) atoi(optarg);
+        break;
 
       case 'h':
         Usage(stderr);
@@ -153,17 +169,24 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
-  // Print configuration
-  ValidateOperator(state);
+  if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
+    // Print configuration
+    ValidateOperator(state);
 
-  peloton_layout = state.layout;
-  ValidateLayout(state);
+    peloton_layout = state.layout;
+    ValidateLayout(state);
 
-  ValidateSelectivity(state);
-  ValidateProjectivity(state);
+    ValidateSelectivity(state);
+    ValidateProjectivity(state);
 
-  std::cout << std::setw(20) << std::left << "scale_factor " << " : " << state.scale_factor << std::endl;
-  std::cout << std::setw(20) << std::left << "transactions " << " : " << state.transactions << std::endl;
+    std::cout << std::setw(20) << std::left
+        << "scale_factor " << " : " << state.scale_factor << std::endl;
+    std::cout << std::setw(20) << std::left
+        << "transactions " << " : " << state.transactions << std::endl;
+  }
+  else{
+    ValidateExperiment(state);
+  }
 
 }
 

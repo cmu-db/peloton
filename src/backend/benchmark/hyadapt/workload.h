@@ -20,11 +20,15 @@ namespace hyadapt{
 
 extern configuration state;
 
-void RunDirectTest();
+storage::DataTable *CreateAndLoadTable();
 
-void RunAggregateTest();
+void RunDirectTest(storage::DataTable *table);
 
-void RunArithmeticTest();
+void RunAggregateTest(storage::DataTable *table);
+
+void RunArithmeticTest(storage::DataTable *table);
+
+void RunProjectivityExperiment();
 
 }  // namespace hyadapt
 }  // namespace benchmark
