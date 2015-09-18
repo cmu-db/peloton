@@ -32,10 +32,21 @@ enum OperatorType{
   OPERATOR_TYPE_ARITHMETIC = 3       /* arithmetic */
 };
 
+enum ExperimentType{
+  EXPERIMENT_TYPE_INVALID = 0,
+
+  EXPERIMENT_TYPE_PROJECTIVITY = 1,
+  EXPERIMENT_TYPE_SELECTIVITY = 2
+
+};
+
 class configuration {
  public:
 
   OperatorType operator_type;
+
+  // experiment
+  ExperimentType experiment_type;
 
   // size of the table
   int scale_factor;
@@ -53,7 +64,7 @@ class configuration {
   // # of times to run operator
   int transactions;
 
-};
+ };
 
 void Usage(FILE *out);
 
