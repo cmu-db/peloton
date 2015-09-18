@@ -562,7 +562,7 @@ std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
 
-std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
+std::vector<double> selectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
 std::vector<double> projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
@@ -601,6 +601,35 @@ void RunProjectivityExperiment() {
 
 void RunSelectivityExperiment() {
 
+  state.projectivity = 0.1;
+
+  // Go over all layouts
+  for(auto layout : layouts) {
+    // Set layout
+    state.layout = layout;
+    peloton_layout = state.layout;
+
+    // Load in the table with layout
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+
+    for(auto select : selectivity) {
+      // Set selectivity
+      state.selectivity = select;
+
+      // Go over all ops
+      state.operator_type = OPERATOR_TYPE_DIRECT;
+      RunDirectTest(table.get());
+
+      state.operator_type = OPERATOR_TYPE_AGGREGATE;
+      RunAggregateTest(table.get());
+
+      state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+      RunArithmeticTest(table.get());
+    }
+
+  }
+
+  out.close();
 }
 
 }  // namespace hyadapt
