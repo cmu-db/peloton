@@ -632,6 +632,42 @@ void RunSelectivityExperiment() {
   out.close();
 }
 
+std::vector<double> op_selectivity = {0.01, 0.5, 1.0};
+
+std::vector<double> op_projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+
+void RunOperatorExperiment() {
+
+  // Go over all layouts
+  for(auto layout : layouts) {
+    // Set layout
+    state.layout = layout;
+    peloton_layout = state.layout;
+
+    // Load in the table with layout
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+
+    for(auto selectivity : op_selectivity) {
+      // Set selectivity
+      state.selectivity = selectivity;
+
+      for(auto projectivity : op_projectivity) {
+        // Set projectivity
+        state.projectivity = projectivity;
+
+        // Run operator
+        state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+        RunArithmeticTest(table.get());
+
+      }
+    }
+
+  }
+
+  out.close();
+}
+
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
