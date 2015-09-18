@@ -104,7 +104,7 @@ static void ValidateSelectivity(const configuration& state) {
 }
 
 static void ValidateExperiment(const configuration& state) {
-  if(state.experiment_type <= 0 || state.experiment_type > 2) {
+  if(state.experiment_type <= 0 || state.experiment_type > 3) {
     std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
     exit(EXIT_FAILURE);
   }
