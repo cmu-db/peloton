@@ -572,6 +572,7 @@ void RunProjectivityExperiment() {
   for(auto layout : layouts) {
     // Set layout
     state.layout = layout;
+    peloton_layout = state.layout;
 
     // Load in the table with layout
     std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
