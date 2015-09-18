@@ -270,7 +270,7 @@ void RunDirectTest() {
   oid_t column_count = state.projectivity * state.column_count;
 
   for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr] - 1);
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
@@ -339,7 +339,7 @@ void RunAggregateTest() {
   oid_t column_count = state.column_count;
 
   for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr] - 1);
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
@@ -464,7 +464,7 @@ void RunArithmeticTest() {
   oid_t column_count = state.column_count;
 
   for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr] - 1);
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
@@ -491,7 +491,7 @@ void RunArithmeticTest() {
   oid_t projection_column_count = state.projectivity * state.column_count;
 
   for(oid_t col_itr = 0 ; col_itr < projection_column_count; col_itr++) {
-    auto hyadapt_colum_id = hyadapt_column_ids[col_itr] - 1;
+    auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
     auto column_expr = expression::TupleValueFactory(0, hyadapt_colum_id);
     if(sum_expr == nullptr)
       sum_expr = column_expr;
