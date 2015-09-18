@@ -26,13 +26,11 @@ TEST(AriesLoggingTest, writing_logfile) {
     EXPECT_TRUE(std::remove(aries_log_file_name.c_str()) == 0 );
   }
 
-  /* TODO: Fix this infinite sleep
   // Prepare a simple log file
   if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES) == true){
   }else{
     LOG_ERROR("Could not prepare log file");
   }
-  */
 }
 
 /**

@@ -15,8 +15,8 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/transaction_record.h"
 
-#define NUM_TUPLES 5
-#define NUM_BACKEND 3
+#define NUM_TUPLES 20
+#define NUM_BACKEND 4
 
 namespace peloton {
 namespace test {
@@ -52,8 +52,11 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
   }
 
   // Wait for the frontend logger to go to enter logging mode
-  while(log_manager.GetStatus() == LOGGING_STATUS_TYPE_RECOVERY){
-    // TODO: Sleep here ?
+  while(1){
+    sleep(1);
+    if(log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
+      break;
+    }
   }
 
   // Build the log
@@ -296,8 +299,8 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
     DeleteTuples(table, locations[1], true/*commit*/);
 
   // Update the first inserted location if we insert >= 1 tuples
-  //if(locations.size() >= 1)
-  //  UpdateTuples(table, locations[0], true/*commit*/);
+  if(locations.size() >= 1)
+    UpdateTuples(table, locations[0], true/*commit*/);
 
   auto& log_manager = logging::LogManager::GetInstance();
   if(log_manager.IsInLoggingMode()){
