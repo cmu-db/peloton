@@ -30,6 +30,8 @@ void RunArithmeticTest(storage::DataTable *table);
 
 void RunProjectivityExperiment();
 
+void RunSelectivityExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
