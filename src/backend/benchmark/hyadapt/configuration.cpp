@@ -111,7 +111,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.selectivity = 1.0;
   state.projectivity = 1.0;
 
-  state.column_count = 250;
+  state.column_count = 251;
   state.layout = LAYOUT_ROW;
 
   // Parse args
