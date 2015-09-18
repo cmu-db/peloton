@@ -93,7 +93,9 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double duration) {
 
-  std::cout << std::setw(20) << std::left << "time " << " : " << duration << " s\n";
+  // Convert to ms
+  duration *= 1000;
+  std::cout << std::setw(20) << std::left << "Time " << " : " << duration << " ms\n";
 
   out << state.layout << " ";
   out << state.operator_type << " ";
@@ -562,7 +564,7 @@ std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGR
 
 std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
-std::vector<double> projectivity = {0.1, 0.3, 0.5, 0.7, 0.9};
+std::vector<double> projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
 void RunProjectivityExperiment() {
 
@@ -595,6 +597,9 @@ void RunProjectivityExperiment() {
   }
 
   out.close();
+}
+
+void RunSelectivityExperiment() {
 
 }
 

@@ -57,6 +57,10 @@ void RunBenchmark(){
         RunProjectivityExperiment();
         break;
 
+      case EXPERIMENT_TYPE_SELECTIVITY:
+        RunSelectivityExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;
