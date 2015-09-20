@@ -103,26 +103,21 @@ TEST(TileGroupTests, BasicTest) {
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  txn_id_t txn_id = txn->GetTransactionId();
+  const txn_id_t txn_id = txn->GetTransactionId();
+  const cid_t commit_id = txn->GetCommitId();
 
   EXPECT_EQ(0, tile_group->GetActiveTupleCount());
 
   auto tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
-  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+  tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
   tuple_slot = tile_group->InsertTuple(txn_id, tuple2);
-  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+  tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
   tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
-  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+  tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
   EXPECT_EQ(3, tile_group->GetActiveTupleCount());
-
-  storage::TileGroupHeader *header = tile_group->GetHeader();
-
-  ItemPointer item(50, 60);
-
-  header->SetPrevItemPointer(2, item);
 
   txn_manager.CommitTransaction(txn);
 
@@ -143,6 +138,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
+  cid_t commit_id = txn->GetCommitId();
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
   tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
@@ -153,7 +149,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(txn_id, tuple);
-    tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+    tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id );
   }
 
   txn_manager.CommitTransaction(txn);
@@ -333,9 +329,10 @@ TEST(TileGroupTests, MVCCInsert) {
 
   // DELETE
   auto txn2 = txn_manager.BeginTransaction();
-  cid_t cid2 = txn2->GetLastCommitId();
+  txn_id_t tid2 = txn2->GetTransactionId();
+  cid_t lcid2 = txn2->GetLastCommitId();
 
-  tile_group->DeleteTuple(cid2, 2);
+  tile_group->DeleteTuple(tid2, 2, lcid2);
 
   txn_manager.CommitTransaction(txn2);
 

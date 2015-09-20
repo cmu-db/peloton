@@ -41,7 +41,12 @@ bool NestedLoopJoinExecutor::DInit() {
     return status;
   }
 
-  left_scan_start = true;
+  assert(right_result_tiles_.empty());
+  right_child_done_ = false;
+  right_result_itr_ = 0;
+
+  assert(left_result_tiles_.empty());
+
   return true;
 }
 
@@ -54,166 +59,188 @@ bool NestedLoopJoinExecutor::DInit() {
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("********** Nested Loop Join executor :: 2 children \n");
 
-  bool right_scan_end = false;
-  // Try to get next tile from RIGHT child
-  if (children_[1]->Execute() == false) {
-    LOG_TRACE("Did not get right tile \n");
-    right_scan_end = true;
-  }
+  for(;;){  // Loop until we have non-empty result tile or exit
 
-  if (right_scan_end == true) {
-    LOG_TRACE("Resetting scan for right tile \n");
-    children_[1]->Init();
-    if (children_[1]->Execute() == false) {
-      LOG_ERROR("Did not get right tile on second try\n");
-      return false;
+    LogicalTile* left_tile = nullptr;
+    LogicalTile* right_tile = nullptr;
+
+    bool advance_left_child = false;
+
+    if(right_child_done_){  // If we have already retrieved all right child's results in buffer
+      LOG_TRACE("Advance the right buffer iterator.");
+      assert(!left_result_tiles_.empty());
+      assert(!right_result_tiles_.empty());
+      right_result_itr_++;
+      if(right_result_itr_ >= right_result_tiles_.size()){
+        advance_left_child = true;
+        right_result_itr_ = 0;
+      }
     }
-  }
-
-  LOG_TRACE("Got right tile \n");
-
-  if (left_scan_start == true || right_scan_end == true) {
-    left_scan_start = false;
-    // Try to get next tile from LEFT child
-    if (children_[0]->Execute() == false) {
-      LOG_TRACE("Did not get left tile \n");
-      return false;
-    }
-    LOG_TRACE("Got left tile \n");
-  } else {
-    LOG_TRACE("Already have left tile \n");
-  }
-
-  std::unique_ptr<LogicalTile> left_tile(children_[0]->GetOutput());
-  std::unique_ptr<LogicalTile> right_tile(children_[1]->GetOutput());
-
-  // Check the input logical tiles.
-  assert(left_tile.get() != nullptr);
-  assert(right_tile.get() != nullptr);
-
-  // Construct output logical tile.
-  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
-
-  auto left_tile_schema = left_tile->GetSchema();
-  auto right_tile_schema = right_tile->GetSchema();
-
-  for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile->GetPositionLists().size();
-  }
-
-  /* build the schema given the projection */
-  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
-
-  // Transfer the base tile ownership
-  left_tile->TransferOwnershipTo(output_tile.get());
-  right_tile->TransferOwnershipTo(output_tile.get());
-
-  // Set the output logical tile schema
-  output_tile->SetSchema(std::move(output_tile_schema));
-  // Now, let's compute the position lists for the output tile
-
-  // Cartesian product
-
-  // Add everything from two logical tiles
-  auto left_tile_position_lists = left_tile->GetPositionLists();
-  auto right_tile_position_lists = right_tile->GetPositionLists();
-
-  // Compute output tile column count
-  size_t left_tile_column_count = left_tile_position_lists.size();
-  size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count =
-      left_tile_column_count + right_tile_column_count;
-
-  assert(left_tile_column_count > 0);
-  assert(right_tile_column_count > 0);
-
-  // Compute output tile row count
-  size_t left_tile_row_count = left_tile_position_lists[0].size();
-  size_t right_tile_row_count = right_tile_position_lists[0].size();
-
-  // Construct position lists for output tile
-  std::vector<std::vector<oid_t>> position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count;
-       column_itr++)
-    position_lists.push_back(std::vector<oid_t>());
-
-  LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count,
-            right_tile_column_count);
-  LOG_TRACE("left col count: %lu, right col count: %lu",
-            left_tile->GetColumnCount(),
-            right_tile->GetColumnCount());
-  LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
-            right_tile_row_count);
-
-  // Go over every pair of tuples in left and right logical tiles
-  for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
-       left_tile_row_itr++) {
-    for (size_t right_tile_row_itr = 0;
-         right_tile_row_itr < right_tile_row_count; right_tile_row_itr++) {
-      // TODO: OPTIMIZATION : Can split the control flow into two paths -
-      // one for cartesian product and one for join
-      // Then, we can skip this branch atleast for the cartesian product path.
-
-      // Join predicate exists
-      if (predicate_ != nullptr) {
-        expression::ContainerTuple<executor::LogicalTile> left_tuple(
-            left_tile.get(), left_tile_row_itr);
-        expression::ContainerTuple<executor::LogicalTile> right_tuple(
-            right_tile.get(), right_tile_row_itr);
-
-        // Join predicate is false. Skip pair and continue.
-        if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-                .IsFalse()) {
-          continue;
+    else { // Otherwise, we must attempt to execute the right child
+      if(false == children_[1]->Execute()){
+        // right child is finished, no more tiles
+        LOG_TRACE("My right child is exhausted.");
+        if(right_result_tiles_.empty()){
+          assert(left_result_tiles_.empty());
+          LOG_TRACE("Right child returns nothing totally. Exit.");
+          return false;
         }
+        right_child_done_ = true;
+        right_result_itr_ = 0;
+        advance_left_child = true;
       }
-
-      // Insert a tuple into the output logical tile
-      // First, copy the elements in left logical tile's tuple
-      for (size_t output_tile_column_itr = 0;
-           output_tile_column_itr < left_tile_column_count;
-           output_tile_column_itr++) {
-        position_lists[output_tile_column_itr].push_back(
-            left_tile_position_lists[output_tile_column_itr]
-                                    [left_tile_row_itr]);
+      else { // Buffer the right child's result
+        LOG_TRACE("Retrieve a new tile from right child");
+        right_result_tiles_.push_back(children_[1]->GetOutput());
+        right_result_itr_ = right_result_tiles_.size() - 1;
       }
-
-      // Then, copy the elements in left logical tile's tuple
-      for (size_t output_tile_column_itr = 0;
-           output_tile_column_itr < right_tile_column_count;
-           output_tile_column_itr++) {
-        position_lists[left_tile_column_count + output_tile_column_itr]
-            .push_back(right_tile_position_lists[output_tile_column_itr]
-                                                [right_tile_row_itr]);
-      }
-
-      // First, copy the elements in left logical tile's tuple
     }
-  }
 
-  for (auto col : position_lists) {
-    LOG_TRACE("col");
-    for (auto elm : col) {
-      (void)elm;  // silent compiler
-      LOG_TRACE("elm: %u", elm);
+    if(advance_left_child || left_result_tiles_.empty()){
+      assert(0 == right_result_itr_);
+      // Need to advance the left child
+      if(false == children_[0]->Execute()){
+        LOG_TRACE("Left child is exhausted. Returning false.");
+        // Left child exhausted.
+        // The whole executor is done.
+        // Release cur left tile. Clear right child's result buffer and return.
+        assert(right_result_tiles_.size() > 0);
+        return false;
+      }
+      else{
+        LOG_TRACE("Advance the left child.");
+        // Insert left child's result to buffer
+        left_result_tiles_.push_back(children_[0]->GetOutput());
+      }
     }
+
+    left_tile = left_result_tiles_.back();
+    right_tile = right_result_tiles_[right_result_itr_];
+
+
+    // Check the input logical tiles.
+    assert(left_tile != nullptr);
+    assert(right_tile != nullptr);
+
+    // Construct output logical tile.
+    std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
+
+    auto left_tile_schema = left_tile->GetSchema();
+    auto right_tile_schema = right_tile->GetSchema();
+
+    for (auto &col : right_tile_schema) {
+      col.position_list_idx += left_tile->GetPositionLists().size();
+    }
+
+    /* build the schema given the projection */
+    auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
+
+    // Set the output logical tile schema
+    output_tile->SetSchema(std::move(output_tile_schema));
+    // Now, let's compute the position lists for the output tile
+
+    // Cartesian product
+
+    // Add everything from two logical tiles
+    auto left_tile_position_lists = left_tile->GetPositionLists();
+    auto right_tile_position_lists = right_tile->GetPositionLists();
+
+    // Compute output tile column count
+    size_t left_tile_column_count = left_tile_position_lists.size();
+    size_t right_tile_column_count = right_tile_position_lists.size();
+    size_t output_tile_column_count =
+        left_tile_column_count + right_tile_column_count;
+
+    assert(left_tile_column_count > 0);
+    assert(right_tile_column_count > 0);
+
+    // Construct position lists for output tile
+    // TODO: We don't have to copy position lists for each column,
+    // as there are likely duplications of them.
+    // But must pay attention to the output schema (see how it is constructed!)
+    std::vector<std::vector<oid_t>> position_lists;
+    for (size_t column_itr = 0; column_itr < output_tile_column_count;
+         column_itr++)
+      position_lists.push_back(std::vector<oid_t>());
+
+    LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count,
+              right_tile_column_count);
+    LOG_TRACE("left col count: %lu, right col count: %lu",
+              left_tile->GetColumnCount(),
+              right_tile->GetColumnCount());
+    LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
+              right_tile_row_count);
+
+    unsigned int removed = 0;
+    // Go over every pair of tuples in left and right logical tiles
+    for(auto left_tile_row_itr : *left_tile){
+      for(auto right_tile_row_itr : *right_tile){
+        // TODO: OPTIMIZATION : Can split the control flow into two paths -
+        // one for cartesian product and one for join
+        // Then, we can skip this branch atleast for the cartesian product path.
+
+        // Join predicate exists
+        if (predicate_ != nullptr) {
+          expression::ContainerTuple<executor::LogicalTile> left_tuple(
+              left_tile, left_tile_row_itr);
+          expression::ContainerTuple<executor::LogicalTile> right_tuple(
+              right_tile, right_tile_row_itr);
+
+          // Join predicate is false. Skip pair and continue.
+          if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
+                  .IsFalse()) {
+            removed++;
+            continue;
+          }
+        }
+
+        // Insert a tuple into the output logical tile
+        // First, copy the elements in left logical tile's tuple
+        for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < left_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[output_tile_column_itr].push_back(
+              left_tile_position_lists[output_tile_column_itr]
+                                      [left_tile_row_itr]);
+        }
+
+        // Then, copy the elements in right logical tile's tuple
+        for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < right_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[left_tile_column_count + output_tile_column_itr]
+              .push_back(right_tile_position_lists[output_tile_column_itr]
+                                                  [right_tile_row_itr]);
+        }
+      } // inner loop of NLJ
+    } // outer loop of NLJ
+
+    LOG_INFO("Predicate removed %d rows", removed);
+
+    // Check if we have any matching tuples.
+    if (position_lists[0].size() > 0) {
+      output_tile->SetPositionListsAndVisibility(std::move(position_lists));
+      SetOutput(output_tile.release());
+      return true;
+    }
+
+    LOG_TRACE("This pair produces empty join result. Loop.");
+  } // End large for-loop
+
+}
+
+NestedLoopJoinExecutor::~NestedLoopJoinExecutor(){
+
+  for(auto tile : left_result_tiles_){
+    delete tile;
+    left_result_tiles_.clear();
   }
 
-  // Check if we have any matching tuples.
-  if (position_lists[0].size() > 0) {
-    output_tile->SetPositionListsAndVisibility(std::move(position_lists));
-    SetOutput(output_tile.release());
-    return true;
-  }
-  // Try again
-  else {
-    // If we are out of any more pairs of child tiles to examine,
-    // then we will return false earlier in this function.
-    // So, we don't have to return false here.
-    DExecute();
+  for(auto tile : right_result_tiles_){
+    delete tile;
+    right_result_tiles_.clear();
   }
 
-  return true;
 }
 
 }  // namespace executor

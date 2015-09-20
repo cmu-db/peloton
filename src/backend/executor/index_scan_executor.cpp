@@ -47,7 +47,6 @@ bool IndexScanExecutor::DInit() {
   if (!status) return false;
 
   assert(children_.size() == 0);
-  LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
@@ -63,6 +62,7 @@ bool IndexScanExecutor::DInit() {
   expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
   runtime_keys_ = node.GetRunTimeKeys();
+  predicate_ = node.GetPredicate();
 
   if (runtime_keys_.size() != 0) {
     assert(runtime_keys_.size() == values_.size());
@@ -80,13 +80,11 @@ bool IndexScanExecutor::DInit() {
     }
   }
 
-  auto table = node.GetTable();
+  table_ = node.GetTable();
 
-  if (table != nullptr) {
-    if (column_ids_.empty()) {
-      column_ids_.resize(table->GetSchema()->GetColumnCount());
-      std::iota(column_ids_.begin(), column_ids_.end(), 0);
-    }
+  if (table_ != nullptr) {
+      full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
+      std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
   }
 
   return true;
@@ -97,28 +95,19 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
+  LOG_INFO("Index Scan executor :: 0 child");
+
   if (!done_) {
     auto status = ExecIndexLookup();
     if (status == false) return false;
+    ExecPredication();
+    ExecProjection();
   }
 
   // Already performed the index lookup
   assert(done_);
 
   while (result_itr < result.size()) {  // Avoid returning empty tiles
-    // In order to be as lazy as possible,
-    // the generic predicate is checked here (instead of upfront)
-    if (nullptr != predicate_) {
-      for (oid_t tuple_id : *result[result_itr]) {
-        expression::ContainerTuple<LogicalTile> tuple(result[result_itr],
-                                                      tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
-                .IsFalse()) {
-          result[result_itr]->RemoveVisibility(tuple_id);
-        }
-      }
-    }
-
     if (result[result_itr]->GetTupleCount() == 0) {
       result_itr++;
       continue;
@@ -131,6 +120,34 @@ bool IndexScanExecutor::DExecute() {
   }  // end while
 
   return false;
+}
+
+void IndexScanExecutor::ExecPredication() {
+  if (nullptr == predicate_)
+    return;
+  unsigned int removed_count = 0;
+  for (auto tile : result) {
+    for (auto tuple_id : *tile) {
+        expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                .IsFalse()) {
+          removed_count++;
+          tile->RemoveVisibility(tuple_id);
+        }
+    }
+  }
+  LOG_INFO("predicate removed %d row", removed_count);
+}
+
+void IndexScanExecutor::ExecProjection() {
+
+  if (column_ids_.size() == 0)
+    return;
+
+  for (auto tile : result) {
+    tile->ProjectColumns(full_column_ids_, column_ids_);
+  }
+
 }
 
 bool IndexScanExecutor::ExecIndexLookup() {
@@ -152,9 +169,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
   txn_id_t txn_id = transaction_->GetTransactionId();
   cid_t commit_id = transaction_->GetLastCommitId();
 
+
   // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTileGroups(tuple_locations, column_ids_,
+  result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
                                               txn_id, commit_id);
+
   done_ = true;
 
   LOG_TRACE("Result tiles : %lu", result.size());

@@ -11,12 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/value.h"
-
-#include <cstdio>
-#include <cstring>
-#include <sstream>
-#include <iostream>
-
+#include "backend/common/logger.h"
 #include "backend/common/stl_friendly_value.h"
 #include "backend/logging/log_manager.h"
 #include "backend/expression/function_expression.h"

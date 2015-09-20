@@ -63,7 +63,7 @@ class Value;
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 10
+#define DEFAULT_TUPLES_PER_TILEGROUP 1000
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently 1048576.
@@ -581,7 +581,9 @@ typedef uint64_t txn_id_t;
 
 static const txn_id_t INVALID_TXN_ID = 0;
 
-static const txn_id_t START_TXN_ID = 1;
+static const txn_id_t INITIAL_TXN_ID = 1;
+
+static const txn_id_t START_TXN_ID = 2;
 
 static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
 
