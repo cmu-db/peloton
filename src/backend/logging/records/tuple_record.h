@@ -89,6 +89,8 @@ public:
 
   ItemPointer GetDeleteLocation(void) const {return delete_location;}
 
+  static size_t GetTupleRecordSize(void);
+
   void Print(void);
 
 private:

@@ -106,6 +106,12 @@ void TupleRecord::DeserializeHeader(CopySerializeInputBE& input) {
   delete_location.offset = (oid_t)(input.ReadShort());
 }
 
+// Used for peloton logging
+size_t TupleRecord::GetTupleRecordSize(void){
+  // log_record_type + header_legnth + db_oid + table_oid + txn_id + insert_location + delete_location 
+  return sizeof(char) + sizeof(int) + sizeof(int16_t) + sizeof(int16_t) + sizeof(long) + sizeof(int16_t)*4;
+}
+
 //just for debugging
 void TupleRecord::Print(){
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
