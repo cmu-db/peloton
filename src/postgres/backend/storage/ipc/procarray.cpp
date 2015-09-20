@@ -94,7 +94,7 @@ typedef struct ProcArrayStruct
 	int			pgprocnos[FLEXIBLE_ARRAY_MEMBER];
 } ProcArrayStruct;
 
-thread_local static ProcArrayStruct *procArray;
+static ProcArrayStruct *procArray;
 
 static PGPROC *allProcs;
 static PGXACT *allPgXact;
