@@ -124,7 +124,7 @@ class BtreeIndex : public Index {
     std::vector<ItemPointer> result;
 
     {
-      index_lock.ReadLock();
+      index_lock.WriteLock();
 
       // check if we have leading column equality
       oid_t leading_column_id = 0;
@@ -139,7 +139,8 @@ class BtreeIndex : public Index {
         }
       }
 
-      auto itr = container.begin();
+      auto itr_begin = container.begin();
+      auto itr_end = container.end();
       storage::Tuple *start_key = nullptr;
       // start scanning from upper bound if possible
       if (special_case == true) {
@@ -151,14 +152,19 @@ class BtreeIndex : public Index {
 
         // all equal case
         if (all_equal) {
-          itr = container.find(index_key1);
+          //itr_begin = container.find(index_key1);
+          /* 'find' may return any one of the elements with the key */
+          auto ret = container.equal_range(index_key1);
+          itr_begin = ret.first;
+          itr_end = ret.second;
+          LOG_INFO("equal range return %ld", std::distance(itr_begin, itr_end));
         } else {
-          itr = container.upper_bound(index_key1);
+          itr_begin = container.upper_bound(index_key1);
         }
       }
 
       // scan all entries comparing against arbitrary key
-      while (itr != container.end()) {
+      for (auto itr = itr_begin; itr != itr_end; itr++) {
         auto index_key = itr->first;
         auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
 
@@ -166,7 +172,6 @@ class BtreeIndex : public Index {
           ItemPointer location = itr->second;
           result.push_back(location);
         }
-        itr++;
       }
 
       delete start_key;
