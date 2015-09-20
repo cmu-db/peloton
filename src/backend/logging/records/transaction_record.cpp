@@ -49,7 +49,7 @@ void TransactionRecord::Deserialize(CopySerializeInputBE& input){
 
 }
 
-// Used for peloton logging to go back to previous transaction record
+// Used for peloton logging
 size_t TransactionRecord::GetTransactionRecordSize(void){
   // log_record_type + header_legnth + transaction_id 
   return sizeof(char) + sizeof(int) + sizeof(long);
