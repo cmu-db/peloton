@@ -164,47 +164,30 @@ void PelotonFrontendLogger::DoRecovery() {
 
       bool EOF_OF_LOG_FILE = false;
 
-      //JumpToLastActiveTransaction();
+      JumpToLastActiveTransaction();
 
       while(!EOF_OF_LOG_FILE){
 
-        std::cout << "offset : " << ftell(log_file) << std::endl;
         // Read the first single bite so that we can distinguish log record type
         // otherwise, finish the recovery 
-        switch(GetNextLogRecordType()){
+        auto log_record_type = GetNextLogRecordType();
+        switch(log_record_type){
 
           case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-            printf("BEGIN \n");
-            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
-            break;
-
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-            printf("COMMIT\n");
-            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-            break;
-
           case LOGRECORD_TYPE_TRANSACTION_END:
-            printf("END\n");
-            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_END);
-            break;
-
-          case LOGRECORD_TYPE_TRANSACTION_DONE:
-            printf("DONE\n");
-            SkipTransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE);
+            SkipTransactionRecord(log_record_type);
             break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-            printf("INSERT\n");
             InsertTuple();
             break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-            printf("DELETE\n");
             DeleteTuple();
             break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-            printf("UPDATE\n");
             UpdateTuple();
             break;
 
@@ -269,6 +252,7 @@ void PelotonFrontendLogger::UpdateTuple(void){
 }
 
 void PelotonFrontendLogger::SkipTransactionRecord(LogRecordType log_record_type){
+
   // read transaction information from the log file
   TransactionRecord txnRecord(log_record_type);
 
@@ -317,42 +301,39 @@ LogRecordType PelotonFrontendLogger::GetNextLogRecordType(){
 }
 
 bool PelotonFrontendLogger::DoWeNeedRecovery(void){
-  char buffer;
 
-  // Read last transaction record type
+  // Read the last record type
   fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
-  int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
-  if( ret <= 0 ){
-    LOG_ERROR("Error occured in fread(%d)", ret);
-  }
-  CopySerializeInputBE input(&buffer, sizeof(char));
-  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
 
-  std::cout << "Log Record Type : " << LogRecordTypeToString(log_record_type) << std::endl;
+  auto log_record_type = GetNextLogRecordType();
 
-  // If last transaction record is COMMIT or END 
-  // Do recovery
+  // If the last transaction is active transaction where the log record type is
+  // either commit or end, we have to do recovery. Otherwise do nothing
   if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT ||
       log_record_type == LOGRECORD_TYPE_TRANSACTION_END){
-    fseek(log_file, 0, SEEK_SET);
+
+    if( log_record_type == LOGRECORD_TYPE_TRANSACTION_END){
+      // move to commit log record 
+      fseek(log_file, -(TransactionRecord::GetTransactionRecordSize()+sizeof(char)), SEEK_CUR);
+    }
     return true;
   }else{
-    fseek(log_file, 0, SEEK_END);
     return false;
   }
 }
 
- 
-
 void PelotonFrontendLogger::JumpToLastActiveTransaction(){
-  while(1){
-    auto entire_txn_size = GetNextFrameSize();
-    auto current_offset = ftell(log_file);
-    if(current_offset+entire_txn_size > GetLogFileSize()){
-      break;
-    }
-    fseek(log_file, entire_txn_size , SEEK_CUR);
+
+  // Step backward so that we can find a begin transaction record 
+  fseek(log_file, -(TransactionRecord::GetTransactionRecordSize()
+                    +TupleRecord::GetTupleRecordSize()), SEEK_CUR);
+
+  auto log_record_type = GetNextLogRecordType();
+
+  while( log_record_type != LOGRECORD_TYPE_TRANSACTION_BEGIN){
+    fseek(log_file, -(TupleRecord::GetTupleRecordSize()+1), SEEK_CUR);
   }
+  fseek(log_file, -1, SEEK_CUR);
 }
 
 /**
