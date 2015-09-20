@@ -17,15 +17,8 @@ Before reporting a problem, please read how to [File an issue](https://github.co
 
 ### Development / Contributing
 
-Peloton has an open commit bit policy: Anyone with an accepted pull request gets added as a repository collaborator.
-Please try to follow these simple rules:
-
-* Commit directly onto the master branch only for typos, improvements to the readme and documentation (please add
-  `[ci skip]` to the commit message).
-* Create a feature branch and open a pull-request early for any new features to get feedback.
-* Make sure you adhere to the general pull request rules above.
-
-See the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for more details.
+Peloton has an open commit bit policy. Anyone with an accepted pull request gets added as a repository collaborator.
+Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for more details.
 
 ### Contributors
 

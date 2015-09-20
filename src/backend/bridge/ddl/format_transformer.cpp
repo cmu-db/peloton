@@ -61,7 +61,7 @@ FormatTransformer::TransformValueFormat(PostgresValueFormat postgresValueFormat)
   // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
   // This code is duplicated in schema_transformer.cpp
   if(VALUE_TYPE_DECIMAL == peloton_value_type){
-    LOG_INFO("Detect a DECIMAL attribute. \n");
+    LOG_TRACE("Detect a DECIMAL attribute. \n");
     peloton_column_length = 16;
     peloton_is_inlined = true;
   }

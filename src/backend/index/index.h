@@ -118,10 +118,9 @@ class Index {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer location) = 0;
 
-  // update a index entry if the old location is same as the one given
+  // update a index entry
   virtual bool UpdateEntry(const storage::Tuple *key,
-                           const ItemPointer location,
-                           const ItemPointer old_location) = 0;
+                           const ItemPointer location) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -139,6 +138,10 @@ class Index {
 
   // scan all keys in the index, working like a sort
   virtual std::vector<ItemPointer> Scan() = 0;
+
+  virtual std::vector<ItemPointer> Scan(const storage::Tuple* key) = 0;
+
+
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -186,14 +189,14 @@ class Index {
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
- protected:
-  Index(IndexMetadata *schema);
-
   // Generic key comparator between index key and given arbitrary key
-  bool Compare(const storage::Tuple &index_key,
+  static bool Compare(const AbstractTuple &index_key,
                const std::vector<oid_t> &column_ids,
                const std::vector<ExpressionType> &expr_types,
                const std::vector<Value> &values);
+
+ protected:
+  Index(IndexMetadata *schema);
 
   // Set the lower bound tuple for index iteration
   bool SetLowerBoundTuple(storage::Tuple *index_key,

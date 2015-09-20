@@ -64,6 +64,10 @@ bool MergeJoinExecutor::DExecute() {
       LOG_INFO("Did not get right tile \n");
       return false;
     }
+
+    std::unique_ptr<LogicalTile> right(children_[1]->GetOutput());
+    right_tiles_.push_back(right.release());
+    LOG_INFO("size of right tiles: %lu", right_tiles_.size());
   }
   LOG_INFO("Got right tile \n");
 
@@ -73,15 +77,19 @@ bool MergeJoinExecutor::DExecute() {
       LOG_INFO("Did not get left tile \n");
       return false;
     }
+
+    std::unique_ptr<LogicalTile> left(children_[0]->GetOutput());
+    left_tiles_.push_back(left.release());
+    LOG_INFO("size of right tiles: %lu", left_tiles_.size());
   }
   LOG_INFO("Got left tile \n");
 
-  std::unique_ptr<LogicalTile> left_tile(children_[0]->GetOutput());
-  std::unique_ptr<LogicalTile> right_tile(children_[1]->GetOutput());
+  LogicalTile *left_tile = left_tiles_.back();
+  LogicalTile *right_tile = right_tiles_.back();
 
   // Check the input logical tiles.
-  assert(left_tile.get() != nullptr);
-  assert(right_tile.get() != nullptr);
+  assert(left_tile != nullptr);
+  assert(right_tile != nullptr);
 
   // Construct output logical tile.
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
@@ -99,13 +107,9 @@ bool MergeJoinExecutor::DExecute() {
   // Set the output logical tile schema
   output_tile->SetSchema(std::move(output_tile_schema));
 
-  // Transfer the base tile ownership
-  left_tile->TransferOwnershipTo(output_tile.get());
-  right_tile->TransferOwnershipTo(output_tile.get());
-
   // Get position list from two logical tiles
-  auto left_tile_position_lists = left_tile.get()->GetPositionLists();
-  auto right_tile_position_lists = right_tile.get()->GetPositionLists();
+  auto left_tile_position_lists = left_tile->GetPositionLists();
+  auto right_tile_position_lists = right_tile->GetPositionLists();
 
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
@@ -137,15 +141,15 @@ bool MergeJoinExecutor::DExecute() {
   size_t left_start_row = 0;
   size_t right_start_row = 0;
 
-  size_t left_end_row = Advance(left_tile.get(), left_start_row, true);
-  size_t right_end_row = Advance(right_tile.get(), right_start_row, false);
+  size_t left_end_row = Advance(left_tile, left_start_row, true);
+  size_t right_end_row = Advance(right_tile, right_start_row, false);
 
   while (left_end_row > left_start_row && right_end_row > right_start_row) {
 
     expression::ContainerTuple<executor::LogicalTile> left_tuple(
-        left_tile.get(), left_start_row);
+        left_tile, left_start_row);
     expression::ContainerTuple<executor::LogicalTile> right_tuple(
-        right_tile.get(), right_start_row);
+        right_tile, right_start_row);
     bool diff = false;
 
     // try to match the join clauses
@@ -160,14 +164,14 @@ bool MergeJoinExecutor::DExecute() {
         // Left key < Right key, advance left
         LOG_INFO("left < right, advance left");
         left_start_row = left_end_row;
-        left_end_row = Advance(left_tile.get(), left_start_row, true);
+        left_end_row = Advance(left_tile, left_start_row, true);
         diff = true;
         break;
       } else if (ret > 0) {
         // Left key > Right key, advance right
         LOG_INFO("left > right, advance right");
         right_start_row = right_end_row;
-        right_end_row = Advance(right_tile.get(), right_start_row, false);
+        right_end_row = Advance(right_tile, right_start_row, false);
         diff = true;
         break;
       }
@@ -188,19 +192,16 @@ bool MergeJoinExecutor::DExecute() {
           .IsFalse()) {
         // Join predicate is false. Advance both.
         left_start_row = left_end_row;
-        left_end_row = Advance(left_tile.get(), left_start_row, true);
+        left_end_row = Advance(left_tile, left_start_row, true);
         right_start_row = right_end_row;
-        right_end_row = Advance(right_tile.get(), right_start_row, false);
+        right_end_row = Advance(right_tile, right_start_row, false);
       }
     }
 
     // sub tile matched, do a Cartesian product
     // Go over every pair of tuples in left and right logical tiles
-    for (size_t left_tile_row_itr = left_start_row;
-        left_tile_row_itr < left_end_row; left_tile_row_itr++) {
-      for (size_t right_tile_row_itr = right_start_row;
-          right_tile_row_itr < right_end_row; right_tile_row_itr++) {
-
+    for (auto left_tile_row_itr : *left_tile) {
+      for (auto right_tile_row_itr : *right_tile) {
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
         for (size_t output_tile_column_itr = 0;
@@ -223,18 +224,24 @@ bool MergeJoinExecutor::DExecute() {
 
     // then Advance both
     left_start_row = left_end_row;
-    left_end_row = Advance(left_tile.get(), left_start_row, true);
+    left_end_row = Advance(left_tile, left_start_row, true);
     right_start_row = right_end_row;
-    right_end_row = Advance(right_tile.get(), right_start_row, false);
+    right_end_row = Advance(right_tile, right_start_row, false);
   }
 
   // set the corresponding flags if left or right is end
   // so that next execution time, it will be re executed
   if (left_end_row == left_start_row) {
+    // Transfer the base tile ownership
+    // as this tile ends and its underlying physical tile, if any, is safe to be owned by output tile
+    left_tile->TransferOwnershipTo(output_tile.get());
     left_end_ = true;
   }
 
   if (right_end_row == right_start_row) {
+    // Transfer the base tile ownership
+    // as this tile ends and its underlying physical tile, if any, is safe to be owned by output tile
+    right_tile->TransferOwnershipTo(output_tile.get());
     right_end_ = true;
   }
 

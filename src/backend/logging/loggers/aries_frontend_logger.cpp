@@ -21,6 +21,7 @@
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace logging {
@@ -329,7 +330,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
     storage::TileGroup *tile_group = entry.first;
 
     for (auto tuple_slot : entry.second)
-      tile_group->AbortDeletedTuple(tuple_slot);
+      tile_group->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
   }
 
   // Clear inserted/deleted tuples from txn, just in case

@@ -57,7 +57,6 @@ extern bool IsPelotonQuery(List *relationOids);
  * Functions called from postgres, utility, and execMain
  * ----------
  */
-
 extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);
