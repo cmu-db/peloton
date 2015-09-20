@@ -25,12 +25,10 @@ TEST(AriesLoggingTest, writing_logfile) {
   if( log_file.good() ){
     EXPECT_TRUE(std::remove(aries_log_file_name.c_str()) == 0 );
   }
+  log_file.close();
 
   // Prepare a simple log file
-  if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES) == true){
-  }else{
-    LOG_ERROR("Could not prepare log file");
-  }
+  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES));
 }
 
 /**
@@ -40,11 +38,18 @@ TEST(AriesLoggingTest, recovery) {
 
   std::ifstream log_file(aries_log_file_name.c_str());
 
-  // Do recovery if the log file exists
+  // Reset the log file if exists
   if( log_file.good() ){
-    LoggingTestsUtil::CheckAriesRecovery();
-  }else{
-    LOG_ERROR("Could not check recovery");
+    EXPECT_TRUE(std::remove(aries_log_file_name.c_str()) == 0 );
+  }
+  log_file.close();
+
+  // Prepare a simple log file for recovery test
+  if (LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES)) {
+	// Do recovery
+	LoggingTestsUtil::CheckAriesRecovery();
+  } else {
+	LOG_ERROR("Could not check recovery");
   }
 }
 

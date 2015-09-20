@@ -79,7 +79,7 @@
 #include "utils/memutils.h"
 
 // TODO: Peloton Changes
-#include "../../../backend/logging/log_manager.h"
+#include "backend/logging/log_manager.h"
 #include "backend/common/message_queue.h"
 #include "backend/common/stack_trace.h"
 
@@ -818,7 +818,7 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
   // TODO: Peloton Changes
   /* figure out if catalog query or user query */
   plan->pelotonQuery = IsPelotonQuery(plan->relationOids);
-  elog(DEBUG2, "Peloton query : %d \n", plan->pelotonQuery);
+  elog(INFO, "Peloton query : %d \n", plan->pelotonQuery);
 
   if (log_planner_stats)
     ShowUsage("PLANNER STATISTICS");

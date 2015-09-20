@@ -69,17 +69,17 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   if(nullptr == index_scan_desc.index){
     LOG_ERROR("Fail to get index with oid : %u \n", iss_plan->indexid);
   };
-  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+  LOG_INFO("Index scan on %s using oid %u, index name: %s",table->GetName().c_str(), iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  LOG_TRACE("Scan order: %d", iss_plan->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
 
-  LOG_INFO("num of scan keys = %d, num of runtime key = %d", iss_plan_state->iss_NumScanKeys, iss_plan_state->iss_NumRuntimeKeys);
+  LOG_TRACE("num of scan keys = %d, num of runtime key = %d", iss_plan_state->iss_NumScanKeys, iss_plan_state->iss_NumRuntimeKeys);
   BuildScanKey(iss_plan_state->iss_ScanKeys, iss_plan_state->iss_NumScanKeys,
                iss_plan_state->iss_RuntimeKeys, iss_plan_state->iss_NumRuntimeKeys,
                index_scan_desc);
@@ -152,7 +152,7 @@ static void BuildScanKey(
 
 
     index_scan_desc.values.push_back(value);
-    LOG_INFO("key no: %d", scan_key->sk_attno);
+    LOG_TRACE("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
         LOG_INFO("key < %s", value.Debug().c_str());
@@ -193,7 +193,7 @@ static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_run
   for (int i = 0; i < num_runtime_keys; i++) {
     auto expr = ExprTransformer::TransformExpr(runtime_keys[i].key_expr);
     index_scan_desc.runtime_keys.push_back(expr);
-    LOG_INFO("Runtime scankey Expr: %s", expr->Debug(" ").c_str());
+    LOG_TRACE("Runtime scankey Expr: %s", expr->Debug(" ").c_str());
   }
 }
 
@@ -222,7 +222,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   Oid table_oid = ioss_plan_state->table_oid;
   Oid database_oid = ioss_plan_state->database_oid;
 
-  LOG_INFO("Index Only Scan :: DB OID :: %u Table OID :: %u",
+  LOG_TRACE("Index Only Scan :: DB OID :: %u Table OID :: %u",
            database_oid, table_oid);
 
   const IndexOnlyScan *ioss_plan = ioss_plan_state->ioss_plan;
@@ -238,11 +238,11 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  LOG_INFO("Scan order: %d", ioss_plan->indexorderdir);
+  LOG_TRACE("Scan order: %d", ioss_plan->indexorderdir);
   // assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
-  LOG_INFO("num of scan keys = %d, num of runtime key = %d", ioss_plan_state->ioss_NumScanKeys, ioss_plan_state->ioss_NumRuntimeKeys);
+  LOG_TRACE("num of scan keys = %d, num of runtime key = %d", ioss_plan_state->ioss_NumScanKeys, ioss_plan_state->ioss_NumRuntimeKeys);
   BuildScanKey(ioss_plan_state->ioss_ScanKeys,
                ioss_plan_state->ioss_NumScanKeys,
                ioss_plan_state->ioss_RuntimeKeys,
@@ -302,7 +302,7 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
-  LOG_INFO("Scan from: database oid %u table oid %u", database_oid, table_oid);
+  LOG_TRACE("Scan from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
@@ -310,8 +310,8 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Can't find Index oid %u \n", biss_plan->indexid);
   }
-  LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
-           biss_plan->indexid, index_scan_desc.index->GetName().c_str());
+  LOG_INFO("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
+           table->GetName().c_str(), biss_plan->indexid, index_scan_desc.index->GetName().c_str());
 
   assert(index_scan_desc.index);
 
@@ -320,7 +320,7 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
 
   /* index qualifier and scan keys */
 
-  LOG_INFO("num of scan keys = %d, num of runtime key = %d", biss_state->biss_NumScanKeys, biss_state->biss_NumRuntimeKeys);
+  LOG_TRACE("num of scan keys = %d, num of runtime key = %d", biss_state->biss_NumScanKeys, biss_state->biss_NumRuntimeKeys);
   BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys,
                biss_state->biss_RuntimeKeys, biss_state->biss_NumRuntimeKeys,
                index_scan_desc);

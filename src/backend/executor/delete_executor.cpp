@@ -111,6 +111,7 @@ bool DeleteExecutor::DExecute() {
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
 
     if (status == false) {
+      LOG_INFO("Fail to delete. Set txn failure");
       transaction_->SetResult(peloton::Result::RESULT_FAILURE);
       return false;
     }
