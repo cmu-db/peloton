@@ -26,6 +26,9 @@ namespace brain {
 // Clusterer
 //===--------------------------------------------------------------------===//
 
+// Column Id to < Tile Id, Tile Column Id >
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
+
 // Sequential k-Means Clustering
 class Clusterer {
  public:
@@ -54,7 +57,7 @@ class Clusterer {
   double GetFraction(oid_t cluster_offset) const;
 
   // get partitioning
-  std::map<oid_t, oid_t> GetPartitioning(oid_t tile_count) const;
+  column_map_type GetPartitioning(oid_t tile_count) const;
 
   // Get a string representation of clusterer
   friend std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer);

@@ -238,7 +238,7 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
     storage::TileGroup *tile_group = entry.first;
 
     for (auto tuple_slot : entry.second)
-      tile_group->CommitInsertedTuple(tuple_slot, txn->cid);
+      tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
   // (B) commit deletes
@@ -369,6 +369,7 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   }
 
   // (A) rollback inserts
+  const txn_id_t txn_id = txn->GetTransactionId();
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
@@ -383,7 +384,7 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
     storage::TileGroup *tile_group = entry.first;
 
     for (auto tuple_slot : entry.second)
-      tile_group->AbortDeletedTuple(tuple_slot);
+      tile_group->AbortDeletedTuple(tuple_slot, txn_id);
   }
 
   EndTransaction(txn, false);

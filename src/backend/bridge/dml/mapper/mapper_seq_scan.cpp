@@ -39,7 +39,7 @@ planner::AbstractPlan *PlanTransformer::TransformSeqScan(
        catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
    assert(target_table);
-   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
+   LOG_INFO("SeqScan: database oid %u table oid %u: %s", database_oid, table_oid, target_table->GetName().c_str());
 
   /**
    * SeqScan only needs the "generic" settings, so grab it.

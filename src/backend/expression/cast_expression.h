@@ -81,6 +81,7 @@ class CastExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
     buffer << spacer << "Cast as [" << this->type_ << "]\n";
+    if (child_) buffer << this->child_->Debug(" " + spacer);
     return (buffer.str());
   }
 

@@ -203,6 +203,7 @@ InitPostmasterChild(void)
 	 * postmaster child processes do this.
 	 */
 #ifdef HAVE_SETSID
+	// TODO: Peloton Changes
 	//if (setsid() < 0)
 	//	elog(FATAL, "setsid() failed: %m");
 #endif

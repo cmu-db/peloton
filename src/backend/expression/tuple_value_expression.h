@@ -26,7 +26,7 @@ class TupleValueExpression : public AbstractExpression {
     TupleValueExpression(const int tableIdx, const int valueIdx)
         : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE), tuple_idx(tableIdx), value_idx(valueIdx)
     {
-        LOG_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
+        LOG_INFO("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
     virtual Value Evaluate(const AbstractTuple *tuple1,

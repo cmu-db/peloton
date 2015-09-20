@@ -115,7 +115,6 @@ void LoggingTestsUtil::TruncateLogFile(std::string file_name){
  * @brief recover the database and check the tuples
  */
 void LoggingTestsUtil::CheckAriesRecovery(){
-
   // Initialize oid since we assume that we restart the system
   auto &manager = catalog::Manager::GetInstance();
   manager.SetNextOid(0);
@@ -168,7 +167,7 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   if( log_manager.EndLogging() ){
     thread.join();
   }else{
-    LOG_ERROR("Failed to terminate logging thread"); 
+    LOG_ERROR("Failed to terminate logging thread");
   }
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
 }
@@ -250,7 +249,10 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
   }
 
   // check # of active tuples
-  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-1) * NUM_BACKEND));
+
+  // TODO Remove hard code here.
+  // Minus 2 because we removed 2 tuples in RunBackends.
+  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-2) * NUM_BACKEND));
 
 }
 
@@ -429,7 +431,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
   auto tuples = GetTuple(table->GetSchema(), 1);
 
   for( auto tuple : tuples){
-    ItemPointer location = table->UpdateTuple(txn, tuple, delete_location);
+    ItemPointer location = table->InsertTuple(txn, tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
       continue;
