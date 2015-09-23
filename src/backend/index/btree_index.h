@@ -49,10 +49,11 @@ class BtreeIndex : public Index {
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.WriteLock();
-      index_key1.SetFromKey(key);
+      KeyType index_key;
+      index_key.SetFromKey(key);
 
       // Insert the key, val pair
-      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+      container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
       index_lock.Unlock();
       return true;
@@ -62,10 +63,11 @@ class BtreeIndex : public Index {
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.WriteLock();
-      index_key1.SetFromKey(key);
+      KeyType index_key;
+      index_key.SetFromKey(key);
 
       // Delete the < key, location > pair
-      auto entries = container.equal_range(index_key1);
+      auto entries = container.equal_range(index_key);
       for (auto iterator = entries.first; iterator != entries.second;) {
         ItemPointer value = iterator->second;
 
@@ -87,10 +89,11 @@ class BtreeIndex : public Index {
                    const ItemPointer location) {
     {
       index_lock.WriteLock();
-      index_key1.SetFromKey(key);
+      KeyType index_key;
+      index_key.SetFromKey(key);
 
       // insert the key, val pair
-      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+      container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
       index_lock.Unlock();
       return true;
@@ -100,10 +103,11 @@ class BtreeIndex : public Index {
   ItemPointer Exists(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.ReadLock();
-      index_key1.SetFromKey(key);
+      KeyType index_key;
+      index_key.SetFromKey(key);
 
       // find the <key, location> pair
-      auto entries = container.equal_range(index_key1);
+      auto entries = container.equal_range(index_key);
       for (auto entry = entries.first; entry != entries.second; ++entry) {
         ItemPointer value = entry->second;
         if ((value.block == location.block) &&
@@ -124,8 +128,9 @@ class BtreeIndex : public Index {
     std::vector<ItemPointer> result;
 
     {
-      index_lock.WriteLock();
+      index_lock.ReadLock();
 
+      KeyType index_key;
       // check if we have leading column equality
       oid_t leading_column_id = 0;
       auto key_column_ids_itr = std::find(
@@ -148,18 +153,18 @@ class BtreeIndex : public Index {
         // set the lower bound tuple
         auto all_equal =
             SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
-        index_key1.SetFromKey(start_key);
+        index_key.SetFromKey(start_key);
 
         // all equal case
         if (all_equal) {
           //itr_begin = container.find(index_key1);
           /* 'find' may return any one of the elements with the key */
-          auto ret = container.equal_range(index_key1);
+          auto ret = container.equal_range(index_key);
           itr_begin = ret.first;
           itr_end = ret.second;
           LOG_INFO("equal range return %ld", std::distance(itr_begin, itr_end));
         } else {
-          itr_begin = container.upper_bound(index_key1);
+          itr_begin = container.upper_bound(index_key);
         }
       }
 
@@ -208,11 +213,13 @@ class BtreeIndex : public Index {
    */
   std::vector<ItemPointer> Scan(const storage::Tuple* key) {
     index_lock.ReadLock();
-    index_key1.SetFromKey(key);
+    KeyType index_key;
+
+    index_key.SetFromKey(key);
 
     std::vector<ItemPointer> retval;
     // find the <key, location> pair
-    auto entries = container.equal_range(index_key1);
+    auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
       retval.push_back(entry->second);
     }
@@ -226,8 +233,6 @@ class BtreeIndex : public Index {
 
  protected:
   MapType container;
-  KeyType index_key1;
-  KeyType index_key2;
 
   // comparison stuff
   KeyEqualityChecker equals;
