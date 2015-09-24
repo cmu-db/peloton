@@ -251,8 +251,8 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
   // check # of active tuples
 
   // TODO Remove hard code here.
-  // Minus 2 because we removed 2 tuples in RunBackends.
-  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-2) * NUM_BACKEND));
+  // Minus 1 because we removed 1 tuples in RunBackends.
+  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-1) * NUM_BACKEND));
 
 }
 
@@ -292,9 +292,10 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   auto locations = InsertTuples(table, true/*commit*/);
 
-  // Try to delete the third inserted location if we insert >= 3 tuples
-  if(locations.size() >= 3)
-    DeleteTuples(table, locations[2], false/*abort*/);
+  // Try to delete the third inserted location and abort it if we insert >= 3 tuples
+  // FIXME
+  //if(locations.size() >= 3)
+  //  DeleteTuples(table, locations[2], false/*abort*/);
 
   // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
@@ -373,7 +374,9 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
   return locations;
 }
 
-void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed){
+void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, 
+                                    ItemPointer location, 
+                                    bool committed){
 
   ItemPointer delete_location(location.block,location.offset);
 
