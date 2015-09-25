@@ -35,8 +35,9 @@ class TableFactory {
   static DataTable *GetDataTable(
       oid_t database_id, oid_t relation_id, catalog::Schema *schema,
       std::string table_name,
-      size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP,
-      bool own_schema = true);
+      size_t tuples_per_tile_group_count,
+      bool own_schema,
+      bool adapt_table);
 
   /**
    * For a given table name, drop the table from database

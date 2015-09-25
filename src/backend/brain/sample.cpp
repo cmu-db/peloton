@@ -85,6 +85,7 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
   os << "Sample :: ";
 
   for (auto column : sample.columns_accessed_) os << std::round(column) << " ";
+  os << "  ::  " << std::round(sample.weight_);
   os << "\n";
 
   return os;

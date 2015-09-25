@@ -483,11 +483,18 @@ storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t tabl
 
   auto column_infos = LoggingTestsUtil::CreateSchema();
 
+  bool own_schema = true;
+  bool adapt_table = false;
+  const int tuples_per_tilegroup_count = 10;
+
   // Construct our schema from vector of ColumnInfo
   auto schema = new catalog::Schema(column_infos);
   storage::DataTable *table = storage::TableFactory::GetDataTable(db_oid, table_oid,
                                                                   schema,
-                                                                  std::to_string(table_oid));
+                                                                  std::to_string(table_oid),
+                                                                  tuples_per_tilegroup_count,
+                                                                  own_schema,
+                                                                  adapt_table);
 
   return table;
 }

@@ -17,7 +17,8 @@ check_PROGRAMS += \
 				  hash_set_op_test \
 				  aggregate_test \
 				  append_test \
-				  projection_test
+				  projection_test \
+				  tile_group_layout_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -74,3 +75,6 @@ projection_test_SOURCES = \
 					$(executor_tests_common) \
 					executor/projection_test.cpp					
 					
+tile_group_layout_test_SOURCES = \
+								 $(executor_tests_common) \
+								 executor/tile_group_layout_test.cpp
