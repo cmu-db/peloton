@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/index/index.h"
@@ -21,7 +22,16 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
 
-#include <string>
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType
+{
+  LAYOUT_ROW,   /* Pure row layout */
+  LAYOUT_COLUMN, /* Pure column layout */
+  LAYOUT_HYBRID /* Hybrid layout */
+} LayoutType;
+
+/* GUC variable */
+extern LayoutType peloton_layout;
 
 namespace peloton {
 namespace storage {
@@ -52,7 +62,8 @@ class DataTable : public AbstractTable {
   DataTable(catalog::Schema *schema, AbstractBackend *backend,
             std::string table_name, oid_t database_oid, oid_t table_oid,
             size_t tuples_per_tilegroup,
-            bool own_schema);
+            bool own_schema,
+            bool adapt_table);
 
   ~DataTable();
 
@@ -75,9 +86,6 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
-
-  // add a default unpartitioned tile group to table
-  oid_t AddDefaultTileGroup();
 
   // coerce into adding a new tile group with a tile group id
   oid_t AddTileGroupWithOid(oid_t tile_group_id);
@@ -148,6 +156,14 @@ class DataTable : public AbstractTable {
   void ResetDirty();
 
   //===--------------------------------------------------------------------===//
+  // Clustering
+  //===--------------------------------------------------------------------===//
+
+  void RecordSample(const brain::Sample& sample);
+
+  void UpdateDefaultPartition();
+
+  //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
@@ -174,6 +190,12 @@ class DataTable : public AbstractTable {
   // Claim a tuple slot in a tile group
   ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
                            const storage::Tuple *tuple);
+
+  // add a default unpartitioned tile group to table
+  oid_t AddDefaultTileGroup();
+
+  // get a partitioning with given layout type
+  column_map_type GetTileGroupLayout(LayoutType layout_type);
 
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
@@ -222,6 +244,18 @@ class DataTable : public AbstractTable {
 
   // dirty flag
   bool dirty = false;
+
+  // clustering mutex
+  std::mutex clustering_mutex;
+
+  // adapt table
+  bool adapt_table = true;
+
+  // default partition map for table
+  column_map_type default_partition;
+
+  // samples for clustering
+  std::vector<brain::Sample> samples;
 };
 
 }  // End storage namespace
