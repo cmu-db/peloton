@@ -567,7 +567,7 @@ enum Endianess {
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-typedef uint16_t oid_t;
+typedef uint64_t oid_t;
 
 static const oid_t START_OID = 0;
 
