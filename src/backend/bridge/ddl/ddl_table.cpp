@@ -184,8 +184,12 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
   if (schema == NULL) schema = new catalog::Schema(column_infos);
 
   // Build a table from schema
+  bool own_schema = true;
+  bool adapt_table = true;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
-      database_oid, relation_oid, schema, table_name);
+      database_oid, relation_oid, schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      own_schema, adapt_table);
 
   if (table != nullptr) {
     LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid,
