@@ -69,6 +69,8 @@ AbstractExpression::InitParamShortCircuits()
 std::string
 AbstractExpression::Debug() const
 {
+  if(this == nullptr)
+    return "";
   std::ostringstream buffer;
   buffer << "Expression[" << ExpressionTypeToString(GetExpressionType()) << ", " << GetExpressionType() << "]";
   return (buffer.str());
