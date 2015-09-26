@@ -97,7 +97,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
   planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
@@ -262,7 +262,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
   planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
@@ -339,7 +339,7 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
   planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */

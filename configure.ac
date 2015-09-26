@@ -102,10 +102,10 @@ MAKEFLAGS="-j$NPROCS"
 AX_LIB_READLINE
 
 # Check for zlib
-AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : libzlib1g-dev]))
+AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
 
 # Check for OpenSSL
-AC_CHECK_SSL
+AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
 
 # Check for Intel TBB library
 AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
