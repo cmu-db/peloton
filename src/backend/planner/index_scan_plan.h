@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "abstract_scan_plan.h"
+#include "backend/planner/abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 
@@ -67,12 +67,11 @@ class IndexScanPlan : public AbstractScan {
     std::vector<expression::AbstractExpression *> runtime_keys;
   };
 
-  IndexScanPlan(expression::AbstractExpression *predicate,
+  IndexScanPlan(storage::DataTable *table,
+                expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                storage::AbstractTable *table,
                 const IndexScanDesc &index_scan_desc)
-      : AbstractScan(predicate, column_ids),
-        table_(table),
+      : AbstractScan(table, predicate, column_ids),
         index_(index_scan_desc.index),
         column_ids_(column_ids),
         key_column_ids_(std::move(index_scan_desc.key_column_ids)),
@@ -85,10 +84,6 @@ class IndexScanPlan : public AbstractScan {
     for (auto expr : runtime_keys_) {
       delete expr;
     }
-  }
-
-  const storage::AbstractTable *GetTable() const {
-    return table_;
   }
 
   index::Index *GetIndex() const {
@@ -124,9 +119,6 @@ class IndexScanPlan : public AbstractScan {
   }
 
  private:
-  /** @brief Pointer to table to scan from. */
-  const storage::AbstractTable *table_;
-
   /** @brief index associated with index scan. */
   index::Index *index_;
 

@@ -24,6 +24,7 @@ include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
+include $(srcdir)/backend/benchmark/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
@@ -33,7 +34,7 @@ include $(srcdir)/postgres/timezone/Makefile.am
 
 include $(top_srcdir)/third_party/Makefile.am
 
-bin_peloton_PROGRAMS = peloton
+bin_peloton_PROGRAMS = peloton hyadapt
 
 bin_pelotondir = /usr/local/peloton/bin
 
@@ -114,3 +115,5 @@ peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la
+
+

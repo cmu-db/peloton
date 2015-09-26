@@ -293,9 +293,12 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
   std::string table_name("TEST_TABLE");
 
   // Create table.
+  bool own_schema = true;
+  bool adapt_table = false;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count);
+      tuples_per_tilegroup_count,
+      own_schema, adapt_table);
 
   if (indexes == true) {
     // PRIMARY INDEX

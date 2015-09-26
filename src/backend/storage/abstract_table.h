@@ -46,6 +46,10 @@ class AbstractTable {
     return table_oid;
   }
 
+  oid_t GetDatabaseOid() const {
+    return database_oid;
+  }
+
   void SetSchema(catalog::Schema *given_schema) {
     schema = given_schema;
   }
