@@ -58,7 +58,7 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
  * @return the true if we pass all
  */
 bool BridgeTest::CheckColumn(catalog::Column &column, std::string column_name,
-                             int length, ValueType type) {
+                             unsigned long length, ValueType type) {
   assert(strcmp(column.GetName().c_str(), column_name.c_str()) == 0);
   assert(column.GetLength() == length);
   assert(column.GetType() == type);
@@ -81,7 +81,7 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
                                            ConstraintType constraint_type,
                                            std::string constraint_name,
                                            unsigned int constraint_count,
-                                           int foreign_key_offset) {
+                                           oid_t foreign_key_offset) {
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
   assert(constraint_infos[0].GetType() == constraint_type);
 

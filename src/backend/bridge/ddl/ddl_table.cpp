@@ -173,8 +173,11 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
                            catalog::Schema *schema) {
   assert(!table_name.empty());
 
+
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return false;
+  //if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return false;
+  /* Oid and oit_t have different range */
+  if (database_oid == InvalidOid || relation_oid == InvalidOid) return false;
 
   // Get db oid
   auto &manager = catalog::Manager::GetInstance();
@@ -244,7 +247,7 @@ bool DDLTable::DropTable(Oid table_oid) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   if (database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid,
+    LOG_WARN("Could not drop table :: db oid : %lu table oid : %u", database_oid,
              table_oid);
     return false;
   }

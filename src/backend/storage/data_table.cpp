@@ -155,7 +155,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     }
   }
 
-  LOG_INFO("tile group offset: %u, tile group id: %u, address: %p",
+  LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
            tile_group_offset, tile_group->GetTileGroupId(), tile_group);
 
   // Set tuple location
@@ -177,7 +177,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %d, %d", location.block, location.offset);
+  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
@@ -277,12 +277,12 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
   // Delete slot in underlying tile group
   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
   if (status == false) {
-    LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
+    LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
              tile_group_id, transaction_id);
     return false;
   }
 
-  LOG_TRACE("Deleted location :: block = %u offset = %u \n", location.block,
+  LOG_TRACE("Deleted location :: block = %lu offset = %lu \n", location.block,
             location.offset);
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
@@ -785,7 +785,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
                                tile_group_id);
 
     if (found_itr == tile_groups.end()) {
-      LOG_ERROR("Tile group not found in table : %u \n", tile_group_id);
+      LOG_ERROR("Tile group not found in table : %lu \n", tile_group_id);
       return nullptr;
     }
   }

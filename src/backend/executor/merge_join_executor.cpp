@@ -245,14 +245,6 @@ bool MergeJoinExecutor::DExecute() {
     right_end_ = true;
   }
 
-  for (auto col : position_lists) {
-    LOG_INFO("col");
-    for (auto elm : col) {
-      (void) elm;  // silent compiler
-      LOG_INFO("elm: %u", elm);
-    }
-  }
-
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
     output_tile->SetPositionListsAndVisibility(std::move(position_lists));

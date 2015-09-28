@@ -63,7 +63,7 @@ class configuration {
   int column_count;
 
   // # of times to run operator
-  int transactions;
+  unsigned long transactions;
 
  };
 
