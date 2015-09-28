@@ -116,7 +116,7 @@ bool InsertExecutor::DExecute() {
 
     // Carry out insertion
     ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
-    LOG_INFO("Inserted into location: %d, %d", location.block, location.offset);
+    LOG_INFO("Inserted into location: %lu, %lu", location.block, location.offset);
 
     if (location.block == INVALID_OID) {
       LOG_INFO("Failed to Insert. Set txn failure.");

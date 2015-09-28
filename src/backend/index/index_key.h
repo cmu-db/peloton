@@ -572,7 +572,7 @@ class TupleKeyComparator {
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
 
-    for (int col_itr = 0; col_itr < schema->GetColumnCount(); ++col_itr) {
+    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount(); ++col_itr) {
       lhValue = lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
       rhValue = rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
       int comparison = lhValue.Compare(rhValue);
@@ -600,7 +600,7 @@ class TupleKeyEqualityChecker {
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
 
-    for (int col_itr = 0; col_itr < schema->GetColumnCount(); ++col_itr) {
+    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount(); ++col_itr) {
       lhValue = lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
       rhValue = rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
