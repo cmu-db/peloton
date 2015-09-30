@@ -49,7 +49,7 @@ pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
 ## ==============================================
 ## UTILS
 ## ==============================================
-def exec_cmd(cmd):
+def exec_cmd(cmd, check=True):
     """
     Execute the external command and get its exitcode, stdout and stderr.
     """
@@ -62,15 +62,20 @@ def exec_cmd(cmd):
     print(out)
     print(err)
     sys.stdout.flush()
-    assert(exitcode == 0)
+    if check:
+        assert(exitcode == 0)
 
 ## ==============================================
 ## MAIN
 ## ==============================================
-if __name__ == '__main__':    
+if __name__ == '__main__':
+    LOG.info("Kill previous Peloton")
+    cmd = 'pkill -9 "peloton"'
+    exec_cmd(cmd, False)
+
     LOG.info("Linking peloton")
     cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
-    
+
     LOG.info("Setting up temp data dir")
     temp_dir_path = tempfile.mkdtemp()
     LOG.info("Temp data dir : %s" % (temp_dir_path))
@@ -79,18 +84,18 @@ if __name__ == '__main__':
     cmd = initdb + ' ' + temp_dir_path
     exec_cmd(cmd)
 
-    LOG.info("Starting the Peloton server in TEST MODE")    
+    LOG.info("Starting the Peloton server in TEST MODE")
     cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/bridge_test_logfile -o -Z start'
     exec_cmd(cmd)
-    
-    LOG.info("Waiting for the server to start")    
+
+    LOG.info("Waiting for the server to start")
     time.sleep(10)
 
-    LOG.info("Stopping the Peloton server")        
+    LOG.info("Stopping the Peloton server")
     cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/bridge_test_logfile stop'
     exec_cmd(cmd)
-    
-    LOG.info("Cleaning up the data dir")    
+
+    LOG.info("Cleaning up the data dir")
     shutil.rmtree(temp_dir_path)
-    
-    
+
+
