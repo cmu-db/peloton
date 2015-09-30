@@ -49,7 +49,7 @@ pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
 ## ==============================================
 ## UTILS
 ## ==============================================
-def exec_cmd(cmd):
+def exec_cmd(cmd, check=True):
     """
     Execute the external command and get its exitcode, stdout and stderr.
     """
@@ -62,7 +62,8 @@ def exec_cmd(cmd):
     print(out)
     print(err)
     sys.stdout.flush()
-    assert(exitcode == 0)
+    if check:
+        assert(exitcode == 0)
 
 ## ==============================================
 ## MAIN
@@ -70,7 +71,7 @@ def exec_cmd(cmd):
 if __name__ == '__main__':
     LOG.info("Kill previous Peloton")
     cmd = 'pkill -9 "peloton"'
-    exec_cmd(cmd)
+    exec_cmd(cmd, False)
 
     LOG.info("Linking peloton")
     cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
