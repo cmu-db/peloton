@@ -966,8 +966,9 @@ do_stop(void)
 		print_msg(_("waiting for server to shut down..."));
 
 		// TODO: Peloton Changes
-		int lower_wait_seconds = 1;
-		for (cnt = 0; cnt < lower_wait_seconds; cnt++)
+
+		//int lower_wait_seconds = 1;
+		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
 			if ((pid = get_pgpid(false)) != 0)
 			{
