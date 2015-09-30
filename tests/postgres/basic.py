@@ -67,7 +67,11 @@ def exec_cmd(cmd):
 ## ==============================================
 ## MAIN
 ## ==============================================
-if __name__ == '__main__':    
+if __name__ == '__main__':
+    LOG.info("Kill previous Peloton")
+    cmd = 'pkill -9 "peloton"'
+    exec_cmd(cmd)
+
     LOG.info("Linking peloton")
     cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
 
@@ -79,18 +83,18 @@ if __name__ == '__main__':
     cmd = initdb + ' ' + temp_dir_path
     exec_cmd(cmd)
 
-    LOG.info("Starting the Peloton server")    
+    LOG.info("Starting the Peloton server")
     cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/basic_test_logfile start'
     exec_cmd(cmd)
-    
-    LOG.info("Waiting for the server to start")    
+
+    LOG.info("Waiting for the server to start")
     time.sleep(10)
 
-    LOG.info("Stopping the Peloton server")        
+    LOG.info("Stopping the Peloton server")
     cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/basic_test_logfile stop'
     exec_cmd(cmd)
-    
-    LOG.info("Cleaning up the data dir")    
+
+    LOG.info("Cleaning up the data dir")
     shutil.rmtree(temp_dir_path)
-    
-    
+
+
