@@ -15,6 +15,7 @@ import tempfile
 import os
 import time
 import logging
+import platform
 
 from subprocess import Popen, PIPE
 
@@ -41,7 +42,12 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = reduce(os.path.join, [BASE_DIR, os.path.pardir, os.path.pardir])
 BUILD_DIR = reduce(os.path.join, [ROOT_DIR, "build"])
 SRC_DIR = reduce(os.path.join, [BUILD_DIR, "src"])
-TOOLS_DIR = reduce(os.path.join, [BUILD_DIR, "tools"])
+# on Jenkins, we do not build in 'build' dir
+if platform.node() == 'jenkins':
+    TOOLS_DIR = reduce(os.path.join, [ROOT_DIR, "tools"])
+else:
+    TOOLS_DIR = reduce(os.path.join, [BUILD_DIR, "tools"])
+
 
 initdb = os.path.join(TOOLS_DIR, "initdb")
 pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
@@ -77,7 +83,7 @@ if __name__ == '__main__':
     cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
 
     LOG.info("Setting up temp data dir")
-    temp_dir_path = tempfile.mkdtemp(dir=BUILD_DIR)
+    temp_dir_path = tempfile.mkdtemp()
     LOG.info("Temp data dir : %s" % (temp_dir_path))
 
     LOG.info("Bootstrap data dir using initdb")
