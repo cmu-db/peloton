@@ -77,7 +77,7 @@ if __name__ == '__main__':
     cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
 
     LOG.info("Setting up temp data dir")
-    temp_dir_path = tempfile.mkdtemp()
+    temp_dir_path = tempfile.mkdtemp(dir=BUILD_DIR)
     LOG.info("Temp data dir : %s" % (temp_dir_path))
 
     LOG.info("Bootstrap data dir using initdb")
