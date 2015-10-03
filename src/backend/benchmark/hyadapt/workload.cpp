@@ -123,6 +123,23 @@ static storage::DataTable* CreateTable() {
     columns.push_back(column);
   }
 
+  switch(peloton_layout){
+
+    case LAYOUT_ROW:
+      tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP / 10;
+      break;
+
+    case LAYOUT_COLUMN:
+      tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP * 10;
+      break;
+
+    case LAYOUT_HYBRID:
+      tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+      break;
+
+    default:
+      break;
+  }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("TEST_TABLE");
