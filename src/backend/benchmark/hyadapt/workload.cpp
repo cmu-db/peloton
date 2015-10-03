@@ -107,7 +107,7 @@ static void WriteOutput(double duration) {
 }
 
 static storage::DataTable* CreateTable() {
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
+  int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
   const oid_t col_count = state.column_count;
   const bool is_inlined = true;
   const bool indexes = false;
