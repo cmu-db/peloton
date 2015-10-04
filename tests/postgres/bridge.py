@@ -69,6 +69,10 @@ class BridgeTest(unittest.TestCase):
         cmd = 'pkill -9 "peloton"'
         self.exec_cmd(cmd, False)
 
+        LOG.info("Creating symbolic link for peloton")
+        cmd = 'ln -s ' + LIB_DIR + "/peloton " + TOOLS_DIR + "/.libs/"
+        self.exec_cmd(cmd, False)
+
         LOG.info("Setting up temp data dir")
         self.temp_dir_path = tempfile.mkdtemp()
         LOG.info("Temp data dir : %s" % (self.temp_dir_path))
@@ -109,6 +113,8 @@ class BridgeTest(unittest.TestCase):
     def tearDown(self):
         LOG.info("Cleaning up the data dir")
         shutil.rmtree(self.temp_dir_path)
+
+        os.remove(TOOLS_DIR + "/.libs/peloton")
 
 
 ## ==============================================
