@@ -16,6 +16,8 @@ import os
 import time
 import logging
 import platform
+import unittest
+import xmlrunner
 
 from subprocess import Popen, PIPE
 
@@ -58,52 +60,63 @@ initdb = os.path.join(TOOLS_DIR, "initdb")
 pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
 
 ## ==============================================
-## UTILS
+## Test cases
 ## ==============================================
-def exec_cmd(cmd, check=True):
-    """
-    Execute the external command and get its exitcode, stdout and stderr.
-    """
-    args = shlex.split(cmd)
+class BasicTest(unittest.TestCase):
 
-    proc = Popen(args, stdout=PIPE, stderr=PIPE, env=my_env)
-    out, err = proc.communicate()
-    exitcode = proc.returncode
+    def setUp(self):
+        LOG.info("Kill previous Peloton")
+        cmd = 'pkill -9 "peloton"'
+        self.exec_cmd(cmd, False)
 
-    print(out)
-    print(err)
-    sys.stdout.flush()
-    if check:
-        assert(exitcode == 0)
+        LOG.info("Setting up temp data dir")
+        self.temp_dir_path = tempfile.mkdtemp()
+        LOG.info("Temp data dir : %s" % (self.temp_dir_path))
+
+    def test_basic(self):
+        LOG.info("Bootstrap data dir using initdb")
+        cmd = initdb + ' ' + self.temp_dir_path
+        self.exec_cmd(cmd)
+
+        LOG.info("Starting the Peloton server")
+        cmd = pg_ctl + ' -D ' + self.temp_dir_path + ' -l '+ self.temp_dir_path + '/basic_test_logfile start'
+        self.exec_cmd(cmd)
+
+        LOG.info("Waiting for the server to start")
+        time.sleep(10)
+
+        LOG.info("Stopping the Peloton server")
+        cmd = pg_ctl + ' -D ' + self.temp_dir_path + ' -l '+ self.temp_dir_path+'/basic_test_logfile stop'
+        self.exec_cmd(cmd)
+
+
+    def exec_cmd(self, cmd, check=True):
+        """
+        Execute the external command and get its exitcode, stdout and stderr.
+        """
+        args = shlex.split(cmd)
+
+        proc = Popen(args, stdout=PIPE, stderr=PIPE, env=my_env)
+        out, err = proc.communicate()
+        exitcode = proc.returncode
+
+        print(out)
+        print(err)
+        sys.stdout.flush()
+        if check:
+            self.assertTrue(exitcode == 0)
+
+    def tearDown(self):
+        LOG.info("Cleaning up the data dir")
+        shutil.rmtree(self.temp_dir_path)
+
 
 ## ==============================================
 ## MAIN
 ## ==============================================
 if __name__ == '__main__':
-    LOG.info("Kill previous Peloton")
-    cmd = 'pkill -9 "peloton"'
-    exec_cmd(cmd, False)
-
-    LOG.info("Setting up temp data dir")
-    temp_dir_path = tempfile.mkdtemp()
-    LOG.info("Temp data dir : %s" % (temp_dir_path))
-
-    LOG.info("Bootstrap data dir using initdb")
-    cmd = initdb + ' ' + temp_dir_path
-    exec_cmd(cmd)
-
-    LOG.info("Starting the Peloton server")
-    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/basic_test_logfile start'
-    exec_cmd(cmd)
-
-    LOG.info("Waiting for the server to start")
-    time.sleep(10)
-
-    LOG.info("Stopping the Peloton server")
-    cmd = pg_ctl + ' -D ' + temp_dir_path + ' -l '+temp_dir_path+'/basic_test_logfile stop'
-    exec_cmd(cmd)
-
-    LOG.info("Cleaning up the data dir")
-    shutil.rmtree(temp_dir_path)
-
+    unittest.main(
+         testRunner=xmlrunner.XMLTestRunner(output='python_tests'),
+        failfast=False, buffer=False, catchbreak=False
+    )
 
