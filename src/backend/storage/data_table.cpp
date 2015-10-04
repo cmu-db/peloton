@@ -865,17 +865,15 @@ void DataTable::UpdateDefaultPartition() {
 column_map_type GetStaticColumnMap(){
   column_map_type column_map;
 
-  column_map[0] = std::make_pair(0, 0);
-  oid_t tile_column_count = ATTRIBUTE_COUNT/10;
+  // Split into two tiles
+  oid_t split_point = peloton_projectivity * ATTRIBUTE_COUNT;
+  std::cout << "split_point :: " << split_point << "\n";
 
-  for(auto column_id = 0; column_id < ATTRIBUTE_COUNT ; column_id++) {
-    oid_t tile_id = column_id / tile_column_count;
-    oid_t tile_column_id = column_id % tile_column_count;
-
-    if(tile_id != 0)
-      column_map[column_id + 1] = std::make_pair(tile_id, tile_column_id);
-    else
-      column_map[column_id + 1] = std::make_pair(tile_id, tile_column_id + 1);
+  for(auto column_id = 0; column_id <= split_point ; column_id++) {
+    column_map[column_id] = std::make_pair(0, column_id);
+  }
+  for(auto column_id = split_point+1; column_id <=  ATTRIBUTE_COUNT; column_id++) {
+    column_map[column_id] = std::make_pair(1, column_id-(split_point+1));
   }
 
   return std::move(column_map);
