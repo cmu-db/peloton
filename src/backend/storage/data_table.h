@@ -33,6 +33,8 @@ typedef enum LayoutType
 /* GUC variable */
 extern LayoutType peloton_layout;
 
+extern double peloton_projectivity;
+
 namespace peloton {
 namespace storage {
 
