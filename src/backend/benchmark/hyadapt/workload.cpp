@@ -206,7 +206,10 @@ static void LoadTable(storage::DataTable *table) {
 
 }
 
-storage::DataTable *CreateAndLoadTable() {
+storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
+
+  // Initialize settings
+  peloton_layout = layout_type;
 
   // Generate sequence
   for(auto column_id = 1; column_id <= ATTRIBUTE_COUNT; column_id++)
@@ -569,7 +572,7 @@ void RunProjectivityExperiment() {
     peloton_layout = state.layout;
 
     // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
     for(auto proj : projectivity) {
       // Set proj
@@ -579,7 +582,7 @@ void RunProjectivityExperiment() {
       peloton_projectivity = state.projectivity;
       if(peloton_layout == LAYOUT_HYBRID){
         table.release();
-        table.reset(CreateAndLoadTable());
+        table.reset(CreateAndLoadTable(layout));
       }
 
       // Go over all ops
@@ -609,7 +612,7 @@ void RunSelectivityExperiment() {
     peloton_layout = state.layout;
 
     // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
     for(auto select : selectivity) {
       // Set selectivity
@@ -644,7 +647,7 @@ void RunOperatorExperiment() {
     peloton_layout = state.layout;
 
     // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
     for(auto selectivity : op_selectivity) {
       // Set selectivity
@@ -658,7 +661,7 @@ void RunOperatorExperiment() {
         peloton_projectivity = state.projectivity;
         if(peloton_layout == LAYOUT_HYBRID){
           table.release();
-          table.reset(CreateAndLoadTable());
+          table.reset(CreateAndLoadTable(layout));
         }
 
         // Run operator
