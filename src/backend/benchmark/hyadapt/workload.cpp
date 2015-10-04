@@ -575,6 +575,13 @@ void RunProjectivityExperiment() {
       // Set proj
       state.projectivity = proj;
 
+      // Load again for hybrid tables
+      peloton_projectivity = state.projectivity;
+      if(peloton_layout == LAYOUT_HYBRID){
+        table.release();
+        table.reset(CreateAndLoadTable());
+      }
+
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
       RunDirectTest(table.get());
@@ -646,6 +653,13 @@ void RunOperatorExperiment() {
       for(auto projectivity : op_projectivity) {
         // Set projectivity
         state.projectivity = projectivity;
+
+        // Load again for hybrid tables
+        peloton_projectivity = state.projectivity;
+        if(peloton_layout == LAYOUT_HYBRID){
+          table.release();
+          table.reset(CreateAndLoadTable());
+        }
 
         // Run operator
         state.operator_type = OPERATOR_TYPE_ARITHMETIC;
