@@ -173,7 +173,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // Print configuration
     ValidateOperator(state);
 
-    peloton_layout = state.layout;
     ValidateLayout(state);
 
     ValidateSelectivity(state);
