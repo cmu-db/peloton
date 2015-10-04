@@ -41,7 +41,7 @@ enum ExperimentType{
 
 };
 
-#define ATTRIBUTE_COUNT 250
+#define ATTRIBUTE_COUNT 500
 
 class configuration {
  public:

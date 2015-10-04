@@ -867,7 +867,6 @@ column_map_type GetStaticColumnMap(){
 
   // Split into two tiles
   oid_t split_point = peloton_projectivity * ATTRIBUTE_COUNT;
-  std::cout << "split_point :: " << split_point << "\n";
 
   for(auto column_id = 0; column_id <= split_point ; column_id++) {
     column_map[column_id] = std::make_pair(0, column_id);
@@ -875,6 +874,7 @@ column_map_type GetStaticColumnMap(){
   for(auto column_id = split_point+1; column_id <=  ATTRIBUTE_COUNT; column_id++) {
     column_map[column_id] = std::make_pair(1, column_id-(split_point+1));
   }
+
 
   return std::move(column_map);
 }
