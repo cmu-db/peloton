@@ -41,16 +41,18 @@ LOG.setLevel(logging.INFO)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = reduce(os.path.join, [BASE_DIR, os.path.pardir, os.path.pardir])
 BUILD_DIR = reduce(os.path.join, [ROOT_DIR, "build"])
-SRC_DIR = reduce(os.path.join, [BUILD_DIR, "src"])
-LIB_DIR = reduce(os.path.join, [ROOT_DIR, "/src/.lib"])
-LD_PATH = os.environ.get('LD_LIBRARY_PATH', '');
 
 # on Jenkins, we do not build in 'build' dir
 if platform.node() == 'jenkins':
     TOOLS_DIR = reduce(os.path.join, [ROOT_DIR, "tools"])
-    os.environ['LD_LIBRARY_PATH'] = LD_PATH + ':' + LIB_DIR
+    SRC_DIR = reduce(os.path.join, [ROOT_DIR, "src"])
 else:
     TOOLS_DIR = reduce(os.path.join, [BUILD_DIR, "tools"])
+    SRC_DIR = reduce(os.path.join, [BUILD_DIR, "src"])
+
+LIB_DIR = reduce(os.path.join, [ROOT_DIR, ".libs"])
+my_env = os.environ.copy()
+my_env['LD_LIBRARY_PATH'] = LIB_DIR
 
 initdb = os.path.join(TOOLS_DIR, "initdb")
 pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
@@ -64,7 +66,7 @@ def exec_cmd(cmd, check=True):
     """
     args = shlex.split(cmd)
 
-    proc = Popen(args, stdout=PIPE, stderr=PIPE)
+    proc = Popen(args, stdout=PIPE, stderr=PIPE, env=my_env)
     out, err = proc.communicate()
     exitcode = proc.returncode
 
@@ -81,9 +83,6 @@ if __name__ == '__main__':
     LOG.info("Kill previous Peloton")
     cmd = 'pkill -9 "peloton"'
     exec_cmd(cmd, False)
-
-    LOG.info("Linking peloton")
-    cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
 
     LOG.info("Setting up temp data dir")
     temp_dir_path = tempfile.mkdtemp()
