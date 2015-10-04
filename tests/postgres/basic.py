@@ -122,7 +122,7 @@ class BasicTest(unittest.TestCase):
 ## ==============================================
 if __name__ == '__main__':
     unittest.main(
-         testRunner=xmlrunner.XMLTestRunner(output='python_tests'),
+         testRunner=xmlrunner.XMLTestRunner(output='python_tests', outsuffix=""),
         failfast=False, buffer=False, catchbreak=False
     )
 
