@@ -122,7 +122,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.selectivity = 1.0;
   state.projectivity = 1.0;
 
-  state.column_count = 251;
+  state.column_count = ATTRIBUTE_COUNT + 1;
   state.layout = LAYOUT_ROW;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
@@ -173,7 +173,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // Print configuration
     ValidateOperator(state);
 
-    peloton_layout = state.layout;
     ValidateLayout(state);
 
     ValidateSelectivity(state);
