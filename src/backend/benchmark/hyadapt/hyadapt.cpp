@@ -26,9 +26,13 @@ configuration state;
 // Main Entry Point
 void RunBenchmark(){
 
+  // Initialize settings
+  peloton_layout = state.layout;
+  peloton_projectivity = state.projectivity;
+
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable());
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
 
     switch(state.operator_type) {
       case OPERATOR_TYPE_DIRECT:

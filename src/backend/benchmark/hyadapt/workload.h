@@ -20,7 +20,7 @@ namespace hyadapt{
 
 extern configuration state;
 
-storage::DataTable *CreateAndLoadTable();
+storage::DataTable *CreateAndLoadTable(LayoutType layout_type);
 
 void RunDirectTest(storage::DataTable *table);
 
