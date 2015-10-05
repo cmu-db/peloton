@@ -94,7 +94,6 @@ static void WriteOutput(double duration) {
 }
 
 static storage::DataTable* CreateTable() {
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
   const oid_t col_count = state.column_count;
   const bool is_inlined = true;
   const bool indexes = false;
@@ -122,7 +121,7 @@ static storage::DataTable* CreateTable() {
   bool adapt_table = true;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count,
+      state.tuples_per_tilegroup,
       own_schema, adapt_table));
 
   // PRIMARY INDEX
@@ -153,11 +152,8 @@ static storage::DataTable* CreateTable() {
 
 static void LoadTable(storage::DataTable *table) {
 
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
-  const int tile_group_count = state.scale_factor;
   const oid_t col_count = state.column_count;
-
-  const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
+  const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
   auto table_schema = table->GetSchema();
 
@@ -217,10 +213,7 @@ storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
 }
 
 static int GetLowerBound() {
-  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
-  const int tile_group_count = state.scale_factor;
-
-  const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
+  const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   const int lower_bound = (1 - state.selectivity) * tuple_count;
 
   return lower_bound;
@@ -578,6 +571,13 @@ void RunProjectivityExperiment() {
         table.release();
         table.reset(CreateAndLoadTable(layout));
       }
+      if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5){
+        // Set query processing engine
+        state.scale_factor /= 10;
+        state.tuples_per_tilegroup *= 10;
+        table.release();
+        table.reset(CreateAndLoadTable(layout));
+      }
 
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -654,6 +654,13 @@ void RunOperatorExperiment() {
         // Load again for hybrid tables
         peloton_projectivity = state.projectivity;
         if(peloton_layout == LAYOUT_HYBRID){
+          table.release();
+          table.reset(CreateAndLoadTable(layout));
+        }
+        if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5){
+          // Set query processing engine
+          state.scale_factor /= 10;
+          state.tuples_per_tilegroup *= 10;
           table.release();
           table.reset(CreateAndLoadTable(layout));
         }

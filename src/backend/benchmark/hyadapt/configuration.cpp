@@ -129,6 +129,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.operator_type = OPERATOR_TYPE_INVALID;
 
   state.scale_factor = 100.0;
+  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+
   state.transactions = 1;
   state.selectivity = 1.0;
   state.projectivity = 1.0;
