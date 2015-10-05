@@ -63,6 +63,17 @@ static void ValidateOperator(const configuration& state) {
   }
 }
 
+static void ValidateScaleFactor(const configuration& state) {
+  if(state.scale_factor <= 0) {
+    std::cout << "Invalid scalefactor :: " <<  state.scale_factor << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left
+      << "scale_factor " << " : " << state.scale_factor << std::endl;
+
+}
+
 static void ValidateLayout(const configuration& state) {
   if(state.layout < 0 || state.layout > 2) {
     std::cout << "Invalid layout :: " << state.layout << "\n";
@@ -177,9 +188,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
     ValidateSelectivity(state);
     ValidateProjectivity(state);
+    ValidateScaleFactor(state);
 
-    std::cout << std::setw(20) << std::left
-        << "scale_factor " << " : " << state.scale_factor << std::endl;
     std::cout << std::setw(20) << std::left
         << "transactions " << " : " << state.transactions << std::endl;
   }
