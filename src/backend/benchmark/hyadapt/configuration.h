@@ -45,6 +45,8 @@ enum ExperimentType{
 #define QUERY_ENGINE_SCALE 20
 #define INFLECTION_POINT 0.6
 
+extern int orig_scale_factor;
+
 class configuration {
  public:
 
