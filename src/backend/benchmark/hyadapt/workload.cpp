@@ -212,6 +212,7 @@ storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
   // Generate sequence
   for(auto column_id = 1; column_id <= ATTRIBUTE_COUNT; column_id++)
     hyadapt_column_ids.push_back(column_id);
+  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
 
   auto table = CreateTable();
 
