@@ -30,6 +30,11 @@ void RunBenchmark(){
   peloton_layout = state.layout;
   peloton_projectivity = state.projectivity;
 
+  // Generate sequence
+  for(auto column_id = 1; column_id <= ATTRIBUTE_COUNT; column_id++)
+    hyadapt_column_ids.push_back(column_id);
+  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
+
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
     std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
