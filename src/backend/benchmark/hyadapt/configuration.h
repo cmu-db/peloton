@@ -42,7 +42,7 @@ enum ExperimentType{
 };
 
 #define ATTRIBUTE_COUNT 250
-#define QUERY_ENGINE_SCALE 10
+#define QUERY_ENGINE_SCALE 20
 
 class configuration {
  public:
