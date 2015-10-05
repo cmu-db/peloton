@@ -41,7 +41,7 @@ enum ExperimentType{
 
 };
 
-#define ATTRIBUTE_COUNT 500
+#define ATTRIBUTE_COUNT 250
 
 class configuration {
  public:
@@ -53,6 +53,8 @@ class configuration {
 
   // size of the table
   int scale_factor;
+
+  int tuples_per_tilegroup;
 
   // tile group layout
   LayoutType layout;

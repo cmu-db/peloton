@@ -35,6 +35,12 @@ void RunBenchmark(){
     hyadapt_column_ids.push_back(column_id);
   std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
 
+  if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5){
+    // Set query processing engine
+    state.scale_factor /= 10;
+    state.tuples_per_tilegroup *= 10;
+  }
+
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
     std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
