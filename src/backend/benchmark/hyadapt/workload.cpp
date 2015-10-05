@@ -572,9 +572,9 @@ void RunProjectivityExperiment() {
         table.reset(CreateAndLoadTable(layout));
       }
       // Set query processing engine
-      if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5 && state.scale_factor >= QUERY_ENGINE_SCALE){
-        state.scale_factor /= QUERY_ENGINE_SCALE;
-        state.tuples_per_tilegroup *= QUERY_ENGINE_SCALE;
+      if(peloton_layout == LAYOUT_ROW && peloton_projectivity < INFLECTION_POINT && state.scale_factor >= QUERY_ENGINE_SCALE){
+        state.scale_factor *= QUERY_ENGINE_SCALE;
+        state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
         table.release();
         table.reset(CreateAndLoadTable(layout));
       }
@@ -658,9 +658,9 @@ void RunOperatorExperiment() {
           table.reset(CreateAndLoadTable(layout));
         }
         // Set query processing engine
-        if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5 && state.scale_factor >= QUERY_ENGINE_SCALE){
-          state.scale_factor /= QUERY_ENGINE_SCALE;
-          state.tuples_per_tilegroup *= QUERY_ENGINE_SCALE;
+        if(peloton_layout == LAYOUT_ROW && peloton_projectivity < INFLECTION_POINT && state.scale_factor >= QUERY_ENGINE_SCALE){
+          state.scale_factor *= QUERY_ENGINE_SCALE;
+          state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
           table.release();
           table.reset(CreateAndLoadTable(layout));
         }

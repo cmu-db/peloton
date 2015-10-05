@@ -35,10 +35,10 @@ void RunBenchmark(){
     hyadapt_column_ids.push_back(column_id);
   std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
 
-  if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5){
+  if(peloton_layout == LAYOUT_ROW && peloton_projectivity < INFLECTION_POINT){
     // Set query processing engine
-    state.scale_factor /= QUERY_ENGINE_SCALE;
-    state.tuples_per_tilegroup *= QUERY_ENGINE_SCALE;
+    state.scale_factor *= QUERY_ENGINE_SCALE;
+    state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
   }
 
   // Single run
