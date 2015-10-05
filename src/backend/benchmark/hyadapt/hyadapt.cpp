@@ -37,8 +37,8 @@ void RunBenchmark(){
 
   if(peloton_layout == LAYOUT_ROW && peloton_projectivity < 0.5){
     // Set query processing engine
-    state.scale_factor /= 10;
-    state.tuples_per_tilegroup *= 10;
+    state.scale_factor /= QUERY_ENGINE_SCALE;
+    state.tuples_per_tilegroup *= QUERY_ENGINE_SCALE;
   }
 
   // Single run
