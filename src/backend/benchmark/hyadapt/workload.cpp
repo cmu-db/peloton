@@ -80,6 +80,20 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double duration) {
 
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << std::setw(20) << std::left
+        << "layout " << " : " << state.layout << std::endl;
+  std::cout << std::setw(20) << std::left
+        << "operator " << " : " << state.operator_type << std::endl;
+  std::cout << std::setw(20) << std::left
+        << "projectivity " << " : " << state.projectivity << std::endl;
+  std::cout << std::setw(20) << std::left
+        << "selectivity " << " : " << state.selectivity << std::endl;
+  std::cout << std::setw(20) << std::left
+        << "scale_factor " << " : " << state.scale_factor << std::endl;
+  std::cout << std::setw(20) << std::left
+        << "tup/tilegroup " << " : " << state.tuples_per_tilegroup << std::endl;
+
   // Convert to ms
   duration *= 1000;
   std::cout << std::setw(20) << std::left << "Time " << " : " << duration << " ms\n";
@@ -572,7 +586,9 @@ void RunProjectivityExperiment() {
         table.reset(CreateAndLoadTable(layout));
       }
       // Set query processing engine
-      if(peloton_layout == LAYOUT_ROW && peloton_projectivity < INFLECTION_POINT && state.scale_factor >= QUERY_ENGINE_SCALE){
+      if(peloton_layout == LAYOUT_ROW
+          && peloton_projectivity < INFLECTION_POINT
+          && state.scale_factor >= QUERY_ENGINE_SCALE){
         state.scale_factor *= QUERY_ENGINE_SCALE;
         state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
         table.release();
@@ -588,6 +604,14 @@ void RunProjectivityExperiment() {
 
       state.operator_type = OPERATOR_TYPE_ARITHMETIC;
       RunArithmeticTest(table.get());
+
+      // Reset query processing engine
+      if(peloton_layout == LAYOUT_ROW
+          && peloton_projectivity < INFLECTION_POINT
+          && state.scale_factor >= QUERY_ENGINE_SCALE){
+        state.scale_factor = orig_scale_factor;
+        state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+      }
     }
 
   }
@@ -658,7 +682,9 @@ void RunOperatorExperiment() {
           table.reset(CreateAndLoadTable(layout));
         }
         // Set query processing engine
-        if(peloton_layout == LAYOUT_ROW && peloton_projectivity < INFLECTION_POINT && state.scale_factor >= QUERY_ENGINE_SCALE){
+        if(peloton_layout == LAYOUT_ROW
+            && peloton_projectivity < INFLECTION_POINT
+            && state.scale_factor >= QUERY_ENGINE_SCALE){
           state.scale_factor *= QUERY_ENGINE_SCALE;
           state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
           table.release();
@@ -668,6 +694,14 @@ void RunOperatorExperiment() {
         // Run operator
         state.operator_type = OPERATOR_TYPE_ARITHMETIC;
         RunArithmeticTest(table.get());
+
+        // Reset query processing engine
+        if(peloton_layout == LAYOUT_ROW
+            && peloton_projectivity < INFLECTION_POINT
+            && state.scale_factor >= QUERY_ENGINE_SCALE){
+          state.scale_factor = orig_scale_factor;
+          state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+        }
 
       }
     }

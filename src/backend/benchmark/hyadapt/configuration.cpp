@@ -123,6 +123,8 @@ static void ValidateExperiment(const configuration& state) {
   std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
 }
 
+int orig_scale_factor;
+
 void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
@@ -198,6 +200,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   else{
     ValidateExperiment(state);
   }
+
+  // cache orig scale factor
+  orig_scale_factor = state.scale_factor;
 
 }
 
