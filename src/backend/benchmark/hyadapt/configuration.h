@@ -43,6 +43,7 @@ enum ExperimentType{
 
 #define ATTRIBUTE_COUNT 250
 #define QUERY_ENGINE_SCALE 20
+#define INFLECTION_POINT 0.3
 
 class configuration {
  public:
