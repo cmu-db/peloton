@@ -15,8 +15,8 @@
 #include <list>
 #include <unordered_map>
 #include <iterator>
+#include <mutex>
 
-#include "backend/common/synch.h"
 
 namespace peloton {
 template<class Key, class Value>
@@ -65,6 +65,8 @@ class Cache {
 
   size_type size(void) const;
 
+  bool empty(void) const;
+
   void clear(void);
 
   inline iterator begin();
@@ -74,7 +76,7 @@ class Cache {
   Map map_;
   KeyList list_;
   size_type capacity_;
-  RWLock cache_lock_;
+  mutable std::mutex cache_mut_;
 
 };
 
