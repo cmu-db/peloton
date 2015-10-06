@@ -50,7 +50,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
-    // FIXME: Shall we use SetValueAllocate() here and below?
+    // FIXME: Should we use SetValueAllocate() here and below?
     dest->SetValue(col_id, value);
   }
 
@@ -68,6 +68,49 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
   }
 
   return true;
+}
+
+/**
+ * @brief Evaluate projections from one or two source tuples and
+ * return projected value.
+ *
+ * @param tuple1  Source tuple 1.
+ * @param tuple2  Source tuple 2.
+ * @param econtext  ExecutorContext for expression evaluation.
+ */
+Value ProjectInfo::Evaluate(oid_t column_id,
+                            const AbstractTuple *tuple1,
+                            const AbstractTuple *tuple2,
+                            executor::ExecutorContext *econtext) const {
+  Value dummy_value;
+
+  // (A) Execute target list
+  for (auto target : target_list_) {
+    auto col_id = target.first;
+    if(col_id != column_id)
+      continue;
+
+    auto expr = target.second;
+    Value value = expr->Evaluate(tuple1, tuple2, econtext);
+    return value;
+  }
+
+  // (B) Execute direct map
+  for (auto dm : direct_map_list_) {
+    auto dest_col_id = dm.first;
+    if(dest_col_id != column_id)
+      continue;
+
+    // whether left tuple or right tuple ?
+    auto tuple_index = dm.second.first;
+    auto src_col_id = dm.second.second;
+
+    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
+                                     : tuple2->GetValue(src_col_id);
+    return value;
+  }
+
+  return dummy_value;
 }
 
 std::string ProjectInfo::Debug() const {

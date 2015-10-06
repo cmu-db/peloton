@@ -77,6 +77,11 @@ class ProjectInfo {
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
 
+  Value Evaluate(oid_t column_id,
+                 const AbstractTuple *tuple1,
+                 const AbstractTuple *tuple2,
+                 executor::ExecutorContext *econtext) const;
+
   std::string Debug() const;
 
   ~ProjectInfo();
