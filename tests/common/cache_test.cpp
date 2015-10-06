@@ -36,6 +36,7 @@ TEST(CacheTest, Basic) {
   Cache<uint32_t, planner::AbstractPlan *> cache(CACHE_SIZE);
 
   EXPECT_EQ(0, cache.size());
+  EXPECT_EQ(true, cache.empty());
 }
 
 /**
@@ -68,6 +69,7 @@ TEST(CacheTest, Insert) {
     cache.insert(std::make_pair(i, plans + i));
 
   EXPECT_EQ(CACHE_SIZE, cache.size());
+  EXPECT_EQ(false, cache.empty());
 }
 
 /**
@@ -85,6 +87,7 @@ TEST(CacheTest, Iterator) {
   set.insert(cache.begin(), cache.end());
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
   for (int i = 0; i < CACHE_SIZE; i++) {
     EXPECT_NE(set.end(), set.find(plans + i));
   }
@@ -109,6 +112,7 @@ TEST(CacheTest, EvictionByInsert) {
   set.insert(cache.begin(), cache.end());
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
   for (int i = 0; i < CACHE_SIZE; i++) {
     EXPECT_EQ(set.end(), set.find(plans + i));
   }
@@ -142,6 +146,7 @@ TEST(CacheTest, EvictionWithAccessing) {
   set.insert(cache.begin(), cache.end());
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
 
   int diff = CACHE_SIZE / 2;
 
@@ -165,6 +170,7 @@ TEST(CacheTest, EvictionWithAccessing) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE - diff; i++) {
@@ -192,6 +198,7 @@ TEST(CacheTest, EvictionWithAccessing) {
   set.insert(cache.begin(), cache.end());
 
   EXPECT_EQ(CACHE_SIZE, cache.size());
+  EXPECT_EQ(false, cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE; i++) {
@@ -225,6 +232,7 @@ TEST(CacheTest, Updating) {
   set.insert(cache.begin(), cache.end());
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
 
   int diff = CACHE_SIZE / 2;
 
@@ -247,6 +255,7 @@ TEST(CacheTest, Updating) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
+  EXPECT_EQ(false, cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE - diff; i++) {
