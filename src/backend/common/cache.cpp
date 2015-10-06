@@ -18,11 +18,20 @@
 
 namespace peloton {
 
+/** @brief the constructor, nothing fancy here
+ */
 template<class Key, class Value>
 Cache<Key, Value>::Cache(size_type capacitry)
     : capacity_(capacitry) {
 }
 
+/* @brief find a value cached with key
+ *
+ * @param key the key associated with the value, if found, this effectively
+ *            make it the most recently accessed
+ *
+ * @return a iterator of this cache, end() if no such entry
+ * */
 template<class Key, class Value>
 typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
   {
@@ -43,6 +52,17 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
   }
 }
 
+/** @brief insert a key value pair
+ *         if the key already exists, this updates its value
+ *         if not, this effectively insert a new entry
+ *         regardless, the related entry would become the most recent one
+ *         If after insertion, the size of the cache exceeds its
+ *         capacity, the cache automatically evict the least recent
+ *         accessed entry
+ *
+ *  @param entry a key value pair to be inserted
+ *  @return a iterator of the inserted entry
+ **/
 template<class Key, class Value>
 typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     const Entry& entry) {
@@ -80,12 +100,32 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
   }
 }
 
+/** @brief get the size of the cache
+ *    it should always less than or equal to its capacity
+ *
+ *  @return the size of the cache
+ */
 template<class Key, class Value>
 typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
   assert(map_.size() == list_.size());
   return map_.size();
 }
 
+/** @brief clear the cache
+ *
+ *  @return Void
+ */
+template<class Key, class Value>
+void Cache<Key, Value>::clear(void) {
+  {
+    cache_lock_.WriteLock();
+    list_.clear();
+    map_.clear();
+    cache_lock_.Unlock();
+  }
+}
+
+/* A explicit instantiation */
 template class Cache<uint32_t, planner::AbstractPlan*> ;
 
 }
