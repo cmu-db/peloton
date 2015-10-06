@@ -75,43 +75,19 @@ bool ProjectionExecutor::DExecute() {
     std::unique_ptr<storage::Tile> dest_tile(
         storage::TileFactory::GetTempTile(*schema_, num_tuples));
 
-    if(peloton_layout != LAYOUT_COLUMN) {
-      // Create projections tuple-at-a-time from original tile
-      oid_t new_tuple_id = 0;
-      for (oid_t old_tuple_id : *source_tile) {
-        storage::Tuple *buffer = new storage::Tuple(schema_, true);
-        expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
-                                                      old_tuple_id);
-        project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
+    // Create projections tuple-at-a-time from original tile
+    oid_t new_tuple_id = 0;
+    for (oid_t old_tuple_id : *source_tile) {
+      storage::Tuple *buffer = new storage::Tuple(schema_, true);
+      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
+                                                    old_tuple_id);
+      project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
-        // Insert projected tuple into the new tile
-        dest_tile->InsertTuple(new_tuple_id, buffer);
+      // Insert projected tuple into the new tile
+      dest_tile->InsertTuple(new_tuple_id, buffer);
 
-        delete buffer;
-        new_tuple_id++;
-      }
-    }
-    else {
-      // Create projections column-at-a-time from original tile
-      for(oid_t column_itr = 0 ; column_itr < num_columns; column_itr++) {
-
-        auto column_info = schema_->GetColumn(column_itr);
-        bool is_inlined = column_info.IsInlined();
-        oid_t column_length = column_info.GetLength();
-
-        oid_t new_tuple_id = 0;
-        for (oid_t old_tuple_id : *source_tile) {
-          expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
-                                                        old_tuple_id);
-          Value value = project_info_->Evaluate(column_itr, &tuple, nullptr, executor_context_);
-
-          // Insert projected value into the new tile
-          dest_tile->SetValueFast(value, new_tuple_id, column_itr, is_inlined, column_length);
-
-          value.Free();
-          new_tuple_id++;
-        }
-      }
+      delete buffer;
+      new_tuple_id++;
     }
 
     // Wrap physical tile in logical tile and return it
