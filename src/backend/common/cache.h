@@ -24,7 +24,7 @@ class Cache {
   /* A key value pair */
   typedef std::pair<Key, Value> Entry;
 
-  /* A list of Key in lru order
+  /* A list of Key in LRU order
    *
    * When iterate thru it, we get most recent entry first
    * i.e.
@@ -32,7 +32,7 @@ class Cache {
    * */
   typedef std::list<Key> KeyList;
 
-  /* pair of Value and interator into the list */
+  /* pair of Value and iterator into the list */
   typedef std::pair<Value, typename KeyList::iterator> IndexedValue;
 
   typedef std::unordered_map<Key, IndexedValue> Map;
