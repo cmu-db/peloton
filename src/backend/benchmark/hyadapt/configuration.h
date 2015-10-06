@@ -41,8 +41,8 @@ enum ExperimentType{
 
 };
 
-#define ATTRIBUTE_COUNT 100
-#define QUERY_ENGINE_SCALE 10
+#define ATTRIBUTE_COUNT 50
+#define QUERY_ENGINE_SCALE 20
 #define INFLECTION_POINT 0.6
 
 extern int orig_scale_factor;
