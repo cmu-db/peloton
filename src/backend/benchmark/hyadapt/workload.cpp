@@ -602,6 +602,7 @@ void RunProjectivityExperiment() {
 void RunSelectivityExperiment() {
 
   state.projectivity = 0.1;
+  peloton_projectivity = state.projectivity;
 
   // Go over all layouts
   for(auto layout : layouts) {
