@@ -29,7 +29,7 @@ namespace storage {
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
 
-column_map_type GetStaticColumnMap();
+column_map_type GetStaticColumnMap(oid_t column_count);
 
 /**
  * Check if the locations contains at least one visible entry to the transaction
@@ -460,7 +460,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       }
     }
     else {
-      column_map = GetStaticColumnMap();
+      column_map = GetStaticColumnMap(col_count);
     }
   }
   else{
@@ -864,12 +864,12 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type GetStaticColumnMap(){
+column_map_type GetStaticColumnMap(oid_t column_count){
   column_map_type column_map;
 
   // Split into two tiles
-  oid_t split_point = peloton_projectivity * ATTRIBUTE_COUNT;
-  oid_t rest_column_count = ATTRIBUTE_COUNT - split_point;
+  oid_t split_point = peloton_projectivity * column_count;
+  oid_t rest_column_count = column_count - split_point;
 
   column_map[0] = std::make_pair(0, 0);
   for(auto column_id = 0; column_id < split_point ; column_id++) {
