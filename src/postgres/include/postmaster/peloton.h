@@ -64,7 +64,8 @@ extern void peloton_ddl(Node *parsetree);
 extern void peloton_dml(PlanState *planstate,
                         bool sendTuples,
                         DestReceiver *dest,
-                        TupleDesc tuple_desc);
+                        TupleDesc tuple_desc,
+                        const char *prepStmtName);
 
 #endif   /* PELOTON_H */
 

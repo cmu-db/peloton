@@ -73,7 +73,8 @@ static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 long numberTuples,
                                 ScanDirection direction,
                                 DestReceiver *dest,
-                                TupleDesc tupDesc);
+                                TupleDesc tupDesc,
+                                const char *prepStmtName);
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -373,7 +374,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                        count,
 	                        direction,
 	                        dest,
-	                        queryDesc->tupDesc);
+	                        queryDesc->tupDesc,
+	                        queryDesc->prepStmtName);
 	  }
 
 	}
@@ -1648,11 +1650,12 @@ peloton_ExecutePlan(EState *estate,
       long numberTuples,
       ScanDirection direction,
       DestReceiver *dest,
-      TupleDesc tupDesc)
+      TupleDesc tupDesc,
+      const char *prepStmtName)
 {
 
   // TODO: Peloton Changes
-  peloton_dml(planstate, sendTuples, dest, tupDesc);
+  peloton_dml(planstate, sendTuples, dest, tupDesc, prepStmtName);
 
 }
 
