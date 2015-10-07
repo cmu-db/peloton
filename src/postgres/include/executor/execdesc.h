@@ -50,6 +50,8 @@ typedef struct QueryDesc
 
 	/* This is always set NULL by the core system, but plugins can change it */
 	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */
+	/* Peloton Change: prep stmt name */
+	const char *prepStmtName;
 } QueryDesc;
 
 /* in pquery.c */
@@ -59,7 +61,8 @@ extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
-				int instrument_options);
+				int instrument_options,
+				const char *prepStmtName=nullptr);
 
 extern QueryDesc *CreateUtilityQueryDesc(Node *utilitystmt,
 					   const char *sourceText,
