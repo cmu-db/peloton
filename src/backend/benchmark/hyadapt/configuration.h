@@ -41,7 +41,7 @@ enum ExperimentType{
 
 };
 
-#define ATTRIBUTE_COUNT 100
+#define ATTRIBUTE_COUNT 150
 
 extern int orig_scale_factor;
 
