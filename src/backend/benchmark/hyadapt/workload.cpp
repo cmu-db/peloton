@@ -33,6 +33,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
 #include "backend/executor/projection_executor.h"
+#include "backend/executor/insert_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/constant_value_expression.h"
@@ -41,6 +42,7 @@
 #include "backend/planner/aggregate_plan.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/planner/seq_scan_plan.h"
+#include "backend/planner/insert_plan.h"
 #include "backend/planner/projection_plan.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
@@ -51,6 +53,9 @@
 namespace peloton {
 namespace benchmark {
 namespace hyadapt{
+
+// Tuple id counter
+oid_t hyadapt_tuple_counter = -1000000;
 
 expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
@@ -234,7 +239,7 @@ static int GetLowerBound() {
   return lower_bound;
 }
 
-static void ExecuteTest(executor::MaterializationExecutor& mat_executor) {
+static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
@@ -243,19 +248,25 @@ static void ExecuteTest(executor::MaterializationExecutor& mat_executor) {
 
   // Run these many transactions
   for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
-    status = mat_executor.Init();
-    assert(status == true);
 
-    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+    // Run all the executors
+    for(auto executor : executors) {
 
-    while(mat_executor.Execute() == true) {
-      std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
-      assert(result_tile != nullptr);
-      result_tiles.emplace_back(result_tile.release());
+      status = executor->Init();
+      assert(status == true);
+
+      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+      while(executor->Execute() == true) {
+        std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
+        assert(result_tile != nullptr);
+        result_tiles.emplace_back(result_tile.release());
+      }
+
+      status = executor->Execute();
+      assert(status == false);
+
     }
-
-    status = mat_executor.Execute();
-    assert(status == false);
   }
 
   end = std::chrono::system_clock::now();
@@ -321,10 +332,36 @@ void RunDirectTest(storage::DataTable *table) {
   mat_executor.AddChild(&seq_scan_executor);
 
   /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+    auto expression = expression::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+
+  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  ExecuteTest(mat_executor);
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
+  executors.push_back(&insert_executor);
+
+  ExecuteTest(executors);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -442,10 +479,36 @@ void RunAggregateTest(storage::DataTable *table) {
   mat_executor.AddChild(&aggregation_executor);
 
   /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
+  planner::ProjectInfo::TargetList target_list;
+  direct_map_list.clear();
+
+  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+    auto expression = expression::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+
+  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  ExecuteTest(mat_executor);
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
+  executors.push_back(&insert_executor);
+
+  ExecuteTest(executors);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -543,10 +606,36 @@ void RunArithmeticTest(storage::DataTable *table) {
   mat_executor.AddChild(&projection_executor);
 
   /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
+  target_list.clear();
+  direct_map_list.clear();
+
+  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+    auto expression = expression::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+
+  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  ExecuteTest(mat_executor);
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
+  executors.push_back(&insert_executor);
+
+  ExecuteTest(executors);
 
   txn_manager.CommitTransaction(txn);
 }
