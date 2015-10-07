@@ -17,7 +17,6 @@
 #include <iterator>
 #include <mutex>
 
-
 namespace peloton {
 template<class Key, class Value>
 class Cache {
@@ -50,7 +49,6 @@ class Cache {
     inline bool operator==(const iterator &rhs);
     inline bool operator!=(const iterator &rhs);
     inline Value& operator*();
-
 
    private:
     inline iterator(typename Map::iterator map_itr);
@@ -104,7 +102,8 @@ inline typename Cache<Key, Value>::iterator& Cache<Key, Value>::iterator::operat
  *  @return iterator before increment
  */
 template<class Key, class Value>
-inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::operator++(int) {
+inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::operator++(
+    int) {
   Cache<Key, Value>::iterator tmp(*this);
   operator++();
   return tmp;
@@ -116,7 +115,8 @@ inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::operato
  * @return True if equal, false otherwise.
  */
 template<class Key, class Value>
-inline bool Cache<Key, Value>::iterator::operator==(const typename Cache<Key, Value>::iterator &rhs) {
+inline bool Cache<Key, Value>::iterator::operator==(
+    const typename Cache<Key, Value>::iterator &rhs) {
   return this->map_itr_ == rhs.map_itr_;
 }
 
@@ -127,7 +127,8 @@ inline bool Cache<Key, Value>::iterator::operator==(const typename Cache<Key, Va
  * @return False if equal, true otherwise.
  */
 template<class Key, class Value>
-inline bool Cache<Key, Value>::iterator::operator!=(const typename Cache<Key, Value>::iterator &rhs) {
+inline bool Cache<Key, Value>::iterator::operator!=(
+    const typename Cache<Key, Value>::iterator &rhs) {
   return this->map_itr_ != rhs.map_itr_;
 }
 
@@ -160,6 +161,5 @@ template<class Key, class Value>
 inline typename Cache<Key, Value>::iterator Cache<Key, Value>::end() {
   return iterator(this->map_.end());
 }
-
 
 }
