@@ -41,8 +41,6 @@ enum ExperimentType{
 
 };
 
-#define ATTRIBUTE_COUNT 150
-
 extern int orig_scale_factor;
 
 class configuration {
@@ -67,6 +65,9 @@ class configuration {
 
   // column count
   int column_count;
+
+  // update ratio
+  double write_ratio;
 
   // # of times to run operator
   int transactions;
