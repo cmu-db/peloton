@@ -46,11 +46,7 @@ public:
                             oid_t db_oid = INVALID_OID);
 
 private:
-
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
-
-    // last committed log record position
-    oid_t last_committed_txn_queue_offset = 0;
 
 };
 
