@@ -37,7 +37,8 @@ static void ProcessQuery(PlannedStmt *plan,
 			 const char *sourceText,
 			 ParamListInfo params,
 			 DestReceiver *dest,
-			 char *completionTag);
+			 char *completionTag,
+			 const char *prepStmtName);
 static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest);
@@ -65,7 +66,8 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
-				int instrument_options)
+				int instrument_options,
+				const char *prepStmtName)
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
@@ -86,6 +88,8 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->estate = NULL;
 	qd->planstate = NULL;
 	qd->totaltime = NULL;
+
+	qd->prepStmtName = prepStmtName;
 
 	return qd;
 }
@@ -161,7 +165,8 @@ ProcessQuery(PlannedStmt *plan,
 			 const char *sourceText,
 			 ParamListInfo params,
 			 DestReceiver *dest,
-			 char *completionTag)
+			 char *completionTag,
+			 const char *prepStmtName)
 {
 	QueryDesc  *queryDesc;
 
@@ -172,7 +177,7 @@ ProcessQuery(PlannedStmt *plan,
 	 */
 	queryDesc = CreateQueryDesc(plan, sourceText,
 								GetActiveSnapshot(), InvalidSnapshot,
-								dest, params, 0);
+								dest, params, 0, prepStmtName);
 
 	/*
 	 * Call ExecutorStart to prepare the plan for execution
@@ -515,7 +520,7 @@ PortalStart(Portal portal, ParamListInfo params,
 											InvalidSnapshot,
 											None_Receiver,
 											params,
-											0);
+											0, portal->prepStmtName);
 
 				/*
 				 * If it's a scrollable cursor, executor needs to support
@@ -1237,6 +1242,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 	 * Loop to handle the individual queries generated from a single parsetree
 	 * by analysis and rewrite.
 	 */
+	elog(DEBUG3, "%s, prep name %s, num of stmt %d", portal->sourceText, portal->prepStmtName, list_length(portal->stmts));
 	foreach(stmtlist_item, portal->stmts)
 	{
 		Node	   *stmt = (Node *) lfirst(stmtlist_item);
@@ -1279,7 +1285,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 				ProcessQuery(pstmt,
 							 portal->sourceText,
 							 portal->portalParams,
-							 dest, completionTag);
+							 dest, completionTag, portal->prepStmtName);
 			}
 			else
 			{
@@ -1287,7 +1293,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 				ProcessQuery(pstmt,
 							 portal->sourceText,
 							 portal->portalParams,
-							 altdest, NULL);
+							 altdest, NULL, portal->prepStmtName);
 			}
 
 			if (log_executor_stats)

@@ -160,7 +160,8 @@ void
 peloton_dml(PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
-            TupleDesc tuple_desc) {
+            TupleDesc tuple_desc,
+            const char *prepStmtName) {
   peloton_status status;
 
   // Get the parameter list
@@ -172,6 +173,12 @@ peloton_dml(PlanState *planstate,
   auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
 
   // Get our plan
+  if (prepStmtName) {
+    std::cout << "Got a named plan " << prepStmtName << std::endl;
+  } else {
+    std::cout << "Got an unnamed plan" << std::endl;
+  }
+
   auto plan = peloton::bridge::PlanTransformer::TransformPlan(plan_state);
   auto txn_id = GetTopTransactionId();
 
