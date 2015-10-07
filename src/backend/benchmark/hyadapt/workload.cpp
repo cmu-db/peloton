@@ -575,28 +575,13 @@ void RunProjectivityExperiment() {
 
     std::cout << "LAYOUT :: " << peloton_layout << "\n\n\n";
 
-    // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
-
     for(auto proj : projectivity) {
       // Set proj
       state.projectivity = proj;
       peloton_projectivity = state.projectivity;
 
-      // Set query processing engine
-      if(peloton_layout == LAYOUT_ROW
-          && peloton_projectivity <= INFLECTION_POINT
-          && state.scale_factor >= QUERY_ENGINE_SCALE){
-
-        std::cout << "INFO :: " << peloton_layout << " " << peloton_projectivity << " " <<
-            state.scale_factor << "\n";
-
-        state.scale_factor *= QUERY_ENGINE_SCALE;
-        state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
-      }
-
-      table.release();
-      table.reset(CreateAndLoadTable(layout));
+      // Load in the table with layout
+      std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -607,14 +592,6 @@ void RunProjectivityExperiment() {
 
       state.operator_type = OPERATOR_TYPE_ARITHMETIC;
       RunArithmeticTest(table.get());
-
-      // Reset query processing engine
-      if(peloton_layout == LAYOUT_ROW
-          && peloton_projectivity <= INFLECTION_POINT
-          && state.scale_factor >= QUERY_ENGINE_SCALE){
-        state.scale_factor = orig_scale_factor;
-        state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
-      }
     }
 
   }
@@ -667,9 +644,6 @@ void RunOperatorExperiment() {
     state.layout = layout;
     peloton_layout = state.layout;
 
-    // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
-
     for(auto selectivity : op_selectivity) {
       // Set selectivity
       state.selectivity = selectivity;
@@ -679,29 +653,12 @@ void RunOperatorExperiment() {
         state.projectivity = projectivity;
         peloton_projectivity = state.projectivity;
 
-        // Set query processing engine
-        if(peloton_layout == LAYOUT_ROW
-            && peloton_projectivity <= INFLECTION_POINT
-            && state.scale_factor >= QUERY_ENGINE_SCALE){
-          state.scale_factor *= QUERY_ENGINE_SCALE;
-          state.tuples_per_tilegroup /= QUERY_ENGINE_SCALE;
-        }
-
-        table.release();
-        table.reset(CreateAndLoadTable(layout));
+        // Load in the table with layout
+        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
         // Run operator
         state.operator_type = OPERATOR_TYPE_ARITHMETIC;
         RunArithmeticTest(table.get());
-
-        // Reset query processing engine
-        if(peloton_layout == LAYOUT_ROW
-            && peloton_projectivity <= INFLECTION_POINT
-            && state.scale_factor >= QUERY_ENGINE_SCALE){
-          state.scale_factor = orig_scale_factor;
-          state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
-        }
-
       }
     }
 
