@@ -565,7 +565,7 @@ std::vector<double> projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
 
 void RunProjectivityExperiment() {
 
-  state.selectivity = 0.1;
+  state.selectivity = 1.0;
 
   // Go over all layouts
   for(auto layout : layouts) {
