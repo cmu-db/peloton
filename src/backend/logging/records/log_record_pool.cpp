@@ -6,110 +6,118 @@ namespace logging {
 void LogRecordList::Clear() {
   // Clean up
   LogRecordNode *cur = head_node;
-  while (cur != NULL) {
+  while (cur != nullptr) {
     LogRecordNode *deletingNode = cur;
     cur = cur->next_node;
     head_node = cur;
     _backend->Free(deletingNode);
   }
-  tail_node = NULL;
+  tail_node = nullptr;
 }
 
-void LogRecordList::AddLogRecord(TupleRecord *record) {
-  if (_backend == NULL)
-    return;
+int LogRecordList::AddLogRecord(TupleRecord *record) {
+  if (_backend == nullptr || record == nullptr || record->GetTransactionId() != txn_id)
+    return -1;
 
   LogRecordNode *localRecord = (LogRecordNode*) _backend->Allocate(sizeof(LogRecordNode));
-  if (record != NULL || record->GetTransactionId() == txn_id) {
+  if (localRecord != nullptr) {
     localRecord->_db_oid = record->GetDatabaseOid();
     localRecord->_delete_location = record->GetDeleteLocation();
     localRecord->_insert_location = record->GetInsertLocation();
     localRecord->_log_record_type = record->GetType();
     localRecord->_table_oid = record->GetTableId();
-    localRecord->next_node = NULL;
+    localRecord->next_node = nullptr;
 
     // add to the list
-    if (tail_node == NULL) {
+    if (tail_node == nullptr) {
       head_node = localRecord;
     } else {
       tail_node->next_node = localRecord;
     }
     tail_node = localRecord;
+    return 0;
+  } else {
+    return -1;
   }
 }
 
 void LogRecordPool::Clear() {
   // Clean up
   LogRecordList *cur = head_list;
-  while (cur != NULL) {
+  while (cur != nullptr) {
     LogRecordList *deletingNode = cur;
-    cur = cur->next_list;
-    head_list = cur;
-    RemoveLogList(NULL, deletingNode);
+    cur = cur->GetNextList();
+    RemoveLogList(nullptr, deletingNode);
   }
-  tail_list = NULL;
+  tail_list = nullptr;
 }
 
-void LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {
-  if (_backend == NULL) {
-    return;
+int LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {
+  if (_backend == nullptr) {
+    return -1;
   }
   LogRecordList* existing_list = SearchRecordList(txn_id);
-  if (existing_list == NULL) {
+  if (existing_list == nullptr) {
     existing_list = (LogRecordList*) _backend->Allocate(sizeof(LogRecordList));
+    if (existing_list == nullptr) {
+      return -1;
+    }
     existing_list->init(_backend);
-    existing_list->txn_id = txn_id;
+    existing_list->SetTxnId(txn_id);
 
     // add to the pool
-    if (tail_list == NULL) {
+    if (tail_list == nullptr) {
       head_list = existing_list;
     } else {
-      tail_list->next_list = existing_list;
+      tail_list->SetNextList(existing_list);
     }
     tail_list = existing_list;
   }
+  return 0;
 }
 
-void LogRecordPool::AddLogRecord(TupleRecord *record) {
+int LogRecordPool::AddLogRecord(TupleRecord *record) {
   LogRecordList* existing_list = SearchRecordList(record->GetTransactionId());
-  if (existing_list == NULL) {
-    existing_list->AddLogRecord(record);
+  if (existing_list != nullptr) {
+    return existing_list->AddLogRecord(record);
   }
+  return -1;
 }
 
 void LogRecordPool::RemoveTxnLogList(txn_id_t txn_id) {
-  LogRecordList *prev = NULL;
+  LogRecordList *prev = nullptr;
   LogRecordList *cur = head_list;
-  while (cur != NULL) {
+  while (cur != nullptr) {
     if (cur->GetTxnID() == txn_id) {
       RemoveLogList(prev, cur);
       break;
     }
     prev = cur;
-    cur = cur->next_list;
+    cur = cur->GetNextList();
   }
 }
 
 LogRecordList* LogRecordPool::SearchRecordList(txn_id_t txn_id) {
   LogRecordList *cur = head_list;
-  while (cur != NULL) {
+  while (cur != nullptr) {
     if (cur->GetTxnID() == txn_id) {
       return cur;
     }
-    cur = cur->next_list;
+    cur = cur->GetNextList();
   }
-  return NULL;
+  return nullptr;
 }
 
 void LogRecordPool::RemoveLogList(LogRecordList *prev, LogRecordList *list) {
-  if (prev == NULL) {
-    head_list = list->next_list;
+  if (prev == nullptr) {
+    head_list = list->GetNextList();
   } else {
-    prev->next_list = list->next_list;
+    prev->SetNextList(list->GetNextList());
   }
-  if (list->next_list == NULL) {
+  if (list->GetNextList() == nullptr) {
     tail_list = prev;
   }
+  // clean the list record
   list->Clear();
   _backend->Free(list);
 }
