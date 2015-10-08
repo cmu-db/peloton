@@ -70,15 +70,10 @@ void PelotonFrontendLogger::Flush(void) {
       case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
         LogRecordList *txn_log_record_list = global_plog_pool->SearchRecordList(
             record->GetTransactionId());
-        if (txn_log_record_list != nullptr) {
-          auto &txn_manager = concurrency::TransactionManager::GetInstance();
-          auto *txn = txn_manager.GetTransaction(record->GetTransactionId());
-          if (txn != nullptr) {
-            txn_log_record_list->SetCommit(txn->GetCommitId());
-            // TODO Flush the commit id first before commit records
-            CommitRecords(txn_log_record_list);
-          }
-        }
+        assert(txn_log_record_list != nullptr);
+        txn_log_record_list->SetCommit();
+        // TODO Flush the commit id first before commit records
+        CommitRecords(txn_log_record_list);
       }
         break;
       case LOGRECORD_TYPE_TRANSACTION_END:
@@ -106,24 +101,31 @@ void PelotonFrontendLogger::Flush(void) {
   }
 }
 
-void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
+cid_t PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
   LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
+  cid_t latest_cid = INVALID_CID;
   while (recordNode != NULL) {
+    cid_t current_cid = INVALID_CID;
     switch (recordNode->_log_record_type) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-        SetInsertCommitMark(recordNode->_insert_location, true);
+        current_cid = SetInsertCommitMark(recordNode->_insert_location, true);
         break;
       case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-        SetDeleteCommitMark(recordNode->_delete_location, true);
+        current_cid = SetDeleteCommitMark(recordNode->_delete_location, true);
         break;
       case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-        SetInsertCommitMark(recordNode->_insert_location, true);
+        current_cid = SetInsertCommitMark(recordNode->_insert_location, true);
         SetDeleteCommitMark(recordNode->_delete_location, true);
         break;
       default:
         break;
     }
+    if (latest_cid < current_cid) {
+      latest_cid = current_cid;
+    }
+    recordNode = recordNode->next_node;
   }
+  return latest_cid;
 }
 
 void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
@@ -150,9 +152,9 @@ void PelotonFrontendLogger::DoRecovery() {
   while (!global_plog_pool->IsEmpty()) {
     LogRecordList *cur = global_plog_pool->GetHeadList();
     if (cur->IsCommit()) {
-      CommitRecords(cur);
-      if (cur->GetCommit() > latest_cid) {
-        latest_cid = cur->GetCommit();
+      cid_t cur_cid = CommitRecords(cur);
+      if (cur_cid > latest_cid) {
+        latest_cid = cur_cid;
       }
     }
     // TODO can be optimized
@@ -161,22 +163,28 @@ void PelotonFrontendLogger::DoRecovery() {
   assert(global_plog_pool->IsEmpty());
 }
 
-void PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
+cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
                                                 bool commit) {
   //Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
   tile_group_header->SetInsertCommit(location.offset, commit);
+  tile_group_header->IncrementActiveTupleCount();
+  LOG_INFO("<%p, %u> : slot is insert committed", tile_group, location.offset);
+  return tile_group_header->GetBeginCommitId(location.offset);
 }
 
-void PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
+cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
                                                 bool commit) {
   //Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
   tile_group_header->SetDeleteCommit(location.offset, commit);
+  tile_group_header->DecrementActiveTupleCount();
+  LOG_INFO("<%p, %u> : slot is delete committed", tile_group, location.offset);
+  return tile_group_header->GetEndCommitId(location.offset);
 }
 
 }  // namespace logging

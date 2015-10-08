@@ -56,7 +56,7 @@ class LogRecordList {
     head_node = nullptr;
     next_list = nullptr;
     _backend = backend;
-    txn_cid = INVALID_CID;
+    commit = false;
     tail_node = nullptr;
     txn_id = INVALID_TXN_ID;
   }
@@ -68,15 +68,11 @@ class LogRecordList {
   }
 
   bool IsCommit() {
-    return txn_cid != INVALID_CID;
+    return commit;
   }
 
-  cid_t GetCommit() {
-    return txn_cid;
-  }
-
-  void SetCommit(cid_t commit_id) {
-    txn_cid = commit_id;
+  void SetCommit() {
+    commit = true;
   }
 
   txn_id_t GetTxnID() {
@@ -109,7 +105,7 @@ class LogRecordList {
   LogRecordList *next_list = nullptr;
   storage::AbstractBackend *_backend = nullptr;
   txn_id_t txn_id = INVALID_TXN_ID;
-  cid_t txn_cid = INVALID_CID;
+  bool commit = false;
   LogRecordNode *tail_node = nullptr; // TODO May need check&update after recovery.
 };
 
