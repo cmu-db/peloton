@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/logging/log_manager.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/common/logger.h"
 #include "backend/common/synch.h"
@@ -287,6 +288,19 @@ class TileGroupHeader {
     bool visible = !(tuple_txn_id == INVALID_TXN_ID)
         && ((!own && activated && !invalidated)
             || (own && !activated && !invalidated));
+
+    // overwrite visible if using peloton logging
+    {
+      auto& log_manager = logging::LogManager::GetInstance();
+      if (log_manager.GetDefaultLoggingType() == LOGGING_TYPE_PELOTON) {
+        bool insert_commit = GetInsertCommit(tuple_slot_id);
+        bool delete_commit = GetDeleteCommit(tuple_slot_id);
+        if (!insert_commit || delete_commit) {
+          LOG_TRACE("Uncommited:: tuple begin cid : %lu", tuple_begin_cid);
+          visible = false;
+        }
+      }
+    }
 
     LOG_INFO(
         "<%p, %u> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",
