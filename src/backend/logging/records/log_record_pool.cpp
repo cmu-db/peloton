@@ -41,6 +41,17 @@ int LogRecordList::AddLogRecord(TupleRecord *record) {
   }
 }
 
+void LogRecordList::SyncLogRecordList() {
+  if (head_node == nullptr) {
+    tail_node = nullptr;
+  }
+  LogRecordNode * cur = head_node;
+  while(cur->next_node != nullptr) {
+    cur = cur->next_node;
+  }
+  tail_node = cur;
+}
+
 void LogRecordPool::Clear() {
   // Clean up
   LogRecordList *cur = head_list;
@@ -121,5 +132,18 @@ void LogRecordPool::RemoveLogList(LogRecordList *prev, LogRecordList *list) {
   list->Clear();
   _backend->Free(list);
 }
+
+void LogRecordPool::SyncLogRecordList() {
+  if (head_list == nullptr) {
+    tail_list = nullptr;
+  }
+  LogRecordList * cur = head_list;
+  while(cur->GetNextList() != nullptr) {
+    cur->SyncLogRecordList();
+    cur = cur->GetNextList();
+  }
+  tail_list = cur;
+}
+
 }
 }

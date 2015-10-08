@@ -161,6 +161,9 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   // Check the tuples
   LoggingTestsUtil::CheckTupleCount(20000, 10000);
 
+  // Check rollback
+  LoggingTestsUtil::CheckRollBack(20000, 10000);
+
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
@@ -177,13 +180,14 @@ void LoggingTestsUtil::CheckAriesRecovery(){
  */
 void LoggingTestsUtil::CheckPelotonRecovery(){
 
-  //  // Initialize oid since we assume that we restart the system
-  //  auto &manager = catalog::Manager::GetInstance();
-  //  manager.SetNextOid(0);
-  //  manager.ClearTileGroup();
-  //
-  //  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  //  txn_manager.ResetStates();
+    // TODO change to initialize object by reading NVM.
+    //  Initialize oid since we assume that we restart the system
+    //  auto &manager = catalog::Manager::GetInstance();
+    //  manager.SetNextOid(0);
+    //  manager.ClearTileGroup();
+    //
+    //  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    //  txn_manager.ResetStates();
 
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
@@ -221,7 +225,10 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   }
 
   // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000,10000);
+  LoggingTestsUtil::CheckTupleCount(20000, 10000);
+
+  // Check rollback
+  LoggingTestsUtil::CheckRollBack(20000, 10000);
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
@@ -232,6 +239,27 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
     LOG_ERROR("Failed to terminate logging thread"); 
   }
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
+}
+
+void LoggingTestsUtil::CheckRollBack(oid_t db_oid, oid_t table_oid) {
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+  auto table = db->GetTableWithOid(table_oid);
+
+  // should has no affect
+  InsertTuples(table, false/*no commit*/);
+
+  auto& log_manager = logging::LogManager::GetInstance();
+  if(log_manager.IsInLoggingMode()){
+    auto logger = log_manager.GetBackendLogger();
+    // Wait until frontend logger collects the data
+    while( logger->IsWaitingForFlushing()){
+      sleep(1);
+    }
+    log_manager.RemoveBackendLogger(logger);
+  }
+
+  CheckTupleCount(db_oid, table_oid);
 }
 
 void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
