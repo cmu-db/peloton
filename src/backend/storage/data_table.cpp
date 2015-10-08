@@ -867,8 +867,6 @@ void DataTable::UpdateDefaultPartition() {
 column_map_type GetStaticColumnMap(oid_t column_count){
   column_map_type column_map;
 
-  std::cout << "Col count :: " << column_count - 1 << "\n";
-
   // Split into two tiles
   oid_t split_point = peloton_projectivity * (column_count - 1);
   oid_t rest_column_count = (column_count - 1) - split_point;
