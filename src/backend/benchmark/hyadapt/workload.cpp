@@ -95,10 +95,13 @@ static void WriteOutput(double duration) {
   std::cout << std::setw(20) << std::left
       << "selectivity " << " : " << state.selectivity << std::endl;
   std::cout << std::setw(20) << std::left
+      << "write ratio " << " : " << state.write_ratio << std::endl;
+  std::cout << std::setw(20) << std::left
       << "scale_factor " << " : " << state.scale_factor << std::endl;
   std::cout << std::setw(20) << std::left
+      << "column count " << " : " << state.column_count << std::endl;
+  std::cout << std::setw(20) << std::left
       << "tup/tilegroup " << " : " << state.tuples_per_tilegroup << std::endl;
-
 
   // Convert to ms
   duration *= 1000;
@@ -108,6 +111,8 @@ static void WriteOutput(double duration) {
   out << state.operator_type << " ";
   out << state.selectivity << " ";
   out << state.projectivity << " ";
+  out << state.column_count << " ";
+  out << state.write_ratio << " ";
   out << duration << "\n";
   out.flush();
 
@@ -644,6 +649,10 @@ void RunArithmeticTest(storage::DataTable *table) {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
+std::vector<oid_t> column_counts = { 50, 150 };
+
+std::vector<double> write_ratios = {0, 0.5};
+
 std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
@@ -656,37 +665,50 @@ void RunProjectivityExperiment() {
 
   state.selectivity = 1.0;
 
-  // Go over all layouts
-  for(auto layout : layouts) {
-    // Set layout
-    state.layout = layout;
-    peloton_layout = state.layout;
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
 
-    std::cout << "LAYOUT :: " << peloton_layout << "\n\n\n";
+    // Generate sequence
+    GenerateSequence(state.column_count);
 
-    // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+    // Go over all write ratios
+    for(auto write_ratio : write_ratios) {
+      state.write_ratio = write_ratio;
 
-    for(auto proj : projectivity) {
-      // Set proj
-      state.projectivity = proj;
-      peloton_projectivity = state.projectivity;
+      // Go over all layouts
+      for(auto layout : layouts) {
+        // Set layout
+        state.layout = layout;
+        peloton_layout = state.layout;
 
-      // Load in the table with layout
-      if(layout == LAYOUT_HYBRID) {
-        table.release();
-        table.reset(CreateAndLoadTable(layout));
+        // Load in the table with layout
+        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+
+        for(auto proj : projectivity) {
+          // Set proj
+          state.projectivity = proj;
+          peloton_projectivity = state.projectivity;
+
+          // Load in the table with layout
+          if(layout == LAYOUT_HYBRID) {
+            table.release();
+            table.reset(CreateAndLoadTable(layout));
+          }
+
+          // Go over all ops
+          state.operator_type = OPERATOR_TYPE_DIRECT;
+          RunDirectTest(table.get());
+
+          state.operator_type = OPERATOR_TYPE_AGGREGATE;
+          RunAggregateTest(table.get());
+
+          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          RunArithmeticTest(table.get());
+        }
+
       }
 
-      // Go over all ops
-      state.operator_type = OPERATOR_TYPE_DIRECT;
-      RunDirectTest(table.get());
-
-      state.operator_type = OPERATOR_TYPE_AGGREGATE;
-      RunAggregateTest(table.get());
-
-      state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-      RunArithmeticTest(table.get());
     }
 
   }
@@ -699,28 +721,43 @@ void RunSelectivityExperiment() {
   state.projectivity = 0.1;
   peloton_projectivity = state.projectivity;
 
-  // Go over all layouts
-  for(auto layout : layouts) {
-    // Set layout
-    state.layout = layout;
-    peloton_layout = state.layout;
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
 
-    // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+    // Generate sequence
+    GenerateSequence(state.column_count);
 
-    for(auto select : selectivity) {
-      // Set selectivity
-      state.selectivity = select;
+    // Go over all write ratios
+    for(auto write_ratio : write_ratios) {
+      state.write_ratio = write_ratio;
 
-      // Go over all ops
-      state.operator_type = OPERATOR_TYPE_DIRECT;
-      RunDirectTest(table.get());
+      // Go over all layouts
+      for(auto layout : layouts) {
+        // Set layout
+        state.layout = layout;
+        peloton_layout = state.layout;
 
-      state.operator_type = OPERATOR_TYPE_AGGREGATE;
-      RunAggregateTest(table.get());
+        // Load in the table with layout
+        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
-      state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-      RunArithmeticTest(table.get());
+        for(auto select : selectivity) {
+          // Set selectivity
+          state.selectivity = select;
+
+          // Go over all ops
+          state.operator_type = OPERATOR_TYPE_DIRECT;
+          RunDirectTest(table.get());
+
+          state.operator_type = OPERATOR_TYPE_AGGREGATE;
+          RunAggregateTest(table.get());
+
+          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          RunArithmeticTest(table.get());
+        }
+
+      }
+
     }
 
   }
@@ -734,34 +771,49 @@ std::vector<double> op_projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0
 
 void RunOperatorExperiment() {
 
-  // Go over all layouts
-  for(auto layout : layouts) {
-    // Set layout
-    state.layout = layout;
-    peloton_layout = state.layout;
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
 
-    // Load in the table with layout
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+    // Generate sequence
+    GenerateSequence(state.column_count);
 
-    for(auto selectivity : op_selectivity) {
-      // Set selectivity
-      state.selectivity = selectivity;
+    // Go over all write ratios
+    for(auto write_ratio : write_ratios) {
+      state.write_ratio = write_ratio;
 
-      for(auto projectivity : op_projectivity) {
-        // Set projectivity
-        state.projectivity = projectivity;
-        peloton_projectivity = state.projectivity;
+      // Go over all layouts
+      for(auto layout : layouts) {
+        // Set layout
+        state.layout = layout;
+        peloton_layout = state.layout;
 
         // Load in the table with layout
-        if(layout == LAYOUT_HYBRID) {
-          table.release();
-          table.reset(CreateAndLoadTable(layout));
+        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+
+        for(auto selectivity : op_selectivity) {
+          // Set selectivity
+          state.selectivity = selectivity;
+
+          for(auto projectivity : op_projectivity) {
+            // Set projectivity
+            state.projectivity = projectivity;
+            peloton_projectivity = state.projectivity;
+
+            // Load in the table with layout
+            if(layout == LAYOUT_HYBRID) {
+              table.release();
+              table.reset(CreateAndLoadTable(layout));
+            }
+
+            // Run operator
+            state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+            RunArithmeticTest(table.get());
+          }
         }
 
-        // Run operator
-        state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-        RunArithmeticTest(table.get());
       }
+
     }
 
   }
