@@ -52,7 +52,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    cid_t CommitRecords(LogRecordList *txn_log_record_list);
+    void CommitRecords(LogRecordList *txn_log_record_list);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
@@ -61,6 +61,12 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Global queue
     LogRecordPool *global_plog_pool;
     storage::NVMBackend *backend;
+
+    // Keep tracking max oid for setting next_oid in manager
+    // For active processing after recovery
+    oid_t max_oid = INVALID_OID;
+    // Keep tracking latest cid for setting next commit in txn manager
+    cid_t latest_cid = INVALID_CID;
 };
 
 }  // namespace logging
