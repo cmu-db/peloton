@@ -47,6 +47,17 @@ static struct option opts[] = {
     { NULL, 0, NULL, 0 }
 };
 
+void GenerateSequence(oid_t column_count){
+  // Reset sequence
+  hyadapt_column_ids.clear();
+
+  // Generate sequence
+  for(auto column_id = 1; column_id < column_count; column_id++)
+    hyadapt_column_ids.push_back(column_id);
+
+  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
+}
+
 static void ValidateOperator(const configuration& state) {
   if(state.operator_type < 1 || state.operator_type > 3) {
     std::cout << "Invalid operator type :: " << state.operator_type << "\n";
