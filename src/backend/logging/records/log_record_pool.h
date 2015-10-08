@@ -97,6 +97,9 @@ class LogRecordList {
 
   int AddLogRecord(TupleRecord *record);
 
+  // recover tail_node if any inconsistency
+  void SyncLogRecordList();
+
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
@@ -106,7 +109,7 @@ class LogRecordList {
   storage::AbstractBackend *_backend = nullptr;
   txn_id_t txn_id = INVALID_TXN_ID;
   bool commit = false;
-  LogRecordNode *tail_node = nullptr; // TODO May need check&update after recovery.
+  LogRecordNode *tail_node = nullptr;
 };
 
 //===--------------------------------------------------------------------===//
@@ -148,6 +151,9 @@ class LogRecordPool {
   void RemoveTxnLogList(txn_id_t txn_id);
 
   LogRecordList* SearchRecordList(txn_id_t txn_id);
+
+  // recover tail_node if any inconsistency
+  void SyncLogRecordList();
 
  private:
 

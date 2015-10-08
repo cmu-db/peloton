@@ -35,7 +35,8 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
   // persistent pool for all pending logs
   backend = new storage::NVMBackend();
 
-  // TODO ??? try to read global_plog_pool info from a fix address, and recovery the lists
+  // TODO ??? try to read global_plog_pool info from a fix address
+  // and recovery the lists by calling SyncLogRecordList()
   global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
   assert(global_plog_pool != nullptr);
   global_plog_pool->init(backend);
@@ -101,9 +102,8 @@ void PelotonFrontendLogger::Flush(void) {
   }
 }
 
-cid_t PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
+void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
   LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
-  cid_t latest_cid = INVALID_CID;
   while (recordNode != NULL) {
     cid_t current_cid = INVALID_CID;
     switch (recordNode->_log_record_type) {
@@ -125,7 +125,6 @@ cid_t PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
     }
     recordNode = recordNode->next_node;
   }
-  return latest_cid;
 }
 
 void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
@@ -147,20 +146,20 @@ void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
  * @brief Recovery system based on log file
  */
 void PelotonFrontendLogger::DoRecovery() {
-  // TODO should we reset latest_cid in txn_manager?
-  cid_t latest_cid = START_CID;
   while (!global_plog_pool->IsEmpty()) {
     LogRecordList *cur = global_plog_pool->GetHeadList();
     if (cur->IsCommit()) {
-      cid_t cur_cid = CommitRecords(cur);
-      if (cur_cid > latest_cid) {
-        latest_cid = cur_cid;
-      }
+      CommitRecords(cur);
     }
     // TODO can be optimized
     global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
   }
   assert(global_plog_pool->IsEmpty());
+  if (max_oid != INVALID_OID) {
+    auto &manager = catalog::Manager::GetInstance();
+    manager.SetNextOid(max_oid);
+  }
+  // TODO reset transaction manager with latest cid and txn id
 }
 
 cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
@@ -172,6 +171,9 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
   tile_group_header->SetInsertCommit(location.offset, commit);
   tile_group_header->IncrementActiveTupleCount();
   LOG_INFO("<%p, %u> : slot is insert committed", tile_group, location.offset);
+  if( max_oid < location.block ){
+    max_oid = location.block;
+  }
   return tile_group_header->GetBeginCommitId(location.offset);
 }
 
@@ -184,6 +186,9 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
   tile_group_header->SetDeleteCommit(location.offset, commit);
   tile_group_header->DecrementActiveTupleCount();
   LOG_INFO("<%p, %u> : slot is delete committed", tile_group, location.offset);
+  if( max_oid < location.block ){
+    max_oid = location.block;
+  }
   return tile_group_header->GetEndCommitId(location.offset);
 }
 
