@@ -17,6 +17,8 @@
 #include <iterator>
 #include <mutex>
 
+#define DEFAULT_CACHE_SIZE 100
+
 namespace peloton {
 template<class Key, class Value>
 class Cache {
@@ -38,7 +40,7 @@ class Cache {
   typedef size_t size_type;
 
  public:
-  Cache(size_type capacity);
+  Cache(size_type capacity=DEFAULT_CACHE_SIZE);
 
   class iterator : public std::iterator<std::input_iterator_tag, Entry> {
     friend class Cache;

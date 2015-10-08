@@ -33,7 +33,7 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlan *node,
+SeqScanExecutor::SeqScanExecutor(const planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 

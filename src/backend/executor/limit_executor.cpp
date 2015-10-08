@@ -24,7 +24,7 @@ namespace executor {
  * @brief Constructor
  * @param node  LimitNode plan node corresponding to this executor
  */
-LimitExecutor::LimitExecutor(planner::AbstractPlan *node,
+LimitExecutor::LimitExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

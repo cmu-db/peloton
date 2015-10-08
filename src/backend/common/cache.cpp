@@ -42,9 +42,7 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
     list_.splice(list_.begin(), list_, map_itr->second.second);
     *(map_itr->second.second) = list_.front();
     cache_itr = iterator(map_itr);
-    LOG_INFO("Found 1 record");
   } else {
-    LOG_INFO("Found 0 record");
   }
   return cache_itr;
 }
@@ -76,18 +74,15 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
                             std::make_pair(entry.second, list_.begin()));
     assert(ret.second); /* should not fail */
     cache_itr = iterator(ret.first);
-    LOG_INFO("Insert %d", entry.first);
     while (map_.size() > this->capacity_) {
       auto deleted = list_.back();
       auto count = this->map_.erase(deleted);
       list_.erase(std::prev(list_.end()));
-      LOG_INFO("Evicted %d", deleted);
       assert(count == 1);
     }
   } else {
     list_.splice(list_.begin(), list_, map_itr->second.second);
     map_itr->second = std::make_pair(entry.second, list_.begin());
-    LOG_INFO("Updated 1 record");
   }
   assert(list_.size() == map_.size());
   assert(list_.size() <= capacity_);
@@ -127,7 +122,8 @@ bool Cache<Key, Value>::empty(void) const {
   return map_.empty();
 }
 
-/* A explicit instantiation */
-template class Cache<uint32_t, planner::AbstractPlan*> ;
+/* Explicit instantiations */
+template class Cache<uint32_t, planner::AbstractPlan*>; /* For testing */
+template class Cache<std::string, const planner::AbstractPlan*>; /* Actual in use */
 
 }

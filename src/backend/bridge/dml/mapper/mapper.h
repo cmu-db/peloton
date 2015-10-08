@@ -21,6 +21,7 @@
 #include "backend/expression/expression_util.h"
 #include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
+#include "backend/common/cache.h"
 #include "backend/planner/project_info.h"
 
 #include "postgres.h"
@@ -44,19 +45,26 @@ class PlanTransformer {
 
   PlanTransformer() {}
 
-  static planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate) {
-    return TransformPlan(planstate, DefaultOptions);
-  }
+  /* Plan caching */
+  static PlanTransformer &GetInstance();
+
+  const planner::AbstractPlan *GetCachedPlan(const char *prepStmtName);
+
+  /* Plan Mapping */
+  static const planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate);
+  const planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate, const char *prepStmtName);
 
   // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan,
                           PlanState *planstate);
 
-  static bool CleanPlan(planner::AbstractPlan *root);
+  static bool CleanPlan(const planner::AbstractPlan *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
  private:
+  Cache<std::string, const planner::AbstractPlan *> plan_cache_;
+
 
   //===--------------------------------------------------------------------===//
   // Options controlling some transform operations
@@ -73,7 +81,7 @@ class PlanTransformer {
 
   static const TransformOptions DefaultOptions;
 
-  static planner::AbstractPlan *TransformPlan(
+  static const planner::AbstractPlan *TransformPlan(
       AbstractPlanState *planstate,
       const TransformOptions options);
 
@@ -81,17 +89,17 @@ class PlanTransformer {
   // MODIFY TABLE FAMILY
   //===--------------------------------------------------------------------===//
 
-  static planner::AbstractPlan *TransformModifyTable(
+  static const planner::AbstractPlan *TransformModifyTable(
       const ModifyTablePlanState *planstate,
       const TransformOptions options);
 
-  static planner::AbstractPlan *TransformInsert(
+  static const planner::AbstractPlan *TransformInsert(
       const ModifyTablePlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformUpdate(
+  static const planner::AbstractPlan *TransformUpdate(
       const ModifyTablePlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformDelete(
+  static const planner::AbstractPlan *TransformDelete(
       const ModifyTablePlanState *planstate,
       const TransformOptions options);
 
@@ -111,16 +119,16 @@ class PlanTransformer {
    * will
    * generate a projection plan node and put it on top of the scan node.
    */
-  static planner::AbstractPlan *TransformSeqScan(
+  static const planner::AbstractPlan *TransformSeqScan(
       const SeqScanPlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformIndexScan(
+  static const planner::AbstractPlan *TransformIndexScan(
       const IndexScanPlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformIndexOnlyScan(
+  static const planner::AbstractPlan *TransformIndexOnlyScan(
       const IndexOnlyScanPlanState *planstate,
       const TransformOptions options);
-  static planner::AbstractPlan *TransformBitmapHeapScan(
+  static const planner::AbstractPlan *TransformBitmapHeapScan(
       const BitmapHeapScanPlanState *planstate,
       const TransformOptions options);
 
@@ -128,29 +136,29 @@ class PlanTransformer {
   // JOIN FAMILY
   //===--------------------------------------------------------------------===//
 
-  static planner::AbstractPlan *TransformNestLoop(
+  static const planner::AbstractPlan *TransformNestLoop(
       const NestLoopPlanState *planstate);
 
-  static planner::AbstractPlan *TransformMergeJoin(
+  static const planner::AbstractPlan *TransformMergeJoin(
       const MergeJoinPlanState *plan_state);
 
   //===--------------------------------------------------------------------===//
   // OTHERS
   //===--------------------------------------------------------------------===//
 
-  static planner::AbstractPlan *TransformLockRows(
+  static const planner::AbstractPlan *TransformLockRows(
       const LockRowsPlanState *planstate);
 
-  static planner::AbstractPlan *TransformMaterialization(
+  static const planner::AbstractPlan *TransformMaterialization(
       const MaterialPlanState *planstate);
 
-  static planner::AbstractPlan *TransformLimit(
+  static const planner::AbstractPlan *TransformLimit(
       const LimitPlanState *planstate);
 
-  static planner::AbstractPlan *TransformAgg(
+  static const planner::AbstractPlan *TransformAgg(
       const AggPlanState *plan_state);
 
-  static planner::AbstractPlan *TransformSort(
+  static const planner::AbstractPlan *TransformSort(
       const SortPlanState *plan_state);
 
   static PelotonJoinType TransformJoinType(
@@ -161,7 +169,7 @@ class PlanTransformer {
   //===--------------------------------------------------------------------===//
 
   // Analyze the columns in the plan
-  static void GetColumnsAccessed(planner::AbstractPlan *plan,
+  static void GetColumnsAccessed(const planner::AbstractPlan *plan,
                                  std::vector<oid_t> &target_list,
                                  std::vector<oid_t> &qual,
                                  oid_t &database_oid,

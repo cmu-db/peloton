@@ -29,7 +29,7 @@ namespace bridge {
  *
  * Basically, it multiplexes into helper methods based on operation type.
  */
-planner::AbstractPlan *PlanTransformer::TransformModifyTable(
+const planner::AbstractPlan *PlanTransformer::TransformModifyTable(
     const ModifyTablePlanState *mt_plan_state,
     const TransformOptions options) {
 
@@ -63,7 +63,7 @@ planner::AbstractPlan *PlanTransformer::TransformModifyTable(
  * @brief Convert ModifyTableState Insert case into AbstractPlan.
  * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlan *PlanTransformer::TransformInsert(
+const planner::AbstractPlan *PlanTransformer::TransformInsert(
     const ModifyTablePlanState *mt_plan_state, __attribute__((unused)) const TransformOptions options) {
   planner::AbstractPlan *plan_node = nullptr;
 
@@ -96,7 +96,7 @@ planner::AbstractPlan *PlanTransformer::TransformInsert(
   return plan_node;
 }
 
-planner::AbstractPlan *PlanTransformer::TransformUpdate(
+const planner::AbstractPlan *PlanTransformer::TransformUpdate(
     const ModifyTablePlanState *mt_plan_state,
     const TransformOptions options) {
   /*
@@ -153,7 +153,7 @@ planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
-planner::AbstractPlan *PlanTransformer::TransformDelete(
+const planner::AbstractPlan *PlanTransformer::TransformDelete(
     const ModifyTablePlanState *mt_plan_state,
     const TransformOptions options) {
   // Grab Database ID and Table ID

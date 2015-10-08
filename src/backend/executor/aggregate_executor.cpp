@@ -28,7 +28,7 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
+AggregateExecutor::AggregateExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
 }
