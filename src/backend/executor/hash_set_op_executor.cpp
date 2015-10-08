@@ -26,7 +26,7 @@ namespace executor {
 /**
  * @brief Constructor
  */
-HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlan *node,
+HashSetOpExecutor::HashSetOpExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

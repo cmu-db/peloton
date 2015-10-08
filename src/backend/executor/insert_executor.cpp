@@ -28,7 +28,7 @@ namespace executor {
  * @brief Constructor for insert executor.
  * @param node Insert node corresponding to this executor.
  */
-InsertExecutor::InsertExecutor(planner::AbstractPlan *node,
+InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
 : AbstractExecutor(node, executor_context) {}
 

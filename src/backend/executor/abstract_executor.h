@@ -59,7 +59,7 @@ class AbstractExecutor {
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times
   // with different executor contexts
-  explicit AbstractExecutor(planner::AbstractPlan *node,
+  explicit AbstractExecutor(const planner::AbstractPlan *node,
                             ExecutorContext *executor_context);
 
   /** @brief Init function to be overriden by derived class. */

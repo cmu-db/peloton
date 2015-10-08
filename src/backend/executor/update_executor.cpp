@@ -29,7 +29,7 @@ namespace executor {
  * @brief Constructor for update executor.
  * @param node Update node corresponding to this executor.
  */
-UpdateExecutor::UpdateExecutor(planner::AbstractPlan *node,
+UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
