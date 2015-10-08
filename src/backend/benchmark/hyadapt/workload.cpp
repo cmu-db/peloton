@@ -119,7 +119,7 @@ static void WriteOutput(double duration) {
 }
 
 static storage::DataTable* CreateTable() {
-  const oid_t col_count = state.column_count;
+  const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
   const bool indexes = false;
 
@@ -177,7 +177,7 @@ static storage::DataTable* CreateTable() {
 
 static void LoadTable(storage::DataTable *table) {
 
-  const oid_t col_count = state.column_count;
+  const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
   auto table_schema = table->GetSchema();
@@ -346,7 +346,7 @@ void RunDirectTest(storage::DataTable *table) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
@@ -390,6 +390,7 @@ void RunAggregateTest(storage::DataTable *table) {
   std::vector<oid_t> column_ids;
   oid_t column_count = state.column_count;
 
+  column_ids.push_back(0);
   for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
@@ -493,7 +494,7 @@ void RunAggregateTest(storage::DataTable *table) {
   planner::ProjectInfo::TargetList target_list;
   direct_map_list.clear();
 
-  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
@@ -537,6 +538,7 @@ void RunArithmeticTest(storage::DataTable *table) {
   std::vector<oid_t> column_ids;
   oid_t column_count = state.column_count;
 
+  column_ids.push_back(0);
   for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
@@ -620,7 +622,7 @@ void RunArithmeticTest(storage::DataTable *table) {
   target_list.clear();
   direct_map_list.clear();
 
-  for (oid_t col_id = START_OID; col_id < state.column_count; col_id++) {
+  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
@@ -668,6 +670,8 @@ void RunProjectivityExperiment() {
   // Go over all column counts
   for(auto column_count : column_counts) {
     state.column_count = column_count;
+
+    std::cout << "COL COUNT :: " << column_count << "\n\n\n";
 
     // Generate sequence
     GenerateSequence(state.column_count);
