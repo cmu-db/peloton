@@ -47,7 +47,9 @@ public:
 
 private:
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
-
+    // TODO this flag is used for testing performance difference between
+    // group flushing and fine grained flushing
+    bool flush_enabled = true;
 };
 
 }  // namespace logging
