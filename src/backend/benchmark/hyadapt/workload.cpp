@@ -651,7 +651,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = { 50, 150 };
+std::vector<oid_t> column_counts = {50, 150};
 
 std::vector<double> write_ratios = {0, 0.5};
 
@@ -659,9 +659,9 @@ std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
 
-std::vector<double> selectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
-std::vector<double> projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+std::vector<double> projectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 void RunProjectivityExperiment() {
 
