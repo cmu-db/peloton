@@ -48,14 +48,16 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
 }
 
 /** @brief insert a key value pair
- *         if the key already exists, this updates its value
+ *         if the key already exists, this updates its value, the reference count
+ *         of the previous value would decrement by 1
+ *
  *         if not, this effectively insert a new entry
  *         regardless, the related entry would become the most recent one
  *         If after insertion, the size of the cache exceeds its
  *         capacity, the cache automatically evict the least recent
  *         accessed entry
  *
- *  @param entry a key value pair to be inserted
+ *  @param entry a key value pair to be inserted of type std::pair<Key, ValuePtr>
  *  @return a iterator of the inserted entry
  **/
 template<class Key, class Value>
