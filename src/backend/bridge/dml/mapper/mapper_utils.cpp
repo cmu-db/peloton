@@ -494,7 +494,7 @@ void PlanTransformer::AnalyzePlan(planner::AbstractPlan *plan,
   target_table->RecordSample(sample);
 }
 
-void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
+void PlanTransformer::GetColumnsAccessed(const planner::AbstractPlan *plan,
                                          std::vector<oid_t> &target_list,
                                          std::vector<oid_t> &qual,
                                          oid_t &database_oid,
@@ -507,7 +507,7 @@ void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
   switch (plan_node_type) {
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN: {
-      planner::AbstractScan *abstract_scan_plan = (planner::AbstractScan *)plan;
+      const planner::AbstractScan *abstract_scan_plan = (const planner::AbstractScan *)plan;
 
       // TARGET LIST
       if(target_list.empty()) {
@@ -519,20 +519,20 @@ void PlanTransformer::GetColumnsAccessed(planner::AbstractPlan *plan,
       table_oid = target_table->GetOid();
 
       // QUAL
-      BuildColumnListFromExpr(qual, ((planner::AbstractScan *)plan)->GetPredicate());
+      BuildColumnListFromExpr(qual, ((const planner::AbstractScan *)plan)->GetPredicate());
     }
     break;
 
     case PLAN_NODE_TYPE_PROJECTION:
       // TARGET LIST
       if(target_list.empty())
-        target_list = ((planner::ProjectionPlan *)plan)->GetColumnIds();
+        target_list = ((const planner::ProjectionPlan *)plan)->GetColumnIds();
       break;
 
     case PLAN_NODE_TYPE_AGGREGATE_V2:
       // TARGET LIST
       if(target_list.empty())
-        target_list = ((planner::AggregatePlan *)plan)->GetColumnIds();
+        target_list = ((const planner::AggregatePlan *)plan)->GetColumnIds();
       break;
 
     default:

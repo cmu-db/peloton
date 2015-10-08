@@ -26,7 +26,7 @@ namespace bridge {
  *        does not support cases where there is only OFFSET
  * @return Pointer to the constructed AbstractPlan
  */
-planner::AbstractPlan *PlanTransformer::TransformLimit(
+const planner::AbstractPlan *PlanTransformer::TransformLimit(
     const LimitPlanState *limit_state) {
 
   // TODO: does not do pass down bound to child node

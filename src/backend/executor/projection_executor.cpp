@@ -27,7 +27,7 @@ namespace executor {
  * @brief Constructor
  * @param node  ProjectionNode plan node corresponding to this executor
  */
-ProjectionExecutor::ProjectionExecutor(planner::AbstractPlan *node,
+ProjectionExecutor::ProjectionExecutor(const planner::AbstractPlan *node,
                                        ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

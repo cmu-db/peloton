@@ -33,7 +33,7 @@ namespace executor {
  * @brief Constructor
  * @param node AbstractScanNode node corresponding to this executor.
  */
-AbstractScanExecutor::AbstractScanExecutor(planner::AbstractPlan *node,
+AbstractScanExecutor::AbstractScanExecutor(const planner::AbstractPlan *node,
                                            ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

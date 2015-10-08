@@ -27,7 +27,7 @@ namespace executor {
  * @brief Constructor for delete executor.
  * @param node Delete node corresponding to this executor.
  */
-DeleteExecutor::DeleteExecutor(planner::AbstractPlan *node,
+DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

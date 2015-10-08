@@ -25,7 +25,7 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
   MergeJoinExecutor &operator=(const MergeJoinExecutor &) = delete;
 
  public:
-  explicit MergeJoinExecutor(planner::AbstractPlan *node,
+  explicit MergeJoinExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
   ~MergeJoinExecutor() {

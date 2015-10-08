@@ -24,7 +24,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   IndexScanExecutor &operator=(const IndexScanExecutor &) = delete;
 
  public:
-  explicit IndexScanExecutor(planner::AbstractPlan *node,
+  explicit IndexScanExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
  protected:

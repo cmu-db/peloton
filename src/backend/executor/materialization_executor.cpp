@@ -42,7 +42,7 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    planner::AbstractPlan *node, ExecutorContext *executor_context)
+    const planner::AbstractPlan *node, ExecutorContext *executor_context)
 : AbstractExecutor(node, executor_context) {}
 
 /**

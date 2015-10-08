@@ -30,7 +30,7 @@ namespace bridge {
 executor::ExecutorContext *BuildExecutorContext(PlanState *planstate,
                                                 concurrency::Transaction *txn);
 executor::AbstractExecutor *BuildExecutorTree(
-    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     PlanState *planstate, executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
@@ -74,7 +74,7 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
  * @return The updated executor tree.
  */
 executor::AbstractExecutor *BuildExecutorTree(
-    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr)
@@ -220,7 +220,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @return status of execution.
  */
 peloton_status
-PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
+PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                           ParamListInfo param_list,
                           TupleDesc tuple_desc,
                           TransactionId txn_id) {

@@ -135,9 +135,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
   if (child_planstate != nullptr) {
     if (root != nullptr) {
       if (left_child)
-        outerAbstractPlanState(root) = child_planstate;
+        root->left_tree = child_planstate;
       else
-        innerAbstractPlanState(root) = child_planstate;
+        root->right_tree = child_planstate;
     } else
       root = child_planstate;
   }

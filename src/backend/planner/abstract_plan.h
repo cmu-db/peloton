@@ -49,11 +49,11 @@ class AbstractPlan {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(AbstractPlan *child);
+  void AddChild(const AbstractPlan *child);
 
-  const std::vector<AbstractPlan *> &GetChildren() const;
+  const std::vector<const AbstractPlan *> &GetChildren() const;
 
-  AbstractPlan *GetParent();
+  const AbstractPlan *GetParent();
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -78,7 +78,7 @@ class AbstractPlan {
  private:
 
   // A plan node can have multiple children
-  std::vector<AbstractPlan *> children_;
+  std::vector<const AbstractPlan *> children_;
 
   AbstractPlan *parent_ = nullptr;
 };
