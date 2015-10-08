@@ -72,13 +72,11 @@ void PelotonFrontendLogger::Flush(void) {
         LogRecordList *txn_log_record_list = global_plog_pool->SearchRecordList(
             record->GetTransactionId());
         assert(txn_log_record_list != nullptr);
-        txn_log_record_list->SetCommit();
-        // TODO Flush the commit id first before commit records
         CommitRecords(txn_log_record_list);
       }
         break;
-      case LOGRECORD_TYPE_TRANSACTION_END:
       case LOGRECORD_TYPE_TRANSACTION_ABORT:
+      case LOGRECORD_TYPE_TRANSACTION_END:
       case LOGRECORD_TYPE_TRANSACTION_DONE:
         global_plog_pool->RemoveTxnLogList(record->GetTransactionId());
         break;
@@ -103,7 +101,13 @@ void PelotonFrontendLogger::Flush(void) {
 }
 
 void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
+  // In case the commit process is interrupted
+  txn_log_record_list->SetCommitting(true);
+
+  // TODO Flush logs commit information first before commit to tuple records
+
   LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
+
   while (recordNode != NULL) {
     cid_t current_cid = INVALID_CID;
     switch (recordNode->_log_record_type) {
@@ -125,6 +129,11 @@ void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
     }
     recordNode = recordNode->next_node;
   }
+  // TODO sync for the tuple record updates
+
+  // All record is committed, its safe to remove them now
+  txn_log_record_list->Clear();
+  txn_log_record_list->SetCommitting(false);
 }
 
 void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
@@ -148,10 +157,9 @@ void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
 void PelotonFrontendLogger::DoRecovery() {
   while (!global_plog_pool->IsEmpty()) {
     LogRecordList *cur = global_plog_pool->GetHeadList();
-    if (cur->IsCommit()) {
+    if (cur->IsCommitting()) {
       CommitRecords(cur);
     }
-    // TODO can be optimized
     global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
   }
   assert(global_plog_pool->IsEmpty());
