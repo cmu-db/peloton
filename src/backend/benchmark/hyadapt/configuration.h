@@ -78,6 +78,8 @@ void Usage(FILE *out);
 
 void ParseArguments(int argc, char* argv[], configuration& state);
 
+void GenerateSequence(oid_t column_count);
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
