@@ -22,9 +22,25 @@
 
 namespace peloton {
 template<class Key, class Value>
+
+
+
+/** @brief An implementation of LRU cache
+ *
+ *  To use this class, make a explicit instantiation at the end of cache.cpp
+ *  The two template parameters are Key and Value, but the cache actually take
+ *  a pair of (key, ValuePtr) on insert, as the responsibility of managing
+ *  the allocated memory for Value would be taken by the Cache class.
+ *
+ * */
 class Cache {
+  /* Raw pointer of Value type */
   typedef Value* RawValuePtr;
+
+  /* Shared pointer of Value type */
   typedef std::shared_ptr<Value> ValuePtr;
+
+  /* A function to delete dynamically allocated Value */
   typedef void (*ValueDeleter)(Value*);
 
   /* A key value pair */
@@ -149,7 +165,7 @@ inline bool Cache<Key, Value>::iterator::operator!=(
 /**
  * @brief Dereference operator.
  *
- * @return A value type
+ * @return A shared pointer of the ValueType
  */
 template<class Key, class Value>
 inline typename Cache<Key, Value>::ValuePtr Cache<Key, Value>::iterator::operator*() {
