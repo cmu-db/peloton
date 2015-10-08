@@ -25,6 +25,8 @@
 namespace peloton {
 namespace logging {
 
+LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
+
 /**
  * @brief create NVM backed log pool
  */
@@ -37,9 +39,13 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
 
   // TODO ??? try to read global_plog_pool info from a fix address
   // and recovery the lists by calling SyncLogRecordList()
-  global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
-  assert(global_plog_pool != nullptr);
-  global_plog_pool->init(backend);
+  if (global_plog_pool == nullptr) {
+    global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
+    assert(global_plog_pool != nullptr);
+    global_plog_pool->init(backend);
+  } else {
+    // XXX do some check?
+  }
 }
 
 /**
@@ -49,9 +55,6 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
   for (auto log_record : global_queue) {
     delete log_record;
   }
-
-  global_plog_pool->Clear();
-  backend->Free(global_plog_pool);
   delete backend;
 }
 
