@@ -39,6 +39,8 @@ public:
 
   static void CheckPelotonRecovery(void);
 
+  static void CheckRollBack(oid_t db_oid, oid_t table_oid);
+
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid);
 
 private:
