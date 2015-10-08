@@ -52,7 +52,7 @@ void GenerateSequence(oid_t column_count){
   hyadapt_column_ids.clear();
 
   // Generate sequence
-  for(auto column_id = 1; column_id < column_count; column_id++)
+  for(auto column_id = 1; column_id <= column_count; column_id++)
     hyadapt_column_ids.push_back(column_id);
 
   std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
@@ -185,7 +185,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
-  state.column_count = 100 + 1;
+  state.column_count = 100;
   state.write_ratio = 0.0;
 
   // Parse args
@@ -220,7 +220,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.experiment_type = (ExperimentType) atoi(optarg);
         break;
       case 'c':
-        state.column_count = atoi(optarg) + 1;
+        state.column_count = atoi(optarg);
         break;
       case 'w':
         state.write_ratio = atof(optarg);
