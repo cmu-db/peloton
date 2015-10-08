@@ -31,6 +31,10 @@ void PelotonBackendLogger::Log(LogRecord* record){
   std::lock_guard<std::mutex> lock(local_queue_mutex);
   record->Serialize();
   local_queue.push_back(record);
+
+  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END && !flush_enabled)  {
+    flush_enabled = true;
+  }
 }
 
 /**
@@ -38,7 +42,11 @@ void PelotonBackendLogger::Log(LogRecord* record){
  * @return local queue size
  */
 size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
-  return local_queue.size();
+  if (flush_enabled) {
+    return local_queue.size();
+  } else {
+    return 0;
+  }
 }
 
 /**

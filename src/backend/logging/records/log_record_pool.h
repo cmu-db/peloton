@@ -56,7 +56,7 @@ class LogRecordList {
     head_node = nullptr;
     next_list = nullptr;
     _backend = backend;
-    commit = false;
+    iscommitting = false;
     tail_node = nullptr;
     txn_id = INVALID_TXN_ID;
   }
@@ -67,12 +67,12 @@ class LogRecordList {
     return head_node == nullptr;
   }
 
-  bool IsCommit() {
-    return commit;
+  bool IsCommitting() {
+    return iscommitting;
   }
 
-  void SetCommit() {
-    commit = true;
+  void SetCommitting(bool _isCommitting) {
+    iscommitting = _isCommitting;
   }
 
   txn_id_t GetTxnID() {
@@ -108,7 +108,7 @@ class LogRecordList {
   LogRecordList *next_list = nullptr;
   storage::AbstractBackend *_backend = nullptr;
   txn_id_t txn_id = INVALID_TXN_ID;
-  bool commit = false;
+  bool iscommitting = false;
   LogRecordNode *tail_node = nullptr;
 };
 
