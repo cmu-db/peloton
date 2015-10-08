@@ -7,7 +7,7 @@
 namespace peloton {
 namespace bridge {
 
-planner::AbstractPlan*
+const planner::AbstractPlan*
 PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   // Alias all I need

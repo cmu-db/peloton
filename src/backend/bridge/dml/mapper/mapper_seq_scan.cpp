@@ -26,7 +26,7 @@ namespace bridge {
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
-planner::AbstractPlan *PlanTransformer::TransformSeqScan(
+const planner::AbstractPlan *PlanTransformer::TransformSeqScan(
     const SeqScanPlanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 

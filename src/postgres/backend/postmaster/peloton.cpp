@@ -171,19 +171,24 @@ peloton_dml(PlanState *planstate,
 
   // Create the raw planstate info
   auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  const peloton::planner::AbstractPlan *mapped_plan = nullptr;
 
   // Get our plan
   if (prepStmtName) {
     std::cout << "Got a named plan " << prepStmtName << std::endl;
+    mapped_plan = peloton::bridge::PlanTransformer::GetInstance().GetCachedPlan(prepStmtName);
   } else {
     std::cout << "Got an unnamed plan" << std::endl;
   }
 
-  auto plan = peloton::bridge::PlanTransformer::TransformPlan(plan_state);
+  /* A cache miss or an unnamed plan */
+  if (!mapped_plan)
+    mapped_plan = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
+
   auto txn_id = GetTopTransactionId();
 
   // Ignore empty plans
-  if(plan == nullptr) {
+  if(mapped_plan == nullptr) {
     elog(WARNING, "Empty or unrecognized plan sent to Peloton");
     return;
   }
@@ -197,13 +202,13 @@ peloton_dml(PlanState *planstate,
 
   // Execute the plantree
   try {
-    status = peloton::bridge::PlanExecutor::ExecutePlan(plan,
+    status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan,
                                                         param_list,
                                                         tuple_desc,
                                                         txn_id);
 
     // Clean up the plantree
-    peloton::bridge::PlanTransformer::CleanPlan(plan);
+    peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());

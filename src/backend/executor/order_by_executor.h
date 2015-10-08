@@ -34,7 +34,7 @@ class OrderByExecutor : public AbstractExecutor {
   OrderByExecutor(const OrderByExecutor &&) = delete;
   OrderByExecutor &operator=(const OrderByExecutor &&) = delete;
 
-  explicit OrderByExecutor(planner::AbstractPlan *node,
+  explicit OrderByExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
  protected:

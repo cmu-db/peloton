@@ -25,7 +25,7 @@ namespace executor {
  * @brief Constructor
  * @param node  OrderByNode plan node corresponding to this executor
  */
-OrderByExecutor::OrderByExecutor(planner::AbstractPlan *node,
+OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
