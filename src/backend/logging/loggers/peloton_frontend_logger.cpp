@@ -35,8 +35,9 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
   // persistent pool for all pending logs
   backend = new storage::NVMBackend();
 
-  // TODO try to read global_plog_pool info from a fix address?
+  // TODO ??? try to read global_plog_pool info from a fix address, and recovery the lists
   global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
+  assert(global_plog_pool != nullptr);
   global_plog_pool->init(backend);
 }
 
@@ -61,7 +62,7 @@ void PelotonFrontendLogger::Flush(void) {
   for (auto record : global_queue) {
     switch (record->GetType()) {
       case LOGRECORD_TYPE_INVALID:
-        continue;
+        // do nothing
         break;
       case LOGRECORD_TYPE_TRANSACTION_BEGIN:
         global_plog_pool->CreateTxnLogList(record->GetTransactionId());
@@ -69,11 +70,12 @@ void PelotonFrontendLogger::Flush(void) {
       case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
         LogRecordList *txn_log_record_list = global_plog_pool->SearchRecordList(
             record->GetTransactionId());
-        if (txn_log_record_list == NULL) {
+        if (txn_log_record_list != nullptr) {
           auto &txn_manager = concurrency::TransactionManager::GetInstance();
           auto *txn = txn_manager.GetTransaction(record->GetTransactionId());
-          if (txn != NULL) {
+          if (txn != nullptr) {
             txn_log_record_list->SetCommit(txn->GetCommitId());
+            // TODO Flush the commit id first before commit records
             CommitRecords(txn_log_record_list);
           }
         }
@@ -105,8 +107,7 @@ void PelotonFrontendLogger::Flush(void) {
 }
 
 void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
-  // TODO Flush
-  LogRecordNode *recordNode = txn_log_record_list->head_node;
+  LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
   while (recordNode != NULL) {
     switch (recordNode->_log_record_type) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
@@ -126,6 +127,9 @@ void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
 }
 
 void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
+  if (record == nullptr) {
+    return;
+  }
   if (record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT
       || record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE
       || (record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE)) {
@@ -141,19 +145,20 @@ void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
  * @brief Recovery system based on log file
  */
 void PelotonFrontendLogger::DoRecovery() {
+  // TODO should we reset latest_cid in txn_manager?
   cid_t latest_cid = START_CID;
-  while (global_plog_pool->head_list != NULL) {
-    LogRecordList *cur = global_plog_pool->head_list;
+  while (!global_plog_pool->IsEmpty()) {
+    LogRecordList *cur = global_plog_pool->GetHeadList();
     if (cur->IsCommit()) {
       CommitRecords(cur);
-    }
-    if (cur->GetCommit() > latest_cid) {
-      latest_cid = cur->GetCommit();
+      if (cur->GetCommit() > latest_cid) {
+        latest_cid = cur->GetCommit();
+      }
     }
     // TODO can be optimized
-    global_plog_pool->RemoveTxnLogList(cur->txn_id);
+    global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
   }
-  // TODO should we reset latest_cid in txn_manager?
+  assert(global_plog_pool->IsEmpty());
 }
 
 void PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
