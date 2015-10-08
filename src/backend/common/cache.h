@@ -16,14 +16,19 @@
 #include <unordered_map>
 #include <iterator>
 #include <mutex>
+#include <memory>
 
 #define DEFAULT_CACHE_SIZE 100
 
 namespace peloton {
 template<class Key, class Value>
 class Cache {
+  typedef Value* RawValuePtr;
+  typedef std::shared_ptr<Value> ValuePtr;
+  typedef void (*ValueDeleter)(Value*);
+
   /* A key value pair */
-  typedef std::pair<Key, Value> Entry;
+  typedef std::pair<Key, ValuePtr> Entry;
 
   /* A list of Key in LRU order
    *
@@ -34,15 +39,21 @@ class Cache {
   typedef std::list<Key> KeyList;
 
   /* pair of Value and iterator into the list */
-  typedef std::pair<Value, typename KeyList::iterator> IndexedValue;
+  typedef std::pair<ValuePtr, typename KeyList::iterator> IndexedValue;
 
   typedef std::unordered_map<Key, IndexedValue> Map;
   typedef size_t size_type;
 
  public:
-  Cache(size_type capacity=DEFAULT_CACHE_SIZE);
+  Cache(const Cache &) = delete;
+  Cache &operator=(const Cache &) = delete;
+  Cache(Cache &&) = delete;
+  Cache &operator=(Cache &&) = delete;
 
-  class iterator : public std::iterator<std::input_iterator_tag, Entry> {
+  explicit Cache(size_type capacity = DEFAULT_CACHE_SIZE, ValueDeleter deleter =
+                     std::default_delete<Value>());
+
+  class iterator : public std::iterator<std::input_iterator_tag, ValuePtr> {
     friend class Cache;
 
    public:
@@ -50,7 +61,7 @@ class Cache {
     inline iterator operator++(int);
     inline bool operator==(const iterator &rhs);
     inline bool operator!=(const iterator &rhs);
-    inline Value& operator*();
+    inline ValuePtr operator*();
 
    private:
     inline iterator(typename Map::iterator map_itr);
@@ -76,6 +87,7 @@ class Cache {
   Map map_;
   KeyList list_;
   size_type capacity_;
+  ValueDeleter value_deleter_;
   mutable std::mutex cache_mut_;
 
 };
@@ -140,7 +152,7 @@ inline bool Cache<Key, Value>::iterator::operator!=(
  * @return A value type
  */
 template<class Key, class Value>
-inline Value& Cache<Key, Value>::iterator::operator*() {
+inline typename Cache<Key, Value>::ValuePtr Cache<Key, Value>::iterator::operator*() {
   return map_itr_->second.first;
 }
 

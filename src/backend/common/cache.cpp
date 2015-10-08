@@ -21,8 +21,8 @@ namespace peloton {
 /** @brief the constructor, nothing fancy here
  */
 template<class Key, class Value>
-Cache<Key, Value>::Cache(size_type capacitry)
-    : capacity_(capacitry) {
+Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
+    : capacity_(capacitry), value_deleter_(deleter) {
 }
 
 /* @brief find a value cached with key
@@ -123,7 +123,7 @@ bool Cache<Key, Value>::empty(void) const {
 }
 
 /* Explicit instantiations */
-template class Cache<uint32_t, planner::AbstractPlan*>; /* For testing */
-template class Cache<std::string, const planner::AbstractPlan*>; /* Actual in use */
+template class Cache<uint32_t, const planner::AbstractPlan>; /* For testing */
+template class Cache<std::string, const planner::AbstractPlan>; /* Actual in use */
 
 }
