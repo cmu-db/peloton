@@ -86,26 +86,18 @@ std::ofstream out("outputfile.summary");
 static void WriteOutput(double duration) {
 
   std::cout << "----------------------------------------------------------\n";
-  std::cout << std::setw(20) << std::left
-      << "layout " << " : " << state.layout << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "operator " << " : " << state.operator_type << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "projectivity " << " : " << state.projectivity << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "selectivity " << " : " << state.selectivity << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "write ratio " << " : " << state.write_ratio << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "scale_factor " << " : " << state.scale_factor << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "column count " << " : " << state.column_count << std::endl;
-  std::cout << std::setw(20) << std::left
-      << "tup/tilegroup " << " : " << state.tuples_per_tilegroup << std::endl;
+  std::cout << state.layout << " "
+      << state.operator_type << " "
+      << state.projectivity << " "
+      << state.selectivity << " "
+      << state.write_ratio << " "
+      << state.scale_factor << " "
+      << state.column_count << " "
+      << state.tuples_per_tilegroup << " "
+      << " : " << duration << " ms\n";
 
   // Convert to ms
   duration *= 1000;
-  std::cout << std::setw(20) << std::left << "Time " << " : " << duration << " ms\n";
 
   out << state.layout << " ";
   out << state.operator_type << " ";
@@ -190,9 +182,6 @@ static void LoadTable(storage::DataTable *table) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  int mark = tuple_count/10;
-
-  std::cout << std::setw(20) << std::left << "LOADING ::::::::: tuple count : " << " : " << tuple_count << "\n";
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
@@ -209,17 +198,7 @@ static void LoadTable(storage::DataTable *table) {
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
-
-    if(rowid % mark == 0){
-      std::cout << "\r" << "Loading :: " << (100 * rowid/tuple_count) << "%" << std::flush;
-    }
   }
-
-  if(rowid % mark == 0){
-    std::cout << "\r" << "Loading :: " << (100 * rowid/tuple_count) << "%" << std::flush;
-  }
-
-  std::cout << "\n";
 
   txn_manager.CommitTransaction(txn);
 
