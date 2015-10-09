@@ -85,19 +85,19 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double duration) {
 
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.layout << " "
-      << state.operator_type << " "
-      << state.projectivity << " "
-      << state.selectivity << " "
-      << state.write_ratio << " "
-      << state.scale_factor << " "
-      << state.column_count << " "
-      << state.tuples_per_tilegroup << " "
-      << " : " << duration << " ms\n";
-
   // Convert to ms
   duration *= 1000;
+
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << state.layout << " "
+        << state.operator_type << " "
+        << state.projectivity << " "
+        << state.selectivity << " "
+        << state.write_ratio << " "
+        << state.scale_factor << " "
+        << state.column_count << " "
+        << state.tuples_per_tilegroup << " :: ";
+  std::cout << duration << " ms\n";
 
   out << state.layout << " ";
   out << state.operator_type << " ";
@@ -650,8 +650,6 @@ void RunProjectivityExperiment() {
   for(auto column_count : column_counts) {
     state.column_count = column_count;
 
-    std::cout << "COL COUNT :: " << column_count << "\n\n\n";
-
     // Generate sequence
     GenerateSequence(state.column_count);
 
@@ -665,19 +663,13 @@ void RunProjectivityExperiment() {
         state.layout = layout;
         peloton_layout = state.layout;
 
-        // Load in the table with layout
-        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
-
         for(auto proj : projectivity) {
           // Set proj
           state.projectivity = proj;
           peloton_projectivity = state.projectivity;
 
           // Load in the table with layout
-          if(layout == LAYOUT_HYBRID) {
-            table.release();
-            table.reset(CreateAndLoadTable(layout));
-          }
+          std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -771,9 +763,6 @@ void RunOperatorExperiment() {
         state.layout = layout;
         peloton_layout = state.layout;
 
-        // Load in the table with layout
-        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
-
         for(auto selectivity : op_selectivity) {
           // Set selectivity
           state.selectivity = selectivity;
@@ -784,10 +773,7 @@ void RunOperatorExperiment() {
             peloton_projectivity = state.projectivity;
 
             // Load in the table with layout
-            if(layout == LAYOUT_HYBRID) {
-              table.release();
-              table.reset(CreateAndLoadTable(layout));
-            }
+            std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
             // Run operator
             state.operator_type = OPERATOR_TYPE_ARITHMETIC;
