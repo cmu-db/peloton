@@ -651,7 +651,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {50, 150};
+std::vector<oid_t> column_counts = {50, 250};
 
 std::vector<double> write_ratios = {0, 0.5};
 
@@ -769,9 +769,9 @@ void RunSelectivityExperiment() {
   out.close();
 }
 
-std::vector<double> op_selectivity = {0.01, 0.1, 1.0};
+std::vector<double> op_selectivity = {0.1, 0.5, 1.0};
 
-std::vector<double> op_projectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+std::vector<double> op_projectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 void RunOperatorExperiment() {
 
