@@ -713,12 +713,12 @@ void RunSelectivityExperiment() {
         state.layout = layout;
         peloton_layout = state.layout;
 
-        // Load in the table with layout
-        std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
-
         for(auto select : selectivity) {
           // Set selectivity
           state.selectivity = select;
+
+          // Load in the table with layout
+          std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
