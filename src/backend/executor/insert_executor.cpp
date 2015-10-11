@@ -80,7 +80,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple.get()->SetValue(column_itr, cur_tuple.GetValue(column_itr));
+        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr));
 
       peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
