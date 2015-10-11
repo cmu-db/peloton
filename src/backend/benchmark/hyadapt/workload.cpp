@@ -90,13 +90,13 @@ static void WriteOutput(double duration) {
 
   std::cout << "----------------------------------------------------------\n";
   std::cout << state.layout << " "
-        << state.operator_type << " "
-        << state.projectivity << " "
-        << state.selectivity << " "
-        << state.write_ratio << " "
-        << state.scale_factor << " "
-        << state.column_count << " "
-        << state.tuples_per_tilegroup << " :: ";
+      << state.operator_type << " "
+      << state.projectivity << " "
+      << state.selectivity << " "
+      << state.write_ratio << " "
+      << state.scale_factor << " "
+      << state.column_count << " "
+      << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
   out << state.layout << " ";
@@ -740,9 +740,9 @@ void RunSelectivityExperiment() {
   out.close();
 }
 
-std::vector<double> op_selectivity = {0.1, 1.0};
+std::vector<double> op_projectivity = {0.1, 1.0};
 
-std::vector<double> op_projectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
+std::vector<double> op_selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 void RunOperatorExperiment() {
 
@@ -763,14 +763,14 @@ void RunOperatorExperiment() {
         state.layout = layout;
         peloton_layout = state.layout;
 
-        for(auto selectivity : op_selectivity) {
-          // Set selectivity
-          state.selectivity = selectivity;
+        for(auto projectivity : op_projectivity) {
+          // Set projectivity
+          state.projectivity = projectivity;
+          peloton_projectivity = state.projectivity;
 
-          for(auto projectivity : op_projectivity) {
-            // Set projectivity
-            state.projectivity = projectivity;
-            peloton_projectivity = state.projectivity;
+          for(auto selectivity : op_selectivity) {
+            // Set selectivity
+            state.selectivity = selectivity;
 
             // Load in the table with layout
             std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
