@@ -127,7 +127,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
 
 /**
  * @brief Transform a PG ProjectionInfo structure to a Peloton ProjectInfo
- *object.
+ * object.
  *
  * @param pg_proj_info  The PG ProjectionInfo struct to be transformed
  * @param column_count  The valid column count of output. This is used to

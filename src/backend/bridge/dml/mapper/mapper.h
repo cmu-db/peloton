@@ -29,6 +29,8 @@
 #include "executor/execdesc.h"
 #include "utils/rel.h"
 
+#define PLAN_CACHE_SIZE 100
+
 namespace peloton {
 namespace bridge {
 
@@ -43,27 +45,30 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer() {}
+  PlanTransformer() : plan_cache_(PLAN_CACHE_SIZE, CleanPlan) {}
 
   /* Plan caching */
   static PlanTransformer &GetInstance();
 
-  const planner::AbstractPlan *GetCachedPlan(const char *prepStmtName);
+  std::shared_ptr<const planner::AbstractPlan> GetCachedPlan(const char *prepStmtName);
 
   /* Plan Mapping */
+  std::shared_ptr<const planner::AbstractPlan> TransformPlan(AbstractPlanState *planstate, const char *prepStmtName);
+
   static const planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate);
-  const planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate, const char *prepStmtName);
 
   // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan,
                           PlanState *planstate);
 
-  static bool CleanPlan(const planner::AbstractPlan *root);
+  //static bool CleanPlan(const planner::AbstractPlan *root);
+
+  static void CleanPlan(const planner::AbstractPlan *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
  private:
-  Cache<std::string, const planner::AbstractPlan *> plan_cache_;
+  Cache<std::string, const planner::AbstractPlan> plan_cache_;
 
 
   //===--------------------------------------------------------------------===//
