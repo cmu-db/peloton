@@ -141,7 +141,7 @@ AC_MSG_RESULT([$debugit])
 
 if test x"$debugit" = x"yes"; then
     AC_DEFINE([DEBUG],[],[Debug Mode])
-    DEBUG_CXXFLAGS="-g -O0 -Wall -Wextra -Werror"
+    DEBUG_CXXFLAGS="-g -D_GLIBCXX_DEBUG -O0 -Wall -Wextra -Werror"
     DEBUG_CPPFLAGS=""
 else
     AC_DEFINE([NDEBUG],[],[No-debug Mode])
