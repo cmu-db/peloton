@@ -32,7 +32,7 @@ PlanTransformer &PlanTransformer::GetInstance() {
   return transformer;
 }
 
-const planner::AbstractPlan *PlanTransformer::GetCachedPlan(
+std::shared_ptr<const planner::AbstractPlan> PlanTransformer::GetCachedPlan(
     const char *prepStmtName) {
   if (!prepStmtName) {
     return nullptr;
@@ -43,9 +43,11 @@ const planner::AbstractPlan *PlanTransformer::GetCachedPlan(
   auto itr = plan_cache_.find(name_str);
   if (itr == plan_cache_.end()) {
     /* A plan cache miss */
+    LOG_INFO("Cache miss for %s", name_str.c_str());
     return nullptr;
   } else {
     /* A plan cache hit */
+    LOG_INFO("Cache hit for %s", name_str.c_str());
     return *itr;
   }
 }
@@ -54,14 +56,15 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(AbstractPlanState *p
   return TransformPlan(planstate, DefaultOptions);
 }
 
-const planner::AbstractPlan *PlanTransformer::TransformPlan(AbstractPlanState *planstate,
+std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(AbstractPlanState *planstate,
                                            const char *prepStmtName) {
   auto mapped_plan = TransformPlan(planstate, DefaultOptions);
+  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan, CleanPlan);
   if (prepStmtName) {
     std::string name_str(prepStmtName);
-    plan_cache_.insert(std::make_pair(std::move(name_str), mapped_plan));
+    plan_cache_.insert(std::make_pair(std::move(name_str), mapped_plan_ptr));
   }
-  return mapped_plan;
+  return mapped_plan_ptr;
 }
 
 /**
@@ -145,7 +148,6 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
 
 /**
  * @brief Recursively destroy the nodes in a plan tree.
- */
 bool PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
   if (!root)
     return false;
@@ -161,6 +163,24 @@ bool PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
   delete root;
   return true;
 }
+*/
+
+/**
+ * @brief Recursively destroy the nodes in a plan tree.
+ */
+void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
+  if (!root) return;
+
+  // Clean all children subtrees
+  auto children = root->GetChildren();
+  for (auto child : children) {
+    CleanPlan(child);
+  }
+
+  // Clean the root
+  delete root;
+}
+
 
 }  // namespace bridge
 }  // namespace peloton
