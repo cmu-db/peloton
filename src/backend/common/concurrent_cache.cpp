@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// cache.cpp
+// concurrent_cache.cpp
 //
-// Identification: src/backend/common/cache.cpp
+// Identification: src/backend/common/concurrent_cache.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon Universitry Database Group
 //
@@ -21,7 +21,7 @@ namespace peloton {
 /** @brief the constructor, nothing fancy here
  */
 template<class Key, class Value>
-Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
+ConcurrentCache<Key, Value>::ConcurrentCache(size_type capacitry, ValueDeleter deleter)
     : capacity_(capacitry), value_deleter_(deleter) {
 }
 
@@ -33,7 +33,8 @@ Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
  * @return a iterator of this cache, end() if no such entry
  * */
 template<class Key, class Value>
-typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
+typename ConcurrentCache<Key, Value>::iterator ConcurrentCache<Key, Value>::find(const Key& key) {
+  std::lock_guard<std::mutex> lock(cache_mut_);
   auto map_itr = map_.find(key);
   auto cache_itr = end();
   if (map_itr != map_.end()) {
@@ -60,8 +61,9 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
  *  @return a iterator of the inserted entry
  **/
 template<class Key, class Value>
-typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
+typename ConcurrentCache<Key, Value>::iterator ConcurrentCache<Key, Value>::insert(
     const Entry& entry) {
+  std::lock_guard<std::mutex> lock(cache_mut_);
   assert(list_.size() == map_.size());
   assert(list_.size() <= this->capacity_);
   auto map_itr = map_.find(entry.first);
@@ -95,7 +97,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
  *  @return the size of the cache
  */
 template<class Key, class Value>
-typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
+typename ConcurrentCache<Key, Value>::size_type ConcurrentCache<Key, Value>::size() const {
+  std::lock_guard<std::mutex> lock(cache_mut_);
   assert(map_.size() == list_.size());
   return map_.size();
 }
@@ -105,7 +108,8 @@ typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
  *  @return Void
  */
 template<class Key, class Value>
-void Cache<Key, Value>::clear(void) {
+void ConcurrentCache<Key, Value>::clear(void) {
+  std::lock_guard<std::mutex> lock(cache_mut_);
   list_.clear();
   map_.clear();
 }
@@ -115,12 +119,13 @@ void Cache<Key, Value>::clear(void) {
  *  @return true if empty, false if not
  */
 template<class Key, class Value>
-bool Cache<Key, Value>::empty(void) const {
+bool ConcurrentCache<Key, Value>::empty(void) const {
+  std::lock_guard<std::mutex> lock(cache_mut_);
   return map_.empty();
 }
 
 /* Explicit instantiations */
-template class Cache<uint32_t, const planner::AbstractPlan>; /* For testing */
-template class Cache<std::string, const planner::AbstractPlan>; /* Actual in use */
+template class ConcurrentCache<uint32_t, const planner::AbstractPlan>; /* For testing */
+template class ConcurrentCache<std::string, const planner::AbstractPlan>; /* Actual in use */
 
 }
