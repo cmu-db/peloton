@@ -632,7 +632,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 
 std::vector<oid_t> column_counts = {50, 200};
 
-std::vector<double> write_ratios = {0, 0.5};
+std::vector<double> write_ratios = {0, 0.1};
 
 std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
