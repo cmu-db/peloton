@@ -3496,18 +3496,18 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
 
   MemoryContextInit();
   //MemoryContextSwitchTo(TopMemoryContext);
+  restore_backend_variables(param, port);
+  free(param);
 
-//InitLockMethodLocalHash();
 
-//InitializeMaxBackends();
+  //InitLockMethodLocalHash();
+
+  //InitializeMaxBackends();
 
   /* Detangle from postmaster */
   InitPostmasterChild();
 
   InitializeGUCOptions(false);
-
-  restore_backend_variables(param, port);
-  free(param);
 
   PGSharedMemoryReAttach();
 
