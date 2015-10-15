@@ -161,11 +161,11 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   // Check the tuples
   LoggingTestsUtil::CheckTupleCount(20000, 10000);
 
-  // Check rollback
-  LoggingTestsUtil::CheckRollBack(20000, 10000);
-
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
+
+  // Check rollback
+  LoggingTestsUtil::CheckRollBack(20000, 10000);
 
   if( log_manager.EndLogging() ){
     thread.join();
@@ -229,9 +229,6 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
 
   // Check rollback
   LoggingTestsUtil::CheckRollBack(20000, 10000);
-
-  // Check the next oid
-  //LoggingTestsUtil::CheckNextOid();
 
   if( log_manager.EndLogging() ){
     thread.join();
