@@ -42,8 +42,8 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 thread_local unsigned long UsedShmemSegID = 0;
 thread_local void	   *UsedShmemSegAddr = NULL;
-thread_local static Size AnonymousShmemSize;
-thread_local static void *AnonymousShmem = NULL;
+thread_local Size AnonymousShmemSize;
+thread_local void *AnonymousShmem = NULL;
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -432,12 +432,13 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	struct stat statbuf;
 	Size		sysvsize;
 
-#if defined(EXEC_BACKEND) || !defined(MAP_HUGETLB)
+//TODO: peloton change
+//#if defined(EXEC_BACKEND) || !defined(MAP_HUGETLB)
 	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("huge pages not supported on this platform")));
-#endif
+//#endif
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
@@ -464,15 +465,16 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	 * process after exec().  Since EXEC_BACKEND is intended only for
 	 * developer use, this shouldn't be a big problem.
 	 */
-#ifndef EXEC_BACKEND
+//TODO: Peloton changes
+//#ifndef EXEC_BACKEND
 	AnonymousShmem = CreateAnonymousSegment(&size);
 	AnonymousShmemSize = size;
 
 	/* Now we need only allocate a minimal-sized SysV shmem block. */
 	sysvsize = sizeof(PGShmemHeader);
-#else
-	sysvsize = size;
-#endif
+//#else
+	//sysvsize = size;
+//#endif
 
 	/* Make sure PGSharedMemoryAttach doesn't fail without need */
 	UsedShmemSegAddr = NULL;
@@ -484,6 +486,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	{
 		/* Try to create new___ segment */
 		memAddress = InternalIpcMemoryCreate(NextShmemSegID, sysvsize);
+		elog(DEBUG3, "InternalIpcMemCreate :: %p", memAddress);
 		if (memAddress)
 			break;				/* successful create and attach */
 
@@ -526,6 +529,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 		 * Now try again to create the segment.
 		 */
 		memAddress = InternalIpcMemoryCreate(NextShmemSegID, sysvsize);
+		elog(DEBUG3, "2nd InternalIpcMemCreate :: %p", memAddress);
 		if (memAddress)
 			break;				/* successful create and attach */
 
@@ -564,6 +568,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
+	elog(DEBUG3, "Initialize UsedShmemSegAddr %p :: TID : %d", memAddress, GetBackendThreadId());
 	UsedShmemSegID = (unsigned long) NextShmemSegID;
 
 	/*
@@ -578,7 +583,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	return (PGShmemHeader *) AnonymousShmem;
 }
 
-#ifdef EXEC_BACKEND
+// TODO: Peloton Changes
+//#ifdef EXEC_BACKEND
 
 /*
  * PGSharedMemoryReAttach
@@ -607,7 +613,7 @@ PGSharedMemoryReAttach(void)
 	UsedShmemSegAddr = origUsedShmemSegAddr;
 #endif
 
-	elog(DEBUG3, "attaching to %p", UsedShmemSegAddr);
+	elog(INFO, "attaching to %p", UsedShmemSegAddr);
 	hdr = (void *) PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
 	if (hdr == NULL)
 		elog(FATAL, "could not reattach to shared memory (key=%d, addr=%p): %m",
@@ -619,7 +625,7 @@ PGSharedMemoryReAttach(void)
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }
-#endif   /* EXEC_BACKEND */
+//#endif   /* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach
@@ -636,7 +642,9 @@ PGSharedMemoryDetach(void)
 	if (UsedShmemSegAddr != NULL)
 	{
 		if ((shmdt(UsedShmemSegAddr) < 0)
-#if defined(EXEC_BACKEND) && defined(__CYGWIN__)
+//TODO: peloton changes
+//#if defined(EXEC_BACKEND) && defined(__CYGWIN__)
+#if defined(__CYGWIN__)
 		/* Work-around for cygipc exec bug */
 			&& shmdt(NULL) < 0
 #endif
@@ -667,12 +675,21 @@ PGSharedMemoryAttach(IpcMemoryKey key, IpcMemoryId *shmid)
 
 	hdr = (PGShmemHeader *) shmat(*shmid, UsedShmemSegAddr, PG_SHMAT_FLAGS);
 
-	if (hdr == (PGShmemHeader *) -1)
-		return NULL;			/* failed: must be some other app's */
+	if (hdr == (PGShmemHeader *) -1) {
+	  //TODO: peloton changes
+	  if (IsUnderPostmaster) {
+	    elog(DEBUG3, "shmat failed, but this is a new backend thread, no need to reattach");
+	    return (PGShmemHeader *)UsedShmemSegAddr;
+	  } else {
+	    elog(DEBUG3, "shmat return -1, must be some other app's, errno : %m, isUnderPostmaster: %d", IsUnderPostmaster);
+	    return NULL;			/* failed: must be some other app's */
+	  }
+	}
 
 	if (hdr->magic != PGShmemMagic)
 	{
 		shmdt((void *) hdr);
+	  elog(LOG, "%d != %d :: magic num does not match, segment belongs to a non-Postgres app", hdr->magic, PGShmemMagic);
 		return NULL;			/* segment belongs to a non-Postgres app */
 	}
 

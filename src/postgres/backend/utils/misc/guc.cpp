@@ -92,10 +92,11 @@
 #define HBA_FILENAME	"pg_hba.conf"
 #define IDENT_FILENAME	"pg_ident.conf"
 
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
-#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new___"
-#endif
+#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
+//#endif
 
 /*
  * Precision with which REAL type guc values are to be printed for GUC
@@ -4098,6 +4099,8 @@ build_guc_variables(void)
 	qsort((void *) guc_variables, num_guc_variables,
 		  sizeof(struct config_generic *), guc_var_compare);
 }
+
+
 
 /*
  * Add a new___ GUC variable to the list of known variables. The
@@ -8447,7 +8450,8 @@ _ShowOption(struct config_generic * record, bool use_units)
 }
 
 
-#ifdef EXEC_BACKEND
+//TODO: Peloton Changes
+//#ifdef EXEC_BACKEND
 
 /*
  *	These routines dump out all non-default GUC options into a binary
@@ -8596,9 +8600,9 @@ read_string_with_null(FILE *fp)
 				elog(FATAL, "invalid format of exec config params file");
 		}
 		if (i == 0)
-			str = guc_malloc(FATAL, maxlen);
+			str = (char *)guc_malloc(FATAL, maxlen);
 		else if (i == maxlen)
-			str = guc_realloc(FATAL, str, maxlen *= 2);
+			str = (char *)guc_realloc(FATAL, str, maxlen *= 2);
 		str[i++] = ch;
 	} while (ch != 0);
 
@@ -8676,7 +8680,8 @@ read_nondefault_variables(void)
 
 	FreeFile(fp);
 }
-#endif   /* EXEC_BACKEND */
+//TODO: peloton changes
+//#endif   /* EXEC_BACKEND */
 
 /*
  * can_skip_gucvar:

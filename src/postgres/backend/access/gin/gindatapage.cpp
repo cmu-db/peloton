@@ -492,8 +492,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	 */
 	if (!dlist_is_empty(&leaf->segments))
 	{
-		lastleftinfo = dlist_container(leafSegmentInfo, node,
-									   dlist_tail_node(&leaf->segments));
+		lastleftinfo = dlist_container(leafSegmentInfo, node, dlist_tail_node(&leaf->segments));
 		if (!lastleftinfo->items)
 			lastleftinfo->items = ginPostingListDecode(lastleftinfo->seg,
 													   &lastleftinfo->nitems);
@@ -1491,8 +1490,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 		 cur_node != NULL;
 		 cur_node = next_node)
 	{
-		leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node,
-												   cur_node);
+		leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node, cur_node);
 
 		if (dlist_has_next(&leaf->segments, cur_node))
 			next_node = dlist_next_node(&leaf->segments, cur_node);

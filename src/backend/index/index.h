@@ -62,7 +62,7 @@ class IndexMetadata {
 
   const catalog::Schema *GetKeySchema() const { return key_schema; }
 
-  int GetColumnCount() const { return GetKeySchema()->GetColumnCount(); }
+  oid_t GetColumnCount() const { return GetKeySchema()->GetColumnCount(); }
 
   bool HasUniqueKeys() const { return unique_keys; }
 
@@ -172,7 +172,7 @@ class Index {
    */
   bool HasUniqueKeys() const { return metadata->HasUniqueKeys(); }
 
-  int GetColumnCount() const { return metadata->GetColumnCount(); }
+  oid_t GetColumnCount() const { return metadata->GetColumnCount(); }
 
   const std::string &GetName() const { return metadata->GetName(); }
 

@@ -57,7 +57,7 @@ extern int	max_files_per_process;
 /*
  * This is private___ to fd.c, but exported for save/restore_backend_variables()
  */
-extern int	max_safe_fds;
+thread_local extern int	max_safe_fds;
 
 
 /*

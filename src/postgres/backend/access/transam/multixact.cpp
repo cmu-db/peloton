@@ -177,8 +177,8 @@
 /*
  * Links to shared-memory data structures for MultiXact control
  */
-static SlruCtlData MultiXactOffsetCtlData;
-static SlruCtlData MultiXactMemberCtlData;
+thread_local static SlruCtlData MultiXactOffsetCtlData;
+thread_local static SlruCtlData MultiXactMemberCtlData;
 
 #define MultiXactOffsetCtl	(&MultiXactOffsetCtlData)
 #define MultiXactMemberCtl	(&MultiXactMemberCtlData)
@@ -277,9 +277,9 @@ typedef struct MultiXactStateData
 #define MaxOldestSlot	(MaxBackends + max_prepared_xacts)
 
 /* Pointers to the state data in shared memory */
-static MultiXactStateData *MultiXactState;
-static MultiXactId *OldestMemberMXactId;
-static MultiXactId *OldestVisibleMXactId;
+thread_local static MultiXactStateData *MultiXactState;
+thread_local static MultiXactId *OldestMemberMXactId;
+thread_local static MultiXactId *OldestVisibleMXactId;
 
 
 /*
