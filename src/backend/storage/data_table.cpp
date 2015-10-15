@@ -475,7 +475,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // First, figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout(peloton_layout);
+  column_map = GetTileGroupLayout((LayoutType) peloton_layout);
 
   TileGroup *tile_group = GetTileGroupWithLayout(column_map);
   assert(tile_group);

@@ -30,7 +30,9 @@ void RunBenchmark(){
   peloton_layout = state.layout;
 
   // Single run
-  std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
+  std::unique_ptr<storage::DataTable>table(CreateAndLoadTable((LayoutType) peloton_layout));
+
+  return;
 
   switch(state.operator_type) {
     case OPERATOR_TYPE_READ:
