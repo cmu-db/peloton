@@ -4,26 +4,25 @@
 //
 // configuration.cpp
 //
-// Identification: benchmark/ycsb/configuration.cpp
+// Identification: benchmark/tpcc/configuration.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/ycsb/configuration.h"
+#include "backend/benchmark/tpcc/configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace ycsb{
+namespace tpcc{
 
 void Usage(FILE *out) {
-  fprintf(out, "Command line options : ycsb <options> \n"
+  fprintf(out, "Command line options : tpcc <options> \n"
           "   -h --help              :  Print help message \n"
           "   -o --operator-type     :  Operator type \n"
-          "   -k --scale-factor      :  # of tuples \n"
+          "   -k --scale-factor      :  # of warehouses \n"
           "   -l --layout            :  Layout \n"
           "   -t --transactions      :  # of transactions \n"
-          "   -c --column_count      :  # of columns \n"
           "   -g --tuples_per_tg     :  # of tuples per tilegroup \n"
   );
   exit(EXIT_FAILURE);
@@ -34,35 +33,19 @@ static struct option opts[] = {
     { "scale-factor", optional_argument, NULL, 'k' },
     { "layout", optional_argument, NULL, 'l' },
     { "transactions", optional_argument, NULL, 't' },
-    { "column_count", optional_argument, NULL, 'c' },
     { "tuples_per_tg", optional_argument, NULL, 'g' },
     { NULL, 0, NULL, 0 }
 };
 
 static void ValidateOperator(const configuration& state) {
-  if(state.operator_type < 1 || state.operator_type > 6) {
+  if(state.operator_type < 1 || state.operator_type > 2) {
     std::cout << "Invalid operator type :: " << state.operator_type << "\n";
     exit(EXIT_FAILURE);
   }
   else {
     switch(state.operator_type) {
-      case OPERATOR_TYPE_READ:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "READ" << std::endl;
-        break;
-      case OPERATOR_TYPE_SCAN:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "SCAN" << std::endl;
-        break;
-      case OPERATOR_TYPE_INSERT:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "INSERT" << std::endl;
-        break;
-      case OPERATOR_TYPE_UPDATE:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "UPDATE" << std::endl;
-        break;
-      case OPERATOR_TYPE_DELETE:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "DELETE" << std::endl;
-        break;
-      case OPERATOR_TYPE_READ_MODIFY_WRITE:
-        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "READ_MODIFY_WRITE" << std::endl;
+      case OPERATOR_TYPE_NEW_ORDER:
+        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "NEW_ORDER" << std::endl;
         break;
       default:
         break;
@@ -103,21 +86,12 @@ static void ValidateLayout(const configuration& state) {
   }
 }
 
-static void ValidateColumnCount(const configuration& state) {
-  if(state.column_count <= 0) {
-    std::cout << "Invalid column_count :: " <<  state.column_count << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "attribute_count " << " : " << state.column_count << std::endl;
-}
-
 void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
   state.operator_type = OPERATOR_TYPE_INVALID;
 
-  state.scale_factor = 100.0;
+  state.scale_factor = 1;
 
   state.transactions = 1;
 
@@ -125,13 +99,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.value_length = 100;
 
-  state.column_count = 100;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aho:k:l:t:c:", opts,
+    int c = getopt_long(argc, argv, "aho:k:l:t:", opts,
                         &idx);
 
     if (c == -1)
@@ -150,9 +123,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 't':
         state.transactions  = atoi(optarg);
         break;
-      case 'c':
-        state.column_count = atoi(optarg);
-        break;
       case 'h':
         Usage(stderr);
         break;
@@ -167,14 +137,13 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidateOperator(state);
   ValidateLayout(state);
   ValidateScaleFactor(state);
-  ValidateColumnCount(state);
 
   std::cout << std::setw(20) << std::left
       << "transactions " << " : " << state.transactions << std::endl;
 
 }
 
-}  // namespace ycsb
+}  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
 

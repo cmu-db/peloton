@@ -220,8 +220,6 @@ static void LoadTable() {
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
-    int populate_value = rowid;
-
     storage::Tuple tuple(table_schema, allocate);
 
     auto key_value = ValueFactory::GetIntegerValue(rowid);
@@ -311,7 +309,7 @@ void RunRead() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+  for(auto col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
@@ -330,10 +328,8 @@ void RunRead() {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
 
   output_columns = GetColumns();
-  oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for(size_t col_itr = 0; col_itr < column_ids.size(); col_itr++) {
     old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
   }
 
   std::unique_ptr<catalog::Schema> output_schema(
@@ -372,7 +368,8 @@ void RunScan() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+
+  for(auto col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
@@ -391,10 +388,8 @@ void RunScan() {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
 
   output_columns = GetColumns();
-  oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for(size_t col_itr = 0; col_itr < column_ids.size(); col_itr++) {
     old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
   }
 
   std::unique_ptr<catalog::Schema> output_schema(
@@ -419,7 +414,6 @@ void RunScan() {
 }
 
 void RunInsert() {
-  const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -480,7 +474,7 @@ void RunUpdate() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+  for(auto col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
@@ -544,7 +538,7 @@ void RunDelete() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+  for(auto col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
@@ -592,7 +586,7 @@ void RunReadModifyWrite() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+  for(auto col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
@@ -610,10 +604,8 @@ void RunReadModifyWrite() {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
 
   output_columns = GetColumns();
-  oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for(size_t col_itr = 0; col_itr < column_ids.size(); col_itr++) {
     old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
   }
 
   std::unique_ptr<catalog::Schema> output_schema(
