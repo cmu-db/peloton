@@ -28,7 +28,9 @@ enum OperatorType{
   OPERATOR_TYPE_INVALID = 0,         /* invalid */
 
   OPERATOR_TYPE_READ = 1,
-  OPERATOR_TYPE_UPDATE = 2
+  OPERATOR_TYPE_SCAN = 2,
+  OPERATOR_TYPE_INSERT = 3,
+  OPERATOR_TYPE_UPDATE = 4
 };
 
 class configuration {
