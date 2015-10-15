@@ -166,9 +166,10 @@ void PelotonFrontendLogger::DoRecovery() {
   assert(global_plog_pool->IsEmpty());
   if (max_oid != INVALID_OID) {
     auto &manager = catalog::Manager::GetInstance();
-    manager.SetNextOid(max_oid);
+    if (max_oid > manager.GetCurrentOid())
+      manager.SetNextOid(++max_oid);
   }
-  // TODO reset transaction manager with latest cid and txn id
+  // TODO How to reset transaction manager with latest cid, if no item is recovered
 }
 
 cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
