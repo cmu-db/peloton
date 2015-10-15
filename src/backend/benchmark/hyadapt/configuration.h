@@ -70,7 +70,7 @@ class configuration {
   double write_ratio;
 
   // # of times to run operator
-  int transactions;
+  unsigned long transactions;
 
  };
 

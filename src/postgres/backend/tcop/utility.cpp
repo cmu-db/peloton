@@ -349,6 +349,8 @@ ProcessUtility(Node *parsetree,
                 context, params,
                 dest, completionTag);
 
+    elog(DEBUG3, "Postgres process utility done");
+
     // TODO: Peloton Changes
     if(IsBackend == true)
     {

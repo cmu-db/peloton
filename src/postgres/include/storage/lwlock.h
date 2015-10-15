@@ -85,7 +85,7 @@ typedef union LWLockPadded
 	LWLock		lock;
 	char		pad[LWLOCK_PADDED_SIZE];
 } LWLockPadded;
-extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
+thread_local extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
 /*
  * Some commonly-used locks have predefined positions within MainLWLockArray;

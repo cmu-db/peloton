@@ -280,6 +280,7 @@ inline void LogicalTile::SetPositionListsAndVisibility(
     std::vector<std::vector<oid_t>> &&position_lists) {
   position_lists_ = position_lists;
   if (position_lists.size() > 0) {
+    total_tuples_ = position_lists[0].size();
     visible_rows_.resize(position_lists_[0].size(), true);
     visible_tuples_ = position_lists_[0].size();
   }

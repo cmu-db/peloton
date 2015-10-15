@@ -72,7 +72,7 @@ int			Log_file_mode = S_IRUSR | S_IWUSR;
  */
 bool		am_syslogger = false;
 
-extern bool redirection_done;
+thread_local extern bool redirection_done;
 
 /*
  * Private state
@@ -82,7 +82,7 @@ static bool pipe_eof_seen = false;
 static bool rotation_disabled = false;
 static FILE *syslogFile = NULL;
 static FILE *csvlogFile = NULL;
-NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
+thread_local NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
 static char *last_file_name = NULL;
 static char *last_csv_file_name = NULL;
 
@@ -108,7 +108,7 @@ static List *buffer_lists[NBUFFER_LISTS];
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
-int			syslogPipe[2] = {-1, -1};
+thread_local int			syslogPipe[2] = {-1, -1};
 #else
 HANDLE		syslogPipe[2] = {0, 0};
 #endif
