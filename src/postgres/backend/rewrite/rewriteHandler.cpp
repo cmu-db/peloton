@@ -1129,7 +1129,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 		return;					/* nothing to do */
 
 	/* Check list lengths (we can assume all the VALUES sublists are alike) */
-	Assert(list_length(attrnos) == list_length(linitial(rte->values_lists)));
+	Assert(list_length(attrnos) == list_length((List *)linitial(rte->values_lists)));
 
 	newValues = NIL;
 	foreach(lc, rte->values_lists)

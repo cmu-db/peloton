@@ -139,7 +139,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
   // Record the built index in the table
   data_table->AddIndex(index);
 
-  LOG_INFO("Created index(%u)  %s on %s.", index_oid, index_name.c_str(),
+  LOG_INFO("Created index(%lu)  %s on %s.", index_oid, index_name.c_str(),
            table_name.c_str());
 
   return true;

@@ -95,7 +95,7 @@
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
-extern slock_t *ShmemLock;
+thread_local extern slock_t *ShmemLock;
 
 #define LW_FLAG_HAS_WAITERS			((uint32) 1 << 30)
 #define LW_FLAG_RELEASE_OK			((uint32) 1 << 29)
@@ -126,7 +126,7 @@ static int	LWLockTranchesAllocated = 0;
  * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
  * where we have special measures to pass it down).
  */
-LWLockPadded *MainLWLockArray = NULL;
+thread_local LWLockPadded *MainLWLockArray = NULL;
 static LWLockTranche MainLWLockTranche;
 
 /*

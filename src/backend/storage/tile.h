@@ -140,7 +140,7 @@ class Tile {
     return schema.GetColumn(column_index).column_name;
   }
 
-  inline int GetColumnCount() const { return column_count; };
+  inline oid_t GetColumnCount() const { return column_count; };
 
   inline AbstractBackend *GetBackend() const { return backend; }
 

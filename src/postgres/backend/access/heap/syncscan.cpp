@@ -110,7 +110,7 @@ typedef struct ss_scan_locations_t
 	(offsetof(ss_scan_locations_t, items) + (N) * sizeof(ss_lru_item_t))
 
 /* Pointer to struct in shared memory */
-static ss_scan_locations_t *scan_locations;
+thread_local static ss_scan_locations_t *scan_locations;
 
 /* prototypes for internal functions */
 static BlockNumber ss_search(RelFileNode relfilenode,

@@ -122,7 +122,7 @@ int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-int			max_safe_fds = 32;	/* default if not changed */
+thread_local int			max_safe_fds = 32;	/* default if not changed */
 
 // Peloton porting issue
 //#ifndef SYNC_FILE_RANGE_WRITE

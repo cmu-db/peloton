@@ -72,7 +72,7 @@
 bool logging_on = true;
 bool syncronization_commit = false;
 
-static void peloton_process_status(const peloton_status& status);
+static void peloton_process_status(const peloton_status& status, PlanState *planstate);
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
@@ -203,7 +203,7 @@ peloton_dml(PlanState *planstate,
   }
 
   // Wait for the response and process it
-  peloton_process_status(status);
+  peloton_process_status(status, planstate);
 
   // Send output to dest
   peloton_send_output(status, sendTuples, dest);
@@ -217,7 +217,7 @@ peloton_dml(PlanState *planstate,
  * ----------
  */
 static void
-peloton_process_status(const peloton_status& status) {
+peloton_process_status(const peloton_status& status, PlanState *planstate) {
   int code;
 
   // Process the status code
@@ -225,6 +225,7 @@ peloton_process_status(const peloton_status& status) {
   switch(code) {
     case peloton::RESULT_SUCCESS: {
       // TODO: Update stats ?
+      planstate->state->es_processed = status.m_processed;
     }
     break;
 

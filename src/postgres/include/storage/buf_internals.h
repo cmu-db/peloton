@@ -222,7 +222,7 @@ typedef union BufferDescPadded
 
 
 /* in buf_init.c */
-extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
+thread_local extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
 
 /* in localbuf.c */
 extern thread_local BufferDesc *LocalBufferDescriptors;

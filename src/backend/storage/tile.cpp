@@ -197,7 +197,7 @@ Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
     auto uninlined_col_cnt = schema->GetUninlinedColumnCount();
 
     // Go over each uninlined column, making a deep copy
-    for (int col_itr = 0; col_itr < uninlined_col_cnt; col_itr++) {
+    for (oid_t col_itr = 0; col_itr < uninlined_col_cnt; col_itr++) {
       auto uninlined_col_offset = schema->GetUninlinedColumn(col_itr);
 
       // Copy the column over to the new tile group
