@@ -34,6 +34,7 @@
 #include "backend/executor/materialization_executor.h"
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/insert_executor.h"
+#include "backend/executor/delete_executor.h"
 #include "backend/executor/update_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
@@ -44,8 +45,9 @@
 #include "backend/planner/materialization_plan.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/planner/insert_plan.h"
-#include "backend/planner/projection_plan.h"
+#include "backend/planner/delete_plan.h"
 #include "backend/planner/update_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
@@ -484,7 +486,7 @@ void RunUpdate(storage::DataTable *table) {
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreateScanPredicate(bound);
+  auto predicate = CreatePointPredicate(bound);
   planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -521,6 +523,148 @@ void RunUpdate(storage::DataTable *table) {
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&update_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void RunDelete(storage::DataTable *table) {
+  const int bound = GetBound();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePointPredicate(bound);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // DELETE
+  /////////////////////////////////////////////////////////
+
+  bool truncate = false;
+  planner::DeletePlan delete_node(table, truncate);
+  executor::DeleteExecutor delete_executor(&delete_node, context.get());
+
+  // Parent-Child relationship
+  delete_node.AddChild(&seq_scan_node);
+  delete_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&delete_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void RunReadModifyWrite(storage::DataTable *table) {
+  const int bound = GetBound();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePointPredicate(bound);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+
+  output_columns = GetColumns();
+  oid_t col_itr = 0;
+  for(auto column_id : column_ids) {
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                        physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // UPDATE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up seq scan executor
+  predicate = CreatePointPredicate(bound);
+  planner::SeqScanPlan seq_scan_node_2(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor_2(&seq_scan_node, context.get());
+
+  std::vector<Value> values;
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
+
+  std::string string_value('.', state.value_length);
+
+  Value update_val = ValueFactory::GetStringValue(string_value);
+  for (auto col_id = 1; col_id <= state.column_count; col_id++) {
+    auto expression = expression::ConstantValueFactory(update_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+
+  planner::UpdatePlan update_node(table, project_info);
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+
+  // Parent-Child relationship
+  update_node.AddChild(&seq_scan_node_2);
+  update_executor.AddChild(&seq_scan_executor_2);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
   executors.push_back(&update_executor);
 
   ExecuteTest(executors);
