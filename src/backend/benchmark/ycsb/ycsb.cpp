@@ -52,6 +52,14 @@ void RunBenchmark(){
       RunUpdate(table.get());
       break;
 
+    case OPERATOR_TYPE_DELETE:
+      RunDelete(table.get());
+      break;
+
+    case OPERATOR_TYPE_READ_MODIFY_WRITE:
+      RunReadModifyWrite(table.get());
+      break;
+
     default:
       std::cout << "Unsupported test type : " << state.operator_type << "\n";
       break;

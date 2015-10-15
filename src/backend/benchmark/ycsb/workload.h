@@ -30,6 +30,10 @@ void RunInsert(storage::DataTable *table);
 
 void RunUpdate(storage::DataTable *table);
 
+void RunDelete(storage::DataTable *table);
+
+void RunReadModifyWrite(storage::DataTable *table);
+
 }  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton
