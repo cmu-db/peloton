@@ -110,7 +110,6 @@ void LoggingTestsUtil::TruncateLogFile(std::string file_name){
 // CHECK RECOVERY
 //===--------------------------------------------------------------------===//
 
-
 /**
  * @brief recover the database and check the tuples
  */
@@ -163,9 +162,6 @@ void LoggingTestsUtil::CheckAriesRecovery(){
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
-
-  // Check rollback
-  LoggingTestsUtil::CheckRollBack(20000, 10000);
 
   if( log_manager.EndLogging() ){
     thread.join();
@@ -228,7 +224,7 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
   LoggingTestsUtil::CheckTupleCount(20000, 10000);
 
   // Check rollback
-  LoggingTestsUtil::CheckRollBack(20000, 10000);
+  //LoggingTestsUtil::CheckRollBack(20000, 10000);
 
   if( log_manager.EndLogging() ){
     thread.join();
@@ -236,27 +232,6 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
     LOG_ERROR("Failed to terminate logging thread"); 
   }
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
-}
-
-void LoggingTestsUtil::CheckRollBack(oid_t db_oid, oid_t table_oid) {
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
-  auto table = db->GetTableWithOid(table_oid);
-
-  // should has no affect
-  InsertTuples(table, false/*no commit*/);
-
-  auto& log_manager = logging::LogManager::GetInstance();
-  if(log_manager.IsInLoggingMode()){
-    auto logger = log_manager.GetBackendLogger();
-    // Wait until frontend logger collects the data
-    while( logger->IsWaitingForFlushing()){
-      sleep(1);
-    }
-    log_manager.RemoveBackendLogger(logger);
-  }
-
-  CheckTupleCount(db_oid, table_oid);
 }
 
 void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
@@ -329,6 +304,9 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
   // Update the first inserted location if we insert >= 1 tuples
   if(locations.size() >= 1)
     UpdateTuples(table, locations[0], true/*commit*/);
+
+  // should has no affect
+  InsertTuples(table, false/*no commit*/);
 
   auto& log_manager = logging::LogManager::GetInstance();
   if(log_manager.IsInLoggingMode()){
