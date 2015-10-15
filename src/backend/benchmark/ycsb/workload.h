@@ -20,19 +20,21 @@ namespace ycsb{
 
 extern configuration state;
 
-storage::DataTable *CreateAndLoadTable(LayoutType layout_type);
+extern storage::DataTable *user_table;
 
-void RunRead(storage::DataTable *table);
+void CreateAndLoadTable(LayoutType layout_type);
 
-void RunScan(storage::DataTable *table);
+void RunRead();
 
-void RunInsert(storage::DataTable *table);
+void RunScan();
 
-void RunUpdate(storage::DataTable *table);
+void RunInsert();
 
-void RunDelete(storage::DataTable *table);
+void RunUpdate();
 
-void RunReadModifyWrite(storage::DataTable *table);
+void RunDelete();
+
+void RunReadModifyWrite();
 
 }  // namespace ycsb
 }  // namespace benchmark

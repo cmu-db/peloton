@@ -30,34 +30,34 @@ void RunBenchmark(){
   peloton_layout = state.layout;
 
   // Single run
-  std::unique_ptr<storage::DataTable>table(CreateAndLoadTable((LayoutType) peloton_layout));
+  CreateAndLoadTable((LayoutType) peloton_layout);
 
   // Initialize random number generator
   srand(0);
 
   switch(state.operator_type) {
     case OPERATOR_TYPE_READ:
-      RunRead(table.get());
+      RunRead();
       break;
 
     case OPERATOR_TYPE_SCAN:
-      RunScan(table.get());
+      RunScan();
       break;
 
     case OPERATOR_TYPE_INSERT:
-      RunInsert(table.get());
+      RunInsert();
       break;
 
     case OPERATOR_TYPE_UPDATE:
-      RunUpdate(table.get());
+      RunUpdate();
       break;
 
     case OPERATOR_TYPE_DELETE:
-      RunDelete(table.get());
+      RunDelete();
       break;
 
     case OPERATOR_TYPE_READ_MODIFY_WRITE:
-      RunReadModifyWrite(table.get());
+      RunReadModifyWrite();
       break;
 
     default:

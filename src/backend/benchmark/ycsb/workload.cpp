@@ -58,6 +58,8 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb{
 
+storage::DataTable *user_table = nullptr;
+
 // Tuple id counter
 oid_t ycsb_tuple_counter = -1000000;
 
@@ -180,7 +182,7 @@ static std::vector<catalog::Column> GetColumns(){
   return columns;
 }
 
-static storage::DataTable* CreateTable() {
+static void CreateTable() {
 
   auto columns = GetColumns();
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -192,20 +194,19 @@ static storage::DataTable* CreateTable() {
 
   bool own_schema = true;
   bool adapt_table = true;
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
+  user_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup,
-      own_schema, adapt_table));
+      own_schema, adapt_table);
 
-  return table.release();
 }
 
-static void LoadTable(storage::DataTable *table) {
+static void LoadTable() {
 
   const oid_t col_count = state.column_count;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
-  auto table_schema = table->GetSchema();
+  auto table_schema = user_table->GetSchema();
   std::string string_value('.', state.value_length);
 
   /////////////////////////////////////////////////////////
@@ -231,7 +232,7 @@ static void LoadTable(storage::DataTable *table) {
       tuple.SetValue(col_itr, value);
     }
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = user_table->InsertTuple(txn, &tuple);
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
@@ -241,16 +242,14 @@ static void LoadTable(storage::DataTable *table) {
 
 }
 
-storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
+void CreateAndLoadTable(LayoutType layout_type) {
 
   // Initialize settings
   peloton_layout = layout_type;
 
-  auto table = CreateTable();
+  CreateTable();
 
-  LoadTable(table);
-
-  return table;
+  LoadTable();
 }
 
 static int GetBound() {
@@ -297,7 +296,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
   WriteOutput(time_per_transaction);
 }
 
-void RunRead(storage::DataTable *table) {
+void RunRead() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -318,7 +317,7 @@ void RunRead(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePointPredicate(bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(user_table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -358,7 +357,7 @@ void RunRead(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunScan(storage::DataTable *table) {
+void RunScan() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -379,7 +378,7 @@ void RunScan(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreateScanPredicate(bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(user_table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -419,7 +418,7 @@ void RunScan(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunInsert(storage::DataTable *table) {
+void RunInsert() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -451,7 +450,7 @@ void RunInsert(storage::DataTable *table) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::InsertPlan insert_node(table, project_info, ycsb_bulk_insert_count);
+  planner::InsertPlan insert_node(user_table, project_info, ycsb_bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -466,7 +465,7 @@ void RunInsert(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunUpdate(storage::DataTable *table) {
+void RunUpdate() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -487,7 +486,7 @@ void RunUpdate(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePointPredicate(bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(user_table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -511,7 +510,7 @@ void RunUpdate(storage::DataTable *table) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::UpdatePlan update_node(table, project_info);
+  planner::UpdatePlan update_node(user_table, project_info);
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Parent-Child relationship
@@ -530,7 +529,7 @@ void RunUpdate(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunDelete(storage::DataTable *table) {
+void RunDelete() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -551,7 +550,7 @@ void RunDelete(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePointPredicate(bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(user_table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -559,7 +558,7 @@ void RunDelete(storage::DataTable *table) {
   /////////////////////////////////////////////////////////
 
   bool truncate = false;
-  planner::DeletePlan delete_node(table, truncate);
+  planner::DeletePlan delete_node(user_table, truncate);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Parent-Child relationship
@@ -578,7 +577,7 @@ void RunDelete(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunReadModifyWrite(storage::DataTable *table) {
+void RunReadModifyWrite() {
   const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -599,7 +598,7 @@ void RunReadModifyWrite(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePointPredicate(bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(user_table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -632,7 +631,7 @@ void RunReadModifyWrite(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   predicate = CreatePointPredicate(bound);
-  planner::SeqScanPlan seq_scan_node_2(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node_2(user_table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor_2(&seq_scan_node, context.get());
 
   std::vector<Value> values;
@@ -652,7 +651,7 @@ void RunReadModifyWrite(storage::DataTable *table) {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
 
-  planner::UpdatePlan update_node(table, project_info);
+  planner::UpdatePlan update_node(user_table, project_info);
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Parent-Child relationship
