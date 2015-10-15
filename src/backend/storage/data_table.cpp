@@ -872,12 +872,12 @@ column_map_type GetStaticColumnMap(oid_t column_count){
   oid_t rest_column_count = (column_count - 1) - split_point;
 
   column_map[0] = std::make_pair(0, 0);
-  for(auto column_id = 0; column_id < split_point ; column_id++) {
+  for(oid_t column_id = 0; column_id < split_point ; column_id++) {
     auto hyadapt_column_id = hyadapt_column_ids[column_id];
     column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
   }
 
-  for(auto column_id = 0; column_id < rest_column_count; column_id++) {
+  for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
     auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
     column_map[hyadapt_column_id] = std::make_pair(1, column_id);
   }

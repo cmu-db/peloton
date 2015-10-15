@@ -52,7 +52,7 @@ void GenerateSequence(oid_t column_count){
   hyadapt_column_ids.clear();
 
   // Generate sequence
-  for(auto column_id = 1; column_id <= column_count; column_id++)
+  for(oid_t column_id = 1; column_id <= column_count; column_id++)
     hyadapt_column_ids.push_back(column_id);
 
   std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
