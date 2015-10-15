@@ -34,7 +34,7 @@ include $(srcdir)/postgres/timezone/Makefile.am
 
 include $(top_srcdir)/third_party/Makefile.am
 
-bin_peloton_PROGRAMS = peloton hyadapt
+bin_peloton_PROGRAMS = peloton hyadapt ycsb
 
 bin_pelotondir = /usr/local/peloton/bin
 
