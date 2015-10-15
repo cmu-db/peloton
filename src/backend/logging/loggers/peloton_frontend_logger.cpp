@@ -45,7 +45,7 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
     global_plog_pool->init(backend);
   } else {
     // XXX do some check?
-    global_plog_pool->SyncLogRecordList(backend);
+    global_plog_pool->CheckLogRecordPool(backend);
   }
 }
 
@@ -108,8 +108,6 @@ void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
   // In case the commit process is interrupted
   txn_log_record_list->SetCommitting(true);
 
-  // TODO Flush logs commit information first before commit to tuple records
-
   LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
 
   while (recordNode != NULL) {
@@ -133,7 +131,6 @@ void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
     }
     recordNode = recordNode->next_node;
   }
-  // TODO sync for the tuple record updates
 
   // All record is committed, its safe to remove them now
   txn_log_record_list->Clear();
@@ -186,12 +183,13 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
   if( max_oid < location.block ){
     max_oid = location.block;
   }
+  // TODO sync change
   return tile_group_header->GetBeginCommitId(location.offset);
 }
 
 cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
                                                 bool commit) {
-  //Commit Insert Mark
+  // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
@@ -201,6 +199,7 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
   if( max_oid < location.block ){
     max_oid = location.block;
   }
+  // TODO sync change
   return tile_group_header->GetEndCommitId(location.offset);
 }
 
