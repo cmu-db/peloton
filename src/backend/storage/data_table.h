@@ -33,6 +33,10 @@ typedef enum LayoutType
 /* GUC variable */
 extern LayoutType peloton_layout;
 
+extern double peloton_projectivity;
+
+extern std::vector<peloton::oid_t> hyadapt_column_ids;
+
 namespace peloton {
 namespace storage {
 
