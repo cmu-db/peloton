@@ -32,7 +32,8 @@ void RunBenchmark(){
   // Single run
   std::unique_ptr<storage::DataTable>table(CreateAndLoadTable((LayoutType) peloton_layout));
 
-  return;
+  // Initialize random number generator
+  srand(0);
 
   switch(state.operator_type) {
     case OPERATOR_TYPE_READ:
@@ -47,8 +48,6 @@ void RunBenchmark(){
       std::cout << "Unsupported test type : " << state.operator_type << "\n";
       break;
   }
-
-
 
 }
 

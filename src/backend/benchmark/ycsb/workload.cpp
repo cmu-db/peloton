@@ -57,22 +57,22 @@ namespace ycsb{
 // Tuple id counter
 oid_t ycsb_tuple_counter = -1000000;
 
-expression::AbstractExpression *CreatePredicate( const int lower_bound) {
+expression::AbstractExpression *CreateReadPredicate(const int bound) {
 
-  // ATTR0 > LOWER_BOUND
+  // ATTR0 == BOUND
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
       expression::TupleValueFactory(0, 0);
 
   // Second, create constant value expression.
-  Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
+  Value constant_value = ValueFactory::GetIntegerValue(bound);
   expression::AbstractExpression *constant_value_expr =
       expression::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
-      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
                                     tuple_value_expr,
                                     constant_value_expr);
 
@@ -103,7 +103,7 @@ static void WriteOutput(double duration) {
 
 }
 
-static storage::DataTable* CreateTable() {
+static std::vector<catalog::Column> GetColumns(){
   const oid_t col_count = state.column_count;
   bool is_inlined;
 
@@ -124,6 +124,12 @@ static storage::DataTable* CreateTable() {
     columns.push_back(column);
   }
 
+  return columns;
+}
+
+static storage::DataTable* CreateTable() {
+
+  auto columns = GetColumns();
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("USERTABLE");
 
@@ -194,10 +200,11 @@ storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
   return table;
 }
 
-static int GetLowerBound() {
+static int GetBound() {
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bound = rand() % tuple_count;
 
-  return tuple_count;
+  return bound;
 }
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
@@ -238,8 +245,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 }
 
 void RunRead(storage::DataTable *table) {
-  const int lower_bound = GetLowerBound();
-  const bool is_inlined = true;
+  const int bound = GetBound();
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -253,13 +259,12 @@ void RunRead(storage::DataTable *table) {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-
-  for(oid_t col_itr = 0 ; col_itr < state.column_count; col_itr++) {
+  for(oid_t col_itr = 0 ; col_itr <= state.column_count; col_itr++) {
     column_ids.push_back(col_itr);
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound);
+  auto predicate = CreateReadPredicate(bound);
   planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
@@ -271,13 +276,10 @@ void RunRead(storage::DataTable *table) {
   // Create and set up materialization executor
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
+
+  output_columns = GetColumns();
   oid_t col_itr = 0;
   for(auto column_id : column_ids) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(column_id), is_inlined);
-    output_columns.push_back(column);
-
     old_to_new_cols[col_itr] = col_itr;
     col_itr++;
   }
@@ -292,33 +294,11 @@ void RunRead(storage::DataTable *table) {
   mat_executor.AddChild(&seq_scan_executor);
 
   /////////////////////////////////////////////////////////
-  // INSERT
-  /////////////////////////////////////////////////////////
-
-  std::vector<Value> values;
-  Value insert_val = ValueFactory::GetIntegerValue(++ycsb_tuple_counter);
-
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
-
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  planner::InsertPlan insert_node(table, project_info);
-  executor::InsertExecutor insert_executor(&insert_node, context.get());
-
-  /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor*> executors;
   executors.push_back(&mat_executor);
-  executors.push_back(&insert_executor);
 
   ExecuteTest(executors);
 
@@ -326,7 +306,7 @@ void RunRead(storage::DataTable *table) {
 }
 
 void RunUpdate(storage::DataTable *table) {
-  const int lower_bound = GetLowerBound();
+  const int bound = GetBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -348,7 +328,7 @@ void RunUpdate(storage::DataTable *table) {
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound);
+  auto predicate = CreateReadPredicate(bound);
   planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
