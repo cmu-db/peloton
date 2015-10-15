@@ -122,7 +122,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.value_length = 100;
 
-  state.column_count = 10;
+  state.column_count = 100;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Parse args
