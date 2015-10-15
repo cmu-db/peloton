@@ -88,6 +88,8 @@ class LogManager{
     bool RemoveBackendLogger(BackendLogger* backend_logger,
                              LoggingType logging_type = LOGGING_TYPE_INVALID);
 
+    FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+
   private:
 
     LogManager(){};
@@ -95,8 +97,6 @@ class LogManager{
     //===--------------------------------------------------------------------===//
     // Utility Functions
     //===--------------------------------------------------------------------===//
-
-    FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
     bool RemoveFrontendLogger(LoggingType logging_type);
 

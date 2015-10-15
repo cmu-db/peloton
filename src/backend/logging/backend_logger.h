@@ -48,7 +48,10 @@ class BackendLogger : public Logger{
 
     bool IsConnectedToFrontend(void) const;
 
-    void SetConnectedToFrontend(void);
+    void SetConnectedToFrontend(bool isConnected);
+
+    // Truncate the log file at given offset
+    void TruncateLocalQueue(oid_t offset);
 
     //===--------------------------------------------------------------------===//
     // Virtual Functions
@@ -63,9 +66,6 @@ class BackendLogger : public Logger{
 
     virtual size_t GetLocalQueueSize(void) const = 0;
 
-    // Truncate the log file at given offset
-    virtual void TruncateLocalQueue(oid_t offset) = 0;
-
     // Construct a log record with tuple information
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                                       txn_id_t txn_id, 
@@ -76,7 +76,6 @@ class BackendLogger : public Logger{
                                       oid_t db_oid = INVALID_OID) = 0;
 
   protected:
-
     // TODO: change vector to list ?
     std::vector<LogRecord*> local_queue;
 
