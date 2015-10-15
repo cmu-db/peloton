@@ -104,24 +104,28 @@ static void WriteOutput(double duration) {
 }
 
 static storage::DataTable* CreateTable() {
-  const oid_t col_count = state.column_count + 1;
-  const bool is_inlined = true;
-  const bool indexes = false;
+  const oid_t col_count = state.column_count;
+  bool is_inlined;
 
   // Create schema first
   std::vector<catalog::Column> columns;
 
+  is_inlined = true;
+  auto key_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                                "YCSB_KEY", is_inlined);
+  columns.push_back(key_column);
+
+  is_inlined = false;
   for(oid_t col_itr = 0 ; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(col_itr), is_inlined);
+        catalog::Column(VALUE_TYPE_VARCHAR, state.value_length,
+                        "FIELD" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
-  std::string table_name("TEST_TABLE");
-
+  std::string table_name("USERTABLE");
 
   /////////////////////////////////////////////////////////
   // Create table.
@@ -134,38 +138,16 @@ static storage::DataTable* CreateTable() {
       state.tuples_per_tilegroup,
       own_schema, adapt_table));
 
-  // PRIMARY INDEX
-  if (indexes == true) {
-    std::vector<oid_t> key_attrs;
-
-    auto tuple_schema = table->GetSchema();
-    catalog::Schema *key_schema;
-    index::IndexMetadata *index_metadata;
-    bool unique;
-
-    key_attrs = {0};
-    key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-    key_schema->SetIndexedColumns(key_attrs);
-
-    unique = true;
-
-    index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
-
-    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-    table->AddIndex(pkey_index);
-  }
-
   return table.release();
 }
 
 static void LoadTable(storage::DataTable *table) {
 
-  const oid_t col_count = state.column_count + 1;
+  const oid_t col_count = state.column_count;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
   auto table_schema = table->GetSchema();
+  std::string string_value('.', state.value_length);
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -182,8 +164,11 @@ static void LoadTable(storage::DataTable *table) {
 
     storage::Tuple tuple(table_schema, allocate);
 
-    for(oid_t col_itr = 0 ; col_itr < col_count; col_itr++) {
-      auto value = ValueFactory::GetIntegerValue(populate_value);
+    auto key_value = ValueFactory::GetIntegerValue(rowid);
+    tuple.SetValue(0, key_value);
+
+    for(oid_t col_itr = 1 ; col_itr <= col_count; col_itr++) {
+      auto value = ValueFactory::GetStringValue(string_value);
       tuple.SetValue(col_itr, value);
     }
 

@@ -93,7 +93,7 @@ static void ValidateLayout(const configuration& state) {
 
 static void ValidateColumnCount(const configuration& state) {
   if(state.column_count <= 0) {
-    std::cout << "Invalid attribute_count :: " <<  state.column_count << std::endl;
+    std::cout << "Invalid column_count :: " <<  state.column_count << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -120,7 +120,10 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.layout = LAYOUT_ROW;
 
-  state.column_count = 100;
+  state.value_length = 100;
+
+  state.column_count = 10;
+  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Parse args
   while (1) {
@@ -162,7 +165,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidateLayout(state);
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
-  ValidateTuplesPerTileGroup(state);
 
   std::cout << std::setw(20) << std::left
       << "transactions " << " : " << state.transactions << std::endl;

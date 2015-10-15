@@ -35,7 +35,7 @@ void RunBenchmark(){
 
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
+    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable((LayoutType) peloton_layout));
 
     switch(state.operator_type) {
       case OPERATOR_TYPE_DIRECT:

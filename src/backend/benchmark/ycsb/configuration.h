@@ -44,6 +44,9 @@ class configuration {
   // column count
   int column_count;
 
+  // value length
+  int value_length;
+
   int tuples_per_tilegroup;
 
   // # of times to run operator
