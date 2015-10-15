@@ -325,7 +325,7 @@ void RunDirectTest(storage::DataTable *table) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
@@ -473,7 +473,7 @@ void RunAggregateTest(storage::DataTable *table) {
   planner::ProjectInfo::TargetList target_list;
   direct_map_list.clear();
 
-  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
@@ -601,7 +601,7 @@ void RunArithmeticTest(storage::DataTable *table) {
   target_list.clear();
   direct_map_list.clear();
 
-  for (oid_t col_id = 0; col_id <= state.column_count; col_id++) {
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
