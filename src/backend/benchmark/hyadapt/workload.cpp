@@ -54,6 +54,8 @@ namespace peloton {
 namespace benchmark {
 namespace hyadapt{
 
+storage::DataTable *hyadapt_table;
+
 // Tuple id counter
 oid_t hyadapt_tuple_counter = -1000000;
 
@@ -110,7 +112,7 @@ static void WriteOutput(double duration) {
 
 }
 
-static storage::DataTable* CreateTable() {
+static void CreateTable() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
   const bool indexes = false;
@@ -136,16 +138,16 @@ static storage::DataTable* CreateTable() {
 
   bool own_schema = true;
   bool adapt_table = true;
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
+  hyadapt_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup,
-      own_schema, adapt_table));
+      own_schema, adapt_table);
 
   // PRIMARY INDEX
   if (indexes == true) {
     std::vector<oid_t> key_attrs;
 
-    auto tuple_schema = table->GetSchema();
+    auto tuple_schema = hyadapt_table->GetSchema();
     catalog::Schema *key_schema;
     index::IndexMetadata *index_metadata;
     bool unique;
@@ -161,18 +163,17 @@ static storage::DataTable* CreateTable() {
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-    table->AddIndex(pkey_index);
+    hyadapt_table->AddIndex(pkey_index);
   }
 
-  return table.release();
 }
 
-static void LoadTable(storage::DataTable *table) {
+static void LoadTable() {
 
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
-  auto table_schema = table->GetSchema();
+  auto table_schema = hyadapt_table->GetSchema();
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -194,7 +195,7 @@ static void LoadTable(storage::DataTable *table) {
       tuple.SetValue(col_itr, value);
     }
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(txn, &tuple);
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
@@ -204,16 +205,14 @@ static void LoadTable(storage::DataTable *table) {
 
 }
 
-storage::DataTable *CreateAndLoadTable(LayoutType layout_type) {
+void CreateAndLoadTable(LayoutType layout_type) {
 
   // Initialize settings
   peloton_layout = layout_type;
 
-  auto table = CreateTable();
+  CreateTable();
 
-  LoadTable(table);
-
-  return table;
+  LoadTable();
 }
 
 static int GetLowerBound() {
@@ -260,7 +259,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
   WriteOutput(time_per_transaction);
 }
 
-void RunDirectTest(storage::DataTable *table) {
+void RunDirectTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -284,7 +283,7 @@ void RunDirectTest(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -334,7 +333,7 @@ void RunDirectTest(storage::DataTable *table) {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -350,7 +349,7 @@ void RunDirectTest(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunAggregateTest(storage::DataTable *table) {
+void RunAggregateTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -376,7 +375,7 @@ void RunAggregateTest(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -419,7 +418,7 @@ void RunAggregateTest(storage::DataTable *table) {
   expression::AbstractExpression* aggregate_predicate = nullptr;
 
   // 5) Create output table schema
-  auto data_table_schema = table->GetSchema();
+  auto data_table_schema = hyadapt_table->GetSchema();
   std::vector<catalog::Column> columns;
   for (auto column_id : column_ids) {
     columns.push_back(data_table_schema->GetColumn(column_id));
@@ -482,7 +481,7 @@ void RunAggregateTest(storage::DataTable *table) {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -498,7 +497,7 @@ void RunAggregateTest(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunArithmeticTest(storage::DataTable *table) {
+void RunArithmeticTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -524,7 +523,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -537,7 +536,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 
   // Construct schema of projection
   std::vector<catalog::Column> columns;
-  auto orig_schema = table->GetSchema();
+  auto orig_schema = hyadapt_table->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   auto projection_schema = new catalog::Schema(columns);
 
@@ -610,7 +609,7 @@ void RunArithmeticTest(storage::DataTable *table) {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -669,17 +668,17 @@ void RunProjectivityExperiment() {
           peloton_projectivity = state.projectivity;
 
           // Load in the table with layout
-          std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+          CreateAndLoadTable(layout);
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest(table.get());
+          RunDirectTest();
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest(table.get());
+          RunAggregateTest();
 
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest(table.get());
+          RunArithmeticTest();
         }
 
       }
@@ -718,17 +717,17 @@ void RunSelectivityExperiment() {
           state.selectivity = select;
 
           // Load in the table with layout
-          std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+          CreateAndLoadTable(layout);
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest(table.get());
+          RunDirectTest();
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest(table.get());
+          RunAggregateTest();
 
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest(table.get());
+          RunArithmeticTest();
         }
 
       }
@@ -773,11 +772,11 @@ void RunOperatorExperiment() {
             state.selectivity = selectivity;
 
             // Load in the table with layout
-            std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(layout));
+            CreateAndLoadTable(layout);
 
             // Run operator
             state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-            RunArithmeticTest(table.get());
+            RunArithmeticTest();
           }
         }
 
