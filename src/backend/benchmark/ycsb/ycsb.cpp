@@ -40,6 +40,14 @@ void RunBenchmark(){
       RunRead(table.get());
       break;
 
+    case OPERATOR_TYPE_SCAN:
+      RunScan(table.get());
+      break;
+
+    case OPERATOR_TYPE_INSERT:
+      RunInsert(table.get());
+      break;
+
     case OPERATOR_TYPE_UPDATE:
       RunUpdate(table.get());
       break;
