@@ -41,7 +41,7 @@ int LogRecordList::AddLogRecord(TupleRecord *record) {
   }
 }
 
-void LogRecordList::SyncLogRecordList(storage::AbstractBackend *backend) {
+void LogRecordList::CheckLogRecordList(storage::AbstractBackend *backend) {
   assert(backend != nullptr);
   _backend = backend;
   if (head_node == nullptr) {
@@ -50,6 +50,15 @@ void LogRecordList::SyncLogRecordList(storage::AbstractBackend *backend) {
   }
   LogRecordNode * cur = head_node;
   while(cur->next_node != nullptr) {
+    cur = cur->next_node;
+  }
+  tail_node = cur;
+}
+
+void LogRecordList::SyncLogRecordList() {
+  LogRecordNode * cur = head_node;
+  while(cur->next_node != nullptr) {
+    _backend->Sync(cur);
     cur = cur->next_node;
   }
   tail_node = cur;
@@ -78,12 +87,17 @@ int LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {
     }
     existing_list->init(_backend);
     existing_list->SetTxnId(txn_id);
-
+    // ensure new node is persisted
+    _backend->Sync(existing_list);
     // add to the pool
     if (tail_list == nullptr) {
       head_list = existing_list;
+      // ensure new node info is linked in the list
+      _backend->Sync(this);
     } else {
       tail_list->SetNextList(existing_list);
+      // ensure new node info is linked in the list
+      _backend->Sync(tail_list);
     }
     tail_list = existing_list;
   }
@@ -136,7 +150,7 @@ void LogRecordPool::RemoveLogList(LogRecordList *prev, LogRecordList *list) {
   _backend->Free(list);
 }
 
-void LogRecordPool::SyncLogRecordList(storage::AbstractBackend *backend) {
+void LogRecordPool::CheckLogRecordPool(storage::AbstractBackend *backend) {
   assert(backend != nullptr);
   _backend = backend;
   if (head_list == nullptr) {
@@ -145,7 +159,7 @@ void LogRecordPool::SyncLogRecordList(storage::AbstractBackend *backend) {
   }
   LogRecordList * cur = head_list;
   while(cur->GetNextList() != nullptr) {
-    cur->SyncLogRecordList(backend);
+    cur->CheckLogRecordList(backend);
     cur = cur->GetNextList();
   }
   tail_list = cur;
