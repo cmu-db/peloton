@@ -80,6 +80,8 @@ void PelotonFrontendLogger::Flush(void) {
       }
         break;
       case LOGRECORD_TYPE_TRANSACTION_ABORT:
+        // Nothing to be done for abort
+        break;
       case LOGRECORD_TYPE_TRANSACTION_END:
       case LOGRECORD_TYPE_TRANSACTION_DONE:
         global_plog_pool->RemoveTxnLogList(record->GetTransactionId());
