@@ -35,4 +35,19 @@ ycsb_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CP
 				-I$(srcdir)/backend/benchmark
 
 ycsb_LDADD = libpelotonpg.la libpeloton.la
-                                        
+                                   
+######################################################################
+# TPCC
+######################################################################
+
+tpcc_SOURCES =  \
+				backend/benchmark/tpcc/tpcc.cpp \
+                backend/benchmark/tpcc/configuration.cpp \
+                backend/benchmark/tpcc/workload.cpp
+                                       
+tpcc_LDFLAGS =
+tpcc_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \
+				$(third_party_INCLUDES) \
+				-I$(srcdir)/backend/benchmark
+
+tpcc_LDADD = libpelotonpg.la libpeloton.la     
