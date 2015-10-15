@@ -39,18 +39,11 @@ TEST(AriesLoggingTest, recovery) {
   std::ifstream log_file(aries_log_file_name.c_str());
 
   // Reset the log file if exists
-  if( log_file.good() ){
-    EXPECT_TRUE(std::remove(aries_log_file_name.c_str()) == 0 );
-  }
+  EXPECT_TRUE(log_file.good());
   log_file.close();
 
-  // Prepare a simple log file for recovery test
-  if (LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES)) {
 	// Do recovery
 	LoggingTestsUtil::CheckAriesRecovery();
-  } else {
-	LOG_ERROR("Could not check recovery");
-  }
 }
 
 }  // End test namespace

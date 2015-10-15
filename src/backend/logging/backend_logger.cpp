@@ -51,6 +51,25 @@ void BackendLogger::Commit(void){
 }
 
 /**
+ * @brief set the wait flush to true and truncate local_queue with commit_offset
+ * @param offset
+ */
+void BackendLogger::TruncateLocalQueue(oid_t offset){
+
+  {
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+
+    // cleanup the queue
+    local_queue.erase(local_queue.begin(),
+                      local_queue.begin()+offset);
+
+    // let's wait for the frontend logger to flush !
+    // the frontend logger will call our Commit to reset it.
+    wait_for_flushing = true;
+  }
+}
+
+/**
  * @brief Get the LogRecord with offset
  * @param offset
  */
@@ -77,15 +96,14 @@ bool BackendLogger::IsWaitingForFlushing(void) const{
   } else {
     return false;
   }
-
 }
 
 bool BackendLogger::IsConnectedToFrontend(void) const{
   return connected_to_frontend;
 }
 
-void BackendLogger::SetConnectedToFrontend(void) {
-  connected_to_frontend = true;
+void BackendLogger::SetConnectedToFrontend(bool isConnected) {
+  connected_to_frontend = isConnected;
 }
 
 }  // namespace logging

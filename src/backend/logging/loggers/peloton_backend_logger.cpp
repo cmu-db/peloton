@@ -14,6 +14,8 @@
 
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/frontend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -28,12 +30,17 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
  * @param log record 
  */
 void PelotonBackendLogger::Log(LogRecord* record){
-  std::lock_guard<std::mutex> lock(local_queue_mutex);
-  record->Serialize();
-  local_queue.push_back(record);
-
-  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END && !flush_enabled)  {
-    flush_enabled = true;
+  {
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
+    record->Serialize();
+    local_queue.push_back(record);
+  }
+  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
+    if (!flush_enabled)
+      flush_enabled = true;
+    auto& log_manager = logging::LogManager::GetInstance();
+    FrontendLogger *frontend = log_manager.GetFrontendLogger(logging_type);
+    frontend->NotifyFrontend(true);
   }
 }
 
@@ -46,24 +53,6 @@ size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
     return local_queue.size();
   } else {
     return 0;
-  }
-}
-
-/**
- * @brief set the wait flush to true and truncate local_queue with commit_offset
- * @param offset
- */
-void PelotonBackendLogger::TruncateLocalQueue(oid_t offset){
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-
-    // cleanup the queue
-    local_queue.erase(local_queue.begin(),
-                      local_queue.begin()+offset);
-
-    // let's wait for the frontend logger to flush !
-    // the frontend logger will call our Commit to reset it.
-    wait_for_flushing = true;
   }
 }
 
