@@ -73,6 +73,9 @@ class LogRecordList {
 
   void SetCommitting(bool _isCommitting) {
     iscommitting = _isCommitting;
+    if (_isCommitting) { // ensure everything is persisted
+      SyncLogRecordList();
+    }
   }
 
   txn_id_t GetTxnID() {
@@ -98,7 +101,9 @@ class LogRecordList {
   int AddLogRecord(TupleRecord *record);
 
   // recover tail_node and backend if any inconsistency
-  void SyncLogRecordList(storage::AbstractBackend *backend);
+  void CheckLogRecordList(storage::AbstractBackend *backend);
+
+  void SyncLogRecordList();
 
   //===--------------------------------------------------------------------===//
   // Member Variables
@@ -153,7 +158,7 @@ class LogRecordPool {
   LogRecordList* SearchRecordList(txn_id_t txn_id);
 
   // recover tail_node and backend if any inconsistency
-  void SyncLogRecordList(storage::AbstractBackend *backend);
+  void CheckLogRecordPool(storage::AbstractBackend *backend);
 
  private:
 
