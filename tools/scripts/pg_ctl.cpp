@@ -920,6 +920,7 @@ do_stop(void)
 
 	pid = get_pgpid(false);
 
+
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
@@ -966,8 +967,9 @@ do_stop(void)
 		print_msg(_("waiting for server to shut down..."));
 
 		// TODO: Peloton Changes
-		int lower_wait_seconds = 1;
-		for (cnt = 0; cnt < lower_wait_seconds; cnt++)
+
+		//int lower_wait_seconds = 1;
+		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
 			if ((pid = get_pgpid(false)) != 0)
 			{

@@ -224,7 +224,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
  * Transform a target list.
  */
 const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
-    const List* targetList, oid_t column_count) {
+    const List* targetList, int column_count) {
 
   planner::ProjectInfo::TargetList target_list;
 

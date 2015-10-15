@@ -178,7 +178,7 @@ class PlanTransformer {
       const PelotonProjectionInfo *pi);
 
   static const planner::ProjectInfo::TargetList BuildTargetList(
-      const List* targetList, oid_t column_count);
+      const List* targetList, int column_count);
 
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 

@@ -218,7 +218,7 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(
   assert(slot);
 
   TupleDesc tuple_desc = slot->tts_tupleDescriptor;
-  int natts = tuple_desc->natts;
+  unsigned int natts = tuple_desc->natts;
   bool isnull;
 
   // Allocate space for a new tuple with given schema
@@ -251,12 +251,12 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
 
   TupleTableSlot *slot = NULL;
   HeapTuple heap_tuple;
-  const int natts = tuple_desc->natts;
+  const unsigned int natts = tuple_desc->natts;
   Datum *datums;
   bool *nulls;
 
   if (tuple->GetColumnCount() != natts) {
-    LOG_WARN("tuple attr count : %u , tuple desc attr count : %d \n",
+    LOG_WARN("tuple attr count : %lu , tuple desc attr count : %d \n",
              tuple->GetColumnCount(), natts);
     return nullptr;
   }
@@ -292,7 +292,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
 
   // Clean up
   // (A) Clean up any possible varlena's
-  assert(natts == tuple_desc->natts);
+  //assert(natts == tuple_desc->natts);
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
       assert(tuple_desc->attrs[att_itr]->attbyval == false);

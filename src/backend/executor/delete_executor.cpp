@@ -85,7 +85,7 @@ bool DeleteExecutor::DExecute() {
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n",
+    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n",
               visible_tuple_id, physical_tuple_id);
 
     peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
