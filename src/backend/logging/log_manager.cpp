@@ -99,6 +99,11 @@ void LogManager::WaitForSleepMode(LoggingType logging_type){
 
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
+  // notify frontend to exit current waiting
+  auto& log_manager = logging::LogManager::GetInstance();
+  FrontendLogger *frontend = log_manager.GetFrontendLogger(logging_type);
+  frontend->NotifyFrontend();
+
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
   while(1){
@@ -173,9 +178,8 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
     // If frontend logger exists
     if( frontend_logger != nullptr){
       backend_logger = BackendLogger::GetBackendLogger(logging_type);
-      if( backend_logger->IsConnectedToFrontend() == false){
+      if (!backend_logger->IsConnectedToFrontend()) {
         frontend_logger->AddBackendLogger(backend_logger);
-        backend_logger->SetConnectedToFrontend();
       }
     }
   }

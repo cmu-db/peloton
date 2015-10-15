@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <condition_variable>
 #include <vector>
 #include <unistd.h>
 
@@ -67,6 +68,8 @@ class FrontendLogger : public Logger{
      */
     virtual void DoRecovery(void) = 0;
 
+    void NotifyFrontend(bool hasNewLog = false);
+
   protected:
 
     // Associated backend loggers
@@ -79,6 +82,12 @@ class FrontendLogger : public Logger{
     // Global queue
     std::vector<LogRecord*> global_queue;
 
+    // Used for waking up frontend logger only when backend loggers
+    // are ready
+    std::mutex backend_notify_mutex;
+    std::condition_variable backend_notify_cv;
+    uint32 wait_timeout = 5; // in seconds
+    bool log_collect_request = false; // used to indicate if backend has new logs
 };
 
 }  // namespace logging
