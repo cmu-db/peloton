@@ -29,7 +29,7 @@ namespace storage {
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
 
-column_map_type GetStaticColumnMap(oid_t column_count);
+column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
 /**
  * Check if the locations contains at least one visible entry to the transaction
@@ -460,7 +460,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       }
     }
     else {
-      column_map = GetStaticColumnMap(col_count);
+      column_map = GetStaticColumnMap(table_name, col_count);
     }
   }
   else{
@@ -864,24 +864,39 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type GetStaticColumnMap(oid_t column_count){
+column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
   column_map_type column_map;
 
-  // Split into two tiles
-  oid_t split_point = peloton_projectivity * (column_count - 1);
-  oid_t rest_column_count = (column_count - 1) - split_point;
+  // HYADAPT
+  if(table_name == "HYADAPTTABLE") {
+    oid_t split_point = peloton_projectivity * (column_count - 1);
+    oid_t rest_column_count = (column_count - 1) - split_point;
 
-  column_map[0] = std::make_pair(0, 0);
-  for(oid_t column_id = 0; column_id < split_point ; column_id++) {
-    auto hyadapt_column_id = hyadapt_column_ids[column_id];
-    column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+    column_map[0] = std::make_pair(0, 0);
+    for(oid_t column_id = 0; column_id < split_point ; column_id++) {
+      auto hyadapt_column_id = hyadapt_column_ids[column_id];
+      column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+    }
+
+    for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
+      auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
+      column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+    }
   }
+  // YCSB
+  else if(table_name == "USERTABLE") {
+    column_map[0] = std::make_pair(0, 0);
 
-  for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-    auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
-    column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+    for(oid_t column_id = 1; column_id < column_count; column_id++) {
+      column_map[column_id] = std::make_pair(1, column_id - 1);
+    }
   }
-
+  // FALLBACK
+  else{
+    for(oid_t column_id = 0; column_id < column_count; column_id++) {
+      column_map[column_id] = std::make_pair(0, column_id);
+    }
+  }
 
   return std::move(column_map);
 }

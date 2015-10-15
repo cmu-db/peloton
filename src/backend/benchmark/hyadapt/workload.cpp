@@ -127,7 +127,7 @@ static storage::DataTable* CreateTable() {
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
-  std::string table_name("TEST_TABLE");
+  std::string table_name("HYADAPTTABLE");
 
 
   /////////////////////////////////////////////////////////
