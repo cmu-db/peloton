@@ -40,7 +40,7 @@ static struct option opts[] = {
 };
 
 static void ValidateOperator(const configuration& state) {
-  if(state.operator_type < 1 || state.operator_type > 3) {
+  if(state.operator_type < 1 || state.operator_type > 4) {
     std::cout << "Invalid operator type :: " << state.operator_type << "\n";
     exit(EXIT_FAILURE);
   }
@@ -48,6 +48,12 @@ static void ValidateOperator(const configuration& state) {
     switch(state.operator_type) {
       case OPERATOR_TYPE_READ:
         std::cout << std::setw(20) << std::left << "operator_type " << " : " << "READ" << std::endl;
+        break;
+      case OPERATOR_TYPE_SCAN:
+        std::cout << std::setw(20) << std::left << "operator_type " << " : " << "SCAN" << std::endl;
+        break;
+      case OPERATOR_TYPE_INSERT:
+        std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "INSERT" << std::endl;
         break;
       case OPERATOR_TYPE_UPDATE:
         std::cout << std::setw(20) << std::left << "operator_type " << " : "  << "UPDATE" << std::endl;

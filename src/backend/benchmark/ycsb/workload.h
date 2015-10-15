@@ -24,6 +24,10 @@ storage::DataTable *CreateAndLoadTable(LayoutType layout_type);
 
 void RunRead(storage::DataTable *table);
 
+void RunScan(storage::DataTable *table);
+
+void RunInsert(storage::DataTable *table);
+
 void RunUpdate(storage::DataTable *table);
 
 }  // namespace ycsb
