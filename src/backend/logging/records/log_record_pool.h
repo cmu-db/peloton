@@ -97,8 +97,8 @@ class LogRecordList {
 
   int AddLogRecord(TupleRecord *record);
 
-  // recover tail_node if any inconsistency
-  void SyncLogRecordList();
+  // recover tail_node and backend if any inconsistency
+  void SyncLogRecordList(storage::AbstractBackend *backend);
 
   //===--------------------------------------------------------------------===//
   // Member Variables
@@ -129,8 +129,8 @@ class LogRecordPool {
 
   void init(storage::AbstractBackend *backend) {
     assert(backend != nullptr);
-    head_list = nullptr;
     _backend = backend;
+    head_list = nullptr;
     tail_list = nullptr;
   }
 
@@ -152,8 +152,8 @@ class LogRecordPool {
 
   LogRecordList* SearchRecordList(txn_id_t txn_id);
 
-  // recover tail_node if any inconsistency
-  void SyncLogRecordList();
+  // recover tail_node and backend if any inconsistency
+  void SyncLogRecordList(storage::AbstractBackend *backend);
 
  private:
 
