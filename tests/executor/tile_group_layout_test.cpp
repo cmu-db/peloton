@@ -218,10 +218,5 @@ TEST(TileGroupLayoutTest, ColumnLayout) {
   RunTest();
 }
 
-TEST(TileGroupLayoutTest, HybridLayout) {
-  peloton_layout = LAYOUT_HYBRID;
-  RunTest();
-}
-
 }  // namespace test
 }  // namespace peloton

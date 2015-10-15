@@ -55,6 +55,7 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table_ = node.GetTable();
+  oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table_);
 
   auto transaction_ = executor_context_->GetTransaction();
@@ -114,32 +115,37 @@ bool InsertExecutor::DExecute() {
       tuple->SetValue(target.first, value);
     }
 
-    // Carry out insertion
-    ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
-    LOG_INFO("Inserted into location: %lu, %lu", location.block, location.offset);
+    // Bulk Insert Mode
+    for(oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
+    
+      // Carry out insertion
+      ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
+      LOG_INFO("Inserted into location: %d, %d", location.block, location.offset);
 
-    if (location.block == INVALID_OID) {
-      LOG_INFO("Failed to Insert. Set txn failure.");
-      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
-      return false;
-    }
-    transaction_->RecordInsert(location);
-
-    // Logging 
-    {
-      auto& log_manager = logging::LogManager::GetInstance();
-
-      if(log_manager.IsInLoggingMode()){
-        auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
-                                             transaction_->GetTransactionId(), 
-                                             target_table_->GetOid(),
-                                             location,
-                                             INVALID_ITEMPOINTER,
-                                             tuple.get());
-
-        logger->Log(record);
+      if (location.block == INVALID_OID) {
+        LOG_INFO("Failed to Insert. Set txn failure.");
+        transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        return false;
       }
+      transaction_->RecordInsert(location);
+
+      // Logging
+      {
+        auto& log_manager = logging::LogManager::GetInstance();
+
+        if(log_manager.IsInLoggingMode()){
+          auto logger = log_manager.GetBackendLogger();
+          auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+                                               transaction_->GetTransactionId(),
+                                               target_table_->GetOid(),
+                                               location,
+                                               INVALID_ITEMPOINTER,
+                                               tuple.get());
+
+          logger->Log(record);
+        }
+      }
+
     }
 
     executor_context_->num_processed += 1; // insert one

@@ -12,13 +12,14 @@
 
 #include "backend/executor/projection_executor.h"
 
-#include "../planner/projection_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace executor {
@@ -68,6 +69,7 @@ bool ProjectionExecutor::DExecute() {
     // Get input from child
     std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
     auto num_tuples = source_tile->GetTupleCount();
+    auto num_columns = schema_->GetColumnCount();
 
     // Create new physical tile where we store projected tuples
     std::unique_ptr<storage::Tile> dest_tile(
