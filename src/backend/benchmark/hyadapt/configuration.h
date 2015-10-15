@@ -41,6 +41,8 @@ enum ExperimentType{
 
 };
 
+extern int orig_scale_factor;
+
 class configuration {
  public:
 
@@ -52,6 +54,8 @@ class configuration {
   // size of the table
   int scale_factor;
 
+  int tuples_per_tilegroup;
+
   // tile group layout
   LayoutType layout;
 
@@ -62,6 +66,9 @@ class configuration {
   // column count
   int column_count;
 
+  // update ratio
+  double write_ratio;
+
   // # of times to run operator
   unsigned long transactions;
 
@@ -70,6 +77,8 @@ class configuration {
 void Usage(FILE *out);
 
 void ParseArguments(int argc, char* argv[], configuration& state);
+
+void GenerateSequence(oid_t column_count);
 
 }  // namespace hyadapt
 }  // namespace benchmark

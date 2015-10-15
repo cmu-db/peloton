@@ -489,6 +489,7 @@ int			row_security;
 // TODO: Peloton Changes
 int			peloton_mode;
 int     peloton_layout;
+double  peloton_projectivity;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't

@@ -98,14 +98,14 @@ void MaterializationExecutor::MaterializeByTiles(
   auto dest_tile_column_count = dest_tile->GetColumnCount();
   // TODO: Make this a parameter
   oid_t column_count_threshold = 20;
-  bool row_wise_materialization = false;
+  bool row_wise_materialization = true;
 
   if(peloton_layout == LAYOUT_COLUMN)
-    row_wise_materialization = true;
+    row_wise_materialization = false;
 
   if(peloton_layout == LAYOUT_HYBRID &&
-      dest_tile_column_count > column_count_threshold)
-    row_wise_materialization = true;
+      dest_tile_column_count < column_count_threshold)
+    row_wise_materialization = false;
 
   // Materialize as needed
   if(row_wise_materialization == true) {
