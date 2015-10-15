@@ -45,6 +45,7 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
     global_plog_pool->init(backend);
   } else {
     // XXX do some check?
+    global_plog_pool->SyncLogRecordList(backend);
   }
 }
 
