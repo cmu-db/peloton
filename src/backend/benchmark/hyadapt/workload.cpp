@@ -686,7 +686,7 @@ void RunOperatorExperiment() {
   out.close();
 }
 
-std::vector<oid_t> vertical_tuples_per_tilegroup = {100, 1000, 10000};
+std::vector<oid_t> vertical_tuples_per_tilegroup = {10, 100, 1000, 10000, 100000};
 
 
 void RunVerticalExperiment() {
