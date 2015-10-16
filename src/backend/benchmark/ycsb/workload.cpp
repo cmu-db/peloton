@@ -574,7 +574,7 @@ void RunReadModifyWrite() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {100};
+std::vector<oid_t> column_counts = {200};
 
 std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
