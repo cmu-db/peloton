@@ -72,6 +72,10 @@ void RunBenchmark(){
         RunOperatorExperiment();
         break;
 
+      case EXPERIMENT_TYPE_VERTICAL:
+        RunVerticalExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;
