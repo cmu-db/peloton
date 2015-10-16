@@ -73,6 +73,9 @@ static void CreateTable() {
   // Create table.
   /////////////////////////////////////////////////////////
 
+  // Clean up
+  delete user_table;
+
   bool own_schema = true;
   bool adapt_table = true;
   user_table = storage::TableFactory::GetDataTable(

@@ -73,6 +73,9 @@ static void CreateTable() {
   // Create table.
   /////////////////////////////////////////////////////////
 
+  // Clean up
+  delete user_table;
+
   bool own_schema = true;
   bool adapt_table = true;
   user_table = storage::TableFactory::GetDataTable(
@@ -115,6 +118,9 @@ static void LoadTable() {
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
+
+    // Clean up
+    tuple.FreeUninlinedData();
   }
 
   txn_manager.CommitTransaction(txn);
