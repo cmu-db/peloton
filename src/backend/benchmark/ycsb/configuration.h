@@ -35,10 +35,20 @@ enum OperatorType{
   OPERATOR_TYPE_READ_MODIFY_WRITE = 6
 };
 
+enum ExperimentType{
+  EXPERIMENT_TYPE_INVALID = 0,
+
+  EXPERIMENT_TYPE_LAYOUT = 1,
+
+};
+
 class configuration {
  public:
 
   OperatorType operator_type;
+
+  // experiment
+  ExperimentType experiment_type;
 
   LayoutType layout;
 

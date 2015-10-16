@@ -58,10 +58,12 @@ static void CreateTable() {
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("HYADAPTTABLE");
 
-
   /////////////////////////////////////////////////////////
   // Create table.
   /////////////////////////////////////////////////////////
+
+  // Clean up
+  delete hyadapt_table;
 
   bool own_schema = true;
   bool adapt_table = true;

@@ -36,6 +36,8 @@ void RunDelete();
 
 void RunReadModifyWrite();
 
+void RunLayoutExperiment();
+
 }  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton
