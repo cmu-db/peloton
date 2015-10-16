@@ -570,6 +570,47 @@ void RunReadModifyWrite() {
   txn_manager.CommitTransaction(txn);
 }
 
+/////////////////////////////////////////////////////////
+// EXPERIMENTS
+/////////////////////////////////////////////////////////
+
+std::vector<LayoutType> layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
+
+void RunLayoutExperiment() {
+
+  // Go over all layouts
+  for(auto layout : layouts) {
+    // Set layout
+    state.layout = layout;
+    peloton_layout = state.layout;
+
+    // Load in the table with layout
+    CreateAndLoadTable(layout);
+
+    // Go over all ops
+    state.operator_type = OPERATOR_TYPE_READ;
+    RunRead();
+
+    state.operator_type = OPERATOR_TYPE_SCAN;
+    RunScan();
+
+    state.operator_type = OPERATOR_TYPE_INSERT;
+    RunInsert();
+
+    state.operator_type = OPERATOR_TYPE_UPDATE;
+    RunUpdate();
+
+    state.operator_type = OPERATOR_TYPE_DELETE;
+    RunDelete();
+
+    state.operator_type = OPERATOR_TYPE_READ_MODIFY_WRITE;
+    RunReadModifyWrite();
+  }
+
+  out.close();
+}
+
+
 }  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton

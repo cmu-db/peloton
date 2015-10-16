@@ -23,6 +23,7 @@ void Usage(FILE *out) {
           "   -k --scale-factor      :  # of tuples \n"
           "   -l --layout            :  Layout \n"
           "   -t --transactions      :  # of transactions \n"
+          "   -e --experiment_type   :  Experiment Type \n"
           "   -c --column_count      :  # of columns \n"
           "   -g --tuples_per_tg     :  # of tuples per tilegroup \n"
   );
@@ -34,6 +35,7 @@ static struct option opts[] = {
     { "scale-factor", optional_argument, NULL, 'k' },
     { "layout", optional_argument, NULL, 'l' },
     { "transactions", optional_argument, NULL, 't' },
+    { "experiment-type", optional_argument, NULL, 'e' },
     { "column_count", optional_argument, NULL, 'c' },
     { "tuples_per_tg", optional_argument, NULL, 'g' },
     { NULL, 0, NULL, 0 }
@@ -103,6 +105,15 @@ static void ValidateLayout(const configuration& state) {
   }
 }
 
+static void ValidateExperiment(const configuration& state) {
+  if(state.experiment_type <= 0 || state.experiment_type > 1) {
+    std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
+}
+
 static void ValidateColumnCount(const configuration& state) {
   if(state.column_count <= 0) {
     std::cout << "Invalid column_count :: " <<  state.column_count << std::endl;
@@ -123,6 +134,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.layout = LAYOUT_ROW;
 
+  state.experiment_type = EXPERIMENT_TYPE_INVALID;
+
   state.value_length = 100;
 
   state.column_count = 100;
@@ -131,7 +144,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aho:k:l:t:c:", opts,
+    int c = getopt_long(argc, argv, "aho:k:l:t:e:c:", opts,
                         &idx);
 
     if (c == -1)
@@ -150,6 +163,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 't':
         state.transactions  = atoi(optarg);
         break;
+      case 'e':
+        state.experiment_type = (ExperimentType) atoi(optarg);
+        break;
       case 'c':
         state.column_count = atoi(optarg);
         break;
@@ -163,14 +179,21 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
-  // Print configuration
-  ValidateOperator(state);
-  ValidateLayout(state);
-  ValidateScaleFactor(state);
-  ValidateColumnCount(state);
+  if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
 
-  std::cout << std::setw(20) << std::left
-      << "transactions " << " : " << state.transactions << std::endl;
+    // Print configuration
+    ValidateOperator(state);
+    ValidateLayout(state);
+    ValidateScaleFactor(state);
+    ValidateColumnCount(state);
+
+    std::cout << std::setw(20) << std::left
+        << "transactions " << " : " << state.transactions << std::endl;
+  }
+  else{
+    ValidateExperiment(state);
+  }
+
 
 }
 
