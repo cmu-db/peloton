@@ -36,6 +36,8 @@ void RunSelectivityExperiment();
 
 void RunOperatorExperiment();
 
+void RunVerticalExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
