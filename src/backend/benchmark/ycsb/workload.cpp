@@ -574,7 +574,7 @@ void RunReadModifyWrite() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {50, 200};
+std::vector<oid_t> column_counts = {100};
 
 std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
@@ -597,8 +597,6 @@ void RunLayoutExperiment() {
       // Load in the table with layout
       CreateAndLoadTable(layout);
 
-      std::cout << "Start Layout :: " << layout << "\n";
-
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_READ;
       RunRead();
@@ -617,8 +615,6 @@ void RunLayoutExperiment() {
 
       state.operator_type = OPERATOR_TYPE_READ_MODIFY_WRITE;
       RunReadModifyWrite();
-
-      std::cout << "Done Layout :: " << layout << "\n";
 
     }
 
