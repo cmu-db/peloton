@@ -35,35 +35,54 @@ void RunBenchmark(){
   // Initialize random number generator
   srand(0);
 
-  switch(state.operator_type) {
-    case OPERATOR_TYPE_READ:
-      RunRead();
-      break;
+  // Single run
+  if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
 
-    case OPERATOR_TYPE_SCAN:
-      RunScan();
-      break;
+    switch(state.operator_type) {
+      case OPERATOR_TYPE_READ:
+        RunRead();
+        break;
 
-    case OPERATOR_TYPE_INSERT:
-      RunInsert();
-      break;
+      case OPERATOR_TYPE_SCAN:
+        RunScan();
+        break;
 
-    case OPERATOR_TYPE_UPDATE:
-      RunUpdate();
-      break;
+      case OPERATOR_TYPE_INSERT:
+        RunInsert();
+        break;
 
-    case OPERATOR_TYPE_DELETE:
-      RunDelete();
-      break;
+      case OPERATOR_TYPE_UPDATE:
+        RunUpdate();
+        break;
 
-    case OPERATOR_TYPE_READ_MODIFY_WRITE:
-      RunReadModifyWrite();
-      break;
+      case OPERATOR_TYPE_DELETE:
+        RunDelete();
+        break;
 
-    default:
-      std::cout << "Unsupported test type : " << state.operator_type << "\n";
-      break;
+      case OPERATOR_TYPE_READ_MODIFY_WRITE:
+        RunReadModifyWrite();
+        break;
+
+      default:
+        std::cout << "Unsupported test type : " << state.operator_type << "\n";
+        break;
+    }
   }
+  // Experiment
+  else {
+
+    switch(state.experiment_type) {
+      case EXPERIMENT_TYPE_LAYOUT:
+        RunLayoutExperiment();
+        break;
+
+      default:
+        std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
+        break;
+    }
+
+  }
+
 
 }
 
