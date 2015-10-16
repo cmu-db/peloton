@@ -106,6 +106,7 @@ static void WriteOutput(double duration) {
   out << state.projectivity << " ";
   out << state.column_count << " ";
   out << state.write_ratio << " ";
+  out << state.tuples_per_tilegroup << " ";
   out << duration << "\n";
   out.flush();
 
@@ -681,6 +682,62 @@ void RunOperatorExperiment() {
     }
 
   }
+
+  out.close();
+}
+
+std::vector<oid_t> vertical_tuples_per_tilegroup = {100, 1000, 10000};
+
+
+void RunVerticalExperiment() {
+
+  // Cache the original value
+  auto orig_tuples_per_tilegroup = state.tuples_per_tilegroup;
+  auto orig_tuple_count = state.tuples_per_tilegroup * orig_scale_factor;
+
+  state.projectivity = 0.1;
+  peloton_projectivity = state.projectivity;
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all write ratios
+    for(auto write_ratio : write_ratios) {
+      state.write_ratio = write_ratio;
+
+      for(auto select : selectivity) {
+        // Set selectivity
+        state.selectivity = select;
+
+        for(auto tuples_per_tg : vertical_tuples_per_tilegroup) {
+          // Set tuples per tilegroup and scale factor
+          state.tuples_per_tilegroup = tuples_per_tg;
+          state.scale_factor = orig_tuple_count/tuples_per_tg;
+
+          // Load in the table with layout
+          CreateAndLoadTable((LayoutType) peloton_layout);
+
+          // Go over all ops
+          state.operator_type = OPERATOR_TYPE_DIRECT;
+          RunDirectTest();
+
+        }
+
+      }
+
+    }
+
+  }
+
+  // Reset
+  state.tuples_per_tilegroup = orig_tuples_per_tilegroup;
+  state.scale_factor = orig_scale_factor;
 
   out.close();
 }
