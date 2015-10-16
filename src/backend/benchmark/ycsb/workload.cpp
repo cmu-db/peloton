@@ -574,37 +574,54 @@ void RunReadModifyWrite() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<LayoutType> layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
+std::vector<oid_t> column_counts = {50, 200};
+
+std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 void RunLayoutExperiment() {
 
-  // Go over all layouts
-  for(auto layout : layouts) {
-    // Set layout
-    state.layout = layout;
-    peloton_layout = state.layout;
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
 
-    // Load in the table with layout
-    CreateAndLoadTable(layout);
+    std::cout << "Column Count :: " << column_count << "\n";
 
-    // Go over all ops
-    state.operator_type = OPERATOR_TYPE_READ;
-    RunRead();
+    // Go over all layouts
+    for(auto layout : layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
 
-    state.operator_type = OPERATOR_TYPE_SCAN;
-    RunScan();
+      std::cout << "Layout :: " << layout << "\n";
 
-    state.operator_type = OPERATOR_TYPE_INSERT;
-    RunInsert();
+      // Load in the table with layout
+      CreateAndLoadTable(layout);
 
-    state.operator_type = OPERATOR_TYPE_UPDATE;
-    RunUpdate();
+      std::cout << "Start Layout :: " << layout << "\n";
 
-    state.operator_type = OPERATOR_TYPE_DELETE;
-    RunDelete();
+      // Go over all ops
+      state.operator_type = OPERATOR_TYPE_READ;
+      RunRead();
 
-    state.operator_type = OPERATOR_TYPE_READ_MODIFY_WRITE;
-    RunReadModifyWrite();
+      state.operator_type = OPERATOR_TYPE_SCAN;
+      RunScan();
+
+      state.operator_type = OPERATOR_TYPE_INSERT;
+      RunInsert();
+
+      state.operator_type = OPERATOR_TYPE_UPDATE;
+      RunUpdate();
+
+      state.operator_type = OPERATOR_TYPE_DELETE;
+      RunDelete();
+
+      state.operator_type = OPERATOR_TYPE_READ_MODIFY_WRITE;
+      RunReadModifyWrite();
+
+      std::cout << "Done Layout :: " << layout << "\n";
+
+    }
+
   }
 
   out.close();
