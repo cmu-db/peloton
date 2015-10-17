@@ -743,6 +743,175 @@ void RunVerticalExperiment() {
 }
 
 
+
+void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num_group) {
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+
+  switch(subset_test_type) {
+
+    case SUBSET_TYPE_SINGLE_GROUP:
+    {
+      oid_t column_count = state.projectivity * state.column_count * fraction;
+
+      for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+        column_ids.push_back(hyadapt_column_ids[col_itr]);
+      }
+    }
+    break;
+
+    case SUBSET_TYPE_MULTIPLE_GROUP:
+    {
+      oid_t column_count = state.projectivity * state.column_count;
+      oid_t column_proj = column_count * fraction;
+      oid_t tile_column_count = column_count / peloton_num_groups;
+      oid_t tile_column_proj = column_proj / peloton_num_groups;
+
+      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_groups ; tile_group_itr++) {
+        oid_t column_offset = tile_group_itr * tile_column_count;
+
+        for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
+          column_ids.push_back(hyadapt_column_ids[column_offset + col_itr]);
+        }
+      }
+
+    }
+    break;
+
+    case SUBSET_TYPE_INVALID:
+    default:
+      std::cout << "Unsupported subset experiment type : " << subset_test_type << "\n";
+      break;
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for(auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                        physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+std::vector<double> subset_ratios = {0.2, 0.4, 0.6, 0.8, 1.0};
+
+void RunSubsetExperiment() {
+
+  state.projectivity = 1.0;
+  peloton_projectivity = state.projectivity;
+
+  state.column_count = column_counts[1];
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  state.write_ratio = 0.0;
+
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  /////////////////////////////////////////////////////////
+  // SINGLE GROUP
+  /////////////////////////////////////////////////////////
+
+  // Load in the table with layout
+  CreateAndLoadTable((LayoutType) peloton_layout);
+
+  for(auto select : selectivity) {
+    // Set selectivity
+    state.selectivity = select;
+
+    for(auto subset_ratio : subset_ratios) {
+
+      // Go over all ops
+      state.operator_type = OPERATOR_TYPE_DIRECT;
+      RunSubsetTest(SUBSET_TYPE_SINGLE_GROUP, subset_ratio, 0);
+    }
+
+  }
+
+  /////////////////////////////////////////////////////////
+  // MULTIPLE GROUPS
+  /////////////////////////////////////////////////////////
+
+  // Across multiple groups
+  peloton_num_groups = 5;
+  auto subset_ratio = subset_ratios[0];
+
+  // Load in the table with layout
+  CreateAndLoadTable((LayoutType) peloton_layout);
+
+  for(auto select : selectivity) {
+    // Set selectivity
+    state.selectivity = select;
+
+    for(oid_t peloton_num_group = 1;
+        peloton_num_group <= peloton_num_groups;
+        peloton_num_group++) {
+
+      // Go over all ops
+      state.operator_type = OPERATOR_TYPE_DIRECT;
+      RunSubsetTest(SUBSET_TYPE_MULTIPLE_GROUP, subset_ratio, peloton_num_group);
+    }
+
+  }
+
+  // Reset
+  peloton_num_groups = 0;
+
+  out.close();
+}
+
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
