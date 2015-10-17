@@ -777,10 +777,13 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
     {
       oid_t column_count = state.projectivity * state.column_count;
       oid_t column_proj = column_count * fraction;
-      oid_t tile_column_count = column_count / peloton_num_groups;
-      oid_t tile_column_proj = column_proj / peloton_num_groups;
+      oid_t tile_column_count = column_count / peloton_num_group;
+      oid_t tile_column_proj = column_proj / peloton_num_group;
 
-      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_groups ; tile_group_itr++) {
+      std::cout << "TILE COLUMN COUNT  :: " << tile_column_count << "\n";
+      std::cout << "TILE COLUMN PROJ  :: " << tile_column_proj << "\n";
+
+      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
         oid_t column_offset = tile_group_itr * tile_column_count;
 
         for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
@@ -788,6 +791,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
         }
       }
 
+      std::cout << "COLUMN ID COUNT :: " << column_ids.size() << "\n";
     }
     break;
 
@@ -844,6 +848,8 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
 
 std::vector<double> subset_ratios = {0.2, 0.4, 0.6, 0.8, 1.0};
 
+std::vector<oid_t> peloton_num_group_vals = {1, 2, 4, 8};
+
 void RunSubsetExperiment() {
 
   state.projectivity = 1.0;
@@ -887,6 +893,9 @@ void RunSubsetExperiment() {
   peloton_num_groups = 5;
   auto subset_ratio = subset_ratios[0];
 
+  state.projectivity = 0.4;
+  peloton_projectivity = state.projectivity;
+
   // Load in the table with layout
   CreateAndLoadTable((LayoutType) peloton_layout);
 
@@ -894,10 +903,7 @@ void RunSubsetExperiment() {
     // Set selectivity
     state.selectivity = select;
 
-    for(oid_t peloton_num_group = 1;
-        peloton_num_group <= peloton_num_groups;
-        peloton_num_group++) {
-
+    for(auto peloton_num_group : peloton_num_group_vals) {
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
       RunSubsetTest(SUBSET_TYPE_MULTIPLE_GROUP, subset_ratio, peloton_num_group);
