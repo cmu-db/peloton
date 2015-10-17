@@ -30,10 +30,10 @@ typedef enum LayoutType
   LAYOUT_HYBRID /* Hybrid layout */
 } LayoutType;
 
-/* GUC variable */
+/* GUC variables */
 extern LayoutType peloton_layout;
-
-extern double peloton_projectivity;
+extern double     peloton_projectivity;
+extern int        peloton_num_groups;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
