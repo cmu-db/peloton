@@ -74,6 +74,10 @@ class configuration {
   // # of times to run operator
   unsigned long transactions;
 
+  int access_num_groups;
+
+  double subset_ratio;
+
  };
 
 void Usage(FILE *out);
