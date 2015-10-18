@@ -43,6 +43,14 @@ enum ExperimentType{
 
 };
 
+enum SubsetType{
+  SUBSET_TYPE_INVALID = 0,
+
+  SUBSET_TYPE_SINGLE_GROUP = 1,
+  SUBSET_TYPE_MULTIPLE_GROUP = 2
+
+};
+
 extern int orig_scale_factor;
 
 class configuration {
@@ -77,6 +85,8 @@ class configuration {
   int access_num_groups;
 
   double subset_ratio;
+
+  SubsetType subset_experiment_type;
 
  };
 

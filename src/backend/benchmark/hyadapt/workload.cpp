@@ -97,6 +97,7 @@ static void WriteOutput(double duration) {
       << state.write_ratio << " "
       << state.scale_factor << " "
       << state.column_count << " "
+      << state.subset_experiment_type << " "
       << state.access_num_groups << " "
       << state.subset_ratio << " "
       << state.tuples_per_tilegroup << " :: ";
@@ -108,6 +109,7 @@ static void WriteOutput(double duration) {
   out << state.projectivity << " ";
   out << state.column_count << " ";
   out << state.write_ratio << " ";
+  out << state.subset_experiment_type << " ";
   out << state.access_num_groups << " ";
   out << state.subset_ratio << " ";
   out << state.tuples_per_tilegroup << " ";
@@ -869,6 +871,8 @@ void RunSubsetExperiment() {
   // SINGLE GROUP
   /////////////////////////////////////////////////////////
 
+  state.subset_experiment_type = SUBSET_TYPE_SINGLE_GROUP;
+
   // Load in the table with layout
   CreateAndLoadTable((LayoutType) peloton_layout);
 
@@ -889,6 +893,8 @@ void RunSubsetExperiment() {
   /////////////////////////////////////////////////////////
   // MULTIPLE GROUPS
   /////////////////////////////////////////////////////////
+
+  state.subset_experiment_type = SUBSET_TYPE_MULTIPLE_GROUP;
 
   // Across multiple groups
   peloton_num_groups = 5;
@@ -920,6 +926,7 @@ void RunSubsetExperiment() {
   peloton_num_groups = 0;
   state.access_num_groups = 1;
   state.subset_ratio = 1.0;
+  state.subset_experiment_type = SUBSET_TYPE_INVALID;
 
   out.close();
 }
