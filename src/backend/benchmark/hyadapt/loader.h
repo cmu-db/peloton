@@ -22,6 +22,10 @@ extern configuration state;
 
 extern storage::DataTable *hyadapt_table;
 
+void CreateTable();
+
+void LoadTable();
+
 void CreateAndLoadTable(LayoutType layout_type);
 
 }  // namespace hyadapt

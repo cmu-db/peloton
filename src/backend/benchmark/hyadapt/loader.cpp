@@ -39,7 +39,7 @@ namespace hyadapt{
 
 storage::DataTable *hyadapt_table;
 
-static void CreateTable() {
+void CreateTable() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
   const bool indexes = false;
@@ -97,7 +97,7 @@ static void CreateTable() {
 
 }
 
-static void LoadTable() {
+void LoadTable() {
 
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;

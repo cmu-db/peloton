@@ -42,6 +42,8 @@ void RunVerticalExperiment();
 
 void RunSubsetExperiment();
 
+void RunAdaptExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton

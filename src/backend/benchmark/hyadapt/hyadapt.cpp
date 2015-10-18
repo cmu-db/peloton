@@ -80,6 +80,10 @@ void RunBenchmark(){
         RunSubsetExperiment();
         break;
 
+      case EXPERIMENT_TYPE_ADAPT:
+        RunAdaptExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;

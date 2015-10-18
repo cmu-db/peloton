@@ -528,6 +528,151 @@ void RunArithmeticTest() {
   txn_manager.CommitTransaction(txn);
 }
 
+
+void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num_group) {
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+
+  switch(subset_test_type) {
+
+    case SUBSET_TYPE_SINGLE_GROUP:
+    {
+      oid_t column_count = state.projectivity * state.column_count * fraction;
+
+      for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+        column_ids.push_back(hyadapt_column_ids[col_itr]);
+      }
+    }
+    break;
+
+    case SUBSET_TYPE_MULTIPLE_GROUP:
+    {
+      oid_t column_count = state.projectivity * state.column_count;
+      oid_t column_proj = column_count * fraction;
+      oid_t tile_column_count = column_count / peloton_num_group;
+      oid_t tile_column_proj = column_proj / peloton_num_group;
+
+      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
+        oid_t column_offset = tile_group_itr * tile_column_count;
+
+        for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
+          column_ids.push_back(hyadapt_column_ids[column_offset + col_itr]);
+        }
+      }
+
+    }
+    break;
+
+    case SUBSET_TYPE_INVALID:
+    default:
+      std::cout << "Unsupported subset experiment type : " << subset_test_type << "\n";
+      break;
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for(auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+                                        physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&mat_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void RunInsertTest() {
+
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  target_list.clear();
+  direct_map_list.clear();
+
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
+    auto expression = expression::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+
+  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+
+  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&insert_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
 /////////////////////////////////////////////////////////
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
@@ -748,106 +893,6 @@ void RunVerticalExperiment() {
   out.close();
 }
 
-
-
-void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num_group) {
-  const int lower_bound = GetLowerBound();
-  const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // SEQ SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-
-  switch(subset_test_type) {
-
-    case SUBSET_TYPE_SINGLE_GROUP:
-    {
-      oid_t column_count = state.projectivity * state.column_count * fraction;
-
-      for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
-        column_ids.push_back(hyadapt_column_ids[col_itr]);
-      }
-    }
-    break;
-
-    case SUBSET_TYPE_MULTIPLE_GROUP:
-    {
-      oid_t column_count = state.projectivity * state.column_count;
-      oid_t column_proj = column_count * fraction;
-      oid_t tile_column_count = column_count / peloton_num_group;
-      oid_t tile_column_proj = column_proj / peloton_num_group;
-
-      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
-        oid_t column_offset = tile_group_itr * tile_column_count;
-
-        for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
-          column_ids.push_back(hyadapt_column_ids[column_offset + col_itr]);
-        }
-      }
-
-    }
-    break;
-
-    case SUBSET_TYPE_INVALID:
-    default:
-      std::cout << "Unsupported subset experiment type : " << subset_test_type << "\n";
-      break;
-  }
-
-  // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
-
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
-
-  /////////////////////////////////////////////////////////
-  // MATERIALIZE
-  /////////////////////////////////////////////////////////
-
-  // Create and set up materialization executor
-  std::vector<catalog::Column> output_columns;
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(column_id), is_inlined);
-    output_columns.push_back(column);
-
-    old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
-  }
-
-  std::unique_ptr<catalog::Schema> output_schema(
-      new catalog::Schema(output_columns));
-  bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
-
-  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&seq_scan_executor);
-
-  /////////////////////////////////////////////////////////
-  // EXECUTE
-  /////////////////////////////////////////////////////////
-
-  std::vector<executor::AbstractExecutor*> executors;
-  executors.push_back(&mat_executor);
-
-  ExecuteTest(executors);
-
-  txn_manager.CommitTransaction(txn);
-}
-
 std::vector<double> subset_ratios = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 std::vector<oid_t> access_num_groups = {1, 2, 4, 8, 16};
@@ -931,6 +976,48 @@ void RunSubsetExperiment() {
   out.close();
 }
 
+
+void RunAdaptExperiment() {
+
+  state.column_count = column_counts[1];
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  // Go over all layouts
+  for(auto layout : layouts) {
+    // Set layout
+    state.layout = layout;
+    peloton_layout = state.layout;
+
+    std::cout << "LAYOUT :: " << layout << "\n";
+    // TODO: Launch adaptor in case of hybrid layout
+
+    state.projectivity = 0;
+    CreateAndLoadTable((LayoutType) peloton_layout);
+
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
+
+    state.write_ratio = 0.1;
+    state.operator_type = OPERATOR_TYPE_INSERT;
+    RunInsertTest();
+
+    state.projectivity = 0.1;
+    state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+    RunArithmeticTest();
+
+    state.write_ratio = 0.1;
+    state.operator_type = OPERATOR_TYPE_INSERT;
+    RunInsertTest();
+
+    state.projectivity = 0.5;
+    state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+    RunAggregateTest();
+  }
+
+  out.close();
+}
 
 }  // namespace hyadapt
 }  // namespace benchmark
