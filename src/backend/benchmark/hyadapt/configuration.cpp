@@ -190,6 +190,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.access_num_groups = 1;
   state.subset_ratio = 1.0;
+  state.subset_experiment_type = SUBSET_TYPE_INVALID;
 
   // Parse args
   while (1) {
