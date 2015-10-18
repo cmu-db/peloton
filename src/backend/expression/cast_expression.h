@@ -37,30 +37,24 @@ class CastExpression : public AbstractExpression {
                  executor::ExecutorContext *econtext) const {
     assert(this->child_);
     Value child_value = this->child_->Evaluate(tuple1, tuple2, econtext);
-    Value casted_value = child_value;
+    LOG_INFO("CastExpr: cast %d as %d", child_value.GetValueType(), this->type_);
     switch (this->type_) {
       case POSTGRES_VALUE_TYPE_BPCHAR:
       case POSTGRES_VALUE_TYPE_VARCHAR2:
       case POSTGRES_VALUE_TYPE_TEXT:
-        casted_value = ValueFactory::CastAsString(child_value);
-       break;
+       return ValueFactory::CastAsString(child_value);
       case POSTGRES_VALUE_TYPE_INTEGER:
-        casted_value = ValueFactory::CastAsInteger(child_value);
-        break;
+        return ValueFactory::CastAsInteger(child_value);
       case POSTGRES_VALUE_TYPE_DECIMAL:
-        casted_value = ValueFactory::CastAsDecimal(child_value);
-        break;
+        return ValueFactory::CastAsDecimal(child_value);
       case POSTGRES_VALUE_TYPE_DOUBLE:
-        casted_value = ValueFactory::CastAsDouble(child_value);
-        break;
+        return ValueFactory::CastAsDouble(child_value);
       default:
-        LOG_ERROR("Not implemented yet, cast as %d", this->type_);
+        LOG_ERROR("Not implemented yet");
         break;
     }
-    LOG_TRACE("cast from %d to %d", child_value.GetValueType(),
-    casted_value.GetValueType());
 
-    return casted_value;
+    return child_value;
   }
 
   /* @setter for the child expr which will be casted into self.type_
