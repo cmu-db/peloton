@@ -97,6 +97,8 @@ static void WriteOutput(double duration) {
       << state.write_ratio << " "
       << state.scale_factor << " "
       << state.column_count << " "
+      << state.access_num_groups << " "
+      << state.subset_ratio << " "
       << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
@@ -106,6 +108,8 @@ static void WriteOutput(double duration) {
   out << state.projectivity << " ";
   out << state.column_count << " ";
   out << state.write_ratio << " ";
+  out << state.access_num_groups << " ";
+  out << state.subset_ratio << " ";
   out << state.tuples_per_tilegroup << " ";
   out << duration << "\n";
   out.flush();
@@ -844,7 +848,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
 
 std::vector<double> subset_ratios = {0.2, 0.4, 0.6, 0.8, 1.0};
 
-std::vector<oid_t> peloton_num_group_vals = {1, 2, 4, 8};
+std::vector<oid_t> access_num_groups = {1, 2, 4, 8, 16};
 
 void RunSubsetExperiment() {
 
@@ -873,6 +877,7 @@ void RunSubsetExperiment() {
     state.selectivity = select;
 
     for(auto subset_ratio : subset_ratios) {
+      state.subset_ratio = subset_ratio;
 
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -889,7 +894,9 @@ void RunSubsetExperiment() {
   peloton_num_groups = 5;
   auto subset_ratio = subset_ratios[0];
 
-  state.projectivity = 0.4;
+  state.subset_ratio = subset_ratio;
+
+  state.projectivity = 0.8;
   peloton_projectivity = state.projectivity;
 
   // Load in the table with layout
@@ -899,16 +906,20 @@ void RunSubsetExperiment() {
     // Set selectivity
     state.selectivity = select;
 
-    for(auto peloton_num_group : peloton_num_group_vals) {
+    for(auto access_num_group : access_num_groups) {
+      state.access_num_groups = access_num_group;
+
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
-      RunSubsetTest(SUBSET_TYPE_MULTIPLE_GROUP, subset_ratio, peloton_num_group);
+      RunSubsetTest(SUBSET_TYPE_MULTIPLE_GROUP, subset_ratio, access_num_group);
     }
 
   }
 
   // Reset
   peloton_num_groups = 0;
+  state.access_num_groups = 1;
+  state.subset_ratio = 1.0;
 
   out.close();
 }
