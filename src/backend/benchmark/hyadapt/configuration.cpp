@@ -188,6 +188,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.column_count = 100;
   state.write_ratio = 0.0;
 
+  state.access_num_groups = 1;
+  state.subset_ratio = 1.0;
+
   // Parse args
   while (1) {
     int idx = 0;
