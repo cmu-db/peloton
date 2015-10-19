@@ -98,7 +98,7 @@ class configuration {
 
   SubsetType subset_experiment_type;
 
-  bool verbose;
+  bool adapt;
  };
 
 void Usage(FILE *out);

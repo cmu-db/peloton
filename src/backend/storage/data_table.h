@@ -139,7 +139,7 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
                                          const column_map_type &column_map,
                                          bool cleanup = true);
 
@@ -261,6 +261,10 @@ class DataTable : public AbstractTable {
   // samples for clustering
   std::vector<brain::Sample> samples;
 };
+
+// Utils
+
+column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
 }  // End storage namespace
 }  // End peloton namespace
