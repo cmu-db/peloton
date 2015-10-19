@@ -673,8 +673,6 @@ void RunInsertTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  std::cout << "BI Count  :: " << bulk_insert_count << "\n";
-
   planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -1008,6 +1006,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.1;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
@@ -1016,6 +1015,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.1;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
@@ -1030,6 +1030,8 @@ void RunAdaptExperiment() {
   std::thread transformer;
 
   state.verbose = true;
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
 
   // Generate sequence
   GenerateSequence(state.column_count);
