@@ -156,7 +156,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
     }
 
     // Capture fine-grained stats in adapt experiment
-    if(state.verbose == true) {
+    if(state.adapt == true) {
       end = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsed_seconds = end-start;
       double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
@@ -168,7 +168,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 
   }
 
-  if(state.verbose == false) {
+  if(state.adapt == false) {
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
@@ -993,7 +993,22 @@ void RunSubsetExperiment() {
 
 static void Transform() {
 
-  std::cout << "Transform \n";
+  auto period = 1000;
+
+  // Get column map
+  auto table_name = hyadapt_table->GetName();
+  auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
+
+  peloton_projectivity = state.projectivity;
+  auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
+
+  // Transform
+  while(state.adapt == true) {
+    auto tile_group_count = hyadapt_table->GetTileGroupCount();
+    auto tile_group_offset = rand() % tile_group_count;
+
+    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, false);
+  }
 
 }
 
@@ -1029,7 +1044,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.verbose = true;
+  state.adapt = true;
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
 
@@ -1052,14 +1067,15 @@ void RunAdaptExperiment() {
     RunAdaptTest();
 
     // Stop transformer
-    if(state.layout == LAYOUT_HYBRID)
+    if(state.layout == LAYOUT_HYBRID) {
+      state.adapt = false;
       transformer.join();
+    }
 
   }
 
   // Reset
   state.transactions = orig_transactions;
-  state.verbose = false;
 
   out.close();
 }

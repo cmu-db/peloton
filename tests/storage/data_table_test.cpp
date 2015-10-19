@@ -33,7 +33,6 @@ TEST(DataTableTests, TransformTileGroupTest) {
 
   auto tile_group = data_table->GetTileGroup(0);
   auto tile_group_id = tile_group->GetTileGroupId();
-
   std::cout << (*tile_group);
 
   // Create the new column map
@@ -45,7 +44,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
 
   // Transform the tile group
   std::unique_ptr<storage::TileGroup> tile_group1(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
+      data_table->TransformTileGroup(0, column_map, false));
 
   std::cout << *(tile_group1.get());
 
@@ -56,7 +55,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 0);
 
   std::unique_ptr<storage::TileGroup> tile_group2(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
+      data_table->TransformTileGroup(0, column_map, false));
 
   std::cout << *(tile_group2.get());
 
@@ -67,7 +66,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 2);
 
   std::unique_ptr<storage::TileGroup> tile_group3(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
+      data_table->TransformTileGroup(0, column_map, false));
 
   std::cout << *(tile_group3.get());
 }
