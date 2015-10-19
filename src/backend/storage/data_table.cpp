@@ -29,8 +29,6 @@ namespace storage {
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
 
-column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
-
 /**
  * Check if the locations contains at least one visible entry to the transaction
  */
@@ -779,19 +777,14 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 }
 
 storage::TileGroup *DataTable::TransformTileGroup(
-    oid_t tile_group_id, const column_map_type &column_map, bool cleanup) {
+    oid_t tile_group_offset, const column_map_type &column_map, bool cleanup) {
   // First, check if the tile group is in this table
-  {
-    std::lock_guard<std::mutex> lock(table_mutex);
-
-    auto found_itr = std::find(tile_groups.begin(), tile_groups.end(),
-                               tile_group_id);
-
-    if (found_itr == tile_groups.end()) {
-      LOG_ERROR("Tile group not found in table : %lu \n", tile_group_id);
-      return nullptr;
-    }
+  if (tile_group_offset >= tile_groups.size()) {
+    LOG_ERROR("Tile group offset not found in table : %lu \n", tile_group_offset);
+    return nullptr;
   }
+
+  auto tile_group_id = tile_groups[tile_group_offset];
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
