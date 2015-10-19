@@ -192,6 +192,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.subset_ratio = 1.0;
   state.subset_experiment_type = SUBSET_TYPE_INVALID;
 
+  state.verbose = false;
+
   // Parse args
   while (1) {
     int idx = 0;

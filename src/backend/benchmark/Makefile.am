@@ -19,7 +19,7 @@ hyadapt_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM
 				   $(third_party_INCLUDES) \
 				   -I$(srcdir)/backend/benchmark
  
-hyadapt_LDADD = libpelotonpg.la libpeloton.la
+hyadapt_LDADD = libpelotonpg.la libpeloton.la -lpthread
 
 ######################################################################
 # YCSB

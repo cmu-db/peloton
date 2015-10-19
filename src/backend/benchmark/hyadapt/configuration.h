@@ -98,6 +98,7 @@ class configuration {
 
   SubsetType subset_experiment_type;
 
+  bool verbose;
  };
 
 void Usage(FILE *out);
