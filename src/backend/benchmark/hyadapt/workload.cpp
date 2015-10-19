@@ -18,6 +18,7 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <thread>
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
@@ -153,6 +154,18 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
       assert(status == false);
 
     }
+
+    // Capture fine-grained stats in adapt experiment
+    if(state.verbose == true) {
+      end = std::chrono::system_clock::now();
+      std::chrono::duration<double> elapsed_seconds = end-start;
+      double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+
+      WriteOutput(time_per_transaction);
+
+      start = std::chrono::system_clock::now();
+    }
+
   }
 
   end = std::chrono::system_clock::now();
@@ -976,10 +989,43 @@ void RunSubsetExperiment() {
   out.close();
 }
 
+static void Transform() {
+
+  std::cout << "Transform \n";
+
+}
+
+static void RunAdaptTest() {
+
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = 0.1;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+  state.write_ratio = 0.1;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunAggregateTest();
+
+}
 
 void RunAdaptExperiment() {
 
   state.column_count = column_counts[1];
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.verbose = true;
 
   // Generate sequence
   GenerateSequence(state.column_count);
@@ -990,31 +1036,24 @@ void RunAdaptExperiment() {
     state.layout = layout;
     peloton_layout = state.layout;
 
-    std::cout << "LAYOUT :: " << layout << "\n";
-    // TODO: Launch adaptor in case of hybrid layout
-
-    state.projectivity = 0;
+    state.projectivity = 1.0;
     CreateAndLoadTable((LayoutType) peloton_layout);
 
-    state.operator_type = OPERATOR_TYPE_DIRECT;
-    RunDirectTest();
+    // Launch transformer
+    if(state.layout == LAYOUT_HYBRID)
+      transformer = std::thread(Transform);
 
-    state.write_ratio = 0.1;
-    state.operator_type = OPERATOR_TYPE_INSERT;
-    RunInsertTest();
+    RunAdaptTest();
 
-    state.projectivity = 0.1;
-    state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-    RunArithmeticTest();
+    // Stop transformer
+    if(state.layout == LAYOUT_HYBRID)
+      transformer.join();
 
-    state.write_ratio = 0.1;
-    state.operator_type = OPERATOR_TYPE_INSERT;
-    RunInsertTest();
-
-    state.projectivity = 0.5;
-    state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-    RunAggregateTest();
   }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.verbose = false;
 
   out.close();
 }
