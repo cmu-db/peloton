@@ -168,11 +168,13 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 
   }
 
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
-  double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+  if(state.verbose == false) {
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
 
-  WriteOutput(time_per_transaction);
+    WriteOutput(time_per_transaction);
+  }
 }
 
 void RunDirectTest() {
@@ -670,6 +672,8 @@ void RunInsertTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+
+  std::cout << "BI Count  :: " << bulk_insert_count << "\n";
 
   planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
