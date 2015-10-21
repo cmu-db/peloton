@@ -394,6 +394,8 @@ standard_ProcessUtility(Node *parsetree,
        */
     case T_TransactionStmt:
       {
+        //Peloton change: try to disable this
+        break;
         TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
         switch (stmt->kind)
