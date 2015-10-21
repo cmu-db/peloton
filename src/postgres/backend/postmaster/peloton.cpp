@@ -175,10 +175,7 @@ peloton_dml(PlanState *planstate,
 
   // Get our plan
   if (prepStmtName) {
-    std::cout << "Got a named plan " << prepStmtName << std::endl;
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().GetCachedPlan(prepStmtName);
-  } else {
-    std::cout << "Got an unnamed plan" << std::endl;
   }
 
   /* A cache miss or an unnamed plan */
