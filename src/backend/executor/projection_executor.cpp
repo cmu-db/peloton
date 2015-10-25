@@ -12,13 +12,14 @@
 
 #include "backend/executor/projection_executor.h"
 
-#include "../planner/projection_plan.h"
+#include "backend/planner/projection_plan.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace executor {
@@ -27,7 +28,7 @@ namespace executor {
  * @brief Constructor
  * @param node  ProjectionNode plan node corresponding to this executor
  */
-ProjectionExecutor::ProjectionExecutor(planner::AbstractPlan *node,
+ProjectionExecutor::ProjectionExecutor(const planner::AbstractPlan *node,
                                        ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

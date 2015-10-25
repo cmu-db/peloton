@@ -128,7 +128,7 @@ PgStat_MsgBgWriter BgWriterStats;
  * Local data
  * ----------
  */
-NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
+thread_local NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
 
 static struct sockaddr_storage pgStatAddr;
 
@@ -2476,14 +2476,14 @@ pgstat_fetch_global(void)
  * ------------------------------------------------------------
  */
 
-static PgBackendStatus *BackendStatusArray = NULL;
-static PgBackendStatus *MyBEEntry = NULL;
-static char *BackendClientHostnameBuffer = NULL;
-static char *BackendAppnameBuffer = NULL;
-static char *BackendActivityBuffer = NULL;
-static Size BackendActivityBufferSize = 0;
+thread_local static PgBackendStatus *BackendStatusArray = NULL;
+thread_local static PgBackendStatus *MyBEEntry = NULL;
+thread_local static char *BackendClientHostnameBuffer = NULL;
+thread_local static char *BackendAppnameBuffer = NULL;
+thread_local static char *BackendActivityBuffer = NULL;
+thread_local static Size BackendActivityBufferSize = 0;
 #ifdef USE_SSL
-static PgBackendSSLStatus *BackendSslStatusBuffer = NULL;
+thread_local static PgBackendSSLStatus *BackendSslStatusBuffer = NULL;
 #endif
 
 

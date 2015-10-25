@@ -26,7 +26,7 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-MergeJoinExecutor::MergeJoinExecutor(planner::AbstractPlan *node,
+MergeJoinExecutor::MergeJoinExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractJoinExecutor(node, executor_context) {
   join_clauses_ = nullptr;
@@ -243,14 +243,6 @@ bool MergeJoinExecutor::DExecute() {
     // as this tile ends and its underlying physical tile, if any, is safe to be owned by output tile
     right_tile->TransferOwnershipTo(output_tile.get());
     right_end_ = true;
-  }
-
-  for (auto col : position_lists) {
-    LOG_INFO("col");
-    for (auto elm : col) {
-      (void) elm;  // silent compiler
-      LOG_INFO("elm: %u", elm);
-    }
   }
 
   // Check if we have any matching tuples.

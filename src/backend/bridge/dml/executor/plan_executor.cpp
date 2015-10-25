@@ -30,7 +30,7 @@ namespace bridge {
 executor::ExecutorContext *BuildExecutorContext(PlanState *planstate,
                                                 concurrency::Transaction *txn);
 executor::AbstractExecutor *BuildExecutorTree(
-    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     PlanState *planstate, executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
@@ -74,7 +74,7 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
  * @return The updated executor tree.
  */
 executor::AbstractExecutor *BuildExecutorTree(
-    executor::AbstractExecutor *root, planner::AbstractPlan *plan,
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr)
@@ -220,7 +220,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
  * @return status of execution.
  */
 peloton_status
-PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
+PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                           ParamListInfo param_list,
                           TupleDesc tuple_desc,
                           TransactionId txn_id) {
@@ -255,7 +255,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(
       nullptr, plan, executor_context);
 
-  // Add materialization if the root if seqscan or limit
+  // Add materialization on top of the root if needed
   executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
@@ -310,7 +310,7 @@ PlanExecutor::ExecutePlan(planner::AbstractPlan *plan,
   p_status.m_processed = executor_context->num_processed;
   p_status.m_result_slots = slots;
 
-// final cleanup
+  // final cleanup
   cleanup:
 
   LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());

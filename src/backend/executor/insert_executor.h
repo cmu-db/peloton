@@ -26,7 +26,7 @@ class InsertExecutor : public AbstractExecutor {
   InsertExecutor(InsertExecutor &&) = delete;
   InsertExecutor &operator=(InsertExecutor &&) = delete;
 
-  explicit InsertExecutor(planner::AbstractPlan *node,
+  explicit InsertExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
  protected:

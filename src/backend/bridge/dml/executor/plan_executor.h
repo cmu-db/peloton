@@ -38,7 +38,7 @@ class PlanExecutor {
   static void PrintPlan(const planner::AbstractPlan *plan,
                         std::string prefix = "");
 
-  static peloton_status ExecutePlan(planner::AbstractPlan *plan,
+  static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     ParamListInfo m_param_list,
                                     TupleDesc m_tuple_desc,
                                     TransactionId txn_id);

@@ -96,13 +96,13 @@ class BridgeTest {
   static std::vector<catalog::Column> CreateSimpleColumns();
 
   static bool CheckColumn(catalog::Column &column, std::string column_name,
-                          int length, ValueType type);
+                          unsigned long length, ValueType type);
 
   static bool CheckColumnWithConstraint(catalog::Column &column,
                                         ConstraintType constraint_type,
                                         std::string constraint_name,
                                         unsigned int constraint_count,
-                                        int foreign_key_offset = -1);
+                                        oid_t foreign_key_offset = INVALID_OID);
 
   static bool CheckIndex(index::Index *index, std::string index_name,
                          oid_t column_count, IndexType method_type,

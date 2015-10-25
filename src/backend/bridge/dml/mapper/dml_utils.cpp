@@ -121,6 +121,10 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       child_planstate = PrepareAggState(reinterpret_cast<AggState*>(planstate));
       break;
 
+    case T_ResultState:
+      // TODO: Do we need to handle this ?
+      break;
+
     default:
       elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d",
            planstate_type);
@@ -131,9 +135,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
   if (child_planstate != nullptr) {
     if (root != nullptr) {
       if (left_child)
-        outerAbstractPlanState(root) = child_planstate;
+        root->left_tree = child_planstate;
       else
-        innerAbstractPlanState(root) = child_planstate;
+        root->right_tree = child_planstate;
     } else
       root = child_planstate;
   }

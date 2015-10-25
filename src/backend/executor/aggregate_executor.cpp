@@ -28,7 +28,7 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-AggregateExecutor::AggregateExecutor(planner::AbstractPlan *node,
+AggregateExecutor::AggregateExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
 }
@@ -56,13 +56,22 @@ bool AggregateExecutor::DInit() {
 
   assert(output_table_schema->GetColumnCount() >= 1);
 
+  // clean up result
   result_itr = START_OID;
+  result.clear();
+
+  // reset done
+  done = false;
+
+  // clean up temporary aggregation table
+  delete output_table;
 
   bool own_schema = false;
+  bool adapt_table = false;
   output_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
       DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema);
+      own_schema, adapt_table);
 
   return true;
 }
