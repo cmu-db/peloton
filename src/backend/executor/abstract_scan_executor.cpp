@@ -50,10 +50,9 @@ bool AbstractScanExecutor::DInit() {
       GetPlanNode<planner::AbstractScan>();
 
   predicate_ = node.GetPredicate();
-  auto column_ids = node.GetColumnIds();
+  //auto column_ids = node.GetColumnIds();
 
-  for(auto column_id : column_ids)
-    column_ids_.push_back(column_id);
+  column_ids_ = std::move(node.GetColumnIds());
 
   return true;
 }
