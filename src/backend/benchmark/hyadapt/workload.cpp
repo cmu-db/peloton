@@ -802,47 +802,45 @@ void RunSelectivityExperiment() {
   out.close();
 }
 
-std::vector<double> op_projectivity = {0.1, 1.0};
+int op_column_count = 100;
 
-std::vector<double> op_selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
+std::vector<double> op_projectivity = {0.01, 0.1, 1.0};
+
+std::vector<double> op_selectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
 void RunOperatorExperiment() {
 
-  // Go over all column counts
-  for(auto column_count : column_counts) {
-    state.column_count = column_count;
+  state.column_count = op_column_count;
 
-    // Generate sequence
-    GenerateSequence(state.column_count);
+  // Generate sequence
+  GenerateSequence(state.column_count);
 
-    // Go over all write ratios
-    for(auto write_ratio : write_ratios) {
-      state.write_ratio = write_ratio;
+  // Go over all write ratios
+  for(auto write_ratio : write_ratios) {
+    state.write_ratio = write_ratio;
 
-      // Go over all layouts
-      for(auto layout : layouts) {
-        // Set layout
-        state.layout = layout;
-        peloton_layout = state.layout;
+    // Go over all layouts
+    for(auto layout : layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
 
-        for(auto projectivity : op_projectivity) {
-          // Set projectivity
-          state.projectivity = projectivity;
-          peloton_projectivity = state.projectivity;
+      for(auto projectivity : op_projectivity) {
+        // Set projectivity
+        state.projectivity = projectivity;
+        peloton_projectivity = state.projectivity;
 
-          for(auto selectivity : op_selectivity) {
-            // Set selectivity
-            state.selectivity = selectivity;
+        for(auto selectivity : op_selectivity) {
+          // Set selectivity
+          state.selectivity = selectivity;
 
-            // Load in the table with layout
-            CreateAndLoadTable(layout);
+          // Load in the table with layout
+          CreateAndLoadTable(layout);
 
-            // Run operator
-            state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-            RunArithmeticTest();
-          }
+          // Run operator
+          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          RunArithmeticTest();
         }
-
       }
 
     }
