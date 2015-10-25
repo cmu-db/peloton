@@ -26,7 +26,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   SeqScanExecutor(SeqScanExecutor &&) = delete;
   SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
 
-  explicit SeqScanExecutor(planner::AbstractPlan *node,
+  explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
  protected:

@@ -139,9 +139,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
 		size = add_size(size, AsyncShmemSize());
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
-#endif
+//#endif
 
 		/* freeze the addin request size and include it */
 		addin_request_allowed = false;
@@ -150,7 +151,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/* might as well round it off to a multiple of a typical page size */
 		size = add_size(size, 8192 - (size % 8192));
 
-		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
+		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu) with makePrivate: %d", size, makePrivate);
 
 		/*
 		 * Create the shmem segment
@@ -173,11 +174,12 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 * should only be reached in the EXEC_BACKEND case, and even then only
 		 * with makePrivate == false.
 		 */
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 		Assert(!makePrivate);
-#else
-		elog(PANIC, "should be attached to shared memory already");
-#endif
+//#else
+		//elog(PANIC, "should be attached to shared memory already");
+//#endif
 	}
 
 	/*
@@ -190,12 +192,17 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Now initialize LWLocks, which do shared memory allocation and are
 	 * needed for InitShmemIndex.
 	 */
+	int thread_id = GetBackendThreadId();
+	int pid = MyProcPid;
 	CreateLWLocks();
+	elog(DEBUG3, "LWLocks Created :: PID: %d, TID : %d", pid, thread_id);
+
 
 	/*
 	 * Set up shmem.c index hashtable
 	 */
 	InitShmemIndex();
+	elog(DEBUG3, "Shmem index init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up xlog, clog, and buffers
@@ -206,31 +213,38 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	SUBTRANSShmemInit();
 	MultiXactShmemInit();
 	InitBufferPool();
+	elog(DEBUG3, "xlog clog and buffers init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up lock manager
 	 */
 	InitLocks();
+	elog(DEBUG3, "Lock mgr init'ed :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up predicate lock manager
 	 */
 	InitPredicateLocks();
+	elog(DEBUG3, "Predicate Lock mgr init'ed :: PID : %d,  TID : %d", pid, thread_id);
+
 
 	/*
 	 * Set up process table
 	 */
 	if (!IsUnderPostmaster)
 		InitProcGlobal();
-	CreateSharedProcArray();
-	CreateSharedBackendStatus();
+	CreateSharedProcArray();  // sth in this are not thread_local
+	CreateSharedBackendStatus(); // sth in this are not thread_local
 	TwoPhaseShmemInit();
 	BackgroundWorkerShmemInit();
+	elog(DEBUG3, "process table created :: PID: %d, TID : %d", pid, thread_id);
+
 
 	/*
 	 * Set up shared-inval messaging
 	 */
 	CreateSharedInvalidationState();
+	elog(DEBUG3, "Set up shared-inval messaging :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up interprocess signaling mechanisms
@@ -243,6 +257,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	ReplicationOriginShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
+	elog(DEBUG3, "Set up interprocess signal mechanisms :: PID: %d, TID : %d", pid, thread_id);
 
 	/*
 	 * Set up other modules that need some shared memory space
@@ -250,15 +265,17 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	BTreeShmemInit();
 	SyncScanShmemInit();
 	AsyncShmemInit();
+	elog(DEBUG3, "Other modules set up :: PID: %d, TID : %d", pid, thread_id);
 
-#ifdef EXEC_BACKEND
+//TODO: Peloton Changes
+//#ifdef EXEC_BACKEND
 
 	/*
 	 * Alloc the win32 shared backend array
 	 */
 	if (!IsUnderPostmaster)
 		ShmemBackendArrayAllocation();
-#endif
+//#endif
 
 	/* Initialize dynamic shared memory facilities. */
 	if (!IsUnderPostmaster)

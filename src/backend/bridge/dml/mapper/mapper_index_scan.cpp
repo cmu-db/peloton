@@ -46,7 +46,7 @@ static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_run
  *          8. unary op
  * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlan *PlanTransformer::TransformIndexScan(
+const planner::AbstractPlan *PlanTransformer::TransformIndexScan(
     const IndexScanPlanState *iss_plan_state,
     const TransformOptions options) {
   /* info needed to initialize plan node */
@@ -97,9 +97,9 @@ planner::AbstractPlan *PlanTransformer::TransformIndexScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
-  planner::AbstractPlan *rv = nullptr;
+  const planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
@@ -212,7 +212,7 @@ static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_run
  *          8. unary op
  * @return Pointer to the constructed AbstractPlan.
  */
-planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
+const planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
     const IndexOnlyScanPlanState *ioss_plan_state,
     const TransformOptions options) {
   /* info needed to initialize plan node */
@@ -262,7 +262,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
   planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
@@ -283,7 +283,7 @@ planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
  *
  * @return Pointer to the constructed AbstractPlan
  */
-planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
+const planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
     const BitmapHeapScanPlanState *bhss_plan_state,
     const TransformOptions options) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
@@ -339,7 +339,7 @@ planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
                               options.use_projInfo);
 
   auto scan_node =
-      new planner::IndexScanPlan(predicate, column_ids, table, index_scan_desc);
+      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc);
 
   planner::AbstractPlan *rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */

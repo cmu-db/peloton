@@ -210,7 +210,7 @@ typedef struct PROC_HDR
 
 extern PROC_HDR *ProcGlobal;
 
-extern PGPROC *PreparedXactProcs;
+thread_local extern PGPROC *PreparedXactProcs;
 
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,

@@ -92,10 +92,11 @@
 #define HBA_FILENAME	"pg_hba.conf"
 #define IDENT_FILENAME	"pg_ident.conf"
 
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
-#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new___"
-#endif
+#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
+//#endif
 
 /*
  * Precision with which REAL type guc values are to be printed for GUC
@@ -398,13 +399,33 @@ static const struct config_enum_entry row_security_options[] = {
  * Range of values may be changed
  * Values have to be defined as enum
  */
+/* Possible values for peloton_mode GUC */
+typedef enum PelotonModeType
+{
+  PELOTON_MODE_0,   /* Whatever */
+  PELOTON_MODE_1    /* Whatever */
+} PelotonModeType;
+
 static const struct config_enum_entry peloton_mode_options[] = {
-	{"peloton_mode_0", 0, false},
-	{"peloton_mode_1", 1, false},
-	{"peloton_mode_2", 2, false},
+	{"peloton_mode_0", PELOTON_MODE_0, false},
+	{"peloton_mode_1", PELOTON_MODE_1, false},
 	{NULL, 0, false}
 };
 
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType
+{
+  LAYOUT_ROW,   /* Pure row layout */
+  LAYOUT_COLUMN, /* Pure column layout */
+  LAYOUT_HYBRID /* Hybrid layout */
+} LayoutType;
+
+static const struct config_enum_entry peloton_tilegroup_layout_options[] = {
+  {"row", LAYOUT_ROW, false},
+  {"column", LAYOUT_COLUMN, false},
+  {"hybrid", LAYOUT_HYBRID, false},
+  {NULL, 0, false}
+};
 
 /*
  * Options for enum values stored in other modules
@@ -466,7 +487,9 @@ int			tcp_keepalives_count;
 int			row_security;
 
 // TODO: Peloton Changes
-int			peloton_mode = 0;
+int			peloton_mode;
+int     peloton_layout;
+double  peloton_projectivity;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -3674,10 +3697,21 @@ struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("System behavior will be modified depending on the specific peloton mode")
 		},
 		&peloton_mode,
-		0, peloton_mode_options,
+		PELOTON_MODE_0, peloton_mode_options,
 		// the constant 0 can be replaced by an enum
 		NULL, NULL, NULL
 	},
+
+	{
+    {"peloton_tilegroup_layout", PGC_USERSET, PELOTON_TILEGROUP_LAYOUT_OPTIONS,
+      gettext_noop("Change peloton tilegroup layout"),
+      gettext_noop("This determines the tilegroup layout.")
+    },
+    &peloton_layout,
+    LAYOUT_ROW, peloton_tilegroup_layout_options,
+    // the constant 0 can be replaced by an enum
+    NULL, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{
@@ -4065,6 +4099,8 @@ build_guc_variables(void)
 	qsort((void *) guc_variables, num_guc_variables,
 		  sizeof(struct config_generic *), guc_var_compare);
 }
+
+
 
 /*
  * Add a new___ GUC variable to the list of known variables. The
@@ -8414,7 +8450,8 @@ _ShowOption(struct config_generic * record, bool use_units)
 }
 
 
-#ifdef EXEC_BACKEND
+//TODO: Peloton Changes
+//#ifdef EXEC_BACKEND
 
 /*
  *	These routines dump out all non-default GUC options into a binary
@@ -8563,9 +8600,9 @@ read_string_with_null(FILE *fp)
 				elog(FATAL, "invalid format of exec config params file");
 		}
 		if (i == 0)
-			str = guc_malloc(FATAL, maxlen);
+			str = (char *)guc_malloc(FATAL, maxlen);
 		else if (i == maxlen)
-			str = guc_realloc(FATAL, str, maxlen *= 2);
+			str = (char *)guc_realloc(FATAL, str, maxlen *= 2);
 		str[i++] = ch;
 	} while (ch != 0);
 
@@ -8643,7 +8680,8 @@ read_nondefault_variables(void)
 
 	FreeFile(fp);
 }
-#endif   /* EXEC_BACKEND */
+//TODO: peloton changes
+//#endif   /* EXEC_BACKEND */
 
 /*
  * can_skip_gucvar:

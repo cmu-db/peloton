@@ -132,6 +132,7 @@ typedef struct CachedPlan
 	bool		is_oneshot;		/* is it a "oneshot" plan? */
 	bool		is_saved;		/* is CachedPlan in a long-lived context? */
 	bool		is_valid;		/* is the stmt_list currently valid? */
+	bool    is_generic; /* Peloton changes: Is this plan a generic plan that leaves parameters blank? */
 	TransactionId saved_xmin;	/* if valid, replan when TransactionXmin
 								 * changes from this value */
 	int			generation;		/* parent's generation number for this plan */

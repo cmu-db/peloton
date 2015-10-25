@@ -28,8 +28,11 @@ class InsertPlan : public AbstractPlan {
   InsertPlan &operator=(InsertPlan &&) = delete;
 
   explicit InsertPlan(storage::DataTable *table,
-                      const planner::ProjectInfo *project_info)
-      : target_table_(table), project_info_(project_info) {}
+                      const planner::ProjectInfo *project_info,
+                      oid_t bulk_insert_count = 1)
+      : target_table_(table),
+        project_info_(project_info),
+        bulk_insert_count(bulk_insert_count) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
@@ -41,6 +44,10 @@ class InsertPlan : public AbstractPlan {
     return project_info_.get();
   }
 
+  oid_t GetBulkInsertCount() const {
+    return bulk_insert_count;
+  }
+
   std::string GetInfo() const { return target_table_->GetName(); }
 
  private:
@@ -50,6 +57,9 @@ class InsertPlan : public AbstractPlan {
 
   /** @brief Projection Info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
+
+  // Number of times to insert
+  oid_t bulk_insert_count;
 };
 
 }  // namespace planner

@@ -35,9 +35,11 @@ class AbstractScan : public AbstractPlan {
   AbstractScan(AbstractScan &&) = delete;
   AbstractScan &operator=(AbstractScan &&) = delete;
 
-  AbstractScan(expression::AbstractExpression *predicate,
-                   const std::vector<oid_t> &column_ids)
-      : predicate_(predicate),
+  AbstractScan(storage::DataTable *table,
+               expression::AbstractExpression *predicate,
+               const std::vector<oid_t> &column_ids)
+      : target_table_(table),
+        predicate_(predicate),
         column_ids_(column_ids){
   }
 
@@ -53,12 +55,20 @@ class AbstractScan : public AbstractPlan {
 
   inline std::string GetInfo() const { return "AbstractScan"; }
 
+  storage::DataTable *GetTable() const {
+    return target_table_;
+  }
+
  private:
+  /** @brief Pointer to table to scan from. */
+  storage::DataTable *target_table_ = nullptr;
+
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 
   /** @brief Columns from tile group to be added to logical tile output. */
   std::vector<oid_t> column_ids_;
+
 };
 
 }  // namespace planner
