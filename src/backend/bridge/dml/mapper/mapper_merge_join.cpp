@@ -28,7 +28,7 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
+const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
     const MergeJoinPlanState* mj_plan_state) {
 
 
@@ -85,9 +85,9 @@ planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
     result = plan_node;
   }
 
-  planner::AbstractPlan *outer = PlanTransformer::TransformPlan(
+  const planner::AbstractPlan *outer = PlanTransformer::TransformPlan(
       outerAbstractPlanState(mj_plan_state));
-  planner::AbstractPlan *inner = PlanTransformer::TransformPlan(
+  const planner::AbstractPlan *inner = PlanTransformer::TransformPlan(
       innerAbstractPlanState(mj_plan_state));
 
   /* Add the children nodes */

@@ -90,7 +90,7 @@ thread_local ErrorContextCallback *error_context_stack = NULL;
 
 thread_local sigjmp_buf *PG_exception_stack = NULL;
 
-extern bool redirection_done;
+thread_local extern bool redirection_done;
 
 /*
  * Hook for intercepting messages before they are sent to the server log.
@@ -99,7 +99,7 @@ extern bool redirection_done;
  * libraries will miss any log messages that are generated before the
  * library is loaded.
  */
-emit_log_hook_type emit_log_hook = NULL;
+thread_local emit_log_hook_type emit_log_hook = NULL;
 
 /* GUC parameters */
 int			Log_error_verbosity = PGERROR_VERBOSE;
@@ -2207,10 +2207,11 @@ setup_formatted_log_time(void)
 	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
 	 */
+	pg_tm *t = pg_localtime(&stamp_time, log_timezone);
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 	/* leave room for milliseconds... */
 				"%Y-%m-%d %H:%M:%S     %Z",
-				pg_localtime(&stamp_time, log_timezone));
+				t);
 
 	/* 'paste' milliseconds into place... */
 	sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));

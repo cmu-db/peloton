@@ -1440,45 +1440,63 @@ class Value {
   Value CastAsString() const {
     assert(IsNull() == false);
 
-    std::stringstream value;
     const ValueType type = GetValueType();
     switch (type) {
-      case VALUE_TYPE_TINYINT:
+      case VALUE_TYPE_TINYINT: {
+        std::stringstream value;
         // This cast keeps the tiny int from being confused for a char.
-        value << static_cast<int>(GetTinyInt()); break;
-      case VALUE_TYPE_SMALLINT:
-        value << GetSmallInt(); break;
-      case VALUE_TYPE_INTEGER:
-        value << GetInteger(); break;
-      case VALUE_TYPE_BIGINT:
-        value << GetBigInt(); break;
+        value << static_cast<int>(GetTinyInt());
+        return GetTempStringValue(value.str().c_str(), value.str().length());
+      }
+      case VALUE_TYPE_SMALLINT: {
+        std::stringstream value;
+        value << GetSmallInt();
+        return GetTempStringValue(value.str().c_str(), value.str().length());
+      }
+      case VALUE_TYPE_INTEGER: {
+        std::stringstream value;
+        value << GetInteger();
+        return GetTempStringValue(value.str().c_str(), value.str().length());
+      }
+      case VALUE_TYPE_BIGINT: {
+        std::stringstream value;
+        value << GetBigInt();
+        return GetTempStringValue(value.str().c_str(), value.str().length());
         //case VALUE_TYPE_TIMESTAMP:
         //TODO: The SQL standard wants an actual date literal rather than a numeric value, here. See ENG-4284.
         //value << static_cast<double>(GetTimestamp()); break;
-      case VALUE_TYPE_DOUBLE:
+      }
+      case VALUE_TYPE_DOUBLE: {
+        std::stringstream value;
         // Use the specific standard SQL formatting for float values,
         // which the C/C++ format options don't quite support.
         StreamSQLFloatFormat(value, GetDouble());
-        break;
-      case VALUE_TYPE_DECIMAL:
-        value << CreateStringFromDecimal(); break;
+        return GetTempStringValue(value.str().c_str(), value.str().length());
+      }
+      case VALUE_TYPE_DECIMAL: {
+        std::stringstream value;
+        value << CreateStringFromDecimal();
+        return GetTempStringValue(value.str().c_str(), value.str().length());
+      }
       case VALUE_TYPE_VARCHAR:
       case VALUE_TYPE_VARBINARY: {
         // note: we allow binary conversion to strings to support
         // byte[] as string parameters...
         // In the future, it would be nice to check this is a decent string here...
-        Value retval(VALUE_TYPE_VARCHAR);
-        memcpy(retval.m_data, m_data, sizeof(m_data));
-        return retval;
+        //Peloton Changes:
+        //Value retval(VALUE_TYPE_VARCHAR);
+        //memcpy(retval.m_data, m_data, sizeof(m_data));
+        return *this;
       }
       case VALUE_TYPE_TIMESTAMP: {
+        std::stringstream value;
         streamTimestamp(value);
-        break;
+        return GetTempStringValue(value.str().c_str(), value.str().length());
       }
       default:
         ThrowCastSQLException(type, VALUE_TYPE_VARCHAR);
     }
-    return GetTempStringValue(value.str().c_str(), value.str().length());
+    return *this;
   }
 
   Value CastAsBinary() const {

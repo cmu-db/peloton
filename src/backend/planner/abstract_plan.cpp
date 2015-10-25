@@ -29,15 +29,15 @@ AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
-void AbstractPlan::AddChild(AbstractPlan *child) {
+void AbstractPlan::AddChild(const AbstractPlan *child) {
   children_.push_back(child);
 }
 
-const std::vector<AbstractPlan *> &AbstractPlan::GetChildren() const {
+const std::vector<const AbstractPlan *> &AbstractPlan::GetChildren() const {
   return children_;
 }
 
-AbstractPlan *AbstractPlan::GetParent() { return parent_; }
+const AbstractPlan *AbstractPlan::GetParent() { return parent_; }
 
 // Get a string representation of this plan
 std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {

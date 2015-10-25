@@ -114,11 +114,11 @@ bool		XLOG_DEBUG = false;
  * Max distance from last checkpoint, before triggering a new___ xlog-based
  * checkpoint.
  */
-int			CheckPointSegments;
+thread_local int			CheckPointSegments;
 
 /* Estimated distance between checkpoints, in bytes */
-static double CheckPointDistanceEstimate = 0;
-static double PrevCheckPointDistance = 0;
+thread_local static double CheckPointDistanceEstimate = 0;
+thread_local static double PrevCheckPointDistance = 0;
 
 /*
  * GUC support
@@ -163,13 +163,13 @@ extern const config_enum_entry archive_mode_options[] = {
  * Because only the checkpointer or a stand-alone backend can perform
  * checkpoints, this will be unused in normal backends.
  */
-CheckpointStatsData CheckpointStats;
+thread_local CheckpointStatsData CheckpointStats;
 
 /*
  * ThisTimeLineID will be same in all backends --- it identifies current
  * WAL timeline for the database system.
  */
-TimeLineID	ThisTimeLineID = 0;
+thread_local TimeLineID	ThisTimeLineID = 0;
 
 /*
  * Are we doing recovery from XLOG?
@@ -182,16 +182,16 @@ TimeLineID	ThisTimeLineID = 0;
  * process you're running in, use RecoveryInProgress() but only after shared
  * memory startup and lock initialization.
  */
-bool		InRecovery = false;
+thread_local bool		InRecovery = false;
 
 /* Are we in Hot Standby mode? Only valid in startup process, see xlog.h */
-HotStandbyState standbyState = STANDBY_DISABLED;
+thread_local HotStandbyState standbyState = STANDBY_DISABLED;
 
-static XLogRecPtr LastRec;
+thread_local static XLogRecPtr LastRec;
 
 /* Local copy of WalRcv->receivedUpto */
-static XLogRecPtr receivedUpto = 0;
-static TimeLineID receiveTLI = 0;
+thread_local static XLogRecPtr receivedUpto = 0;
+thread_local static TimeLineID receiveTLI = 0;
 
 /*
  * During recovery, lastFullPageWrites keeps track of full_page_writes that
@@ -199,7 +199,7 @@ static TimeLineID receiveTLI = 0;
  * that the recovery starting checkpoint record indicates, and then updated
  * each time XLOG_FPW_CHANGE record is replayed.
  */
-static bool lastFullPageWrites;
+thread_local static bool lastFullPageWrites;
 
 /*
  * Local copy of SharedRecoveryInProgress variable. True actually means "not
@@ -236,45 +236,45 @@ thread_local static int	LocalXLogInsertAllowed = -1;
  * will switch to using offline XLOG archives as soon as we reach the end of
  * WAL in pg_xlog.
 */
-bool		ArchiveRecoveryRequested = false;
-bool		InArchiveRecovery = false;
+thread_local bool		ArchiveRecoveryRequested = false;
+thread_local bool		InArchiveRecovery = false;
 
 /* Was the last xlog file restored from archive, or local? */
-static bool restoredFromArchive = false;
+thread_local static bool restoredFromArchive = false;
 
 /* options taken from recovery.conf for archive recovery */
-char	   *recoveryRestoreCommand = NULL;
-static char *recoveryEndCommand = NULL;
-static char *archiveCleanupCommand = NULL;
-static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
-static bool recoveryTargetInclusive = true;
-static RecoveryTargetAction recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
-static TransactionId recoveryTargetXid;
-static TimestampTz recoveryTargetTime;
-static char *recoveryTargetName;
-static int	recovery_min_apply_delay = 0;
-static TimestampTz recoveryDelayUntilTime;
+thread_local char	   *recoveryRestoreCommand = NULL;
+thread_local static char *recoveryEndCommand = NULL;
+thread_local static char *archiveCleanupCommand = NULL;
+thread_local static RecoveryTargetType recoveryTarget = RECOVERY_TARGET_UNSET;
+thread_local static bool recoveryTargetInclusive = true;
+thread_local static RecoveryTargetAction recoveryTargetAction = RECOVERY_TARGET_ACTION_PAUSE;
+thread_local static TransactionId recoveryTargetXid;
+thread_local static TimestampTz recoveryTargetTime;
+thread_local static char *recoveryTargetName;
+thread_local static int	recovery_min_apply_delay = 0;
+thread_local static TimestampTz recoveryDelayUntilTime;
 
 /* options taken from recovery.conf for XLOG streaming */
-static bool StandbyModeRequested = false;
-static char *PrimaryConnInfo = NULL;
-static char *PrimarySlotName = NULL;
-static char *TriggerFile = NULL;
+thread_local static bool StandbyModeRequested = false;
+thread_local static char *PrimaryConnInfo = NULL;
+thread_local static char *PrimarySlotName = NULL;
+thread_local static char *TriggerFile = NULL;
 
 /* are we currently in standby mode? */
-bool		StandbyMode = false;
+thread_local bool		StandbyMode = false;
 
 /* whether request for fast promotion has been made yet */
-static bool fast_promote = false;
+thread_local static bool fast_promote = false;
 
 /*
  * if recoveryStopsBefore/After returns true, it saves information of the stop
  * point here
  */
-static TransactionId recoveryStopXid;
-static TimestampTz recoveryStopTime;
-static char recoveryStopName[MAXFNAMELEN];
-static bool recoveryStopAfter;
+thread_local static TransactionId recoveryStopXid;
+thread_local static TimestampTz recoveryStopTime;
+thread_local static char recoveryStopName[MAXFNAMELEN];
+thread_local static bool recoveryStopAfter;
 
 /*
  * During normal operation, the only timeline we care about is ThisTimeLineID.
@@ -322,8 +322,8 @@ static TimeLineID curFileTLI;
  */
 thread_local static XLogRecPtr ProcLastRecPtr = InvalidXLogRecPtr;
 
-XLogRecPtr	XactLastRecEnd = InvalidXLogRecPtr;
-XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
+thread_local XLogRecPtr	XactLastRecEnd = InvalidXLogRecPtr;
+thread_local XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
 
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
@@ -354,7 +354,7 @@ thread_local static bool doPageWrites;
  * backwards to the REDO location after reading the checkpoint record,
  * because the REDO record can precede the checkpoint record.
  */
-static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
+thread_local static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
 
 /*----------
  * Shared-memory data structures for XLOG control
@@ -648,15 +648,15 @@ typedef struct XLogCtlData
 	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
 
-static XLogCtlData *XLogCtl = NULL;
+thread_local static XLogCtlData *XLogCtl = NULL;
 
 /* a private___ copy of XLogCtl->Insert.WALInsertLocks, for convenience */
-static WALInsertLockPadded *WALInsertLocks = NULL;
+thread_local static WALInsertLockPadded *WALInsertLocks = NULL;
 
 /*
  * We maintain an image of pg_control in shared memory.
  */
-static ControlFileData *ControlFile = NULL;
+thread_local static ControlFileData *ControlFile = NULL;
 
 /*
  * Calculate the amount of space left on the page after 'endptr'. Beware

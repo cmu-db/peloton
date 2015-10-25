@@ -41,7 +41,6 @@ namespace storage {
  * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
  *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
  * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
->>>>>>> master
  *
  */
 
@@ -303,7 +302,7 @@ class TileGroupHeader {
     }
 
     LOG_INFO(
-        "<%p, %u> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",
+        "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",
         this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
         txn_id, at_lcid, visible);
 
@@ -323,7 +322,7 @@ class TileGroupHeader {
     bool deletable = tuple_end_cid == MAX_CID;
 
     LOG_INFO(
-        "<%p, %u> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), deletable = %d",
+        "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), deletable = %d",
         this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
         txn_id, at_lcid, deletable);
 

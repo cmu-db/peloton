@@ -26,7 +26,7 @@ namespace bridge {
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlan *PlanTransformer::TransformNestLoop(
+const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     const NestLoopPlanState *nl_plan_state) {
 
   auto join_type = nl_plan_state->jointype;
@@ -84,10 +84,10 @@ planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     result = plan_node;
   }
 
-  planner::AbstractPlan *outer =
-      PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state), true);
-  planner::AbstractPlan *inner =
-      PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state), false);
+  const planner::AbstractPlan *outer =
+      PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state));
+  const planner::AbstractPlan *inner =
+      PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state));
 
   /* Add the children nodes */
   plan_node->SetJoinType(peloton_join_type);

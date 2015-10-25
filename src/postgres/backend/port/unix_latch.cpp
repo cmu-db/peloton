@@ -57,11 +57,11 @@
 #include "storage/shmem.h"
 
 /* Are we currently in WaitLatch? The signal handler would like to know. */
-static volatile sig_atomic_t waiting = false;
+thread_local static volatile sig_atomic_t waiting = false;
 
 /* Read and write ends of the self-pipe */
-static int	selfpipe_readfd = -1;
-static int	selfpipe_writefd = -1;
+thread_local static int	selfpipe_readfd = -1;
+thread_local static int	selfpipe_writefd = -1;
 
 /* Private function prototypes */
 static void sendSelfPipeByte(void);

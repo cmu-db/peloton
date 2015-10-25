@@ -13,17 +13,23 @@
 #include <mutex>
 #include <utility>
 
+#include "backend/brain/clusterer.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
+#include "backend/benchmark/hyadapt/configuration.h"
+
+std::vector<peloton::oid_t> hyadapt_column_ids;
 
 namespace peloton {
 namespace storage {
 
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
+
+column_map_type GetStaticColumnMap(oid_t column_count);
 
 /**
  * Check if the locations contains at least one visible entry to the transaction
@@ -55,10 +61,12 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t database_oid, oid_t table_oid,
                      size_t tuples_per_tilegroup,
-                     bool own_schema)
-    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-      backend(backend),
-      tuples_per_tilegroup(tuples_per_tilegroup) {
+                     bool own_schema,
+                     bool adapt_table)
+: AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
+  backend(backend),
+  tuples_per_tilegroup(tuples_per_tilegroup),
+  adapt_table(adapt_table){
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -97,7 +105,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   assert(schema->GetColumnCount() == tuple->GetColumnCount());
 
   oid_t column_count = schema->GetColumnCount();
-  for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
           "%d th attribute in the tuple was NULL. It is non-nullable " "attribute.",
@@ -150,7 +158,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     }
   }
 
-  LOG_INFO("tile group offset: %u, tile group id: %u, address: %p",
+  LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
            tile_group_offset, tile_group->GetTileGroupId(), tile_group);
 
   // Set tuple location
@@ -172,7 +180,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %d, %d", location.block, location.offset);
+  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
@@ -222,7 +230,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
           return false;
         }
       }
-        break;
+      break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
@@ -272,12 +280,12 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
   // Delete slot in underlying tile group
   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
   if (status == false) {
-    LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
+    LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
              tile_group_id, transaction_id);
     return false;
   }
 
-  LOG_TRACE("Deleted location :: block = %u offset = %u \n", location.block,
+  LOG_TRACE("Deleted location :: block = %lu offset = %lu \n", location.block,
             location.offset);
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
@@ -424,16 +432,50 @@ TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
   return tile_group;
 }
 
-oid_t DataTable::AddDefaultTileGroup() {
+column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
+  column_map_type column_map;
 
+  auto col_count = schema->GetColumnCount();
+  if(adapt_table == false)
+    layout_type = LAYOUT_ROW;
+
+  // pure row layout map
+  if(layout_type == LAYOUT_ROW) {
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      column_map[col_itr] = std::make_pair(0, col_itr);
+    }
+  }
+  // pure column layout map
+  else if(layout_type == LAYOUT_COLUMN) {
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      column_map[col_itr] = std::make_pair(col_itr, 0);
+    }
+  }
+  // hybrid layout map
+  else if(layout_type == LAYOUT_HYBRID){
+    // TODO: Fallback option for regular tables
+    if(col_count < 10) {
+      for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+        column_map[col_itr] = std::make_pair(0, col_itr);
+      }
+    }
+    else {
+      column_map = GetStaticColumnMap(col_count);
+    }
+  }
+  else{
+    throw Exception("Unknown tilegroup layout option : " + std::to_string(layout_type));
+  }
+
+  return column_map;
+}
+
+oid_t DataTable::AddDefaultTileGroup() {
   column_map_type column_map;
   oid_t tile_group_id = INVALID_OID;
 
-  // pure column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(col_itr, 0);
-  }
+  // First, figure out the partitioning for given tilegroup layout
+  column_map = GetTileGroupLayout(peloton_layout);
 
   TileGroup *tile_group = GetTileGroupWithLayout(column_map);
   assert(tile_group);
@@ -463,7 +505,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if (active_tuple_count < allocated_tuple_count) {
       LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count,
-               allocated_tuple_count);
+                allocated_tuple_count);
       delete tile_group;
       return INVALID_OID;
     }
@@ -556,7 +598,7 @@ std::ostream &operator<<(std::ostream &os, const DataTable &table) {
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     os << "Tile Group Id  : " << tile_group_itr << " Tuple Count : "
-       << tile_tuple_count << "\n";
+        << tile_tuple_count << "\n";
     os << (*tile_group);
 
     tuple_count += tile_tuple_count;
@@ -746,7 +788,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
                                tile_group_id);
 
     if (found_itr == tile_groups.end()) {
-      LOG_ERROR("Tile group not found in table : %u \n", tile_group_id);
+      LOG_ERROR("Tile group not found in table : %lu \n", tile_group_id);
       return nullptr;
     }
   }
@@ -776,6 +818,72 @@ storage::TileGroup *DataTable::TransformTileGroup(
     delete tile_group;
 
   return new_tile_group;
+}
+
+void DataTable::RecordSample(const brain::Sample& sample) {
+
+  // Add sample
+  {
+    std::lock_guard<std::mutex> lock(clustering_mutex);
+    samples.push_back(sample);
+  }
+
+  if(rand() % 10 < 2)
+    UpdateDefaultPartition();
+
+}
+
+void DataTable::UpdateDefaultPartition() {
+
+  oid_t cluster_count = 4;
+  oid_t column_count = GetSchema()->GetColumnCount();
+
+  brain::Clusterer clusterer(cluster_count, column_count);
+
+  // Process all samples
+  {
+    std::lock_guard<std::mutex> lock(clustering_mutex);
+
+    for(auto sample : samples)
+      clusterer.ProcessSample(sample);
+  }
+
+  auto partitioning = clusterer.GetPartitioning(2);
+
+  std::cout << "UPDATED PARTITIONING \n";
+  std::cout << "COLUMN "
+      << "\t"
+      << " TILE"
+      << "\n";
+  for (auto entry : partitioning)
+    std::cout << entry.first << "\t"
+    << entry.second.first << " : " << entry.second.second << "\n";
+}
+
+//===--------------------------------------------------------------------===//
+// UTILS
+//===--------------------------------------------------------------------===//
+
+column_map_type GetStaticColumnMap(oid_t column_count){
+  column_map_type column_map;
+
+  // Split into two tiles
+  oid_t split_point = peloton_projectivity * (column_count - 1);
+  oid_t rest_column_count = (column_count - 1) - split_point;
+
+  column_map[0] = std::make_pair(0, 0);
+  for(oid_t column_id = 0; column_id < split_point ; column_id++) {
+    auto hyadapt_column_id = hyadapt_column_ids[column_id];
+    column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+  }
+
+  for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
+    auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
+    column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+  }
+
+
+  return std::move(column_map);
 }
 
 }  // End storage namespace

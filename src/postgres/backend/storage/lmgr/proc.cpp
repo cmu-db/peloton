@@ -70,12 +70,12 @@ thread_local PGXACT	   *MyPgXact = NULL;
  * relatively infrequently (only at backend startup or shutdown) and not for
  * very long, so a spinlock is okay.
  */
-NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
+thread_local NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
 PROC_HDR   *ProcGlobal = NULL;
-NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
-PGPROC	   *PreparedXactProcs = NULL;
+thread_local NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
+thread_local PGPROC	   *PreparedXactProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
 thread_local static LOCALLOCK *lockAwaited = NULL;
@@ -194,6 +194,7 @@ InitProcGlobal(void)
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
 	ProcGlobal->allProcCount = MaxBackends + NUM_AUXILIARY_PROCS;
+	elog(DEBUG3, "InitProcGlobal of size %d :: TID : %d", TotalProcs, GetBackendThreadId());
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -242,6 +243,8 @@ InitProcGlobal(void)
 			/* PGPROC for normal backend, add to freeProcs list */
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 			ProcGlobal->freeProcs = &procs[i];
+			//elog(DEBUG3, "freeProcs %d = %p", i, ProcGlobal->freeProcs);
+			//Assert(ShmemAddrIsValid(ProcGlobal->freeProcs));
 		}
 		else if (i < MaxConnections + autovacuum_max_workers + 1)
 		{

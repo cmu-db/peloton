@@ -22,7 +22,7 @@ namespace executor {
 /**
  * @brief Constructor
  */
-AppendExecutor::AppendExecutor(planner::AbstractPlan *node,
+AppendExecutor::AppendExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 

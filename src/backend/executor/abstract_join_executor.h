@@ -26,7 +26,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   AbstractJoinExecutor &operator=(const AbstractJoinExecutor &) = delete;
 
  public:
-  explicit AbstractJoinExecutor(planner::AbstractPlan *node,
+  explicit AbstractJoinExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
   virtual ~AbstractJoinExecutor(){}

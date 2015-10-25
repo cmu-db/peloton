@@ -97,7 +97,19 @@ class Tile {
    */
   Value GetValue(const oid_t tuple_slot_id, const oid_t column_id);
 
+  // Faster way to access value
+  // By amortizing schema lookups
+  Value GetValueFast(const oid_t tuple_slot_id, const size_t column_offset,
+                     const ValueType column_type, const bool is_inlined);
+
   void SetValue(Value value, const oid_t tuple_slot_id, const oid_t column_id);
+
+  // Faster way to set values
+  // By amortizing schema lookups
+  void SetValueFast(Value value, const oid_t tuple_slot_id,
+                    const size_t column_offset,
+                    const bool is_inlined,
+                    const size_t column_length);
 
   // Get tuple at location
   static Tuple *GetTuple(catalog::Manager *catalog,
@@ -128,7 +140,7 @@ class Tile {
     return schema.GetColumn(column_index).column_name;
   }
 
-  inline int GetColumnCount() const { return column_count; };
+  inline oid_t GetColumnCount() const { return column_count; };
 
   inline AbstractBackend *GetBackend() const { return backend; }
 

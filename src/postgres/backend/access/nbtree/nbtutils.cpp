@@ -1877,7 +1877,7 @@ typedef struct BTVacInfo
 	BTOneVacInfo vacuums[FLEXIBLE_ARRAY_MEMBER];
 } BTVacInfo;
 
-static BTVacInfo *btvacinfo;
+thread_local static BTVacInfo *btvacinfo;
 
 
 /*
