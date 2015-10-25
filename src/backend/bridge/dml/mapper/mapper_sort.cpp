@@ -5,7 +5,7 @@
 namespace peloton {
 namespace bridge {
 
-planner::AbstractPlan*
+const planner::AbstractPlan*
 PlanTransformer::TransformSort(const SortPlanState *plan_state) {
 
   auto sort = plan_state->sort;

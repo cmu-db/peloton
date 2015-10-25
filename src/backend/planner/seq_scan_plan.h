@@ -38,20 +38,11 @@ class SeqScanPlan : public AbstractScan {
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : AbstractScan(predicate, column_ids), target_table_(table) {}
-
-  storage::DataTable *GetTable() const {
-    return target_table_;
-  }
+      : AbstractScan(table, predicate, column_ids) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   inline std::string GetInfo() const { return "SeqScan"; }
-
- private:
-
-  /** @brief Pointer to table to scan from. */
-  storage::DataTable *target_table_ = nullptr;
 };
 
 }  // namespace planner

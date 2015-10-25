@@ -30,7 +30,7 @@ class LimitExecutor : public AbstractExecutor {
   LimitExecutor(const LimitExecutor &&) = delete;
   LimitExecutor &operator=(const LimitExecutor &&) = delete;
 
-  explicit LimitExecutor(planner::AbstractPlan *node,
+  explicit LimitExecutor(const planner::AbstractPlan *node,
                          ExecutorContext *executor_context);
 
  protected:

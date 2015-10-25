@@ -104,9 +104,6 @@ SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
 void
 LockRelationOid(Oid relid, LOCKMODE lockmode)
 {
-  // TODO: Peloton Changes
-  return;
-
 	LOCKTAG		tag;
 	LockAcquireResult res;
 
@@ -140,9 +137,6 @@ LockRelationOid(Oid relid, LOCKMODE lockmode)
 bool
 ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode)
 {
-  // TODO: Peloton Changes
-  return true;
-
 	LOCKTAG		tag;
 	LockAcquireResult res;
 
@@ -172,8 +166,6 @@ ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode)
 void
 UnlockRelationId(LockRelId *relid, LOCKMODE lockmode)
 {
-  // TODO: Peloton Changes
-  return;
 
 	LOCKTAG		tag;
 
@@ -190,9 +182,6 @@ UnlockRelationId(LockRelId *relid, LOCKMODE lockmode)
 void
 UnlockRelationOid(Oid relid, LOCKMODE lockmode)
 {
-  // TODO: Peloton Changes
-  return;
-
 	LOCKTAG		tag;
 
 	SetLocktagRelationOid(&tag, relid);

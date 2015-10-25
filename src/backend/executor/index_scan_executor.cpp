@@ -33,7 +33,7 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlan *node,
+IndexScanExecutor::IndexScanExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 

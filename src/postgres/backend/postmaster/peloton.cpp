@@ -72,7 +72,7 @@
 bool logging_on = true;
 bool syncronization_commit = false;
 
-static void peloton_process_status(const peloton_status& status);
+static void peloton_process_status(const peloton_status& status, PlanState *planstate);
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
@@ -160,7 +160,8 @@ void
 peloton_dml(PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
-            TupleDesc tuple_desc) {
+            TupleDesc tuple_desc,
+            const char *prepStmtName) {
   peloton_status status;
 
   // Get the parameter list
@@ -170,13 +171,24 @@ peloton_dml(PlanState *planstate,
 
   // Create the raw planstate info
   auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
+  std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
 
   // Get our plan
-  auto plan = peloton::bridge::PlanTransformer::TransformPlan(plan_state);
+  if (prepStmtName) {
+    std::cout << "Got a named plan " << prepStmtName << std::endl;
+    mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().GetCachedPlan(prepStmtName);
+  } else {
+    std::cout << "Got an unnamed plan" << std::endl;
+  }
+
+  /* A cache miss or an unnamed plan */
+  if (mapped_plan_ptr.get() == nullptr)
+    mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
+
   auto txn_id = GetTopTransactionId();
 
   // Ignore empty plans
-  if(plan == nullptr) {
+  if(mapped_plan_ptr.get() == nullptr) {
     elog(WARNING, "Empty or unrecognized plan sent to Peloton");
     return;
   }
@@ -185,24 +197,26 @@ peloton_dml(PlanState *planstate,
   std::vector<peloton::oid_t> qual;
 
   // Analyze the plan
-  peloton::bridge::PlanTransformer::AnalyzePlan(plan, target_list, qual);
+  //if(rand() % 100 < 5)
+  //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
   // Execute the plantree
   try {
-    status = peloton::bridge::PlanExecutor::ExecutePlan(plan,
+    status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
                                                         param_list,
                                                         tuple_desc,
                                                         txn_id);
 
     // Clean up the plantree
-    peloton::bridge::PlanTransformer::CleanPlan(plan);
+    // Not clean up now ! This is cached !
+    //peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
   }
 
   // Wait for the response and process it
-  peloton_process_status(status);
+  peloton_process_status(status, planstate);
 
   // Send output to dest
   peloton_send_output(status, sendTuples, dest);
@@ -216,7 +230,7 @@ peloton_dml(PlanState *planstate,
  * ----------
  */
 static void
-peloton_process_status(const peloton_status& status) {
+peloton_process_status(const peloton_status& status, PlanState *planstate) {
   int code;
 
   // Process the status code
@@ -224,6 +238,7 @@ peloton_process_status(const peloton_status& status) {
   switch(code) {
     case peloton::RESULT_SUCCESS: {
       // TODO: Update stats ?
+      planstate->state->es_processed = status.m_processed;
     }
     break;
 

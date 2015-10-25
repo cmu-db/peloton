@@ -25,7 +25,7 @@ class UpdateExecutor : public AbstractExecutor {
   UpdateExecutor &operator=(const UpdateExecutor &) = delete;
 
  public:
-  explicit UpdateExecutor(planner::AbstractPlan *node,
+  explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
  protected:

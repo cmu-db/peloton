@@ -940,6 +940,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
   plan->context = plan_context;
   plan->is_oneshot = plansource->is_oneshot;
   plan->is_saved = false;
+  plan->is_generic = false;
   plan->is_valid = true;
 
   /* assign generation number to new___ plan */
@@ -977,7 +978,8 @@ static bool choose_custom_plan(CachedPlanSource *plansource,
     return true;
 
   /* Generate custom plans until we have done at least 5 (arbitrary) */
-  if (plansource->num_custom_plans < 5)
+  elog(DEBUG3, "num_custom_plans %d", plansource->num_custom_plans);
+  if (plansource->num_custom_plans < 1)
     return true;
 
   avg_custom_cost = plansource->total_custom_cost
@@ -1091,9 +1093,11 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
   if (!customplan) {
     if (CheckCachedPlan(plansource)) {
       /* We want a generic plan, and we already have a valid one */
+      elog(DEBUG3, "CheckPlan true");
       plan = plansource->gplan;
       Assert(plan->magic == CACHEDPLAN_MAGIC);
     } else {
+      elog(DEBUG3, "CheckPlan false");
       /* Build a new___ generic plan */
       plan = BuildCachedPlan(plansource, qlist, NULL);
       /* Just make real sure plansource->gplan is clear */
@@ -1106,6 +1110,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
         /* saved plans all live under CacheMemoryContext */
         MemoryContextSetParent(plan->context, CacheMemoryContext);
         plan->is_saved = true;
+        plan->is_generic = true;
       } else {
         /* otherwise, it should be a sibling of the plansource */
         MemoryContextSetParent(plan->context,

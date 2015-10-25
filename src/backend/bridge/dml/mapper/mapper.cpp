@@ -27,41 +27,77 @@ namespace bridge {
 
 const PlanTransformer::TransformOptions PlanTransformer::DefaultOptions;
 
+PlanTransformer &PlanTransformer::GetInstance() {
+  thread_local static PlanTransformer transformer;
+  return transformer;
+}
+
+std::shared_ptr<const planner::AbstractPlan> PlanTransformer::GetCachedPlan(
+    const char *prepStmtName) {
+  if (!prepStmtName) {
+    return nullptr;
+  }
+
+  std::string name_str(prepStmtName);
+
+  auto itr = plan_cache_.find(name_str);
+  if (itr == plan_cache_.end()) {
+    /* A plan cache miss */
+    LOG_INFO("Cache miss for %s", name_str.c_str());
+    return nullptr;
+  } else {
+    /* A plan cache hit */
+    LOG_INFO("Cache hit for %s", name_str.c_str());
+    return *itr;
+  }
+}
+
+const planner::AbstractPlan *PlanTransformer::TransformPlan(AbstractPlanState *planstate) {
+  return TransformPlan(planstate, DefaultOptions);
+}
+
+std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(AbstractPlanState *planstate,
+                                           const char *prepStmtName) {
+  auto mapped_plan = TransformPlan(planstate, DefaultOptions);
+  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan, CleanPlan);
+  if (prepStmtName) {
+    std::string name_str(prepStmtName);
+    plan_cache_.insert(std::make_pair(std::move(name_str), mapped_plan_ptr));
+  }
+  return mapped_plan_ptr;
+}
+
 /**
  * @brief Convert Postgres Plan (tree) into AbstractPlan (tree).
  * @return Pointer to the constructed AbstractPlan Node.
  */
-planner::AbstractPlan *PlanTransformer::TransformPlan(
-    AbstractPlanState *planstate,
-    const TransformOptions options) {
+const planner::AbstractPlan *PlanTransformer::TransformPlan(
+    AbstractPlanState *planstate, const TransformOptions options) {
 
   assert(planstate);
 
   // Ignore empty plans
-  if (planstate == nullptr) return nullptr;
+  if (planstate == nullptr)
+    return nullptr;
 
-  planner::AbstractPlan *peloton_plan = nullptr;
+  const planner::AbstractPlan *peloton_plan = nullptr;
 
   switch (nodeTag(planstate)) {
     case T_ModifyTableState:
       peloton_plan = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTablePlanState *>(planstate),
-          options);
+          reinterpret_cast<const ModifyTablePlanState *>(planstate), options);
       break;
     case T_SeqScanState:
       peloton_plan = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanPlanState *>(planstate),
-          options);
+          reinterpret_cast<const SeqScanPlanState *>(planstate), options);
       break;
     case T_IndexScanState:
       peloton_plan = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanPlanState *>(planstate),
-          options);
+          reinterpret_cast<const IndexScanPlanState *>(planstate), options);
       break;
     case T_IndexOnlyScanState:
       peloton_plan = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanPlanState *>(planstate),
-          options);
+          reinterpret_cast<const IndexOnlyScanPlanState *>(planstate), options);
       break;
     case T_BitmapHeapScanState:
       peloton_plan = PlanTransformer::TransformBitmapHeapScan(
@@ -94,7 +130,6 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
           reinterpret_cast<const AggPlanState*>(planstate));
       break;
 
-
     case T_SortState:
       peloton_plan = PlanTransformer::TransformSort(
           reinterpret_cast<const SortPlanState*>(planstate));
@@ -113,8 +148,7 @@ planner::AbstractPlan *PlanTransformer::TransformPlan(
 
 /**
  * @brief Recursively destroy the nodes in a plan tree.
- */
-bool PlanTransformer::CleanPlan(planner::AbstractPlan *root) {
+bool PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
   if (!root)
     return false;
 
@@ -129,6 +163,24 @@ bool PlanTransformer::CleanPlan(planner::AbstractPlan *root) {
   delete root;
   return true;
 }
+*/
+
+/**
+ * @brief Recursively destroy the nodes in a plan tree.
+ */
+void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
+  if (!root) return;
+
+  // Clean all children subtrees
+  auto children = root->GetChildren();
+  for (auto child : children) {
+    CleanPlan(child);
+  }
+
+  // Clean the root
+  delete root;
+}
+
 
 }  // namespace bridge
 }  // namespace peloton

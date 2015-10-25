@@ -50,7 +50,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
-    // FIXME: Shall we use SetValueAllocate() here and below?
+    // FIXME: Should we use SetValueAllocate() here and below?
     dest->SetValue(col_id, value);
   }
 

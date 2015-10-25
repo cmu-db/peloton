@@ -166,7 +166,7 @@ typedef struct TwoPhaseLockRecord
  * our locks to the primary lock table, but it can never be lower than the
  * real value, since only we can acquire locks on our own behalf.
  */
-static int	FastPathLocalUseCount = 0;
+thread_local static int	FastPathLocalUseCount = 0;
 
 /* Macros for manipulating proc->fpLockBits */
 #define FAST_PATH_BITS_PER_SLOT			3
@@ -248,8 +248,8 @@ static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
  * The LockMethodLockHash and LockMethodProcLockHash hash tables are in
  * shared memory; LockMethodLocalHash is local to each backend.
  */
-static HTAB *LockMethodLockHash;
-static HTAB *LockMethodProcLockHash;
+thread_local static HTAB *LockMethodLockHash;
+thread_local static HTAB *LockMethodProcLockHash;
 thread_local static HTAB *LockMethodLocalHash;
 
 

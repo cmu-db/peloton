@@ -78,9 +78,9 @@ typedef ComboCidEntryData *ComboCidEntry;
  * An array of cmin,cmax pairs, indexed by combo command id.
  * To convert a combo cid to cmin and cmax, you do a simple array lookup.
  */
-static ComboCidKey comboCids = NULL;
-static int	usedComboCids = 0;	/* number of elements in comboCids */
-static int	sizeComboCids = 0;	/* allocated size of array */
+thread_local static ComboCidKey comboCids = NULL;
+thread_local static int	usedComboCids = 0;	/* number of elements in comboCids */
+thread_local static int	sizeComboCids = 0;	/* allocated size of array */
 
 /* Initial size of the array */
 #define CCID_ARRAY_SIZE			100

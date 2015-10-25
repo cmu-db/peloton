@@ -31,7 +31,7 @@ class AbstractScanExecutor : public AbstractExecutor {
   AbstractScanExecutor(AbstractScanExecutor &&) = delete;
   AbstractScanExecutor &operator=(AbstractScanExecutor &&) = delete;
 
-  explicit AbstractScanExecutor(planner::AbstractPlan *node,
+  explicit AbstractScanExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
  protected:

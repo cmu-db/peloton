@@ -3627,8 +3627,11 @@ PostgresMain(int argc, char *argv[],
   {
     pqsignal(SIGHUP, SigHupHandler);		/* set flag to read config
      * file */
-    pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
-    pqsignal(SIGTERM, die); /* cancel current query and exit */
+    /* Peloton Changes
+     * This two handlers are in conflict with the postmaster handlers
+     * For the time being, we disable it */
+    //pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
+    //pqsignal(SIGTERM, die); /* cancel current query and exit */
 
     /*
      * In a standalone backend, SIGQUIT can be generated from the keyboard
@@ -3694,18 +3697,21 @@ PostgresMain(int argc, char *argv[],
   /* Early initialization */
   BaseInit();
 
+  elog(DEBUG3, "BaseInit() finished");
+
   /*
    * Create a per-backend PGPROC struct in shared memory, except in the
    * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
    * this before we can use LWLocks (and in the EXEC_BACKEND case we already
    * had to do some stuff with LWLocks).
    */
-#ifdef EXEC_BACKEND
+//TODO: peloton changes:
+//#ifdef EXEC_BACKEND
   if (!IsUnderPostmaster)
-    InitProcess();
-#else
-  InitProcess();
-#endif
+    InitProcess();  //Doen this in BackendTask
+//#else
+//  InitProcess();
+//#endif
 
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);

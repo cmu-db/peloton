@@ -58,10 +58,13 @@ extern thread_local unsigned long UsedShmemSegID;
 extern HANDLE UsedShmemSegID;
 #endif
 extern thread_local void *UsedShmemSegAddr;
+extern thread_local void *AnonymousShmem;
+extern thread_local Size AnonymousShmemSize;
 
-#ifdef EXEC_BACKEND
+//TODO: peloton changes
+//#ifdef EXEC_BACKEND
 extern void PGSharedMemoryReAttach(void);
-#endif
+//#endif
 
 extern PGShmemHeader *PGSharedMemoryCreate(Size size, bool makePrivate,
 					 int port, PGShmemHeader **shim);

@@ -11,7 +11,8 @@ common_FILES = \
 			   backend/common/pool.cpp \
 			   backend/common/stack_trace.cpp \
 			   backend/common/message_queue.cpp \
-			   backend/common/serializer.cpp
+			   backend/common/serializer.cpp \
+			   backend/common/cache.cpp
 
 common_INCLUDES = \
 				  -I$(srcdir)/backend/common    

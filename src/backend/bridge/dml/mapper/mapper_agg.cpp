@@ -7,7 +7,7 @@
 namespace peloton {
 namespace bridge {
 
-planner::AbstractPlan*
+const planner::AbstractPlan*
 PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   // Alias all I need
@@ -126,7 +126,9 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   std::vector<oid_t> column_ids;
   for(auto agg_term : unique_agg_terms){
-    LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
+    if (agg_term.expression) {
+      LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
+    }
     BuildColumnListFromExpr(column_ids, agg_term.expression);
   }
 

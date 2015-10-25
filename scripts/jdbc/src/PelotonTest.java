@@ -30,6 +30,7 @@ public class PelotonTest {
   private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
   private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
+  private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
 
   private final Connection conn;
 
@@ -86,6 +87,8 @@ public class PelotonTest {
         break;
     }
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
+    pgstmt.setPrepareThreshold(1);
+    //System.out.println("Prepare threshold" + pgstmt.getPrepareThreshold());
     for (int i = 0; i < n; i++) {
       String data = table.name() + " says hello world and id = " + i;
       stmt.setInt(1, i);
@@ -104,19 +107,35 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Insert(int n) throws SQLException {
+    conn.setAutoCommit(false);
     PreparedStatement stmt = conn.prepareStatement(INSERT);
+    PreparedStatement stmtA = conn.prepareStatement(INSERT_A);
+    PreparedStatement stmtB = conn.prepareStatement(INSERT_B);
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
+    pgstmt.setPrepareThreshold(1);
     for (int i = 0; i < n; i++) {
+      /*
       String data1 = "Ming says hello world and id = " + i;
       String data2 = "Joy says hello world and id = " + i;
       stmt.setInt(1, i);
       stmt.setInt(3, i);
       stmt.setString(2, data1);
       stmt.setString(4, data2);
-      boolean usingServerPrepare = pgstmt.isUseServerPrepare();
       int ret = stmt.executeUpdate();
-      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: " + ret);
+      */
+      String data = TABLE.A.name() + " says hello world and id = " + i;
+      stmtA.setInt(1, i);
+      stmtA.setString(2, data);
+      data = TABLE.B.name();
+      stmtB.setInt(1, i);
+      stmtB.setString(2, data);
+      int ret = stmtA.executeUpdate();
+      System.out.println("A Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
+      ret = stmtB.executeUpdate();
+      System.out.println("B Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
     }
+    conn.commit();
+    conn.setAutoCommit(true);
     return;
   }
 
@@ -222,13 +241,24 @@ public class PelotonTest {
     System.out.println("Updated: id: " + i + ", data: Updated");
   }
 
+  public void Union(int i) throws SQLException {
+    PreparedStatement stmt = conn.prepareStatement(UNION);
+
+    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
+    pgstmt.setPrepareThreshold(1);
+    stmt.setInt(1, i);
+    stmt.setInt(2, i);
+    ResultSet r = stmt.executeQuery();
+
+    System.out.println(r.getString(1));
+  }
+
 
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Insert(3, TABLE.A);
-    pt.Insert(10, TABLE.B);
-
+    //pt.Insert(3, TABLE.A);
+    pt.Insert(20);
     //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
     //pt.SeqScan();
