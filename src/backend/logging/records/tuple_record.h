@@ -31,9 +31,6 @@ public:
     db_oid = INVALID_OID;
     table_oid = INVALID_OID;
 
-    memset(&insert_location, 0, sizeof(ItemPointer));
-    memset(&delete_location, 0, sizeof(ItemPointer));
-
     data = nullptr;
   }
 
@@ -71,7 +68,7 @@ public:
   // Serial/Deserialization 
   //===--------------------------------------------------------------------===//
 
-  bool Serialize();
+  bool Serialize(CopySerializeOutput& output);
 
   void SerializeHeader(CopySerializeOutput& output);
 
