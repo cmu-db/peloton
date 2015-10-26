@@ -38,8 +38,7 @@ void PelotonBackendLogger::Log(LogRecord* record){
     if (!flush_enabled)
       flush_enabled = true;
     auto& log_manager = logging::LogManager::GetInstance();
-    FrontendLogger *frontend = log_manager.GetFrontendLogger(logging_type);
-    frontend->NotifyFrontend(true);
+    log_manager.NotifyFrontendLogger(logging_type, true);
   }
 }
 

@@ -52,8 +52,6 @@ class FrontendLogger : public Logger{
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    std::vector<BackendLogger*> GetBackendLoggers(void);
-
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//

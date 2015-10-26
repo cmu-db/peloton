@@ -56,9 +56,7 @@ void FrontendLogger::MainLoop(void) {
 
   LOG_TRACE("Frontendlogger] Standby Mode");
   // Standby before we are ready to recovery
-  while(logManager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_STANDBY ){
-    sleep(1);
-  }
+  logManager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
   switch(logManager.GetStatus()){
@@ -103,8 +101,11 @@ void FrontendLogger::MainLoop(void) {
   // TERMINATE MODE
   /////////////////////////////////////////////////////////////////////
 
-  // force the last check to be done without waiting
-  log_collect_request = true;
+  {
+    std::lock_guard<std::mutex> lock(backend_notify_mutex);
+    // force the last check to be done without waiting
+    log_collect_request = true;
+  }
   // flush any remaining log records
   CollectLogRecord();
   Flush();
@@ -155,7 +156,6 @@ void FrontendLogger::CollectLogRecord() {
                              std::chrono::seconds(wait_timeout)); // timeout
   }
 
-  backend_loggers = GetBackendLoggers();
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
     // Look at the commit mark of the backend loggers of the current frontend logger
@@ -189,16 +189,7 @@ void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
   }
 }
 
-/**
- * @brief Get backend loggers
- * @return the backend loggers
- */
-std::vector<BackendLogger*> FrontendLogger::GetBackendLoggers(){
-  return backend_loggers;
-}
-
 bool FrontendLogger::RemoveBackendLogger(BackendLogger* _backend_logger){
-
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
     oid_t offset=0;

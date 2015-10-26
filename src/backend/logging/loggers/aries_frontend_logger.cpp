@@ -96,9 +96,11 @@ void AriesFrontendLogger::Flush(void) {
   global_queue.clear();
 
   // Commit each backend logger
-  backend_loggers = GetBackendLoggers();
-  for( auto backend_logger : backend_loggers){
-    backend_logger->Commit();
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    for( auto backend_logger : backend_loggers){
+      backend_logger->Commit();
+    }
   }
 }
 
@@ -213,12 +215,16 @@ void AriesFrontendLogger::RemoveTransactionFromRecoveryTable(){
   auto txn_id = txn_record.GetTransactionId();
 
   // remove txn from recovery txn table
-  auto txn = recovery_txn_table.at(txn_id);
-  recovery_txn_table.erase(txn_id);
+  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
+    auto txn = recovery_txn_table.at(txn_id);
+    recovery_txn_table.erase(txn_id);
 
-  // drop the txn as well
-  delete txn;
-  LOG_TRACE("Erase txd id %d object in table",(int)txn_id);
+    // drop the txn as well
+    delete txn;
+    LOG_TRACE("Erase txd id %d object in table",(int)txn_id);
+  } else {
+    LOG_TRACE("Erase txd id %d not found in recovery txn table",(int)txn_id);
+  }
 }
 
 /**
@@ -237,12 +243,15 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
 
   // Get info about the transaction from recovery table
   auto txn_id = txn_record.GetTransactionId();
-  auto txn = recovery_txn_table.at(txn_id);
+  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
+    auto txn = recovery_txn_table.at(txn_id);
+    // Copy inserted/deleted tuples to recovery transaction
+    MoveTuples(recovery_txn, txn);
 
-  // Copy inserted/deleted tuples to recovery transaction
-  MoveTuples(recovery_txn, txn);
-
-  LOG_TRACE("Commit txd id %d object in table",(int)txn_id);
+    LOG_TRACE("Commit txd id %d object in table",(int)txn_id);
+  } else {
+    LOG_TRACE("Commit txd id %d not found in recovery txn table",(int)txn_id);
+  }
 }
 
 /**
@@ -286,7 +295,7 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
 void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
 
   // read transaction information from the log file
-  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_END);
+  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_ABORT);
 
   // Check for torn log write
   if( ReadTransactionRecordHeader(txn_record) == false ){
@@ -296,11 +305,13 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   auto txn_id = txn_record.GetTransactionId();
 
   // Get info about the transaction from recovery table
-  auto txn = recovery_txn_table.at(txn_id);
-
-  AbortTuples(txn);
-
-  LOG_INFO("Abort txd id %d object in table",(int)txn_id);
+  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
+    auto txn = recovery_txn_table.at(txn_id);
+    AbortTuples(txn);
+    LOG_INFO("Abort txd id %d object in table",(int)txn_id);
+  } else {
+    LOG_INFO("Abort txd id %d not found in recovery txn table",(int)txn_id);
+  }
 }
 
 /**
@@ -353,12 +364,18 @@ void AriesFrontendLogger::AbortActiveTransactions(){
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
+void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
 
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_INSERT);
 
   // Check for torn log write
-  if( ReadTupleRecordHeader(tuple_record) == false){
+  if (ReadTupleRecordHeader(tuple_record) == false) {
+    return;
+  }
+
+  auto txn_id = tuple_record.GetTransactionId();
+  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
+    LOG_TRACE("Insert txd id %d not found in recovery txn table",(int)txn_id);
     return;
   }
 
@@ -366,12 +383,12 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
   // TODO: Remove per-record backend construction
   storage::AbstractBackend *backend = new storage::VMBackend();
   VarlenPool *pool = new VarlenPool(backend);
- 
+
   // Read off the tuple record body from the log
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   // Check for torn log write
-  if( tuple == nullptr) {
+  if (tuple == nullptr) {
     delete pool;
     delete backend;
     return;
@@ -383,30 +400,29 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn){
 
   auto tile_group = GetTileGroup(tile_group_id);
 
-  auto txn_id = tuple_record.GetTransactionId();
   auto txn = recovery_txn_table.at(txn_id);
 
   // Create new tile group if table doesn't already have that tile group
-  if(tile_group == nullptr){
+  if (tile_group == nullptr) {
     table->AddTileGroupWithOid(tile_group_id);
     tile_group = table->GetTileGroupById(tile_group_id);
-    if( max_oid < tile_group_id ){
+    if (max_oid < tile_group_id) {
       max_oid = tile_group_id;
     }
   }
 
   // Do the insert !
-  auto inserted_tuple_slot = tile_group->InsertTuple(recovery_txn->GetTransactionId(),
-                                                     tuple_slot, tuple);
+  auto inserted_tuple_slot = tile_group->InsertTuple(
+      recovery_txn->GetTransactionId(), tuple_slot, tuple);
 
   if (inserted_tuple_slot == INVALID_OID) {
     // TODO: We need to abort on failure !
     recovery_txn->SetResult(Result::RESULT_FAILURE);
-  } else{
+  } else {
     txn->RecordInsert(target_location);
     table->IncreaseNumberOfTuplesBy(1);
   }
-  
+
   delete tuple;
   delete pool;
   delete backend;
@@ -438,8 +454,12 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
   }
 
   auto txn_id = tuple_record.GetTransactionId();
-  auto txn = recovery_txn_table.at(txn_id);
-  txn->RecordDelete(delete_location);
+  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
+    LOG_TRACE("Delete txd id %d not found in recovery txn table",(int)txn_id);
+  } else {
+    auto txn = recovery_txn_table.at(txn_id);
+    txn->RecordDelete(delete_location);
+  }
 }
 
 /**
@@ -456,6 +476,11 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   }
 
   auto txn_id = tuple_record.GetTransactionId();
+  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
+    LOG_TRACE("Update txd id %d not found in recovery txn table",(int)txn_id);
+    return;
+  }
+
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tuple_record);
@@ -470,7 +495,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   if( tuple == nullptr){
      delete pool;
      delete backend;
-    return;
+     return;
   }
 
   // First, redo the delete
@@ -582,14 +607,6 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
     LOG_ERROR("Error occured in fseek ");
   }
   return frame_size;
-}
-
-/**
- * @brief Get global_queue size
- * @return the size of global_queue
- */
-size_t AriesFrontendLogger::GetLogRecordCount() const{
-  return global_queue.size();
 }
 
 /**
