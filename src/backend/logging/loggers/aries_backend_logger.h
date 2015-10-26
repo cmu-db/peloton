@@ -34,7 +34,7 @@ class AriesBackendLogger : public BackendLogger{
 
   void Log(LogRecord* record);
 
-  size_t GetLocalQueueSize(void) const ;
+  size_t GetLocalQueueSize(void) ;
 
   void TruncateLocalQueue(oid_t offset);
 

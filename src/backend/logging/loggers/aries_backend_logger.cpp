@@ -47,7 +47,8 @@ void AriesBackendLogger::Log(LogRecord* record){
  * @brief Get the local queue size
  * @return local queue size
  */
-size_t AriesBackendLogger::GetLocalQueueSize(void) const{
+size_t AriesBackendLogger::GetLocalQueueSize(void) {
+  std::lock_guard<std::mutex> lock(local_queue_mutex);
   return local_queue.size();
 }
 

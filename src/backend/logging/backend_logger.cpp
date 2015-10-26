@@ -47,26 +47,29 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
  * @brief set the wait flush to false
  */
 void BackendLogger::Commit(void){
-  wait_for_flushing = false;
+  std::lock_guard<std::mutex> lock(flush_notify_mutex);
+  // Only need to commit if they are waiting for us to flush
+  if(wait_for_flushing){
+    wait_for_flushing = false;
+    flush_notify_cv.notify_all();
+  }
 }
 
 /**
  * @brief set the wait flush to true and truncate local_queue with commit_offset
  * @param offset
  */
-void BackendLogger::TruncateLocalQueue(oid_t offset){
-
+void BackendLogger::TruncateLocalQueue(oid_t offset) {
+  // Lock notify first, make sure is_wait_for_flush will not return premature
+  std::lock_guard<std::mutex> lock(flush_notify_mutex);
   {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-
+    std::lock_guard < std::mutex > lock(local_queue_mutex);
     // cleanup the queue
-    local_queue.erase(local_queue.begin(),
-                      local_queue.begin()+offset);
-
-    // let's wait for the frontend logger to flush !
-    // the frontend logger will call our Commit to reset it.
-    wait_for_flushing = true;
+    local_queue.erase(local_queue.begin(), local_queue.begin() + offset);
   }
+  // let's wait for the frontend logger to flush !
+  // the frontend logger will call our Commit to reset it.
+  wait_for_flushing = true;
 }
 
 /**
@@ -85,8 +88,7 @@ LogRecord* BackendLogger::GetLogRecord(oid_t offset){
  * @brief if we still have log record in local queue or waiting for flushing
  * @return true otherwise false
  */
-bool BackendLogger::IsWaitingForFlushing(void) const{
-
+bool BackendLogger::IsWaitingForFlushing(void) {
   // Sometimes, the backend logger has some log records even if
   // wait_for_flushing is false.
   // For example, if backend logger enqueues the log record right after
@@ -104,6 +106,13 @@ bool BackendLogger::IsConnectedToFrontend(void) const{
 
 void BackendLogger::SetConnectedToFrontend(bool isConnected) {
   connected_to_frontend = isConnected;
+}
+
+void BackendLogger::WaitForFlushing(void) {
+  std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
+  while(IsWaitingForFlushing()){
+    flush_notify_cv.wait(wait_lock);
+  }
 }
 
 }  // namespace logging
