@@ -97,9 +97,11 @@ void PelotonFrontendLogger::Flush(void) {
   global_queue.clear();
 
   // Commit each backend logger 
-  backend_loggers = GetBackendLoggers();
-  for (auto backend_logger : backend_loggers) {
-    backend_logger->Commit();
+  {
+    std::lock_guard<std::mutex> lock(backend_logger_mutex);
+    for (auto backend_logger : backend_loggers) {
+      backend_logger->Commit();
+    }
   }
 }
 

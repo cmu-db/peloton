@@ -43,21 +43,13 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
                      log_manager.GetDefaultLoggingType());
 
   // Wait for the frontend logger to go to enter recovery mode
-  while(1){
-    sleep(1);
-    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
-      log_manager.StartRecoveryMode();
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  // Recovery -> Ongoing
+  log_manager.StartRecoveryMode();
+  // Standby -> Recovery
 
   // Wait for the frontend logger to go to enter logging mode
-  while(1){
-    sleep(1);
-    if(log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Build the log
   LoggingTestsUtil::BuildLog(20000, 10000, logging_type);
@@ -138,24 +130,13 @@ void LoggingTestsUtil::CheckAriesRecovery(){
 
   // When the frontend logger gets ready to logging,
   // start logging
-  while(1){
-    sleep(1);
-    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
-      // Standby -> Recovery
-      log_manager.StartRecoveryMode();
-      // Recovery -> Ongoing
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  // Standby -> Recovery
+  log_manager.StartRecoveryMode();
+  // Recovery -> Ongoing
 
   //wait recovery
-  while(1){
-    sleep(1);
-    // escape when recovery is done
-    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Check the tuples
   LoggingTestsUtil::CheckTupleCount(20000, 10000);
@@ -201,24 +182,13 @@ void LoggingTestsUtil::CheckPelotonRecovery(){
 
   // When the frontend logger gets ready to logging,
   // start logging
-  while(1){
-    sleep(1);
-    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_STANDBY){
-      // Standby -> Recovery
-      log_manager.StartRecoveryMode();
-      // Recovery -> Ongoing
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  // Standby -> Recovery
+  log_manager.StartRecoveryMode();
+  // Recovery -> Ongoing
 
   //wait recovery
-  while(1){
-    sleep(1);
-    // escape when recovery is done
-    if( log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
-      break;
-    }
-  }
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Check the tuples
   LoggingTestsUtil::CheckTupleCount(20000, 10000);
