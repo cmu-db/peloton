@@ -24,7 +24,7 @@ TEST(PelotonLoggingTest, writing_log_file) {
  * @brief recovery test
  */
 TEST(PelotonLoggingTest, recovery) {
-  LoggingTestsUtil::CheckPelotonRecovery();
+  LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON);
 }
 
 }  // End test namespace

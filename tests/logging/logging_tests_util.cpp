@@ -15,7 +15,6 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/transaction_record.h"
 
-#define NUM_TUPLES 20
 #define NUM_BACKEND 4
 
 namespace peloton {
@@ -102,10 +101,7 @@ void LoggingTestsUtil::TruncateLogFile(std::string file_name){
 // CHECK RECOVERY
 //===--------------------------------------------------------------------===//
 
-/**
- * @brief recover the database and check the tuples
- */
-void LoggingTestsUtil::CheckAriesRecovery(){
+void LoggingTestsUtil::ResetSystem(){
   // Initialize oid since we assume that we restart the system
   auto &manager = catalog::Manager::GetInstance();
   manager.SetNextOid(0);
@@ -113,7 +109,12 @@ void LoggingTestsUtil::CheckAriesRecovery(){
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   txn_manager.ResetStates();
+}
 
+/**
+ * @brief recover the database and check the tuples
+ */
+void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
   auto& log_manager = logging::LogManager::GetInstance();
@@ -123,7 +124,7 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   }
 
   // start a thread for logging
-  log_manager.SetDefaultLoggingType(LOGGING_TYPE_ARIES);
+  log_manager.SetDefaultLoggingType(logging_type);
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
                      log_manager.GetDefaultLoggingType());
@@ -152,58 +153,6 @@ void LoggingTestsUtil::CheckAriesRecovery(){
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
 }
 
-/**
- * @brief recover the database and check the tuples
- */
-void LoggingTestsUtil::CheckPelotonRecovery(){
-
-    // TODO change to initialize object by reading NVM.
-    //  Initialize oid since we assume that we restart the system
-    //  auto &manager = catalog::Manager::GetInstance();
-    //  manager.SetNextOid(0);
-    //  manager.ClearTileGroup();
-    //
-    //  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-    //  txn_manager.ResetStates();
-
-  LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
-
-  auto& log_manager = logging::LogManager::GetInstance();
-  if( log_manager.ActiveFrontendLoggerCount() > 0){
-    LOG_ERROR("another logging thread is running now");
-    return;
-  }
-
-  // start a thread for logging
-  log_manager.SetDefaultLoggingType(LOGGING_TYPE_PELOTON);
-  std::thread thread(&logging::LogManager::StartStandbyMode, 
-                     &log_manager,
-                     log_manager.GetDefaultLoggingType());
-
-  // When the frontend logger gets ready to logging,
-  // start logging
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
-  // Standby -> Recovery
-  log_manager.StartRecoveryMode();
-  // Recovery -> Ongoing
-
-  //wait recovery
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
-
-  // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000, 10000);
-
-  // Check rollback
-  //LoggingTestsUtil::CheckRollBack(20000, 10000);
-
-  if( log_manager.EndLogging() ){
-    thread.join();
-  }else{
-    LOG_ERROR("Failed to terminate logging thread"); 
-  }
-  LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
-}
-
 void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
 
   auto &manager = catalog::Manager::GetInstance();
@@ -219,11 +168,8 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
   }
 
   // check # of active tuples
-
-  // TODO Remove hard code here.
   // Minus 1 because we removed 1 tuples in RunBackends.
-  EXPECT_EQ(active_tuple_count, ((NUM_TUPLES-1) * NUM_BACKEND));
-
+  EXPECT_EQ(active_tuple_count, ((GetTestTupleNumber()-1) * NUM_BACKEND));
 }
 
 //===--------------------------------------------------------------------===//
@@ -262,11 +208,6 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   auto locations = InsertTuples(table, true/*commit*/);
 
-  // Try to delete the third inserted location and abort it if we insert >= 3 tuples
-  // FIXME
-  //if(locations.size() >= 3)
-  //  DeleteTuples(table, locations[2], false/*abort*/);
-
   // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
     DeleteTuples(table, locations[1], true/*commit*/);
@@ -295,7 +236,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = GetTuple(table->GetSchema(),NUM_TUPLES);
+  auto tuples = GetTuple(table->GetSchema(),GetTestTupleNumber());
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -534,8 +475,16 @@ void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
 }
 
 void LoggingTestsUtil::DropDatabase(oid_t db_oid){
-
   bridge::DDLDatabase::DropDatabase(db_oid);
+}
+
+oid_t LoggingTestsUtil::GetTestTupleNumber() {
+  char* tuples_number_str = getenv("NUM_TUPLES");
+  if (tuples_number_str) {
+    return atof(tuples_number_str);
+  } else {
+    return 20;
+  }
 }
 
 }  // End test namespace

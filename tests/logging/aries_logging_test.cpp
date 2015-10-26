@@ -42,8 +42,10 @@ TEST(AriesLoggingTest, recovery) {
   EXPECT_TRUE(log_file.good());
   log_file.close();
 
+  // Reset data
+  LoggingTestsUtil::ResetSystem();
 	// Do recovery
-	LoggingTestsUtil::CheckAriesRecovery();
+	LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES);
 }
 
 }  // End test namespace
