@@ -10,10 +10,9 @@ namespace logging {
  * @brief Serialize given data
  * @return true if we serialize data otherwise false
  */
-bool TransactionRecord::Serialize(){
+bool TransactionRecord::Serialize(CopySerializeOutput& output){
   bool status = true;
-
-  CopySerializeOutput output;
+  output.Reset();
 
   // First, write out the log record type
   output.WriteEnumInSingleByte(log_record_type);
@@ -29,7 +28,6 @@ bool TransactionRecord::Serialize(){
   
   message_length = output.Size();
   message = (char*) malloc(message_length);
-  memset(message, 0, message_length);
   memcpy(message, output.Data(), message_length);
 
   return status;

@@ -33,7 +33,7 @@ void AriesBackendLogger::Log(LogRecord* record){
   // Enqueue the serialized log record into the queue
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
+    record->Serialize(output_buffer);
     local_queue.push_back(record);
   }
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {

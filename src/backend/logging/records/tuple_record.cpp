@@ -21,10 +21,9 @@ namespace logging {
  * @brief Serialize given data
  * @return true if we serialize data otherwise false
  */
-bool TupleRecord::Serialize(){
-
+bool TupleRecord::Serialize(CopySerializeOutput& output){
   bool status = true;
-  CopySerializeOutput output;
+  output.Reset();
 
   // Serialize the common variables such as database oid, table oid, etc.
   SerializeHeader(output);
@@ -58,7 +57,6 @@ bool TupleRecord::Serialize(){
 
   message_length = output.Size();
   message = (char*)malloc(message_length);
-  memset( message, 0, message_length);
   memcpy( message, output.Data(), message_length);
 
   return status;
