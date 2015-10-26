@@ -32,7 +32,6 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
 void PelotonBackendLogger::Log(LogRecord* record){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
     local_queue.push_back(record);
   }
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {

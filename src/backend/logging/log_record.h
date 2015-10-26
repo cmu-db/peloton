@@ -38,6 +38,7 @@
 
 #include "backend/common/types.h"
 #include "backend/bridge/ddl/bridge.h"
+#include "backend/common/serializer.h"
 
 namespace peloton {
 namespace logging {
@@ -61,7 +62,7 @@ class LogRecord{
 
   txn_id_t GetTransactionId() const{ return txn_id; }
 
-  virtual bool Serialize(void) = 0;
+  virtual bool Serialize(CopySerializeOutput& output) = 0;
 
   virtual void Print(void) = 0;
 
