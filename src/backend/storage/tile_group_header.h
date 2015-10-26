@@ -85,7 +85,7 @@ class TileGroupHeader {
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
-    oid_t val = other.next_tuple_slot;
+    unsigned long long val = other.next_tuple_slot;
     next_tuple_slot = val;
 
     val = other.active_tuple_slots;
@@ -364,7 +364,7 @@ class TileGroupHeader {
   oid_t next_tuple_slot;
 
   // active tuples
-  std::atomic<oid_t> active_tuple_slots;
+  std::atomic<unsigned long long> active_tuple_slots;
 
   // synch helpers
   std::mutex tile_header_mutex;
