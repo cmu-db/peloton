@@ -146,11 +146,8 @@ void TransactionManager::EndTransaction(Transaction *txn,
       // Check for sync commit
       // If true, wait for the fronted logger to flush the data
       if( log_manager.GetSyncCommit())  {
-        while(logger->IsWaitingForFlushing()){
-          sleep(1);
-        }
+        logger->WaitForFlushing();
       }
-
     }
   }
 

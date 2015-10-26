@@ -33,7 +33,7 @@ public:
 
   void Log(LogRecord* record);
 
-  size_t GetLocalQueueSize(void) const;
+  size_t GetLocalQueueSize(void) ;
 
   void TruncateLocalQueue(oid_t offset);
 
@@ -47,7 +47,7 @@ public:
 
 private:
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
-    // TODO this flag is used for testing performance difference between
+    // XXX this flag is used for testing performance difference between
     // group flushing and fine grained flushing
     bool flush_enabled = false;
 };

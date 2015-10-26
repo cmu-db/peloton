@@ -98,11 +98,8 @@ void PelotonFrontendLogger::Flush(void) {
 
   // Commit each backend logger 
   backend_loggers = GetBackendLoggers();
-
   for (auto backend_logger : backend_loggers) {
-    if (backend_logger->IsWaitingForFlushing()) {
-      backend_logger->Commit();
-    }
+    backend_logger->Commit();
   }
 }
 
