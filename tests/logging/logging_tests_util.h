@@ -35,9 +35,9 @@ public:
   // CHECK RECOVERY
   //===--------------------------------------------------------------------===//
 
-  static void CheckAriesRecovery(void);
+  static void ResetSystem(void);
 
-  static void CheckPelotonRecovery(void);
+  static void CheckRecovery(LoggingType logging_type);
 
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid);
 
@@ -74,6 +74,8 @@ private:
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void DropDatabase(oid_t db_oid);
+
+  static oid_t GetTestTupleNumber();
 
 };
 
