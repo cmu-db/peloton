@@ -313,9 +313,7 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
     auto logger = log_manager.GetBackendLogger();
 
     // Wait until frontend logger collects the data
-    while( logger->IsWaitingForFlushing()){
-      sleep(1);
-    }
+    logger->WaitForFlushing();
 
     log_manager.RemoveBackendLogger(logger);
   }
