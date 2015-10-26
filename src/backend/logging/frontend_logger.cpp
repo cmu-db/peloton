@@ -129,8 +129,11 @@ void FrontendLogger::NotifyFrontend(bool hasNewLog) {
     if (log_collect_request == false) {
       log_collect_request = true;
     }
+    // Only when new logs appear,
+    // we need lock backend_notify_mutex and notify
     backend_notify_cv.notify_one();
   } else {
+    // No need to lock mutex
     backend_notify_cv.notify_one();
   }
 }

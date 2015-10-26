@@ -47,8 +47,9 @@ void PelotonBackendLogger::Log(LogRecord* record){
  * @brief Get the local queue size
  * @return local queue size
  */
-size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
+size_t PelotonBackendLogger::GetLocalQueueSize(void) {
   if (flush_enabled) {
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
     return local_queue.size();
   } else {
     return 0;
