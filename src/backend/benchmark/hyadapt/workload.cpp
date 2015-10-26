@@ -839,7 +839,7 @@ void RunOperatorExperiment() {
 
           // Run operator
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest();
+          RunDirectTest();
         }
       }
 
