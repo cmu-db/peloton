@@ -38,8 +38,7 @@ void AriesBackendLogger::Log(LogRecord* record){
   }
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
     auto& log_manager = logging::LogManager::GetInstance();
-    FrontendLogger *frontend = log_manager.GetFrontendLogger(logging_type);
-    frontend->NotifyFrontend(true);
+    log_manager.NotifyFrontendLogger(logging_type, true);
   }
 }
 
