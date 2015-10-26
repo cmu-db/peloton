@@ -50,6 +50,8 @@ class AriesBackendLogger : public BackendLogger{
 
   AriesBackendLogger(){ logging_type = LOGGING_TYPE_ARIES;}
 
+  CopySerializeOutput output_buffer;
+
 };
 
 }  // namespace logging
