@@ -34,8 +34,6 @@ class AriesBackendLogger : public BackendLogger{
 
   void Log(LogRecord* record);
 
-  size_t GetLocalQueueSize(void) ;
-
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord* GetTupleRecord(LogRecordType log_record_type,

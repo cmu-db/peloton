@@ -115,5 +115,14 @@ void BackendLogger::WaitForFlushing(void) {
   }
 }
 
+/**
+ * @brief Get the local queue size
+ * @return local queue size
+ */
+size_t BackendLogger::GetLocalQueueSize(void) {
+  std::lock_guard<std::mutex> lock(local_queue_mutex);
+  return local_queue.size();
+}
+
 }  // namespace logging
 }
