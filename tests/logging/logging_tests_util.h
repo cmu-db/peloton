@@ -26,10 +26,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type);
-
-  // Truncate the log file for Peloton Recovery Test
-  static void TruncateLogFile(std::string file_name);
+  static bool PrepareLogFile(LoggingType logging_type, bool suspend_commit = false);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -38,8 +35,6 @@ public:
   static void ResetSystem(void);
 
   static void CheckRecovery(LoggingType logging_type);
-
-  static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 
 private:
 
@@ -77,6 +72,9 @@ private:
 
   static oid_t GetTestTupleNumber();
 
+  static bool DoCheckTupleNumber();
+
+  static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 };
 
 }  // End test namespace

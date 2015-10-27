@@ -84,7 +84,9 @@ void PelotonFrontendLogger::Flush(void) {
         break;
       case LOGRECORD_TYPE_TRANSACTION_END:
       case LOGRECORD_TYPE_TRANSACTION_DONE:
-        global_plog_pool->RemoveTxnLogList(record->GetTransactionId());
+        // don't remove tuples when doing test
+        if (!suspend_committing)
+          global_plog_pool->RemoveTxnLogList(record->GetTransactionId());
         break;
       default:
         // Collect the commit information
@@ -108,9 +110,11 @@ void PelotonFrontendLogger::Flush(void) {
 void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
   // In case the commit process is interrupted
   txn_log_record_list->SetCommitting(true);
+  if (suspend_committing) {
+    return;
+  }
 
   LogRecordNode *recordNode = txn_log_record_list->GetHeadNode();
-
   while (recordNode != NULL) {
     cid_t current_cid = INVALID_CID;
     switch (recordNode->_log_record_type) {
@@ -162,7 +166,9 @@ void PelotonFrontendLogger::DoRecovery() {
     if (cur->IsCommitting()) {
       CommitRecords(cur);
     }
-    global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
+    // don't remove tuples when doing test
+    if (!suspend_committing)
+      global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
   }
   assert(global_plog_pool->IsEmpty());
   if (max_oid != INVALID_OID) {

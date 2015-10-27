@@ -27,7 +27,7 @@ namespace test {
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
+bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, bool suspend_commit){
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -37,12 +37,18 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
     return false;
   }
   log_manager.SetDefaultLoggingType(logging_type);
+
   std::thread thread(&logging::LogManager::StartStandbyMode,
                      &log_manager,
                      log_manager.GetDefaultLoggingType());
 
   // Wait for the frontend logger to go to enter recovery mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+
+  if (suspend_commit) {
+    log_manager.SetTestInterruptCommit(suspend_commit);
+  }
+
   // Recovery -> Ongoing
   log_manager.StartRecoveryMode();
   // Standby -> Recovery
@@ -61,40 +67,6 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
 
   LOG_ERROR("Failed to terminate logging thread");
   return false;
-}
-
-void LoggingTestsUtil::TruncateLogFile(std::string file_name){
-  struct stat log_stats;
-  size_t log_file_size;
-
-  // Open the log file
-  FILE* log_file = fopen(file_name.c_str(),"ab+");
-  if(log_file == NULL) {
-    LOG_ERROR("LogFile is NULL");
-  }
-
-  // Get the file descriptor and size
-  int log_file_fd = fileno(log_file);
-  if( log_file_fd == -1) {
-    LOG_ERROR("log_file_fd is -1");
-  }
-
-  if(stat(file_name.c_str(), &log_stats) == 0){
-    fstat(log_file_fd, &log_stats);
-    log_file_size = log_stats.st_size;
-  }
-
-  // Finally, close the log file
-  int ret = fclose(log_file);
-  if( ret != 0 ){
-    LOG_ERROR("Error occured while closing LogFile");
-  }
-
-  int res = truncate(file_name.c_str(), log_file_size-logging::TransactionRecord::GetTransactionRecordSize());
-  if( res == -1 ){
-    LOG_ERROR("Failed to truncate the log file"); 
-  }
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -125,6 +97,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
 
   // start a thread for logging
   log_manager.SetDefaultLoggingType(logging_type);
+
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
                      log_manager.GetDefaultLoggingType());
@@ -132,6 +105,10 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   // When the frontend logger gets ready to logging,
   // start logging
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+
+  // always enable commit when recovery
+  log_manager.SetTestInterruptCommit(false);
+
   // Standby -> Recovery
   log_manager.StartRecoveryMode();
   // Recovery -> Ongoing
@@ -139,9 +116,11 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   //wait recovery
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
-  // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000, 10000,
+  if (DoCheckTupleNumber()) {
+    // Check the tuples
+    LoggingTestsUtil::CheckTupleCount(20000, 10000,
                                       ((GetTestTupleNumber()-1) * NUM_BACKEND));
+  }
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
@@ -196,9 +175,11 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 
   db->AddTable(table);
 
-  // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000, 10000,
+  if (DoCheckTupleNumber()) {
+    // Check the tuples
+    LoggingTestsUtil::CheckTupleCount(20000, 10000,
                                       ((GetTestTupleNumber()-1) * NUM_BACKEND));
+  }
 
   // We can only drop this for ARIES
   if(logging_type == LOGGING_TYPE_ARIES){
@@ -489,6 +470,16 @@ oid_t LoggingTestsUtil::GetTestTupleNumber() {
   } else {
     return 20;
   }
+}
+
+bool LoggingTestsUtil::DoCheckTupleNumber() {
+  char* tuples_number_str = getenv("CHECK_TUPLES_NUM");
+  if (tuples_number_str) {
+    if(atoi(tuples_number_str) == 0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // End test namespace
