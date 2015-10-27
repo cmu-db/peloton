@@ -26,7 +26,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type, bool suspend_commit = false);
+  static bool PrepareLogFile(LoggingType logging_type);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -73,6 +73,8 @@ private:
   static oid_t GetTestTupleNumber();
 
   static bool DoCheckTupleNumber();
+
+  static bool DoTestSuspendCommit();
 
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 };
