@@ -140,7 +140,8 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Check the tuples
-  LoggingTestsUtil::CheckTupleCount(20000, 10000);
+  LoggingTestsUtil::CheckTupleCount(20000, 10000,
+                                      ((GetTestTupleNumber()-1) * NUM_BACKEND));
 
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
@@ -153,7 +154,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
 }
 
-void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
+void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected){
 
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
@@ -169,7 +170,7 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid){
 
   // check # of active tuples
   // Minus 1 because we removed 1 tuples in RunBackends.
-  EXPECT_EQ(active_tuple_count, ((GetTestTupleNumber()-1) * NUM_BACKEND));
+  EXPECT_EQ(active_tuple_count, expected);
 }
 
 //===--------------------------------------------------------------------===//
@@ -428,7 +429,7 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   // Column
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, 4, "id");
+  catalog::Column column1(VALUE_TYPE_BIGINT, 8, "id");
   catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
   catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
   catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
@@ -451,12 +452,12 @@ std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema,
     storage::Tuple *tuple = new storage::Tuple(schema, true);
 
     // Setting values in tuple
-    Value integerValue = ValueFactory::GetIntegerValue(243432+col_itr+tid);
+    Value longValue = ValueFactory::GetBigIntValue(243432+col_itr+tid);
     Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
     Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+tid));
 
-    tuple->SetValue(0, integerValue);
+    tuple->SetValue(0, longValue);
     tuple->SetValue(1, stringValue);
     tuple->SetValue(2, timestampValue);
     tuple->SetValue(3, doubleValue);

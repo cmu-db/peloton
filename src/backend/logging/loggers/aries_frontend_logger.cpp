@@ -112,7 +112,6 @@ void AriesFrontendLogger::Flush(void) {
  * @brief Recovery system based on log file
  */
 void AriesFrontendLogger::DoRecovery() {
-
   // Go over the log size if needed
   if(GetLogFileSize() > 0){
     bool reached_end_of_file = false;
@@ -263,7 +262,6 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
                                      concurrency::Transaction* source){
   // This is the local transaction
   auto inserted_tuples = source->GetInsertedTuples();
-
   // Record the inserts in recovery txn
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
@@ -280,8 +278,9 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
     storage::TileGroup *tile_group = entry.first;
     auto tile_group_id = tile_group->GetTileGroupId();
 
-    for (auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second) {
       destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
+    }
   }
 
   // Clear inserted/deleted tuples from txn, just in case
@@ -327,8 +326,9 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
 
-    for (auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second) {
       tile_group->AbortInsertedTuple(tuple_slot);
+    }
   }
 
   // Record the aborted deletes in recovery txn
@@ -336,8 +336,9 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   for (auto entry : txn->GetDeletedTuples()) {
     storage::TileGroup *tile_group = entry.first;
 
-    for (auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second) {
       tile_group->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
+    }
   }
 
   // Clear inserted/deleted tuples from txn, just in case
