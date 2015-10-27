@@ -233,7 +233,6 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
-
     for (auto tuple_slot : entry.second)
       tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
   }

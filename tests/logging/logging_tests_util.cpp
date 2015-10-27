@@ -169,8 +169,7 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
   }
 
   // check # of active tuples
-  // Minus 1 because we removed 1 tuples in RunBackends.
-  EXPECT_EQ(active_tuple_count, expected);
+  EXPECT_EQ(expected, active_tuple_count);
 }
 
 //===--------------------------------------------------------------------===//
@@ -197,8 +196,12 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 
   db->AddTable(table);
 
+  // Check the tuples
+  LoggingTestsUtil::CheckTupleCount(20000, 10000,
+                                      ((GetTestTupleNumber()-1) * NUM_BACKEND));
+
   // We can only drop this for ARIES
-  if(logging_type == LOGGING_TYPE_ARIES ){
+  if(logging_type == LOGGING_TYPE_ARIES){
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
