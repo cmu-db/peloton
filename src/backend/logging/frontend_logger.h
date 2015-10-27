@@ -54,6 +54,10 @@ class FrontendLogger : public Logger{
 
     void NotifyFrontend(bool hasNewLog = false);
 
+    void SetTestInterruptCommit(bool suspend) {
+      suspend_committing = suspend;
+    }
+
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
@@ -85,6 +89,9 @@ class FrontendLogger : public Logger{
     std::condition_variable backend_notify_cv;
     uint32 wait_timeout = 5; // in seconds
     bool log_collect_request = false; // used to indicate if backend has new logs
+
+    // for testing
+    bool suspend_committing = false;
 };
 
 }  // namespace logging
