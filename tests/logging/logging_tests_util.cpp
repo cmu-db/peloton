@@ -27,7 +27,7 @@ namespace test {
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, bool suspend_commit){
+bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -45,8 +45,8 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, bool suspend_com
   // Wait for the frontend logger to go to enter recovery mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
-  if (suspend_commit) {
-    log_manager.SetTestInterruptCommit(suspend_commit);
+  if (DoTestSuspendCommit()) {
+    log_manager.SetTestInterruptCommit(true);
   }
 
   // Recovery -> Ongoing
@@ -473,13 +473,23 @@ oid_t LoggingTestsUtil::GetTestTupleNumber() {
 }
 
 bool LoggingTestsUtil::DoCheckTupleNumber() {
-  char* tuples_number_str = getenv("CHECK_TUPLES_NUM");
-  if (tuples_number_str) {
-    if(atoi(tuples_number_str) == 0) {
+  char* check_tuple_str = getenv("CHECK_TUPLES_NUM");
+  if (check_tuple_str) {
+    if(atoi(check_tuple_str) == 0) {
       return false;
     }
   }
   return true;
+}
+
+bool LoggingTestsUtil::DoTestSuspendCommit() {
+  char* suspend_commit_str = getenv("SUSPEND_COMMIT");
+  if (suspend_commit_str) {
+    if(atoi(suspend_commit_str) != 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // End test namespace
