@@ -53,6 +53,9 @@ class BackendLogger : public Logger{
     void TruncateLocalQueue(oid_t offset);
 
     void WaitForFlushing(void);
+
+    size_t GetLocalQueueSize(void);
+
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
@@ -63,8 +66,6 @@ class BackendLogger : public Logger{
 
     // Log the given record
     virtual void Log(LogRecord* record) = 0;
-
-    virtual size_t GetLocalQueueSize(void) = 0;
 
     // Construct a log record with tuple information
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
