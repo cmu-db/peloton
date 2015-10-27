@@ -35,8 +35,6 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
     assert(logging_type);
   }
 
-  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_STANDBY);
-
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
 
@@ -55,6 +53,8 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
       frontend_exists = true;
     }
   }
+
+  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_STANDBY);
 
   if(frontend_exists == false){
     // Launch the frontend logger's main loop
@@ -113,9 +113,10 @@ void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
   }
   {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
-    while(logging_statuses.find(logging_type) != logging_statuses.end() &&
+    while(logging_statuses.find(logging_type) == logging_statuses.end() ||
+        (logging_statuses.find(logging_type) != logging_statuses.end() &&
         ((!is_equal && logging_statuses[logging_type] == logging_status) ||
-          (is_equal && logging_statuses[logging_type] != logging_status))){
+          (is_equal && logging_statuses[logging_type] != logging_status)))){
       logging_status_cv.wait(wait_lock);
     }
   }
@@ -348,6 +349,13 @@ void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
     frontend->NotifyFrontend(newLog);
   }
 }
+
+void LogManager::SetTestInterruptCommit(bool test_suspend_commit) {
+  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+  FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
+  frontend->SetTestInterruptCommit(test_suspend_commit);
+}
+
 
 }  // namespace logging
 }  // namespace peloton

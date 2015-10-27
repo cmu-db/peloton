@@ -95,6 +95,8 @@ class LogManager{
 
     void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
 
+    void SetTestInterruptCommit(bool test_suspend_commit);
+
   private:
 
     LogManager(){};
