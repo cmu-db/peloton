@@ -33,8 +33,6 @@ public:
 
   void Log(LogRecord* record);
 
-  size_t GetLocalQueueSize(void) ;
-
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord* GetTupleRecord(LogRecordType log_record_type, 
@@ -47,9 +45,6 @@ public:
 
 private:
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
-    // XXX this flag is used for testing performance difference between
-    // group flushing and fine grained flushing
-    bool flush_enabled = false;
 };
 
 }  // namespace logging

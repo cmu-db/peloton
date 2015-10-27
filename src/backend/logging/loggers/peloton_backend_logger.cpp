@@ -35,23 +35,8 @@ void PelotonBackendLogger::Log(LogRecord* record){
     local_queue.push_back(record);
   }
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
-    if (!flush_enabled)
-      flush_enabled = true;
     auto& log_manager = logging::LogManager::GetInstance();
     log_manager.NotifyFrontendLogger(logging_type, true);
-  }
-}
-
-/**
- * @brief Get the local queue size
- * @return local queue size
- */
-size_t PelotonBackendLogger::GetLocalQueueSize(void) {
-  if (flush_enabled) {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    return local_queue.size();
-  } else {
-    return 0;
   }
 }
 
