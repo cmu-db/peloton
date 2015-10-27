@@ -52,6 +52,8 @@ class FrontendLogger : public Logger{
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
+    void NotifyFrontend(bool hasNewLog = false);
+
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
@@ -65,8 +67,6 @@ class FrontendLogger : public Logger{
      * Restore database
      */
     virtual void DoRecovery(void) = 0;
-
-    void NotifyFrontend(bool hasNewLog = false);
 
   protected:
 

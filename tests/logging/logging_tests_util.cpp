@@ -455,7 +455,7 @@ std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema,
     storage::Tuple *tuple = new storage::Tuple(schema, true);
 
     // Setting values in tuple
-    Value longValue = ValueFactory::GetBigIntValue(243432+col_itr+tid);
+    Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+tid);
     Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
     Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+tid));
