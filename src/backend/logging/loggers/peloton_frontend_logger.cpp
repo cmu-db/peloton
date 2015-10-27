@@ -115,14 +115,14 @@ void PelotonFrontendLogger::CommitRecords(LogRecordList *txn_log_record_list) {
     cid_t current_cid = INVALID_CID;
     switch (recordNode->_log_record_type) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-        current_cid = SetInsertCommitMark(recordNode->_insert_location, true);
+        current_cid = SetInsertCommitMark(recordNode->_insert_location);
         break;
       case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-        current_cid = SetDeleteCommitMark(recordNode->_delete_location, true);
+        current_cid = SetDeleteCommitMark(recordNode->_delete_location);
         break;
       case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-        current_cid = SetInsertCommitMark(recordNode->_insert_location, true);
-        SetDeleteCommitMark(recordNode->_delete_location, true);
+        current_cid = SetInsertCommitMark(recordNode->_insert_location);
+        SetDeleteCommitMark(recordNode->_delete_location);
         break;
       default:
         break;
@@ -173,14 +173,15 @@ void PelotonFrontendLogger::DoRecovery() {
   // TODO How to reset transaction manager with latest cid, if no item is recovered
 }
 
-cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
-                                                bool commit) {
-  //Commit Insert Mark
+cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
+  // XXX Do we need to lock tile before operating?
+  // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
-  tile_group_header->SetInsertCommit(location.offset, commit);
-  tile_group_header->IncrementActiveTupleCount();
+  if (!tile_group_header->GetInsertCommit(location.offset)) {
+    tile_group_header->SetInsertCommit(location.offset, true);
+  }
   LOG_INFO("<%p, %u> : slot is insert committed", tile_group, location.offset);
   if( max_oid < location.block ){
     max_oid = location.block;
@@ -189,14 +190,15 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location,
   return tile_group_header->GetBeginCommitId(location.offset);
 }
 
-cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location,
-                                                bool commit) {
+cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
+  // XXX Do we need to lock tile before operating?
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
-  tile_group_header->SetDeleteCommit(location.offset, commit);
-  tile_group_header->DecrementActiveTupleCount();
+  if (!tile_group_header->GetDeleteCommit(location.offset)) {
+    tile_group_header->SetDeleteCommit(location.offset, true);
+  }
   LOG_INFO("<%p, %u> : slot is delete committed", tile_group, location.offset);
   if( max_oid < location.block ){
     max_oid = location.block;

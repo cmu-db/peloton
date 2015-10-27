@@ -44,9 +44,9 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void DoRecovery(void);
 
-    cid_t SetInsertCommitMark(ItemPointer location, bool commit);
+    cid_t SetInsertCommitMark(ItemPointer location);
 
-    cid_t SetDeleteCommitMark(ItemPointer location, bool commit);
+    cid_t SetDeleteCommitMark(ItemPointer location);
 
     //===--------------------------------------------------------------------===//
     // Utility functions

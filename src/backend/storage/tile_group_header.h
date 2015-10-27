@@ -52,8 +52,7 @@ class TileGroupHeader {
       : backend(_backend),
         data(nullptr),
         num_tuple_slots(tuple_count),
-        next_tuple_slot(0),
-        active_tuple_slots(0) {
+        next_tuple_slot(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -65,10 +64,11 @@ class TileGroupHeader {
     // Set MVCC Initial Value
     for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
         tuple_slot_id++) {
-
       SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
       SetBeginCommitId(tuple_slot_id, MAX_CID);
       SetEndCommitId(tuple_slot_id, MAX_CID);
+      SetInsertCommit(tuple_slot_id, false);
+      SetDeleteCommit(tuple_slot_id, false);
     }
 
   }
@@ -87,9 +87,6 @@ class TileGroupHeader {
     num_tuple_slots = other.num_tuple_slots;
     unsigned long long val = other.next_tuple_slot;
     next_tuple_slot = val;
-
-    val = other.active_tuple_slots;
-    active_tuple_slots = val;
 
     return *this;
   }
@@ -138,17 +135,7 @@ class TileGroupHeader {
     return next_tuple_slot;
   }
 
-  inline oid_t GetActiveTupleCount() const {
-    return active_tuple_slots;
-  }
-
-  inline void IncrementActiveTupleCount() {
-    ++active_tuple_slots;
-  }
-
-  inline void DecrementActiveTupleCount() {
-    --active_tuple_slots;
-  }
+  oid_t GetActiveTupleCount();
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
@@ -362,9 +349,6 @@ class TileGroupHeader {
 
   // next free tuple slot
   oid_t next_tuple_slot;
-
-  // active tuples
-  std::atomic<unsigned long long> active_tuple_slots;
 
   // synch helpers
   std::mutex tile_header_mutex;
