@@ -39,7 +39,7 @@ public:
 
   static void CheckRecovery(LoggingType logging_type);
 
-  static void CheckTupleCount(oid_t db_oid, oid_t table_oid);
+  static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 
 private:
 

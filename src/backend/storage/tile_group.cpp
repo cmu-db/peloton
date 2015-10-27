@@ -228,12 +228,6 @@ void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
   // set the begin commit id to persist insert
   if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
-    // Only increase when not using peloton logger
-    // For peloton logger, the active count will be done when the commit bit is set
-    auto& log_manager = logging::LogManager::GetInstance();
-    if (log_manager.GetDefaultLoggingType() != LOGGING_TYPE_PELOTON) {
-      tile_group_header->IncrementActiveTupleCount();
-    }
   }
 }
 
@@ -242,12 +236,6 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
   // set the end commit id to persist delete
   if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
-    // Only decreasse when not using peloton logger
-    // For peloton logger, the active count will be done when the commit bit is set
-    auto& log_manager = logging::LogManager::GetInstance();
-    if (log_manager.GetDefaultLoggingType() != LOGGING_TYPE_PELOTON) {
-      tile_group_header->DecrementActiveTupleCount();
-    }
   }
 }
 /**
