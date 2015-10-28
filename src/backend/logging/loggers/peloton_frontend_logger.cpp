@@ -61,6 +61,7 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
   for (auto log_record : global_queue) {
     delete log_record;
   }
+  global_plog_pool->Clear();
 }
 
 /**
@@ -165,14 +166,16 @@ void PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
  * @brief Recovery system based on log file
  */
 void PelotonFrontendLogger::DoRecovery() {
-  while (!global_plog_pool->IsEmpty()) {
-    LogRecordList *cur = global_plog_pool->GetHeadList();
+  LogRecordList *cur = global_plog_pool->GetHeadList();
+  while (cur != nullptr) {
     if (cur->IsCommitting()) {
       CommitRecords(cur);
     }
+    txn_id_t txn_id = cur->GetTxnID();
+    cur = cur->GetNextList();
     // don't remove tuples when doing test
     if (!suspend_committing)
-      global_plog_pool->RemoveTxnLogList(cur->GetTxnID());
+      global_plog_pool->RemoveTxnLogList(txn_id);
   }
   assert(global_plog_pool->IsEmpty());
   if (max_oid != INVALID_OID) {
