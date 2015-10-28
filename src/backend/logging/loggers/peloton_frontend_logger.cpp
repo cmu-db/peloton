@@ -26,6 +26,7 @@ namespace peloton {
 namespace logging {
 
 LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
+storage::NVMBackend *PelotonFrontendLogger::backend = nullptr;
 
 /**
  * @brief create NVM backed log pool
@@ -34,11 +35,15 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
 
   logging_type = LOGGING_TYPE_PELOTON;
 
-  // persistent pool for all pending logs
-  backend = new storage::NVMBackend();
-
   // TODO ??? try to read global_plog_pool info from a fix address
   // and recovery the lists by calling SyncLogRecordList()
+
+  // persistent pool for all pending logs
+  if (backend == nullptr) {
+    backend = new storage::NVMBackend();
+    assert(backend != nullptr);
+  }
+
   if (global_plog_pool == nullptr) {
     global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
     assert(global_plog_pool != nullptr);
@@ -56,7 +61,6 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
   for (auto log_record : global_queue) {
     delete log_record;
   }
-  delete backend;
 }
 
 /**
