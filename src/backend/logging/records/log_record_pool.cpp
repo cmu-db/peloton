@@ -62,7 +62,7 @@ void LogRecordList::CheckLogRecordList(storage::AbstractBackend *backend) {
   }
 }
 
-void LogRecordPool::Clear() {
+void LogRecordPool::Clear(bool doCleanAllLog) {
   // Clean up
   if (txn_log_table != nullptr) {
     txn_log_table->clear();
@@ -70,10 +70,14 @@ void LogRecordPool::Clear() {
     txn_log_table = nullptr;
   }
 
-  while (head_list != nullptr) {
-    RemoveLogList(head_list);
+  LogRecordList *cur = head_list;
+  while (cur != nullptr) {
+    LogRecordList * deleting_list = cur;
+    cur = cur->GetNextList();
+    if (doCleanAllLog || !deleting_list->IsCommitting()) {
+      RemoveLogList(deleting_list);
+    }
   }
-  tail_list = nullptr;
 }
 
 int LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {

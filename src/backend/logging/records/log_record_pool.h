@@ -137,7 +137,7 @@ class LogRecordPool {
     txn_log_table = new std::map<txn_id_t, LogRecordList *>();
   }
 
-  void Clear();
+  void Clear(bool doCleanAllLog = false);
 
   bool IsEmpty() const {
     return head_list == NULL;
