@@ -35,7 +35,7 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> &column_types,
 
     column_offset += column.fixed_length;
 
-    columns.push_back(column);
+    columns.push_back(std::move(column));
 
     if (is_inlined[column_itr] == false) {
       tup_is_inlined = false;
