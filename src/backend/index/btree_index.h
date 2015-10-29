@@ -21,6 +21,7 @@
 #include "backend/common/synch.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
+#include "stx/btree_multimap.h"
 
 namespace peloton {
 namespace index {
@@ -35,7 +36,8 @@ class BtreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
+  //typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
+  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
   BtreeIndex(IndexMetadata *metadata)
@@ -68,15 +70,13 @@ class BtreeIndex : public Index {
 
       // Delete the < key, location > pair
       auto entries = container.equal_range(index_key);
-      for (auto iterator = entries.first; iterator != entries.second;) {
+      for (auto iterator = entries.first; iterator != entries.second; iterator++) {
         ItemPointer value = iterator->second;
 
         if ((value.block == location.block) &&
             (value.offset == location.offset)) {
           // remove matching (key, value) entry
-          iterator = container.erase(iterator);
-        } else {
-          ++iterator;
+          container.erase(iterator);
         }
       }
 
