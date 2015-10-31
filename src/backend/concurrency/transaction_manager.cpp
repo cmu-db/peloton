@@ -234,16 +234,16 @@ void TransactionManager::CommitPendingTransactions(
   pending_txns.push_back(txn);
 
   // commit all pending transactions
-  auto current_txn = txn->next;
+  auto next_txn = txn->next;
 
-  while (current_txn != nullptr && current_txn->waiting_to_commit == true) {
+  while (next_txn != nullptr && next_txn->waiting_to_commit == true) {
     // try to increment last finished cid
-    if (atomic_cas(&last_cid, current_txn->cid - 1, current_txn->cid)) {
+    if (atomic_cas(&last_cid, next_txn->cid - 1, next_txn->cid)) {
       // if that worked, add transaction to list
-      pending_txns.push_back(current_txn);
-      LOG_TRACE("Pending Txn  : %lu \n", current_txn->txn_id);
+      pending_txns.push_back(next_txn);
+      LOG_TRACE("Pending Txn  : %lu \n", next_txn->txn_id);
 
-      current_txn = current_txn->next;
+      next_txn = next_txn->next;
       continue;
     }
     // it did not work, so some other txn must have squeezed in
@@ -293,6 +293,7 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
 
 void TransactionManager::CommitTransaction(bool sync) {
 
+  LOG_INFO("Committing peloton txn : %lu \n", current_txn->GetTransactionId());
   // begin commit phase : get cid and add to transaction list
   BeginCommitPhase(current_txn);
 
@@ -309,6 +310,8 @@ void TransactionManager::CommitTransaction(bool sync) {
   // XXX LOG : group commit entry
   // we already record commit entry in CommitModifications, isn't it?
 
+  current_txn = nullptr;
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -316,7 +319,7 @@ void TransactionManager::CommitTransaction(bool sync) {
 //===--------------------------------------------------------------------===//
 
 void TransactionManager::AbortTransaction() {
-
+  LOG_INFO("Aborting peloton txn : %lu \n", current_txn->GetTransactionId());
   // Log the ABORT TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
@@ -352,6 +355,8 @@ void TransactionManager::AbortTransaction() {
 
   // drop a reference
   current_txn->DecrementRefCount();
+
+  current_txn = nullptr;
 
 }
 
