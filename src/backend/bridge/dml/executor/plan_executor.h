@@ -40,8 +40,7 @@ class PlanExecutor {
 
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     ParamListInfo m_param_list,
-                                    TupleDesc m_tuple_desc,
-                                    TransactionId txn_id);
+                                    TupleDesc m_tuple_desc);
 
   static executor::AbstractExecutor *AddMaterialization(
       executor::AbstractExecutor *root);

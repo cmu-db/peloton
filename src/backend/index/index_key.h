@@ -453,7 +453,7 @@ class GenericComparator {
     return diff < 0;
     */
 
-    for (int column_itr = 0; column_itr < schema->GetColumnCount(); column_itr++) {
+    for (oid_t column_itr = 0; column_itr < schema->GetColumnCount(); column_itr++) {
       const Value lhs_value = lhs.ToValueFast(schema, column_itr);
       const Value rhs_value = rhs.ToValueFast(schema, column_itr);
 
