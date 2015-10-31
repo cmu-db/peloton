@@ -29,6 +29,8 @@ typedef unsigned int TransactionId;
 
 class Transaction;
 
+extern thread_local Transaction *current_txn;
+
 //===--------------------------------------------------------------------===//
 // Transaction Manager
 //===--------------------------------------------------------------------===//
@@ -80,17 +82,11 @@ class TransactionManager {
 
   std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
 
-  void CommitTransaction(Transaction *txn, bool sync = true);
+  void CommitTransaction(bool sync = true);
 
   // ABORT
 
-  void AbortTransaction(Transaction *txn);
-
-  // Store PG Transaction
-  Transaction *StartPGTransaction(TransactionId txn_id);
-
-  // Get PG Transaction
-  Transaction *GetPGTransaction(TransactionId txn_id);
+  void AbortTransaction();
 
  private:
   //===--------------------------------------------------------------------===//
@@ -112,11 +108,6 @@ class TransactionManager {
 
   std::mutex txn_table_mutex;
 
-  // Postgres transaction id -> our transaction
-  // Sync access with pg_txn_table_mutex
-  std::map<TransactionId, Transaction *> pg_txn_table;
-
-  std::mutex pg_txn_table_mutex;
 };
 
 }  // End concurrency namespace
