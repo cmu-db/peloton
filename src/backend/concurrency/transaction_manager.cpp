@@ -28,6 +28,9 @@
 namespace peloton {
 namespace concurrency {
 
+// Current transaction for the backend thread
+thread_local Transaction *current_txn;
+
 TransactionManager::TransactionManager() {
   next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
   next_cid = ATOMIC_VAR_INIT(START_CID);
@@ -79,8 +82,8 @@ Transaction *TransactionManager::BeginTransaction() {
     }
   }
 
- // Log the BEGIN TXN record
- {
+  // Log the BEGIN TXN record
+  {
     auto& log_manager = logging::LogManager::GetInstance();
     if(log_manager.IsInLoggingMode()){
       auto logger = log_manager.GetBackendLogger();
@@ -88,7 +91,10 @@ Transaction *TransactionManager::BeginTransaction() {
                                                    next_txn->txn_id);
       logger->Log(record);
     }
- }
+  }
+
+  // Update the next txn
+  current_txn = next_txn;
 
   return next_txn;
 }
@@ -124,11 +130,6 @@ void TransactionManager::ResetStates(void){
     delete curr_txn;
   }
   txn_table.clear();
-  for(auto txn : pg_txn_table){
-    auto curr_txn = txn.second;
-    delete curr_txn;
-  }
-  pg_txn_table.clear();
 }
 
 void TransactionManager::EndTransaction(Transaction *txn,
@@ -160,40 +161,6 @@ void TransactionManager::EndTransaction(Transaction *txn,
     // erase entry in transaction table
     txn_table.erase(txn->txn_id);
   }
-}
-
-// Store an entry in PG Transaction table
-Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
-  {
-    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
-
-    // If entry already exists
-    if (pg_txn_table.count(txn_id) != 0) return pg_txn_table.at(txn_id);
-
-    // Else, create one for this new pg txn id
-    auto txn = BeginTransaction();
-    auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
-    if (status.second == true) {
-      return txn;
-    }
-  }
-
-  return nullptr;
-}
-
-// Get entry in PG Transaction table
-Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
-  {
-    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
-
-    // If entry already exists
-    if (pg_txn_table.count(txn_id) != 0) {
-      auto txn = pg_txn_table.at(txn_id);
-      return txn;
-    }
-  }
-
-  return nullptr;
 }
 
 //===--------------------------------------------------------------------===//
@@ -324,26 +291,20 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
   return std::move(txn_list);
 }
 
-void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
-  assert(txn != nullptr);
-
-  // validate txn id
-  if (!IsValid(txn->txn_id)) {
-    throw TransactionException("Transaction not found in transaction table : " +
-                               std::to_string(txn->txn_id));
-  }
+void TransactionManager::CommitTransaction(bool sync) {
 
   // begin commit phase : get cid and add to transaction list
-  BeginCommitPhase(txn);
+  BeginCommitPhase(current_txn);
 
   // commit all modifications
-  CommitModifications(txn, sync);
+  CommitModifications(current_txn, sync);
 
   // end commit phase : increment last_cid and process pending txns if needed
-  std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
+  std::vector<Transaction *> committed_txns = EndCommitPhase(current_txn, sync);
 
   // process all committed txns
-  for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
+  for (auto committed_txn : committed_txns)
+    committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
   // we already record commit entry in CommitModifications, isn't it?
@@ -354,7 +315,7 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 // Abort Processing
 //===--------------------------------------------------------------------===//
 
-void TransactionManager::AbortTransaction(Transaction *txn) {
+void TransactionManager::AbortTransaction() {
 
   // Log the ABORT TXN record
   {
@@ -362,15 +323,15 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
     if(log_manager.IsInLoggingMode()){
       auto logger = log_manager.GetBackendLogger();
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
-                                                   txn->txn_id);
+                                                   current_txn->txn_id);
       logger->Log(record);
 
     }
   }
 
   // (A) rollback inserts
-  const txn_id_t txn_id = txn->GetTransactionId();
-  auto inserted_tuples = txn->GetInsertedTuples();
+  const txn_id_t txn_id = current_txn->GetTransactionId();
+  auto inserted_tuples = current_txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
 
@@ -379,18 +340,18 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   }
 
   // (B) rollback deletes
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : txn->GetDeletedTuples()) {
+  auto deleted_tuples = current_txn->GetDeletedTuples();
+  for (auto entry : current_txn->GetDeletedTuples()) {
     storage::TileGroup *tile_group = entry.first;
 
     for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot, txn_id);
   }
 
-  EndTransaction(txn, false);
+  EndTransaction(current_txn, false);
 
   // drop a reference
-  txn->DecrementRefCount();
+  current_txn->DecrementRefCount();
 
 }
 

@@ -136,13 +136,9 @@ peloton_ddl(Node *parsetree) {
     */
   }
 
-  auto txn_id = GetTopTransactionId();
-
-
   try {
     /* Process the utility statement */
-    peloton::bridge::DDL::ProcessUtility(parsetree,
-                                         txn_id);
+    peloton::bridge::DDL::ProcessUtility(parsetree);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -183,8 +179,6 @@ peloton_dml(PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
-  auto txn_id = GetTopTransactionId();
-
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {
     elog(WARNING, "Empty or unrecognized plan sent to Peloton");
@@ -202,8 +196,7 @@ peloton_dml(PlanState *planstate,
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
                                                         param_list,
-                                                        tuple_desc,
-                                                        txn_id);
+                                                        tuple_desc);
 
     // Clean up the plantree
     // Not clean up now ! This is cached !

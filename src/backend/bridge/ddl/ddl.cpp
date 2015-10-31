@@ -39,8 +39,7 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree,
-                         TransactionId txn_id) {
+void DDL::ProcessUtility(Node *parsetree) {
   assert(parsetree != nullptr);
 
   LOG_TRACE("Process Utility");
@@ -67,7 +66,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack);
       break;
     }
 
@@ -94,7 +93,7 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *)parsetree;
 
-      DDLTransaction::ExecTransactionStmt(stmt, txn_id);
+      DDLTransaction::ExecTransactionStmt(stmt);
     } break;
 
     default: {
