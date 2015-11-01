@@ -165,7 +165,7 @@ void AriesFrontendLogger::DoRecovery() {
     }
 
     // Commit the recovery transaction
-    txn_manager.CommitTransaction(recovery_txn);
+    txn_manager.CommitTransaction();
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
@@ -442,6 +442,12 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
+  auto txn_id = tuple_record.GetTransactionId();
+  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
+    LOG_TRACE("Delete txd id %d not found in recovery txn table",(int)txn_id);
+    return;
+  }
+
   auto table = GetTable(tuple_record);
 
   ItemPointer delete_location = tuple_record.GetDeleteLocation();
@@ -454,13 +460,8 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
     return;
   }
 
-  auto txn_id = tuple_record.GetTransactionId();
-  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-    LOG_TRACE("Delete txd id %d not found in recovery txn table",(int)txn_id);
-  } else {
-    auto txn = recovery_txn_table.at(txn_id);
-    txn->RecordDelete(delete_location);
-  }
+  auto txn = recovery_txn_table.at(txn_id);
+  txn->RecordDelete(delete_location);
 }
 
 /**
