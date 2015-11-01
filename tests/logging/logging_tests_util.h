@@ -70,6 +70,8 @@ private:
 
   static void DropDatabase(oid_t db_oid);
 
+  static uint GetTestThreadNumber();
+
   static oid_t GetTestTupleNumber();
 
   static bool DoCheckTupleNumber();
