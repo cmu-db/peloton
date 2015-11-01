@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction_manager.h"
-
 #include "nodes/nodes.h"
 
 #include <mutex>
@@ -38,8 +36,7 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree,
-                             concurrency::TransactionId txn_id);
+  static void ProcessUtility(Node *parsetree);
 };
 
 }  // namespace bridge

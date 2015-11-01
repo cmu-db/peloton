@@ -119,7 +119,7 @@ TEST(TileGroupTests, BasicTest) {
 
   EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   delete tuple1;
   delete tuple2;
@@ -152,7 +152,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
     tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id );
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   delete tuple;
 }
@@ -325,7 +325,7 @@ TEST(TileGroupTests, MVCCInsert) {
   EXPECT_NE(result, nullptr);
   delete result;
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   // DELETE
   auto txn2 = txn_manager.BeginTransaction();
@@ -441,7 +441,7 @@ TEST(TileGroupTests, TileCopyTest) {
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple3);
   EXPECT_EQ(2, tuple_slot_id);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
   txn_manager.EndTransaction(txn);
 
   std::cout << "\t Original Tile Details ..." << std::endl

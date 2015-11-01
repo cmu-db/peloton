@@ -12,21 +12,13 @@
 
 #include <iostream>
 #include <cstdio>
+#include <vector>
 
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
 
-#include "tbb/tbb.h"
-#include "tbb/flow_graph.h"
-
 namespace peloton {
 namespace backend {
-
-#ifdef __APPLE__
-using namespace tbb::flow::interface7;
-#else
-using namespace tbb::flow;
-#endif
 
 int size = 10000000;
 int chunk_size = 100000;
@@ -93,29 +85,6 @@ class aggregator_task {
 
 Result Kernel::Handler(__attribute__((unused)) const char *query) {
   Result status = RESULT_INVALID;
-
-  /*
-  int num_chunks = size/chunk_size;
-  data = new int[size]
-  for(auto ii = 0; ii < size; ii++)
-    data[ii] = rand()%10;
-
-  graph g;
-  function_node< int, int > aggregator( g, 1, aggregator_task() );
-  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited,
-  summer_task());
-  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited,
-  seq_scanner_task());
-  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false
-  );
-
-  make_edge(table_iterator, seq_scanner);
-  make_edge(seq_scanner, summer);
-  make_edge(summer, aggregator);
-  table_iterator.activate();
-  g.wait_for_all();
-  */
-
   status = RESULT_SUCCESS;
   return status;
 }
