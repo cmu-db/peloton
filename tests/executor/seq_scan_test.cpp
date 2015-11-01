@@ -20,7 +20,6 @@
 
 #include "backend/planner/seq_scan_plan.h"
 
-
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
@@ -49,7 +48,7 @@ namespace {
 /**
  * @brief Set of tuple_ids that will satisfy the predicate in our test cases.
  */
-const std::set<oid_t> g_tuple_ids({0, 3});
+const std::set<oid_t> g_tuple_ids( { 0, 3 });
 
 /**
  * @brief Convenience method to create table for test.
@@ -62,17 +61,16 @@ storage::DataTable *CreateTable() {
 
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                        ExecutorTestsUtil::GetColumnInfo(1)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+      { catalog::Schema( { ExecutorTestsUtil::GetColumnInfo(0),
+          ExecutorTestsUtil::GetColumnInfo(1) }), catalog::Schema(
+          { ExecutorTestsUtil::GetColumnInfo(2),
+              ExecutorTestsUtil::GetColumnInfo(3) }) });
 
   // Schema for second tile group. Vertical partition is 1, 3.
-  std::vector<catalog::Schema> schemas2(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                        ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+  std::vector<catalog::Schema> schemas2( { catalog::Schema( {
+      ExecutorTestsUtil::GetColumnInfo(0) }), catalog::Schema( {
+      ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2),
+      ExecutorTestsUtil::GetColumnInfo(3) }) });
 
   GetNextTileGroupId();
 
@@ -89,13 +87,17 @@ storage::DataTable *CreateTable() {
   column_map2[3] = std::make_pair(1, 2);
 
   // Create tile groups.
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
-      table->GetBackend(), schemas1, column_map1, tuple_count));
+  table->AddTileGroup(
+      storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
+                                              GetNextTileGroupId(), table.get(),
+                                              table->GetBackend(), schemas1,
+                                              column_map1, tuple_count));
 
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
-      table->GetBackend(), schemas2, column_map2, tuple_count));
+  table->AddTileGroup(
+      storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
+                                              GetNextTileGroupId(), table.get(),
+                                              table->GetBackend(), schemas2,
+                                              column_map2, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
@@ -122,8 +124,8 @@ expression::AbstractExpression *CreatePredicate(
     const std::set<oid_t> &tuple_ids) {
   assert(tuple_ids.size() >= 1);
 
-  expression::AbstractExpression *predicate =
-      expression::ConstantValueFactory(Value::GetFalse());
+  expression::AbstractExpression *predicate = expression::ConstantValueFactory(
+      Value::GetFalse());
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {
@@ -133,15 +135,18 @@ expression::AbstractExpression *CreatePredicate(
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::TupleValueFactory(0, 0)
-                            : expression::TupleValueFactory(0, 3);
+    tuple_value_expr =
+        even ?
+            expression::TupleValueFactory(0, 0) :
+            expression::TupleValueFactory(0, 3);
 
     // Second, create constant value expression.
     Value constant_value =
-        even ? ValueFactory::GetIntegerValue(
-                   ExecutorTestsUtil::PopulatedValue(tuple_id, 0))
-             : ValueFactory::GetStringValue(std::to_string(
-                   ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+        even ?
+            ValueFactory::GetIntegerValue(
+                ExecutorTestsUtil::PopulatedValue(tuple_id, 0)) :
+            ValueFactory::GetStringValue(
+                std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
 
     expression::AbstractExpression *constant_value_expr =
         expression::ConstantValueFactory(constant_value);
@@ -207,8 +212,8 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       // Bad style. Being a bit lazy here...
 
       int old_tuple_id =
-          result_tiles[i]->GetValue(new_tuple_id, 0).GetIntegerForTestsOnly() /
-          10;
+          result_tiles[i]->GetValue(new_tuple_id, 0).GetIntegerForTestsOnly()
+              / 10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
@@ -232,7 +237,6 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
   }
 }
 
-
 // Sequential scan of table with predicate.
 // The table being scanned has more than one tile group. i.e. the vertical
 // partitioning changes midway.
@@ -241,7 +245,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   std::unique_ptr<storage::DataTable> table(CreateTable());
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids({0, 1, 3});
+  std::vector<oid_t> column_ids( { 0, 1, 3 });
 
   // Create plan node.
   planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
@@ -255,7 +259,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   executor::SeqScanExecutor executor(&node, context.get());
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 // Sequential scan of logical tile with predicate.
@@ -268,6 +272,9 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
   // Create plan node.
   planner::SeqScanPlan node(table, CreatePredicate(g_tuple_ids), column_ids);
+// This table is generated so we can reuse the test data of the test case
+  // where seq scan is a leaf node. We only need the data in the tiles.
+  std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
   // Set up executor and its child.
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -283,14 +290,8 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
-
-  // This table is generated so we can reuse the test data of the test case
-  // where seq scan is a leaf node. We only need the data in the tiles.
-  std::unique_ptr<storage::DataTable> data_table(CreateTable());
+  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
+      Return(true)).WillOnce(Return(false));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
@@ -298,15 +299,15 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(2)));
 
-  EXPECT_CALL(child_executor, GetOutput())
-      .WillOnce(Return(source_logical_tile1.release()))
-      .WillOnce(Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
+      Return(source_logical_tile1.release())).WillOnce(
+      Return(source_logical_tile2.release()));
 
   int expected_column_count = data_table->GetSchema()->GetColumnCount();
 
   RunTest(executor, 2, expected_column_count);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 }

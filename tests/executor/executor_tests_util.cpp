@@ -205,7 +205,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     string_value.Free();
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 /**
@@ -247,7 +247,7 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
     string_value.Free();
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 /**
