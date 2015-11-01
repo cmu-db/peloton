@@ -97,6 +97,10 @@ class LogManager{
 
     void SetTestInterruptCommit(bool test_suspend_commit);
 
+    void SetLogFile(std::string log_file);
+
+    std::string GetLogFile(void);
+
   private:
 
     LogManager(){};
@@ -112,7 +116,6 @@ class LogManager{
     //===--------------------------------------------------------------------===//
     // Data members
     //===--------------------------------------------------------------------===//
-
     // default logging type for new logging
     // this is used instead when the argument passed to member functions
     // is LOGGING_TYPE_INVALID
@@ -130,6 +133,8 @@ class LogManager{
     std::condition_variable logging_status_cv;
 
     bool syncronization_commit = false;
+
+    std::string log_file_name = "peloton.log";
 };
 
 
