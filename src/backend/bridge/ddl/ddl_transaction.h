@@ -32,7 +32,7 @@ class DDLTransaction {
   DDLTransaction(DDLTransaction &&) = delete;
   DDLTransaction &operator=(DDLTransaction &&) = delete;
 
-  static bool ExecTransactionStmt(TransactionStmt *stmt, TransactionId txn_id);
+  static bool ExecTransactionStmt(TransactionStmt *stmt);
 
  private:
 };

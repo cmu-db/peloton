@@ -140,7 +140,7 @@ void RunTest() {
     txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /////////////////////////////////////////////////////////
   // Do a seq scan with predicate on top of the table
@@ -200,7 +200,7 @@ void RunTest() {
 
   EXPECT_FALSE(mat_executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;

@@ -96,8 +96,13 @@ TEST(IndexTests, BtreeIndexTest) {
   ItemPointer item2(123, 19);
 
   index->InsertEntry(key0, item0);
+
   index->InsertEntry(key1, item1);
   index->InsertEntry(key1, item2);
+  index->InsertEntry(key1, item1);
+  index->InsertEntry(key1, item1);
+  index->InsertEntry(key1, item0);
+
   index->InsertEntry(key2, item1);
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
@@ -119,6 +124,13 @@ TEST(IndexTests, BtreeIndexTest) {
 
   locations = index->Scan(key0);
   EXPECT_EQ(locations.size(), 0);
+
+  locations = index->Scan(key1);
+  EXPECT_EQ(locations.size(), 2);
+
+  locations = index->Scan(key2);
+  EXPECT_EQ(locations.size(), 1);
+
   //EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;

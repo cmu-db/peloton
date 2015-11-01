@@ -646,8 +646,8 @@ typedef NameData *Name;
  * not configured, it does nothing.
  */
 
-#define USE_ASSERT_CHECKING
-#define LOCK_DEBUG
+//#define USE_ASSERT_CHECKING
+//#define LOCK_DEBUG
 #ifndef USE_ASSERT_CHECKING
 
 #define Assert(condition)	((void)true)

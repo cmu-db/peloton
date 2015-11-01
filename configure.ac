@@ -36,9 +36,6 @@ AM_PATH_PYTHON
 AC_CHECK_LIB([m], [cos], ,
              AC_MSG_ERROR([Please install libm library], 1))
 
-AC_CHECK_LIB([mm], [mm_version], , 
-             AC_MSG_ERROR([Please install libmm library : libmm-dev], 1))
-
 AC_CHECK_LIB([dl], [dlsym], ,
              AC_MSG_ERROR([Please install libdl library], 1))
 
@@ -107,9 +104,6 @@ AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
 # Check for OpenSSL
 AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
 
-# Check for Intel TBB library
-AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
-
 # Check for Boost libraries
 #AX_BOOST_BASE([1.42])
 #AX_BOOST_ASIO
@@ -133,10 +127,10 @@ AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
 ######################################################################
 AC_MSG_CHECKING([whether to build with debug information])
 AC_ARG_ENABLE([debug],
-    [AS_HELP_STRING([--enable-debug],
-        [enable debug data generation (def=no)])],
-    [debugit="$enableval"],
-    [debugit=no])
+              [AS_HELP_STRING([--enable-debug],
+                              [enable debug data generation (def=no)])],
+                              [debugit="$enableval"],
+                              [debugit=no])
 AC_MSG_RESULT([$debugit])
 
 if test x"$debugit" = x"yes"; then
@@ -176,17 +170,17 @@ AC_CONFIG_LINKS([tools/pg_psql/psqlscan.cpp:tools/pg_psql/psqlscan.cpp])
 AC_OUTPUT
 
 echo \
-"---------------------------------------------------------------------
+    "---------------------------------------------------------------------
 
-${PACKAGE_NAME} 
+${PACKAGE_NAME}
 
 Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS} 
+CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS}
 C++ Flags      : ${CXXFLAGS} ${DEBUG_CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
-Libraries      : ${LIBS} $TBB_LIBS
+Libraries      : ${LIBS}
 
 ---------------------------------------------------------------------"
