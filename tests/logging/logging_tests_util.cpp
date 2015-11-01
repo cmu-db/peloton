@@ -15,8 +15,6 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/transaction_record.h"
 
-#define NUM_BACKEND 4
-
 namespace peloton {
 namespace test {
 
@@ -119,7 +117,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
   if (DoCheckTupleNumber()) {
     // Check the tuples
     LoggingTestsUtil::CheckTupleCount(20000, 10000,
-                                      ((GetTestTupleNumber()-1) * NUM_BACKEND));
+                                      ((GetTestTupleNumber()-1) * GetTestThreadNumber()));
   }
 
   // Check the next oid
@@ -171,14 +169,14 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   db->DropTableWithOid(table_oid);
   table = CreateSimpleTable(db_oid, table_oid);
 
-  LaunchParallelTest(NUM_BACKEND, RunBackends, table);
+  LaunchParallelTest(GetTestThreadNumber(), RunBackends, table);
 
   db->AddTable(table);
 
   if (DoCheckTupleNumber()) {
     // Check the tuples
     LoggingTestsUtil::CheckTupleCount(20000, 10000,
-                                      ((GetTestTupleNumber()-1) * NUM_BACKEND));
+                                      ((GetTestTupleNumber()-1) * GetTestThreadNumber()));
   }
 
   // We can only drop this for ARIES
@@ -490,6 +488,15 @@ bool LoggingTestsUtil::DoTestSuspendCommit() {
     }
   }
   return false;
+}
+
+uint LoggingTestsUtil::GetTestThreadNumber() {
+  char* thread_number_str = getenv("NUM_BACKEND");
+  if (thread_number_str) {
+    return atoi(thread_number_str);
+  } else {
+    return 4;
+  }
 }
 
 }  // End test namespace
