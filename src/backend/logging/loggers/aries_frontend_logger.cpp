@@ -35,7 +35,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  log_file = fopen( file_name.c_str(),"ab+");
+  log_file = fopen( GetLogFile().c_str(),"ab+");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
@@ -551,7 +551,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 size_t AriesFrontendLogger::GetLogFileSize(){
   struct stat log_stats;
 
-  if(stat(file_name.c_str(), &log_stats) == 0){
+  if(stat(GetLogFile().c_str(), &log_stats) == 0){
     fstat(log_file_fd, &log_stats);
     return log_stats.st_size;
   }else{
@@ -742,6 +742,11 @@ storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   return tile_group;
+}
+
+std::string AriesFrontendLogger::GetLogFile(void) {
+  auto& log_manager = logging::LogManager::GetInstance();
+  return log_manager.GetLogFile();
 }
 
 }  // namespace logging

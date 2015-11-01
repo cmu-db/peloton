@@ -28,7 +28,7 @@ TEST(AriesLoggingTest, writing_logfile) {
   log_file.close();
 
   // Prepare a simple log file
-  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES));
+  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES, aries_log_file_name));
 
   // Reset data
   LoggingTestsUtil::ResetSystem();
@@ -46,7 +46,7 @@ TEST(AriesLoggingTest, recovery) {
   log_file.close();
 
 	// Do recovery
-	LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES);
+	LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
 }
 
 }  // End test namespace
