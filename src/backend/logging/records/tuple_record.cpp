@@ -75,13 +75,13 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
   // then reserve 4 bytes for the header size
   output.WriteInt(0);
 
-  output.WriteShort(db_oid);
-  output.WriteShort(table_oid);
+  output.WriteLong(db_oid);
+  output.WriteLong(table_oid);
   output.WriteLong(txn_id);
-  output.WriteShort(insert_location.block);
-  output.WriteShort(insert_location.offset);
-  output.WriteShort(delete_location.block);
-  output.WriteShort(delete_location.offset);
+  output.WriteLong(insert_location.block);
+  output.WriteLong(insert_location.offset);
+  output.WriteLong(delete_location.block);
+  output.WriteLong(delete_location.offset);
 
   output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
@@ -92,22 +92,22 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
  */
 void TupleRecord::DeserializeHeader(CopySerializeInputBE& input) {
   input.ReadInt();
-  db_oid = (oid_t)(input.ReadShort());
+  db_oid = (oid_t)(input.ReadLong());
   assert(db_oid);
-  table_oid = (oid_t)(input.ReadShort());
+  table_oid = (oid_t)(input.ReadLong());
   assert(table_oid);
   txn_id = (txn_id_t)(input.ReadLong());
   assert(txn_id);
-  insert_location.block = (oid_t)(input.ReadShort());
-  insert_location.offset = (oid_t)(input.ReadShort());
-  delete_location.block = (oid_t)(input.ReadShort());
-  delete_location.offset = (oid_t)(input.ReadShort());
+  insert_location.block = (oid_t)(input.ReadLong());
+  insert_location.offset = (oid_t)(input.ReadLong());
+  delete_location.block = (oid_t)(input.ReadLong());
+  delete_location.offset = (oid_t)(input.ReadLong());
 }
 
 // Used for peloton logging
 size_t TupleRecord::GetTupleRecordSize(void){
   // log_record_type + header_legnth + db_oid + table_oid + txn_id + insert_location + delete_location 
-  return sizeof(char) + sizeof(int) + sizeof(int16_t) + sizeof(int16_t) + sizeof(long) + sizeof(int16_t)*4;
+  return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) + sizeof(txn_id_t) + sizeof(oid_t)*2;
 }
 
 //just for debugging
