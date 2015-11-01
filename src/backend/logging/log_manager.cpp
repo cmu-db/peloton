@@ -356,6 +356,14 @@ void LogManager::SetTestInterruptCommit(bool test_suspend_commit) {
   frontend->SetTestInterruptCommit(test_suspend_commit);
 }
 
+void LogManager::SetLogFile(std::string log_file) {
+  log_file_name = log_file;
+}
+// XXX change to read configuration file
+std::string LogManager::GetLogFile(void) {
+  return log_file_name;
+}
+
 
 }  // namespace logging
 }  // namespace peloton

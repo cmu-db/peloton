@@ -25,7 +25,8 @@ namespace test {
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
+bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
+                                            std::string log_file){
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -34,6 +35,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type){
     LOG_ERROR("another logging thread is running now");
     return false;
   }
+  log_manager.SetLogFile(log_file);
   log_manager.SetDefaultLoggingType(logging_type);
 
   std::thread thread(&logging::LogManager::StartStandbyMode,
@@ -84,7 +86,8 @@ void LoggingTestsUtil::ResetSystem(){
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
+void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
+                                         std::string log_file){
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
   auto& log_manager = logging::LogManager::GetInstance();
@@ -92,7 +95,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type){
     LOG_ERROR("another logging thread is running now");
     return;
   }
-
+  log_manager.SetLogFile(log_file);
   // start a thread for logging
   log_manager.SetDefaultLoggingType(logging_type);
 
