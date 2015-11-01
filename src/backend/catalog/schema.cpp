@@ -20,10 +20,10 @@ namespace peloton {
 namespace catalog {
 
 // Helper function for creating TupleSchema
-void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
-                               const std::vector<oid_t> column_lengths,
-                               const std::vector<std::string> column_names,
-                               const std::vector<bool> is_inlined) {
+void Schema::CreateTupleSchema(const std::vector<ValueType> &column_types,
+                               const std::vector<oid_t> &column_lengths,
+                               const std::vector<std::string> &column_names,
+                               const std::vector<bool> &is_inlined) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
@@ -35,7 +35,7 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 
     column_offset += column.fixed_length;
 
-    columns.push_back(column);
+    columns.push_back(std::move(column));
 
     if (is_inlined[column_itr] == false) {
       tup_is_inlined = false;
@@ -51,7 +51,7 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 }
 
 // Construct schema from vector of Column
-Schema::Schema(const std::vector<Column> columns)
+Schema::Schema(const std::vector<Column> &columns)
     : length(0), tuple_is_inlined(false) {
   oid_t column_count = columns.size();
 

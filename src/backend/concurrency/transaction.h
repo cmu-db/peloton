@@ -88,18 +88,18 @@ class Transaction {
   void ResetState(void);
 
   // maintain reference counts for transactions
-  void IncrementRefCount();
+  inline void IncrementRefCount();
 
-  void DecrementRefCount();
+  inline void DecrementRefCount();
 
   // Get a string representation of this txn
   friend std::ostream &operator<<(std::ostream &os, const Transaction &txn);
 
   // Set result and status
-  void SetResult(Result result);
+  inline void SetResult(Result result);
 
   // Get result and status
-  Result GetResult() const;
+  inline Result GetResult() const;
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -136,6 +136,20 @@ class Transaction {
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
 };
+
+inline void Transaction::IncrementRefCount() { ++ref_count; }
+
+inline void Transaction::DecrementRefCount() {
+  // DROP transaction when ref count reaches 1
+  if (ref_count.fetch_sub(1) == 1) {
+    delete this;
+  }
+}
+
+inline void Transaction::SetResult(Result result) { result_ = result; }
+
+inline Result Transaction::GetResult() const { return result_; }
+
 
 }  // End concurrency namespace
 }  // End peloton namespace
