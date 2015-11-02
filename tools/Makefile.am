@@ -11,9 +11,9 @@ bin_peloton_PROGRAMS = initdb pg_ctl psql \
 					   createdb createuser dropdb dropuser             
 bin_pelotondir = /usr/local/peloton/bin
 if BUILD_OS_IS_DARWIN
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq $(TBB_LIBS) -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq -lm -lreadline
 else
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq $(TBB_LIBS) -lrt -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq -lrt -lm -lreadline
 endif
 
 pg_common_cxxflags = $(AM_CXXFLAGS) \
