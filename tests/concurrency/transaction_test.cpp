@@ -49,9 +49,6 @@ TEST(TransactionTests, TransactionTest) {
   LaunchParallelTest(8, TransactionTest, &txn_manager);
 
   std::cout << "Last Commit Id :: " << txn_manager.GetLastCommitId() << "\n";
-
-  std::cout << "Current transactions count :: "
-            << txn_manager.GetCurrentTransactions().size() << "\n";
 }
 
 }  // End test namespace

@@ -47,18 +47,6 @@ TransactionManager::~TransactionManager() {
   delete last_txn;
 }
 
-// Get entry in table
-Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    if (txn_table.count(txn_id) != 0) {
-      return txn_table.at(txn_id);
-    }
-  }
-
-  return nullptr;
-}
-
 txn_id_t TransactionManager::GetNextTransactionId() {
   if (next_txn_id == MAX_TXN_ID) {
     throw TransactionException("Txn id equals MAX_TXN_ID");
@@ -71,16 +59,6 @@ txn_id_t TransactionManager::GetNextTransactionId() {
 Transaction *TransactionManager::BeginTransaction() {
   Transaction *next_txn =
       new Transaction(GetNextTransactionId(), GetLastCommitId());
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    auto txn_id = next_txn->txn_id;
-
-    // erase entry in transaction table
-    if (txn_table.count(txn_id) != 0) {
-      txn_table.insert(std::make_pair(txn_id, next_txn));
-    }
-  }
 
   // Log the BEGIN TXN record
   {
@@ -97,17 +75,6 @@ Transaction *TransactionManager::BeginTransaction() {
   current_txn = next_txn;
 
   return next_txn;
-}
-
-std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
-  std::vector<Transaction *> txns;
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    for (auto entry : txn_table) txns.push_back(entry.second);
-  }
-
-  return txns;
 }
 
 bool TransactionManager::IsValid(txn_id_t txn_id) {
@@ -155,12 +122,6 @@ void TransactionManager::EndTransaction(Transaction *txn,
     }
   }
 
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    // erase entry in transaction table
-    txn_table.erase(txn->txn_id);
-  }
 }
 
 //===--------------------------------------------------------------------===//
