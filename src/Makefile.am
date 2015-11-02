@@ -75,6 +75,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
+						 -I /opt/local/include \
 						 $(third_party_INCLUDES)
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
