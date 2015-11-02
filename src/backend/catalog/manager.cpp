@@ -29,22 +29,28 @@ Manager &Manager::GetInstance() {
 //===--------------------------------------------------------------------===//
 
 void Manager::SetTileGroup(const oid_t oid, storage::TileGroup *location) {
-  locator.insert(std::pair<oid_t, storage::TileGroup *>(oid, location));
+  {
+    std::lock_guard<std::mutex> lock(locator_mutex);
+    locator[oid] = location;
+  }
 }
 
-storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
+storage::TileGroup *Manager::GetTileGroup(const oid_t oid) {
   storage::TileGroup *location = nullptr;
-  try {
-    location = locator.at(oid);
-  } catch (std::exception &e) {
-    // FIXME
+  {
+    std::lock_guard<std::mutex> lock(locator_mutex);
+    if(locator.count(oid) != 0)
+      location = locator[oid];
   }
   return location;
 }
 
-//used for logging test
+// used for logging test
 void Manager::ClearTileGroup(){
-  locator.clear(); 
+  {
+    std::lock_guard<std::mutex> lock(locator_mutex);
+    locator.clear();
+  }
 }
 
 //===--------------------------------------------------------------------===//
