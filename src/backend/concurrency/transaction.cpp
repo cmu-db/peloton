@@ -66,19 +66,6 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-void Transaction::IncrementRefCount() { ++ref_count; }
-
-void Transaction::DecrementRefCount() {
-  // DROP transaction when ref count reaches 1
-  if (ref_count.fetch_sub(1) == 1) {
-    delete this;
-  }
-}
-
-void Transaction::SetResult(Result result) { result_ = result; }
-
-Result Transaction::GetResult() const { return result_; }
-
 std::ostream &operator<<(std::ostream &os, const Transaction &txn) {
   os << "\tTxn :: @" << &txn << " ID : " << std::setw(4) << txn.txn_id
      << " Commit ID : " << std::setw(4) << txn.cid
