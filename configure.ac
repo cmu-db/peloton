@@ -83,36 +83,36 @@ NPROCS=1
 if [[ "$build_os" == "linux-gnu" ]]
 then
     NPROCS=$(grep -c ^processor /proc/cpuinfo)
-    elif [[ "$build_os" == "darwin" ]]
-    then
-        NPROCS=$(sysctl -n hw.physicalcpu)
-        fi
+elif [[ "$build_os" == "darwin" ]]
+then
+    NPROCS=$(sysctl -n hw.physicalcpu)
+fi
 
-        #NPROCS=`expr $NPROCS / 2`
-        MAKEFLAGS="-j$NPROCS"
+#NPROCS=`expr $NPROCS / 2`
+MAKEFLAGS="-j$NPROCS"
 
-        ######################################################################
-        # PACKAGES
-        ######################################################################
+######################################################################
+# PACKAGES
+######################################################################
 
-        # Check for readline support
-        AX_LIB_READLINE
+# Check for readline support
+AX_LIB_READLINE
 
-        # Check for zlib
-        AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
+# Check for zlib
+AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
 
-        # Check for OpenSSL
-        AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
+# Check for OpenSSL
+AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
 
-        # Check for Boost libraries
-        #AX_BOOST_BASE([1.42])
-        #AX_BOOST_ASIO
-        #AX_BOOST_FILESYSTEM
-        #AX_BOOST_SERIALIZATION
-        #AX_BOOST_SYSTEM
-        #AX_BOOST_THREAD
+# Check for Boost libraries
+#AX_BOOST_BASE([1.42])
+#AX_BOOST_ASIO
+#AX_BOOST_FILESYSTEM
+#AX_BOOST_SERIALIZATION
+#AX_BOOST_SYSTEM
+#AX_BOOST_THREAD
 
-        #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
+#[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
@@ -172,15 +172,15 @@ AC_OUTPUT
 echo \
     "---------------------------------------------------------------------
 
-${PACKAGE_NAME} 
+${PACKAGE_NAME}
 
 Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS} 
+CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS}
 C++ Flags      : ${CXXFLAGS} ${DEBUG_CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
-Libraries      : ${LIBS} $TBB_LIBS
+Libraries      : ${LIBS}
 
 ---------------------------------------------------------------------"
