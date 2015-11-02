@@ -21,7 +21,6 @@ include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
 include $(srcdir)/backend/main/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
-include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
 include $(srcdir)/backend/benchmark/Makefile.am
@@ -40,7 +39,7 @@ bin_pelotondir = /usr/local/peloton/bin
 
 # The order matters here
 
-lib_LTLIBRARIES += libpeloton.la 
+lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
 
 DEFAULT_INCLUDES =
@@ -60,9 +59,8 @@ libpeloton_la_SOURCES = \
 			$(executor_FILES) \
 			$(index_FILES) \
 			$(planner_FILES) \
-			$(scheduler_FILES) \
 			$(storage_FILES) \
-			$(logging_FILES)			
+			$(logging_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
@@ -80,7 +78,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -ldw $(TBB_LIBS)
+libpeloton_la_LDFLAGS = -lm
 
 ######################################################################
 # LIBPELOTONPG
