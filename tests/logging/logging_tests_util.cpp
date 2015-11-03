@@ -353,9 +353,9 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     }
 
     if(committed){
-      txn_manager.CommitTransaction(txn);
+      txn_manager.CommitTransaction();
     } else{
-      txn_manager.AbortTransaction(txn);
+      txn_manager.AbortTransaction();
     }
   }
 
@@ -401,9 +401,9 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, ItemPointer locat
   }
 
   if(committed){
-    txn_manager.CommitTransaction(txn);
+    txn_manager.CommitTransaction();
   }else{
-    txn_manager.AbortTransaction(txn);
+    txn_manager.AbortTransaction();
   }
 }
 
@@ -451,9 +451,9 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
   }
 
   if(committed){
-    txn_manager.CommitTransaction(txn);
+    txn_manager.CommitTransaction();
   } else{
-    txn_manager.AbortTransaction(txn);
+    txn_manager.AbortTransaction();
   }
 
   // Clean up data

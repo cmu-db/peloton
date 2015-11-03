@@ -222,8 +222,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
 peloton_status
 PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                           ParamListInfo param_list,
-                          TupleDesc tuple_desc,
-                          TransactionId txn_id) {
+                          TupleDesc tuple_desc) {
   peloton_status p_status;
 
   if (plan == nullptr)
@@ -237,11 +236,11 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   List *slots = NULL;
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.GetPGTransaction(txn_id);
+  auto txn = peloton::concurrency::current_txn;
   // This happens for single statement queries in PG
   if (txn == nullptr) {
     single_statement_txn = true;
-    txn = txn_manager.StartPGTransaction(txn_id);
+    txn = txn_manager.BeginTransaction();
   }
   assert(txn);
 
@@ -320,19 +319,15 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     auto status = txn->GetResult();
     switch (status) {
       case Result::RESULT_SUCCESS:
-        LOG_INFO("Committing txn_id : %lu , cid : %lu\n",
-                 txn->GetTransactionId(), txn->GetCommitId());
         // Commit
-        txn_manager.CommitTransaction(txn);
+        txn_manager.CommitTransaction();
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
-                 txn->GetCommitId());
         // Abort
-        txn_manager.AbortTransaction(txn);
+        txn_manager.AbortTransaction();
     }
   }
   // clean up executor tree

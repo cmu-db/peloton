@@ -16,4 +16,4 @@ AM_CXXFLAGS = $(DEBUG_CXXFLAGS) -std=c++11 \
               -fPIC -fpermissive -fno-strict-aliasing \
               $(CODE_COVERAGE_CFLAGS)
 
-AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS)

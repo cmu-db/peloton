@@ -94,7 +94,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   EXPECT_EQ(result_tiles[1].get()->GetTupleCount(), 5);
   EXPECT_EQ(result_tiles[2].get()->GetTupleCount(), 2);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 TEST(IndexScanTests, MultiColumnPredicateTest) {
@@ -157,7 +157,7 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
   EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 2);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 }  // namespace test
