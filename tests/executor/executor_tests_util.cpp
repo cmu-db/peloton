@@ -115,8 +115,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  *
  * @return Pointer to tile group.
  */
-storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
-    storage::AbstractBackend *backend, int tuple_count) {
+storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
 
@@ -139,7 +138,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, GetNextTileGroupId(), nullptr, backend, schemas,
+      INVALID_OID, INVALID_OID, GetNextTileGroupId(), nullptr, schemas,
       column_map, tuple_count);
 
   return tile_group;

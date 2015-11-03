@@ -16,7 +16,6 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"

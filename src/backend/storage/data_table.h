@@ -17,7 +17,6 @@
 #include "backend/catalog/foreign_key.h"
 #include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
@@ -63,7 +62,7 @@ class DataTable : public AbstractTable {
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema, AbstractBackend *backend,
+  DataTable(catalog::Schema *schema,
             std::string table_name, oid_t database_oid, oid_t table_oid,
             size_t tuples_per_tilegroup,
             bool own_schema,
@@ -177,8 +176,6 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  AbstractBackend *GetBackend() const { return backend; }
-
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
@@ -217,9 +214,6 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
-
-  // backend
-  AbstractBackend *backend;
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup

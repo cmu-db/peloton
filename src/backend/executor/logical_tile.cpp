@@ -22,9 +22,67 @@ namespace peloton {
 namespace executor {
 
 LogicalTile::~LogicalTile() {
-  // Frees owned base tiles.
-  for (storage::Tile *base_tile : owned_base_tiles_) {
-    delete base_tile;
+  // Drop reference on base tiles.
+  for (storage::Tile *base_tile : base_tiles_) {
+    base_tile->DecrementRefCount();
+  }
+}
+
+/**
+ * @brief Adds column metadata to the logical tile.
+ * @param cp ColumnInfo that needs to be added.
+ * @param own_base_tile True if the logical tile should assume ownership of
+ *                      the base tile passed in.
+ */
+void LogicalTile::AddColumn(const ColumnInfo &cp, bool own_base_tile) {
+  schema_.push_back(cp);
+
+  if (own_base_tile) {
+    base_tiles_.insert(cp.base_tile);
+  }
+}
+
+/**
+ * @brief Adds column metadata to the logical tile.
+ * @param base_tile Base tile that this column is from.
+ * @param own_base_tile True if the logical tile should assume ownership of
+ *                      the base tile passed in.
+ * @param origin_column_id Original column id of this column in its base tile.
+ * @param position_list_idx Index of the position list corresponding to this
+ *        column.
+ *
+ * The position list corresponding to this column should be added
+ * before the metadata.
+ */
+void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
+                            oid_t origin_column_id, oid_t position_list_idx) {
+  assert(position_list_idx < position_lists_.size());
+
+  ColumnInfo cp;
+  cp.base_tile = base_tile;
+  cp.origin_column_id = origin_column_id;
+  cp.position_list_idx = position_list_idx;
+  schema_.push_back(cp);
+
+  if (own_base_tile) {
+    base_tiles_.insert(base_tile);
+  }
+}
+
+/**
+ * @brief Add the column specified in column_ids to this logical tile.
+ */
+void LogicalTile::AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids) {
+  const int position_list_idx = 0;
+  const bool own_base_tile = false;
+  for (oid_t origin_column_id : column_ids) {
+    oid_t base_tile_offset, tile_column_id;
+
+    tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
+                                    tile_column_id);
+
+    AddColumn(tile_group->GetTile(base_tile_offset),
+                            own_base_tile, tile_column_id, position_list_idx);
   }
 }
 
