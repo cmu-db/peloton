@@ -359,7 +359,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   bool own_base_tile = true;
 
   // Wrap physical tile in logical tile.
-  return LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile);
+  return LogicalTileFactory::WrapTiles({dest_tile.release()});
 }
 
 /**

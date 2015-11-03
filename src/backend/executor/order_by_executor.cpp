@@ -77,7 +77,7 @@ bool OrderByExecutor::DExecute() {
   // Create an owner wrapper of this physical tile
   std::vector<storage::Tile *> singleton({ptile});
   std::unique_ptr<LogicalTile> ltile(
-      LogicalTileFactory::WrapTiles(singleton, true));
+      LogicalTileFactory::WrapTiles(singleton));
   assert(ltile->GetTupleCount() == tile_size);
 
   SetOutput(ltile.release());

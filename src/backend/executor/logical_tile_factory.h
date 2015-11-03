@@ -35,8 +35,7 @@ class LogicalTileFactory {
  public:
   static LogicalTile *GetTile();
 
-  static LogicalTile *WrapTiles(const std::vector<storage::Tile *> &base_tile,
-                                bool own_base_tile = false);
+  static LogicalTile *WrapTiles(const std::vector<storage::Tile *> &base_tile);
 
   static LogicalTile *WrapTileGroup(storage::TileGroup *tile_group);
 
