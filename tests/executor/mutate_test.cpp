@@ -96,7 +96,7 @@ void InsertTuple(storage::DataTable *table) {
     delete tuple;
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void UpdateTuple(storage::DataTable *table) {
@@ -146,7 +146,7 @@ void UpdateTuple(storage::DataTable *table) {
   EXPECT_TRUE(update_executor.Init());
   EXPECT_TRUE(update_executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void DeleteTuple(storage::DataTable *table) {
@@ -185,7 +185,7 @@ void DeleteTuple(storage::DataTable *table) {
   EXPECT_TRUE(delete_executor.Execute());
   EXPECT_TRUE(delete_executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 TEST(MutateTests, StressTests) {
@@ -231,7 +231,7 @@ TEST(MutateTests, StressTests) {
   tuple->FreeUninlinedData();
   delete tuple;
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   std::cout << "Start tests \n";
 
@@ -287,10 +287,6 @@ TEST(MutateTests, StressTests) {
 // Insert a logical tile into a table
 TEST(MutateTests, InsertTest) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
@@ -300,6 +296,11 @@ TEST(MutateTests, InsertTest) {
 
   EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
+
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
 
   planner::InsertPlan node(dest_data_table.get(), nullptr);
   executor::InsertExecutor executor(&node, context.get());
@@ -333,7 +334,7 @@ TEST(MutateTests, InsertTest) {
   EXPECT_TRUE(executor.Execute());
   EXPECT_FALSE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   // We have inserted all the tuples in this logical tile
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);

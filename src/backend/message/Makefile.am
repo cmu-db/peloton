@@ -1,9 +1,13 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# SCHEDULER
+# MESSAGE
 ######################################################################
 
-check_PROGRAMS += scheduler_test
+message_FILES =
 
-scheduler_test_SOURCES = scheduler/scheduler_test.cpp
+#backend/message/abstract_message.cpp \
+#			   backend/message/nanomsg.cpp
+
+message_INCLUDES = \
+                  -I$(srcdir)/message

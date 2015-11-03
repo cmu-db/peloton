@@ -116,7 +116,7 @@ TEST(AggregateTests, SortedDistinctTest) {
   EXPECT_TRUE(executor.Init());
 
   EXPECT_TRUE(executor.Execute());
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -214,7 +214,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -313,7 +313,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -408,7 +408,7 @@ TEST(AggregateTests, HashDistinctTest) {
   EXPECT_TRUE(executor.Init());
 
   EXPECT_TRUE(executor.Execute());
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -498,7 +498,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -589,7 +589,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -695,7 +695,7 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
