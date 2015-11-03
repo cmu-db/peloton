@@ -49,12 +49,10 @@ class LogRecordList {
   // Accessor
   //===--------------------------------------------------------------------===//
 
-  void init(storage::Backend *backend, txn_id_t id) {
-    assert(backend != nullptr);
+  void init(txn_id_t id) {
     head_node = nullptr;
     next_list = nullptr;
     prev_list = nullptr;
-    _backend = backend;
     iscommitting = false;
     tail_node = nullptr;
     txn_id = id;
@@ -72,7 +70,7 @@ class LogRecordList {
 
   void SetCommitting(bool _isCommitting) {
     iscommitting = _isCommitting;
-    _backend->Sync(this);
+    backend.Sync(this);
   }
 
   txn_id_t GetTxnID() const {
@@ -89,7 +87,7 @@ class LogRecordList {
 
   void SetNextList(LogRecordList* next) {
     next_list = next;
-    _backend->Sync(this);
+    backend.Sync(this);
   }
 
   LogRecordList* GetPrevList() const {
@@ -98,13 +96,13 @@ class LogRecordList {
 
   void SetPrevList(LogRecordList* prev) {
     prev_list = prev;
-    _backend->Sync(this);
+    backend.Sync(this);
   }
 
   int AddLogRecord(TupleRecord *record);
 
   // recover tail_node and backend if any inconsistency
-  void CheckLogRecordList(storage::Backend *backend);
+  void CheckLogRecordList();
 
   //===--------------------------------------------------------------------===//
   // Member Variables
@@ -113,8 +111,10 @@ class LogRecordList {
   LogRecordNode *head_node = nullptr; // need to keep sync
   LogRecordList *prev_list = nullptr; // can be corrected after reboot
   LogRecordList *next_list = nullptr; // need to keep sync
-  storage::Backend *_backend = nullptr;
   txn_id_t txn_id = INVALID_TXN_ID;
+
+  static storage::Backend& backend;
+
   bool iscommitting = false; // need to keep sync
   LogRecordNode *tail_node = nullptr; // can be corrected after reboot
 };
@@ -130,9 +130,7 @@ class LogRecordPool {
   // Accessor
   //===--------------------------------------------------------------------===//
 
-  void init(storage::Backend *backend) {
-    assert(backend != nullptr);
-    _backend = backend;
+  void init() {
     head_list = nullptr;
     tail_list = nullptr;
     txn_log_table = new std::map<txn_id_t, LogRecordList *>();
@@ -157,7 +155,7 @@ class LogRecordPool {
   LogRecordList* SearchRecordList(txn_id_t txn_id) const;
 
   // recover tail_node and backend if any inconsistency
-  void CheckLogRecordPool(storage::Backend *backend);
+  void CheckLogRecordPool();
 
  private:
 
@@ -167,8 +165,9 @@ class LogRecordPool {
   // Member Variables
   //===--------------------------------------------------------------------===//
   LogRecordList *head_list = nullptr; // need to keep sync
-  storage::Backend *_backend = nullptr;
   LogRecordList *tail_list = nullptr; // can be corrected after reboot
+
+  static storage::Backend& backend;
 
   // Transient record for fast access to log records
   std::map<txn_id_t, LogRecordList *> *txn_log_table = nullptr;
