@@ -223,11 +223,11 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
   }
 }
 
-void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id) {
+void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
+                                    txn_id_t transaction_id, cid_t commit_id) {
   // set the begin commit id to persist insert
   if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
-    tile_group_header->IncrementActiveTupleCount();
   }
 }
 
@@ -236,7 +236,6 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
   // set the end commit id to persist delete
   if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
-    tile_group_header->DecrementActiveTupleCount();
   }
 }
 /**

@@ -33,8 +33,6 @@ public:
 
   void Log(LogRecord* record);
 
-  size_t GetLocalQueueSize(void) const;
-
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord* GetTupleRecord(LogRecordType log_record_type, 
@@ -46,12 +44,7 @@ public:
                             oid_t db_oid = INVALID_OID);
 
 private:
-
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
-
-    // last committed log record position
-    oid_t last_committed_txn_queue_offset = 0;
-
 };
 
 }  // namespace logging
