@@ -31,7 +31,6 @@ OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
 
 bool OrderByExecutor::DInit() {
   assert(children_.size() == 1);
-  assert(!backend_);
 
   sort_done_ = false;
   num_tuples_returned_ = 0;
@@ -55,15 +54,12 @@ bool OrderByExecutor::DExecute() {
   // Grab data from plan node
   const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
 
-  // TODO: Should we move backend out of this executor?
-  backend_ = node.GetBackend();
-
   // Returned tiles must be newly created physical tiles,
   // which have the same physical schema as input tiles.
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
   storage::Tile *ptile = storage::TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend_,
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, nullptr,
       *input_schema_, nullptr, tile_size);
   for (size_t id = 0; id < tile_size; id++) {
     oid_t source_tile_id =

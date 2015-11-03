@@ -49,7 +49,6 @@
 #include "backend/planner/delete_plan.h"
 #include "backend/planner/update_plan.h"
 #include "backend/planner/projection_plan.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"

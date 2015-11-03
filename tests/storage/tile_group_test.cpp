@@ -70,8 +70,6 @@ TEST(TileGroupTests, BasicTest) {
   column_names.push_back(tile_column_names);
 
   // TILE GROUP
-  storage::AbstractBackend *backend = new storage::VMBackend();
-
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
   column_map[1] = std::make_pair(0, 1);
@@ -79,7 +77,7 @@ TEST(TileGroupTests, BasicTest) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
       column_map, 4);
 
   // TUPLES
@@ -126,7 +124,6 @@ TEST(TileGroupTests, BasicTest) {
   delete schema;
 
   delete tile_group;
-  delete backend;
   delete schema1;
   delete schema2;
 }
@@ -199,8 +196,6 @@ TEST(TileGroupTests, StressTest) {
 
   // TILE GROUP
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
-
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
   column_map[1] = std::make_pair(0, 1);
@@ -208,7 +203,7 @@ TEST(TileGroupTests, StressTest) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
       column_map, 10000);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
@@ -216,7 +211,6 @@ TEST(TileGroupTests, StressTest) {
   EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
   delete tile_group;
-  delete backend;
   delete schema1;
   delete schema2;
   delete schema;
@@ -263,8 +257,6 @@ TEST(TileGroupTests, MVCCInsert) {
   column_names.push_back(tile_column_names);
 
   // TILE GROUP
-  storage::AbstractBackend *backend = new storage::VMBackend();
-
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
   column_map[1] = std::make_pair(0, 1);
@@ -272,7 +264,7 @@ TEST(TileGroupTests, MVCCInsert) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
       column_map, 3);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
@@ -339,7 +331,6 @@ TEST(TileGroupTests, MVCCInsert) {
   delete tuple;
   delete schema;
   delete tile_group;
-  delete backend;
 
   delete schema1;
   delete schema2;
@@ -386,16 +377,15 @@ TEST(TileGroupTests, TileCopyTest) {
     column_map[col_itr] = std::make_pair(0, col_itr);
   }
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
       column_map, tuple_count);
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   storage::Tile *tile = storage::TileFactory::GetTile(
       INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, tile_group_header,
-      backend, *schema, nullptr, tuple_count);
+      *schema, nullptr, tuple_count);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -450,8 +440,7 @@ TEST(TileGroupTests, TileCopyTest) {
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
-  storage::AbstractBackend *new_backend = new storage::VMBackend();
-  storage::Tile *new_tile = tile->CopyTile(new_backend);
+  storage::Tile *new_tile = tile->CopyTile();
 
   std::cout << "\t Copied Tile Details ..." << std::endl
             << std::endl;
@@ -538,8 +527,6 @@ TEST(TileGroupTests, TileCopyTest) {
   delete tile;
   delete new_tile;
   delete tile_group;
-  delete backend;
-  delete new_backend;
   delete schema;
 }
 

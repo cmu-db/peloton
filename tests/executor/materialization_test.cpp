@@ -30,7 +30,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 
@@ -49,10 +48,9 @@ namespace test {
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
 TEST(MaterializationTests, SingleBaseTileTest) {
-  storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
@@ -97,10 +95,9 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 // The materialized tile's output columns are reordered.
 // Also, one of the columns is dropped.
 TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
-  storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 

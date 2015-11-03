@@ -14,13 +14,11 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/storage/abstract_backend.h"
-#include "backend/storage/backend_vm.h"
-#include "backend/storage/backend_nvm.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
 
 #include <mutex>
+#include "backend.h"
 
 namespace peloton {
 namespace storage {
@@ -50,8 +48,9 @@ class Tile {
 
  public:
   // Tile creator
-  Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
-       const catalog::Schema &tuple_schema, TileGroup *tile_group,
+  Tile(TileGroupHeader *tile_header,
+       const catalog::Schema &tuple_schema,
+       TileGroup *tile_group,
        int tuple_count);
 
   virtual ~Tile();
@@ -116,7 +115,7 @@ class Tile {
                          const ItemPointer *tuple_location);
 
   // Copy current tile in given backend and return new tile
-  Tile *CopyTile(AbstractBackend *backend);
+  Tile *CopyTile();
 
   //===--------------------------------------------------------------------===//
   // Size Stats
@@ -141,8 +140,6 @@ class Tile {
   }
 
   inline oid_t GetColumnCount() const { return column_count; };
-
-  inline AbstractBackend *GetBackend() const { return backend; }
 
   inline TileGroupHeader *GetHeader() const { return tile_group_header; }
 
@@ -193,9 +190,6 @@ class Tile {
   oid_t tile_group_id;
   oid_t tile_id;
 
-  // storage backend
-  AbstractBackend *backend;
-
   // tile schema
   catalog::Schema schema;
 
@@ -237,7 +231,6 @@ class Tile {
   // references
   std::atomic<size_t> ref_count;
 
-  bool own_tile;
 };
 
 inline void Tile::IncrementRefCount() { ++ref_count; }
@@ -290,24 +283,22 @@ class TileFactory {
     // These temporary tiles don't belong to any tile group.
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
-    AbstractBackend *backend = new NVMBackend();
 
     Tile *tile = GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-                         header, backend, schema, tile_group, tuple_count);
-    tile->own_tile = true;
+                         header, schema, tile_group, tuple_count);
 
     return tile;
   }
 
   static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id,
                        oid_t tile_id, TileGroupHeader *tile_header,
-                       AbstractBackend *backend, const catalog::Schema &schema,
+                       const catalog::Schema &schema,
                        TileGroup *tile_group, int tuple_count) {
     Tile *tile =
-        new Tile(tile_header, backend, schema, tile_group, tuple_count);
+        new Tile(tile_header, schema, tile_group, tuple_count);
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
-                            backend, schema);
+                            schema);
 
     return tile;
   }
@@ -315,13 +306,11 @@ class TileFactory {
  private:
   static void InitCommon(Tile *tile, oid_t database_id, oid_t table_id,
                          oid_t tile_group_id, oid_t tile_id,
-                         AbstractBackend *backend,
                          const catalog::Schema &schema) {
     tile->database_id = database_id;
     tile->table_id = table_id;
     tile->tile_group_id = tile_group_id;
     tile->tile_id = tile_id;
-    tile->backend = backend;
     tile->schema = schema;
   }
 };

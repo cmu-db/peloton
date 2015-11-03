@@ -46,7 +46,6 @@
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/planner/projection_plan.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
@@ -146,7 +145,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 
       while(executor->Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
-        assert(result_tile != nullptr);
         result_tiles.emplace_back(result_tile.release());
       }
 
@@ -580,7 +578,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
       oid_t tile_column_count = column_count / peloton_num_group;
       oid_t tile_column_proj = column_proj / peloton_num_group;
 
-      for(oid_t tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
+      for(int tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
         oid_t column_offset = tile_group_itr * tile_column_count;
 
         for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
@@ -990,8 +988,6 @@ void RunSubsetExperiment() {
 }
 
 static void Transform() {
-
-  auto period = 1000;
 
   // Get column map
   auto table_name = hyadapt_table->GetName();

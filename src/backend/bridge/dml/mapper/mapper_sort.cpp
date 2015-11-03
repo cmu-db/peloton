@@ -17,7 +17,6 @@ PlanTransformer::TransformSort(const SortPlanState *plan_state) {
   std::vector<oid_t> sort_keys;
   std::vector<bool> descend_flags;
   std::vector<oid_t> output_col_ids;
-  storage::AbstractBackend *backend = new storage::VMBackend();
 
   for (int i = 0; i < numCols; i++) {
     LOG_INFO("Sort Col Idx : %u , reverse : %u", sortColIdx[i],
@@ -28,7 +27,7 @@ PlanTransformer::TransformSort(const SortPlanState *plan_state) {
   }
 
   auto retval = new planner::OrderByPlan(sort_keys, descend_flags,
-                                         output_col_ids, backend);
+                                         output_col_ids);
 
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
   retval->AddChild(lchild);

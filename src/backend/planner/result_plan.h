@@ -35,13 +35,13 @@ class ResultPlan : public AbstractPlan {
   ResultPlan(ResultPlan &&) = delete;
   ResultPlan &operator=(ResultPlan &&) = delete;
 
-  ResultPlan(storage::Tuple *tuple, storage::AbstractBackend *backend)
+  ResultPlan(storage::Tuple *tuple, storage::Backend *backend)
       : tuple_(tuple), backend_(backend) {}
 
   // Accessors
   const storage::Tuple *GetTuple() const { return tuple_.get(); }
 
-  storage::AbstractBackend *GetBackend() const { return backend_; }
+  storage::Backend *GetBackend() const { return backend_; }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_RESULT; }
 
@@ -52,7 +52,7 @@ class ResultPlan : public AbstractPlan {
    * @brief A backend is needed to create physical tuple
    * TODO: Can we move backend out of the plan?
    */
-  storage::AbstractBackend *backend_;
+  storage::Backend *backend_;
   std::unique_ptr<storage::Tuple> tuple_;
 };
 
