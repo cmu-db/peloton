@@ -5,14 +5,14 @@ ACLOCAL_AMFLAGS	 = -I m4
 include $(top_srcdir)/doc/doxygen.am
 include $(top_srcdir)/third_party/gmock/Makefile.am
 
-# subdirectories of the project 
+# subdirectories of the project
 SUBDIRS = \
 		  src \
 		  tests \
-		  tools 
+		  tools
 
 # add files in the distribution
-EXTRA_DIST = bootstrap $(DX_CONFIG) doc 
+EXTRA_DIST = bootstrap $(DX_CONFIG) doc
 
 clean-local:
 	find . -type f -name "*.gcno" -delete; find . -type f -name "*.gcda" -delete

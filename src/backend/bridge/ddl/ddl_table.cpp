@@ -43,8 +43,7 @@ namespace bridge {
  */
 
 bool DDLTable::ExecCreateStmt(Node *parsetree,
-                              std::vector<Node *> &parsetree_stack,
-                              TransactionId txn_id) {
+                              std::vector<Node *> &parsetree_stack) {
   List *stmts = ((CreateStmt *)parsetree)->stmts;
 
   /* ... and do it */
@@ -80,7 +79,7 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
   {
     std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
     for (auto parsetree : parsetree_stack) {
-      DDL::ProcessUtility(parsetree, txn_id);
+      DDL::ProcessUtility(parsetree);
       pfree(parsetree);
     }
     parsetree_stack.clear();

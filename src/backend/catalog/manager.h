@@ -16,8 +16,8 @@
 #include <utility>
 #include <mutex>
 #include <vector>
+#include <unordered_map>
 
-#include "tbb/concurrent_unordered_map.h"
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -37,7 +37,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef tbb::concurrent_unordered_map<oid_t, storage::TileGroup *> lookup_dir;
+typedef std::unordered_map<oid_t, storage::TileGroup *> lookup_dir;
 
 class Manager {
  public:
@@ -58,7 +58,7 @@ class Manager {
 
   void SetTileGroup(const oid_t oid, storage::TileGroup *location);
 
-  storage::TileGroup *GetTileGroup(const oid_t oid) const;
+  storage::TileGroup *GetTileGroup(const oid_t oid);
 
   void ClearTileGroup(void);
 
@@ -101,6 +101,8 @@ class Manager {
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   lookup_dir locator;
+
+  std::mutex locator_mutex;
 
   // DATABASES
 
