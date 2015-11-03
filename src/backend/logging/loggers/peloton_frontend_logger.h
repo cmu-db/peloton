@@ -60,7 +60,8 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     // Global queue
     static LogRecordPool *global_plog_pool;
-    static storage::Backend *backend;
+
+    static storage::Backend& backend;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery
