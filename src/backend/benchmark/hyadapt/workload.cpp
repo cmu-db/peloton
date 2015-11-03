@@ -996,43 +996,69 @@ static void Transform() {
   // Get column map
   auto table_name = hyadapt_table->GetName();
   auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
   auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
 
+  std::cout << "TG Count :: " << tile_group_count << "\n";
+
   // Transform
-  while(state.adapt == true) {
-    auto tile_group_count = hyadapt_table->GetTileGroupCount();
+  while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
 
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, false);
+    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, true);
   }
 
 }
 
 static void RunAdaptTest() {
 
-  state.projectivity = 0.1;
+  int sleep_period = 10;
+
+  state.projectivity = 0.01;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true)
+    sleep(sleep_period);
+
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
+  state.projectivity = 0.01;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true)
+    sleep(sleep_period);
+
   state.write_ratio = 0.1;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.1;
+  state.projectivity = 0.01;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true)
+    sleep(sleep_period);
+
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
 
+  state.projectivity = 0.01;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true)
+    sleep(sleep_period);
+
   state.write_ratio = 0.1;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.1;
-  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-  RunAggregateTest();
+  state.projectivity = 0.01;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true)
+    sleep(sleep_period);
+
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 
 }
 
@@ -1042,9 +1068,11 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.adapt = true;
+  state.transactions = 2;
+
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
+  state.adapt = true;
 
   // Generate sequence
   GenerateSequence(state.column_count);
@@ -1059,14 +1087,16 @@ void RunAdaptExperiment() {
     CreateAndLoadTable((LayoutType) peloton_layout);
 
     // Launch transformer
-    if(state.layout == LAYOUT_HYBRID)
+    if(state.layout == LAYOUT_HYBRID) {
+      state.fsm = true;
       transformer = std::thread(Transform);
+    }
 
     RunAdaptTest();
 
     // Stop transformer
     if(state.layout == LAYOUT_HYBRID) {
-      state.adapt = false;
+      state.fsm = false;
       transformer.join();
     }
 
@@ -1074,6 +1104,7 @@ void RunAdaptExperiment() {
 
   // Reset
   state.transactions = orig_transactions;
+  state.adapt = false;
 
   out.close();
 }
