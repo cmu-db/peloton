@@ -30,20 +30,6 @@ LogicalTile::~LogicalTile() {
 
 /**
  * @brief Adds column metadata to the logical tile.
- * @param cp ColumnInfo that needs to be added.
- * @param own_base_tile True if the logical tile should assume ownership of
- *                      the base tile passed in.
- */
-void LogicalTile::AddColumn(const ColumnInfo &cp, bool own_base_tile) {
-  schema_.push_back(cp);
-
-  if (own_base_tile) {
-    base_tiles_.insert(cp.base_tile);
-  }
-}
-
-/**
- * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
  * @param own_base_tile True if the logical tile should assume ownership of
  *                      the base tile passed in.
@@ -64,9 +50,18 @@ void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
   cp.position_list_idx = position_list_idx;
   schema_.push_back(cp);
 
-  if (own_base_tile) {
-    base_tiles_.insert(base_tile);
+  // Add a reference to the base tile
+  auto ret = base_tiles_.insert(base_tile);
+  if (ret.second == true) {
+    std::cout << "Inc :: " << base_tile << " [ " << base_tile->GetRefCount() << " ] \n";
+    base_tile->IncrementRefCount();
+
+    // Drop a reference if you own the base tile
+    if(own_base_tile == true) {
+      base_tile->DecrementRefCount();
+    }
   }
+
 }
 
 /**
@@ -84,6 +79,55 @@ void LogicalTile::AddColumns(storage::TileGroup *tile_group, const std::vector<o
     AddColumn(tile_group->GetTile(base_tile_offset),
                             own_base_tile, tile_column_id, position_list_idx);
   }
+}
+
+/**
+ * @brief Transfer all owned basetiles to another logical tile
+ *        and give up all the base tiles
+ *
+ */
+void LogicalTile::TransferOwnershipTo(LogicalTile *other) {
+  auto other_ownership_set = other->GetOwnedBaseTiles();
+  other_ownership_set.insert(base_tiles_.begin(),
+                             base_tiles_.end());
+  base_tiles_.clear();
+}
+
+/**
+ * @brief Get the underlying owned base tile set
+ * @return Owned base tile set of the tile
+ */
+std::unordered_set<storage::Tile *> &LogicalTile::GetOwnedBaseTiles() {
+  return base_tiles_;
+}
+
+/**
+ * @brief Given the original column ids, reorganize the schema to conform the new column_ids
+ * column_ids is a vector of oid_t. Each column_id is the index into the original table schema
+ * schema_ is a vector of ColumnInfos. Each ColumnInfo represents a column in the corresponding place in colum_ids.
+ */
+void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids) {
+  std::vector<ColumnInfo> new_schema;
+  for (auto id : column_ids) {
+    auto ret = std::find(original_column_ids.begin(), original_column_ids.end(), id);
+    assert(ret != original_column_ids.end());
+    new_schema.push_back(schema_[*ret]);
+  }
+
+  // remove ownership if needed
+  for (auto it = base_tiles_.begin(); it != base_tiles_.end();) {
+    for (auto cp : new_schema) {
+      if (cp.base_tile == *it) {
+        it++;
+        continue;
+      }
+    }
+    // Drop reference
+    (*it)->DecrementRefCount();
+    it = base_tiles_.erase(it);
+  }
+
+  schema_ = std::move(new_schema);
 }
 
 /** @brief Returns a string representation of this tile. */
