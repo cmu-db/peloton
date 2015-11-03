@@ -471,8 +471,12 @@ void Tile::IncrementRefCount() {
 }
 
 void Tile::DecrementRefCount() {
+
+  std::cout << "Dec :: " << this << " [ " << GetRefCount() << " ] \n";
+
   // DROP tile when ref count reaches 0
-  if (ref_count.fetch_sub(1) == 1) {
+  // this returns the value immediately preceding the assignment
+  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
     delete this;
   }
 }

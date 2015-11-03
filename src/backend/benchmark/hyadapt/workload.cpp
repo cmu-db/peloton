@@ -1003,7 +1003,7 @@ static void Transform() {
   while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
 
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, true);
+    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, false);
   }
 
 }
@@ -1058,6 +1058,8 @@ static void RunAdaptTest() {
 
 }
 
+std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+
 void RunAdaptExperiment() {
 
   state.column_count = column_counts[1];
@@ -1065,6 +1067,7 @@ void RunAdaptExperiment() {
   std::thread transformer;
 
   state.transactions = 2;
+  state.scale_factor = 1;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1074,7 +1077,7 @@ void RunAdaptExperiment() {
   GenerateSequence(state.column_count);
 
   // Go over all layouts
-  for(auto layout : layouts) {
+  for(auto layout : adapt_layouts) {
     // Set layout
     state.layout = layout;
     peloton_layout = state.layout;
