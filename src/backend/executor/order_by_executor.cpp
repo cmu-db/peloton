@@ -51,9 +51,6 @@ bool OrderByExecutor::DExecute() {
   assert(input_schema_.get());
   assert(input_tiles_.size() > 0);
 
-  // Grab data from plan node
-  const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
-
   // Returned tiles must be newly created physical tiles,
   // which have the same physical schema as input tiles.
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
