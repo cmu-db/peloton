@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// backend_vm.h
+// abstract_backend.h
 //
-// Identification: src/backend/storage/backend_vm.h
+// Identification: src/backend/storage/backend.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,23 +12,26 @@
 
 #pragma once
 
-#include "backend/storage/abstract_backend.h"
+#include <string>
+
+#include "backend/common/types.h"
 
 namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// VM Backend
+// Backend (for physical storage)
 //===--------------------------------------------------------------------===//
 
-class VMBackend : public AbstractBackend {
+/// Represents a storage backend. Can reside on MM or NVM.
+class Backend  {
  public:
-  virtual ~VMBackend(){};
+  virtual ~Backend(){};
 
   // global singleton
-  static VMBackend& GetInstance(void) {
-    static VMBackend vm_backend;
-    return vm_backend;
+  static Backend& GetInstance(void) {
+    static Backend backend;
+    return backend;
   }
 
   void *Allocate(size_t size) { return ::operator new(size); }

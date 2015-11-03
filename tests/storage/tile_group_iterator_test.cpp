@@ -56,12 +56,11 @@ TEST(TileGroupIteratorTests, BasicTest) {
   // Allocated Tuple Count
   const int tuple_count = 6;
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
   storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(backend, tuple_count);
+      new storage::TileGroupHeader(tuple_count);
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header, backend,
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header,
       *schema, nullptr, tuple_count);
 
   for (int i = 0; i < tuple_count; i++) {
@@ -86,8 +85,6 @@ TEST(TileGroupIteratorTests, BasicTest) {
   delete tile;
   delete header;
   delete schema;
-  //     delete table;
-  delete backend;
 }
 
 }  // End test namespace

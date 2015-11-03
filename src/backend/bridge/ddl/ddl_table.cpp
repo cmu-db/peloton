@@ -20,7 +20,6 @@
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/common/logger.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 

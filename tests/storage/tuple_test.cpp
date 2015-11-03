@@ -16,7 +16,6 @@
 
 #include "backend/storage/tuple.h"
 
-#include "backend/storage/backend_vm.h"
 
 namespace peloton {
 namespace test {
@@ -86,8 +85,7 @@ TEST(TupleTests, VarcharTest) {
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
   tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  auto pool = new peloton::VarlenPool(backend);
+  auto pool = new peloton::VarlenPool();
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
   tuple->SetValue(3, val);
@@ -107,7 +105,6 @@ TEST(TupleTests, VarcharTest) {
   delete schema;
 
   delete pool;
-  delete backend;
 }
 
 }  // End test namespace

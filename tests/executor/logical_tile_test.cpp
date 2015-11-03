@@ -23,7 +23,6 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 
@@ -38,10 +37,9 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(LogicalTileTests, TileMaterializationTest) {
-  storage::VMBackend backend;
   const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
