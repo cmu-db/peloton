@@ -140,7 +140,8 @@ class Transaction {
 inline void Transaction::IncrementRefCount() { ++ref_count; }
 
 inline void Transaction::DecrementRefCount() {
-  // DROP transaction when ref count reaches 1
+  // DROP transaction when ref count reaches 0
+  // this returns the value immediately preceding the assignment
   if (ref_count.fetch_sub(1) == 1) {
     delete this;
   }
