@@ -1027,13 +1027,13 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.01;
+  state.projectivity = 0.9;
   peloton_projectivity = state.projectivity;
   if(state.fsm == true)
     sleep(sleep_period);
 
-  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-  RunArithmeticTest();
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 
   state.projectivity = 0.01;
   peloton_projectivity = state.projectivity;
@@ -1077,6 +1077,8 @@ void RunAdaptExperiment() {
     // Set layout
     state.layout = layout;
     peloton_layout = state.layout;
+
+    std::cout << "----------------------------------------- \n\n";
 
     state.projectivity = 1.0;
     CreateAndLoadTable((LayoutType) peloton_layout);
