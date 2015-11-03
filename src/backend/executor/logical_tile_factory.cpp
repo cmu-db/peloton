@@ -25,8 +25,6 @@ namespace peloton {
 namespace executor {
 
 namespace {
-// TODO Implement function to verify that all base tiles in vector have the
-// same height.
 
 /**
  * @brief Creates position list with the identity mapping.
@@ -94,10 +92,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
-  // TODO Don't use allocated tuple count. Use active tuple count.
-  new_tile->AddPositionList(
-      //      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
-      CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
+  new_tile->AddPositionList(CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
