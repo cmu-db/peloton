@@ -146,9 +146,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     // Add visible tuples to logical tile
     std::vector<oid_t> position_list;
     for (auto tuple_id : block.second) {
-      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
-        continue;
-      } else {
+      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
         position_list.push_back(tuple_id);
       }
     }

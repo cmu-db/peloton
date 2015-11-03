@@ -30,13 +30,13 @@ class Schema {
   //===--------------------------------------------------------------------===//
 
   // Construct schema
-  void CreateTupleSchema(const std::vector<ValueType> column_types,
-                         const std::vector<oid_t> column_lengths,
-                         const std::vector<std::string> column_names,
-                         const std::vector<bool> is_inlined);
+  void CreateTupleSchema(const std::vector<ValueType> &column_types,
+                         const std::vector<oid_t> &column_lengths,
+                         const std::vector<std::string> &column_names,
+                         const std::vector<bool> &is_inlined);
 
   // Construct schema from vector of Column
-  Schema(const std::vector<Column> columns);
+  Schema(const std::vector<Column> &columns);
 
   // Copy schema
   static Schema *CopySchema(const Schema *schema);
