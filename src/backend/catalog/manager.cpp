@@ -40,7 +40,8 @@ storage::TileGroup *Manager::GetTileGroup(const oid_t oid) {
 
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
-    location = locator.at(oid);
+    if (locator.find(oid) != locator.end())
+      location = locator.at(oid);
   }
 
   return location;
