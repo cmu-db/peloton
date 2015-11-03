@@ -25,14 +25,13 @@ TEST(AriesLoggingTest, writing_logfile) {
   if( log_file.good() ){
     EXPECT_TRUE(std::remove(aries_log_file_name.c_str()) == 0 );
   }
+  log_file.close();
 
-  /* TODO: Fix this infinite sleep
   // Prepare a simple log file
-  if( LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES) == true){
-  }else{
-    LOG_ERROR("Could not prepare log file");
-  }
-  */
+  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES));
+
+  // Reset data
+  LoggingTestsUtil::ResetSystem();
 }
 
 /**
@@ -42,12 +41,12 @@ TEST(AriesLoggingTest, recovery) {
 
   std::ifstream log_file(aries_log_file_name.c_str());
 
-  // Do recovery if the log file exists
-  if( log_file.good() ){
-    LoggingTestsUtil::CheckAriesRecovery();
-  }else{
-    LOG_ERROR("Could not check recovery");
-  }
+  // Reset the log file if exists
+  EXPECT_TRUE(log_file.good());
+  log_file.close();
+
+	// Do recovery
+	LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES);
 }
 
 }  // End test namespace
