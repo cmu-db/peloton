@@ -15,6 +15,8 @@
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
+#include "backend/logging/records/log_record_pool.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace logging {
@@ -34,9 +36,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     void Flush(void);
 
     // Used by flush to update the commit mark
-    void CollectCommittedTuples(TupleRecord* record,
-                                std::vector<ItemPointer> &inserted_tuples,
-                                std::vector<ItemPointer> &deleted_tuples);
+    void CollectCommittedTuples(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 
@@ -44,49 +44,29 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void DoRecovery(void);
 
-    void SkipTransactionRecord(LogRecordType log_record_type);
+    cid_t SetInsertCommitMark(ItemPointer location);
 
-    void SetInsertCommitMark(ItemPointer location, bool commit);
-
-    void SetDeleteCommitMark(ItemPointer location, bool commit);
-
-    void InsertTuple(void);
-
-    void DeleteTuple(void);
-
-    void UpdateTuple(void);
+    cid_t SetDeleteCommitMark(ItemPointer location);
 
     //===--------------------------------------------------------------------===//
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    size_t GetLogFileSize();
-
-    bool IsFileTruncated(size_t size_to_read);
-
-    size_t GetNextFrameSize(void);
-
-    LogRecordType GetNextLogRecordType(void);
-
-    bool DoWeNeedRecovery(void);
-
-    void JumpToLastActiveTransaction(void);
-
-    bool ReadTransactionRecordHeader(TransactionRecord &txn_record);
-
-    bool ReadTupleRecordHeader(TupleRecord& tuple_record);
+    void CommitRecords(LogRecordList *txn_log_record_list);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
     //===--------------------------------------------------------------------===//
 
-    // TODO :: Hard coded file name
-    std::string file_name = "peloton.log";
+    // Global queue
+    static LogRecordPool *global_plog_pool;
+    static storage::Backend *backend;
 
-    // File pointer and descriptor
-    FILE* log_file;
-    int log_file_fd;
-
+    // Keep tracking max oid for setting next_oid in manager
+    // For active processing after recovery
+    oid_t max_oid = INVALID_OID;
+    // Keep tracking latest cid for setting next commit in txn manager
+    cid_t latest_cid = INVALID_CID;
 };
 
 }  // namespace logging

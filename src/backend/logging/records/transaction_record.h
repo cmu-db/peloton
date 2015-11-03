@@ -26,7 +26,7 @@ class TransactionRecord : public LogRecord {
   // Serial/Deserialization 
   //===--------------------------------------------------------------------===//
 
-  bool Serialize();
+  bool Serialize(CopySerializeOutput& output);
 
   void Deserialize(CopySerializeInputBE& input);
 
