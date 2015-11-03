@@ -56,7 +56,7 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(storage::Tile *base_tile, bool own_base_tile,
+  void AddColumn(storage::Tile *base_tile,
                  oid_t origin_column_id, oid_t position_list_idx);
 
   void AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids);
@@ -81,7 +81,7 @@ class LogicalTile {
 
   inline catalog::Schema *GetPhysicalSchema() const;
 
-  inline void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
+  void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
   inline const std::vector<std::vector<oid_t>> &GetPositionLists() const;
 
@@ -91,10 +91,6 @@ class LogicalTile {
 
   inline void SetPositionListsAndVisibility(
       std::vector<std::vector<oid_t>> &&position_lists);
-
-  void TransferOwnershipTo(LogicalTile *other);
-
-  std::unordered_set<storage::Tile *> &GetOwnedBaseTiles();
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
@@ -186,9 +182,6 @@ class LogicalTile {
 
   /** @brief Keeps track of the number of tuples that are still visible. */
   oid_t visible_tuples_ = 0;
-
-  /** @brief Set of base tiles referenced (memory-wise) by this logical tile. */
-  std::unordered_set<storage::Tile *> base_tiles_;
 };
 
 /**
@@ -241,14 +234,6 @@ inline const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() co
  */
 inline const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) const {
   return position_lists_[column_id];
-}
-
-/**
- * @brief Set the schema of the tile.
- * @param ColumnInfo-based schema of the tile.
- */
-inline void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
-  schema_ = schema;
 }
 
 /**
