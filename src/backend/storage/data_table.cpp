@@ -56,13 +56,12 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
   return false;
 }
 
-DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
+DataTable::DataTable(catalog::Schema *schema,
                      std::string table_name, oid_t database_oid, oid_t table_oid,
                      size_t tuples_per_tilegroup,
                      bool own_schema,
                      bool adapt_table)
 : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-  backend(backend),
   tuples_per_tilegroup(tuples_per_tilegroup),
   adapt_table(adapt_table){
   // Create a tile group.
@@ -87,10 +86,6 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys) {
     delete foreign_key;
   }
-
-  // table owns its backend
-  // TODO: Should we really be doing this here?
-  delete backend;
 
   // AbstractTable cleans up the schema
 }
@@ -424,7 +419,7 @@ TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
   }
 
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      database_oid, table_oid, tile_group_id, this, schemas,
       partitioning, tuples_per_tilegroup);
 
   return tile_group;
@@ -533,7 +528,7 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
   }
 
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      database_oid, table_oid, tile_group_id, this, schemas,
       column_map, tuples_per_tilegroup);
 
   LOG_TRACE("Trying to add a tile group \n");
@@ -797,7 +792,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   auto new_tile_group = TileGroupFactory::GetTileGroup(
       tile_group->GetDatabaseId(), tile_group->GetTableId(),
       tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-      tile_group->GetBackend(), new_schema, column_map,
+      new_schema, column_map,
       tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
@@ -886,7 +881,7 @@ column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
 
       for(oid_t column_id = 1; column_id < column_count; column_id++) {
         auto hyadapt_column_id = hyadapt_column_ids[column_id - 1];
-        oid_t tile_id = (column_id - 1) / tile_column_count;
+        int tile_id = (column_id - 1) / tile_column_count;
         oid_t tile_column_id;
         if(tile_id == 0)
           tile_column_id = (column_id) % tile_column_count;

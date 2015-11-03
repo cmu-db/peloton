@@ -61,8 +61,7 @@ TEST(IndexTests, BtreeIndexTest) {
       "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, unique_keys);
 
-  storage::VMBackend *backend = new storage::VMBackend();
-  peloton::VarlenPool *pool = new peloton::VarlenPool(backend);
+  peloton::VarlenPool *pool = new peloton::VarlenPool();
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -141,7 +140,6 @@ TEST(IndexTests, BtreeIndexTest) {
   delete keynonce;
 
   delete pool;
-  delete backend;
 
   delete tuple_schema;
 

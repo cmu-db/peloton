@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-#include "backend/storage/abstract_backend.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 
@@ -64,39 +64,38 @@ inline T nexthigher(T k) {
  * calling purge.
  */
 class VarlenPool {
-  VarlenPool() = delete;
   VarlenPool(const VarlenPool &) = delete;
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  VarlenPool(storage::AbstractBackend *_backend)
-      : backend(_backend),
-        allocation_size(TEMP_POOL_CHUNK_SIZE),
+  VarlenPool()
+      : allocation_size(TEMP_POOL_CHUNK_SIZE),
         max_chunk_count(1),
         current_chunk_index(0) {
     Init();
   }
 
-  VarlenPool(storage::AbstractBackend *_backend, uint64_t allocation_size,
+  VarlenPool(uint64_t allocation_size,
        uint64_t max_chunk_count)
-      : backend(_backend),
-        allocation_size(allocation_size),
+      : allocation_size(allocation_size),
         max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
         current_chunk_index(0) {
     Init();
   }
 
   void Init() {
-    char *storage = (char *)backend->Allocate(allocation_size);
+    auto backend = storage::Backend::GetInstance();
+    char *storage = (char *)backend.Allocate(allocation_size);
     chunks.push_back(Chunk(allocation_size, storage));
   }
 
   ~VarlenPool() {
+    auto backend = storage::Backend::GetInstance();
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-      backend->Free(chunks[ii].chunk_data);
+      backend.Free(chunks[ii].chunk_data);
     }
     for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-      backend->Free(oversize_chunks[ii].chunk_data);
+      backend.Free(oversize_chunks[ii].chunk_data);
     }
   }
 
@@ -112,8 +111,6 @@ class VarlenPool {
   int64_t GetAllocatedMemory();
 
  private:
-  /// Location of pool on storage
-  storage::AbstractBackend *backend;
 
   const uint64_t allocation_size;
   std::size_t max_chunk_count;

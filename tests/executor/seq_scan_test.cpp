@@ -90,13 +90,13 @@ storage::DataTable *CreateTable() {
   table->AddTileGroup(
       storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
                                               GetNextTileGroupId(), table.get(),
-                                              table->GetBackend(), schemas1,
+                                              schemas1,
                                               column_map1, tuple_count));
 
   table->AddTileGroup(
       storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
                                               GetNextTileGroupId(), table.get(),
-                                              table->GetBackend(), schemas2,
+                                              schemas2,
                                               column_map2, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
