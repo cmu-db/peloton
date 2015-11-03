@@ -32,7 +32,6 @@ TEST(DataTableTests, TransformTileGroupTest) {
                                    true);
 
   auto tile_group = data_table->GetTileGroup(0);
-  auto tile_group_id = tile_group->GetTileGroupId();
   std::cout << (*tile_group);
 
   // Create the new column map
