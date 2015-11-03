@@ -466,6 +466,22 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
   }
 }
 
+void Tile::IncrementRefCount() {
+  ++ref_count;
+}
+
+void Tile::DecrementRefCount() {
+  // DROP tile when ref count reaches 0
+  if (ref_count.fetch_sub(1) == 1) {
+    delete this;
+  }
+}
+
+size_t Tile::GetRefCount() const {
+  return ref_count;
+}
+
+
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
