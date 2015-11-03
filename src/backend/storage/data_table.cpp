@@ -886,7 +886,7 @@ column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
 
       for(oid_t column_id = 1; column_id < column_count; column_id++) {
         auto hyadapt_column_id = hyadapt_column_ids[column_id - 1];
-        oid_t tile_id = (column_id - 1) / tile_column_count;
+        int tile_id = (column_id - 1) / tile_column_count;
         oid_t tile_column_id;
         if(tile_id == 0)
           tile_column_id = (column_id) % tile_column_count;
