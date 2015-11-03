@@ -22,10 +22,27 @@ namespace peloton {
 namespace executor {
 
 LogicalTile::~LogicalTile() {
-  // Drop reference on base tiles.
-  for (storage::Tile *base_tile : base_tiles_) {
+
+  // Drop reference on base tiles for each column
+  for(auto cp : schema_) {
+    auto base_tile = cp.base_tile;
     base_tile->DecrementRefCount();
   }
+}
+
+/**
+ * @brief Set the schema of the tile.
+ * @param ColumnInfo-based schema of the tile.
+ */
+void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
+  schema_ = schema;
+
+  // Add reference on base tiles for each column
+  for(auto cp : schema_) {
+    auto base_tile = cp.base_tile;
+    base_tile->IncrementRefCount();
+  }
+
 }
 
 /**
@@ -40,8 +57,9 @@ LogicalTile::~LogicalTile() {
  * The position list corresponding to this column should be added
  * before the metadata.
  */
-void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
-                            oid_t origin_column_id, oid_t position_list_idx) {
+void LogicalTile::AddColumn(storage::Tile *base_tile,
+                            oid_t origin_column_id,
+                            oid_t position_list_idx) {
   assert(position_list_idx < position_lists_.size());
 
   ColumnInfo cp;
@@ -51,17 +69,7 @@ void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
   schema_.push_back(cp);
 
   // Add a reference to the base tile
-  auto ret = base_tiles_.insert(base_tile);
-  if (ret.second == true) {
-    std::cout << "Inc :: " << base_tile << " [ " << base_tile->GetRefCount() << " ] \n";
-    base_tile->IncrementRefCount();
-
-    // Drop a reference if you own the base tile
-    if(own_base_tile == true) {
-      base_tile->DecrementRefCount();
-    }
-  }
-
+  base_tile->IncrementRefCount();
 }
 
 /**
@@ -69,7 +77,6 @@ void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
  */
 void LogicalTile::AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids) {
   const int position_list_idx = 0;
-  const bool own_base_tile = false;
   for (oid_t origin_column_id : column_ids) {
     oid_t base_tile_offset, tile_column_id;
 
@@ -77,28 +84,8 @@ void LogicalTile::AddColumns(storage::TileGroup *tile_group, const std::vector<o
                                     tile_column_id);
 
     AddColumn(tile_group->GetTile(base_tile_offset),
-                            own_base_tile, tile_column_id, position_list_idx);
+              tile_column_id, position_list_idx);
   }
-}
-
-/**
- * @brief Transfer all owned basetiles to another logical tile
- *        and give up all the base tiles
- *
- */
-void LogicalTile::TransferOwnershipTo(LogicalTile *other) {
-  auto other_ownership_set = other->GetOwnedBaseTiles();
-  other_ownership_set.insert(base_tiles_.begin(),
-                             base_tiles_.end());
-  base_tiles_.clear();
-}
-
-/**
- * @brief Get the underlying owned base tile set
- * @return Owned base tile set of the tile
- */
-std::unordered_set<storage::Tile *> &LogicalTile::GetOwnedBaseTiles() {
-  return base_tiles_;
 }
 
 /**
@@ -112,19 +99,16 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids, 
     auto ret = std::find(original_column_ids.begin(), original_column_ids.end(), id);
     assert(ret != original_column_ids.end());
     new_schema.push_back(schema_[*ret]);
+
+    // add reference to needed base tiles
+    auto cp = schema_[*ret];
+    cp.base_tile->IncrementRefCount();
   }
 
-  // remove ownership if needed
-  for (auto it = base_tiles_.begin(); it != base_tiles_.end();) {
-    for (auto cp : new_schema) {
-      if (cp.base_tile == *it) {
-        it++;
-        continue;
-      }
-    }
-    // Drop reference
-    (*it)->DecrementRefCount();
-    it = base_tiles_.erase(it);
+  // remove references to base tiles from columns that are projected away
+  for(auto cp : schema_) {
+    auto base_tile = cp.base_tile;
+    base_tile->DecrementRefCount();
   }
 
   schema_ = std::move(new_schema);

@@ -52,15 +52,7 @@ class TileGroup {
             const std::vector<catalog::Schema> &schemas,
             const column_map_type &column_map, int tuple_count);
 
-  ~TileGroup() {
-    // clean up tiles
-    for (auto tile : tiles) {
-      tile->DecrementRefCount();
-    }
-
-    // clean up tile group header
-    delete tile_group_header;
-  }
+  ~TileGroup();
 
   //===--------------------------------------------------------------------===//
   // Operations

@@ -47,6 +47,16 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
   }
 }
 
+TileGroup::~TileGroup() {
+  // clean up tiles
+  for (auto tile : tiles) {
+    tile->DecrementRefCount();
+  }
+
+  // clean up tile group header
+  delete tile_group_header;
+}
+
 //===--------------------------------------------------------------------===//
 // Operations
 //===--------------------------------------------------------------------===//

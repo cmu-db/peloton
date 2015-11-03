@@ -707,6 +707,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
   auto orig_schemas = tile_group->GetTileSchemas();
   for (auto column_map_entry : column_map) {
+
     new_tile_offset = column_map_entry.second.first;
     new_tile_column_offset = column_map_entry.second.second;
     oid_t column_offset = column_map_entry.first;
@@ -772,7 +773,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 }
 
 storage::TileGroup *DataTable::TransformTileGroup(
-    oid_t tile_group_offset, const column_map_type &column_map, bool cleanup) {
+    oid_t tile_group_offset, const column_map_type &column_map) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
     LOG_ERROR("Tile group offset not found in table : %lu \n", tile_group_offset);
@@ -801,9 +802,10 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Set the location of the new tile group
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
-  // Clean up the orig tile group, if needed which is normally the case
-  if (cleanup)
-    delete tile_group;
+  // Clean up the orig tile group
+  delete tile_group;
+
+  tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   return new_tile_group;
 }

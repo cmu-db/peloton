@@ -139,8 +139,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
-                                         const column_map_type &column_map,
-                                         bool cleanup = true);
+                                         const column_map_type &column_map);
 
   //===--------------------------------------------------------------------===//
   // STATS
