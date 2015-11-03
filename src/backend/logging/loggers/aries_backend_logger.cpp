@@ -14,6 +14,8 @@
 
 #include <iostream>
 #include "backend/logging/records/tuple_record.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/frontend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -28,65 +30,40 @@ AriesBackendLogger* AriesBackendLogger::GetInstance(){
  * @param log record 
  */
 void AriesBackendLogger::Log(LogRecord* record){
-
   // Enqueue the serialized log record into the queue
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    record->Serialize();
+    record->Serialize(output_buffer);
     local_queue.push_back(record);
   }
-}
-
-/**
- * @brief Get the local queue size
- * @return local queue size
- */
-size_t AriesBackendLogger::GetLocalQueueSize(void) const{
-  return local_queue.size();
-}
-
-/**
- * @brief set the wait flush to true and truncate local_queue with commit_offset
- * @param offset
- */
-void AriesBackendLogger::TruncateLocalQueue(oid_t offset){
-
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-
-    // cleanup the queue
-    local_queue.erase(local_queue.begin(),
-                      local_queue.begin()+offset);
-
-    // let's wait for the frontend logger to flush !
-    // the frontend logger will call our Commit to reset it.
-    wait_for_flushing = true;
+  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
+    auto& log_manager = logging::LogManager::GetInstance();
+    log_manager.NotifyFrontendLogger(logging_type, true);
   }
-
 }
 
-LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
-                                              txn_id_t txn_id, 
-                                              oid_t table_oid, 
-                                              ItemPointer insert_location, 
-                                              ItemPointer delete_location, 
+LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type,
+                                              txn_id_t txn_id,
+                                              oid_t table_oid,
+                                              ItemPointer insert_location,
+                                              ItemPointer delete_location,
                                               void* data,
                                               oid_t db_oid){
 
   // Build the log record
   switch(log_record_type){
     case LOGRECORD_TYPE_TUPLE_INSERT:  {
-      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_INSERT; 
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_INSERT;
       break;
     }
 
     case LOGRECORD_TYPE_TUPLE_DELETE:  {
-      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_DELETE; 
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_DELETE;
       break;
     }
 
     case LOGRECORD_TYPE_TUPLE_UPDATE:  {
-      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_UPDATE; 
+      log_record_type = LOGRECORD_TYPE_ARIES_TUPLE_UPDATE;
       break;
     }
 

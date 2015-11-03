@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/logging/log_manager.h"
 #include "backend/storage/abstract_backend.h"
 #include "backend/common/logger.h"
 #include "backend/common/synch.h"
@@ -51,8 +52,7 @@ class TileGroupHeader {
       : backend(_backend),
         data(nullptr),
         num_tuple_slots(tuple_count),
-        next_tuple_slot(0),
-        active_tuple_slots(0) {
+        next_tuple_slot(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -64,10 +64,11 @@ class TileGroupHeader {
     // Set MVCC Initial Value
     for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
         tuple_slot_id++) {
-
       SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
       SetBeginCommitId(tuple_slot_id, MAX_CID);
       SetEndCommitId(tuple_slot_id, MAX_CID);
+      SetInsertCommit(tuple_slot_id, false);
+      SetDeleteCommit(tuple_slot_id, false);
     }
 
   }
@@ -84,11 +85,8 @@ class TileGroupHeader {
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
-    oid_t val = other.next_tuple_slot;
+    unsigned long long val = other.next_tuple_slot;
     next_tuple_slot = val;
-
-    val = other.active_tuple_slots;
-    active_tuple_slots = val;
 
     return *this;
   }
@@ -137,17 +135,7 @@ class TileGroupHeader {
     return next_tuple_slot;
   }
 
-  inline oid_t GetActiveTupleCount() const {
-    return active_tuple_slots;
-  }
-
-  inline void IncrementActiveTupleCount() {
-    ++active_tuple_slots;
-  }
-
-  inline void DecrementActiveTupleCount() {
-    --active_tuple_slots;
-  }
+  oid_t GetActiveTupleCount();
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
@@ -287,6 +275,19 @@ class TileGroupHeader {
         && ((!own && activated && !invalidated)
             || (own && !activated && !invalidated));
 
+    // overwrite visible if using peloton logging
+    {
+      auto& log_manager = logging::LogManager::GetInstance();
+      if (log_manager.GetDefaultLoggingType() == LOGGING_TYPE_PELOTON) {
+        bool insert_commit = GetInsertCommit(tuple_slot_id);
+        bool delete_commit = GetDeleteCommit(tuple_slot_id);
+        if (!insert_commit || delete_commit) {
+          LOG_TRACE("Uncommited:: tuple begin cid : %lu", tuple_begin_cid);
+          visible = false;
+        }
+      }
+    }
+
     LOG_INFO(
         "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",
         this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
@@ -348,9 +349,6 @@ class TileGroupHeader {
 
   // next free tuple slot
   oid_t next_tuple_slot;
-
-  // active tuples
-  std::atomic<oid_t> active_tuple_slots;
 
   // synch helpers
   std::mutex tile_header_mutex;
