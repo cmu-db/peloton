@@ -99,6 +99,8 @@ class configuration {
   SubsetType subset_experiment_type;
 
   bool adapt;
+
+  bool fsm;
  };
 
 void Usage(FILE *out);
