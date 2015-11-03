@@ -71,8 +71,6 @@ class AriesFrontendLogger : public FrontendLogger{
 
   size_t GetNextFrameSize(void);
 
-  size_t GetLogRecordCount() const;
-
   LogRecordType GetNextLogRecordType(void);
 
   bool ReadTransactionRecordHeader(TransactionRecord &txn_record);

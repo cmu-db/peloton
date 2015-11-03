@@ -16,6 +16,7 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <condition_variable>
 
 #include "backend_logger.h"
 #include "frontend_logger.h"
@@ -54,8 +55,12 @@ class LogManager{
     // Check whether the frontend logger is in logging mode
     bool IsInLoggingMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
-    // Used to
-    void WaitForSleepMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    // Used to terminate current logging and wait for sleep mode
+    void TerminateLoggingMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    // Used to wait for a certain mode (or not certain mode if is_equal is false)
+    void WaitForMode(LoggingStatus logging_status, bool is_equal = true,
+                               LoggingType logging_type = LOGGING_TYPE_INVALID);
 
     // End the actual logging
     bool EndLogging(LoggingType logging_type =  LOGGING_TYPE_INVALID);
@@ -81,12 +86,16 @@ class LogManager{
 
     bool GetSyncCommit(void) const { return syncronization_commit;}
 
-    size_t ActiveFrontendLoggerCount(void) const;
+    size_t ActiveFrontendLoggerCount(void) ;
 
     BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
 
     bool RemoveBackendLogger(BackendLogger* backend_logger,
                              LoggingType logging_type = LOGGING_TYPE_INVALID);
+
+    void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
+
+    void SetTestInterruptCommit(bool test_suspend_commit);
 
   private:
 
@@ -112,17 +121,15 @@ class LogManager{
     // There is only one frontend_logger for each type of logging
     // like -- stdout, aries, peloton
     std::vector<FrontendLogger*> frontend_loggers;
-
-    std::map<LoggingType, LoggingStatus> logging_statuses;
-
-    bool syncronization_commit = false;
-
     // To manage frontend loggers
     std::mutex frontend_logger_mutex;
 
+    std::map<LoggingType, LoggingStatus> logging_statuses;
     // To synch the status map
     std::mutex logging_status_mutex;
+    std::condition_variable logging_status_cv;
 
+    bool syncronization_commit = false;
 };
 
 

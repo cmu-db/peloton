@@ -35,8 +35,6 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
     assert(logging_type);
   }
 
-  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_STANDBY);
-
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
 
@@ -44,7 +42,6 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
   // as the given logging type exists or not ?
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-
     // find frontend logger inside log manager
     frontend_logger = GetFrontendLogger(logging_type);
 
@@ -56,6 +53,8 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
       frontend_exists = true;
     }
   }
+
+  SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_STANDBY);
 
   if(frontend_exists == false){
     // Launch the frontend logger's main loop
@@ -84,14 +83,13 @@ bool LogManager::IsInLoggingMode(LoggingType logging_type){
       return false;
   }
 
-  auto logging_status = GetStatus(logging_type);
-  if(logging_status == LOGGING_STATUS_TYPE_LOGGING)
+  if(GetStatus(logging_type) == LOGGING_STATUS_TYPE_LOGGING)
     return true;
   else
     return false;
 }
 
-void LogManager::WaitForSleepMode(LoggingType logging_type){
+void LogManager::TerminateLoggingMode(LoggingType logging_type){
   if( logging_type == LOGGING_TYPE_INVALID){
     logging_type = default_logging_type;
     assert(logging_type);
@@ -99,15 +97,29 @@ void LogManager::WaitForSleepMode(LoggingType logging_type){
 
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
+  // notify frontend to exit current waiting
+  NotifyFrontendLogger(logging_type);
+
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
-  while(1){
-    sleep(1);
-    if( GetStatus(logging_type) == LOGGING_STATUS_TYPE_SLEEP){
-      break;
+  WaitForMode(LOGGING_STATUS_TYPE_SLEEP, logging_type);
+}
+
+void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
+                                                          LoggingType logging_type) {
+  if( logging_type == LOGGING_TYPE_INVALID){
+    logging_type = default_logging_type;
+    assert(logging_type);
+  }
+  {
+    std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
+    while(logging_statuses.find(logging_type) == logging_statuses.end() ||
+        (logging_statuses.find(logging_type) != logging_statuses.end() &&
+        ((!is_equal && logging_statuses[logging_type] == logging_status) ||
+          (is_equal && logging_statuses[logging_type] != logging_status)))){
+      logging_status_cv.wait(wait_lock);
     }
   }
-
 }
 
 /**
@@ -121,15 +133,13 @@ bool LogManager::EndLogging(LoggingType logging_type ){
   }
 
   // Wait if current status is recovery
-  // TODO: Sleep here ? we are spinning here...
-  while(GetStatus(logging_type) == LOGGING_STATUS_TYPE_RECOVERY){
-  }
+  WaitForMode(LOGGING_STATUS_TYPE_RECOVERY, false, logging_type);
 
   LOG_INFO("Wait until frontend logger(%s) escapes main loop..",
            LoggingStatusToString(GetStatus(logging_type)).c_str());
 
   // Wait for the frontend logger to enter sleep mode
-  WaitForSleepMode();
+  TerminateLoggingMode();
 
   LOG_INFO("Escaped from MainLoop(%s)",
            LoggingStatusToString(GetStatus(logging_type)).c_str());
@@ -167,15 +177,13 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
   // if so, create backend logger and store it in frontend logger
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-
     frontend_logger = GetFrontendLogger(logging_type);
 
     // If frontend logger exists
     if( frontend_logger != nullptr){
       backend_logger = BackendLogger::GetBackendLogger(logging_type);
-      if( backend_logger->IsConnectedToFrontend() == false){
+      if (!backend_logger->IsConnectedToFrontend()) {
         frontend_logger->AddBackendLogger(backend_logger);
-        backend_logger->SetConnectedToFrontend();
       }
     }
   }
@@ -199,9 +207,7 @@ bool LogManager::RemoveBackendLogger(BackendLogger* backend_logger, LoggingType 
   // if so, remove backend logger otherwise return false
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-
     FrontendLogger* frontend_logger = GetFrontendLogger(logging_type);
-
     // If frontend logger exists
     if( frontend_logger != nullptr){
       status = frontend_logger->RemoveBackendLogger(backend_logger);
@@ -249,7 +255,6 @@ bool LogManager::RemoveFrontendLogger(LoggingType logging_type ){
       frontend_loggers.erase(frontend_loggers.begin()+offset);
       return true;
     }
-
   }
 }
 
@@ -257,12 +262,15 @@ void LogManager::ResetLoggingStatusMap(LoggingType logging_type ) {
 
   // Remove status for the specific logging type
   {
+    std::lock_guard<std::mutex> lock(logging_status_mutex);
     std::map<LoggingType,LoggingStatus>::iterator it;
     it = logging_statuses.find(logging_type);
 
     if (it != logging_statuses.end()){
       logging_statuses.erase(it);
     }
+    // in case any threads are waiting...
+    logging_status_cv.notify_all();
   }
 
   // Reset default logging type as well
@@ -277,7 +285,8 @@ LoggingType LogManager::GetDefaultLoggingType(void){
   return default_logging_type;
 }
 
-size_t LogManager::ActiveFrontendLoggerCount(void) const{
+size_t LogManager::ActiveFrontendLoggerCount(void) {
+  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
   return frontend_loggers.size();
 }
 
@@ -329,9 +338,24 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
     }else{
       logging_statuses.insert(std::make_pair(logging_type, logging_status));
     }
+    logging_status_cv.notify_all();
   }
-
 }
+
+void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
+  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+  FrontendLogger *frontend = GetFrontendLogger(logging_type);
+  if (frontend != nullptr) {
+    frontend->NotifyFrontend(newLog);
+  }
+}
+
+void LogManager::SetTestInterruptCommit(bool test_suspend_commit) {
+  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+  FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
+  frontend->SetTestInterruptCommit(test_suspend_commit);
+}
+
 
 }  // namespace logging
 }  // namespace peloton

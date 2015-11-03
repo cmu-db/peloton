@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/storage/tile_group_header.h"
+#include "backend/concurrency/transaction_manager.h"
 
 #include <iostream>
 #include <iomanip>
@@ -151,6 +152,19 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   LOG_INFO("%s", os.str().c_str());
 }
+
+oid_t TileGroupHeader::GetActiveTupleCount() {
+    oid_t active_tuple_slots = 0;
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    cid_t last_cid = txn_manager.GetLastCommitId();
+    for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+        tuple_slot_id++) {
+      if (IsVisible(tuple_slot_id, INVALID_TXN_ID, last_cid)) {
+        active_tuple_slots++;
+      }
+    }
+    return active_tuple_slots;
+  }
 
 }  // End storage namespace
 }  // End peloton namespace

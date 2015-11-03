@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 
 #include "backend/logging/logger.h"
 #include "backend/logging/log_record.h"
@@ -44,11 +45,16 @@ class BackendLogger : public Logger{
 
     void Commit(void);
 
-    bool IsWaitingForFlushing(void) const;
-
     bool IsConnectedToFrontend(void) const;
 
-    void SetConnectedToFrontend(void);
+    void SetConnectedToFrontend(bool isConnected);
+
+    // Truncate the log file at given offset
+    void TruncateLocalQueue(oid_t offset);
+
+    void WaitForFlushing(void);
+
+    size_t GetLocalQueueSize(void);
 
     //===--------------------------------------------------------------------===//
     // Virtual Functions
@@ -61,11 +67,6 @@ class BackendLogger : public Logger{
     // Log the given record
     virtual void Log(LogRecord* record) = 0;
 
-    virtual size_t GetLocalQueueSize(void) const = 0;
-
-    // Truncate the log file at given offset
-    virtual void TruncateLocalQueue(oid_t offset) = 0;
-
     // Construct a log record with tuple information
     virtual LogRecord* GetTupleRecord(LogRecordType log_record_type, 
                                       txn_id_t txn_id, 
@@ -76,15 +77,17 @@ class BackendLogger : public Logger{
                                       oid_t db_oid = INVALID_OID) = 0;
 
   protected:
+    bool IsWaitingForFlushing(void);
 
-    // TODO: change vector to list ?
     std::vector<LogRecord*> local_queue;
-
     std::mutex local_queue_mutex;
 
     // wait for the frontend to flush
     // need to ensure synchronous commit
     bool wait_for_flushing = false;
+    // Used for notify any waiting thread that backend is flushed
+    std::mutex flush_notify_mutex;
+    std::condition_variable flush_notify_cv;
 
     // is this backend connected to frontend ?
     bool connected_to_frontend = false;

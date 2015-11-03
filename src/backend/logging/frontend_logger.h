@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <condition_variable>
 #include <vector>
 #include <unistd.h>
 
@@ -51,7 +52,11 @@ class FrontendLogger : public Logger{
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    std::vector<BackendLogger*> GetBackendLoggers(void);
+    void NotifyFrontend(bool hasNewLog = false);
+
+    void SetTestInterruptCommit(bool suspend) {
+      suspend_committing = suspend;
+    }
 
     //===--------------------------------------------------------------------===//
     // Virtual Functions
@@ -71,7 +76,6 @@ class FrontendLogger : public Logger{
 
     // Associated backend loggers
     std::vector<BackendLogger*> backend_loggers;
-
     // Since backend loggers can add themselves into the list above
     // via log manager, we need to protect the backend_loggers list
     std::mutex backend_logger_mutex;
@@ -79,6 +83,15 @@ class FrontendLogger : public Logger{
     // Global queue
     std::vector<LogRecord*> global_queue;
 
+    // Used for waking up frontend logger only when backend loggers
+    // are ready
+    std::mutex backend_notify_mutex;
+    std::condition_variable backend_notify_cv;
+    uint32 wait_timeout = 5; // in seconds
+    bool log_collect_request = false; // used to indicate if backend has new logs
+
+    // for testing
+    bool suspend_committing = false;
 };
 
 }  // namespace logging
