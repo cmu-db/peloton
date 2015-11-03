@@ -25,6 +25,12 @@ class NVMBackend : public AbstractBackend {
  public:
   virtual ~NVMBackend(){};
 
+  // global singleton
+  static NVMBackend& GetInstance(void) {
+    static NVMBackend nvm_backend;
+    return nvm_backend;
+  }
+
   void *Allocate(size_t size) { return ::operator new(size); }
 
   void Free(void *ptr) { ::operator delete(ptr); }
