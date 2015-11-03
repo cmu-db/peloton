@@ -25,6 +25,12 @@ class VMBackend : public AbstractBackend {
  public:
   virtual ~VMBackend(){};
 
+  // global singleton
+  static VMBackend& GetInstance(void) {
+    static VMBackend vm_backend;
+    return vm_backend;
+  }
+
   void *Allocate(size_t size) { return ::operator new(size); }
 
   void Free(void *ptr) { ::operator delete(ptr); }
