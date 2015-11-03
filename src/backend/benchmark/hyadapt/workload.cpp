@@ -997,20 +997,17 @@ static void Transform() {
   peloton_projectivity = state.projectivity;
   auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
 
-  std::cout << "TG Count :: " << tile_group_count << "\n";
-
   // Transform
   while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
-
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, false);
+    hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
   }
 
 }
 
 static void RunAdaptTest() {
 
-  int sleep_period = 10;
+  int sleep_period = 1;
 
   state.projectivity = 0.01;
   peloton_projectivity = state.projectivity;
@@ -1066,8 +1063,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 2;
-  state.scale_factor = 1;
+  state.transactions = 1;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;

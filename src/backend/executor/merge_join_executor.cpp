@@ -232,16 +232,10 @@ bool MergeJoinExecutor::DExecute() {
   // set the corresponding flags if left or right is end
   // so that next execution time, it will be re executed
   if (left_end_row == left_start_row) {
-    // Transfer the base tile ownership
-    // as this tile ends and its underlying physical tile, if any, is safe to be owned by output tile
-    left_tile->TransferOwnershipTo(output_tile.get());
     left_end_ = true;
   }
 
   if (right_end_row == right_start_row) {
-    // Transfer the base tile ownership
-    // as this tile ends and its underlying physical tile, if any, is safe to be owned by output tile
-    right_tile->TransferOwnershipTo(output_tile.get());
     right_end_ = true;
   }
 
