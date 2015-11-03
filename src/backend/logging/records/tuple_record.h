@@ -31,9 +31,6 @@ public:
     db_oid = INVALID_OID;
     table_oid = INVALID_OID;
 
-    memset(&insert_location, 0, sizeof(ItemPointer));
-    memset(&delete_location, 0, sizeof(ItemPointer));
-
     data = nullptr;
   }
 
@@ -71,7 +68,7 @@ public:
   // Serial/Deserialization 
   //===--------------------------------------------------------------------===//
 
-  bool Serialize();
+  bool Serialize(CopySerializeOutput& output);
 
   void SerializeHeader(CopySerializeOutput& output);
 
@@ -88,6 +85,8 @@ public:
   ItemPointer GetInsertLocation(void) const {return insert_location;}
 
   ItemPointer GetDeleteLocation(void) const {return delete_location;}
+
+  static size_t GetTupleRecordSize(void);
 
   void Print(void);
 

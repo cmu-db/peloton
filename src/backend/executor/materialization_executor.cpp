@@ -101,7 +101,7 @@ void MaterializationExecutor::MaterializeByTiles(
   bool row_wise_materialization = true;
 
   if(peloton_layout == LAYOUT_COLUMN)
-    row_wise_materialization = false;
+      row_wise_materialization = false;
 
   if(peloton_layout == LAYOUT_HYBRID &&
       dest_tile_column_count < column_count_threshold)
@@ -355,8 +355,6 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   // Proceed to materialize logical tile by physical tile at a time.
   MaterializeByTiles(source_tile, old_to_new_cols, tile_to_cols,
                      dest_tile.get());
-
-  bool own_base_tile = true;
 
   // Wrap physical tile in logical tile.
   return LogicalTileFactory::WrapTiles({dest_tile.release()});
