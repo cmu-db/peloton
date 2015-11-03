@@ -177,6 +177,11 @@ class Tile {
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
+  // maintain reference counts for
+  inline void IncrementRefCount();
+
+  inline void DecrementRefCount();
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -229,9 +234,20 @@ class Tile {
    */
   TileGroupHeader *tile_group_header;
 
-  // clean up later
-  bool own_tile = false;
+  // references
+  std::atomic<size_t> ref_count;
+
+  bool own_tile;
 };
+
+inline void Tile::IncrementRefCount() { ++ref_count; }
+
+inline void Tile::DecrementRefCount() {
+  // DROP transaction when ref count reaches 1
+  if (ref_count.fetch_sub(1) == 1) {
+    delete this;
+  }
+}
 
 // Returns a pointer to the tuple requested. No checks are done that the index
 // is valid.
