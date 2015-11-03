@@ -31,7 +31,7 @@ Manager &Manager::GetInstance() {
 void Manager::SetTileGroup(const oid_t oid, storage::TileGroup *location) {
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
-    locator.insert(std::pair<oid_t, storage::TileGroup *>(oid, location));
+    locator[oid] = location;
   }
 }
 
