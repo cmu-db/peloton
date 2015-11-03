@@ -14,6 +14,8 @@
 
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/frontend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -28,68 +30,13 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
  * @param log record 
  */
 void PelotonBackendLogger::Log(LogRecord* record){
-  std::lock_guard<std::mutex> lock(local_queue_mutex);
-  record->Serialize();
-  local_queue.push_back(record);
-
-  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
-
-    // Get the previous record
-    assert(local_queue.size() >= 2);
-    auto previous_record = local_queue[local_queue.size() - 2];
-    auto previous_record_type = previous_record->GetType();
-
-    // TODO: We update local queue size only after we are sure about
-    // whether the transaction is committed or aborted
-
-    // Handle commit
-    if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT)  {
-      // Update the log queue offset of last committed transaction
-      last_committed_txn_queue_offset = local_queue.size();
-    }
-    // Handle abort
-    else if(previous_record_type == LOGRECORD_TYPE_TRANSACTION_ABORT)  {
-
-      // Remove aborted log record
-      for(oid_t log_record_itr=last_committed_txn_queue_offset; log_record_itr<local_queue.size();
-          log_record_itr++){
-        delete local_queue[log_record_itr];;
-      }
-
-      // Clean up the local queue of the backend logger
-      local_queue.erase(local_queue.begin()+last_committed_txn_queue_offset, local_queue.end());
-    }
-
-  }
-
-}
-
-/**
- * @brief Get the local queue size
- * @return local queue size
- */
-size_t PelotonBackendLogger::GetLocalQueueSize(void) const{
-  return last_committed_txn_queue_offset;
-}
-
-/**
- * @brief set the wait flush to true and truncate local_queue with commit_offset
- * @param offset
- */
-void PelotonBackendLogger::TruncateLocalQueue(oid_t offset){
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-
-    // let's wait for the frontend logger to flush !
-    // the frontend logger will call our Commit to reset it.
-    wait_for_flushing = true;
-
-    // cleanup the queue
-    local_queue.erase(local_queue.begin(),
-                      local_queue.begin()+offset);
-
-    // last committed log record position
-    last_committed_txn_queue_offset -= offset;
+    local_queue.push_back(record);
+  }
+  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
+    auto& log_manager = logging::LogManager::GetInstance();
+    log_manager.NotifyFrontendLogger(logging_type, true);
   }
 }
 
