@@ -56,10 +56,11 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Create logical tile from single base tile.
   storage::Tile *source_base_tile = tile_group->GetTile(0);
-  const bool own_base_tiles = false;
+
+  // Add a reference because we are going to wrap around it and we don't own it
+  source_base_tile->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles({source_base_tile},
-                                              own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles({source_base_tile}));
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(nullptr, nullptr);
@@ -104,10 +105,12 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Create logical tile from two base tiles.
   const std::vector<storage::Tile *> source_base_tiles = {
       tile_group->GetTile(0), tile_group->GetTile(1)};
-  const bool own_base_tiles = false;
+
+  // Add a reference because we are going to wrap around it and we don't own it
+  tile_group->GetTile(0)->IncrementRefCount();
+  tile_group->GetTile(1)->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(source_base_tiles,
-                                              own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles(source_base_tiles));
 
   // Create materialization node for this test.
   // Construct output schema. We drop column 3 and reorder the others to 3,1,0.

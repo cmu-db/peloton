@@ -54,13 +54,10 @@ LogicalTile *LogicalTileFactory::GetTile() {
 /**
  * @brief Convenience method to construct a logical tile wrapping base tiles.
  * @param base_tiles Base tiles to be represented as a logical tile.
- * @param own_base_tiles True if the logical tile should own the base tiles.
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(
-    const std::vector<storage::Tile *> &base_tiles,
-    bool own_base_tile) {
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles) {
   assert(base_tiles.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
@@ -81,10 +78,8 @@ LogicalTile *LogicalTileFactory::WrapTiles(
   }
 
   // Drop reference because we created the base tile
-  if(own_base_tile) {
-    for(auto base_tile : base_tiles)
-      base_tile->DecrementRefCount();
-  }
+  for(auto base_tile : base_tiles)
+    base_tile->DecrementRefCount();
 
   return new_tile.release();
 }
