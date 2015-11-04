@@ -1111,8 +1111,14 @@ static void Transform() {
 
 }
 
+static double GetRandDouble() {
+  auto rand = ((double)rand()/(double)RAND_MAX);
+  return rand;
+}
+
 static void RunAdaptTest() {
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
@@ -1122,10 +1128,12 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
@@ -1135,10 +1143,12 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
@@ -1148,10 +1158,12 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_AGGREGATE;
   RunAggregateTest();
 
+  state.selectivity = GetRandDouble();
   state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
@@ -1196,6 +1208,7 @@ void RunAdaptExperiment() {
       transformer = std::thread(Transform);
     }
 
+    srand(0);
     RunAdaptTest();
 
     // Stop transformer
