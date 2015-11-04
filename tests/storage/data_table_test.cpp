@@ -31,11 +31,6 @@ TEST(DataTableTests, TransformTileGroupTest) {
   ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
                                    true);
 
-  auto tile_group = data_table->GetTileGroup(0);
-  auto tile_group_id = tile_group->GetTileGroupId();
-
-  std::cout << (*tile_group);
-
   // Create the new column map
   storage::column_map_type column_map;
   column_map[0] = std::make_pair(0, 0);
@@ -44,10 +39,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 1);
 
   // Transform the tile group
-  std::unique_ptr<storage::TileGroup> tile_group1(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
-
-  std::cout << *(tile_group1.get());
+  data_table->TransformTileGroup(0, column_map);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -55,10 +47,8 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[2] = std::make_pair(0, 2);
   column_map[3] = std::make_pair(1, 0);
 
-  std::unique_ptr<storage::TileGroup> tile_group2(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
-
-  std::cout << *(tile_group2.get());
+  // Transform the tile group
+  data_table->TransformTileGroup(0, column_map);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -66,10 +56,9 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[2] = std::make_pair(1, 1);
   column_map[3] = std::make_pair(1, 2);
 
-  std::unique_ptr<storage::TileGroup> tile_group3(
-      data_table->TransformTileGroup(tile_group_id, column_map, false));
+  // Transform the tile group
+  data_table->TransformTileGroup(0, column_map);
 
-  std::cout << *(tile_group3.get());
 }
 
 }  // End test namespace

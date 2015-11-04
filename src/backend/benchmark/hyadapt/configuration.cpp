@@ -132,7 +132,7 @@ static void ValidateSelectivity(const configuration& state) {
 }
 
 static void ValidateExperiment(const configuration& state) {
-  if(state.experiment_type <= 0 || state.experiment_type > 3) {
+  if(state.experiment_type <= 0 || state.experiment_type > 6) {
     std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -187,6 +187,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   state.column_count = 100;
   state.write_ratio = 0.0;
+
+  state.access_num_groups = 1;
+  state.subset_ratio = 1.0;
+  state.subset_experiment_type = SUBSET_TYPE_INVALID;
+
+  state.adapt = false;
 
   // Parse args
   while (1) {

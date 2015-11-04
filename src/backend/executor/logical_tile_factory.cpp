@@ -25,8 +25,6 @@ namespace peloton {
 namespace executor {
 
 namespace {
-// TODO Implement function to verify that all base tiles in vector have the
-// same height.
 
 /**
  * @brief Creates position list with the identity mapping.
@@ -56,12 +54,10 @@ LogicalTile *LogicalTileFactory::GetTile() {
 /**
  * @brief Convenience method to construct a logical tile wrapping base tiles.
  * @param base_tiles Base tiles to be represented as a logical tile.
- * @param own_base_tiles True if the logical tile should own the base tiles.
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(
-    const std::vector<storage::Tile *> &base_tiles, bool own_base_tile) {
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles) {
   assert(base_tiles.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
@@ -76,10 +72,14 @@ LogicalTile *LogicalTileFactory::WrapTiles(
     // Next, we construct the schema.
     int column_count = base_tiles[i]->GetColumnCount();
     for (int col_id = 0; col_id < column_count; col_id++) {
-      new_tile->AddColumn(base_tiles[i], own_base_tile, col_id,
+      new_tile->AddColumn(base_tiles[i], col_id,
                           position_list_idx);
     }
   }
+
+  // Drop reference because we created the base tile
+  for(auto base_tile : base_tiles)
+    base_tile->DecrementRefCount();
 
   return new_tile.release();
 }
@@ -94,19 +94,15 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
-  // TODO Don't use allocated tuple count. Use active tuple count.
-  new_tile->AddPositionList(
-      //      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
-      CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
+  new_tile->AddPositionList(CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
   assert(schemas.size() == tile_group->NumTiles());
-  bool own_base_tile = false;
   for (unsigned int i = 0; i < schemas.size(); i++) {
     storage::Tile *base_tile = tile_group->GetTile(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
-      new_tile->AddColumn(base_tile, own_base_tile, col_id, position_list_idx);
+      new_tile->AddColumn(base_tile, col_id, position_list_idx);
     }
   }
 

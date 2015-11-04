@@ -490,6 +490,7 @@ int			row_security;
 int			peloton_mode;
 int     peloton_layout;
 double  peloton_projectivity;
+int     peloton_num_groups;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't

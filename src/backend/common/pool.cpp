@@ -29,7 +29,8 @@ void *VarlenPool::Allocate(std::size_t size) {
       /// Not enough space. Check if it is greater than our allocation size.
       if (size > allocation_size) {
         /// Allocate an oversize chunk that will not be reused.
-        char *storage = (char *)backend->Allocate(size);
+        auto backend = storage::Backend::GetInstance();
+        char *storage = (char *)backend.Allocate(size);
         oversize_chunks.push_back(Chunk(nexthigher(size), storage));
         Chunk &newChunk = oversize_chunks.back();
         newChunk.offset = size;
@@ -45,7 +46,8 @@ void *VarlenPool::Allocate(std::size_t size) {
         return current_chunk->chunk_data;
       } else {
         /// Need to allocate a new chunk
-        char *storage = (char *)backend->Allocate(allocation_size);
+        auto backend = storage::Backend::GetInstance();
+        char *storage = (char *)backend.Allocate(allocation_size);
         chunks.push_back(Chunk(allocation_size, storage));
         Chunk &new_chunk = chunks.back();
         new_chunk.offset = size;
@@ -82,7 +84,8 @@ void VarlenPool::Purge() {
     /// Erase any oversize chunks that were allocated
     const std::size_t numOversizeChunks = oversize_chunks.size();
     for (std::size_t ii = 0; ii < numOversizeChunks; ii++) {
-      backend->Free(oversize_chunks[ii].chunk_data);
+      auto backend = storage::Backend::GetInstance();
+      backend.Free(oversize_chunks[ii].chunk_data);
     }
     oversize_chunks.clear();
 
@@ -93,7 +96,8 @@ void VarlenPool::Purge() {
     /// If more then maxChunkCount chunks are allocated erase all extra chunks
     if (num_chunks > max_chunk_count) {
       for (std::size_t ii = max_chunk_count; ii < num_chunks; ii++) {
-        backend->Free(chunks[ii].chunk_data);
+        auto backend = storage::Backend::GetInstance();
+        backend.Free(chunks[ii].chunk_data);
       }
       chunks.resize(max_chunk_count);
     }

@@ -14,7 +14,6 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/data_table.h"
 
 #include <iostream>
