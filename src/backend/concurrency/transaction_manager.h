@@ -23,8 +23,6 @@
 namespace peloton {
 namespace concurrency {
 
-#define BASE_REF_COUNT 1
-
 typedef unsigned int TransactionId;
 
 class Transaction;

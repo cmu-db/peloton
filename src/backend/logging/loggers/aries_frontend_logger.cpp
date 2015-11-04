@@ -17,7 +17,6 @@
 #include "backend/catalog/schema.h"
 #include "backend/logging/loggers/aries_frontend_logger.h"
 #include "backend/logging/loggers/aries_backend_logger.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
@@ -381,9 +380,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   }
 
   auto table = GetTable(tuple_record);
-  // TODO: Remove per-record backend construction
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  VarlenPool *pool = new VarlenPool(backend);
+  VarlenPool *pool = new VarlenPool();
 
   // Read off the tuple record body from the log
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
@@ -391,7 +388,6 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   // Check for torn log write
   if (tuple == nullptr) {
     delete pool;
-    delete backend;
     return;
   }
 
@@ -426,7 +422,6 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
 
   delete tuple;
   delete pool;
-  delete backend;
 }
 
 /**
@@ -486,18 +481,14 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tuple_record);
-
-  // TODO: Remove per-record backend construction
-  storage::AbstractBackend *backend = new storage::VMBackend();
-  VarlenPool *pool = new VarlenPool(backend);
+  VarlenPool *pool = new VarlenPool();
 
   auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
 
   // Check for torn log write
   if( tuple == nullptr){
      delete pool;
-     delete backend;
-     return;
+    return;
   }
 
   // First, redo the delete
@@ -537,7 +528,6 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   delete tuple;
   delete pool;
-  delete backend;
 }
 
 //===--------------------------------------------------------------------===//

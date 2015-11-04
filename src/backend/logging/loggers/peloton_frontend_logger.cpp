@@ -15,7 +15,6 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
@@ -26,7 +25,8 @@ namespace peloton {
 namespace logging {
 
 LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
-storage::NVMBackend *PelotonFrontendLogger::backend = nullptr;
+
+storage::Backend& PelotonFrontendLogger::backend = storage::Backend::GetInstance();
 
 /**
  * @brief create NVM backed log pool
@@ -39,18 +39,15 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
   // and recovery the lists by calling SyncLogRecordList()
 
   // persistent pool for all pending logs
-  if (backend == nullptr) {
-    backend = new storage::NVMBackend();
-    assert(backend != nullptr);
-  }
 
   if (global_plog_pool == nullptr) {
-    global_plog_pool = (LogRecordPool*) backend->Allocate(sizeof(LogRecordPool));
+    // Allocate global peloton log pool
+    global_plog_pool = (LogRecordPool*) backend.Allocate(sizeof(LogRecordPool));
     assert(global_plog_pool != nullptr);
-    global_plog_pool->init(backend);
+    global_plog_pool->init();
   } else {
     // XXX do some check?
-    global_plog_pool->CheckLogRecordPool(backend);
+    global_plog_pool->CheckLogRecordPool();
   }
 }
 

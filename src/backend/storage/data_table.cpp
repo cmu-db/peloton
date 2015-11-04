@@ -29,8 +29,6 @@ namespace storage {
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
 
-column_map_type GetStaticColumnMap(oid_t column_count);
-
 /**
  * Check if the locations contains at least one visible entry to the transaction
  */
@@ -58,13 +56,12 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
   return false;
 }
 
-DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
+DataTable::DataTable(catalog::Schema *schema,
                      std::string table_name, oid_t database_oid, oid_t table_oid,
                      size_t tuples_per_tilegroup,
                      bool own_schema,
                      bool adapt_table)
 : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-  backend(backend),
   tuples_per_tilegroup(tuples_per_tilegroup),
   adapt_table(adapt_table){
   // Create a tile group.
@@ -89,10 +86,6 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys) {
     delete foreign_key;
   }
-
-  // table owns its backend
-  // TODO: Should we really be doing this here?
-  delete backend;
 
   // AbstractTable cleans up the schema
 }
@@ -426,7 +419,7 @@ TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
   }
 
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      database_oid, table_oid, tile_group_id, this, schemas,
       partitioning, tuples_per_tilegroup);
 
   return tile_group;
@@ -460,7 +453,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       }
     }
     else {
-      column_map = GetStaticColumnMap(col_count);
+      column_map = GetStaticColumnMap(table_name, col_count);
     }
   }
   else{
@@ -475,7 +468,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // First, figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout(peloton_layout);
+  column_map = GetTileGroupLayout((LayoutType) peloton_layout);
 
   TileGroup *tile_group = GetTileGroupWithLayout(column_map);
   assert(tile_group);
@@ -535,7 +528,7 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
   }
 
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, backend, schemas,
+      database_oid, table_oid, tile_group_id, this, schemas,
       column_map, tuples_per_tilegroup);
 
   LOG_TRACE("Trying to add a tile group \n");
@@ -714,6 +707,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
   auto orig_schemas = tile_group->GetTileSchemas();
   for (auto column_map_entry : column_map) {
+
     new_tile_offset = column_map_entry.second.first;
     new_tile_column_offset = column_map_entry.second.second;
     oid_t column_offset = column_map_entry.first;
@@ -779,19 +773,14 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 }
 
 storage::TileGroup *DataTable::TransformTileGroup(
-    oid_t tile_group_id, const column_map_type &column_map, bool cleanup) {
+    oid_t tile_group_offset, const column_map_type &column_map) {
   // First, check if the tile group is in this table
-  {
-    std::lock_guard<std::mutex> lock(table_mutex);
-
-    auto found_itr = std::find(tile_groups.begin(), tile_groups.end(),
-                               tile_group_id);
-
-    if (found_itr == tile_groups.end()) {
-      LOG_ERROR("Tile group not found in table : %lu \n", tile_group_id);
-      return nullptr;
-    }
+  if (tile_group_offset >= tile_groups.size()) {
+    LOG_ERROR("Tile group offset not found in table : %lu \n", tile_group_offset);
+    return nullptr;
   }
+
+  auto tile_group_id = tile_groups[tile_group_offset];
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
@@ -804,7 +793,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   auto new_tile_group = TileGroupFactory::GetTileGroup(
       tile_group->GetDatabaseId(), tile_group->GetTableId(),
       tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-      tile_group->GetBackend(), new_schema, column_map,
+      new_schema, column_map,
       tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
@@ -813,9 +802,10 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Set the location of the new tile group
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
-  // Clean up the orig tile group, if needed which is normally the case
-  if (cleanup)
-    delete tile_group;
+  // Clean up the orig tile group
+  delete tile_group;
+
+  tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   return new_tile_group;
 }
@@ -864,24 +854,65 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type GetStaticColumnMap(oid_t column_count){
+column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
   column_map_type column_map;
 
-  // Split into two tiles
-  oid_t split_point = peloton_projectivity * (column_count - 1);
-  oid_t rest_column_count = (column_count - 1) - split_point;
+  // HYADAPT
+  if(table_name == "HYADAPTTABLE") {
 
-  column_map[0] = std::make_pair(0, 0);
-  for(oid_t column_id = 0; column_id < split_point ; column_id++) {
-    auto hyadapt_column_id = hyadapt_column_ids[column_id];
-    column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+    // DEFAULT
+    if(peloton_num_groups == 0) {
+      oid_t split_point = peloton_projectivity * (column_count - 1);
+      oid_t rest_column_count = (column_count - 1) - split_point;
+
+      column_map[0] = std::make_pair(0, 0);
+      for(oid_t column_id = 0; column_id < split_point ; column_id++) {
+        auto hyadapt_column_id = hyadapt_column_ids[column_id];
+        column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+      }
+
+      for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
+        auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
+        column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+      }
+    }
+    // MULTIPLE GROUPS
+    else {
+      column_map[0] = std::make_pair(0, 0);
+      oid_t tile_column_count = column_count / peloton_num_groups;
+
+      for(oid_t column_id = 1; column_id < column_count; column_id++) {
+        auto hyadapt_column_id = hyadapt_column_ids[column_id - 1];
+        int tile_id = (column_id - 1) / tile_column_count;
+        oid_t tile_column_id;
+        if(tile_id == 0)
+          tile_column_id = (column_id) % tile_column_count;
+        else
+          tile_column_id = (column_id - 1) % tile_column_count;
+
+        if(tile_id >= peloton_num_groups)
+          tile_id = peloton_num_groups - 1;
+
+        column_map[hyadapt_column_id] = std::make_pair(tile_id, tile_column_id);
+      }
+    }
+
+
   }
+  // YCSB
+  else if(table_name == "USERTABLE") {
+    column_map[0] = std::make_pair(0, 0);
 
-  for(oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-    auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
-    column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+    for(oid_t column_id = 1; column_id < column_count; column_id++) {
+      column_map[column_id] = std::make_pair(1, column_id - 1);
+    }
   }
-
+  // FALLBACK
+  else{
+    for(oid_t column_id = 0; column_id < column_count; column_id++) {
+      column_map[column_id] = std::make_pair(0, column_id);
+    }
+  }
 
   return std::move(column_map);
 }

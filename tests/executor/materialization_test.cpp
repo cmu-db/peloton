@@ -30,7 +30,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 
@@ -49,19 +48,19 @@ namespace test {
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
 TEST(MaterializationTests, SingleBaseTileTest) {
-  storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from single base tile.
   storage::Tile *source_base_tile = tile_group->GetTile(0);
-  const bool own_base_tiles = false;
+
+  // Add a reference because we are going to wrap around it and we don't own it
+  source_base_tile->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles({source_base_tile},
-                                              own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles({source_base_tile}));
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(nullptr, nullptr);
@@ -97,20 +96,21 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 // The materialized tile's output columns are reordered.
 // Also, one of the columns is dropped.
 TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
-  storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from two base tiles.
   const std::vector<storage::Tile *> source_base_tiles = {
       tile_group->GetTile(0), tile_group->GetTile(1)};
-  const bool own_base_tiles = false;
+
+  // Add a reference because we are going to wrap around it and we don't own it
+  tile_group->GetTile(0)->IncrementRefCount();
+  tile_group->GetTile(1)->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(source_base_tiles,
-                                              own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles(source_base_tiles));
 
   // Create materialization node for this test.
   // Construct output schema. We drop column 3 and reorder the others to 3,1,0.

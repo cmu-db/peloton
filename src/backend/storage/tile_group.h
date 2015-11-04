@@ -49,19 +49,10 @@ class TileGroup {
  public:
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
-            AbstractBackend *backend,
             const std::vector<catalog::Schema> &schemas,
             const column_map_type &column_map, int tuple_count);
 
-  ~TileGroup() {
-    // clean up tiles
-    for (auto tile : tiles) {
-      delete tile;
-    }
-
-    // clean up tile group header
-    delete tile_group_header;
-  }
+  ~TileGroup();
 
   //===--------------------------------------------------------------------===//
   // Operations
@@ -155,8 +146,6 @@ class TileGroup {
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
-  AbstractBackend *GetBackend() const { return backend; }
-
   std::vector<catalog::Schema> &GetTileSchemas() { return tile_schemas; }
 
   size_t GetTileCount() const { return tile_count; }
@@ -179,9 +168,6 @@ class TileGroup {
   oid_t database_id;
   oid_t table_id;
   oid_t tile_group_id;
-
-  // backend
-  AbstractBackend *backend;  // TODO REMOVE(?)
 
   // mapping to tile schemas
   std::vector<catalog::Schema> tile_schemas;
