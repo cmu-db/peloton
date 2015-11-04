@@ -125,12 +125,17 @@ static int GetLowerBound() {
   return lower_bound;
 }
 
-static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
+static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
+                        std::vector<double> columns_accessed,
+                        double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
   bool status = false;
   start = std::chrono::system_clock::now();
+
+  // Construct sample
+  brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
   for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
@@ -162,6 +167,9 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
       WriteOutput(time_per_transaction);
 
       start = std::chrono::system_clock::now();
+
+      // Record sample
+      hyadapt_table->RecordSample(sample);
     }
 
   }
@@ -173,6 +181,28 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 
     WriteOutput(time_per_transaction);
   }
+}
+
+std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
+  std::vector<double> columns_accessed;
+  std::map<oid_t, oid_t> columns_accessed_map;
+
+  std::cout << "Columns Accessed :: " << column_ids.size() << "\n";
+
+  // Init map
+  for(auto col : column_ids)
+    columns_accessed_map[col] = 1;
+
+  for(oid_t column_itr = 0 ; column_itr < state.column_count; column_itr++){
+    auto location = columns_accessed_map.find(column_itr);
+    auto end = columns_accessed_map.end();
+    if(location != end)
+      columns_accessed.push_back(1);
+    else
+      columns_accessed.push_back(0);
+  }
+
+  return columns_accessed;
 }
 
 void RunDirectTest() {
@@ -260,7 +290,13 @@ void RunDirectTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -408,7 +444,13 @@ void RunAggregateTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -459,6 +501,9 @@ void RunArithmeticTest() {
   // target list
   expression::AbstractExpression *sum_expr = nullptr;
   oid_t projection_column_count = state.projectivity * state.column_count;
+
+  // Resize column ids to contain only columns over which we evaluate the expression
+  column_ids.resize(projection_column_count);
 
   for(oid_t col_itr = 0 ; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
@@ -536,7 +581,13 @@ void RunArithmeticTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -635,7 +686,14 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   std::vector<executor::AbstractExecutor*> executors;
   executors.push_back(&mat_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  // Not going to use these stats
+  double cost = 0;
+  std::vector<double> columns_accessed;
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -657,6 +715,7 @@ void RunInsertTest() {
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
+  std::vector<oid_t> column_ids;
 
   target_list.clear();
   direct_map_list.clear();
@@ -664,6 +723,7 @@ void RunInsertTest() {
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
+    column_ids.push_back(col_id);
   }
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
@@ -681,7 +741,13 @@ void RunInsertTest() {
   std::vector<executor::AbstractExecutor*> executors;
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
