@@ -860,7 +860,7 @@ void DataTable::UpdateDefaultPartition() {
   oid_t cluster_count = 4;
   double new_sample_weight = 0.01;
 
-  brain::Clusterer clusterer(cluster_count, column_count);
+  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
 
   // Process all samples
   {
