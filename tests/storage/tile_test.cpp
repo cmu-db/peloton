@@ -57,12 +57,11 @@ TEST(TileTests, BasicTest) {
   // Allocated Tuple Count
   const int tuple_count = 6;
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
   storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(backend, tuple_count);
+      new storage::TileGroupHeader(tuple_count);
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header, backend,
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header,
       *schema, nullptr, tuple_count);
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
@@ -103,7 +102,6 @@ TEST(TileTests, BasicTest) {
   delete tile;
   delete header;
   delete schema;
-  delete backend;
 }
 
 }  // End test namespace

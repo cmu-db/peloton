@@ -21,49 +21,54 @@
 #include "backend/common/exception.h"
 #include "backend/common/pool.h"
 #include "backend/common/serializer.h"
+#include "backend/common/types.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace storage {
 
-Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
-           const catalog::Schema &tuple_schema, TileGroup *tile_group,
+Tile::Tile(TileGroupHeader *tile_header,
+           const catalog::Schema &tuple_schema,
+           TileGroup *tile_group,
            int tuple_count)
-    : database_id(INVALID_OID),
-      table_id(INVALID_OID),
-      tile_group_id(INVALID_OID),
-      tile_id(INVALID_OID),
-      backend(backend),
-      schema(tuple_schema),
-      data(NULL),
-      tile_group(tile_group),
-      pool(NULL),
-      num_tuple_slots(tuple_count),
-      column_count(tuple_schema.GetColumnCount()),
-      tuple_length(tuple_schema.GetLength()),
-      uninlined_data_size(0),
-      column_header(NULL),
-      column_header_size(INVALID_OID),
-      tile_group_header(tile_header) {
+: database_id(INVALID_OID),
+  table_id(INVALID_OID),
+  tile_group_id(INVALID_OID),
+  tile_id(INVALID_OID),
+  schema(tuple_schema),
+  data(NULL),
+  tile_group(tile_group),
+  pool(NULL),
+  num_tuple_slots(tuple_count),
+  column_count(tuple_schema.GetColumnCount()),
+  tuple_length(tuple_schema.GetLength()),
+  uninlined_data_size(0),
+  column_header(NULL),
+  column_header_size(INVALID_OID),
+  tile_group_header(tile_header),
+  ref_count(BASE_REF_COUNT){
   assert(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)backend->Allocate(tile_size);
+  auto backend = storage::Backend::GetInstance();
+  data = (char *)backend.Allocate(tile_size);
   assert(data != NULL);
 
   // initialize it
   std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false) pool = new VarlenPool(backend);
+  if (schema.IsInlined() == false) pool = new VarlenPool();
 }
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  backend->Free(data);
+  auto backend = storage::Backend::GetInstance();
+  backend.Free(data);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
@@ -74,11 +79,6 @@ Tile::~Tile() {
   if (column_header) delete column_header;
   column_header = NULL;
 
-  // Look in the tile factory class to figure out how we use own_tile.
-  // reclaim backend and header if needed
-  if (own_tile) {
-    delete backend;
-  }
 }
 
 //===--------------------------------------------------------------------===//
@@ -177,7 +177,7 @@ void Tile::SetValueFast(Value value, const oid_t tuple_slot_id,
                                                   pool);
 }
 
-Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
+Tile *Tile::CopyTile() {
   auto schema = GetSchema();
   bool tile_columns_inlined = schema->IsInlined();
   auto allocated_tuple_count = GetAllocatedTupleCount();
@@ -185,7 +185,7 @@ Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
   // Create a shallow copy of the old tile
   TileGroupHeader *new_header = GetHeader();
   Tile *new_tile = TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, new_header, backend,
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, new_header,
       *schema, tile_group, allocated_tuple_count);
 
   ::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data),
@@ -202,7 +202,7 @@ Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
 
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
-           tuple_itr++) {
+          tuple_itr++) {
         auto val = new_tile->GetValue(tuple_itr, uninlined_col_offset);
         new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
@@ -222,10 +222,9 @@ std::ostream &operator<<(std::ostream &os, const Tile &tile) {
 
   os << "\tTILE\n";
   os << "\tCatalog ::"
-     << " Backend: " << tile.backend->GetBackendType()
-     << " DB: " << tile.database_id << " Table: " << tile.table_id
-     << " Tile Group:  " << tile.tile_group_id << " Tile:  " << tile.tile_id
-     << "\n";
+      << " DB: " << tile.database_id << " Table: " << tile.table_id
+      << " Tile Group:  " << tile.tile_group_id << " Tile:  " << tile.tile_id
+      << "\n";
 
   // Columns
   // os << "\t-----------------------------------------------------------\n";
@@ -427,15 +426,15 @@ void Tile::DeserializeTuplesFrom(SerializeInputBE &input, VarlenPool *pool) {
     std::stringstream message(std::stringstream::in | std::stringstream::out);
 
     message << "Column count mismatch. Expecting " << schema.GetColumnCount()
-            << ", but " << column_count << " given" << std::endl;
+                << ", but " << column_count << " given" << std::endl;
     message << "Expecting the following columns:" << std::endl;
     message << schema.GetColumnCount() << std::endl;
     message << "The following columns are given:" << std::endl;
 
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       message << "column " << column_itr << ": " << names[column_itr]
-              << ", type = " << ValueTypeToString(types[column_itr])
-              << std::endl;
+                                                          << ", type = " << ValueTypeToString(types[column_itr])
+                                                          << std::endl;
     }
 
     throw SerializationException(message.str());
@@ -466,6 +465,23 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
     // temp_target1.debug(Name()).c_str());
   }
 }
+
+void Tile::IncrementRefCount() {
+  ++ref_count;
+}
+
+void Tile::DecrementRefCount() {
+  // DROP tile when ref count reaches 0
+  // this returns the value immediately preceding the assignment
+  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
+    delete this;
+  }
+}
+
+size_t Tile::GetRefCount() const {
+  return ref_count;
+}
+
 
 //===--------------------------------------------------------------------===//
 // Utilities

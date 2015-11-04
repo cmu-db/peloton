@@ -17,7 +17,6 @@
 #include "backend/catalog/foreign_key.h"
 #include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
@@ -30,10 +29,10 @@ typedef enum LayoutType
   LAYOUT_HYBRID /* Hybrid layout */
 } LayoutType;
 
-/* GUC variable */
+/* GUC variables */
 extern LayoutType peloton_layout;
-
-extern double peloton_projectivity;
+extern double     peloton_projectivity;
+extern int        peloton_num_groups;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
@@ -63,7 +62,7 @@ class DataTable : public AbstractTable {
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema, AbstractBackend *backend,
+  DataTable(catalog::Schema *schema,
             std::string table_name, oid_t database_oid, oid_t table_oid,
             size_t tuples_per_tilegroup,
             bool own_schema,
@@ -139,9 +138,8 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
-                                         const column_map_type &column_map,
-                                         bool cleanup = true);
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
+                                         const column_map_type &column_map);
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -176,8 +174,6 @@ class DataTable : public AbstractTable {
   bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
-
-  AbstractBackend *GetBackend() const { return backend; }
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
@@ -217,9 +213,6 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
-
-  // backend
-  AbstractBackend *backend;
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup
@@ -261,6 +254,10 @@ class DataTable : public AbstractTable {
   // samples for clustering
   std::vector<brain::Sample> samples;
 };
+
+// Utils
+
+column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
 }  // End storage namespace
 }  // End peloton namespace

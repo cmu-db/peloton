@@ -323,8 +323,12 @@ TEST(MutateTests, InsertTest) {
   for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
     physical_tiles.push_back(physical_tile_group->GetTile(tile_itr));
 
+  // Add a reference because we are going to wrap around it and we don't own it
+  for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
+    physical_tile_group->GetTile(tile_itr)->IncrementRefCount();
+
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(physical_tiles, false));
+      executor::LogicalTileFactory::WrapTiles(physical_tiles));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile.release()));

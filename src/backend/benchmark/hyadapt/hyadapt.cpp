@@ -35,19 +35,19 @@ void RunBenchmark(){
 
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    std::unique_ptr<storage::DataTable>table(CreateAndLoadTable(peloton_layout));
+    CreateAndLoadTable((LayoutType) peloton_layout);
 
     switch(state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        RunDirectTest(table.get());
+        RunDirectTest();
         break;
 
       case OPERATOR_TYPE_AGGREGATE:
-        RunAggregateTest(table.get());
+        RunAggregateTest();
         break;
 
       case OPERATOR_TYPE_ARITHMETIC:
-        RunArithmeticTest(table.get());
+        RunArithmeticTest();
         break;
 
       default:
@@ -70,6 +70,18 @@ void RunBenchmark(){
 
       case EXPERIMENT_TYPE_OPERATOR:
         RunOperatorExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_VERTICAL:
+        RunVerticalExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_SUBSET:
+        RunSubsetExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_ADAPT:
+        RunAdaptExperiment();
         break;
 
       default:

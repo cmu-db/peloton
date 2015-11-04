@@ -23,7 +23,6 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 
@@ -38,10 +37,9 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(LogicalTileTests, TileMaterializationTest) {
-  storage::VMBackend backend;
   const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
@@ -80,8 +78,6 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   ////////////////////////////////////////////////////////////////
 
   // Don't transfer ownership of any base tile to logical tile.
-  const bool own_base_tile = false;
-
   storage::Tile *base_tile = tile_group->GetTile(1);
 
   std::vector<oid_t> position_list1 = {0, 1};
@@ -98,7 +94,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    logical_tile->AddColumn(base_tile, own_base_tile, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile, column_itr, column_itr);
   }
 
   std::cout << (*logical_tile) << "\n";
@@ -124,12 +120,12 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   oid_t column_count1 = schema1->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
-    logical_tile->AddColumn(base_tile1, own_base_tile, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile1, column_itr, column_itr);
   }
 
   oid_t column_count2 = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
-    logical_tile->AddColumn(base_tile2, own_base_tile, column_itr,
+    logical_tile->AddColumn(base_tile2, column_itr,
                             column_count1 + column_itr);
   }
 

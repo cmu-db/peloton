@@ -43,21 +43,18 @@ void AddTileGroup() {
   catalog::Schema *schema1 = new catalog::Schema(columns);
   schemas.push_back(*schema1);
 
-  storage::AbstractBackend *backend = new storage::VMBackend();
-
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
 
   for (oid_t txn_itr = 0; txn_itr < 100; txn_itr++) {
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
         column_map, 3);
 
     delete tile_group;
   }
 
   delete schema1;
-  delete backend;
 }
 
 TEST(ManagerTests, TransactionTest) {

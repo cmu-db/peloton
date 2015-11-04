@@ -27,9 +27,11 @@ namespace hyadapt{
 enum OperatorType{
   OPERATOR_TYPE_INVALID = 0,         /* invalid */
 
-  OPERATOR_TYPE_DIRECT = 1,          /* direct */
-  OPERATOR_TYPE_AGGREGATE = 2,       /* aggregate */
-  OPERATOR_TYPE_ARITHMETIC = 3       /* arithmetic */
+  OPERATOR_TYPE_DIRECT = 1,
+  OPERATOR_TYPE_AGGREGATE = 2,
+  OPERATOR_TYPE_ARITHMETIC = 3,
+  OPERATOR_TYPE_INSERT = 4
+
 };
 
 enum ExperimentType{
@@ -37,8 +39,26 @@ enum ExperimentType{
 
   EXPERIMENT_TYPE_PROJECTIVITY = 1,
   EXPERIMENT_TYPE_SELECTIVITY = 2,
-  EXPERIMENT_TYPE_OPERATOR = 3
+  EXPERIMENT_TYPE_OPERATOR = 3,
+  EXPERIMENT_TYPE_VERTICAL = 4,
+  EXPERIMENT_TYPE_SUBSET = 5,
+  EXPERIMENT_TYPE_ADAPT = 6
 
+};
+
+enum SubsetType{
+  SUBSET_TYPE_INVALID = 0,
+
+  SUBSET_TYPE_SINGLE_GROUP = 1,
+  SUBSET_TYPE_MULTIPLE_GROUP = 2
+
+};
+
+enum AdaptType{
+  ADAPT_TYPE_INVALID = 0,
+
+  ADAPT_TYPE_STATIC = 1,
+  ADAPT_TYPE_DYNAMIC = 2
 };
 
 extern int orig_scale_factor;
@@ -72,6 +92,15 @@ class configuration {
   // # of times to run operator
   unsigned long transactions;
 
+  int access_num_groups;
+
+  double subset_ratio;
+
+  SubsetType subset_experiment_type;
+
+  bool adapt;
+
+  bool fsm;
  };
 
 void Usage(FILE *out);

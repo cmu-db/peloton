@@ -169,7 +169,6 @@ bool IndexScanExecutor::ExecIndexLookup() {
   txn_id_t txn_id = transaction_->GetTransactionId();
   cid_t commit_id = transaction_->GetLastCommitId();
 
-
   // Get the logical tiles corresponding to the given tuple locations
   result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
                                               txn_id, commit_id);
