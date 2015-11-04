@@ -1196,7 +1196,8 @@ void RunAdaptExperiment() {
       transformer = std::thread(Transform);
     }
 
-    srand(0);
+    RunAdaptTest();
+
     RunAdaptTest();
 
     // Stop transformer
