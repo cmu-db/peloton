@@ -1158,7 +1158,7 @@ static void RunAdaptTest() {
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
 
 void RunAdaptExperiment() {
 
