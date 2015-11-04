@@ -491,6 +491,7 @@ int			peloton_mode;
 int     peloton_layout;
 double  peloton_projectivity;
 int     peloton_num_groups;
+bool    peloton_fsm;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
