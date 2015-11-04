@@ -183,6 +183,8 @@ class DataTable : public AbstractTable {
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
+  void PrintDefaultPartition();
+
  protected:
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
