@@ -157,6 +157,8 @@ class DataTable : public AbstractTable {
 
   void ResetDirty();
 
+  const column_map_type& GetDefaultPartition();
+
   //===--------------------------------------------------------------------===//
   // Clustering
   //===--------------------------------------------------------------------===//
