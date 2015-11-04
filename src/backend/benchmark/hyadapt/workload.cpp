@@ -1118,8 +1118,7 @@ static double GetRandDouble() {
 
 static void RunAdaptTest() {
 
-  state.selectivity = GetRandDouble();
-  state.projectivity = 0.01;
+  state.projectivity = 0.6;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1128,12 +1127,10 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = GetRandDouble();
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
@@ -1143,12 +1140,10 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.selectivity = GetRandDouble();
   state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
@@ -1158,13 +1153,11 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.selectivity = GetRandDouble();
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_AGGREGATE;
   RunAggregateTest();
 
-  state.selectivity = GetRandDouble();
-  state.projectivity = 0.01;
+  state.projectivity = 0.3;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
