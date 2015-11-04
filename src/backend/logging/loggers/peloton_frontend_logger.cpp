@@ -20,13 +20,14 @@
 #include "backend/storage/tuple.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
+#include "backend/storage/backend_file.h"
 
 namespace peloton {
 namespace logging {
 
 LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
 
-storage::Backend& PelotonFrontendLogger::backend = storage::Backend::GetInstance();
+storage::Backend& PelotonFrontendLogger::backend = storage::BackendFile::GetInstance();
 
 /**
  * @brief create NVM backed log pool
