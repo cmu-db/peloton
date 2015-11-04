@@ -831,6 +831,27 @@ const column_map_type& DataTable::GetDefaultPartition() {
   return default_partition;
 }
 
+void DataTable::PrintDefaultPartition(){
+  std::map<oid_t, oid_t> column_map_stats;
+
+  // Cluster per-tile column count
+  for(auto entry : default_partition){
+    auto tile_id = entry.second.first;
+    auto column_map_itr = column_map_stats.find(tile_id);
+    if(column_map_itr == column_map_stats.end())
+      column_map_stats[tile_id] = 1;
+    else
+      column_map_stats[tile_id]++;
+  }
+
+  // Display info
+  std::cout << "---------\n";
+  for(auto entry : column_map_stats) {
+    std::cout << entry.first << " " << entry.second << "\n";
+  }
+  std::cout << "---------\n\n";
+}
+
 void DataTable::UpdateDefaultPartition() {
 
   oid_t column_count = GetSchema()->GetColumnCount();

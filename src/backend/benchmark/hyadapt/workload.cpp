@@ -130,6 +130,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
                         double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
+  int sleep_period = 0;
   auto txn_count = state.transactions;
   bool status = false;
   start = std::chrono::system_clock::now();
@@ -166,13 +167,16 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
 
       WriteOutput(time_per_transaction);
 
+      // Record sample
+      if(state.fsm == true)
+        hyadapt_table->RecordSample(sample);
+
+      // Sleep
+      if(sleep_period != 0)
+        sleep(sleep_period);
+
       start = std::chrono::system_clock::now();
     }
-
-    // Record sample
-    if(state.fsm == true)
-      hyadapt_table->RecordSample(sample);
-
   }
 
   if(state.adapt == false) {
@@ -1081,7 +1085,6 @@ static void Transform() {
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
-  auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
 
   // TODO: Update period ?
   oid_t update_period = 10;
@@ -1091,7 +1094,7 @@ static void Transform() {
   while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
 
-    //auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
+    auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
 
     // Compute diff
@@ -1100,7 +1103,7 @@ static void Transform() {
     // Update partitioning periodically
     update_itr++;
     if(update_itr == update_period) {
-      //hyadapt_table->UpdateDefaultPartition();
+      hyadapt_table->UpdateDefaultPartition();
       update_itr = 0;
     }
   }
@@ -1109,11 +1112,11 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
-  int sleep_period = 1;
+  int sleep_period = 0;
 
   state.projectivity = 0.01;
   peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
+  if(state.fsm == true && sleep_period != 0)
     sleep(sleep_period);
 
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -1121,7 +1124,7 @@ static void RunAdaptTest() {
 
   state.projectivity = 0.01;
   peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
+  if(state.fsm == true && sleep_period != 0)
     sleep(sleep_period);
 
   state.write_ratio = 0.1;
@@ -1131,7 +1134,15 @@ static void RunAdaptTest() {
 
   state.projectivity = 0.9;
   peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
+  if(state.fsm == true && sleep_period != 0)
+    sleep(sleep_period);
+
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.1;
+  peloton_projectivity = state.projectivity;
+  if(state.fsm == true && sleep_period != 0)
     sleep(sleep_period);
 
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -1139,17 +1150,7 @@ static void RunAdaptTest() {
 
   state.projectivity = 0.01;
   peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
-
-  state.write_ratio = 0.1;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
+  if(state.fsm == true && sleep_period != 0)
     sleep(sleep_period);
 
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -1165,7 +1166,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 1;
+  state.transactions = 2;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1188,7 +1189,7 @@ void RunAdaptExperiment() {
     // Launch transformer
     if(state.layout == LAYOUT_HYBRID) {
       state.fsm = true;
-      //peloton_fsm = true;
+      peloton_fsm = true;
       transformer = std::thread(Transform);
     }
 
@@ -1197,7 +1198,7 @@ void RunAdaptExperiment() {
     // Stop transformer
     if(state.layout == LAYOUT_HYBRID) {
       state.fsm = false;
-      //peloton_fsm = false;
+      peloton_fsm = false;
       transformer.join();
     }
 
