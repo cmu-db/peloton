@@ -188,8 +188,6 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
   std::vector<double> columns_accessed;
   std::map<oid_t, oid_t> columns_accessed_map;
 
-  std::cout << "Columns Accessed :: " << column_ids.size() << "\n";
-
   // Init map
   for(auto col : column_ids)
     columns_accessed_map[col] = 1;
@@ -1083,7 +1081,7 @@ static void Transform() {
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
-  auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
+  auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
 
   // TODO: Update period ?
   oid_t update_period = 10;
@@ -1092,15 +1090,17 @@ static void Transform() {
   // Transform
   while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
+
+    //auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
 
     // Compute diff
-    double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
+    //double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
 
     // Update partitioning periodically
     update_itr++;
     if(update_itr == update_period) {
-      hyadapt_table->UpdateDefaultPartition();
+      //hyadapt_table->UpdateDefaultPartition();
       update_itr = 0;
     }
   }
@@ -1188,6 +1188,7 @@ void RunAdaptExperiment() {
     // Launch transformer
     if(state.layout == LAYOUT_HYBRID) {
       state.fsm = true;
+      //peloton_fsm = true;
       transformer = std::thread(Transform);
     }
 
@@ -1196,6 +1197,7 @@ void RunAdaptExperiment() {
     // Stop transformer
     if(state.layout == LAYOUT_HYBRID) {
       state.fsm = false;
+      //peloton_fsm = false;
       transformer.join();
     }
 
