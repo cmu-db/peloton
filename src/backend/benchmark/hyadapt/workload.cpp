@@ -84,6 +84,8 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
 std::ofstream out("outputfile.summary");
 
+oid_t query_itr;
+
 static void WriteOutput(double duration) {
 
   // Convert to ms
@@ -113,6 +115,7 @@ static void WriteOutput(double duration) {
   out << state.access_num_groups << " ";
   out << state.subset_ratio << " ";
   out << state.tuples_per_tilegroup << " ";
+  out << query_itr << " ";
   out << duration << "\n";
   out.flush();
 
@@ -130,7 +133,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
                         double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
-  int sleep_period = 0;
   auto txn_count = state.transactions;
   bool status = false;
   start = std::chrono::system_clock::now();
@@ -139,7 +141,10 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
   brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
-  for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+  for(auto txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+
+    // Increment query counter
+    query_itr++;
 
     // Run all the executors
     for(auto executor : executors) {
@@ -170,10 +175,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
       // Record sample
       if(state.fsm == true)
         hyadapt_table->RecordSample(sample);
-
-      // Sleep
-      if(sleep_period != 0)
-        sleep(sleep_period);
 
       start = std::chrono::system_clock::now();
     }
@@ -1112,20 +1113,9 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
-  int sleep_period = 0;
-
   state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true && sleep_period != 0)
-    sleep(sleep_period);
-
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
-
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true && sleep_period != 0)
-    sleep(sleep_period);
 
   state.write_ratio = 0.1;
   state.operator_type = OPERATOR_TYPE_INSERT;
@@ -1133,26 +1123,36 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 
   state.projectivity = 0.9;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true && sleep_period != 0)
-    sleep(sleep_period);
-
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
   state.projectivity = 0.1;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true && sleep_period != 0)
-    sleep(sleep_period);
-
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true && sleep_period != 0)
-    sleep(sleep_period);
+  state.write_ratio = 0.5;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+  state.write_ratio = 0.1;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_AGGREGATE;
+  RunAggregateTest();
+
+  state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1166,7 +1166,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 2;
+  state.transactions = 10;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1185,6 +1185,9 @@ void RunAdaptExperiment() {
 
     state.projectivity = 1.0;
     CreateAndLoadTable((LayoutType) peloton_layout);
+
+    // Reset query counter
+    query_itr = 0;
 
     // Launch transformer
     if(state.layout == LAYOUT_HYBRID) {
@@ -1207,6 +1210,7 @@ void RunAdaptExperiment() {
   // Reset
   state.transactions = orig_transactions;
   state.adapt = false;
+  query_itr = 0;
 
   out.close();
 }
