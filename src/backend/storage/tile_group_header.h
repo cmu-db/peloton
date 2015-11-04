@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/logging/log_manager.h"
-#include "backend/storage/abstract_backend.h"
 #include "backend/common/logger.h"
 #include "backend/common/synch.h"
+#include "backend/storage/backend.h"
+#include "backend/logging/log_manager.h"
 
 #include <atomic>
 #include <mutex>
@@ -48,15 +48,15 @@ class TileGroupHeader {
   TileGroupHeader() = delete;
 
  public:
-  TileGroupHeader(AbstractBackend *_backend, int tuple_count)
-      : backend(_backend),
-        data(nullptr),
+  TileGroupHeader(int tuple_count)
+      : data(nullptr),
         num_tuple_slots(tuple_count),
         next_tuple_slot(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
-    data = (char *) backend->Allocate(header_size);
+    auto backend = storage::Backend::GetInstance();
+    data = (char *) backend.Allocate(header_size);
     // initialize data with zero
     memset(data, 0, header_size);
     assert(data != nullptr);
@@ -78,7 +78,6 @@ class TileGroupHeader {
     if (&other == this)
       return *this;
 
-    backend = other.backend;
     header_size = other.header_size;
 
     // copy over all the data
@@ -93,7 +92,8 @@ class TileGroupHeader {
 
   ~TileGroupHeader() {
     // reclaim the space
-    backend->Free(data);
+    auto backend = storage::Backend::GetInstance();
+    backend.Free(data);
     data = nullptr;
   }
 
@@ -335,9 +335,6 @@ class TileGroupHeader {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-
-  // storage backend
-  AbstractBackend *backend;
 
   size_t header_size;
 

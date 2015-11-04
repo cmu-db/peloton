@@ -73,9 +73,6 @@ class OrderByExecutor : public AbstractExecutor {
     sort_buffer_entry_t &operator=(const sort_buffer_entry_t &) = delete;
   };
 
-  /** A backend is required to allocate physical tiles */
-  storage::AbstractBackend *backend_ = nullptr;
-
   /** All tiles returned by child. */
   std::vector<std::unique_ptr<LogicalTile>> input_tiles_;
 

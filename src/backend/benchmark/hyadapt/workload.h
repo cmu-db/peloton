@@ -20,19 +20,29 @@ namespace hyadapt{
 
 extern configuration state;
 
-storage::DataTable *CreateAndLoadTable(LayoutType layout_type);
+extern storage::DataTable *hyadapt_table;
 
-void RunDirectTest(storage::DataTable *table);
+void CreateAndLoadTable(LayoutType layout_type);
 
-void RunAggregateTest(storage::DataTable *table);
+void RunDirectTest();
 
-void RunArithmeticTest(storage::DataTable *table);
+void RunAggregateTest();
+
+void RunArithmeticTest();
+
+void RunSubsetTest(SubsetType subset_test_type, double fraction);
 
 void RunProjectivityExperiment();
 
 void RunSelectivityExperiment();
 
 void RunOperatorExperiment();
+
+void RunVerticalExperiment();
+
+void RunSubsetExperiment();
+
+void RunAdaptExperiment();
 
 }  // namespace hyadapt
 }  // namespace benchmark

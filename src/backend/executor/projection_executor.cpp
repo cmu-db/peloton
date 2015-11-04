@@ -90,9 +90,7 @@ bool ProjectionExecutor::DExecute() {
     }
 
     // Wrap physical tile in logical tile and return it
-    bool own_base_tile = true;
-    SetOutput(
-        LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
+    SetOutput(LogicalTileFactory::WrapTiles({dest_tile.release()}));
 
     return true;
   }
