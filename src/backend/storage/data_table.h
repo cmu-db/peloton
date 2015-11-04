@@ -33,6 +33,7 @@ typedef enum LayoutType
 extern LayoutType peloton_layout;
 extern double     peloton_projectivity;
 extern int        peloton_num_groups;
+extern bool       peloton_fsm;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
@@ -106,7 +107,7 @@ class DataTable : public AbstractTable {
   size_t GetTileGroupCount() const;
 
   // Get a tile group with given layout
-  TileGroup *GetTileGroupWithLayout(column_map_type partitioning);
+  TileGroup *GetTileGroupWithLayout(const column_map_type& partitioning);
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -176,6 +177,8 @@ class DataTable : public AbstractTable {
   bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
+
+  column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
@@ -256,10 +259,6 @@ class DataTable : public AbstractTable {
   // samples for clustering
   std::vector<brain::Sample> samples;
 };
-
-// Utils
-
-column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
 }  // End storage namespace
 }  // End peloton namespace

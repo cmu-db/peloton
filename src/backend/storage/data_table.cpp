@@ -64,6 +64,13 @@ DataTable::DataTable(catalog::Schema *schema,
 : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
   tuples_per_tilegroup(tuples_per_tilegroup),
   adapt_table(adapt_table){
+
+  // Init default partition
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    default_partition[col_itr] = std::make_pair(0, col_itr);
+  }
+
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -395,7 +402,7 @@ void DataTable::ResetDirty() {
 // TILE GROUP
 //===--------------------------------------------------------------------===//
 
-TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
+TileGroup *DataTable::GetTileGroupWithLayout(const column_map_type& partitioning){
 
   std::vector<catalog::Schema> schemas;
   oid_t tile_group_id = INVALID_OID;
@@ -850,11 +857,16 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
+column_map_type DataTable::GetStaticColumnMap(std::string table_name, oid_t column_count){
   column_map_type column_map;
 
   // HYADAPT
   if(table_name == "HYADAPTTABLE") {
+
+    // FSM MODE
+    if(peloton_fsm == true) {
+      return default_partition;
+    }
 
     // DEFAULT
     if(peloton_num_groups == 0) {
