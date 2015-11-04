@@ -1113,7 +1113,7 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
-  state.projectivity = 0.6;
+  state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1196,7 +1196,8 @@ void RunAdaptExperiment() {
       transformer = std::thread(Transform);
     }
 
-    srand(0);
+    RunAdaptTest();
+
     RunAdaptTest();
 
     // Stop transformer
