@@ -818,15 +818,19 @@ void DataTable::RecordSample(const brain::Sample& sample) {
     samples.push_back(sample);
   }
 
-  if(rand() % 10 < 2)
-    UpdateDefaultPartition();
+}
 
+const column_map_type& DataTable::GetDefaultPartition() {
+  return default_partition;
 }
 
 void DataTable::UpdateDefaultPartition() {
 
-  oid_t cluster_count = 4;
   oid_t column_count = GetSchema()->GetColumnCount();
+
+  // TODO: Number of clusters and new sample weight
+  oid_t cluster_count = 4;
+  double new_sample_weight = 0.01;
 
   brain::Clusterer clusterer(cluster_count, column_count);
 
@@ -838,16 +842,8 @@ void DataTable::UpdateDefaultPartition() {
       clusterer.ProcessSample(sample);
   }
 
-  auto partitioning = clusterer.GetPartitioning(2);
-
-  std::cout << "UPDATED PARTITIONING \n";
-  std::cout << "COLUMN "
-      << "\t"
-      << " TILE"
-      << "\n";
-  for (auto entry : partitioning)
-    std::cout << entry.first << "\t"
-    << entry.second.first << " : " << entry.second.second << "\n";
+  // TODO: Max number of tiles
+  default_partition = clusterer.GetPartitioning(2);
 }
 
 //===--------------------------------------------------------------------===//

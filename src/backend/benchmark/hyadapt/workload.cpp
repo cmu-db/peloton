@@ -167,10 +167,11 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
       WriteOutput(time_per_transaction);
 
       start = std::chrono::system_clock::now();
-
-      // Record sample
-      hyadapt_table->RecordSample(sample);
     }
+
+    // Record sample
+    if(state.fsm == true)
+      hyadapt_table->RecordSample(sample);
 
   }
 
@@ -1053,6 +1054,27 @@ void RunSubsetExperiment() {
   out.close();
 }
 
+static double GetRelativeDifference(const storage::column_map_type& old_column_map,
+                                    const storage::column_map_type& new_column_map) {
+
+  double theta = 0;
+  size_t capacity = old_column_map.size();
+  double diff = 0;
+
+  for(auto col_itr = 0 ; col_itr < capacity ; col_itr++) {
+    auto& old_col = old_column_map.at(col_itr);
+    auto& new_col = new_column_map.at(col_itr);
+
+    if(old_col != new_col)
+      diff++;
+  }
+
+  // compute diff
+  theta = diff/capacity;
+
+  return theta;
+}
+
 static void Transform() {
 
   // Get column map
@@ -1063,10 +1085,24 @@ static void Transform() {
   peloton_projectivity = state.projectivity;
   auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
 
+  // TODO: Update period ?
+  oid_t update_period = 10;
+  oid_t update_itr = 0;
+
   // Transform
   while(state.fsm == true) {
     auto tile_group_offset = rand() % tile_group_count;
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
+
+    // Compute diff
+    double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
+
+    // Update partitioning periodically
+    update_itr++;
+    if(update_itr == update_period) {
+      hyadapt_table->UpdateDefaultPartition();
+      update_itr = 0;
+    }
   }
 
 }
