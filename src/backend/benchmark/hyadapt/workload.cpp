@@ -1122,11 +1122,11 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.9;
+  state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.projectivity = 0.1;
+  state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1139,7 +1139,7 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.projectivity = 0.9;
+  state.projectivity = 0.5;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
 
@@ -1148,7 +1148,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.9;
+  state.projectivity = 0.8;
   state.operator_type = OPERATOR_TYPE_AGGREGATE;
   RunAggregateTest();
 
