@@ -1112,8 +1112,8 @@ static void Transform() {
 }
 
 static double GetRandDouble() {
-  auto rand = ((double)rand()/(double)RAND_MAX);
-  return rand;
+  auto rand_double = ((double)rand()/(double)RAND_MAX);
+  return rand_double;
 }
 
 static void RunAdaptTest() {
