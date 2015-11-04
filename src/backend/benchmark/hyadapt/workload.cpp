@@ -141,7 +141,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
   brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
-  for(auto txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+  for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
 
     // Increment query counter
     query_itr++;
@@ -197,7 +197,7 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
   for(auto col : column_ids)
     columns_accessed_map[col] = 1;
 
-  for(oid_t column_itr = 0 ; column_itr < state.column_count; column_itr++){
+  for(int column_itr = 0 ; column_itr < state.column_count; column_itr++){
     auto location = columns_accessed_map.find(column_itr);
     auto end = columns_accessed_map.end();
     if(location != end)
@@ -1064,7 +1064,7 @@ static double GetRelativeDifference(const storage::column_map_type& old_column_m
   size_t capacity = old_column_map.size();
   double diff = 0;
 
-  for(auto col_itr = 0 ; col_itr < capacity ; col_itr++) {
+  for(oid_t col_itr = 0 ; col_itr < capacity ; col_itr++) {
     auto& old_col = old_column_map.at(col_itr);
     auto& new_col = new_column_map.at(col_itr);
 
@@ -1099,7 +1099,7 @@ static void Transform() {
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
 
     // Compute diff
-    //double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
+    __attribute__((unused)) double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
 
     // Update partitioning periodically
     update_itr++;
@@ -1109,11 +1109,6 @@ static void Transform() {
     }
   }
 
-}
-
-static double GetRandDouble() {
-  auto rand_double = ((double)rand()/(double)RAND_MAX);
-  return rand_double;
 }
 
 static void RunAdaptTest() {
