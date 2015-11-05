@@ -135,6 +135,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
 
   auto txn_count = state.transactions;
   bool status = false;
+  int sleep_period = 1;
+
   start = std::chrono::system_clock::now();
 
   // Construct sample
@@ -168,13 +170,14 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     if(state.adapt == true) {
       end = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsed_seconds = end-start;
-      double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+      double time_per_transaction = ((double)elapsed_seconds.count());
 
       WriteOutput(time_per_transaction);
 
       // Record sample
-      if(state.fsm == true)
+      if(state.fsm == true) {
         hyadapt_table->RecordSample(sample);
+      }
 
       start = std::chrono::system_clock::now();
     }
@@ -1083,7 +1086,6 @@ static void Transform() {
   // Get column map
   auto table_name = hyadapt_table->GetName();
   auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
-  auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
 
@@ -1093,13 +1095,13 @@ static void Transform() {
 
   // Transform
   while(state.fsm == true) {
+    auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
 
     auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
 
-    // Compute diff
-    __attribute__((unused)) double theta = GetRelativeDifference(hyadapt_table->GetDefaultPartition(), column_map);
+    std::cout << "Transform \n";
 
     // Update partitioning periodically
     update_itr++;
@@ -1107,31 +1109,27 @@ static void Transform() {
       hyadapt_table->UpdateDefaultPartition();
       update_itr = 0;
     }
+
   }
 
 }
 
 static void RunAdaptTest() {
 
-  state.projectivity = 0.3;
+  state.projectivity = 0.01;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
-
-  state.projectivity = 0.7;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID };
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[0];
+  state.column_count = column_counts[1];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 50;
+  state.transactions = 100;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1148,7 +1146,8 @@ void RunAdaptExperiment() {
 
     std::cout << "----------------------------------------- \n\n";
 
-    state.projectivity = 1.0;
+    state.projectivity = 0.01;
+    peloton_projectivity = 0.01;
     CreateAndLoadTable((LayoutType) peloton_layout);
 
     // Reset query counter
@@ -1160,8 +1159,6 @@ void RunAdaptExperiment() {
       peloton_fsm = true;
       transformer = std::thread(Transform);
     }
-
-    RunAdaptTest();
 
     RunAdaptTest();
 
