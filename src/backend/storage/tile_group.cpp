@@ -32,7 +32,8 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      column_map(column_map) {
+      column_map(column_map),
+      ref_count(BASE_REF_COUNT) {
   tile_count = tile_schemas.size();
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
@@ -54,7 +55,19 @@ TileGroup::~TileGroup() {
   }
 
   // clean up tile group header
-  tile_group_header->DecrementRefCount();
+  delete tile_group_header;
+}
+
+void TileGroup::IncrementRefCount() {
+  ++ref_count;
+}
+
+void TileGroup::DecrementRefCount() {
+  // DROP tile group when ref count reaches 0
+  // this returns the value immediately preceding the assignment
+  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
+    delete this;
+  }
 }
 
 //===--------------------------------------------------------------------===//
