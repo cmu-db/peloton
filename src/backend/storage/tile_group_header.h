@@ -51,8 +51,7 @@ class TileGroupHeader {
   TileGroupHeader(int tuple_count)
       : data(nullptr),
         num_tuple_slots(tuple_count),
-        next_tuple_slot(0),
-        ref_count(BASE_REF_COUNT) {
+        next_tuple_slot(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -320,10 +319,6 @@ class TileGroupHeader {
   //TODO 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
-  void IncrementRefCount();
-
-  void DecrementRefCount();
-
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
@@ -354,9 +349,6 @@ class TileGroupHeader {
 
   // synch helpers
   std::mutex tile_header_mutex;
-
-  // references
-  std::atomic<size_t> ref_count;
 
 };
 
