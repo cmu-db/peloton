@@ -24,6 +24,18 @@ namespace storage {
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
+void TileGroupHeader::IncrementRefCount() {
+  ++ref_count;
+}
+
+void TileGroupHeader::DecrementRefCount() {
+  // DROP tile group header when ref count reaches 0
+  // this returns the value immediately preceding the assignment
+  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
+    delete this;
+  }
+}
+
 std::ostream &operator<<(std::ostream &os,
                          const TileGroupHeader &tile_group_header) {
   os << "\t-----------------------------------------------------------\n";

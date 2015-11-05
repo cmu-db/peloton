@@ -54,7 +54,7 @@ TileGroup::~TileGroup() {
   }
 
   // clean up tile group header
-  delete tile_group_header;
+  tile_group_header->DecrementRefCount();
 }
 
 //===--------------------------------------------------------------------===//

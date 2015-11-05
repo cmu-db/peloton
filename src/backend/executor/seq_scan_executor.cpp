@@ -116,7 +116,10 @@ bool SeqScanExecutor::DExecute() {
 
       storage::TileGroup *tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
+
       storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+      tile_group_header->IncrementRefCount();
+
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
       cid_t commit_id = transaction_->GetLastCommitId();
@@ -124,6 +127,10 @@ bool SeqScanExecutor::DExecute() {
 
       // Print tile group visibility
       // tile_group_header->PrintVisibility(txn_id, commit_id);
+
+      // Construct logical tile.
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      logical_tile->AddColumns(tile_group, column_ids_);
 
       // Construct position list by looping through tile group
       // and applying the predicate.
@@ -141,16 +148,13 @@ bool SeqScanExecutor::DExecute() {
         }
       }
 
-      // Construct logical tile.
-      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      tile_group_header->DecrementRefCount();
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
       if(0 == logical_tile->GetTupleCount()){
         continue;
       }
-
-      logical_tile->AddColumns(tile_group, column_ids_);
 
       SetOutput(logical_tile.release());
       return true;
