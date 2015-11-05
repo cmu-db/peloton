@@ -1113,7 +1113,7 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
-  state.projectivity = 0.01;
+  state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1121,40 +1121,19 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
-
-  state.projectivity = 0.01;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
 
   state.projectivity = 0.9;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.write_ratio = 0.5;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = 0.1;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.projectivity = 0.5;
+  state.projectivity = 0.2;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
 
-  state.write_ratio = 0.1;
+  state.write_ratio = 0.3;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
-
-  state.projectivity = 0.8;
-  state.operator_type = OPERATOR_TYPE_AGGREGATE;
-  RunAggregateTest();
-
-  state.projectivity = 0.3;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
 
 }
 
@@ -1162,11 +1141,11 @@ std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLU
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[1];
+  state.column_count = column_counts[0];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 10;
+  state.transactions = 20;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
