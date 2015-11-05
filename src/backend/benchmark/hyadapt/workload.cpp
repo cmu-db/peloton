@@ -301,6 +301,7 @@ void RunDirectTest() {
   // COLLECT STATS
   /////////////////////////////////////////////////////////
   double cost = 10;
+  column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
   ExecuteTest(executors, columns_accessed, cost);
@@ -455,6 +456,7 @@ void RunAggregateTest() {
   // COLLECT STATS
   /////////////////////////////////////////////////////////
   double cost = 10;
+  column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
   ExecuteTest(executors, columns_accessed, cost);
@@ -592,6 +594,7 @@ void RunArithmeticTest() {
   // COLLECT STATS
   /////////////////////////////////////////////////////////
   double cost = 10;
+  column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
   ExecuteTest(executors, columns_accessed, cost);
@@ -752,6 +755,7 @@ void RunInsertTest() {
   // COLLECT STATS
   /////////////////////////////////////////////////////////
   double cost = 10;
+  column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
   ExecuteTest(executors, columns_accessed, cost);
@@ -1101,8 +1105,6 @@ static void Transform() {
     auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
     hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
 
-    std::cout << "Transform \n";
-
     // Update partitioning periodically
     update_itr++;
     if(update_itr == update_period) {
@@ -1116,16 +1118,17 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
-  state.projectivity = 0.01;
+  state.projectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
+
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID };
+std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID};
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[1];
+  state.column_count = column_counts[0];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1146,8 +1149,8 @@ void RunAdaptExperiment() {
 
     std::cout << "----------------------------------------- \n\n";
 
-    state.projectivity = 0.01;
-    peloton_projectivity = 0.01;
+    state.projectivity = 1.0;
+    peloton_projectivity = 1.0;
     CreateAndLoadTable((LayoutType) peloton_layout);
 
     // Reset query counter
