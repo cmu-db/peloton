@@ -135,6 +135,10 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     auto &manager = catalog::Manager::GetInstance();
     storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+    tile_group_header->IncrementRefCount();
+
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, column_ids);
 
     // Print tile group visibility
     //tile_group_header->PrintVisibility(txn_id, commit_id);
@@ -147,10 +151,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
       }
     }
 
+    tile_group_header->DecrementRefCount();
     logical_tile->AddPositionList(std::move(position_list));
-
-    // Add relevant columns to logical tile
-    logical_tile->AddColumns(tile_group, column_ids);
 
     result.push_back(logical_tile);
   }
