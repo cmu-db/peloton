@@ -1090,6 +1090,7 @@ static void Transform() {
   // Get column map
   auto table_name = hyadapt_table->GetName();
   auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
 
@@ -1099,7 +1100,6 @@ static void Transform() {
 
   // Transform
   while(state.fsm == true) {
-    auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
 
     auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
@@ -1118,13 +1118,52 @@ static void Transform() {
 
 static void RunAdaptTest() {
 
+  state.projectivity = 0.01;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = 0.1;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = 0.01;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = 0.2;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
   state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.5;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+  state.write_ratio = 0.1;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_AGGREGATE;
+  RunAggregateTest();
+
+  state.projectivity = 0.3;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
 
 void RunAdaptExperiment() {
 
@@ -1132,7 +1171,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 100;
+  state.transactions = 10;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
