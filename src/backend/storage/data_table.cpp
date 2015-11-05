@@ -811,7 +811,6 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Clean up the orig tile group
   tile_group->DecrementRefCount();
-
   tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   return new_tile_group;
@@ -831,11 +830,11 @@ const column_map_type& DataTable::GetDefaultPartition() {
   return default_partition;
 }
 
-void DataTable::PrintDefaultPartition(){
+static void PrintDefaultPartitionHelper(const column_map_type& column_map){
   std::map<oid_t, oid_t> column_map_stats;
 
   // Cluster per-tile column count
-  for(auto entry : default_partition){
+  for(auto entry : column_map){
     auto tile_id = entry.second.first;
     auto column_map_itr = column_map_stats.find(tile_id);
     if(column_map_itr == column_map_stats.end())
@@ -846,10 +845,15 @@ void DataTable::PrintDefaultPartition(){
 
   // Display info
   std::cout << "---------\n";
+  std::cout << "Default Partition \n";
   for(auto entry : column_map_stats) {
     std::cout << entry.first << " " << entry.second << "\n";
   }
   std::cout << "---------\n\n";
+}
+
+void DataTable::PrintDefaultPartition(){
+  PrintDefaultPartitionHelper(default_partition);
 }
 
 void DataTable::UpdateDefaultPartition() {
@@ -866,12 +870,21 @@ void DataTable::UpdateDefaultPartition() {
   {
     std::lock_guard<std::mutex> lock(clustering_mutex);
 
-    for(auto sample : samples)
+    // Check if we have any samples
+    if(samples.empty())
+      return;
+
+    for(auto sample : samples) {
       clusterer.ProcessSample(sample);
+    }
+
+    samples.clear();
   }
 
   // TODO: Max number of tiles
   default_partition = clusterer.GetPartitioning(2);
+  std::cout << "MODEL UPDATE \n";
+  PrintDefaultPartition();
 }
 
 //===--------------------------------------------------------------------===//
