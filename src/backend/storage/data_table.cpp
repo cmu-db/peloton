@@ -81,7 +81,7 @@ DataTable::~DataTable() {
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
       tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
-    delete tile_group;
+    tile_group->DecrementRefCount();
   }
 
   // clean up indices
@@ -506,7 +506,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     if (active_tuple_count < allocated_tuple_count) {
       LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count,
                 allocated_tuple_count);
-      delete tile_group;
+      tile_group->DecrementRefCount();
       return INVALID_OID;
     }
 
@@ -810,7 +810,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group
-  delete tile_group;
+  tile_group->DecrementRefCount();
 
   tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
