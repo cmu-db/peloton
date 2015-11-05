@@ -159,6 +159,10 @@ class TileGroup {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
+  void IncrementRefCount();
+
+  void DecrementRefCount();
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -192,6 +196,10 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
+
+  // references
+  std::atomic<size_t> ref_count;
+
 };
 
 }  // End storage namespace

@@ -134,8 +134,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
 
     auto &manager = catalog::Manager::GetInstance();
     storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
+    tile_group->IncrementRefCount();
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-    tile_group_header->IncrementRefCount();
 
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, column_ids);
@@ -151,7 +151,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
       }
     }
 
-    tile_group_header->DecrementRefCount();
+    tile_group->DecrementRefCount();
     logical_tile->AddPositionList(std::move(position_list));
 
     result.push_back(logical_tile);

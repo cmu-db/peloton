@@ -116,9 +116,9 @@ bool SeqScanExecutor::DExecute() {
 
       storage::TileGroup *tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
+      tile_group->IncrementRefCount();
 
       storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-      tile_group_header->IncrementRefCount();
 
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
@@ -148,7 +148,7 @@ bool SeqScanExecutor::DExecute() {
         }
       }
 
-      tile_group_header->DecrementRefCount();
+      tile_group->DecrementRefCount();
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
