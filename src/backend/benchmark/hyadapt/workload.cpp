@@ -1167,11 +1167,11 @@ std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLU
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[0];
+  state.column_count = column_counts[1];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 10;
+  state.transactions = 20;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
