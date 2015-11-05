@@ -883,8 +883,6 @@ void DataTable::UpdateDefaultPartition() {
 
   // TODO: Max number of tiles
   default_partition = clusterer.GetPartitioning(2);
-  std::cout << "MODEL UPDATE \n";
-  PrintDefaultPartition();
 }
 
 //===--------------------------------------------------------------------===//
