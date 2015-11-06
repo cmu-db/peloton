@@ -1238,8 +1238,6 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.scale_factor = 10;
-  state.tuples_per_tilegroup = 10;
   state.transactions = 25;
 
   state.write_ratio = 0.0;
