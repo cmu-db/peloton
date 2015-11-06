@@ -808,7 +808,8 @@ void RunUpdateTest() {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
+  for(oid_t col_itr = 1 ; col_itr < column_count; col_itr++) {
     target_list.emplace_back(col_itr, expression::ConstantValueFactory(update_val));
   }
 
