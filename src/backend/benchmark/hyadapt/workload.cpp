@@ -1179,11 +1179,11 @@ static void RunAdaptTest() {
   state.selectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
- 
+
   state.projectivity = 0.3;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
-  
+
   state.selectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
@@ -1195,7 +1195,7 @@ static void RunAdaptTest() {
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 void RunAdaptExperiment() {
 
