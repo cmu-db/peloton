@@ -1180,18 +1180,13 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
 
-  state.projectivity = 0.3;
+  state.projectivity = 0.06;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
   state.selectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
-
-  state.write_ratio = 0.2;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
 
 }
 
@@ -1203,7 +1198,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 20;
+  state.transactions = 25;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
