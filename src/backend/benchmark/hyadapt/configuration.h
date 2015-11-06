@@ -43,7 +43,8 @@ enum ExperimentType{
   EXPERIMENT_TYPE_OPERATOR = 3,
   EXPERIMENT_TYPE_VERTICAL = 4,
   EXPERIMENT_TYPE_SUBSET = 5,
-  EXPERIMENT_TYPE_ADAPT = 6
+  EXPERIMENT_TYPE_ADAPT = 6,
+  EXPERIMENT_TYPE_TRANSITION = 7
 
 };
 
@@ -102,6 +103,8 @@ class configuration {
   bool adapt;
 
   bool fsm;
+
+  double theta;
  };
 
 void Usage(FILE *out);
