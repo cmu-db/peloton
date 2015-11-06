@@ -60,8 +60,6 @@ void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
 void LogicalTile::AddColumn(storage::Tile *base_tile,
                             oid_t origin_column_id,
                             oid_t position_list_idx) {
-  assert(position_list_idx < position_lists_.size());
-
   ColumnInfo cp;
   cp.base_tile = base_tile;
   cp.origin_column_id = origin_column_id;
