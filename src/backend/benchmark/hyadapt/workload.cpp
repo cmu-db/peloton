@@ -28,6 +28,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/seq_scan_executor.h"
@@ -36,16 +37,21 @@
 #include "backend/executor/materialization_executor.h"
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/insert_executor.h"
+#include "backend/executor/update_executor.h"
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/index/index_factory.h"
+
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/planner/insert_plan.h"
+#include "backend/planner/update_plan.h"
 #include "backend/planner/projection_plan.h"
+
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
@@ -763,6 +769,76 @@ void RunInsertTest() {
   txn_manager.CommitTransaction(txn);
 }
 
+void RunUpdateTest() {
+  const int lower_bound = GetLowerBound();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  // We need all columns because projection can require any column
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count;
+
+  column_ids.push_back(0);
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // UPDATE
+  /////////////////////////////////////////////////////////
+
+  // Update
+  std::vector<Value> values;
+  Value update_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    target_list.emplace_back(col_itr, expression::ConstantValueFactory(update_val));
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  planner::UpdatePlan update_node(hyadapt_table, project_info);
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+
+  update_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&update_executor);
+
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
+
+  txn_manager.CommitTransaction(txn);
+}
+
 /////////////////////////////////////////////////////////
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
@@ -1064,46 +1140,26 @@ void RunSubsetExperiment() {
   out.close();
 }
 
-static double GetRelativeDifference(const storage::column_map_type& old_column_map,
-                                    const storage::column_map_type& new_column_map) {
-
-  double theta = 0;
-  size_t capacity = old_column_map.size();
-  double diff = 0;
-
-  for(oid_t col_itr = 0 ; col_itr < capacity ; col_itr++) {
-    auto& old_col = old_column_map.at(col_itr);
-    auto& new_col = new_column_map.at(col_itr);
-
-    if(old_col != new_col)
-      diff++;
-  }
-
-  // compute diff
-  theta = diff/capacity;
-
-  return theta;
-}
-
 static void Transform() {
 
   // Get column map
   auto table_name = hyadapt_table->GetName();
   auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
-  auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
 
   // TODO: Update period ?
   oid_t update_period = 10;
   oid_t update_itr = 0;
+  double theta = 0.5;
 
   // Transform
   while(state.fsm == true) {
+    auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
 
     auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
+    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, theta);
 
     // Update partitioning periodically
     update_itr++;
@@ -1122,23 +1178,18 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.write_ratio = 0.1;
+  state.selectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
+
+  state.write_ratio = 0.2;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.9;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.projectivity = 0.06;
-  state.operator_type = OPERATOR_TYPE_AGGREGATE;
-  RunAggregateTest();
-
-  state.write_ratio = 0.5;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+  state.selectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
 
 }
 
@@ -1150,7 +1201,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 20;
+  state.transactions = 40;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
