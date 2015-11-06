@@ -1190,7 +1190,7 @@ static void RunAdaptTest() {
   RunUpdateTest();
   state.selectivity = 1.0;
  
-  state.projectivity = 0.9;
+  state.projectivity = 0.4;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1199,7 +1199,7 @@ static void RunAdaptTest() {
   RunUpdateTest();
   state.selectivity = 1.0;
 
-  state.projectivity = 0.9;
+  state.projectivity = 0.4;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1241,7 +1241,7 @@ void RunAdaptExperiment() {
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
   state.adapt = true;
-  double theta = 0.5;
+  double theta = 0.0;
 
   // Generate sequence
   GenerateSequence(state.column_count);
