@@ -1293,10 +1293,6 @@ static void RunTransitionTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.projectivity = 0.2;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
   state.projectivity = 0.5;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
@@ -1315,7 +1311,7 @@ void RunTransitionExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 1;
+  state.transactions = 20;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
