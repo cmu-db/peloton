@@ -1176,7 +1176,7 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.5;
+  state.selectivity = 0.05;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
   state.selectivity = 1.0;
@@ -1185,14 +1185,50 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.5;
+  state.selectivity = 0.05;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
+  state.selectivity = 1.0;
+ 
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.selectivity = 0.05;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
   state.selectivity = 1.0;
 
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.selectivity = 0.05;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
+  state.selectivity = 1.0;
+ 
+  state.projectivity = 0.06;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.selectivity = 0.05;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
+  state.selectivity = 1.0;
+
+  state.projectivity = 0.06;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.selectivity = 0.05;
+  state.operator_type = OPERATOR_TYPE_UPDATE;
+  RunUpdateTest();
+  state.selectivity = 1.0;
+ 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
 
 void RunAdaptExperiment() {
 
