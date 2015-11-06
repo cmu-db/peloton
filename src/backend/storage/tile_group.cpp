@@ -320,7 +320,8 @@ double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column
     auto& old_col = column_map.at(col_itr);
     auto& new_col = new_column_map.at(col_itr);
 
-    if(old_col != new_col)
+    // The tile don't match
+    if(old_col.first != new_col.first)
       diff++;
   }
 
