@@ -66,7 +66,7 @@ oid_t hyadapt_tuple_counter = -1000000;
 
 expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
-  // ATTR0 > LOWER_BOUND
+  // ATTR0 >= LOWER_BOUND
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
@@ -74,12 +74,13 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
   // Second, create constant value expression.
   Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
+
   expression::AbstractExpression *constant_value_expr =
       expression::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
-      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                     tuple_value_expr,
                                     constant_value_expr);
 
@@ -808,9 +809,8 @@ void RunUpdateTest() {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
-  for(oid_t col_itr = 1 ; col_itr < column_count; col_itr++) {
-    target_list.emplace_back(col_itr, expression::ConstantValueFactory(update_val));
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
@@ -1176,21 +1176,23 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.1;
+  state.selectivity = 0.5;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
+  state.selectivity = 1.0;
 
   state.projectivity = 0.06;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.1;
+  state.selectivity = 0.5;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
+  state.selectivity = 1.0;
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW};
 
 void RunAdaptExperiment() {
 
@@ -1277,7 +1279,7 @@ void RunTransitionExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 40;
+  state.transactions = 1;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;

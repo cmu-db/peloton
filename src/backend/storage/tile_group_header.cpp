@@ -150,7 +150,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  LOG_INFO("%s", os.str().c_str());
+  std::cout << os.str().c_str();
 }
 
 oid_t TileGroupHeader::GetActiveTupleCount() {
