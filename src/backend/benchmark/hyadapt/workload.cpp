@@ -141,7 +141,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
 
   auto txn_count = state.transactions;
   bool status = false;
-  int sleep_period = 1;
 
   start = std::chrono::system_clock::now();
 
