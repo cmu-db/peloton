@@ -803,7 +803,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   auto diff = tile_group->GetSchemaDifference(column_map);
 
   // Check threshold for transformation
-  if(diff < theta) {
+  if(diff > theta) {
     return nullptr;
   }
 
