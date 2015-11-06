@@ -38,8 +38,10 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
+  auto theta = 0.0;
+
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, column_map, theta);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -48,7 +50,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 0);
 
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, column_map, theta);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -57,7 +59,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 2);
 
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, column_map, theta);
 
 }
 

@@ -311,6 +311,25 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
+double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column_map) {
+  double theta = 0;
+  size_t capacity = column_map.size();
+  double diff = 0;
+
+  for(oid_t col_itr = 0 ; col_itr < capacity ; col_itr++) {
+    auto& old_col = column_map.at(col_itr);
+    auto& new_col = new_column_map.at(col_itr);
+
+    if(old_col != new_col)
+      diff++;
+  }
+
+  // compute diff
+  theta = diff/capacity;
+
+  return theta;
+}
+
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//

@@ -73,15 +73,9 @@ class Transaction {
   // record deleted tuple
   void RecordDelete(ItemPointer location);
 
-  // check if it has inserted any tuples in given tile group
-  bool HasInsertedTuples(storage::TileGroup *tile_group) const;
+  const std::map<oid_t, std::vector<oid_t>> &GetInsertedTuples();
 
-  // check if it has deleted any tuples in given tile group
-  bool HasDeletedTuples(storage::TileGroup *tile_group) const;
-
-  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetInsertedTuples();
-
-  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetDeletedTuples();
+  const std::map<oid_t, std::vector<oid_t>> &GetDeletedTuples();
 
   // reset inserted tuples and deleted tuples
   // used by recovery (logging)
@@ -125,10 +119,10 @@ class Transaction {
   Transaction *next __attribute__((aligned(16)));
 
   // inserted tuples
-  std::map<storage::TileGroup *, std::vector<oid_t>> inserted_tuples;
+  std::map<oid_t, std::vector<oid_t>> inserted_tuples;
 
   // deleted tuples
-  std::map<storage::TileGroup *, std::vector<oid_t>> deleted_tuples;
+  std::map<oid_t, std::vector<oid_t>> deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;

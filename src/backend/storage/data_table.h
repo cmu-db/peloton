@@ -140,7 +140,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
-                                         const column_map_type &column_map);
+                                         const column_map_type &column_map,
+                                         double theta);
 
   //===--------------------------------------------------------------------===//
   // STATS
