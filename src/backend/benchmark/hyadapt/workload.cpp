@@ -180,7 +180,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
       WriteOutput(time_per_transaction);
 
       // Record sample
-      if(state.fsm == true) {
+      if(state.fsm == true && cost != 0) {
         hyadapt_table->RecordSample(sample);
       }
 
@@ -759,9 +759,8 @@ void RunInsertTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double cost = 10;
-  column_ids.push_back(0);
-  auto columns_accessed = GetColumnsAccessed(column_ids);
+  double cost = 0;
+  std::vector<double> columns_accessed;
 
   ExecuteTest(executors, columns_accessed, cost);
 
@@ -829,9 +828,8 @@ void RunUpdateTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double cost = 10;
-  column_ids.push_back(0);
-  auto columns_accessed = GetColumnsAccessed(column_ids);
+  double cost = 0;
+  std::vector<double> columns_accessed;
 
   ExecuteTest(executors, columns_accessed, cost);
 
@@ -1181,7 +1179,7 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
  
-  state.projectivity = 0.9;
+  state.projectivity = 0.3;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
   
@@ -1189,9 +1187,11 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
 
-  state.projectivity = 0.06;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  state.write_ratio = 0.5;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
 }
 
 std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
@@ -1202,7 +1202,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 50;
+  state.transactions = 40;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1232,6 +1232,8 @@ void RunAdaptExperiment() {
       peloton_fsm = true;
       transformer = std::thread(Transform);
     }
+
+    RunAdaptTest();
 
     RunAdaptTest();
 
