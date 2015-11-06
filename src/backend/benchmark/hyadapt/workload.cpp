@@ -122,6 +122,7 @@ static void WriteOutput(double duration) {
   out << state.subset_ratio << " ";
   out << state.tuples_per_tilegroup << " ";
   out << query_itr << " ";
+  out << state.theta << " ";
   out << duration << "\n";
   out.flush();
 
@@ -1137,7 +1138,7 @@ void RunSubsetExperiment() {
   out.close();
 }
 
-static void Transform() {
+static void Transform(double theta) {
 
   // Get column map
   auto table_name = hyadapt_table->GetName();
@@ -1148,7 +1149,6 @@ static void Transform() {
   // TODO: Update period ?
   oid_t update_period = 10;
   oid_t update_itr = 0;
-  double theta = 0.5;
 
   // Transform
   while(state.fsm == true) {
@@ -1187,7 +1187,7 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
 
-  state.write_ratio = 0.5;
+  state.write_ratio = 0.2;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
@@ -1198,15 +1198,16 @@ std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLU
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[0];
+  state.column_count = column_counts[1];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 40;
+  state.transactions = 20;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
   state.adapt = true;
+  double theta = 0.5;
 
   // Generate sequence
   GenerateSequence(state.column_count);
@@ -1230,10 +1231,8 @@ void RunAdaptExperiment() {
     if(state.layout == LAYOUT_HYBRID) {
       state.fsm = true;
       peloton_fsm = true;
-      transformer = std::thread(Transform);
+      transformer = std::thread(Transform, theta);
     }
-
-    RunAdaptTest();
 
     RunAdaptTest();
 
@@ -1249,6 +1248,87 @@ void RunAdaptExperiment() {
   // Reset
   state.transactions = orig_transactions;
   state.adapt = false;
+  query_itr = 0;
+
+  out.close();
+}
+
+static void RunTransitionTest() {
+
+  state.projectivity = 0.1;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.2;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.5;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+}
+
+std::vector<double> thetas = { 0.1, 0.5, 0.9 };
+
+void RunTransitionExperiment() {
+
+  state.column_count = column_counts[0];
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.transactions = 40;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+
+  // Set layout
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  // Go over all thetas
+  for(auto theta : thetas) {
+
+    state.projectivity = 1.0;
+    peloton_projectivity = 1.0;
+    CreateAndLoadTable((LayoutType) peloton_layout);
+
+    // Reset query counter
+    query_itr = 0;
+
+    // Launch transformer
+    if(state.layout == LAYOUT_HYBRID) {
+      state.fsm = true;
+      peloton_fsm = true;
+      transformer = std::thread(Transform, theta);
+    }
+
+    // Set theta
+    state.theta = theta;
+
+    RunTransitionTest();
+
+    // Stop transformer
+    if(state.layout == LAYOUT_HYBRID) {
+      state.fsm = false;
+      peloton_fsm = false;
+      transformer.join();
+    }
+
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  state.theta = 0;
   query_itr = 0;
 
   out.close();
