@@ -120,9 +120,9 @@ bool DeleteExecutor::DExecute() {
 
     executor_context_->num_processed += 1; // deleted one
     transaction_->RecordDelete(delete_location);
-    tile_group->DecrementRefCount();
   }
 
+  tile_group->DecrementRefCount();
   return true;
 }
 
