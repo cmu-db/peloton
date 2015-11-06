@@ -138,6 +138,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
+  oid_t tile_group_id = INVALID_OID;
   auto transaction_id = transaction->GetTransactionId();
 
   while (tuple_slot == INVALID_OID) {
@@ -151,7 +152,12 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
+    tile_group->IncrementRefCount();
+
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    tile_group_id = tile_group->GetTileGroupId();
+
+    tile_group->DecrementRefCount();
     if (tuple_slot == INVALID_OID) {
       // XXX Should we put this in a critical section?
       AddDefaultTileGroup();
@@ -162,7 +168,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
            tile_group_offset, tile_group->GetTileGroupId(), tile_group);
 
   // Set tuple location
-  ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+  ItemPointer location(tile_group_id, tuple_slot);
 
   return location;
 }
@@ -780,7 +786,9 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 }
 
 storage::TileGroup *DataTable::TransformTileGroup(
-    oid_t tile_group_offset, const column_map_type &column_map) {
+    oid_t tile_group_offset,
+    const column_map_type &column_map,
+    double theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
     LOG_ERROR("Tile group offset not found in table : %lu \n", tile_group_offset);
@@ -792,6 +800,12 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
+  auto diff = tile_group->GetSchemaDifference(column_map);
+
+  // Check threshold for transformation
+  if(diff < theta) {
+    return nullptr;
+  }
 
   // Get the schema for the new transformed tile group
   auto new_schema = TransformTileGroupSchema(tile_group, column_map);
