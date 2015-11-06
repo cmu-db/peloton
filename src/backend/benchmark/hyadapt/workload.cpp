@@ -1180,16 +1180,18 @@ static void RunAdaptTest() {
   state.selectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
-
-  state.write_ratio = 0.2;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
+ 
+  state.projectivity = 0.9;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+  
   state.selectivity = 0.1;
   state.operator_type = OPERATOR_TYPE_UPDATE;
   RunUpdateTest();
 
+  state.projectivity = 0.06;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 }
 
 std::vector<LayoutType> adapt_layouts = { LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
@@ -1200,7 +1202,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 40;
+  state.transactions = 50;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
