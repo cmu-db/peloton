@@ -126,7 +126,7 @@ bool SeqScanExecutor::DExecute() {
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility
-      // tile_group_header->PrintVisibility(txn_id, commit_id);
+      //tile_group_header->PrintVisibility(txn_id, commit_id);
 
       // Construct logical tile.
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
@@ -142,9 +142,13 @@ bool SeqScanExecutor::DExecute() {
 
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group,
                                                              tuple_id);
-        if (predicate_ == nullptr ||
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue()) {
+        if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
+        }
+        else {
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          if(eval == true)
+            position_list.push_back(tuple_id);
         }
       }
 
