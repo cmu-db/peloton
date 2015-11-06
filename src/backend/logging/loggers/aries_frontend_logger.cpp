@@ -259,13 +259,12 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
  */
 void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
                                      concurrency::Transaction* source){
+
   // This is the local transaction
   auto inserted_tuples = source->GetInsertedTuples();
   // Record the inserts in recovery txn
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
+    oid_t tile_group_id = entry.first;
     for (auto tuple_slot : entry.second){
       destination->RecordInsert(ItemPointer(tile_group_id, tuple_slot));
     }
@@ -274,9 +273,7 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
   // Record the deletes in recovery txn
   auto deleted_tuples = source->GetDeletedTuples();
   for (auto entry : deleted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
+    oid_t tile_group_id = entry.first;
     for (auto tuple_slot : entry.second) {
       destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
     }
@@ -320,24 +317,34 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 
   LOG_INFO("Abort txd id %d object in table",(int)txn->GetTransactionId());
 
+  auto& manager = catalog::Manager::GetInstance();
+
   // Record the aborted inserts in recovery txn
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
 
     for (auto tuple_slot : entry.second) {
       tile_group->AbortInsertedTuple(tuple_slot);
     }
+
+    tile_group->DecrementRefCount();
   }
 
   // Record the aborted deletes in recovery txn
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : txn->GetDeletedTuples()) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
 
     for (auto tuple_slot : entry.second) {
       tile_group->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
     }
+
+    tile_group->DecrementRefCount();
   }
 
   // Clear inserted/deleted tuples from txn, just in case

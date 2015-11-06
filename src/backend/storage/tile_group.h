@@ -163,6 +163,8 @@ class TileGroup {
 
   void DecrementRefCount();
 
+  double GetSchemaDifference(const storage::column_map_type& new_column_map);
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
