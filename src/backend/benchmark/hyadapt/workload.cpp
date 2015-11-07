@@ -109,6 +109,8 @@ static void WriteOutput(double duration) {
       << state.subset_experiment_type << " "
       << state.access_num_groups << " "
       << state.subset_ratio << " "
+      << state.theta << " "
+      << state.split_point << " "
       << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
@@ -124,6 +126,7 @@ static void WriteOutput(double duration) {
   out << state.tuples_per_tilegroup << " ";
   out << query_itr << " ";
   out << state.theta << " ";
+  out << state.split_point << " ";
   out << duration << "\n";
   out.flush();
 
@@ -1291,6 +1294,91 @@ void RunAdaptExperiment() {
 
   out.close();
 }
+
+std::vector<double> thetas = {0.0, 0.5};
+
+brain::Sample GetSample(double projectivity) {
+  double cost = 10;
+  auto col_count = projectivity * state.column_count;
+  std::vector<oid_t> columns_accessed;
+
+  // Build columns accessed
+  for(auto col_itr = 0; col_itr < col_count ; col_itr++)
+    columns_accessed.push_back(col_itr);
+
+  // Construct sample
+  auto columns_accessed_bitmap = GetColumnsAccessed(columns_accessed);
+  brain::Sample sample(columns_accessed_bitmap, cost);
+
+  return std::move(sample);
+}
+
+void RunThetaExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.column_count = column_counts[1];
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  state.transactions = 100;
+  oid_t num_types = 5;
+  std::vector<brain::Sample> samples;
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  CreateAndLoadTable((LayoutType) peloton_layout);
+
+  // Construct sample
+  for(oid_t type_itr = 1; type_itr < num_types; type_itr++) {
+    auto type_proj = type_itr * ((double) 1.0/num_types);
+    auto sample = GetSample(type_proj);
+    samples.push_back(sample);
+  }
+
+  // Go over all layouts
+  for(auto theta : thetas) {
+    // Set theta
+    state.theta = theta;
+
+    state.fsm = true;
+    transformer = std::thread(Transform, theta);
+
+    // Reset query counter
+    query_itr = 0;
+
+    // Go over all query types
+    for(auto sample : samples) {
+
+      for(oid_t txn_itr = 0 ; txn_itr < state.transactions; txn_itr++) {
+        hyadapt_table->RecordSample(samples[0]);
+
+        auto col_map = hyadapt_table->GetColumnMapStats();
+        auto split_point = col_map.at(0);
+        state.split_point = split_point;
+
+        query_itr++;
+        WriteOutput(0);
+      }
+
+    }
+
+    state.fsm = false;
+    transformer.join();
+  }
+
+  // Reset query counter
+  state.transactions = orig_transactions;
+  query_itr = 0;
+
+}
+
+void RunWeightExperiment() {
+
+}
+
 
 }  // namespace hyadapt
 }  // namespace benchmark

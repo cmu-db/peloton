@@ -44,6 +44,11 @@ void RunSubsetExperiment();
 
 void RunAdaptExperiment();
 
+void RunThetaExperiment();
+
+void RunWeightExperiment();
+
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
