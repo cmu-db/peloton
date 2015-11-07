@@ -84,10 +84,6 @@ void RunBenchmark(){
         RunAdaptExperiment();
         break;
 
-      case EXPERIMENT_TYPE_THETA:
-        RunThetaExperiment();
-        break;
-
       case EXPERIMENT_TYPE_WEIGHT:
         RunWeightExperiment();
         break;
