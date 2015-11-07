@@ -44,8 +44,6 @@ void RunSubsetExperiment();
 
 void RunAdaptExperiment();
 
-void RunThetaExperiment();
-
 void RunWeightExperiment();
 
 
