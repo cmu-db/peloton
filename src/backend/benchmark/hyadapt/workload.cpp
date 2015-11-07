@@ -1230,11 +1230,8 @@ static void RunAdaptTest() {
 
 std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
-std::vector<double> thetas = { 0.0, 0.5 };
-
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[1];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1243,13 +1240,14 @@ void RunAdaptExperiment() {
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
   state.adapt = true;
+  double theta = 0.0;
 
-  // Generate sequence
-  GenerateSequence(state.column_count);
+  // Go over all column counts
+  for(auto column_count : column_counts) {
+    state.column_count = column_count;
 
-  // Go over all thetas
-  for(auto theta : thetas) {
-    state.theta = theta;
+    // Generate sequence
+    GenerateSequence(state.column_count);
 
     // Go over all layouts
     for(auto layout : adapt_layouts) {
