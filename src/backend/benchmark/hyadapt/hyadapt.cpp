@@ -84,6 +84,14 @@ void RunBenchmark(){
         RunAdaptExperiment();
         break;
 
+      case EXPERIMENT_TYPE_THETA:
+        RunThetaExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_WEIGHT:
+        RunWeightExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;
