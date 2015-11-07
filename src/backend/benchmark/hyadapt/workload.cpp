@@ -22,6 +22,7 @@
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
+#include "backend/brain/clusterer.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -111,6 +112,7 @@ static void WriteOutput(double duration) {
       << state.subset_ratio << " "
       << state.theta << " "
       << state.split_point << " "
+      << state.sample_weight << " "
       << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
@@ -127,6 +129,7 @@ static void WriteOutput(double duration) {
   out << query_itr << " ";
   out << state.theta << " ";
   out << state.split_point << " ";
+  out << state.sample_weight << " ";
   out << duration << "\n";
   out.flush();
 
@@ -1295,8 +1298,6 @@ void RunAdaptExperiment() {
   out.close();
 }
 
-std::vector<double> thetas = {0.0, 0.5};
-
 brain::Sample GetSample(double projectivity) {
   double cost = 10;
   auto col_count = projectivity * state.column_count;
@@ -1313,7 +1314,25 @@ brain::Sample GetSample(double projectivity) {
   return std::move(sample);
 }
 
-void RunThetaExperiment() {
+static std::map<oid_t, oid_t> GetColumnMapStats(const storage::column_map_type& default_partition){
+  std::map<oid_t, oid_t> column_map_stats;
+
+  // Cluster per-tile column count
+  for(auto entry : default_partition){
+    auto tile_id = entry.second.first;
+    auto column_map_itr = column_map_stats.find(tile_id);
+    if(column_map_itr == column_map_stats.end())
+      column_map_stats[tile_id] = 1;
+    else
+      column_map_stats[tile_id]++;
+  }
+
+  return std::move(column_map_stats);
+}
+
+std::vector<double> sample_weights = {0.001, 0.01, 0.1};
+
+void RunWeightExperiment() {
 
   auto orig_transactions = state.transactions;
   std::thread transformer;
@@ -1322,40 +1341,41 @@ void RunThetaExperiment() {
   state.layout = LAYOUT_HYBRID;
   peloton_layout = state.layout;
 
-  state.transactions = 100;
-  oid_t num_types = 5;
-  std::vector<brain::Sample> samples;
-
-  // Generate sequence
-  GenerateSequence(state.column_count);
-
-  CreateAndLoadTable((LayoutType) peloton_layout);
+  state.transactions = 50;
+  oid_t num_types = 10;
+  std::vector<brain::Sample> queries;
 
   // Construct sample
-  for(oid_t type_itr = 1; type_itr < num_types; type_itr++) {
+  for(oid_t type_itr = 1; type_itr <= num_types; type_itr++) {
     auto type_proj = type_itr * ((double) 1.0/num_types);
-    auto sample = GetSample(type_proj);
-    samples.push_back(sample);
+    auto query = GetSample(type_proj);
+    queries.push_back(query);
   }
 
   // Go over all layouts
-  for(auto theta : thetas) {
-    // Set theta
-    state.theta = theta;
-
-    state.fsm = true;
-    transformer = std::thread(Transform, theta);
+  for(auto sample_weight : sample_weights) {
+    state.sample_weight = sample_weight;
 
     // Reset query counter
     query_itr = 0;
 
+    // Clusterer
+    oid_t cluster_count = 4;
+
+    brain::Clusterer clusterer(cluster_count,
+                               state.column_count,
+                               sample_weight);
+
     // Go over all query types
-    for(auto sample : samples) {
+    for(auto query : queries) {
 
       for(oid_t txn_itr = 0 ; txn_itr < state.transactions; txn_itr++) {
-        hyadapt_table->RecordSample(samples[0]);
+        // Process sample
+        clusterer.ProcessSample(query);
 
-        auto col_map = hyadapt_table->GetColumnMapStats();
+        auto default_partition = clusterer.GetPartitioning(2);
+
+        auto col_map = GetColumnMapStats(default_partition);
         auto split_point = col_map.at(0);
         state.split_point = split_point;
 
@@ -1365,8 +1385,6 @@ void RunThetaExperiment() {
 
     }
 
-    state.fsm = false;
-    transformer.join();
   }
 
   // Reset query counter
@@ -1374,11 +1392,6 @@ void RunThetaExperiment() {
   query_itr = 0;
 
 }
-
-void RunWeightExperiment() {
-
-}
-
 
 }  // namespace hyadapt
 }  // namespace benchmark
