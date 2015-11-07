@@ -844,11 +844,11 @@ const column_map_type& DataTable::GetDefaultPartition() {
   return default_partition;
 }
 
-static void PrintDefaultPartitionHelper(const column_map_type& column_map){
+std::map<oid_t, oid_t> DataTable::GetColumnMapStats(){
   std::map<oid_t, oid_t> column_map_stats;
 
   // Cluster per-tile column count
-  for(auto entry : column_map){
+  for(auto entry : default_partition){
     auto tile_id = entry.second.first;
     auto column_map_itr = column_map_stats.find(tile_id);
     if(column_map_itr == column_map_stats.end())
@@ -857,17 +857,7 @@ static void PrintDefaultPartitionHelper(const column_map_type& column_map){
       column_map_stats[tile_id]++;
   }
 
-  // Display info
-  std::cout << "---------\n";
-  std::cout << "Default Partition \n";
-  for(auto entry : column_map_stats) {
-    std::cout << entry.first << " " << entry.second << "\n";
-  }
-  std::cout << "---------\n\n";
-}
-
-void DataTable::PrintDefaultPartition(){
-  PrintDefaultPartitionHelper(default_partition);
+  return std::move(column_map_stats);
 }
 
 void DataTable::UpdateDefaultPartition() {

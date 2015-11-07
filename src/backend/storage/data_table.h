@@ -184,7 +184,7 @@ class DataTable : public AbstractTable {
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
-  void PrintDefaultPartition();
+  std::map<oid_t, oid_t> GetColumnMapStats();
 
  protected:
   //===--------------------------------------------------------------------===//
