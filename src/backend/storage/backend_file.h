@@ -14,6 +14,7 @@
 
 #include "backend/storage/backend.h"
 #include <mutex>
+#include <map>
 
 namespace peloton {
 namespace storage {
@@ -49,6 +50,10 @@ class BackendFile : public Backend {
   char * backend_space = nullptr;
   size_t current_pos = 0;
   std::mutex backend_mutex;
+
+  // Record chunks size for free and sync
+  // XXX How to persist this information?
+  std::map<void*, size_t> chunk_size_recs;
 
   std::string file_name = "backend.file";
   size_t file_size = 1024*1024*20;
