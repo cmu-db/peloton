@@ -1,11 +1,12 @@
 #include "log_record_pool.h"
+#include "backend/storage/backend_file.h"
 
 namespace peloton {
 namespace logging {
 
-storage::Backend& LogRecordList::backend = storage::Backend::GetInstance();
+storage::Backend& LogRecordList::backend = storage::BackendFile::GetInstance();
 
-storage::Backend& LogRecordPool::backend = storage::Backend::GetInstance();
+storage::Backend& LogRecordPool::backend = storage::BackendFile::GetInstance();
 
 void LogRecordList::Clear() {
   // Clean up
