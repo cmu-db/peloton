@@ -21,10 +21,6 @@ namespace peloton {
 namespace storage {
 
 BackendFile::BackendFile() {
-  // XXX only for supporting log test. If use this class for general purpose, remove following setting
-  auto& log_manager = logging::LogManager::GetInstance();
-  file_name = log_manager.GetLogFile();
-
   // create a big file
   std::ofstream backend_file(file_name, std::ios::binary | std::ios::out);
   backend_file.seekp(file_size - 1);
