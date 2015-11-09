@@ -1341,7 +1341,7 @@ void RunWeightExperiment() {
   state.layout = LAYOUT_HYBRID;
   peloton_layout = state.layout;
 
-  state.transactions = 50;
+  state.transactions = 20;
   oid_t num_types = 10;
   std::vector<brain::Sample> queries;
 
