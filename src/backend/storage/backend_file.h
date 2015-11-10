@@ -45,6 +45,16 @@ class BackendFile : public Backend {
   std::string GetBackendType() const {
     return BackendTypeToString(BACKEND_TYPE_FILE);
   }
+
+  bool EnableBackFileType() {
+    char* filebackend_str = getenv("ENABLE_FILEBACKEND");
+    if (filebackend_str) {
+      return atoi(filebackend_str) == 1;
+    } else {
+      return false;
+    }
+  }
+
  private:
   int fd = -1;
   char * backend_space = nullptr;
@@ -55,7 +65,7 @@ class BackendFile : public Backend {
   // XXX How to persist this information?
   std::map<void*, size_t> chunk_size_recs;
 
-  std::string file_name = "backend.file";
+  std::string file_name = "/run/backend.file";
   size_t file_size = 1024*1024*20;
 };
 
