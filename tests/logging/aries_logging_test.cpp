@@ -12,7 +12,7 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
-std::string aries_log_file_name = "aries.log";
+std::string aries_log_file_name = "/run/aries.log";
 
 /**
  * @brief writing a simple log with multiple threads
