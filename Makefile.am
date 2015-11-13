@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS	 = -I m4
 
 include $(top_srcdir)/doc/doxygen.am
 include $(top_srcdir)/third_party/gmock/Makefile.am
+include $(top_srcdir)/third_party/libnanomsg/Makefile.am
 
 # subdirectories of the project 
 SUBDIRS = \
