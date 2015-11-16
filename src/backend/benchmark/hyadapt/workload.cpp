@@ -1162,8 +1162,7 @@ static void Transform(double theta) {
     auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
 
-    auto column_map = hyadapt_table->GetStaticColumnMap(table_name, column_count);
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map, theta);
+    hyadapt_table->TransformTileGroup(tile_group_offset, theta);
 
     // Update partitioning periodically
     update_itr++;
@@ -1182,55 +1181,55 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.06;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.4;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.4;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.06;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = 0.06;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.selectivity = 0.05;
-  state.operator_type = OPERATOR_TYPE_UPDATE;
-  RunUpdateTest();
-  state.selectivity = 1.0;
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
 }
 
