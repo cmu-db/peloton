@@ -45,7 +45,8 @@ enum ExperimentType{
   EXPERIMENT_TYPE_SUBSET = 5,
   EXPERIMENT_TYPE_ADAPT = 6,
   EXPERIMENT_TYPE_WEIGHT = 7,
-  EXPERIMENT_TYPE_REORG = 8
+  EXPERIMENT_TYPE_REORG = 8,
+  EXPERIMENT_TYPE_DISTRIBUTION = 9
 
 };
 
@@ -112,6 +113,8 @@ class configuration {
   double sample_weight;
 
   bool reorg;
+
+  bool distribution;
  };
 
 void Usage(FILE *out);
