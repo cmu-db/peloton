@@ -48,6 +48,8 @@ void RunWeightExperiment();
 
 void RunReorgExperiment();
 
+void RunDistributionExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
