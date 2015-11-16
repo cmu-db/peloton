@@ -44,7 +44,8 @@ enum ExperimentType{
   EXPERIMENT_TYPE_VERTICAL = 4,
   EXPERIMENT_TYPE_SUBSET = 5,
   EXPERIMENT_TYPE_ADAPT = 6,
-  EXPERIMENT_TYPE_WEIGHT = 7
+  EXPERIMENT_TYPE_WEIGHT = 7,
+  EXPERIMENT_TYPE_REORG = 8
 
 };
 
@@ -109,6 +110,8 @@ class configuration {
   int split_point;
 
   double sample_weight;
+
+  bool reorg;
  };
 
 void Usage(FILE *out);
