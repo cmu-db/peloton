@@ -65,6 +65,8 @@ namespace hyadapt{
 // Tuple id counter
 oid_t hyadapt_tuple_counter = -1000000;
 
+static void CollectColumnMapStats();
+
 expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
   // ATTR0 >= LOWER_BOUND
@@ -203,6 +205,10 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
 
     WriteOutput(time_per_transaction);
   }
+
+  // if(state.fsm == true)
+  //  CollectColumnMapStats();
+
 }
 
 std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
@@ -1169,7 +1175,6 @@ static void CollectColumnMapStats() {
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
   std::cout << "TG Count :: " << tile_group_count << "\n";
-
 
   for(auto tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
 
