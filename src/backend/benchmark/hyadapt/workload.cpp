@@ -1145,6 +1145,93 @@ void RunSubsetExperiment() {
   out.close();
 }
 
+static std::map<oid_t, oid_t> GetColumnMapStats(
+    const peloton::storage::column_map_type& column_map) {
+  std::map<oid_t, oid_t> column_map_stats;
+
+  // Cluster per-tile column count
+  for(auto entry : column_map){
+    auto tile_id = entry.second.first;
+    auto column_map_itr = column_map_stats.find(tile_id);
+    if(column_map_itr == column_map_stats.end())
+      column_map_stats[tile_id] = 1;
+    else
+      column_map_stats[tile_id]++;
+  }
+
+  return std::move(column_map_stats);
+}
+
+static void CollectColumnMapStats() {
+
+  std::map<std::map<oid_t, oid_t>, oid_t> col_map_stats_summary;
+
+  // Go over all tg's
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
+  std::cout << "TG Count :: " << tile_group_count << "\n";
+
+
+  for(auto tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+
+    auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
+    auto col_map = tile_group->GetColumnMap();
+
+    // Get stats
+    auto col_map_stats = GetColumnMapStats(col_map);
+
+    // Compare stats
+    bool found = false;
+    for(auto col_map_stats_summary_itr : col_map_stats_summary) {
+
+      // Compare types
+      auto col_map_stats_size = col_map_stats.size();
+      auto entry = col_map_stats_summary_itr.first;
+      auto entry_size = entry.size();
+
+      // Compare sizes
+      if(col_map_stats_size != entry_size)
+        continue;
+
+      // Compare entries
+      bool match = true;
+      for(auto entry_itr = 0; entry_itr < entry_size; entry_itr++) {
+        if(entry[entry_itr] != col_map_stats[entry_itr]) {
+          match = false;
+          break;
+        }
+      }
+      if(match == false)
+        continue;
+
+      // Match found
+      col_map_stats_summary[col_map_stats]++;
+      found = true;
+      break;
+    }
+
+    // Add new type if not found
+    if(found == false)
+      col_map_stats_summary[col_map_stats] = 1;
+
+  }
+
+  oid_t type_itr = 0;
+  for(auto col_map_stats_summary_entry : col_map_stats_summary) {
+    // First, print col map stats
+    std::cout << "Type " << type_itr << " -- ";
+
+    for(auto col_stats_itr : col_map_stats_summary_entry.first)
+      std::cout << col_stats_itr.first << " " << col_stats_itr.second << " :: ";
+
+    // Next, print the normalized count
+    std::cout << col_map_stats_summary_entry.second << "\n";
+    type_itr++;
+  }
+
+
+
+}
+
 static void Transform(double theta) {
 
   // Get column map
@@ -1177,18 +1264,8 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double arithmetic_high_proj = 0.9;
-  double insert_write_ratio = 0.1;
-
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+  double direct_high_proj = 0.7;
+  double insert_write_ratio = 0.05;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -1199,18 +1276,27 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = arithmetic_high_proj;
-  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-  RunArithmeticTest();
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 
   state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = arithmetic_high_proj;
-  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-  RunArithmeticTest();
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 
   state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
@@ -1237,7 +1323,7 @@ static void RunAdaptTest() {
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {  LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 void RunAdaptExperiment() {
 
@@ -1315,22 +1401,6 @@ brain::Sample GetSample(double projectivity) {
   brain::Sample sample(columns_accessed_bitmap, cost);
 
   return std::move(sample);
-}
-
-static std::map<oid_t, oid_t> GetColumnMapStats(const storage::column_map_type& default_partition){
-  std::map<oid_t, oid_t> column_map_stats;
-
-  // Cluster per-tile column count
-  for(auto entry : default_partition){
-    auto tile_id = entry.second.first;
-    auto column_map_itr = column_map_stats.find(tile_id);
-    if(column_map_itr == column_map_stats.end())
-      column_map_stats[tile_id] = 1;
-    else
-      column_map_stats[tile_id]++;
-  }
-
-  return std::move(column_map_stats);
 }
 
 std::vector<double> sample_weights = {0.001, 0.01, 0.1};
