@@ -1330,6 +1330,9 @@ static void RunAdaptTest() {
 
 std::vector<LayoutType> adapt_layouts = {  LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
+std::vector<oid_t> adapt_column_counts = {200};
+
+
 void RunAdaptExperiment() {
 
   auto orig_transactions = state.transactions;
@@ -1343,7 +1346,7 @@ void RunAdaptExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for(auto column_count : column_counts) {
+  for(auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
