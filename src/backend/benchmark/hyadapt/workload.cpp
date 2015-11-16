@@ -164,7 +164,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
   for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
 
     // Reorg mode
-    if(state.reorg == true && txn_itr == 0) {
+    if(state.reorg == true && txn_itr == 4) {
       hyadapt_table->RecordSample(sample);
       Reorg();
     }
@@ -1483,14 +1483,28 @@ void RunWeightExperiment() {
 
 }
 
-std::vector<oid_t> tile_group_counts = {100, 1000};
+std::vector<oid_t> tile_group_counts = { 1000 };
 
 static void RunReorgTest() {
+
   double direct_low_proj = 0.06;
+  double direct_high_proj = 0.3;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
 
 }
 
@@ -1516,7 +1530,7 @@ void RunReorgExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 50;
+  state.transactions = 25;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
