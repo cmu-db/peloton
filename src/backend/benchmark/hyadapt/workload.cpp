@@ -196,7 +196,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
       std::chrono::duration<double> elapsed_seconds = end-start;
       double time_per_transaction = ((double)elapsed_seconds.count());
 
-      WriteOutput(time_per_transaction);
+      if(state.distribution == false)
+        WriteOutput(time_per_transaction);
 
       // Record sample
       if(state.fsm == true && cost != 0) {
@@ -215,8 +216,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     WriteOutput(time_per_transaction);
   }
 
-  // if(state.fsm == true)
-  //  CollectColumnMapStats();
+  if(state.distribution == true)
+    CollectColumnMapStats();
 
 }
 
@@ -1230,6 +1231,7 @@ static void CollectColumnMapStats() {
   }
 
   oid_t type_itr = 0;
+  oid_t type_cnt = 5;
   for(auto col_map_stats_summary_entry : col_map_stats_summary) {
     // First, print col map stats
     std::cout << "Type " << type_itr << " -- ";
@@ -1239,10 +1241,15 @@ static void CollectColumnMapStats() {
 
     // Next, print the normalized count
     std::cout << col_map_stats_summary_entry.second << "\n";
+    out << query_itr << " " << type_itr << " " << col_map_stats_summary_entry.second << "\n";
     type_itr++;
   }
 
+  // Fillers for other types
+  for(; type_itr < type_cnt ; type_itr++)
+    out << query_itr << " " << type_itr << " " << 0 << "\n";
 
+  out.flush();
 
 }
 
@@ -1340,7 +1347,6 @@ static void RunAdaptTest() {
 std::vector<LayoutType> adapt_layouts = {  LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {200};
-
 
 void RunAdaptExperiment() {
 
@@ -1600,6 +1606,73 @@ void RunReorgExperiment() {
   query_itr = 0;
 
   out.close();
+}
+
+std::vector<LayoutType> distribution_layouts = {  LAYOUT_HYBRID };
+
+void RunDistributionExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.distribution = true;
+  state.transactions = 25;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  // Go over all column counts
+  for(auto column_count : adapt_column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    for(auto layout : distribution_layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
+
+      std::cout << "----------------------------------------- \n\n";
+
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType) peloton_layout);
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunAdaptTest();
+
+      // Stop transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
+    }
+
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  state.distribution = false;
+  query_itr = 0;
+
+  out.close();
+
 }
 
 }  // namespace hyadapt
