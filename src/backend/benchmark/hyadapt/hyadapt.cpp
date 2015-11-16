@@ -92,6 +92,10 @@ void RunBenchmark(){
         RunReorgExperiment();
         break;
 
+      case EXPERIMENT_TYPE_DISTRIBUTION:
+        RunDistributionExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;
