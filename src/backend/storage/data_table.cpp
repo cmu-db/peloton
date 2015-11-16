@@ -787,7 +787,6 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 
 storage::TileGroup *DataTable::TransformTileGroup(
     oid_t tile_group_offset,
-    const column_map_type &column_map,
     double theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
@@ -800,7 +799,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetSchemaDifference(column_map);
+  auto diff = tile_group->GetSchemaDifference(default_partition);
 
   // Check threshold for transformation
   if(diff < theta) {
@@ -808,13 +807,13 @@ storage::TileGroup *DataTable::TransformTileGroup(
   }
 
   // Get the schema for the new transformed tile group
-  auto new_schema = TransformTileGroupSchema(tile_group, column_map);
+  auto new_schema = TransformTileGroupSchema(tile_group, default_partition);
 
   // Allocate space for the transformed tile group
   auto new_tile_group = TileGroupFactory::GetTileGroup(
       tile_group->GetDatabaseId(), tile_group->GetTableId(),
       tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-      new_schema, column_map,
+      new_schema, default_partition,
       tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
@@ -901,7 +900,13 @@ column_map_type DataTable::GetStaticColumnMap(std::string table_name, oid_t colu
 
     // FSM MODE
     if(peloton_fsm == true) {
-      return default_partition;
+      for(oid_t column_id = 0; column_id < column_count; column_id++) {
+        column_map[column_id] = std::make_pair(0, column_id);
+      }
+      return std::move(column_map);
+
+      // TODO: ADD A FSM
+      //return default_partition;
     }
 
     // DEFAULT
