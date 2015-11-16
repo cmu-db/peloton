@@ -1176,53 +1176,57 @@ static void Transform(double theta) {
 }
 
 static void RunAdaptTest() {
+  double direct_low_proj = 0.06;
+  double arithmetic_high_proj = 0.9;
+  double insert_write_ratio = 0.1;
 
-  state.projectivity = 0.06;
+
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.write_ratio = 0.05;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.06;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.write_ratio = 0.05;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.4;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  state.projectivity = arithmetic_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
 
-  state.write_ratio = 0.05;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.4;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  state.projectivity = arithmetic_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
 
-  state.write_ratio = 0.05;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.06;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.write_ratio = 0.05;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.06;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
