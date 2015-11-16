@@ -67,6 +67,8 @@ oid_t hyadapt_tuple_counter = -1000000;
 
 static void CollectColumnMapStats();
 
+static void Reorg();
+
 expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
   // ATTR0 >= LOWER_BOUND
@@ -132,6 +134,7 @@ static void WriteOutput(double duration) {
   out << state.theta << " ";
   out << state.split_point << " ";
   out << state.sample_weight << " ";
+  out << state.scale_factor << " ";
   out << duration << "\n";
   out.flush();
 
@@ -159,6 +162,12 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
 
   // Run these many transactions
   for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+
+    // Reorg mode
+    if(state.reorg == true && txn_itr == 0) {
+      hyadapt_table->RecordSample(sample);
+      Reorg();
+    }
 
     // Increment query counter
     query_itr++;
@@ -1472,6 +1481,111 @@ void RunWeightExperiment() {
   state.transactions = orig_transactions;
   query_itr = 0;
 
+}
+
+std::vector<oid_t> tile_group_counts = {100, 1000};
+
+static void RunReorgTest() {
+  double direct_low_proj = 0.06;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+}
+
+static void Reorg() {
+
+  // Reorg all the tile groups
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
+  double theta = 0.0;
+
+  hyadapt_table->UpdateDefaultPartition();
+
+  for(auto tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+    hyadapt_table->TransformTileGroup(tile_group_itr, theta);
+  }
+
+}
+
+
+std::vector<LayoutType> reorg_layouts = {  LAYOUT_ROW, LAYOUT_HYBRID};
+
+void RunReorgExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.transactions = 50;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  state.column_count = column_counts[1];
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  // Go over all tile_group_counts
+  for(auto tile_group_count : tile_group_counts) {
+    state.scale_factor = tile_group_count;
+
+    // Go over all layouts
+    for(auto layout : reorg_layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
+
+      // Enable reorg mode
+      if(state.layout != LAYOUT_HYBRID) {
+        state.reorg = true;
+      }
+
+      std::cout << "----------------------------------------- \n\n";
+
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType) peloton_layout);
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunReorgTest();
+
+      // Stop transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
+      // Enable reorg mode
+      if(state.layout != LAYOUT_HYBRID) {
+        state.reorg = false;
+      }
+
+    }
+
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  query_itr = 0;
+
+  out.close();
 }
 
 }  // namespace hyadapt

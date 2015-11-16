@@ -46,6 +46,7 @@ void RunAdaptExperiment();
 
 void RunWeightExperiment();
 
+void RunReorgExperiment();
 
 }  // namespace hyadapt
 }  // namespace benchmark
