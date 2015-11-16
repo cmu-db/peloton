@@ -1420,7 +1420,7 @@ brain::Sample GetSample(double projectivity) {
   return std::move(sample);
 }
 
-std::vector<double> sample_weights = {0.001, 0.01, 0.1};
+std::vector<double> sample_weights = {0.0001, 0.001, 0.01, 0.1};
 
 void RunWeightExperiment() {
 
@@ -1431,12 +1431,12 @@ void RunWeightExperiment() {
   state.layout = LAYOUT_HYBRID;
   peloton_layout = state.layout;
 
-  state.transactions = 20;
+  state.transactions = 1000;
   oid_t num_types = 10;
   std::vector<brain::Sample> queries;
 
   // Construct sample
-  for(oid_t type_itr = 1; type_itr <= num_types; type_itr++) {
+  for(oid_t type_itr = num_types; type_itr >= 1; type_itr--) {
     auto type_proj = type_itr * ((double) 1.0/num_types);
     auto query = GetSample(type_proj);
     queries.push_back(query);
