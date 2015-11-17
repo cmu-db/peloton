@@ -1279,7 +1279,6 @@ static void Transform(double theta) {
       update_itr = 0;
     }
 
-    usleep(100);
   }
 
 }
