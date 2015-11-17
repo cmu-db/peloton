@@ -1307,7 +1307,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_mid_proj;
+  state.projectivity = direct_high_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1316,7 +1316,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_mid_proj;
+  state.projectivity = direct_high_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
