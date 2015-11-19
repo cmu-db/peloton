@@ -26,6 +26,7 @@ BackendFile::BackendFile() {
     std::ofstream backend_file(file_name, std::ios::binary | std::ios::out);
     backend_file.seekp(file_size - 1);
     backend_file.write("", 1);
+    backend_file.close();
 
     // do mmap
     fd = open(file_name.c_str(), O_RDWR, 0);
