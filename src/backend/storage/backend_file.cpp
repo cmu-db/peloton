@@ -32,10 +32,17 @@ BackendFile::BackendFile() {
     backend_space = (char *) mmap(nullptr, file_size, PROT_READ | PROT_WRITE,
                                   MAP_FILE | MAP_SHARED, fd, 0);
     close(fd);
+    assert(backend_space != nullptr);
+    // create vmem pool
+    vmp = vmem_create_in_region(backend_space, file_size);
+    assert(vmp != nullptr);
   }
 }
 
 BackendFile::~BackendFile() {
+  if (vmp != nullptr) {
+    vmem_delete(vmp);
+  }
   if (backend_space != nullptr) {
     munmap(backend_space, file_size);
     //remove(file_name.c_str());
@@ -44,20 +51,7 @@ BackendFile::~BackendFile() {
 
 void *BackendFile::Allocate(size_t size) {
   if (backend_space != nullptr) {
-    void *ret = nullptr;
-    {
-      std::lock_guard < std::mutex > lock(backend_mutex);
-      if (current_pos + size > file_size) {
-        ret = nullptr;
-      } else {
-        ret = (void *) (backend_space + current_pos);
-        current_pos += size;
-      }
-    }
-    if (ret) {
-      chunk_size_recs.insert(std::make_pair(ret, size));
-    }
-    return ret;
+    return vmem_malloc(vmp, size);;
   } else {
     return ::operator new(size);
   }
@@ -65,10 +59,7 @@ void *BackendFile::Allocate(size_t size) {
 
 void BackendFile::Free(void *ptr) {
   if (backend_space != nullptr) {
-    // do nothing about the space
-    if (chunk_size_recs.find(ptr) != chunk_size_recs.end()) {
-      chunk_size_recs.erase(ptr);
-    }
+    vmem_free(vmp, ptr);
   } else {
     ::operator delete(ptr);
   }
@@ -76,8 +67,9 @@ void BackendFile::Free(void *ptr) {
 
 void BackendFile::Sync(void *ptr) {
   if (backend_space != nullptr) {
-    if (chunk_size_recs.find(ptr) != chunk_size_recs.end()) {
-      msync(ptr, chunk_size_recs.at(ptr), MS_SYNC);
+    size_t ptr_size = vmem_malloc_usable_size(vmp, ptr);
+    if (ptr_size != 0) {
+      msync(ptr, ptr_size, MS_SYNC);
     }
   }
 }
