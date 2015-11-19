@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/storage/backend.h"
+#include <libvmem.h>
 #include <mutex>
 #include <map>
 
@@ -58,12 +59,7 @@ class BackendFile : public Backend {
  private:
   int fd = -1;
   char * backend_space = nullptr;
-  size_t current_pos = 0;
-  std::mutex backend_mutex;
-
-  // Record chunks size for free and sync
-  // XXX How to persist this information?
-  std::map<void*, size_t> chunk_size_recs;
+  VMEM *vmp = nullptr;
 
   std::string file_name = "/run/backend.file";
   size_t file_size = 1024*1024*20;
