@@ -27,7 +27,7 @@ namespace logging {
 
 LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
 
-storage::Backend& PelotonFrontendLogger::backend = storage::BackendFile::GetInstance();
+storage::BackendFile& PelotonFrontendLogger::backend = storage::BackendFile::GetInstance();
 
 /**
  * @brief create NVM backed log pool

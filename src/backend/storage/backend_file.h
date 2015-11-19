@@ -38,7 +38,7 @@ class BackendFile : public Backend {
   void Sync(void *ptr);
 
   // global singleton
-  static Backend& GetInstance(void) {
+  static BackendFile& GetInstance(void) {
     static BackendFile backend;
     return backend;
   }
