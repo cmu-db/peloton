@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-#include "backend/storage/backend.h"
+#include "backend/storage/backend_file.h"
 
 namespace peloton {
 
@@ -84,13 +84,13 @@ class VarlenPool {
   }
 
   void Init() {
-    auto backend = storage::Backend::GetInstance();
+    auto backend = storage::BackendFile::GetInstance();
     char *storage = (char *)backend.Allocate(allocation_size);
     chunks.push_back(Chunk(allocation_size, storage));
   }
 
   ~VarlenPool() {
-    auto backend = storage::Backend::GetInstance();
+    auto backend = storage::BackendFile::GetInstance();
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
       backend.Free(chunks[ii].chunk_data);
     }
