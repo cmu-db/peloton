@@ -18,7 +18,6 @@
 #include "backend/storage/tile_group_header.h"
 
 #include <mutex>
-#include "backend.h"
 
 namespace peloton {
 namespace storage {

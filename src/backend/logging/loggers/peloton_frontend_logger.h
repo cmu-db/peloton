@@ -16,7 +16,7 @@
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/log_record_pool.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/backend_file.h"
 
 namespace peloton {
 namespace logging {
@@ -61,7 +61,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Global queue
     static LogRecordPool *global_plog_pool;
 
-    static storage::Backend& backend;
+    static storage::BackendFile& backend;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery
