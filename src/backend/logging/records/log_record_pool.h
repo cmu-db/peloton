@@ -15,7 +15,7 @@
 #include <map>
 
 #include "backend/logging/records/tuple_record.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/backend_file.h"
 
 namespace peloton {
 namespace logging {
@@ -70,7 +70,7 @@ class LogRecordList {
 
   void SetCommitting(bool _isCommitting) {
     iscommitting = _isCommitting;
-    backend.Sync(this);
+    storage::BackendFile::GetInstance().Sync(this);
   }
 
   txn_id_t GetTxnID() const {
@@ -87,7 +87,7 @@ class LogRecordList {
 
   void SetNextList(LogRecordList* next) {
     next_list = next;
-    backend.Sync(this);
+    storage::BackendFile::GetInstance().Sync(this);
   }
 
   LogRecordList* GetPrevList() const {
@@ -96,7 +96,7 @@ class LogRecordList {
 
   void SetPrevList(LogRecordList* prev) {
     prev_list = prev;
-    backend.Sync(this);
+    storage::BackendFile::GetInstance().Sync(this);
   }
 
   int AddLogRecord(TupleRecord *record);
@@ -112,8 +112,6 @@ class LogRecordList {
   LogRecordList *prev_list = nullptr; // can be corrected after reboot
   LogRecordList *next_list = nullptr; // need to keep sync
   txn_id_t txn_id = INVALID_TXN_ID;
-
-  static storage::Backend& backend;
 
   bool iscommitting = false; // need to keep sync
   LogRecordNode *tail_node = nullptr; // can be corrected after reboot
@@ -166,8 +164,6 @@ class LogRecordPool {
   //===--------------------------------------------------------------------===//
   LogRecordList *head_list = nullptr; // need to keep sync
   LogRecordList *tail_list = nullptr; // can be corrected after reboot
-
-  static storage::Backend& backend;
 
   // Transient record for fast access to log records
   std::map<txn_id_t, LogRecordList *> *txn_log_table = nullptr;
