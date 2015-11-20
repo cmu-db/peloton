@@ -14,6 +14,7 @@
 
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/manager.h"
 
 #include <chrono>
 #include <thread>
