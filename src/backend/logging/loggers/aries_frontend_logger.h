@@ -13,11 +13,13 @@
 #pragma once
 
 #include "backend/logging/frontend_logger.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/concurrency/transaction.h"
 
 namespace peloton {
+
+namespace concurrency{
+class Transaction;
+}
+
 namespace logging {
 
 //===--------------------------------------------------------------------===//
@@ -60,30 +62,6 @@ class AriesFrontendLogger : public FrontendLogger{
   void AbortActiveTransactions();
 
   void AbortTuples(concurrency::Transaction* txn);
-
-  //===--------------------------------------------------------------------===//
-  // Utility functions
-  //===--------------------------------------------------------------------===//
-
-  size_t GetLogFileSize();
-
-  bool IsFileTruncated(size_t size_to_read);
-
-  size_t GetNextFrameSize(void);
-
-  LogRecordType GetNextLogRecordType(void);
-
-  bool ReadTransactionRecordHeader(TransactionRecord &txn_record);
-
-  bool ReadTupleRecordHeader(TupleRecord& tuple_record);
-
-  storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
-                                      VarlenPool *pool);
-
-  // Wrappers
-  storage::DataTable* GetTable(TupleRecord tupleRecord);
-
-  storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
  private:
 

@@ -14,7 +14,6 @@
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
-#include "backend/storage/tile_group.h"
 #include "backend/concurrency/transaction_manager.h"
 
 #include <atomic>
