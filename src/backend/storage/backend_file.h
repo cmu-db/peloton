@@ -61,8 +61,8 @@ class BackendFile : public Backend {
   void * backend_space = nullptr;
   VMEM *vmp = nullptr;
 
-  std::string file_name = "backend.file";
-  size_t file_size = 1024*1024*200;
+  std::string file_name = "/tmp/backend.file";
+  size_t file_size = 1024*1024*1000;
 };
 
 }  // End storage namespace
