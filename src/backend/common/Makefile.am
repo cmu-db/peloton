@@ -9,7 +9,6 @@ common_FILES = \
 			   backend/common/types.cpp \
 			   backend/common/varlen.cpp \
 			   backend/common/pool.cpp \
-			   backend/common/stack_trace.cpp \
 			   backend/common/serializer.cpp \
 			   backend/common/cache.cpp
 
