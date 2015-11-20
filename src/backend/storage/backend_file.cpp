@@ -41,18 +41,12 @@ BackendFile::BackendFile() {
 }
 
 BackendFile::~BackendFile() {
-  if (vmp != nullptr) {
-    vmem_delete(vmp);
-  }
-  if (backend_space != nullptr) {
-    munmap(backend_space, file_size);
-    //remove(file_name.c_str());
-  }
+  // backend should not be freed
 }
 
 void *BackendFile::Allocate(size_t size) {
   if (backend_space != nullptr) {
-    return vmem_malloc(vmp, size);;
+    return vmem_malloc(vmp, size);
   } else {
     return ::operator new(size);
   }

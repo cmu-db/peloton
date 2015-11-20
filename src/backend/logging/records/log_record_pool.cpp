@@ -4,20 +4,16 @@
 namespace peloton {
 namespace logging {
 
-storage::Backend& LogRecordList::backend = storage::BackendFile::GetInstance();
-
-storage::Backend& LogRecordPool::backend = storage::BackendFile::GetInstance();
-
 void LogRecordList::Clear() {
   // Clean up
   while (head_node != nullptr) {
     LogRecordNode *deletingNode = head_node;
     head_node = head_node->next_node;
-    backend.Sync(this);
+    storage::BackendFile::GetInstance().Sync(this);
 
     // XXX cannot ensure free success if _backend is newly created while the
     // node is created by last execution...
-    backend.Free(deletingNode);
+    storage::BackendFile::GetInstance().Free(deletingNode);
   }
   tail_node = nullptr;
 }
@@ -26,7 +22,7 @@ int LogRecordList::AddLogRecord(TupleRecord *record) {
   if (record == nullptr || record->GetTransactionId() != txn_id)
     return -1;
 
-  LogRecordNode *localRecord = (LogRecordNode*) backend.Allocate(sizeof(LogRecordNode));
+  LogRecordNode *localRecord = (LogRecordNode*) storage::BackendFile::GetInstance().Allocate(sizeof(LogRecordNode));
   if (localRecord != nullptr) {
     localRecord->_db_oid = record->GetDatabaseOid();
     localRecord->_delete_location = record->GetDeleteLocation();
@@ -35,15 +31,15 @@ int LogRecordList::AddLogRecord(TupleRecord *record) {
     localRecord->_table_oid = record->GetTableId();
     localRecord->next_node = nullptr;
 
-    backend.Sync(localRecord);
+    storage::BackendFile::GetInstance().Sync(localRecord);
 
     // add to the list
     if (tail_node == nullptr) {
       head_node = localRecord;
-      backend.Sync(this);
+      storage::BackendFile::GetInstance().Sync(this);
     } else {
       tail_node->next_node = localRecord;
-      backend.Sync(tail_node);
+      storage::BackendFile::GetInstance().Sync(tail_node);
     }
     tail_node = localRecord;
     return 0;
@@ -88,19 +84,19 @@ void LogRecordPool::Clear(bool doCleanAllLog) {
 int LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {
   LogRecordList* existing_list = SearchRecordList(txn_id);
   if (existing_list == nullptr) {
-    existing_list = (LogRecordList*) backend.Allocate(sizeof(LogRecordList));
+    existing_list = (LogRecordList*) storage::BackendFile::GetInstance().Allocate(sizeof(LogRecordList));
     if (existing_list == nullptr) {
       return -1;
     }
     existing_list->init(txn_id);
     // ensure new node is persisted
-    backend.Sync(existing_list);
+    storage::BackendFile::GetInstance().Sync(existing_list);
     txn_log_table->insert(std::pair<txn_id_t, LogRecordList*>(txn_id, existing_list));
     // add to the pool
     if (tail_list == nullptr) {
       head_list = existing_list;
       // ensure new node info is linked in the list
-      backend.Sync(this);
+      storage::BackendFile::GetInstance().Sync(this);
       existing_list->SetPrevList(nullptr);
     } else {
       tail_list->SetNextList(existing_list);
@@ -138,7 +134,7 @@ LogRecordList* LogRecordPool::SearchRecordList(txn_id_t txn_id) const {
 void LogRecordPool::RemoveLogList(LogRecordList *list) {
   if (list->GetPrevList() == nullptr) {
     head_list = list->GetNextList();
-    backend.Sync(this);
+    storage::BackendFile::GetInstance().Sync(this);
   } else {
     list->GetPrevList()->SetNextList(list->GetNextList());
   }
@@ -150,7 +146,7 @@ void LogRecordPool::RemoveLogList(LogRecordList *list) {
 
   // clean the list record
   list->Clear();
-  backend.Free(list);
+  storage::BackendFile::GetInstance().Free(list);
 }
 
 void LogRecordPool::CheckLogRecordPool() {

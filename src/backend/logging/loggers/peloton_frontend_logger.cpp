@@ -27,8 +27,6 @@ namespace logging {
 
 LogRecordPool *PelotonFrontendLogger::global_plog_pool = nullptr;
 
-storage::BackendFile& PelotonFrontendLogger::backend = storage::BackendFile::GetInstance();
-
 /**
  * @brief create NVM backed log pool
  */
@@ -43,7 +41,7 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
 
   if (global_plog_pool == nullptr) {
     // Allocate global peloton log pool
-    global_plog_pool = (LogRecordPool*) backend.Allocate(sizeof(LogRecordPool));
+    global_plog_pool = (LogRecordPool*) storage::BackendFile::GetInstance().Allocate(sizeof(LogRecordPool));
     assert(global_plog_pool != nullptr);
     global_plog_pool->init();
   } else {
@@ -60,6 +58,7 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
     delete log_record;
   }
   global_plog_pool->Clear();
+  storage::BackendFile::GetInstance().Free(global_plog_pool);
 }
 
 /**
