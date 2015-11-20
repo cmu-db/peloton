@@ -13,7 +13,6 @@
 #include <cassert>
 
 #include "backend/common/cache.h"
-#include "backend/common/logger.h"
 #include "backend/planner/abstract_plan.h"
 
 namespace peloton {

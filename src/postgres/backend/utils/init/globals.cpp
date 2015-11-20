@@ -23,9 +23,6 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 
-// TODO: Peloton Changes
-#include "backend/common/message_queue.h"
-
 thread_local ProtocolVersion FrontendProtocol;
 
 thread_local volatile bool InterruptPending = false;
@@ -71,8 +68,6 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 #endif
 
 thread_local BackendId	MyBackendId = InvalidBackendId;
-
-thread_local mqd_t MyBackendQueue = InvalidBackendId;
 
 thread_local Oid  MyDatabaseId = InvalidOid;
 

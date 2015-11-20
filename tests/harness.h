@@ -16,9 +16,9 @@
 #include <thread>
 #include <functional>
 #include <iostream>
+#include <atomic>
 
 #include "backend/common/types.h"
-#include "backend/common/pretty_printer.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
