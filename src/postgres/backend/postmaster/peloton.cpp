@@ -25,15 +25,12 @@
 #include <map>
 
 #include "backend/common/logger.h"
-#include "backend/common/message_queue.h"
-#include "backend/common/stack_trace.h"
 #include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/common/stack_trace.h"
 #include "backend/logging/log_manager.h"
 
 #include "postgres.h"

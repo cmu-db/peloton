@@ -80,8 +80,6 @@
 
 // TODO: Peloton Changes
 #include "backend/logging/log_manager.h"
-#include "backend/common/message_queue.h"
-#include "backend/common/stack_trace.h"
 
 
 /* ----------------
