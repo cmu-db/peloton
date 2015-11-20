@@ -30,8 +30,8 @@ BackendFile::BackendFile() {
 
     // do mmap
     fd = open(file_name.c_str(), O_RDWR, 0);
-    backend_space = (char *) mmap(nullptr, file_size, PROT_READ | PROT_WRITE,
-                                  MAP_FILE | MAP_SHARED, fd, 0);
+    backend_space = mmap(nullptr, file_size, PROT_READ | PROT_WRITE,
+                                                  MAP_FILE | MAP_SHARED, fd, 0);
     close(fd);
     assert(backend_space != nullptr);
     // create vmem pool
