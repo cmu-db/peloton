@@ -27,8 +27,6 @@ namespace storage {
 /// Represents a storage backend. Can reside on MM or NVM.
 class BackendFile : public Backend {
  public:
-  BackendFile();
-
   ~BackendFile();
 
   void *Allocate(size_t size);
@@ -57,12 +55,14 @@ class BackendFile : public Backend {
   }
 
  private:
+  BackendFile();
+
   int fd = -1;
-  char * backend_space = nullptr;
+  void * backend_space = nullptr;
   VMEM *vmp = nullptr;
 
-  std::string file_name = "/run/backend.file";
-  size_t file_size = 1024*1024*20;
+  std::string file_name = "backend.file";
+  size_t file_size = 1024*1024*200;
 };
 
 }  // End storage namespace
