@@ -826,7 +826,6 @@ void RunUpdateTest() {
 
   // Update
   std::vector<Value> values;
-  Value update_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
@@ -1186,7 +1185,7 @@ static void CollectColumnMapStats() {
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
   std::cout << "TG Count :: " << tile_group_count << "\n";
 
-  for(auto tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
 
     auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
     auto col_map = tile_group->GetColumnMap();
@@ -1209,7 +1208,7 @@ static void CollectColumnMapStats() {
 
       // Compare entries
       bool match = true;
-      for(auto entry_itr = 0; entry_itr < entry_size; entry_itr++) {
+      for(size_t entry_itr = 0; entry_itr < entry_size; entry_itr++) {
         if(entry[entry_itr] != col_map_stats[entry_itr]) {
           match = false;
           break;
@@ -1257,7 +1256,6 @@ static void Transform(double theta) {
 
   // Get column map
   auto table_name = hyadapt_table->GetName();
-  auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
 
   peloton_projectivity = state.projectivity;
 
@@ -1285,7 +1283,6 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double direct_mid_proj = 0.1;
   double direct_high_proj = 0.7;
   double insert_write_ratio = 0.05;
 
@@ -1523,7 +1520,7 @@ static void Reorg() {
 
   hyadapt_table->UpdateDefaultPartition();
 
-  for(auto tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
     hyadapt_table->TransformTileGroup(tile_group_itr, theta);
   }
 
