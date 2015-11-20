@@ -14,7 +14,6 @@
 
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
-#include "backend/catalog/manager.h"
 
 #include <chrono>
 #include <thread>
@@ -24,12 +23,10 @@ namespace peloton {
 namespace concurrency {
 
 void Transaction::RecordInsert(ItemPointer location) {
-  auto &manager = catalog::Manager::GetInstance();
   inserted_tuples[location.block].push_back(location.offset);
 }
 
 void Transaction::RecordDelete(ItemPointer location) {
-  auto &manager = catalog::Manager::GetInstance();
   deleted_tuples[location.block].push_back(location.offset);
 }
 
