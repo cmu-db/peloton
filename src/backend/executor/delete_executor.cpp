@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/executor/delete_executor.h"
+#include "backend/executor/executor_context.h"
 
-#include "../logging/log_manager.h"
-#include "../logging/records/tuple_record.h"
-#include "../planner/delete_plan.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-
 
 namespace peloton {
 namespace executor {

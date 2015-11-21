@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 
 namespace peloton {
