@@ -15,18 +15,21 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "../storage/backend.h"
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/storage/data_table.h"
 #include "backend/planner/aggregate_plan.h"
+#include "backend/expression/container_tuple.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
 
 namespace peloton {
+
+namespace storage{
+class DataTable;
+}
+
 namespace executor {
 
 /*
