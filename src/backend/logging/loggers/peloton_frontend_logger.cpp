@@ -59,6 +59,7 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
   }
   global_plog_pool->Clear();
   storage::BackendFile::GetInstance().Free(global_plog_pool);
+  global_plog_pool = nullptr;
 }
 
 /**
