@@ -39,13 +39,7 @@ public:
 
     Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                    __attribute__((unused)) const AbstractTuple *tuple2,
-                   executor::ExecutorContext *context) const {
-
-      auto params = context->GetParams();
-      assert(m_valueIdx < params.GetSize());
-
-      return params[m_valueIdx];
-    }
+                   executor::ExecutorContext *context) const;
 
     bool HasParameter() const {
         // this class represents a parameter.

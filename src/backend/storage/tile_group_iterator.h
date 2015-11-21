@@ -14,11 +14,8 @@
 
 #include <memory>
 
+#include "backend/common/types.h"
 #include "backend/common/iterator.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {

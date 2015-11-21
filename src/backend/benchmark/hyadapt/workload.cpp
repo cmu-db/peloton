@@ -30,6 +30,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
 
+#include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/seq_scan_executor.h"

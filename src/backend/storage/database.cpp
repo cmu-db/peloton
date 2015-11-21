@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
+
 #include "postmaster/peloton.h"
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
 #include "backend/common/logger.h"
-
-#include <sstream>
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace storage {

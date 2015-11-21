@@ -15,6 +15,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/index/index_factory.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 namespace test {

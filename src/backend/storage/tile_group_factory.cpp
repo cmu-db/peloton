@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/storage/tile_group_factory.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {

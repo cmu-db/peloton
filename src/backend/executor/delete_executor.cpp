@@ -20,6 +20,8 @@
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace executor {

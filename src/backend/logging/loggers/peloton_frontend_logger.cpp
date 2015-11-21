@@ -18,6 +18,8 @@
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
 

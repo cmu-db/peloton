@@ -15,6 +15,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/tuple_record.h"

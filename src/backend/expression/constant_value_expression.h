@@ -14,6 +14,7 @@
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/common/value_vector.h"
+#include "backend/common/value_factory.h"
 
 #include <string>
 
