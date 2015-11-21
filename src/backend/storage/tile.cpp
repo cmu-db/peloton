@@ -24,7 +24,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
-#include "backend/storage/backend_file.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace storage {
@@ -54,7 +54,7 @@ Tile::Tile(TileGroupHeader *tile_header,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::BackendFile::GetInstance().Allocate(tile_size);
+  data = (char *)storage::Backend::GetInstance().Allocate(tile_size);
   assert(data != NULL);
 
   // initialize it
@@ -66,7 +66,7 @@ Tile::Tile(TileGroupHeader *tile_header,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::BackendFile::GetInstance().Free(data);
+  storage::Backend::GetInstance().Free(data);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
