@@ -19,6 +19,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
+#include "backend/index/index.h"
 
 #include "tcop/tcopprot.h"
 #include "parser/parse_utilcmd.h"

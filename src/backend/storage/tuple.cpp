@@ -19,6 +19,7 @@
 #include "backend/storage/tuple.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/schema.h"
 
 namespace peloton {
 namespace storage {

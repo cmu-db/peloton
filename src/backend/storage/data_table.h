@@ -15,10 +15,7 @@
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
-#include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
 
 /* Possible values for peloton_tilegroup_layout GUC */
@@ -38,7 +35,17 @@ extern bool       peloton_fsm;
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
 namespace peloton {
+
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
+
+namespace index{
+class Index;
+}
+
 namespace storage {
+
+class Tuple;
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // DataTable

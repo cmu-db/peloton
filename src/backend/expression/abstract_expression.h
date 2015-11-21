@@ -20,7 +20,6 @@
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
-#include "backend/executor/executor_context.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"
@@ -29,6 +28,11 @@
 #include "boost/shared_ptr.hpp"
 
 namespace peloton {
+
+namespace executor{
+class ExecutorContext;
+}
+
 namespace expression {
 
 //===--------------------------------------------------------------------===//

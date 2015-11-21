@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/catalog/manager.h"
 #include "gtest/gtest.h"
 
 #include "harness.h"
+#include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
 

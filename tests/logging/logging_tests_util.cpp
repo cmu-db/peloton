@@ -11,6 +11,8 @@
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile_group.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/transaction_record.h"
