@@ -15,9 +15,13 @@
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/project_info.h"
 #include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
 
 namespace peloton {
+
+namespace expression{
+class AbstractExpression;
+}
+
 namespace planner {
 
 class AggregatePlan : public AbstractPlan {

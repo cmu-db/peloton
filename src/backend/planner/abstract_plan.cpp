@@ -20,7 +20,7 @@
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 #include "backend/planner/plan_column.h"
-#include "plan_util.h"
+#include "backend/planner/plan_util.h"
 
 namespace peloton {
 namespace planner {

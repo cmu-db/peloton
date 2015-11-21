@@ -21,6 +21,7 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace executor {
