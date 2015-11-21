@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "abstract_plan.h"
+#include "backend/planner/abstract_plan.h"
 #include "backend/common/types.h"
 #include "backend/catalog/schema.h"
 
