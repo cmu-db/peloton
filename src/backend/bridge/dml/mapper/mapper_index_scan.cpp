@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/catalog/manager.h"
 #include "backend/planner/index_scan_plan.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace bridge {

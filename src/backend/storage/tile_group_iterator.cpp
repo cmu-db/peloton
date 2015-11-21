@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/storage/tile_group_iterator.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace storage {

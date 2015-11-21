@@ -11,10 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/storage/data_table.h"
+#include "backend/catalog/manager.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/planner/update_plan.h"
 #include "backend/planner/delete_plan.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace bridge {

@@ -17,6 +17,7 @@
 #include "backend/bridge/ddl/ddl_index.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
 #include "backend/index/index_factory.h"

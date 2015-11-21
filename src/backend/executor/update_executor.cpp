@@ -18,10 +18,12 @@
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
 
 namespace peloton {
 namespace executor {

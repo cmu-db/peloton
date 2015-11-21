@@ -12,9 +12,14 @@
 
 #include "gtest/gtest.h"
 
+#include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 
 #include "harness.h"
 

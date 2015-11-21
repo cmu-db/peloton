@@ -18,6 +18,8 @@
 #include "backend/bridge/ddl/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
+#include "backend/storage/tuple.h"
+#include "backend/common/value_factory.h"
 
 namespace peloton {
 namespace bridge {

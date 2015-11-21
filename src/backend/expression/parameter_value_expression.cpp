@@ -13,6 +13,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/value_vector.h"
 #include "backend/expression/parameter_value_expression.h"
+#include "backend/executor/executor_context.h"
 
 namespace peloton {
 namespace expression {
@@ -23,6 +24,16 @@ namespace expression {
     {
         LOG_TRACE("ParameterValueExpression %d", value_idx);
     };
+
+    Value ParameterValueExpression::Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                                            __attribute__((unused)) const AbstractTuple *tuple2,
+                                            executor::ExecutorContext *context) const{
+      auto params = context->GetParams();
+      assert(m_valueIdx < params.GetSize());
+
+      return params[m_valueIdx];
+    }
+
 
 }  // End expression namespace
 }  // End peloton namespace

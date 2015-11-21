@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <iomanip>
+#include <algorithm>
+
 #include "backend/benchmark/hyadapt/configuration.h"
 
 namespace peloton {
