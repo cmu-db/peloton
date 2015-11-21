@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include "../planner/seq_scan_plan.h"
-#include "backend/common/types.h"
+#include "backend/planner/seq_scan_plan.h"
 #include "backend/executor/abstract_scan_executor.h"
 
 namespace peloton {

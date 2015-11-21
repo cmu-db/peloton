@@ -12,11 +12,17 @@
 
 #pragma once
 
-#include "backend/executor/abstract_scan_executor.h"
 #include <vector>
-#include "../planner/index_scan_plan.h"
+
+#include "backend/executor/abstract_scan_executor.h"
+#include "backend/planner/index_scan_plan.h"
 
 namespace peloton {
+
+namespace storage{
+class AbstractTable;
+}
+
 namespace executor {
 
 class IndexScanExecutor : public AbstractScanExecutor {
