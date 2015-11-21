@@ -20,6 +20,11 @@
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
 #include "backend/benchmark/hyadapt/configuration.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile_group_factory.h"
 
 std::vector<peloton::oid_t> hyadapt_column_ids;
 

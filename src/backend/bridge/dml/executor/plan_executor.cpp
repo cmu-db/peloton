@@ -18,6 +18,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
+#include "backend/executor/executor_context.h"
 #include "backend/storage/tuple_iterator.h"
 
 #include "access/tupdesc.h"

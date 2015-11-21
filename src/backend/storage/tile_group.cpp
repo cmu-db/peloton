@@ -14,10 +14,14 @@
 
 #include <numeric>
 
+#include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/common/synch.h"
 #include "backend/common/types.h"
 #include "backend/storage/abstract_table.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {
@@ -62,12 +66,34 @@ void TileGroup::IncrementRefCount() {
   ++ref_count;
 }
 
+oid_t TileGroup::GetTileId(const oid_t tile_id) const {
+  assert(tiles[tile_id]);
+  return tiles[tile_id]->GetTileId();
+}
+
+peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
+   Tile *tile = GetTile(tile_id);
+
+   if (tile != nullptr) return tile->GetPool();
+
+   return nullptr;
+ }
+
+
 void TileGroup::DecrementRefCount() {
   // DROP tile group when ref count reaches 0
   // this returns the value immediately preceding the assignment
   if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
     delete this;
   }
+}
+
+oid_t TileGroup::GetNextTupleSlot() const {
+  return tile_group_header->GetNextTupleSlot();
+}
+
+oid_t TileGroup::GetActiveTupleCount() const {
+  return tile_group_header->GetActiveTupleCount();
 }
 
 //===--------------------------------------------------------------------===//

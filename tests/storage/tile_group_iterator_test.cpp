@@ -14,9 +14,14 @@
 
 #include "gtest/gtest.h"
 
+#include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/tile_group_iterator.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
 
 #include "harness.h"
 

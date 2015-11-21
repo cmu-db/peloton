@@ -10,11 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/tile.h"
-
 #include <cassert>
 #include <cstdio>
-
 #include <sstream>
 
 #include "backend/catalog/schema.h"
@@ -25,6 +22,8 @@
 #include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/backend.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {
@@ -480,6 +479,18 @@ void Tile::DecrementRefCount() {
 
 size_t Tile::GetRefCount() const {
   return ref_count;
+}
+
+// active tuple slots
+oid_t Tile::GetActiveTupleCount() const {
+  // For normal tiles
+  if (tile_group_header != nullptr) {
+    return tile_group_header->GetNextTupleSlot();
+  }
+  // For temp tiles
+  else {
+    return num_tuple_slots;
+  }
 }
 
 

@@ -18,6 +18,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/value.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile.h"
 
 namespace peloton {
 namespace executor {

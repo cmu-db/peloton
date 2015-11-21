@@ -19,6 +19,7 @@
 #include "backend/common/types.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/executor/executor_context.h"
 
 namespace peloton {
 namespace expression {

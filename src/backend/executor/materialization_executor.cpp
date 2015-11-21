@@ -16,11 +16,13 @@
 #include <memory>
 #include <utility>
 
+#include "backend/common/logger.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
 
 namespace peloton {
 namespace executor {

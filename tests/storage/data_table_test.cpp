@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
 #include "executor/executor_tests_util.h"
 
 namespace peloton {
