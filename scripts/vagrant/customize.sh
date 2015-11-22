@@ -13,8 +13,5 @@ cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
 # Change the vagrant user's shell to use zsh
 sudo chsh -s /bin/zsh vagrant
 
-# Set up an alias to peloton dev dir
-echo "alias cdd='cd /home/vagrant/peloton'" >> log.txt
-
 # Add peloton install dir to the path
 export PATH=$PATH:/usr/local/peloton/bin
