@@ -1,3 +1,5 @@
+[![Peloton Logo](https://github.com/cmu-db/peloton/tree/coupling/scripts/assets/logos/peloton.svg)](http://pelotondb.org/)
+
 Peloton
 =====
 
