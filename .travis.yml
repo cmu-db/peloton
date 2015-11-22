@@ -15,7 +15,7 @@ addons:
 
 before_script:
     # setup environment
-    - sudo apt-get install pkg-config libtool libjson-spirit-dev libreadline-dev libssl-dev
+    - sudo apt-get install pkg-config libtool libjson-spirit-dev libreadline-dev libssl-dev libmm-dev
 
 script:
     # bootstrap

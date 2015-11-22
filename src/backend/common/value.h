@@ -34,8 +34,6 @@
 #include "backend/common/varlen.h"
 #include "backend/common/logger.h"
 
-#include "boost/scoped_ptr.hpp"
-#include "boost/functional/hash.hpp"
 #include "ttmath/ttmathint.h"
 #include "utf8.h"
 #include "murmur3/MurmurHash3.h"
@@ -3321,57 +3319,7 @@ inline Value Value::GetNullValue(ValueType type) {
 }
 
 inline void Value::HashCombine(std::size_t &seed) const {
-  const ValueType type = GetValueType();
-  switch (type) {
-    case VALUE_TYPE_TINYINT:
-      boost::hash_combine( seed, GetTinyInt()); break;
-    case VALUE_TYPE_SMALLINT:
-      boost::hash_combine( seed, GetSmallInt()); break;
-    case VALUE_TYPE_INTEGER:
-      boost::hash_combine( seed, GetInteger()); break;
-    case VALUE_TYPE_BIGINT:
-    case VALUE_TYPE_TIMESTAMP:
-      boost::hash_combine( seed, GetBigInt()); break;
-    case VALUE_TYPE_DOUBLE:
-      // This method was observed to fail on Centos 5 / GCC 4.1.2, returning different hashes
-      // for identical inputs, so the conditional was added,
-      // mutated from the one in boost/type_traits/intrinsics.hpp,
-      // and the broken overload for "double" was by-passed in favor of the more reliable
-      // one for int64 -- even if this may give sub-optimal hashes for typical collections of double.
-      // This conditional can be dropped when Centos 5 support is dropped.
-#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) && !defined(__GCCXML__))) && !defined(BOOST_CLANG)
-      boost::hash_combine( seed, GetDouble()); break;
-#else
-      {
-        const int64_t proxyForDouble =  *reinterpret_cast<const int64_t*>(m_data);
-        boost::hash_combine( seed, proxyForDouble); break;
-      }
-#endif
-    case VALUE_TYPE_VARCHAR: {
-      if (IsNull()) {
-        boost::hash_combine( seed, std::string(""));
-      } else {
-        const int32_t length = GetObjectLengthWithoutNull();
-        boost::hash_combine( seed, std::string( reinterpret_cast<const char*>(GetObjectValueWithoutNull()), length ));
-      }
-      break;
-    }
-    case VALUE_TYPE_VARBINARY: {
-      if (IsNull()) {
-        boost::hash_combine( seed, std::string(""));
-      } else {
-        const int32_t length = GetObjectLengthWithoutNull();
-        char* data = reinterpret_cast<char*>(GetObjectValueWithoutNull());
-        for (int32_t i = 0; i < length; i++)
-          boost::hash_combine(seed, data[i]);
-      }
-      break;
-    }
-    case VALUE_TYPE_DECIMAL:
-      GetDecimal().hash(seed); break;
-    default:
-      throw Exception("Value::HashCombine unknown type " +  GetValueTypeString());
-  }
+  // TODO: REMOVED BOOST CODE
 }
 
 

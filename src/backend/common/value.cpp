@@ -463,23 +463,7 @@ void Value::CastAndSortAndDedupArrayForInList(const ValueType outputType, std::v
 
 void Value::streamTimestamp(std::stringstream& value) const
 {
-  int64_t epoch_micros = GetTimestamp();
-  boost::gregorian::date as_date;
-  boost::posix_time::time_duration as_time;
-  micros_to_date_and_time(epoch_micros, as_date, as_time);
-
-  long micro = epoch_micros % 1000000;
-  if (epoch_micros < 0 && micro < 0) {
-    // deal with negative micros (for dates before 1970)
-    // by taking back the 1 whole second that was rounded down from the formatted date/time
-    // and converting it to 1000000 micros
-    micro += 1000000;
-  }
-  char mbstr[27];    // Format: "YYYY-MM-DD HH:MM:SS."- 20 characters + terminator
-  snprintf(mbstr, sizeof(mbstr), "%04d-%02d-%02d %02d:%02d:%02d.%06d",
-           (int)as_date.year(), (int)as_date.month(), (int)as_date.day(),
-           (int)as_time.hours(), (int)as_time.minutes(), (int)as_time.seconds(), (int)micro);
-  value << mbstr;
+  // TODO: REMOVED BOOST CODE
 }
 
 inline static void throwTimestampFormatError(const std::string &str)
