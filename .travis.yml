@@ -4,12 +4,15 @@ compiler:
     - g++
 
 before_script:
+    # setup environment
     - sudo apt-get install pkg-config libtool libjson-spirit-dev libreadline-dev libssl-dev
 
-scripts:
+script:
+    # bootstrap
     - ./bootstrap
     - cd build
     - ../configure
-
+    # make
     - make -j3
+    # run tests
     - make check
