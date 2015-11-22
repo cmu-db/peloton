@@ -1,8 +1,5 @@
 [![Peloton Logo](http://db.cs.cmu.edu/wordpress/wp-content/uploads/2015/11/peloton.jpg)](http://pelotondb.org/)
 
-Peloton
-=====
-
 **Peloton is a distributed in-memory DBMS designed for hybrid transaction/analytical processing (HTAP) workloads and next-generation storage technologies.**
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
