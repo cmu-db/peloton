@@ -2,11 +2,11 @@
 
 [![Build Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon?style=flat)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
 
-**Peloton is a distributed in-memory DBMS designed for hybrid transaction/analytical processing (HTAP) workloads and next-generation storage technologies.**
+:zap: **Peloton is a distributed in-memory DBMS designed for real-time analytics.** :zap:
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
 
-If you have any questions about the Peloton usage, please send a mail to peloton-dev@cs.cmu.edu.
+If you have any questions on Peloton usage, please send a mail to peloton-dev@cs.cmu.edu.
 
 ### Installation
 
@@ -18,8 +18,7 @@ Before reporting a problem, please read how to [File an issue](https://github.co
 
 ### Development / Contributing
 
-Peloton has an open commit bit policy. Anyone with an accepted pull request gets added as a repository collaborator.
-Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for more details.
+Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ### Contributors
 
