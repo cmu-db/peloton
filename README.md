@@ -2,7 +2,7 @@
 
 [![Build Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon?style=flat)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
 
-:zap: **Peloton is a distributed in-memory DBMS designed for real-time analytics.** :zap:
+**Peloton is a distributed in-memory DBMS designed for real-time analytics.**
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
 
