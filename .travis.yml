@@ -1,1 +1,15 @@
 language: cpp
+
+compiler:
+    - g++
+
+before_script:
+    - sudo apt-get install pkg-config libtool libjson-spirit-dev libreadline-dev libssl-dev
+
+scripts:
+    - ./bootstrap
+    - cd build
+    - ../configure
+
+    - make -j3
+    - make check
