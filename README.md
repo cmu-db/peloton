@@ -23,3 +23,8 @@ Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/maste
 ### Contributors
 
 [https://github.com/cmu-db/peloton/graphs/contributors](https://github.com/cmu-db/peloton/graphs/contributors)
+
+## [License]
+
+Copyright (c) 2014-2015 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)
+Licensed under the [Apache License](LICENSE).
