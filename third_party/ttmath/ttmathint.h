@@ -44,6 +44,7 @@
  */
 
 #include "ttmathuint.h"
+#include "boost/unordered_map.hpp"
 namespace ttmath {
 
 /*!
