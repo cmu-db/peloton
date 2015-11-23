@@ -25,7 +25,6 @@
 
 #if !defined NN_HAVE_WINDOWS
 
-#define NN_USE_POLL 1
 #define NN_POLLER_IN 1
 #define NN_POLLER_OUT 2
 #define NN_POLLER_ERR 3
