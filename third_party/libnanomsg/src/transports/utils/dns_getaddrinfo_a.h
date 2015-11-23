@@ -29,6 +29,7 @@
 #else
 #include <sys/socket.h>
 #endif
+
 struct nn_dns {
     struct nn_fsm fsm;
     int state;
