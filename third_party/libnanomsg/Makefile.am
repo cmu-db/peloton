@@ -1,4 +1,10 @@
-nnincludedir = third_party/libnanomsg
+######################################################################
+# LIBNANOMSG
+######################################################################
+
+LIBNANOMSG_SRCDIR = $(top_srcdir)/third_party/libnanomsg
+
+nnincludedir = third_party/libnanomsg/
 
 nninclude_HEADERS = \
     third_party/libnanomsg/src/nn.h \
@@ -18,7 +24,7 @@ lib_LTLIBRARIES = libnanomsg.la
 
 NANOMSG_CORE = \
     third_party/libnanomsg/src/core/ep.h \
-    third_party/libnanomsg/src/core/ep.c \
+    $(LIBNANOMSG_SRCDIR)/src/core/ep.c \
     third_party/libnanomsg/src/core/epbase.c \
     third_party/libnanomsg/src/core/global.h \
     third_party/libnanomsg/src/core/global.c \
@@ -328,4 +334,3 @@ DEFS =	-DNN_HAVE_GCC=1 \
 
 libnanomsg_la_LDFLAGS = -no-undefined 
 libnanomsg_la_CFLAGS = -DNN_EXPORTS $(DEFS)
-LDADD = libnanomsg.la
