@@ -1,13 +1,12 @@
-#LIBNANOMSG_DIR = third_party/libnanomsg/
+## Makefile.am -- Process this file with automake to produce Makefile.in
 
-#LIBNANOMSG_SRCDIR = $(top_srcdir)/$(LIBNANOMSG_DIR)
-#LIBNANOMSG_BUILDDIR = $(top_builddir)/$(LIBNANOMSG_DIR)
+######################################################################
+# LIBNANOMSG
+######################################################################
+
+LIBNANOMSG_SRCDIR = $(top_srcdir)/third_party/libnanomsg
 
 nnincludedir = third_party/libnanomsg/
-
-LIBNANOMSG_SRCDIR = $(top_srcdir)/$(LIBNANOMSG_DIR)
-LIBNANOMSG_BUILDDIR = $(top_builddir)/$(LIBNANOMSG_DIR)
-lib_LTLIBRARIES = third_party/libnanomsg/libnanomsg.la
 
 nninclude_HEADERS = \
     third_party/libnanomsg/src/nn.h \
@@ -25,7 +24,7 @@ nninclude_HEADERS = \
 
 NANOMSG_CORE = \
     third_party/libnanomsg/src/core/ep.h \
-    third_party/libnanomsg/src/core/ep.c \
+    $(LIBNANOMSG_SRCDIR)/src/core/ep.c \
     third_party/libnanomsg/src/core/epbase.c \
     third_party/libnanomsg/src/core/global.h \
     third_party/libnanomsg/src/core/global.c \
@@ -304,7 +303,7 @@ NANOMSG_TRANSPORTS = \
     $(TRANSPORTS_WS) \
     $(TRANSPORTS_TCPMUX)
 
-third_party_libnanomsg_la_SOURCES = \
+libnanomsg_la_SOURCES = \
     third_party/libnanomsg/src/transport.h \
     third_party/libnanomsg/src/protocol.h \
     $(NANOMSG_CORE) \
@@ -333,6 +332,5 @@ DEFS =	-DNN_HAVE_GCC=1 \
 	-DNN_HAVE_MSG_CONTROL=1 -DNN_USE_EVENTFD=1 -DHAVE_DLFCN_H=1 \
 	-DLT_OBJDIR=\".libs/\" -D_GNU_SOURCE
 
-third_party_libnanomsg_la_LDFLAGS = -no-undefined 
-third_party_libnanomsg_la_CFLAGS = -DNN_EXPORTS $(DEFS)
-third_party_libnanomsg_la_LIBADD = third_party/libnanomsg/libnanomsg.la
+libnanomsg_la_LDFLAGS = -no-undefined 
+libnanomsg_la_CFLAGS = -DNN_EXPORTS $(DEFS)
