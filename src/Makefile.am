@@ -11,6 +11,8 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
+include $(top_srcdir)/third_party/libnanomsg/Makefile.am
+
 include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
@@ -40,7 +42,8 @@ bin_pelotondir = /usr/local/peloton/bin
 
 # The order matters here
 
-lib_LTLIBRARIES += libpeloton.la 
+lib_LTLIBRARIES += libnanomsg.la
+lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
 
 DEFAULT_INCLUDES =
