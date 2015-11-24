@@ -82,16 +82,8 @@ int node1 (const char *url)
 
 TEST(PairTest, BasicTest) {
 
-  if (strncmp (NODE0, argv[1], strlen (NODE0)) == 0 && argc > 1)
-    return node0 (argv[2]);
-  else if (strncmp (NODE1, argv[1], strlen (NODE1)) == 0 && argc > 1)
-    return node1 (argv[2]);
-  else
-  {
-    fprintf (stderr, "Usage: pair %s|%s <URL> <ARG> ...\n",
-        NODE0, NODE1);
-    return 1;
-  }
+ node0(NODE0);
+ node1(NODE1);
 
 }
 
