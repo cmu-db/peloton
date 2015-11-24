@@ -11,7 +11,7 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
-include $(top_srcdir)/third_party/libnanomsg/Makefile.am
+include $(srcdir)/backend/mfabric/libnanomsg/Makefile.am
 
 include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
