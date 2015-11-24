@@ -2,6 +2,11 @@
 # LIBNANOMSG
 ######################################################################
 
+<<<<<<< HEAD
+=======
+LIBNANOMSG_SRCDIR = $(top_srcdir)/backend/mfabric/libnanomsg
+
+>>>>>>> 89a467448a2202495a395c5951b29e8eb3861f38
 nnincludedir = backend/mfabric/libnanomsg/
 
 nninclude_HEADERS = \
