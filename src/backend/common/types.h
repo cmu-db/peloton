@@ -316,6 +316,7 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_APPEND = 59,  // append
 
   PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
+  PLAN_NODE_TYPE_HASH = 62,
 
   // Utility
   PLAN_NODE_TYPE_RESULT = 70,
