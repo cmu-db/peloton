@@ -3564,8 +3564,6 @@ static int BackendStartup(Port *port) {
   Backend *bn; /* for backend cleanup */
   pid_t pid;
 
-
-  ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("BackendStartup")));
   /*
    * Create backend data structure.  Better before the fork() so we can
    * handle failure cleanly.
