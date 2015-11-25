@@ -63,7 +63,7 @@ catalog::Schema *LogicalTile::GetPhysicalSchema() const {
  * @brief Get the position lists of the tile.
  * @return Position lists of the tile.
  */
-const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
+const LogicalTile::PositionLists &LogicalTile::GetPositionLists() const {
   return position_lists_;
 }
 
@@ -71,7 +71,7 @@ const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
  * @brief Get the position list at given offset in the tile.
  * @return Position list associated with column.
  */
-const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) const {
+const LogicalTile::PositionList &LogicalTile::GetPositionList(const oid_t column_id) const {
   return position_lists_[column_id];
 }
 
@@ -79,13 +79,11 @@ const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) co
  * @brief Set the position lists of the tile.
  * @param Position lists.
  */
-void LogicalTile::SetPositionLists(
-    std::vector<std::vector<oid_t>> &&position_lists) {
+void LogicalTile::SetPositionLists(LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
 }
 
-void LogicalTile::SetPositionListsAndVisibility(
-    std::vector<std::vector<oid_t>> &&position_lists) {
+void LogicalTile::SetPositionListsAndVisibility(LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
   if (position_lists.size() > 0) {
     total_tuples_ = position_lists[0].size();
@@ -104,7 +102,7 @@ void LogicalTile::SetPositionListsAndVisibility(
  *
  * @return Position list index of newly added list.
  */
-int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
+int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
   assert(
       position_lists_.size() == 0
           || position_lists_[0].size() == position_list.size());
