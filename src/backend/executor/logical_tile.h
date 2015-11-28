@@ -13,7 +13,6 @@
 #pragma once
 
 #include <iterator>
-#include <unordered_set>
 #include <vector>
 
 #include "backend/common/types.h"
@@ -70,7 +69,7 @@ class LogicalTile {
 
   void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
-  int AddPositionList(std::vector<oid_t> &&position_list);
+  int AddPositionList(PositionList &&position_list);
 
   void RemoveVisibility(oid_t tuple_id);
 
