@@ -95,6 +95,28 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
   return peloton_expr;
 }
 
+std::vector<std::unique_ptr<const expression::AbstractExpression>>
+ExprTransformer::TransformExprList(const ExprState *expr_state) {
+  std::vector<std::unique_ptr<const expression::AbstractExpression> > exprs;  // a list of AND'ed expressions
+  if (nodeTag(expr_state->expr) == T_List) {
+    const List* list = reinterpret_cast<const List*>(expr_state);
+    ListCell* l;
+    int length = list_length(list);
+    assert(length > 0);
+    LOG_TRACE("Expression List of length %d", length);
+
+    foreach (l, list)
+    {
+      const ExprState* expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
+      exprs.emplace_back(ExprTransformer::TransformExpr(expr_state));
+    }
+  } else {
+      exprs.emplace_back(ExprTransformer::TransformExpr(expr_state));
+  }
+
+  return exprs;
+}
+
 bool ExprTransformer::CleanExprTree(expression::AbstractExpression* root) {
   // AbstractExpression's destructor already handles deleting children
   delete root;

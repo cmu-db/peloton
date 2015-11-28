@@ -39,7 +39,13 @@ class ContainerTuple : public AbstractTuple {
   ContainerTuple &operator=(ContainerTuple &&) = default;
 
   ContainerTuple(T *container, oid_t tuple_id)
-      : container_(container), tuple_id_(tuple_id) {}
+      : container_(container),
+        tuple_id_(tuple_id) {}
+
+  ContainerTuple(T *container, oid_t tuple_id, std::vector<oid_t> *column_ids)
+      : container_(container),
+        tuple_id_(tuple_id),
+        column_ids_(column_ids) {}
 
   /* Accessors */
   T *GetContainer() const { return container_; }
@@ -65,11 +71,17 @@ class ContainerTuple : public AbstractTuple {
   /** @brief Compute the hash value based on all valid columns and a given seed.
    */
   size_t HashCode(size_t seed = 0) const {
-    const int column_count = container_->GetColumnCount();
-
-    for (int column_itr = 0; column_itr < column_count; column_itr++) {
-      const Value value = GetValue(column_itr);
-      value.HashCombine(seed);
+    if (column_ids_) {
+      for (auto &column_itr : *column_ids_) {
+        const Value value = GetValue(column_itr);
+        value.HashCombine(seed);
+      }
+    } else {
+      int column_count = container_->GetColumnCount();
+      for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
+        const Value value = GetValue(column_itr);
+        value.HashCombine(seed);
+      }
     }
     return seed;
   }
@@ -78,13 +90,22 @@ class ContainerTuple : public AbstractTuple {
    * Assume the schema of other tuple.Is the same as this. No check.
    */
   bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
-    const int column_count = container_->GetColumnCount();
-
-    for (int column_itr = 0; column_itr < column_count; column_itr++) {
-      const Value lhs = GetValue(column_itr);
-      const Value rhs = other.GetValue(column_itr);
-      if (lhs.OpNotEquals(rhs).IsTrue()) {
-        return false;
+    if (column_ids_) {
+      for (auto &column_itr : *column_ids_) {
+        const Value lhs = GetValue(column_itr);
+        const Value rhs = other.GetValue(column_itr);
+        if (lhs.OpNotEquals(rhs).IsTrue()) {
+          return false;
+        }
+      }
+    } else {
+      int column_count = container_->GetColumnCount();
+      for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
+        const Value lhs = GetValue(column_itr);
+        const Value rhs = other.GetValue(column_itr);
+        if (lhs.OpNotEquals(rhs).IsTrue()) {
+          return false;
+        }
       }
     }
     return true;
@@ -99,7 +120,13 @@ class ContainerTuple : public AbstractTuple {
    *        to be.
    */
   const oid_t tuple_id_;
-};
+
+  /** @brief The ids of column that this tuple cares about
+   *  This enables this class only looks at a subset of a tuple
+   * */
+  std::vector<oid_t> *column_ids_ = nullptr;
+
+  };
 
 //===--------------------------------------------------------------------===//
 // ContainerTuple Hasher
