@@ -107,6 +107,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       break;
 
     case T_HashJoinState:
+      child_planstate = PrepareHashJoinState(reinterpret_cast<HashJoinState *>(planstate));
+      break;
+
     case T_NestLoopState:
       child_planstate = PrepareNestLoopState(
           reinterpret_cast<NestLoopState *>(planstate));
@@ -123,6 +126,10 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
 
     case T_ResultState:
       // TODO: Do we need to handle this ?
+      break;
+
+    case T_HashState:
+      child_planstate = PrepareHashState(reinterpret_cast<HashState*>(planstate));
       break;
 
     default:
@@ -440,6 +447,21 @@ MergeJoinPlanState* DMLUtils::PrepareMergeJoinState(MergeJoinState* mj_state) {
   return info;
 }
 
+
+HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
+  HashJoinPlanState *info = (HashJoinPlanState*) palloc(sizeof(HashJoinPlanState));
+  info->type = hj_state->js.ps.type;
+
+  return info;
+}
+
+HashPlanState *DMLUtils::PrepareHashState(HashState *hash_state) {
+  HashPlanState *info = (HashPlanState*) palloc(sizeof(HashPlanState));
+  info->type = hash_state->ps.type;
+  info->hashkeys = CopyExprStateList(hash_state->hashkeys);
+  return info;
+}
+
 void DMLUtils::PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
                                         const ScanState& ss_state) {
 
@@ -636,43 +658,6 @@ DMLUtils::PrepareAggState(AggState* agg_plan_state) {
       agg_plan_state->ss.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
   return info;
-}
-
-SortPlanState* DMLUtils::PrepareSortState(SortState* sort_plan_state) {
-
-  SortPlanState *info = (SortPlanState*) palloc(sizeof(SortPlanState));
-  info->type = sort_plan_state->ss.ps.type;
-
-  info->sort = (const Sort*) copyObject(sort_plan_state->ss.ps.plan);
-
-  info->reverse_flags = (bool*) palloc(sizeof(bool) * info->sort->numCols);
-
-  // Find the reverse flags here
-
-  for (int i = 0; i < info->sort->numCols; i++) {
-
-    Oid orderingOp = info->sort->sortOperators[i];
-    Oid opfamily;
-    Oid opcintype;
-    int16 strategy;
-
-    /* Find the operator___ in pg_amop */
-    if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
-                                    &strategy)) {
-      elog(ERROR, "operator___ %u is not a valid ordering operator___",
-           orderingOp);
-    }
-
-    bool reverse = (strategy == BTGreaterStrategyNumber);
-
-    info->reverse_flags[i] = reverse;
-
-    elog(INFO, "Sort Col Idx : %d, Sort OperatorOid : %u , reverse : %u",
-         info->sort->sortColIdx[i], orderingOp, reverse);
-  }
-
-  return info;
-
 }
 
 /**

@@ -14,6 +14,7 @@
 
 #include "abstract_plan.h"
 #include "backend/common/types.h"
+#include "backend/expression/abstract_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -29,13 +30,27 @@ class HashPlan : public AbstractPlan {
   HashPlan(const HashPlan &&) = delete;
   HashPlan &operator=(const HashPlan &&) = delete;
 
-  HashPlan() {}
+  typedef const expression::AbstractExpression HashKeyType;
+  typedef std::unique_ptr<HashKeyType> HashKeyPtrType;
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_HASH; }
+  HashPlan(std::vector<HashKeyPtrType> &hashkeys)
+    : hash_keys_(std::move(hashkeys)) {}
 
-  inline std::string GetInfo() const { return "Hash"; }
+  inline PlanNodeType GetPlanNodeType() const {
+    return PLAN_NODE_TYPE_HASH;
+  }
+
+  inline std::string GetInfo() const {
+    return "Hash";
+  }
+
+  inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
+    return this->hash_keys_;
+  }
 
  private:
+  std::vector<HashKeyPtrType> hash_keys_;
+
 };
 }
 }
