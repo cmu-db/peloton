@@ -18,7 +18,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/hash_set_op_executor.h"
 
-#include "../planner/set_op_plan.h"
+#include "backend/planner/set_op_plan.h"
 
 namespace peloton {
 namespace executor {
