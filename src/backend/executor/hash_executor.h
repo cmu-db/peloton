@@ -39,23 +39,37 @@ class HashExecutor : public AbstractExecutor {
   explicit HashExecutor(const planner::AbstractPlan *node,
                         ExecutorContext *executor_context);
 
- protected:
-  bool DInit();
-
-  bool DExecute();
-
- private:
   /** @brief Type definitions for hash table */
   typedef std::unordered_map<expression::ContainerTuple<LogicalTile>,
       std::unordered_set<std::pair<size_t, oid_t>, boost::hash<std::pair<size_t, oid_t>>>,
       expression::ContainerTupleHasher<LogicalTile>,
       expression::ContainerTupleComparator<LogicalTile> > HashMapType;
 
+  inline HashMapType &GetHashTable() {
+    return this->htable_;
+  }
+
+  inline const std::vector<oid_t> &GetHashKeyIds() const {
+    return this->column_ids_;
+  }
+
+ protected:
+  bool DInit();
+
+  bool DExecute();
+
+ private:
   /** @brief Hash table */
   HashMapType htable_;
 
   /** @brief Input tiles from child node */
   std::vector<std::unique_ptr<LogicalTile> > child_tiles_;
+
+  std::vector<oid_t> column_ids_;
+
+  bool done_ = false;
+
+  size_t result_itr = 0;
 
 };
 
