@@ -117,6 +117,9 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
           reinterpret_cast<const MergeJoinPlanState *>(planstate));
       break;
     case T_HashJoinState:
+      peloton_plan = PlanTransformer::TransformHashJoin(
+          reinterpret_cast<const HashJoinPlanState *>(planstate));
+      break;
     case T_NestLoopState:
       peloton_plan = PlanTransformer::TransformNestLoop(
           reinterpret_cast<const NestLoopPlanState *>(planstate));
@@ -133,6 +136,11 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
     case T_SortState:
       peloton_plan = PlanTransformer::TransformSort(
           reinterpret_cast<const SortPlanState*>(planstate));
+      break;
+
+    case T_HashState:
+      peloton_plan = PlanTransformer::TransformHash(
+          reinterpret_cast<const HashPlanState*>(planstate));
       break;
 
     default: {

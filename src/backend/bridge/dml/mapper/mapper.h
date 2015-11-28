@@ -147,6 +147,9 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformMergeJoin(
       const MergeJoinPlanState *plan_state);
 
+  static const planner::AbstractPlan *TransformHashJoin(
+      const HashJoinPlanState *plan_state);
+
   //===--------------------------------------------------------------------===//
   // OTHERS
   //===--------------------------------------------------------------------===//
@@ -165,6 +168,9 @@ class PlanTransformer {
 
   static const planner::AbstractPlan *TransformSort(
       const SortPlanState *plan_state);
+
+  static const planner::AbstractPlan *TransformHash(
+      const HashPlanState *plan_state);
 
   static PelotonJoinType TransformJoinType(
       const JoinType type);
