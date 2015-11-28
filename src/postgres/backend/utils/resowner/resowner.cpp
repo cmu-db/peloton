@@ -126,20 +126,6 @@ typedef struct ResourceReleaseCallbackItem
 
 thread_local static ResourceReleaseCallbackItem *ResourceRelease_callbacks = NULL;
 
-
-/* Internal routines */
-static void ResourceOwnerReleaseInternal(ResourceOwner owner,
-							 ResourceReleasePhase phase,
-							 bool isCommit,
-							 bool isTopLevel);
-static void PrintRelCacheLeakWarning(Relation rel);
-static void PrintPlanCacheLeakWarning(CachedPlan *plan);
-static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
-static void PrintSnapshotLeakWarning(Snapshot snapshot);
-static void PrintFileLeakWarning(File file);
-static void PrintDSMLeakWarning(dsm_segment *seg);
-
-
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
  *****************************************************************************/
@@ -192,13 +178,6 @@ ResourceOwnerRelease(ResourceOwner owner,
 {
 }
 
-static void
-ResourceOwnerReleaseInternal(ResourceOwner owner,
-							 ResourceReleasePhase phase,
-							 bool isCommit,
-							 bool isTopLevel)
-{
-}
 
 /*
  * ResourceOwnerDelete
@@ -402,14 +381,6 @@ ResourceOwnerForgetRelationRef(ResourceOwner owner, Relation rel)
 }
 
 /*
- * Debugging subroutine
- */
-static void
-PrintRelCacheLeakWarning(Relation rel)
-{
-}
-
-/*
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * plancache reference array.
  *
@@ -436,14 +407,6 @@ ResourceOwnerRememberPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
  */
 void
 ResourceOwnerForgetPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
-{
-}
-
-/*
- * Debugging subroutine
- */
-static void
-PrintPlanCacheLeakWarning(CachedPlan *plan)
 {
 }
 
@@ -478,14 +441,6 @@ ResourceOwnerForgetTupleDesc(ResourceOwner owner, TupleDesc tupdesc)
 }
 
 /*
- * Debugging subroutine
- */
-static void
-PrintTupleDescLeakWarning(TupleDesc tupdesc)
-{
-}
-
-/*
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * snapshot reference array.
  *
@@ -512,14 +467,6 @@ ResourceOwnerRememberSnapshot(ResourceOwner owner, Snapshot snapshot)
  */
 void
 ResourceOwnerForgetSnapshot(ResourceOwner owner, Snapshot snapshot)
-{
-}
-
-/*
- * Debugging subroutine
- */
-static void
-PrintSnapshotLeakWarning(Snapshot snapshot)
 {
 }
 
@@ -556,14 +503,6 @@ ResourceOwnerForgetFile(ResourceOwner owner, File file)
 
 
 /*
- * Debugging subroutine
- */
-static void
-PrintFileLeakWarning(File file)
-{
-}
-
-/*
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * dynamic shmem segment reference array.
  *
@@ -593,11 +532,3 @@ ResourceOwnerForgetDSM(ResourceOwner owner, dsm_segment *seg)
 {
 }
 
-
-/*
- * Debugging subroutine
- */
-static void
-PrintDSMLeakWarning(dsm_segment *seg)
-{
-}
