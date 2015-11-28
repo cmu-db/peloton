@@ -42,7 +42,7 @@ class ContainerTuple : public AbstractTuple {
       : container_(container),
         tuple_id_(tuple_id) {}
 
-  ContainerTuple(T *container, oid_t tuple_id, std::vector<oid_t> *column_ids)
+  ContainerTuple(T *container, oid_t tuple_id, const std::vector<oid_t> *column_ids)
       : container_(container),
         tuple_id_(tuple_id),
         column_ids_(column_ids) {}
@@ -124,7 +124,7 @@ class ContainerTuple : public AbstractTuple {
   /** @brief The ids of column that this tuple cares about
    *  This enables this class only looks at a subset of a tuple
    * */
-  std::vector<oid_t> *column_ids_ = nullptr;
+  const std::vector<oid_t> *column_ids_ = nullptr;
 
   };
 

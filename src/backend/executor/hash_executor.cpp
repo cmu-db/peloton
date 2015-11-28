@@ -36,43 +36,55 @@ HashExecutor::HashExecutor(const planner::AbstractPlan *node,
  */
 bool HashExecutor::DInit() {
   assert(children_.size() == 1);
-
-
   return true;
 }
 
 bool HashExecutor::DExecute() {
   LOG_INFO("Hash Executor");
-  const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
 
-  while (children_[0]->Execute()) {
-    child_tiles_.emplace_back(children_[0]->GetOutput());
+  if (!done_) {
+    const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
+
+    while (children_[0]->Execute()) {
+      child_tiles_.emplace_back(children_[0]->GetOutput());
+    }
+
+    if (child_tiles_.size() == 0) return false;
+
+
+    /* HashKeys should be a vector of TupleValue expr
+     * from which we construct a vector of column ids that represent the
+     * attributes of the underlying table.
+     * The hash table builds on these attributes */
+    auto &hashkeys = node.GetHashKeys();
+    std::vector<oid_t> column_ids;
+    for (auto &hashkey : hashkeys) {
+      assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+      auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
+      assert(tuple_value->GetTupleIdx() == 0);
+      column_ids.push_back(tuple_value->GetColumnId());
+    }
+
+    for (size_t i = 0; i < child_tiles_.size(); i++) {
+      auto tile = child_tiles_[i].get();
+      for (oid_t tuple_id : *tile) {
+        htable_[HashMapType::key_type(tile, tuple_id, &column_ids)].insert(std::make_pair(i, tuple_id));
+      }
+    }
+
+    done_ = true;
   }
 
-  if (child_tiles_.size() == 0) return false;
-
-
-  /* HashKeys should be a vector of TupleValue expr
-   * from which we construct a vector of column ids that represent the
-   * attributes of the underlying table.
-   * The hash table builds on these attributes */
-  auto &hashkeys = node.GetHashKeys();
-  std::vector<oid_t> column_ids;
-  for (auto &hashkey : hashkeys) {
-    assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
-    auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
-    assert(tuple_value->GetTupleIdx() == 0);
-    column_ids.push_back(tuple_value->GetColumnId());
-  }
-
-  for (size_t i = 0; i < child_tiles_.size(); i++) {
-    auto tile = child_tiles_[i].get();
-    for (oid_t tuple_id : *tile) {
-      htable_[HashMapType::key_type(tile, tuple_id, &column_ids)].insert(std::make_pair(i, tuple_id));
+  while (result_itr < child_tiles_.size()) {
+    if (child_tiles_[result_itr]->GetTupleCount() == 0) {
+      result_itr++;
+      continue;
+    } else {
+      SetOutput(child_tiles_[result_itr++].release());
+      return true;
     }
   }
-
-  return true;
+  return false;
 }
 
 
