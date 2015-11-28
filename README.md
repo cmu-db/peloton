@@ -22,15 +22,15 @@ If you have any questions on Peloton usage, please send a mail to peloton-dev@cs
 
 ## Installation
 
-Please refer to the [installation instructions](https://github.com/cmu-db/peloton/wiki/Installation).
+Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki/Installation).
+
+## Development / Contributing
+
+Look up the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Issues
 
 Before reporting a problem, please read how to [File an issue](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#file-an-issue).
-
-## Development / Contributing
-
-Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Contributors
 
@@ -38,5 +38,5 @@ Please see the [Contributing Guide](https://github.com/cmu-db/peloton/blob/maste
 
 ## License
 
-Copyright (c) 2014-2015 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)
+Copyright (c) 2014-15 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)  
 Licensed under the [Apache License](LICENSE).
