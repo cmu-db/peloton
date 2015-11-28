@@ -206,11 +206,6 @@ thread_local static int	FastPathLocalUseCount = 0;
 	(locktag)->locktag_field1 != InvalidOid && \
 	(mode) > ShareUpdateExclusiveLock)
 
-static bool FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode);
-static bool FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode);
-static bool FastPathTransferRelationLocks(LockMethod lockMethodTable,
-							  const LOCKTAG *locktag, uint32 hashcode);
-static PROCLOCK *FastPathGetRelationLockEntry(LOCALLOCK *locallock);
 
 /*
  * To make the fast-path lock mechanism work, we must have some way of
