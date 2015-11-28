@@ -613,6 +613,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_MERGEJOIN: {
       return "MERGEJOIN";
     }
+    case PLAN_NODE_TYPE_HASHJOIN: {
+      return "HASHJOIN";
+    }
     case PLAN_NODE_TYPE_UPDATE: {
       return "UPDATE";
     }
@@ -669,6 +672,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PLAN_NODE_TYPE_MOCK: {
       return "MOCK";
+    }
+    case PLAN_NODE_TYPE_HASH: {
+      return "HASH";
     }
   }
   return "INVALID";

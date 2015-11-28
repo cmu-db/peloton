@@ -176,8 +176,8 @@ bool NestedLoopJoinExecutor::DExecute() {
     for(auto left_tile_row_itr : *left_tile){
       for(auto right_tile_row_itr : *right_tile){
         // TODO: OPTIMIZATION : Can split the control flow into two paths -
-        // one for cartesian product and one for join
-        // Then, we can skip this branch atleast for the cartesian product path.
+        // one for Cartesian product and one for join
+        // Then, we can skip this branch atleast for the Cartesian product path.
 
         // Join predicate exists
         if (predicate_ != nullptr) {
