@@ -24,7 +24,7 @@ namespace logging {
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
-  BackendLogger* backendLogger;
+  BackendLogger* backendLogger = nullptr;
 
   switch(logging_type){
     case LOGGING_TYPE_ARIES:{
