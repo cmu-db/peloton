@@ -22,7 +22,9 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   LOG_INFO("Number of Agg phases: %d \n", numphases);
 
-  assert(1 == numphases);  // When we'll have >1 phases?
+  // When we'll have >1 phases?
+  if(numphases != 1)
+    return nullptr;
 
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(

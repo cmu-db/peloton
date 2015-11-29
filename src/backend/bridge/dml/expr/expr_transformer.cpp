@@ -311,7 +311,8 @@ expression::AbstractExpression* ExprTransformer::TransformList(
   const List* list = reinterpret_cast<const List*>(es);
   ListCell* l;
   int length = list_length(list);
-  assert(length > 0);
+  if(length == 0)
+    return nullptr;
   LOG_TRACE("Expression List of length %d", length);
   std::list<expression::AbstractExpression*> exprs;  // a list of AND'ed expressions
 
