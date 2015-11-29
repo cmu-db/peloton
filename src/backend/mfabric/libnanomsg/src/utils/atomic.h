@@ -23,6 +23,8 @@
 #ifndef NN_ATOMIC_INCLUDED
 #define NN_ATOMIC_INCLUDED
 
+#include "../headers.h"
+
 #if defined NN_HAVE_WINDOWS
 #include "win.h"
 #define NN_ATOMIC_WINAPI

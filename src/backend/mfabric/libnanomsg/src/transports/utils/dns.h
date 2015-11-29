@@ -23,6 +23,8 @@
 #ifndef NN_DNS_INCLUDED
 #define NN_DNS_INCLUDED
 
+#include "../../headers.h"
+
 #include "../../aio/fsm.h"
 
 #include <stddef.h>

@@ -23,6 +23,8 @@
 #ifndef NN_POLLER_INCLUDED
 #define NN_POLLER_INCLUDED
 
+#include "../headers.h"
+
 #if !defined NN_HAVE_WINDOWS
 
 #define NN_POLLER_IN 1

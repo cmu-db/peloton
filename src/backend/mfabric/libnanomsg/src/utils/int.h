@@ -23,6 +23,8 @@
 #ifndef NN_INT_INCLUDED
 #define NN_INT_INCLUDED
 
+#include "../headers.h"
+
 #if defined NN_HAVE_WINDOWS && !defined NN_HAVE_STDINT
 
 /*  Old versions of MSVC don't ship with stdint.h header file.
