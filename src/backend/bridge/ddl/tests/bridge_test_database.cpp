@@ -15,6 +15,7 @@
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_database.h"
+#include "backend/common/exception.h"
 
 namespace peloton {
 namespace bridge {
@@ -35,7 +36,8 @@ void BridgeTest::DDL_Database_TEST() {
 void BridgeTest::DDL_CreateDatabase_TEST_WITH_INVALID_OID() {
   bool status = DDLDatabase::CreateDatabase(INVALID_OID);
   // CHECK :: status must be false
-  assert(status == false);
+  if(status != false)
+    throw CatalogException("Could create database");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
@@ -48,7 +50,8 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   bool status = DDLDatabase::CreateDatabase(12345);
 
   // CHECK :: status must be true
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create database");
 
   status = DDLDatabase::DropDatabase(12345);
   assert(status);
