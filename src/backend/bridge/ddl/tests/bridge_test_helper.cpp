@@ -18,6 +18,7 @@
 #include "backend/bridge/ddl/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/foreign_key.h"
+#include "backend/common/exception.h"
 #include "backend/storage/database.h"
 #include "backend/index/index.h"
 
@@ -60,9 +61,15 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
  */
 bool BridgeTest::CheckColumn(catalog::Column &column, std::string column_name,
                              unsigned long length, ValueType type) {
-  assert(strcmp(column.GetName().c_str(), column_name.c_str()) == 0);
-  assert(column.GetLength() == length);
-  assert(column.GetType() == type);
+
+  if(strcmp(column.GetName().c_str(), column_name.c_str()) != 0)
+    return false;
+
+  if(column.GetLength() != length)
+    return false;
+
+  if(column.GetType() != type)
+    return false;
 
   return true;
 }
@@ -84,15 +91,19 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
                                            unsigned int constraint_count,
                                            oid_t foreign_key_offset) {
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
-  assert(constraint_infos[0].GetType() == constraint_type);
+  if(constraint_infos[0].GetType() != constraint_type)
+    return false;
 
   if (constraint_infos[0].GetName().size() > 0 && constraint_name.size() > 0)
-    assert(strcmp(constraint_infos[0].GetName().c_str(),
-                  constraint_name.c_str()) == 0);
+    if(strcmp(constraint_infos[0].GetName().c_str(), constraint_name.c_str()) != 0)
+      return false;
 
-  assert(constraint_infos.size() == constraint_count);
+  if(constraint_infos.size() != constraint_count)
+    return false;
+
   if (constraint_type == CONSTRAINT_TYPE_FOREIGN)
-    assert(constraint_infos[0].GetForeignKeyListOffset() == foreign_key_offset);
+    if(constraint_infos[0].GetForeignKeyListOffset() != foreign_key_offset)
+      return false;
 
   return true;
 }
@@ -111,11 +122,20 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
 bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
                             oid_t column_count, IndexType method_type,
                             IndexConstraintType constraint_type, bool unique) {
-  assert(strcmp(index->GetName().c_str(), index_name.c_str()) == 0);
-  assert(index->GetColumnCount() == column_count);
-  assert(index->GetIndexMethodType() == method_type);
-  assert(index->GetIndexType() == constraint_type);
-  assert(index->HasUniqueKeys() == unique);
+  if(strcmp(index->GetName().c_str(), index_name.c_str()) != 0)
+    return false;
+
+  if(index->GetColumnCount() != column_count)
+    return false;
+
+  if(index->GetIndexMethodType() != method_type)
+    return false;
+
+  if(index->GetIndexType() != constraint_type)
+    return false;
+
+  if(index->HasUniqueKeys() != unique)
+    return false;
 
   return true;
 }
@@ -139,18 +159,27 @@ bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
                                  unsigned int pk_column_names_count,
                                  unsigned int fk_column_names_count,
                                  char fk_update_action, char fk_delete_action) {
-  assert(foreign_key->GetSinkTableOid() == pktable_oid);
-  assert(strcmp((foreign_key->GetConstraintName()).c_str(),
-                constraint_name.c_str()) == 0);
+  if(foreign_key->GetSinkTableOid() != pktable_oid)
+    return false;
+
+  if(strcmp((foreign_key->GetConstraintName()).c_str(),
+                constraint_name.c_str()) != 0)
+    return false;
 
   std::vector<std::string> pk_column_names = foreign_key->GetPKColumnNames();
   std::vector<std::string> fk_column_names = foreign_key->GetFKColumnNames();
 
-  assert(pk_column_names.size() == pk_column_names_count);
-  assert(fk_column_names.size() == fk_column_names_count);
+  if(pk_column_names.size() != pk_column_names_count)
+    return false;
 
-  assert(foreign_key->GetUpdateAction() == fk_update_action);
-  assert(foreign_key->GetDeleteAction() == fk_delete_action);
+  if(fk_column_names.size() != fk_column_names_count)
+    return false;
+
+  if(foreign_key->GetUpdateAction() != fk_update_action)
+    return false;
+
+  if(foreign_key->GetDeleteAction() != fk_delete_action)
+    return false;
 
   return true;
 }
@@ -172,7 +201,8 @@ void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create index");
 }
 
 /**
@@ -192,7 +222,8 @@ void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
                              true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create index");
 }
 
 /**
@@ -223,7 +254,8 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
 
   // Current table ----> reference table
   status = DDLTable::SetReferenceTables(foreign_keys, table_oid);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create sample foreign key");
 }
 
 /**

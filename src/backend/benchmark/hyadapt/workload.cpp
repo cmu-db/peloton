@@ -177,7 +177,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     for(auto executor : executors) {
 
       status = executor->Init();
-      assert(status == true);
+      if(status == false)
+        throw Exception("Init failed");
 
       std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
@@ -187,8 +188,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
       }
 
       status = executor->Execute();
-      assert(status == false);
-
+      if(status == false)
+        throw Exception("Execution failed");
     }
 
     // Capture fine-grained stats in adapt experiment

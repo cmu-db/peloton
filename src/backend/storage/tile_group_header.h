@@ -274,15 +274,16 @@ class TileGroupHeader {
   bool IsDeletable(const oid_t tuple_slot_id,
                    __attribute__((unused))         txn_id_t txn_id,
                    __attribute__((unused))         cid_t at_lcid) {
-    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-    cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
     bool deletable = tuple_end_cid == MAX_CID;
 
     LOG_INFO(
         "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), deletable = %d",
-        this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
+        this, tuple_slot_id,
+        GetTransactionId(tuple_slot_id),
+        GetBeginCommitId(tuple_slot_id),
+        tuple_end_cid,
         txn_id, at_lcid, deletable);
 
     return deletable;
