@@ -21,6 +21,7 @@
     IN THE SOFTWARE.
 */
 
+#include "../headers.h"
 #include "../utils/alloc.h"
 #include "../utils/closefd.h"
 #include "../utils/cont.h"

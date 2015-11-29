@@ -20,6 +20,7 @@
     IN THE SOFTWARE.
 */
 
+#include "../headers.h"
 #include "../nn.h"
 
 #include "../utils/err.h"
