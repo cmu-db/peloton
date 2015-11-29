@@ -93,7 +93,7 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
-  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
+  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", nl_plan_state->jointype);
   return result;
 }
 
