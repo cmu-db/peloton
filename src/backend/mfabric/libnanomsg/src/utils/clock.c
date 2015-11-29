@@ -21,6 +21,8 @@
     IN THE SOFTWARE.
 */
 
+#include "../headers.h"
+
 #if defined NN_HAVE_WINDOWS
 #include "win.h"
 #elif defined NN_HAVE_OSX

@@ -27,6 +27,7 @@
     is that nn_efd_getfd() returns an actual OS-level file descriptor that
     you can poll on to wait for the event. */
 
+#include "../headers.h"
 #include "fd.h"
 
 #if defined NN_HAVE_WINDOWS
