@@ -105,40 +105,45 @@ void LoggingTestsUtil::ResetSystem(){
  */
 void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
                                      std::string log_file){
-  LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
+  LoggingTestsUtil::CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 
+  // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
   if( log_manager.ActiveFrontendLoggerCount() > 0){
     LOG_ERROR("another logging thread is running now");
     return;
   }
+
+  // set log file and logging type
   log_manager.SetLogFile(log_file);
-  // start a thread for logging
   log_manager.SetDefaultLoggingType(logging_type);
 
+  // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
                      log_manager.GetDefaultLoggingType());
 
-  // When the frontend logger gets ready to logging,
-  // start logging
+  // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
-  // always enable commit when recovery
+  // always enable commit when testing recovery
   log_manager.SetTestInterruptCommit(false);
 
-  // Standby -> Recovery
+  // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
 
-  // Recovery -> Ongoing
-
-  //wait recovery
+  // Wait for the frontend logger to enter LOGGING mode after recovery
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
-  if (DoCheckTupleNumber()) {
-    // Check the tuples
-    LoggingTestsUtil::CheckTupleCount(20000, 10000,
-                                      ((GetTestTupleNumber()-1) * GetTestThreadNumber()));
+  // Check the tuple count if needed
+  auto check_tuple_number = DoCheckTupleNumber();
+  if (check_tuple_number) {
+    oid_t per_thread_expected = GetTestTupleNumber() - 1;
+    oid_t total_expected =  per_thread_expected * GetTestThreadNumber();
+
+    LoggingTestsUtil::CheckTupleCount(LOGGING_TESTS_DATABASE_OID,
+                                      LOGGING_TESTS_TABLE_OID,
+                                      total_expected);
   }
 
   // Check the next oid
@@ -149,7 +154,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
   }else{
     LOG_ERROR("Failed to terminate logging thread");
   }
-  LoggingTestsUtil::DropDatabaseAndTable(20000, 10000);
+  LoggingTestsUtil::DropDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 }
 
 void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected){
