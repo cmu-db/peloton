@@ -372,7 +372,7 @@ void LogManager::SetLogFile(std::string log_file) {
   log_file_name = log_file;
 }
 // XXX change to read configuration file
-std::string LogManager::GetLogFile(void) {
+std::string LogManager::GetLogFileName(void) {
   return log_file_name;
 }
 
