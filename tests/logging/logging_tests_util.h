@@ -38,6 +38,36 @@ public:
   static void CheckRecovery(LoggingType logging_type,
                                 std::string log_file = "peloton.log");
 
+  //===--------------------------------------------------------------------===//
+  // Configuration
+  //===--------------------------------------------------------------------===//
+
+  static void ParseArguments(int argc, char* argv[]);
+
+  class logging_test_configuration {
+   public:
+
+    // # of tuples
+    int tuple_count;
+
+    // # of backends (i.e. backend loggers)
+    int backend_count;
+
+    // tuple size
+    int tuple_size;
+
+    // check if the count matches after recovery
+    bool check_tuple_count;
+
+    // SUSPEND_COMMIT: suspend final step in transaction commit,
+    // so that it only get committed during recovery
+    bool suspend_commit;
+
+    // enable file backend ?
+    bool file_backend;
+
+   };
+
 private:
 
   //===--------------------------------------------------------------------===//
@@ -72,15 +102,8 @@ private:
 
   static void DropDatabase(oid_t db_oid);
 
-  static uint GetTestThreadNumber();
-
-  static oid_t GetTestTupleNumber();
-
-  static bool DoCheckTupleNumber();
-
-  static bool DoTestSuspendCommit();
-
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
+
 };
 
 }  // End test namespace

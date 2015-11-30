@@ -2,6 +2,7 @@
 #include "harness.h"
 
 #include <thread>
+#include <getopt.h>
 
 #include "logging/logging_tests_util.h"
 
@@ -33,6 +34,9 @@ namespace test {
 #define LOGGING_TESTS_DATABASE_OID 20000
 #define LOGGING_TESTS_TABLE_OID    10000
 
+// configuration for testing
+LoggingTestsUtil::logging_test_configuration state;
+
 /**
  * @brief writing a simple log file 
  */
@@ -61,7 +65,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
-  if (DoTestSuspendCommit()) {
+  if (state.suspend_commit) {
     log_manager.SetTestInterruptCommit(true);
   }
 
@@ -136,10 +140,9 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Check the tuple count if needed
-  auto check_tuple_number = DoCheckTupleNumber();
-  if (check_tuple_number) {
-    oid_t per_thread_expected = GetTestTupleNumber() - 1;
-    oid_t total_expected =  per_thread_expected * GetTestThreadNumber();
+  if (state.check_tuple_count) {
+    oid_t per_thread_expected = state.tuple_count - 1;
+    oid_t total_expected =  per_thread_expected * state.backend_count;
 
     LoggingTestsUtil::CheckTupleCount(LOGGING_TESTS_DATABASE_OID,
                                       LOGGING_TESTS_TABLE_OID,
@@ -196,15 +199,14 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   table = CreateSimpleTable(db_oid, table_oid);
 
   // Execute the workload to build the log
-  LaunchParallelTest(GetTestThreadNumber(), RunBackends, table);
+  LaunchParallelTest(state.backend_count, RunBackends, table);
 
   db->AddTable(table);
 
   // Check the tuple count if needed
-  auto check_tuple_number = DoCheckTupleNumber();
-  if (check_tuple_number) {
-    oid_t per_thread_expected = GetTestTupleNumber() - 1;
-    oid_t total_expected =  per_thread_expected * GetTestThreadNumber();
+  if (state.check_tuple_count) {
+    oid_t per_thread_expected = state.tuple_count - 1;
+    oid_t total_expected =  per_thread_expected * state.backend_count;
 
     LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
   }
@@ -252,7 +254,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = CreateTuples(table->GetSchema(), GetTestTupleNumber());
+  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -498,45 +500,107 @@ void LoggingTestsUtil::DropDatabase(oid_t db_oid){
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
-oid_t LoggingTestsUtil::GetTestTupleNumber() {
-  char* tuples_number_str = getenv("NUM_TUPLES");
-  if (tuples_number_str) {
-    return atof(tuples_number_str);
-  } else {
-    return 20;
-  }
+//===--------------------------------------------------------------------===//
+// Configuration
+//===--------------------------------------------------------------------===//
+
+static void Usage(FILE *out) {
+  fprintf(out, "Command line options : hyadapt <options> \n"
+          "   -h --help              :  Print help message \n"
+          "   -t --tuple-count       :  Tuple count \n"
+          "   -b --backend-count     :  Backend count \n"
+          "   -z --tuple-size        :  Tuple size \n"
+          "   -c --check-tuple-count :  Check tuple count \n"
+          "   -s --suspend-commit    :  Suspend commit \n"
+          "   -f --file-backend      :  File backend \n"
+  );
+  exit(EXIT_FAILURE);
 }
 
-bool LoggingTestsUtil::DoCheckTupleNumber() {
-  char* check_tuple_str = getenv("CHECK_TUPLES_NUM");
-  if (check_tuple_str) {
-    if(atoi(check_tuple_str) == 0) {
-      return false;
+static struct option opts[] = {
+    { "tuple-count", optional_argument, NULL, 't' },
+    { "backend-count", optional_argument, NULL, 'b' },
+    { "tuple-size", optional_argument, NULL, 'z' },
+    { "check-tuple-count", optional_argument, NULL, 'c' },
+    { "suspend-commit", optional_argument, NULL, 's' },
+    { "file-backend", optional_argument, NULL, 'f' },
+    { NULL, 0, NULL, 0 }
+};
+
+static void PrintConfiguration(){
+  int width = 25;
+
+  std::cout << std::setw(width) << std::left
+      << "tuple_count " << " : " << state.tuple_count << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "backend_count " << " : " << state.backend_count << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "tuple_size " << " : " << state.tuple_size << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "suspend_commit " << " : " << state.suspend_commit << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "file_backend " << " : " << state.file_backend << std::endl;
+
+}
+
+void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
+
+  // Default Values
+  state.tuple_count = 20;
+
+  state.backend_count = 4;
+
+  state.tuple_size = 50;
+
+  state.check_tuple_count = true;
+  state.suspend_commit = false;
+  state.file_backend = false;
+
+  // Parse args
+  while (1) {
+    int idx = 0;
+    int c = getopt_long(argc, argv, "aht:b:z:c:s:f:", opts,
+                        &idx);
+
+    if (c == -1)
+      break;
+
+    switch (c) {
+      case 't':
+        state.tuple_count  = atoi(optarg);
+        break;
+      case 'b':
+        state.backend_count  = atoi(optarg);
+        break;
+      case 'z':
+        state.tuple_size  = atoi(optarg);
+        break;
+      case 'c':
+        state.check_tuple_count  = atoi(optarg);
+        break;
+      case 's':
+        state.suspend_commit  = atoi(optarg);
+        break;
+      case 'f':
+        state.file_backend  = atoi(optarg);
+        break;
+
+      case 'h':
+        Usage(stderr);
+        break;
+
+      default:
+        fprintf(stderr, "\nUnknown option: -%c-\n", c);
+        Usage(stderr);
     }
   }
-  return true;
+
+  PrintConfiguration();
+
 }
 
-// SUSPEND_COMMIT: suspend final step in transaction commit,
-// so that it only get committed during recovery
-bool LoggingTestsUtil::DoTestSuspendCommit() {
-  char* suspend_commit_str = getenv("SUSPEND_COMMIT");
-  if (suspend_commit_str) {
-    if(atoi(suspend_commit_str) != 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-uint LoggingTestsUtil::GetTestThreadNumber() {
-  char* thread_number_str = getenv("NUM_BACKEND");
-  if (thread_number_str) {
-    return atoi(thread_number_str);
-  } else {
-    return 4;
-  }
-}
 
 }  // End test namespace
 }  // End peloton namespace
