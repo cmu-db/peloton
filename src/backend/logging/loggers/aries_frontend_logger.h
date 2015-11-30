@@ -65,7 +65,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
  private:
 
-  std::string GetLogFile(void);
+  std::string GetLogFileName(void);
 
   //===--------------------------------------------------------------------===//
   // Member Variables
