@@ -66,7 +66,7 @@ private:
 
   static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> GetTuple(catalog::Schema* schema, oid_t num_of_tuples);
+  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 

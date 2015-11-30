@@ -90,7 +90,7 @@ class FrontendLogger : public Logger{
     uint32 wait_timeout = 5; // in seconds
     bool log_collect_request = false; // used to indicate if backend has new logs
 
-    // for testing
+    // suspend final step in transaction commit for testing recovery
     bool suspend_committing = false;
 };
 
