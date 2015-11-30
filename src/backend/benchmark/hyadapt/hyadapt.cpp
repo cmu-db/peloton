@@ -84,6 +84,18 @@ void RunBenchmark(){
         RunAdaptExperiment();
         break;
 
+      case EXPERIMENT_TYPE_WEIGHT:
+        RunWeightExperiment();
+        break;
+
+      case  EXPERIMENT_TYPE_REORG:
+        RunReorgExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_DISTRIBUTION:
+        RunDistributionExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
         break;

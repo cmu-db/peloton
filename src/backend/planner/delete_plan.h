@@ -14,9 +14,13 @@
 
 #include "abstract_plan.h"
 #include "backend/common/types.h"
-#include "backend/storage/data_table.h"
 
 namespace peloton {
+
+namespace storage{
+class DataTable;
+}
+
 namespace planner {
 
 class DeletePlan : public AbstractPlan {
@@ -36,7 +40,7 @@ class DeletePlan : public AbstractPlan {
     return target_table_;
   }
 
-  std::string GetInfo() const { return target_table_->GetName(); }
+  std::string GetInfo() const { return "DeletePlan"; }
 
   bool GetTruncate() const { return truncate; }
 

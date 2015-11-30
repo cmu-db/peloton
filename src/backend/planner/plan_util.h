@@ -12,7 +12,7 @@
 
 #include <string>
 
-#include "abstract_plan.h"
+#include "backend/planner/abstract_plan.h"
 
 namespace peloton {
 namespace planner {

@@ -16,7 +16,7 @@
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
 #include "backend/catalog/manager.h"
-#include "backend/storage/tile_group_factory.h"
+#include "backend/catalog/schema.h"
 
 #include <mutex>
 

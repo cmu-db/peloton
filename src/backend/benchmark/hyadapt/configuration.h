@@ -30,7 +30,8 @@ enum OperatorType{
   OPERATOR_TYPE_DIRECT = 1,
   OPERATOR_TYPE_AGGREGATE = 2,
   OPERATOR_TYPE_ARITHMETIC = 3,
-  OPERATOR_TYPE_INSERT = 4
+  OPERATOR_TYPE_INSERT = 4,
+  OPERATOR_TYPE_UPDATE = 5
 
 };
 
@@ -42,7 +43,10 @@ enum ExperimentType{
   EXPERIMENT_TYPE_OPERATOR = 3,
   EXPERIMENT_TYPE_VERTICAL = 4,
   EXPERIMENT_TYPE_SUBSET = 5,
-  EXPERIMENT_TYPE_ADAPT = 6
+  EXPERIMENT_TYPE_ADAPT = 6,
+  EXPERIMENT_TYPE_WEIGHT = 7,
+  EXPERIMENT_TYPE_REORG = 8,
+  EXPERIMENT_TYPE_DISTRIBUTION = 9
 
 };
 
@@ -101,6 +105,16 @@ class configuration {
   bool adapt;
 
   bool fsm;
+
+  double theta;
+
+  int split_point;
+
+  double sample_weight;
+
+  bool reorg;
+
+  bool distribution;
  };
 
 void Usage(FILE *out);

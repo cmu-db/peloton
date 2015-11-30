@@ -23,7 +23,7 @@ namespace logging {
  * @param logging type can be stdout(debug), aries, peloton
  */
 FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
-  FrontendLogger* frontendLogger;
+  FrontendLogger* frontendLogger = nullptr;
 
   switch(logging_type){
     case LOGGING_TYPE_ARIES:{

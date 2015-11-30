@@ -33,7 +33,6 @@
 #include "utils/memutils.h"
 
 // TODO: Peloton Changes
-#include "backend/common/stack_trace.h"
 #include "postmaster/postmaster.h"
 
 #include <thread>

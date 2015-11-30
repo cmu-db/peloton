@@ -12,19 +12,32 @@
 
 #pragma once
 
-#include "backend/catalog/manager.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group_header.h"
-
 #include <cassert>
+#include <map>
+#include <atomic>
+#include <vector>
+#include <mutex>
+
+#include "backend/common/types.h"
 
 namespace peloton {
+
+class VarlenPool;
+
+namespace catalog{
+class Manager;
+class Schema;
+}
+
 namespace storage {
 
 //===--------------------------------------------------------------------===//
 // Tile Group
 //===--------------------------------------------------------------------===//
 
+class Tuple;
+class Tile;
+class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
 
@@ -100,13 +113,9 @@ class TileGroup {
   friend std::ostream &operator<<(std::ostream &os,
                                   const TileGroup &tile_group);
 
-  oid_t GetNextTupleSlot() const {
-    return tile_group_header->GetNextTupleSlot();
-  }
+  oid_t GetNextTupleSlot() const;
 
-  oid_t GetActiveTupleCount() const {
-    return tile_group_header->GetActiveTupleCount();
-  }
+  oid_t GetActiveTupleCount() const;
 
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
 
@@ -119,18 +128,9 @@ class TileGroup {
   // Get the tile at given offset in the tile group
   Tile *GetTile(const oid_t tile_itr) const;
 
-  oid_t GetTileId(const oid_t tile_id) const {
-    assert(tiles[tile_id]);
-    return tiles[tile_id]->GetTileId();
-  }
+  oid_t GetTileId(const oid_t tile_id) const;
 
-  peloton::VarlenPool *GetTilePool(const oid_t tile_id) const {
-    Tile *tile = GetTile(tile_id);
-
-    if (tile != nullptr) return tile->GetPool();
-
-    return nullptr;
-  }
+  peloton::VarlenPool *GetTilePool(const oid_t tile_id) const;
 
   const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
@@ -158,6 +158,12 @@ class TileGroup {
   oid_t GetTileColumnId(oid_t column_id);
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
+
+  void IncrementRefCount();
+
+  void DecrementRefCount();
+
+  double GetSchemaDifference(const storage::column_map_type& new_column_map);
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -192,6 +198,10 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
+
+  // references
+  std::atomic<size_t> ref_count;
+
 };
 
 }  // End storage namespace

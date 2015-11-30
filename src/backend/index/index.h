@@ -15,11 +15,20 @@
 #include <vector>
 #include <string>
 
-#include "backend/catalog/schema.h"
 #include "backend/common/types.h"
-#include "backend/storage/tuple.h"
 
 namespace peloton {
+
+class AbstractTuple;
+
+namespace catalog{
+class Schema;
+}
+
+namespace storage{
+class Tuple;
+}
+
 namespace index {
 
 //===--------------------------------------------------------------------===//
@@ -46,11 +55,7 @@ class IndexMetadata {
         key_schema(key_schema),
         unique_keys(unique_keys) {}
 
-  ~IndexMetadata() {
-    // clean up key schema
-    delete key_schema;
-    // no need to clean the tuple schema
-  }
+  ~IndexMetadata();
 
   const std::string &GetName() const { return index_name; }
 
@@ -62,7 +67,7 @@ class IndexMetadata {
 
   const catalog::Schema *GetKeySchema() const { return key_schema; }
 
-  oid_t GetColumnCount() const { return GetKeySchema()->GetColumnCount(); }
+  oid_t GetColumnCount() const;
 
   bool HasUniqueKeys() const { return unique_keys; }
 

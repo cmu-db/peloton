@@ -12,6 +12,7 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/catalog/manager.h"
 #include "backend/planner/projection_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/planner/abstract_scan_plan.h"

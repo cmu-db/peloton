@@ -1,6 +1,7 @@
 #include "backend/bridge/ddl/raw_database_info.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/format_transformer.h"
+#include "backend/common/exception.h"
 
 #include "catalog/pg_class.h"
 #include "access/heapam.h"
@@ -70,7 +71,9 @@ void raw_database_info::CollectRawTableAndIndex(void){
 
     // We only support tables with atleast one attribute
     int attnum = pg_class->relnatts;
-    assert(attnum > 0);
+    if(attnum == 0) {
+      throw CatalogException("We only support tables with atleast one attribute");
+    }
 
     // Get the tuple oid
     // This can be a relation oid or index oid etc.

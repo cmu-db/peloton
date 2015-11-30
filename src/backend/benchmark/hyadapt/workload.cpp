@@ -22,12 +22,15 @@
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
+#include "backend/brain/clusterer.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+
+#include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/seq_scan_executor.h"
@@ -36,16 +39,21 @@
 #include "backend/executor/materialization_executor.h"
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/insert_executor.h"
+#include "backend/executor/update_executor.h"
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/index/index_factory.h"
+
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/planner/insert_plan.h"
+#include "backend/planner/update_plan.h"
 #include "backend/planner/projection_plan.h"
+
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
@@ -58,9 +66,13 @@ namespace hyadapt{
 // Tuple id counter
 oid_t hyadapt_tuple_counter = -1000000;
 
+static void CollectColumnMapStats();
+
+static void Reorg();
+
 expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
-  // ATTR0 > LOWER_BOUND
+  // ATTR0 >= LOWER_BOUND
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
@@ -68,12 +80,13 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 
   // Second, create constant value expression.
   Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
+
   expression::AbstractExpression *constant_value_expr =
       expression::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
-      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                     tuple_value_expr,
                                     constant_value_expr);
 
@@ -83,6 +96,8 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
 }
 
 std::ofstream out("outputfile.summary");
+
+oid_t query_itr;
 
 static void WriteOutput(double duration) {
 
@@ -100,6 +115,9 @@ static void WriteOutput(double duration) {
       << state.subset_experiment_type << " "
       << state.access_num_groups << " "
       << state.subset_ratio << " "
+      << state.theta << " "
+      << state.split_point << " "
+      << state.sample_weight << " "
       << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
@@ -113,6 +131,11 @@ static void WriteOutput(double duration) {
   out << state.access_num_groups << " ";
   out << state.subset_ratio << " ";
   out << state.tuples_per_tilegroup << " ";
+  out << query_itr << " ";
+  out << state.theta << " ";
+  out << state.split_point << " ";
+  out << state.sample_weight << " ";
+  out << state.scale_factor << " ";
   out << duration << "\n";
   out.flush();
 
@@ -125,21 +148,37 @@ static int GetLowerBound() {
   return lower_bound;
 }
 
-static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
+static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
+                        std::vector<double> columns_accessed,
+                        double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
   bool status = false;
+
   start = std::chrono::system_clock::now();
+
+  // Construct sample
+  brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
   for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
+
+    // Reorg mode
+    if(state.reorg == true && txn_itr == 4) {
+      hyadapt_table->RecordSample(sample);
+      Reorg();
+    }
+
+    // Increment query counter
+    query_itr++;
 
     // Run all the executors
     for(auto executor : executors) {
 
       status = executor->Init();
-      assert(status == true);
+      if(status == false)
+        throw Exception("Init failed");
 
       std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
@@ -149,21 +188,26 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
       }
 
       status = executor->Execute();
-      assert(status == false);
-
+      if(status == false)
+        throw Exception("Execution failed");
     }
 
     // Capture fine-grained stats in adapt experiment
     if(state.adapt == true) {
       end = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsed_seconds = end-start;
-      double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+      double time_per_transaction = ((double)elapsed_seconds.count());
 
-      WriteOutput(time_per_transaction);
+      if(state.distribution == false)
+        WriteOutput(time_per_transaction);
+
+      // Record sample
+      if(state.fsm == true && cost != 0) {
+        hyadapt_table->RecordSample(sample);
+      }
 
       start = std::chrono::system_clock::now();
     }
-
   }
 
   if(state.adapt == false) {
@@ -173,6 +217,30 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors) {
 
     WriteOutput(time_per_transaction);
   }
+
+  if(state.distribution == true)
+    CollectColumnMapStats();
+
+}
+
+std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
+  std::vector<double> columns_accessed;
+  std::map<oid_t, oid_t> columns_accessed_map;
+
+  // Init map
+  for(auto col : column_ids)
+    columns_accessed_map[col] = 1;
+
+  for(int column_itr = 0 ; column_itr < state.column_count; column_itr++){
+    auto location = columns_accessed_map.find(column_itr);
+    auto end = columns_accessed_map.end();
+    if(location != end)
+      columns_accessed.push_back(1);
+    else
+      columns_accessed.push_back(0);
+  }
+
+  return columns_accessed;
 }
 
 void RunDirectTest() {
@@ -260,7 +328,14 @@ void RunDirectTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -408,7 +483,14 @@ void RunAggregateTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -459,6 +541,9 @@ void RunArithmeticTest() {
   // target list
   expression::AbstractExpression *sum_expr = nullptr;
   oid_t projection_column_count = state.projectivity * state.column_count;
+
+  // Resize column ids to contain only columns over which we evaluate the expression
+  column_ids.resize(projection_column_count);
 
   for(oid_t col_itr = 0 ; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
@@ -536,7 +621,14 @@ void RunArithmeticTest() {
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -635,7 +727,14 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   std::vector<executor::AbstractExecutor*> executors;
   executors.push_back(&mat_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  // Not going to use these stats
+  double cost = 0;
+  std::vector<double> columns_accessed;
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -657,6 +756,7 @@ void RunInsertTest() {
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
+  std::vector<oid_t> column_ids;
 
   target_list.clear();
   direct_map_list.clear();
@@ -664,6 +764,7 @@ void RunInsertTest() {
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
+    column_ids.push_back(col_id);
   }
 
   auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
@@ -681,7 +782,81 @@ void RunInsertTest() {
   std::vector<executor::AbstractExecutor*> executors;
   executors.push_back(&insert_executor);
 
-  ExecuteTest(executors);
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 0;
+  std::vector<double> columns_accessed;
+
+  ExecuteTest(executors, columns_accessed, cost);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void RunUpdateTest() {
+  const int lower_bound = GetLowerBound();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  // We need all columns because projection can require any column
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count;
+
+  column_ids.push_back(0);
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // UPDATE
+  /////////////////////////////////////////////////////////
+
+  // Update
+  std::vector<Value> values;
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+    direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  planner::UpdatePlan update_node(hyadapt_table, project_info);
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+
+  update_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor*> executors;
+  executors.push_back(&update_executor);
+
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 0;
+  std::vector<double> columns_accessed;
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -987,112 +1162,242 @@ void RunSubsetExperiment() {
   out.close();
 }
 
-static void Transform() {
+static std::map<oid_t, oid_t> GetColumnMapStats(
+    const peloton::storage::column_map_type& column_map) {
+  std::map<oid_t, oid_t> column_map_stats;
+
+  // Cluster per-tile column count
+  for(auto entry : column_map){
+    auto tile_id = entry.second.first;
+    auto column_map_itr = column_map_stats.find(tile_id);
+    if(column_map_itr == column_map_stats.end())
+      column_map_stats[tile_id] = 1;
+    else
+      column_map_stats[tile_id]++;
+  }
+
+  return std::move(column_map_stats);
+}
+
+static void CollectColumnMapStats() {
+
+  std::map<std::map<oid_t, oid_t>, oid_t> col_map_stats_summary;
+
+  // Go over all tg's
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
+  std::cout << "TG Count :: " << tile_group_count << "\n";
+
+  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+
+    auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
+    auto col_map = tile_group->GetColumnMap();
+
+    // Get stats
+    auto col_map_stats = GetColumnMapStats(col_map);
+
+    // Compare stats
+    bool found = false;
+    for(auto col_map_stats_summary_itr : col_map_stats_summary) {
+
+      // Compare types
+      auto col_map_stats_size = col_map_stats.size();
+      auto entry = col_map_stats_summary_itr.first;
+      auto entry_size = entry.size();
+
+      // Compare sizes
+      if(col_map_stats_size != entry_size)
+        continue;
+
+      // Compare entries
+      bool match = true;
+      for(size_t entry_itr = 0; entry_itr < entry_size; entry_itr++) {
+        if(entry[entry_itr] != col_map_stats[entry_itr]) {
+          match = false;
+          break;
+        }
+      }
+      if(match == false)
+        continue;
+
+      // Match found
+      col_map_stats_summary[col_map_stats]++;
+      found = true;
+      break;
+    }
+
+    // Add new type if not found
+    if(found == false)
+      col_map_stats_summary[col_map_stats] = 1;
+
+  }
+
+  oid_t type_itr = 0;
+  oid_t type_cnt = 5;
+  for(auto col_map_stats_summary_entry : col_map_stats_summary) {
+    // First, print col map stats
+    std::cout << "Type " << type_itr << " -- ";
+
+    for(auto col_stats_itr : col_map_stats_summary_entry.first)
+      std::cout << col_stats_itr.first << " " << col_stats_itr.second << " :: ";
+
+    // Next, print the normalized count
+    std::cout << col_map_stats_summary_entry.second << "\n";
+    out << query_itr << " " << type_itr << " " << col_map_stats_summary_entry.second << "\n";
+    type_itr++;
+  }
+
+  // Fillers for other types
+  for(; type_itr < type_cnt ; type_itr++)
+    out << query_itr << " " << type_itr << " " << 0 << "\n";
+
+  out.flush();
+
+}
+
+static void Transform(double theta) {
 
   // Get column map
   auto table_name = hyadapt_table->GetName();
-  auto column_count = hyadapt_table->GetSchema()->GetColumnCount();
-  auto tile_group_count = hyadapt_table->GetTileGroupCount();
 
   peloton_projectivity = state.projectivity;
-  auto column_map = peloton::storage::GetStaticColumnMap(table_name, column_count);
+
+  // TODO: Update period ?
+  oid_t update_period = 10;
+  oid_t update_itr = 0;
 
   // Transform
   while(state.fsm == true) {
+    auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
-    hyadapt_table->TransformTileGroup(tile_group_offset, column_map);
+
+    hyadapt_table->TransformTileGroup(tile_group_offset, theta);
+
+    // Update partitioning periodically
+    update_itr++;
+    if(update_itr == update_period) {
+      hyadapt_table->UpdateDefaultPartition();
+      update_itr = 0;
+    }
+
   }
 
 }
 
 static void RunAdaptTest() {
+  double direct_low_proj = 0.06;
+  double direct_high_proj = 0.7;
+  double insert_write_ratio = 0.05;
 
-  int sleep_period = 1;
-
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
-
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
-
-  state.write_ratio = 0.1;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
 
-  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-  RunArithmeticTest();
-
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
-
-  state.write_ratio = 0.1;
+  state.write_ratio = insert_write_ratio;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = 0.01;
-  peloton_projectivity = state.projectivity;
-  if(state.fsm == true)
-    sleep(sleep_period);
-
+  state.projectivity = direct_high_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
 }
 
-std::vector<LayoutType> adapt_layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {  LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+
+std::vector<oid_t> adapt_column_counts = {200};
 
 void RunAdaptExperiment() {
 
-  state.column_count = column_counts[1];
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 1;
+  state.transactions = 25;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
   state.adapt = true;
+  double theta = 0.0;
 
-  // Generate sequence
-  GenerateSequence(state.column_count);
+  // Go over all column counts
+  for(auto column_count : adapt_column_counts) {
+    state.column_count = column_count;
 
-  // Go over all layouts
-  for(auto layout : adapt_layouts) {
-    // Set layout
-    state.layout = layout;
-    peloton_layout = state.layout;
+    // Generate sequence
+    GenerateSequence(state.column_count);
 
-    state.projectivity = 1.0;
-    CreateAndLoadTable((LayoutType) peloton_layout);
+    // Go over all layouts
+    for(auto layout : adapt_layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
 
-    // Launch transformer
-    if(state.layout == LAYOUT_HYBRID) {
-      state.fsm = true;
-      transformer = std::thread(Transform);
-    }
+      std::cout << "----------------------------------------- \n\n";
 
-    RunAdaptTest();
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType) peloton_layout);
 
-    // Stop transformer
-    if(state.layout == LAYOUT_HYBRID) {
-      state.fsm = false;
-      transformer.join();
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunAdaptTest();
+
+      // Stop transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
     }
 
   }
@@ -1100,8 +1405,274 @@ void RunAdaptExperiment() {
   // Reset
   state.transactions = orig_transactions;
   state.adapt = false;
+  query_itr = 0;
 
   out.close();
+}
+
+brain::Sample GetSample(double projectivity) {
+  double cost = 10;
+  auto col_count = projectivity * state.column_count;
+  std::vector<oid_t> columns_accessed;
+
+  // Build columns accessed
+  for(auto col_itr = 0; col_itr < col_count ; col_itr++)
+    columns_accessed.push_back(col_itr);
+
+  // Construct sample
+  auto columns_accessed_bitmap = GetColumnsAccessed(columns_accessed);
+  brain::Sample sample(columns_accessed_bitmap, cost);
+
+  return std::move(sample);
+}
+
+std::vector<double> sample_weights = {0.0001, 0.001, 0.01, 0.1};
+
+void RunWeightExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.column_count = column_counts[1];
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  state.transactions = 1000;
+  oid_t num_types = 10;
+  std::vector<brain::Sample> queries;
+
+  // Construct sample
+  for(oid_t type_itr = num_types; type_itr >= 1; type_itr--) {
+    auto type_proj = type_itr * ((double) 1.0/num_types);
+    auto query = GetSample(type_proj);
+    queries.push_back(query);
+  }
+
+  // Go over all layouts
+  for(auto sample_weight : sample_weights) {
+    state.sample_weight = sample_weight;
+
+    // Reset query counter
+    query_itr = 0;
+
+    // Clusterer
+    oid_t cluster_count = 4;
+
+    brain::Clusterer clusterer(cluster_count,
+                               state.column_count,
+                               sample_weight);
+
+    // Go over all query types
+    for(auto query : queries) {
+
+      for(oid_t txn_itr = 0 ; txn_itr < state.transactions; txn_itr++) {
+        // Process sample
+        clusterer.ProcessSample(query);
+
+        auto default_partition = clusterer.GetPartitioning(2);
+
+        auto col_map = GetColumnMapStats(default_partition);
+        auto split_point = col_map.at(0);
+        state.split_point = split_point;
+
+        query_itr++;
+        WriteOutput(0);
+      }
+
+    }
+
+  }
+
+  // Reset query counter
+  state.transactions = orig_transactions;
+  query_itr = 0;
+
+}
+
+std::vector<oid_t> tile_group_counts = { 1000 };
+
+static void RunReorgTest() {
+
+  double direct_low_proj = 0.06;
+  double direct_high_proj = 0.3;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+  RunArithmeticTest();
+
+}
+
+static void Reorg() {
+
+  // Reorg all the tile groups
+  auto tile_group_count = hyadapt_table->GetTileGroupCount();
+  double theta = 0.0;
+
+  hyadapt_table->UpdateDefaultPartition();
+
+  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+    hyadapt_table->TransformTileGroup(tile_group_itr, theta);
+  }
+
+}
+
+
+std::vector<LayoutType> reorg_layouts = {  LAYOUT_ROW, LAYOUT_HYBRID};
+
+void RunReorgExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.transactions = 25;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  state.layout = LAYOUT_HYBRID;
+  peloton_layout = state.layout;
+
+  state.column_count = column_counts[1];
+
+  // Generate sequence
+  GenerateSequence(state.column_count);
+
+  // Go over all tile_group_counts
+  for(auto tile_group_count : tile_group_counts) {
+    state.scale_factor = tile_group_count;
+
+    // Go over all layouts
+    for(auto layout : reorg_layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
+
+      // Enable reorg mode
+      if(state.layout != LAYOUT_HYBRID) {
+        state.reorg = true;
+      }
+
+      std::cout << "----------------------------------------- \n\n";
+
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType) peloton_layout);
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunReorgTest();
+
+      // Stop transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
+      // Enable reorg mode
+      if(state.layout != LAYOUT_HYBRID) {
+        state.reorg = false;
+      }
+
+    }
+
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  query_itr = 0;
+
+  out.close();
+}
+
+std::vector<LayoutType> distribution_layouts = {  LAYOUT_HYBRID };
+
+void RunDistributionExperiment() {
+
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.distribution = true;
+  state.transactions = 25;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  // Go over all column counts
+  for(auto column_count : adapt_column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    for(auto layout : distribution_layouts) {
+      // Set layout
+      state.layout = layout;
+      peloton_layout = state.layout;
+
+      std::cout << "----------------------------------------- \n\n";
+
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType) peloton_layout);
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunAdaptTest();
+
+      // Stop transformer
+      if(state.layout == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
+    }
+
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  state.distribution = false;
+  query_itr = 0;
+
+  out.close();
+
 }
 
 }  // namespace hyadapt

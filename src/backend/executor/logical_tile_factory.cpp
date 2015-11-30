@@ -20,6 +20,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace executor {
@@ -134,7 +135,11 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
 
     auto &manager = catalog::Manager::GetInstance();
     storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
+    tile_group->IncrementRefCount();
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, column_ids);
 
     // Print tile group visibility
     //tile_group_header->PrintVisibility(txn_id, commit_id);
@@ -147,10 +152,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
       }
     }
 
+    tile_group->DecrementRefCount();
     logical_tile->AddPositionList(std::move(position_list));
-
-    // Add relevant columns to logical tile
-    logical_tile->AddColumns(tile_group, column_ids);
 
     result.push_back(logical_tile);
   }

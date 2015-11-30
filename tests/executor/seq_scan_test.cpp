@@ -20,10 +20,12 @@
 
 #include "backend/planner/seq_scan_plan.h"
 
+#include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
