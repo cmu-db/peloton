@@ -51,3 +51,12 @@ TEST(AriesLoggingTest, recovery) {
 
 }  // End test namespace
 }  // End peloton namespace
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  // Setup testing configuration
+  peloton::test::LoggingTestsUtil::ParseArguments(argc, argv);
+
+  return RUN_ALL_TESTS();
+}
