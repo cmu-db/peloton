@@ -13,12 +13,25 @@
 #include "backend/index/index.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/schema.h"
 #include "backend/catalog/manager.h"
+#include "backend/storage/tuple.h"
 
 #include <iostream>
 
 namespace peloton {
 namespace index {
+
+IndexMetadata::~IndexMetadata() {
+   // clean up key schema
+   delete key_schema;
+   // no need to clean the tuple schema
+ }
+
+oid_t IndexMetadata::GetColumnCount() const {
+  return GetKeySchema()->GetColumnCount();
+}
+
 
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,

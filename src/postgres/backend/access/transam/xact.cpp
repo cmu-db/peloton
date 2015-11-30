@@ -64,9 +64,6 @@
 #include "utils/timestamp.h"
 #include "pg_trace.h"
 
-// TODO: Peloton Changes
-#include "backend/common/stack_trace.h"
-
 /*
  *	User-tweakable parameters
  */

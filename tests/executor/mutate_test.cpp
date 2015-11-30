@@ -21,6 +21,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
 
+#include "backend/executor/executor_context.h"
 #include "backend/executor/delete_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/executor/seq_scan_executor.h"
@@ -30,6 +31,7 @@
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/table_factory.h"
 

@@ -10,15 +10,48 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/tile_group_header.h"
-#include "backend/concurrency/transaction_manager.h"
-
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 
+#include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/backend.h"
+#include "backend/storage/tile_group_header.h"
+
 namespace peloton {
 namespace storage {
+
+TileGroupHeader::TileGroupHeader(int tuple_count)
+    : data(nullptr),
+      num_tuple_slots(tuple_count),
+      next_tuple_slot(0) {
+  header_size = num_tuple_slots * header_entry_size;
+
+  // allocate storage space for header
+  auto backend = storage::Backend::GetInstance();
+  data = (char *) backend.Allocate(header_size);
+  // initialize data with zero
+  memset(data, 0, header_size);
+  assert(data != nullptr);
+
+  // Set MVCC Initial Value
+  for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+      tuple_slot_id++) {
+    SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+    SetBeginCommitId(tuple_slot_id, MAX_CID);
+    SetEndCommitId(tuple_slot_id, MAX_CID);
+    SetInsertCommit(tuple_slot_id, false);
+    SetDeleteCommit(tuple_slot_id, false);
+  }
+
+}
+
+TileGroupHeader::~TileGroupHeader() {
+  // reclaim the space
+  auto backend = storage::Backend::GetInstance();
+  backend.Free(data);
+  data = nullptr;
+}
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -150,7 +183,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  LOG_INFO("%s", os.str().c_str());
+  std::cout << os.str().c_str();
 }
 
 oid_t TileGroupHeader::GetActiveTupleCount() {

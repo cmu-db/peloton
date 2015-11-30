@@ -20,6 +20,7 @@
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/synch.h"
 #include "backend/common/logger.h"
@@ -157,20 +158,28 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
 void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
 
+  auto& manager = catalog::Manager::GetInstance();
+
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
     for (auto tuple_slot : entry.second)
       tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
+    tile_group->DecrementRefCount();
   }
 
   // (B) commit deletes
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : deleted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
     for (auto tuple_slot : entry.second)
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
+    tile_group->DecrementRefCount();
   }
 
   // Log the COMMIT TXN record
@@ -289,23 +298,29 @@ void TransactionManager::AbortTransaction() {
     }
   }
 
+  auto& manager = catalog::Manager::GetInstance();
+
   // (A) rollback inserts
   const txn_id_t txn_id = current_txn->GetTransactionId();
   auto inserted_tuples = current_txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
     for (auto tuple_slot : entry.second)
       tile_group->AbortInsertedTuple(tuple_slot);
+    tile_group->DecrementRefCount();
   }
 
   // (B) rollback deletes
   auto deleted_tuples = current_txn->GetDeletedTuples();
   for (auto entry : current_txn->GetDeletedTuples()) {
-    storage::TileGroup *tile_group = entry.first;
-
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
     for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot, txn_id);
+    tile_group->DecrementRefCount();
   }
 
   EndTransaction(current_txn, false);

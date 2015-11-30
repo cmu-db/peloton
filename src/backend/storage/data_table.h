@@ -15,10 +15,7 @@
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
-#include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction.h"
 
 /* Possible values for peloton_tilegroup_layout GUC */
@@ -33,11 +30,22 @@ typedef enum LayoutType
 extern LayoutType peloton_layout;
 extern double     peloton_projectivity;
 extern int        peloton_num_groups;
+extern bool       peloton_fsm;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
 namespace peloton {
+
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
+
+namespace index{
+class Index;
+}
+
 namespace storage {
+
+class Tuple;
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -106,7 +114,7 @@ class DataTable : public AbstractTable {
   size_t GetTileGroupCount() const;
 
   // Get a tile group with given layout
-  TileGroup *GetTileGroupWithLayout(column_map_type partitioning);
+  TileGroup *GetTileGroupWithLayout(const column_map_type& partitioning);
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -139,7 +147,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
-                                         const column_map_type &column_map);
+                                         double theta);
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -156,6 +164,8 @@ class DataTable : public AbstractTable {
   bool IsDirty() const;
 
   void ResetDirty();
+
+  const column_map_type& GetDefaultPartition();
 
   //===--------------------------------------------------------------------===//
   // Clustering
@@ -175,8 +185,12 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
+  column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
+
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+
+  std::map<oid_t, oid_t> GetColumnMapStats();
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -254,10 +268,6 @@ class DataTable : public AbstractTable {
   // samples for clustering
   std::vector<brain::Sample> samples;
 };
-
-// Utils
-
-column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
 
 }  // End storage namespace
 }  // End peloton namespace

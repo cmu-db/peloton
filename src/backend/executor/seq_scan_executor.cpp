@@ -19,11 +19,12 @@
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
+#include "backend/executor/executor_context.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
-
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -116,14 +117,21 @@ bool SeqScanExecutor::DExecute() {
 
       storage::TileGroup *tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
+      tile_group->IncrementRefCount();
+
       storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
       cid_t commit_id = transaction_->GetLastCommitId();
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility
-      // tile_group_header->PrintVisibility(txn_id, commit_id);
+      //tile_group_header->PrintVisibility(txn_id, commit_id);
+
+      // Construct logical tile.
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      logical_tile->AddColumns(tile_group, column_ids_);
 
       // Construct position list by looping through tile group
       // and applying the predicate.
@@ -135,22 +143,23 @@ bool SeqScanExecutor::DExecute() {
 
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group,
                                                              tuple_id);
-        if (predicate_ == nullptr ||
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue()) {
+        if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
+        }
+        else {
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          if(eval == true)
+            position_list.push_back(tuple_id);
         }
       }
 
-      // Construct logical tile.
-      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      tile_group->DecrementRefCount();
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
       if(0 == logical_tile->GetTupleCount()){
         continue;
       }
-
-      logical_tile->AddColumns(tile_group, column_ids_);
 
       SetOutput(logical_tile.release());
       return true;

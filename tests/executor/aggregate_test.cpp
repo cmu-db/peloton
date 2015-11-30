@@ -23,6 +23,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
+#include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/iterator.h"
+#include "backend/storage/tuple.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 

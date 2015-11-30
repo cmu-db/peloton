@@ -30,7 +30,7 @@ AC_PROG_LEX
 AM_PATH_PYTHON
 
 ######################################################################
-# LIBRARIES : MM, DL, RT, and M
+# LIBRARIES : DL, RT, and M
 ######################################################################
 
 AC_CHECK_LIB([m], [cos], ,
@@ -41,9 +41,6 @@ AC_CHECK_LIB([dl], [dlsym], ,
 
 AC_CHECK_LIB([rt], [clock_gettime], ,
              AC_MSG_ERROR([Please install librt library], 1))
-
-AC_CHECK_LIB([dw], [dwarf_filesrc], ,
-             AC_MSG_ERROR([Please install libdw library : libdw-dev], 1))
 
 ######################################################################
 # OS X Support
@@ -76,7 +73,7 @@ AX_CODE_COVERAGE
 
 
 ######################################################################
-# PARALLEL MAKE 
+# PARALLEL MAKE
 ######################################################################
 
 NPROCS=1
@@ -135,11 +132,11 @@ AC_MSG_RESULT([$debugit])
 
 if test x"$debugit" = x"yes"; then
     AC_DEFINE([DEBUG],[],[Debug Mode])
-    DEBUG_CXXFLAGS="-g -O0 -Wall -Wextra -Werror"
+    DEBUG_CXXFLAGS="-O0 -g -ggdb -Wall -Wextra -Werror"
     DEBUG_CPPFLAGS=""
 else
     AC_DEFINE([NDEBUG],[],[No-debug Mode])
-    DEBUG_CXXFLAGS="-O2 "
+    DEBUG_CXXFLAGS="-O2 -Wall -Wextra -Werror"
     DEBUG_CPPFLAGS="-DNDEBUG"
 fi
 
