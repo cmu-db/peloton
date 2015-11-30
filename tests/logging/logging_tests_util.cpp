@@ -22,11 +22,22 @@ namespace test {
 // PREPARE LOG FILE
 //===--------------------------------------------------------------------===//
 
+//===--------------------------------------------------------------------===//
+// 1. Standby -- Bootstrap
+// 2. Recovery -- Optional
+// 3. Logging -- Collect data and flush when commit
+// 4. Terminate -- Collect any remaining data and flush
+// 5. Sleep -- Disconnect backend loggers and frontend logger from manager
+//===--------------------------------------------------------------------===//
+
+#define LOGGING_TESTS_DATABASE_OID 20000
+#define LOGGING_TESTS_TABLE_OID    10000
+
 /**
  * @brief writing a simple log file 
  */
 bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
-                                            std::string log_file){
+                                      std::string log_file){
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -35,32 +46,38 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
     LOG_ERROR("another logging thread is running now");
     return false;
   }
+
+  // set log file and logging type
   log_manager.SetLogFile(log_file);
   log_manager.SetDefaultLoggingType(logging_type);
 
+  // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode,
                      &log_manager,
                      log_manager.GetDefaultLoggingType());
 
-  // Wait for the frontend logger to go to enter recovery mode
+  // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
+  // suspend final step in transaction commit,
+  // so that it only get committed during recovery
   if (DoTestSuspendCommit()) {
     log_manager.SetTestInterruptCommit(true);
   }
 
-  // Recovery -> Ongoing
+  // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
-  // Standby -> Recovery
 
-  // Wait for the frontend logger to go to enter logging mode
+  // Wait for the frontend logger to enter LOGGING mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Build the log
-  LoggingTestsUtil::BuildLog(20000, 10000, logging_type);
+  LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
+                             LOGGING_TESTS_TABLE_OID,
+                             logging_type);
 
-  //  Wait for the transition :: LOGGING -> TERMINATE -> SLEEP
-  if( log_manager.EndLogging() ){
+  //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
+  if(log_manager.EndLogging()){
     thread.join();
     return true;
   }
@@ -87,7 +104,7 @@ void LoggingTestsUtil::ResetSystem(){
  * @brief recover the database and check the tuples
  */
 void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
-                                         std::string log_file){
+                                     std::string log_file){
   LoggingTestsUtil::CreateDatabaseAndTable(20000, 10000);
 
   auto& log_manager = logging::LogManager::GetInstance();
@@ -112,6 +129,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
 
   // Standby -> Recovery
   log_manager.StartRecoveryMode();
+
   // Recovery -> Ongoing
 
   //wait recovery
@@ -172,17 +190,21 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   db->DropTableWithOid(table_oid);
   table = CreateSimpleTable(db_oid, table_oid);
 
+  // Execute the workload to build the log
   LaunchParallelTest(GetTestThreadNumber(), RunBackends, table);
 
   db->AddTable(table);
 
-  if (DoCheckTupleNumber()) {
-    // Check the tuples
-    LoggingTestsUtil::CheckTupleCount(20000, 10000,
-                                      ((GetTestTupleNumber()-1) * GetTestThreadNumber()));
+  // Check the tuple count if needed
+  auto check_tuple_number = DoCheckTupleNumber();
+  if (check_tuple_number) {
+    oid_t per_thread_expected = GetTestTupleNumber() - 1;
+    oid_t total_expected =  per_thread_expected * GetTestThreadNumber();
+
+    LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
   }
 
-  // We can only drop this for ARIES
+  // We can only drop the table in case of ARIES
   if(logging_type == LOGGING_TYPE_ARIES){
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
@@ -192,19 +214,22 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 
 void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
-  auto locations = InsertTuples(table, true/*commit*/);
+  bool commit = true;
+  auto locations = InsertTuples(table, commit);
 
   // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
-    DeleteTuples(table, locations[1], true/*commit*/);
+    DeleteTuples(table, locations[1], commit);
 
   // Update the first inserted location if we insert >= 1 tuples
   if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], true/*commit*/);
+    UpdateTuples(table, locations[0], commit);
 
-  // should has no affect
-  InsertTuples(table, false/*no commit*/);
+  // This insert should have no effect
+  commit = false;
+  InsertTuples(table, commit);
 
+  // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
   if(log_manager.IsInLoggingMode()){
     auto logger = log_manager.GetBackendLogger();
@@ -222,7 +247,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = GetTuple(table->GetSchema(),GetTestTupleNumber());
+  auto tuples = CreateTuples(table->GetSchema(), GetTestTupleNumber());
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -250,12 +275,13 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
                                              location,
                                              INVALID_ITEMPOINTER,
                                              tuple,
-                                             20000);
+                                             LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
 
       }
     }
 
+    // commit or abort as required
     if(committed){
       txn_manager.CommitTransaction();
     } else{
@@ -276,7 +302,8 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
                                     ItemPointer location, 
                                     bool committed){
 
-  ItemPointer delete_location(location.block,location.offset);
+  // Location of tuple that needs to be deleted
+  ItemPointer delete_location(location.block, location.offset);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -301,7 +328,7 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
                                            INVALID_ITEMPOINTER,
                                            delete_location,
                                            nullptr,
-                                           20000);
+                                           LOGGING_TESTS_DATABASE_OID);
       logger->Log(record);
     }
   }
@@ -329,7 +356,8 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
   txn->RecordDelete(delete_location);
 
   // Create Tuples
-  auto tuples = GetTuple(table->GetSchema(), 1);
+  oid_t tuple_count = 1;
+  auto tuples = CreateTuples(table->GetSchema(), tuple_count);
 
   for( auto tuple : tuples){
     ItemPointer location = table->InsertTuple(txn, tuple);
@@ -350,7 +378,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
                                              location,
                                              delete_location,
                                              tuple,
-                                             20000);
+                                             LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
     }
@@ -427,9 +455,9 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema, oid_t num_of_tuples) {
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples) {
 
-  oid_t tid = (oid_t)GetThreadId();
+  oid_t thread_id = (oid_t) GetThreadId();
 
   std::vector<storage::Tuple*> tuples;
 
@@ -437,10 +465,10 @@ std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema,
     storage::Tuple *tuple = new storage::Tuple(schema, true);
 
     // Setting values in tuple
-    Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+tid);
-    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+tid));
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+tid));
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+tid));
+    Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+thread_id);
+    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+thread_id));
+    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+thread_id));
+    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+thread_id));
 
     tuple->SetValue(0, longValue);
     tuple->SetValue(1, stringValue);
@@ -448,6 +476,7 @@ std::vector<storage::Tuple*> LoggingTestsUtil::GetTuple(catalog::Schema* schema,
     tuple->SetValue(3, doubleValue);
     tuples.push_back(tuple);
   }
+
   return tuples;
 }
 
@@ -483,6 +512,8 @@ bool LoggingTestsUtil::DoCheckTupleNumber() {
   return true;
 }
 
+// SUSPEND_COMMIT: suspend final step in transaction commit,
+// so that it only get committed during recovery
 bool LoggingTestsUtil::DoTestSuspendCommit() {
   char* suspend_commit_str = getenv("SUSPEND_COMMIT");
   if (suspend_commit_str) {

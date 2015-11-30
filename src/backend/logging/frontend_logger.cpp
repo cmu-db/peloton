@@ -55,7 +55,8 @@ void FrontendLogger::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
 
   LOG_TRACE("Frontendlogger] Standby Mode");
-  // Standby before we are ready to recovery
+
+  // Standby before we need to do RECOVERY
   logManager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
@@ -70,14 +71,14 @@ void FrontendLogger::MainLoop(void) {
       // First, do recovery if needed
       DoRecovery();
 
-      // Now, enable active logging
+      // Now, enter LOGGING mode
       logManager.SetLoggingStatus(GetLoggingType(), LOGGING_STATUS_TYPE_LOGGING);
 
       break;
     }
 
     case LOGGING_STATUS_TYPE_LOGGING:{
-      LOG_TRACE("Frontendlogger] Ongoing Mode");
+      LOG_TRACE("Frontendlogger] Logging Mode");
     }
     break;
 
@@ -91,8 +92,10 @@ void FrontendLogger::MainLoop(void) {
 
   // Periodically, wake up and do logging
   while(logManager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_LOGGING){
+
     // Collect LogRecords from all backend loggers
     CollectLogRecord();
+
     // Flush the data to the file
     Flush();
   }
@@ -103,9 +106,11 @@ void FrontendLogger::MainLoop(void) {
 
   {
     std::lock_guard<std::mutex> lock(backend_notify_mutex);
+
     // force the last check to be done without waiting
     log_collect_request = true;
   }
+
   // flush any remaining log records
   CollectLogRecord();
   Flush();

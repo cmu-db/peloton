@@ -54,6 +54,7 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
     }
   }
 
+  // Toggle status in log manager map
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_STANDBY);
 
   if(frontend_exists == false){
@@ -72,7 +73,7 @@ void LogManager::StartRecoveryMode(LoggingType logging_type) {
     assert(logging_type);
   }
 
-  // Toggle the status after BOOTSTRAP
+  // Toggle the status after STANDBY
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_RECOVERY);
 }
 
@@ -107,12 +108,17 @@ void LogManager::TerminateLoggingMode(LoggingType logging_type){
 
 void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
                                                           LoggingType logging_type) {
+
+  // check logging type
   if( logging_type == LOGGING_TYPE_INVALID){
     logging_type = default_logging_type;
     assert(logging_type);
   }
+
+  // wait for mode change
   {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
+
     while(logging_statuses.find(logging_type) == logging_statuses.end() ||
         (logging_statuses.find(logging_type) != logging_statuses.end() &&
         ((!is_equal && logging_statuses[logging_type] == logging_status) ||
@@ -120,6 +126,7 @@ void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
       logging_status_cv.wait(wait_lock);
     }
   }
+
 }
 
 /**
@@ -321,7 +328,7 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
     assert(logging_type);
   }
 
-  // Set the status from the map
+  // Set the status in the log manager map
   {
     std::lock_guard<std::mutex> lock(logging_status_mutex);
 
@@ -330,7 +337,7 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
 
     if (it != logging_statuses.end()){
       // Ensure that we cannot change to previous status in the transition diagram
-      // For example, we can change status only in this direction:
+      // i.e., we can change status only in this direction:
       // standby -> recovery -> logging -> terminate -> sleep
       if( logging_statuses[logging_type] < logging_status){
         logging_statuses[logging_type] = logging_status;
@@ -338,6 +345,8 @@ void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus loggin
     }else{
       logging_statuses.insert(std::make_pair(logging_type, logging_status));
     }
+
+    // notify everyone about the status change
     logging_status_cv.notify_all();
   }
 }
@@ -351,9 +360,12 @@ void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
 }
 
 void LogManager::SetTestInterruptCommit(bool test_suspend_commit) {
-  std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-  FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
-  frontend->SetTestInterruptCommit(test_suspend_commit);
+  {
+    std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+    FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
+
+    frontend->SetTestInterruptCommit(test_suspend_commit);
+  }
 }
 
 void LogManager::SetLogFile(std::string log_file) {
