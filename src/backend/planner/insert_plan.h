@@ -14,9 +14,13 @@
 
 #include "abstract_plan.h"
 #include "backend/planner/project_info.h"
-#include "backend/storage/data_table.h"
 
 namespace peloton {
+
+namespace storage {
+class DataTable;
+}
+
 namespace planner {
 
 class InsertPlan : public AbstractPlan {
@@ -48,7 +52,7 @@ class InsertPlan : public AbstractPlan {
     return bulk_insert_count;
   }
 
-  std::string GetInfo() const { return target_table_->GetName(); }
+  std::string GetInfo() const { return "InsertPlan"; }
 
  private:
 

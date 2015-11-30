@@ -15,15 +15,47 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/logging/records/transaction_record.h"
+#include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/aries_frontend_logger.h"
 #include "backend/logging/loggers/aries_backend_logger.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
 namespace logging {
+
+//===--------------------------------------------------------------------===//
+// Utility functions
+//===--------------------------------------------------------------------===//
+
+size_t GetLogFileSize(const std::string& file_name,
+                      int log_file_fd);
+
+bool IsFileTruncated(FILE *log_file, size_t size_to_read);
+
+size_t GetNextFrameSize(FILE *log_file);
+
+LogRecordType GetNextLogRecordType(FILE *log_file);
+
+bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
+                                 FILE *log_file);
+
+bool ReadTupleRecordHeader(TupleRecord& tuple_record,
+                           FILE *log_file);
+
+storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
+                                    VarlenPool *pool,
+                                    FILE *log_file);
+
+// Wrappers
+storage::DataTable* GetTable(TupleRecord tupleRecord);
+
+storage::TileGroup* GetTileGroup(oid_t tile_group_id);
 
 /**
  * @brief Open logfile and file descriptor
@@ -112,7 +144,7 @@ void AriesFrontendLogger::Flush(void) {
  */
 void AriesFrontendLogger::DoRecovery() {
   // Go over the log size if needed
-  if(GetLogFileSize() > 0){
+  if(GetLogFileSize(file_name, log_file_fd) > 0){
     bool reached_end_of_file = false;
 
     // Start the recovery transaction
@@ -127,7 +159,7 @@ void AriesFrontendLogger::DoRecovery() {
 
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
-      switch(GetNextLogRecordType()){
+      switch(GetNextLogRecordType(log_file)){
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
           AddTransactionToRecoveryTable();
@@ -186,7 +218,7 @@ void AriesFrontendLogger::AddTransactionToRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_BEGIN);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
     return;
   }
 
@@ -206,7 +238,7 @@ void AriesFrontendLogger::RemoveTransactionFromRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_END);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
     return;
   }
 
@@ -235,7 +267,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
     return;
   }
 
@@ -259,13 +291,12 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
  */
 void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
                                      concurrency::Transaction* source){
+
   // This is the local transaction
   auto inserted_tuples = source->GetInsertedTuples();
   // Record the inserts in recovery txn
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
+    oid_t tile_group_id = entry.first;
     for (auto tuple_slot : entry.second){
       destination->RecordInsert(ItemPointer(tile_group_id, tuple_slot));
     }
@@ -274,9 +305,7 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction* destination,
   // Record the deletes in recovery txn
   auto deleted_tuples = source->GetDeletedTuples();
   for (auto entry : deleted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
-    auto tile_group_id = tile_group->GetTileGroupId();
-
+    oid_t tile_group_id = entry.first;
     for (auto tuple_slot : entry.second) {
       destination->RecordDelete( ItemPointer(tile_group_id, tuple_slot));
     }
@@ -296,7 +325,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_ABORT);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
     return;
   }
 
@@ -320,24 +349,34 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
 
   LOG_INFO("Abort txd id %d object in table",(int)txn->GetTransactionId());
 
+  auto& manager = catalog::Manager::GetInstance();
+
   // Record the aborted inserts in recovery txn
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
 
     for (auto tuple_slot : entry.second) {
       tile_group->AbortInsertedTuple(tuple_slot);
     }
+
+    tile_group->DecrementRefCount();
   }
 
   // Record the aborted deletes in recovery txn
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : txn->GetDeletedTuples()) {
-    storage::TileGroup *tile_group = entry.first;
+    oid_t tile_group_id = entry.first;
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->IncrementRefCount();
 
     for (auto tuple_slot : entry.second) {
       tile_group->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
     }
+
+    tile_group->DecrementRefCount();
   }
 
   // Clear inserted/deleted tuples from txn, just in case
@@ -369,7 +408,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_INSERT);
 
   // Check for torn log write
-  if (ReadTupleRecordHeader(tuple_record) == false) {
+  if (ReadTupleRecordHeader(tuple_record, log_file) == false) {
     return;
   }
 
@@ -383,7 +422,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   VarlenPool *pool = new VarlenPool();
 
   // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
 
   // Check for torn log write
   if (tuple == nullptr) {
@@ -433,7 +472,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_DELETE);
 
   // Check for torn log write
-  if( ReadTupleRecordHeader(tuple_record) == false){
+  if( ReadTupleRecordHeader(tuple_record, log_file) == false){
     return;
   }
 
@@ -468,7 +507,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_UPDATE);
 
   // Check for torn log write
-  if( ReadTupleRecordHeader(tuple_record) == false){
+  if( ReadTupleRecordHeader(tuple_record, log_file) == false){
     return;
   }
 
@@ -483,7 +522,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto table = GetTable(tuple_record);
   VarlenPool *pool = new VarlenPool();
 
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
 
   // Check for torn log write
   if( tuple == nullptr){
@@ -538,7 +577,8 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
  * @brief Measure the size of log file
  * @return the size if the log file exists otherwise 0
  */
-size_t AriesFrontendLogger::GetLogFileSize(){
+size_t GetLogFileSize(const std::string& file_name,
+                      int log_file_fd){
   struct stat log_stats;
 
   if(stat(GetLogFile().c_str(), &log_stats) == 0){
@@ -549,15 +589,22 @@ size_t AriesFrontendLogger::GetLogFileSize(){
   }
 }
 
-bool AriesFrontendLogger::IsFileTruncated(size_t size_to_read){
+bool IsFileTruncated(FILE *log_file,
+                     size_t size_to_read){
+  // Cache current position
   size_t current_position = ftell(log_file);
+
+  // Get expected size of file
+  fseek(log_file, 0L, SEEK_END);
+  size_t file_size = ftell(log_file);
 
   // Check if the actual file size is less than the expected file size
   // Current position + frame length
-  if( GetLogFileSize() < (current_position+size_to_read)){
+  if( current_position + size_to_read > file_size ){
     fseek(log_file, 0, SEEK_END);
     return true;
   }else{
+    fseek(log_file, current_position, SEEK_SET);
     return false;
   }
 }
@@ -568,12 +615,12 @@ bool AriesFrontendLogger::IsFileTruncated(size_t size_to_read){
  *  Transaction Record has a single frame
  * @return the next frame size
  */
-size_t AriesFrontendLogger::GetNextFrameSize(){
+size_t GetNextFrameSize(FILE *log_file){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
 
   // Check if the frame size is broken
-  if( IsFileTruncated(sizeof(int32_t)) ){
+  if( IsFileTruncated(log_file, sizeof(int32_t)) ){
     return 0;
   }
 
@@ -588,7 +635,7 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
   frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
 
   // Check if the frame is broken
-  if( IsFileTruncated(frame_size) ){
+  if( IsFileTruncated(log_file, frame_size) ){
     return 0;
   }
 
@@ -606,11 +653,11 @@ size_t AriesFrontendLogger::GetNextFrameSize(){
  * @return log record type otherwise return invalid log record type,
  * which menas there is no more log in the log file
  */
-LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
+LogRecordType GetNextLogRecordType(FILE *log_file){
   char buffer;
 
   // Check if the log record type is broken
-  if( IsFileTruncated(1) ){
+  if( IsFileTruncated(log_file, 1) ){
     return LOGRECORD_TYPE_INVALID;
   }
 
@@ -630,10 +677,11 @@ LogRecordType AriesFrontendLogger::GetNextLogRecordType(){
  * @brief Read TransactionRecord
  * @param txn_record
  */
-bool AriesFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txn_record){
+bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
+                                 FILE *log_file){
 
   // Check if frame is broken
-  auto header_size = GetNextFrameSize();
+  auto header_size = GetNextFrameSize(log_file);
   if( header_size == 0 ){
     return false;
   }
@@ -655,10 +703,11 @@ bool AriesFrontendLogger::ReadTransactionRecordHeader(TransactionRecord &txn_rec
  * @brief Read TupleRecordHeader
  * @param tuple_record
  */
-bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tuple_record){
+bool ReadTupleRecordHeader(TupleRecord& tuple_record,
+                           FILE *log_file){
 
   // Check if frame is broken
-  auto header_size = GetNextFrameSize();
+  auto header_size = GetNextFrameSize(log_file);
   if( header_size == 0 ){
     return false;
   }
@@ -682,10 +731,11 @@ bool AriesFrontendLogger::ReadTupleRecordHeader(TupleRecord& tuple_record){
  * @param pool
  * @return tuple
  */
-storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema,
-                                                         VarlenPool *pool){
+storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
+                                    VarlenPool *pool,
+                                    FILE *log_file){
   // Check if the frame is broken
-  size_t body_size = GetNextFrameSize();
+  size_t body_size = GetNextFrameSize(log_file);
   if( body_size == 0 ){
     return nullptr;
   }
@@ -711,7 +761,7 @@ storage::Tuple* AriesFrontendLogger::ReadTupleRecordBody(catalog::Schema* schema
  * @param tuple record
  * @return data table
  */
-storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tuple_record){
+storage::DataTable* GetTable(TupleRecord tuple_record){
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
@@ -728,7 +778,7 @@ storage::DataTable* AriesFrontendLogger::GetTable(TupleRecord tuple_record){
  * @param tile group id
  * @return tile group
  */
-storage::TileGroup* AriesFrontendLogger::GetTileGroup(oid_t tile_group_id){
+storage::TileGroup* GetTileGroup(oid_t tile_group_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   return tile_group;

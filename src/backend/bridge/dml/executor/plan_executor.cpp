@@ -18,6 +18,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
+#include "backend/executor/executor_context.h"
 #include "backend/storage/tuple_iterator.h"
 
 #include "access/tupdesc.h"
@@ -254,9 +255,6 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(
       nullptr, plan, executor_context);
 
-  // Add materialization on top of the root if needed
-  executor_tree = AddMaterialization(executor_tree);
-
   LOG_TRACE("Initializing the executor tree");
 
   // Initialize the executor tree
@@ -280,26 +278,21 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
       break;
     }
 
-    std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
+    std::unique_ptr<executor::LogicalTile> logical_tile(executor_tree->GetOutput());
 
-    // Some executor just doesn't return tiles (e.g., Update).
-    if (tile.get() == nullptr) {
+    // Some executors don't return logical tiles (e.g., Update).
+    if (logical_tile.get() == nullptr) {
       continue;
     }
 
-    // Get result base tile and iterate over it
-    auto base_tile = tile.get()->GetBaseTile(0);
-    assert(base_tile);
-    storage::TupleIterator tile_itr(base_tile);
-    storage::Tuple tuple(base_tile->GetSchema());
+    // Go over the logical tile
+    for (oid_t tuple_id : *logical_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
 
-    // Go over tile and get result slots
-    while (tile_itr.Next(tuple)) {
-      auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
+      auto slot = TupleTransformer::GetPostgresTuple(&cur_tuple, tuple_desc);
 
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        //print_slot(slot);
       }
     }
 

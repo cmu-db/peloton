@@ -16,16 +16,17 @@
 #include <unordered_set>
 #include <vector>
 
-#include "backend/catalog/schema.h"
 #include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/storage/tile_group.h"
 
 namespace peloton {
 
+namespace catalog{
+class Schema;
+}
+
 namespace storage {
 class Tile;
-class Tuple;
+class TileGroup;
 }
 
 namespace executor {
@@ -63,33 +64,33 @@ class LogicalTile {
 
   void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
-  inline int AddPositionList(std::vector<oid_t> &&position_list);
+  int AddPositionList(std::vector<oid_t> &&position_list);
 
-  inline void RemoveVisibility(oid_t tuple_id);
+  void RemoveVisibility(oid_t tuple_id);
 
-  inline storage::Tile *GetBaseTile(oid_t column_id);
+  storage::Tile *GetBaseTile(oid_t column_id);
 
-  inline Value GetValue(oid_t tuple_id, oid_t column_id);
+  Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  inline size_t GetTupleCount();
+  size_t GetTupleCount();
 
-  inline size_t GetColumnCount();
+  size_t GetColumnCount();
 
-  inline const std::vector<ColumnInfo> &GetSchema() const;
+  const std::vector<ColumnInfo> &GetSchema() const;
 
-  inline const ColumnInfo &GetColumnInfo(const oid_t column_id) const;
+  const ColumnInfo &GetColumnInfo(const oid_t column_id) const;
 
-  inline catalog::Schema *GetPhysicalSchema() const;
+  catalog::Schema *GetPhysicalSchema() const;
 
   void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  inline const std::vector<std::vector<oid_t>> &GetPositionLists() const;
+  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
 
-  inline const std::vector<oid_t> &GetPositionList(const oid_t column_id) const;
+  const std::vector<oid_t> &GetPositionList(const oid_t column_id) const;
 
-  inline void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
+  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
 
-  inline void SetPositionListsAndVisibility(
+  void SetPositionListsAndVisibility(
       std::vector<std::vector<oid_t>> &&position_lists);
 
   friend std::ostream &operator<<(std::ostream &os,
@@ -109,18 +110,18 @@ class LogicalTile {
     friend class LogicalTile;
 
    public:
-    inline iterator &operator++();
+    iterator &operator++();
 
-    inline iterator operator++(int);
+    iterator operator++(int);
 
-    inline bool operator==(const iterator &rhs);
+    bool operator==(const iterator &rhs);
 
-    inline bool operator!=(const iterator &rhs);
+    bool operator!=(const iterator &rhs);
 
-    inline oid_t operator*();
+    oid_t operator*();
 
    private:
-    inline iterator(LogicalTile *tile, bool begin);
+    iterator(LogicalTile *tile, bool begin);
 
     /** @brief Keeps track of position of iterator. */
     oid_t pos_;
@@ -129,9 +130,9 @@ class LogicalTile {
     LogicalTile *tile_;
   };
 
-  inline iterator begin();
+  iterator begin();
 
-  inline iterator end();
+  iterator end();
 
   //===--------------------------------------------------------------------===//
   // Column Info
@@ -183,279 +184,6 @@ class LogicalTile {
   /** @brief Keeps track of the number of tuples that are still visible. */
   oid_t visible_tuples_ = 0;
 };
-
-/**
- * @brief Get the schema of the tile.
- * @return ColumnInfo-based schema of the tile.
- */
-inline const std::vector<LogicalTile::ColumnInfo> &LogicalTile::GetSchema() const {
-  return schema_;
-}
-
-/**
- * @brief Get the information about the column.
- * @return ColumnInfo of the column.
- */
-inline const LogicalTile::ColumnInfo &LogicalTile::GetColumnInfo(const oid_t column_id) const {
-  return schema_[column_id];
-}
-
-/**
- * @brief Construct the underlying physical schema of all the columns in the
- *logical tile.
- *
- * @return New schema object.
- */
-inline catalog::Schema *LogicalTile::GetPhysicalSchema() const {
-  std::vector<catalog::Column> physical_columns;
-
-  for (ColumnInfo column : schema_) {
-    auto schema = column.base_tile->GetSchema();
-    auto physical_column = schema->GetColumn(column.origin_column_id);
-    physical_columns.push_back(physical_column);
-  }
-
-  catalog::Schema *schema = new catalog::Schema(physical_columns);
-
-  return schema;
-}
-
-/**
- * @brief Get the position lists of the tile.
- * @return Position lists of the tile.
- */
-inline const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
-  return position_lists_;
-}
-
-/**
- * @brief Get the position list at given offset in the tile.
- * @return Position list associated with column.
- */
-inline const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) const {
-  return position_lists_[column_id];
-}
-
-/**
- * @brief Set the position lists of the tile.
- * @param Position lists.
- */
-inline void LogicalTile::SetPositionLists(
-    std::vector<std::vector<oid_t>> &&position_lists) {
-  position_lists_ = position_lists;
-}
-
-inline void LogicalTile::SetPositionListsAndVisibility(
-    std::vector<std::vector<oid_t>> &&position_lists) {
-  position_lists_ = position_lists;
-  if (position_lists.size() > 0) {
-    total_tuples_ = position_lists[0].size();
-    visible_rows_.resize(position_lists_[0].size(), true);
-    visible_tuples_ = position_lists_[0].size();
-  }
-}
-
-
-/**
- * @brief Adds position list to logical tile.
- * @param position_list Position list to be added. Note the move semantics.
- *
- * The first position list to be added determines the number of rows in this
- * logical tile.
- *
- * @return Position list index of newly added list.
- */
-inline int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
-  assert(
-      position_lists_.size() == 0
-          || position_lists_[0].size() == position_list.size());
-
-  if (position_lists_.size() == 0) {
-    visible_tuples_ = position_list.size();
-    visible_rows_.resize(position_list.size(), true);
-
-    // All tuples are visible initially
-    total_tuples_ = visible_tuples_;
-  }
-
-  position_lists_.push_back(std::move(position_list));
-  return position_lists_.size() - 1;
-}
-
-/**
- * @brief Remove visibility the specified tuple in the logical tile.
- * @param tuple_id Id of the specified tuple.
- */
-inline void LogicalTile::RemoveVisibility(oid_t tuple_id) {
-  assert(tuple_id < total_tuples_);
-  assert(visible_rows_[tuple_id]);
-
-  visible_rows_[tuple_id] = false;
-  visible_tuples_--;
-}
-
-/**
- * @brief Returns base tile that the specified column was from.
- * @param column_id Id of the specified column.
- *
- * @return Pointer to base tile of specified column.
- */
-inline storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
-  return schema_[column_id].base_tile;
-}
-
-/**
- * @brief Get the value at the specified field.
- * @param tuple_id Tuple id of the specified field (row/position).
- * @param column_id Column id of the specified field.
- *
- * @return Value at the specified field,
- *         or VALUE_TYPE_INVALID if it doesn't exist.
- */
-// TODO: Deprecated. Avoid calling this function if possible.
-inline Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
-  assert(column_id < schema_.size());
-  assert(tuple_id < total_tuples_);
-  assert(visible_rows_[tuple_id]);
-
-  ColumnInfo &cp = schema_[column_id];
-  oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
-  storage::Tile *base_tile = cp.base_tile;
-
-  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
-  Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
-
-  return value;
-}
-
-/**
- * @brief Returns the number of visible tuples in this logical tile.
- *
- * @return Number of tuples.
- */
-inline size_t LogicalTile::GetTupleCount() {
-  return visible_tuples_;
-}
-
-/**
- * @brief Returns the number of columns.
- *
- * @return Number of columns.
- */
-inline size_t LogicalTile::GetColumnCount() {
-  return schema_.size();
-}
-
-/**
- * @brief Returns iterator pointing to first tuple.
- *
- * @return iterator pointing to first tuple.
- */
-inline LogicalTile::iterator LogicalTile::begin() {
-  bool begin = true;
-  return iterator(this, begin);
-}
-
-/**
- * @brief Returns iterator indicating that we are past the last tuple.
- *
- * @return iterator indicating we're past the last tuple.
- */
-inline LogicalTile::iterator LogicalTile::end() {
-  bool begin = false;
-  return iterator(this, begin);
-}
-
-/**
- * @brief Constructor for iterator.
- * @param Logical tile corresponding to this iterator.
- * @param begin Specifies whether we want the iterator initialized to point
- *              to the first tuple id, or to past-the-last tuple.
- */
-inline LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
-    : tile_(tile) {
-  if (!begin) {
-    pos_ = INVALID_OID;
-    return;
-  }
-
-  auto total_tile_tuples = tile_->total_tuples_;
-
-  // Find first visible tuple.
-  pos_ = 0;
-  while (pos_ < total_tile_tuples && !tile_->visible_rows_[pos_]) {
-    pos_++;
-  }
-
-  // If no visible tuples...
-  if (pos_ == total_tile_tuples) {
-    pos_ = INVALID_OID;
-  }
-}
-
-/**
- * @brief Increment operator.
- *
- * It ignores invisible tuples.
- *
- * @return iterator after the increment.
- */
-inline LogicalTile::iterator &LogicalTile::iterator::operator++() {
-  auto total_tile_tuples = tile_->total_tuples_;
-
-  // Find next visible tuple.
-  do {
-    pos_++;
-  } while (pos_ < total_tile_tuples && !tile_->visible_rows_[pos_]);
-
-  if (pos_ == total_tile_tuples) {
-    pos_ = INVALID_OID;
-  }
-
-  return *this;
-}
-
-/**
- * @brief Increment operator.
- *
- * It ignores invisible tuples.
- *
- * @return iterator before the increment.
- */
-inline LogicalTile::iterator LogicalTile::iterator::operator++(int) {
-  LogicalTile::iterator tmp(*this);
-  operator++();
-  return tmp;
-}
-
-/**
- * @brief Equality operator.
- * @param rhs The iterator to compare to.
- *
- * @return True if equal, false otherwise.
- */
-inline bool LogicalTile::iterator::operator==(const iterator &rhs) {
-  return pos_ == rhs.pos_ && tile_ == rhs.tile_;
-}
-
-/**
- * @brief Inequality operator.
- * @param rhs The iterator to compare to.
- *
- * @return False if equal, true otherwise.
- */
-inline bool LogicalTile::iterator::operator!=(const iterator &rhs) {
-  return pos_ != rhs.pos_ || tile_ != rhs.tile_;
-}
-
-/**
- * @brief Dereference operator.
- *
- * @return Id of tuple that iterator is pointing at.
- */
-inline oid_t LogicalTile::iterator::operator*() {
-  return pos_;
-}
 
 }  // namespace executor
 }  // namespace peloton

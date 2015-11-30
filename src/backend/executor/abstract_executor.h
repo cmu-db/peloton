@@ -16,12 +16,18 @@
 #include <memory>
 #include <vector>
 
-#include "../planner/abstract_plan.h"
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 
 namespace peloton {
+
+namespace planner {
+class AbstractPlan;
+}
+
+namespace executor {
+class ExecutorContext;
+}
+
 namespace executor {
 
 class AbstractExecutor {

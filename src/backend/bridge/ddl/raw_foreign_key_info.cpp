@@ -1,10 +1,10 @@
 #include "backend/bridge/ddl/raw_foreign_key_info.h"
-
-#include "backend/catalog/foreign_key.h"
-#include "backend/storage/data_table.h"
-#include "backend/catalog/manager.h"
 #include "backend/bridge/ddl/bridge.h"
+#include "backend/catalog/foreign_key.h"
+#include "backend/catalog/manager.h"
 #include "backend/catalog/column.h"
+#include "backend/catalog/schema.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace bridge {

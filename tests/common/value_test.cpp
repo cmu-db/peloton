@@ -14,15 +14,6 @@
 
 #include "harness.h"
 
-namespace peloton {
-namespace test {
-
-//===--------------------------------------------------------------------===//
-// Value Tests
-//===--------------------------------------------------------------------===//
-
-#include "harness.h"
-
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/common/value_peeker.h"
@@ -30,6 +21,13 @@ namespace test {
 
 #include <cfloat>
 #include <limits>
+
+namespace peloton {
+namespace test {
+
+//===--------------------------------------------------------------------===//
+// Value Tests
+//===--------------------------------------------------------------------===//
 
 void deserDecHelper(Value nv, ValueType &vt, TTInt &value, std::string &str) {
   vt = ValuePeeker::PeekValueType(nv);

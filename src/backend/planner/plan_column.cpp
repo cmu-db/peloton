@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/planner/plan_column.h"
+#include "backend/common/exception.h"
 
 #include <sstream>
 
@@ -48,7 +49,8 @@ PlanColumn::PlanColumn(json_spirit::Object &col_object)
     m_inputColumnName = "";
   }
 
-  assert(contains_name && contains_type && contains_size);
+  if(contains_name == false || contains_type == false || contains_size == false)
+    throw Exception("Does not contain everything");
 }
 
 int PlanColumn::GetGuid() const { return m_guid; }

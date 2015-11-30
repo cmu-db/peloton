@@ -12,10 +12,11 @@
 
 #pragma once
 
+#include <vector>
+
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/abstract_expression.h"
-#include <vector>
-#include "../planner/update_plan.h"
+#include "backend/planner/update_plan.h"
 
 namespace peloton {
 namespace executor {

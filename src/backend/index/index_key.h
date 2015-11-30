@@ -12,14 +12,14 @@
 
 #pragma once
 
+#include <cassert>
+#include <iostream>
+#include <sstream>
+
 #include "backend/common/value_peeker.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
-
-#include <cassert>
-#include <iostream>
-#include <sstream>
 
 namespace peloton {
 namespace index {

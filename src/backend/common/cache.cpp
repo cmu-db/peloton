@@ -13,7 +13,6 @@
 #include <cassert>
 
 #include "backend/common/cache.h"
-#include "backend/common/logger.h"
 #include "backend/planner/abstract_plan.h"
 
 namespace peloton {
@@ -76,9 +75,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     cache_itr = iterator(ret.first);
     while (map_.size() > this->capacity_) {
       auto deleted = list_.back();
-      auto count = this->map_.erase(deleted);
+      this->map_.erase(deleted);
       list_.erase(std::prev(list_.end()));
-      assert(count == 1);
     }
   } else {
     list_.splice(list_.begin(), list_, map_itr->second.second);

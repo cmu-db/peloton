@@ -14,11 +14,18 @@
 
 #include "abstract_plan.h"
 #include "backend/planner/project_info.h"
-#include "backend/expression/abstract_expression.h"
 #include "backend/common/types.h"
-#include "backend/storage/data_table.h"
 
 namespace peloton {
+
+namespace expression{
+class Expression;
+}
+
+namespace storage {
+class DataTable;
+}
+
 namespace planner {
 
 class UpdatePlan : public AbstractPlan {
@@ -41,7 +48,7 @@ class UpdatePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  std::string GetInfo() const { return target_table_->GetName(); }
+  std::string GetInfo() const { return "UpdatePlan"; }
 
  private:
   /** @brief Target table. */

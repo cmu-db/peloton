@@ -21,7 +21,6 @@
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
-#include "backend/storage/tuple.h"
 
 #include "boost/unordered_map.hpp"
 #include "boost/array.hpp"

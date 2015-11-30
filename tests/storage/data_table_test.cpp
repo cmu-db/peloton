@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
 #include "executor/executor_tests_util.h"
 
 namespace peloton {
@@ -38,8 +39,10 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
+  auto theta = 0.0;
+
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, theta);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -48,7 +51,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 0);
 
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, theta);
 
   // Create the another column map
   column_map[0] = std::make_pair(0, 0);
@@ -57,7 +60,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   column_map[3] = std::make_pair(1, 2);
 
   // Transform the tile group
-  data_table->TransformTileGroup(0, column_map);
+  data_table->TransformTileGroup(0, theta);
 
 }
 

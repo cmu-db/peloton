@@ -18,6 +18,9 @@
 #include "backend/bridge/ddl/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
+#include "backend/storage/tuple.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/exception.h"
 
 namespace peloton {
 namespace bridge {
@@ -50,7 +53,8 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Create a table
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create table");
 
   // Get the table pointer and schema
   storage::DataTable *table = db->GetTableWithOid(table_oid);
@@ -108,7 +112,8 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not drop table");
 
   // Drop the table
   status = DDLTable::DropTable(pktable_oid);
@@ -135,22 +140,24 @@ void BridgeTest::DDL_MIX_TEST_2() {
 
   // Create a table
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-  assert(status);
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not drop table");
 
   // Create a table again
   status = DDLTable::CreateTable(table_oid, table_name, columns);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create table");
 
   // Get the table pointer and schema
   storage::DataTable *table = db->GetTableWithOid(table_oid);
   catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  if(schema->GetColumnCount() != 4)
+    throw CatalogException("Schema does not match");
 
   // Insert tuples
   const bool allocate = true;
@@ -174,17 +181,23 @@ void BridgeTest::DDL_MIX_TEST_2() {
 
     table->InsertTuple(txn, &tuple);
 
-    assert(tuple.GetValue(0) == integerValue);
-    assert(tuple.GetValue(1) == stringValue);
-    assert(tuple.GetValue(2) == timestampValue);
-    assert(tuple.GetValue(3) == doubleValue);
+    if(tuple.GetValue(0) != integerValue)
+      throw CatalogException("Value does not match");
+    if(tuple.GetValue(1) != stringValue)
+      throw CatalogException("Value does not match");
+    if(tuple.GetValue(2) != timestampValue)
+      throw CatalogException("Value does not match");
+    if(tuple.GetValue(3) != doubleValue)
+      throw CatalogException("Value does not match");
+
   }
 
   txn_manager.CommitTransaction(txn);
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not drop table");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
