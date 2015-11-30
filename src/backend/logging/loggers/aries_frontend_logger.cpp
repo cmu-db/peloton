@@ -34,7 +34,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  log_file = fopen( GetLogFile().c_str(),"ab+");
+  log_file = fopen(GetLogFile().c_str(),"ab+");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
