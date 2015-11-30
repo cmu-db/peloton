@@ -16,6 +16,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/aries_frontend_logger.h"
@@ -33,8 +34,7 @@ namespace logging {
 // Utility functions
 //===--------------------------------------------------------------------===//
 
-size_t GetLogFileSize(const std::string& file_name,
-                      int log_file_fd);
+size_t GetLogFileSize(int log_file_fd);
 
 bool IsFileTruncated(FILE *log_file, size_t size_to_read);
 
@@ -66,7 +66,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  log_file = fopen(GetLogFile().c_str(),"ab+");
+  log_file = fopen(GetLogFileName().c_str(),"ab+");
   if(log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
@@ -144,7 +144,7 @@ void AriesFrontendLogger::Flush(void) {
  */
 void AriesFrontendLogger::DoRecovery() {
   // Go over the log size if needed
-  if(GetLogFileSize(file_name, log_file_fd) > 0){
+  if(GetLogFileSize(log_file_fd) > 0){
     bool reached_end_of_file = false;
 
     // Start the recovery transaction
@@ -577,16 +577,11 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
  * @brief Measure the size of log file
  * @return the size if the log file exists otherwise 0
  */
-size_t GetLogFileSize(const std::string& file_name,
-                      int log_file_fd){
+size_t GetLogFileSize(int log_file_fd){
   struct stat log_stats;
 
-  if(stat(GetLogFile().c_str(), &log_stats) == 0){
-    fstat(log_file_fd, &log_stats);
-    return log_stats.st_size;
-  }else{
-    return 0;
-  }
+  fstat(log_file_fd, &log_stats);
+  return log_stats.st_size;
 }
 
 bool IsFileTruncated(FILE *log_file,
@@ -784,9 +779,9 @@ storage::TileGroup* GetTileGroup(oid_t tile_group_id){
   return tile_group;
 }
 
-std::string AriesFrontendLogger::GetLogFile(void) {
+std::string AriesFrontendLogger::GetLogFileName(void) {
   auto& log_manager = logging::LogManager::GetInstance();
-  return log_manager.GetLogFile();
+  return log_manager.GetLogFileName();
 }
 
 }  // namespace logging

@@ -99,7 +99,7 @@ class LogManager{
 
     void SetLogFile(std::string log_file);
 
-    std::string GetLogFile(void);
+    std::string GetLogFileName(void);
 
   private:
 
