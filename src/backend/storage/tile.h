@@ -14,8 +14,8 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group_header.h"
+#include "backend/common/serializer.h"
+#include "backend/common/pool.h"
 
 #include <mutex>
 
@@ -26,9 +26,10 @@ namespace storage {
 // Tile
 //===--------------------------------------------------------------------===//
 
+class Tuple;
 class TileGroup;
+class TileGroupHeader;
 class TupleIterator;
-// class TileStats;
 
 /**
  * Represents a Tile.
@@ -68,16 +69,7 @@ class Tile {
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
 
   // active tuple slots
-  inline virtual oid_t GetActiveTupleCount() const {
-    // For normal tiles
-    if (tile_group_header != nullptr) {
-      return tile_group_header->GetNextTupleSlot();
-    }
-    // For temp tiles
-    else {
-      return num_tuple_slots;
-    }
-  }
+  virtual oid_t GetActiveTupleCount() const;
 
   int GetTupleOffset(const char *tuple_address) const;
 

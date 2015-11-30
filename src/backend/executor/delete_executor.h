@@ -17,6 +17,11 @@
 #include <vector>
 
 namespace peloton {
+
+namespace storage{
+class DataTable;
+}
+
 namespace executor {
 
 class DeleteExecutor : public AbstractExecutor {

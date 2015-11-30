@@ -13,6 +13,7 @@
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
+#include "backend/catalog/manager.h"
 
 #include "postmaster/peloton.h"
 #include "nodes/parsenodes.h"

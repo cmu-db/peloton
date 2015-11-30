@@ -20,6 +20,11 @@
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
 #include "backend/benchmark/hyadapt/configuration.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile_group_factory.h"
 
 std::vector<peloton::oid_t> hyadapt_column_ids;
 
@@ -64,6 +69,13 @@ DataTable::DataTable(catalog::Schema *schema,
 : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
   tuples_per_tilegroup(tuples_per_tilegroup),
   adapt_table(adapt_table){
+
+  // Init default partition
+  auto col_count = schema->GetColumnCount();
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    default_partition[col_itr] = std::make_pair(0, col_itr);
+  }
+
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -74,7 +86,7 @@ DataTable::~DataTable() {
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
       tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
-    delete tile_group;
+    tile_group->DecrementRefCount();
   }
 
   // clean up indices
@@ -131,6 +143,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
+  oid_t tile_group_id = INVALID_OID;
   auto transaction_id = transaction->GetTransactionId();
 
   while (tuple_slot == INVALID_OID) {
@@ -144,7 +157,12 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
+    tile_group->IncrementRefCount();
+
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    tile_group_id = tile_group->GetTileGroupId();
+
+    tile_group->DecrementRefCount();
     if (tuple_slot == INVALID_OID) {
       // XXX Should we put this in a critical section?
       AddDefaultTileGroup();
@@ -155,7 +173,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
            tile_group_offset, tile_group->GetTileGroupId(), tile_group);
 
   // Set tuple location
-  ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+  ItemPointer location(tile_group_id, tuple_slot);
 
   return location;
 }
@@ -395,7 +413,7 @@ void DataTable::ResetDirty() {
 // TILE GROUP
 //===--------------------------------------------------------------------===//
 
-TileGroup *DataTable::GetTileGroupWithLayout(column_map_type partitioning){
+TileGroup *DataTable::GetTileGroupWithLayout(const column_map_type& partitioning){
 
   std::vector<catalog::Schema> schemas;
   oid_t tile_group_id = INVALID_OID;
@@ -499,7 +517,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     if (active_tuple_count < allocated_tuple_count) {
       LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count,
                 allocated_tuple_count);
-      delete tile_group;
+      tile_group->DecrementRefCount();
       return INVALID_OID;
     }
 
@@ -773,7 +791,8 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 }
 
 storage::TileGroup *DataTable::TransformTileGroup(
-    oid_t tile_group_offset, const column_map_type &column_map) {
+    oid_t tile_group_offset,
+    double theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
     LOG_ERROR("Tile group offset not found in table : %lu \n", tile_group_offset);
@@ -785,15 +804,21 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
+  auto diff = tile_group->GetSchemaDifference(default_partition);
+
+  // Check threshold for transformation
+  if(diff < theta) {
+    return nullptr;
+  }
 
   // Get the schema for the new transformed tile group
-  auto new_schema = TransformTileGroupSchema(tile_group, column_map);
+  auto new_schema = TransformTileGroupSchema(tile_group, default_partition);
 
   // Allocate space for the transformed tile group
   auto new_tile_group = TileGroupFactory::GetTileGroup(
       tile_group->GetDatabaseId(), tile_group->GetTableId(),
       tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-      new_schema, column_map,
+      new_schema, default_partition,
       tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
@@ -803,8 +828,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group
-  delete tile_group;
-
+  tile_group->DecrementRefCount();
   tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   return new_tile_group;
@@ -818,47 +842,77 @@ void DataTable::RecordSample(const brain::Sample& sample) {
     samples.push_back(sample);
   }
 
-  if(rand() % 10 < 2)
-    UpdateDefaultPartition();
+}
 
+const column_map_type& DataTable::GetDefaultPartition() {
+  return default_partition;
+}
+
+std::map<oid_t, oid_t> DataTable::GetColumnMapStats(){
+  std::map<oid_t, oid_t> column_map_stats;
+
+  // Cluster per-tile column count
+  for(auto entry : default_partition){
+    auto tile_id = entry.second.first;
+    auto column_map_itr = column_map_stats.find(tile_id);
+    if(column_map_itr == column_map_stats.end())
+      column_map_stats[tile_id] = 1;
+    else
+      column_map_stats[tile_id]++;
+  }
+
+  return std::move(column_map_stats);
 }
 
 void DataTable::UpdateDefaultPartition() {
 
-  oid_t cluster_count = 4;
   oid_t column_count = GetSchema()->GetColumnCount();
 
-  brain::Clusterer clusterer(cluster_count, column_count);
+  // TODO: Number of clusters and new sample weight
+  oid_t cluster_count = 4;
+  double new_sample_weight = 0.01;
+
+  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
 
   // Process all samples
   {
     std::lock_guard<std::mutex> lock(clustering_mutex);
 
-    for(auto sample : samples)
+    // Check if we have any samples
+    if(samples.empty())
+      return;
+
+    for(auto sample : samples) {
       clusterer.ProcessSample(sample);
+    }
+
+    samples.clear();
   }
 
-  auto partitioning = clusterer.GetPartitioning(2);
-
-  std::cout << "UPDATED PARTITIONING \n";
-  std::cout << "COLUMN "
-      << "\t"
-      << " TILE"
-      << "\n";
-  for (auto entry : partitioning)
-    std::cout << entry.first << "\t"
-    << entry.second.first << " : " << entry.second.second << "\n";
+  // TODO: Max number of tiles
+  default_partition = clusterer.GetPartitioning(2);
 }
 
 //===--------------------------------------------------------------------===//
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count){
+column_map_type DataTable::GetStaticColumnMap(std::string table_name, oid_t column_count){
   column_map_type column_map;
 
   // HYADAPT
   if(table_name == "HYADAPTTABLE") {
+
+    // FSM MODE
+    if(peloton_fsm == true) {
+      for(oid_t column_id = 0; column_id < column_count; column_id++) {
+        column_map[column_id] = std::make_pair(0, column_id);
+      }
+      return std::move(column_map);
+
+      // TODO: ADD A FSM
+      //return default_partition;
+    }
 
     // DEFAULT
     if(peloton_num_groups == 0) {

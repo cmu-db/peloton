@@ -10,10 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/aggregator.h"
-#include "backend/common/logger.h"
-
 #include <set>
+
+#include "backend/executor/aggregator.h"
+#include "backend/executor/executor_context.h"
+#include "backend/common/logger.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace executor {

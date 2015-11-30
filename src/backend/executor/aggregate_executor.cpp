@@ -17,6 +17,7 @@
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
+#include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/storage/table_factory.h"

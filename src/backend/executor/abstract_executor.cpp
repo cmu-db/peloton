@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/executor/abstract_executor.h"
+#include "backend/planner/abstract_plan.h"
 #include "backend/common/logger.h"
 
 namespace peloton {

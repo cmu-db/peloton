@@ -18,9 +18,12 @@
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
 
 namespace peloton {
 namespace executor {
@@ -75,6 +78,7 @@ bool UpdateExecutor::DExecute() {
   storage::TileGroup *tile_group = tile->GetTileGroup();
   auto transaction_ = executor_context_->GetTransaction();
   auto tile_group_id = tile_group->GetTileGroupId();
+  tile_group->IncrementRefCount();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -88,6 +92,7 @@ bool UpdateExecutor::DExecute() {
     if (status == false) {
       LOG_INFO("Fail to delete old tuple. Set txn failure.");
       transaction_->SetResult(Result::RESULT_FAILURE);
+      tile_group->DecrementRefCount();
       return false;
     }
     transaction_->RecordDelete(delete_location);
@@ -108,9 +113,9 @@ bool UpdateExecutor::DExecute() {
       delete new_tuple;
       LOG_INFO("Fail to insert new tuple. Set txn failure.");
       transaction_->SetResult(Result::RESULT_FAILURE);
+      tile_group->DecrementRefCount();
       return false;
     }
-
 
     executor_context_->num_processed += 1; // updated one
 
@@ -136,6 +141,8 @@ bool UpdateExecutor::DExecute() {
 
     delete new_tuple;
   }
+
+  tile_group->DecrementRefCount();
 
   // By default, update should return nothing?
   // SetOutput(source_tile.release());

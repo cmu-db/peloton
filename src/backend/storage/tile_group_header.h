@@ -14,7 +14,6 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/synch.h"
-#include "backend/storage/backend.h"
 #include "backend/logging/log_manager.h"
 
 #include <atomic>
@@ -48,30 +47,8 @@ class TileGroupHeader {
   TileGroupHeader() = delete;
 
  public:
-  TileGroupHeader(int tuple_count)
-      : data(nullptr),
-        num_tuple_slots(tuple_count),
-        next_tuple_slot(0) {
-    header_size = num_tuple_slots * header_entry_size;
 
-    // allocate storage space for header
-    auto backend = storage::Backend::GetInstance();
-    data = (char *) backend.Allocate(header_size);
-    // initialize data with zero
-    memset(data, 0, header_size);
-    assert(data != nullptr);
-
-    // Set MVCC Initial Value
-    for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
-        tuple_slot_id++) {
-      SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-      SetBeginCommitId(tuple_slot_id, MAX_CID);
-      SetEndCommitId(tuple_slot_id, MAX_CID);
-      SetInsertCommit(tuple_slot_id, false);
-      SetDeleteCommit(tuple_slot_id, false);
-    }
-
-  }
+  TileGroupHeader(int tuple_count);
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
@@ -90,12 +67,7 @@ class TileGroupHeader {
     return *this;
   }
 
-  ~TileGroupHeader() {
-    // reclaim the space
-    auto backend = storage::Backend::GetInstance();
-    backend.Free(data);
-    data = nullptr;
-  }
+  ~TileGroupHeader();
 
   oid_t GetNextEmptyTupleSlot() {
     oid_t tuple_slot_id = INVALID_OID;
@@ -302,15 +274,16 @@ class TileGroupHeader {
   bool IsDeletable(const oid_t tuple_slot_id,
                    __attribute__((unused))         txn_id_t txn_id,
                    __attribute__((unused))         cid_t at_lcid) {
-    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-    cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
     bool deletable = tuple_end_cid == MAX_CID;
 
     LOG_INFO(
         "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), deletable = %d",
-        this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
+        this, tuple_slot_id,
+        GetTransactionId(tuple_slot_id),
+        GetBeginCommitId(tuple_slot_id),
+        tuple_end_cid,
         txn_id, at_lcid, deletable);
 
     return deletable;

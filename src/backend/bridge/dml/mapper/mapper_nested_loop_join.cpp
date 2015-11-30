@@ -29,12 +29,11 @@ namespace bridge {
 const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     const NestLoopPlanState *nl_plan_state) {
 
-  auto join_type = nl_plan_state->jointype;
   PelotonJoinType peloton_join_type =
       PlanTransformer::TransformJoinType(nl_plan_state->jointype);
 
   if (peloton_join_type == JOIN_TYPE_INVALID) {
-    LOG_ERROR("unsupported join type: %d", join_type);
+    LOG_ERROR("unsupported join type: %d", nl_plan_state->jointype);
     return nullptr;
   }
 
@@ -94,7 +93,7 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
-  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
+  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", nl_plan_state->jointype);
   return result;
 }
 

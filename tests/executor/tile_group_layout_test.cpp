@@ -30,6 +30,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
+#include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
@@ -42,6 +43,7 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/storage/table_factory.h"
+#include "backend/storage/tuple.h"
 #include "backend/index/index_factory.h"
 
 #include "executor/executor_tests_util.h"

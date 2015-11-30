@@ -11,14 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/executor/delete_executor.h"
+#include "backend/executor/executor_context.h"
 
-#include "../logging/log_manager.h"
-#include "../logging/records/tuple_record.h"
-#include "../planner/delete_plan.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
-
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace executor {
@@ -71,6 +74,7 @@ bool DeleteExecutor::DExecute() {
 
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+  tile_group->IncrementRefCount();
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
@@ -113,12 +117,15 @@ bool DeleteExecutor::DExecute() {
     if (status == false) {
       LOG_INFO("Fail to delete. Set txn failure");
       transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+      tile_group->DecrementRefCount();
       return false;
     }
+
     executor_context_->num_processed += 1; // deleted one
     transaction_->RecordDelete(delete_location);
   }
 
+  tile_group->DecrementRefCount();
   return true;
 }
 

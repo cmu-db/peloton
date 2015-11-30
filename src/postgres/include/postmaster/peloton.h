@@ -14,7 +14,6 @@
 #define PELOTON_H
 
 #include "backend/common/types.h"
-#include "backend/common/message_queue.h"
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/planner/abstract_plan.h"
 #include "backend/bridge/dml/mapper/dml_utils.h"

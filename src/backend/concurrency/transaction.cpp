@@ -23,40 +23,19 @@ namespace peloton {
 namespace concurrency {
 
 void Transaction::RecordInsert(ItemPointer location) {
-  auto &manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group = manager.GetTileGroup(location.block);
-  inserted_tuples[tile_group].push_back(location.offset);
+  inserted_tuples[location.block].push_back(location.offset);
 }
 
 void Transaction::RecordDelete(ItemPointer location) {
-  auto &manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group = manager.GetTileGroup(location.block);
-  deleted_tuples[tile_group].push_back(location.offset);
+  deleted_tuples[location.block].push_back(location.offset);
 }
 
-bool Transaction::HasInsertedTuples(storage::TileGroup *tile_group) const {
-  auto tile_group_itr = inserted_tuples.find(tile_group);
-  if (tile_group_itr != inserted_tuples.end() &&
-      !tile_group_itr->second.empty())
-    return true;
-
-  return false;
-}
-
-bool Transaction::HasDeletedTuples(storage::TileGroup *tile_group) const {
-  auto tile_group_itr = deleted_tuples.find(tile_group);
-  if (tile_group_itr != deleted_tuples.end() && !tile_group_itr->second.empty())
-    return true;
-
-  return false;
-}
-
-const std::map<storage::TileGroup *, std::vector<oid_t>> &
+const std::map<oid_t, std::vector<oid_t>> &
 Transaction::GetInsertedTuples() {
   return inserted_tuples;
 }
 
-const std::map<storage::TileGroup *, std::vector<oid_t>> &
+const std::map<oid_t, std::vector<oid_t>> &
 Transaction::GetDeletedTuples() {
   return deleted_tuples;
 }
