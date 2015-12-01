@@ -35,7 +35,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     void Flush(void);
 
     // Used by flush to update the commit mark
-    void CollectCommittedTuples(TupleRecord* record);
+    bool CollectCommittedTuples(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 
@@ -51,14 +51,25 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    void CommitRecords(LogRecordList *txn_log_record_list);
+    void FlushRecords(std::vector<txn_id_t> committing_list);
+
+    void CommitRecords(std::vector<txn_id_t> committing_list);
+
+  private:
+    std::string GetLogFileName(void);
+
+    void WriteTxnLog(TransactionRecord txnLog);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
     //===--------------------------------------------------------------------===//
 
-    // Global queue
-    static LogRecordPool *global_plog_pool;
+    // File pointer and descriptor
+    FILE* log_file;
+    int log_file_fd;
+
+    // Global pool
+    static LogRecordPool global_plog_pool;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery

@@ -95,7 +95,7 @@ class LogManager{
 
     void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
 
-    void SetTestInterruptCommit(bool test_suspend_commit);
+    void SetTestRedoAllLogs(bool test_suspend_commit);
 
     void SetLogFile(std::string log_file);
 
