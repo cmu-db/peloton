@@ -22,7 +22,7 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
 #include "backend/logging/loggers/peloton_backend_logger.h"
-#include "backend/storage/backend_file.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace logging {
@@ -43,7 +43,7 @@ PelotonFrontendLogger::PelotonFrontendLogger() {
 
   if (global_plog_pool == nullptr) {
     // Allocate global peloton log pool
-    global_plog_pool = (LogRecordPool*) storage::BackendFile::GetInstance().Allocate(sizeof(LogRecordPool));
+    global_plog_pool = (LogRecordPool*) storage::Backend::GetInstance().Allocate(sizeof(LogRecordPool));
     assert(global_plog_pool != nullptr);
     global_plog_pool->init();
   } else {
@@ -60,7 +60,7 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
     delete log_record;
   }
   global_plog_pool->Clear();
-  storage::BackendFile::GetInstance().Free(global_plog_pool);
+  storage::Backend::GetInstance().Free(global_plog_pool);
   global_plog_pool = nullptr;
 }
 
