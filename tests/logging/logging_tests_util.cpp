@@ -554,7 +554,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aht:b:z:c:s:f:", opts,
+    int c = getopt_long(argc, argv, "aht:b:z:c:r:", opts,
                         &idx);
 
     if (c == -1)
