@@ -14,8 +14,7 @@ storage_FILES = \
 				backend/storage/tile_group_header.cpp \
 				backend/storage/tile_group_factory.cpp \
 				backend/storage/tile_group_iterator.cpp \
-				backend/storage/tuple.cpp \
-				backend/storage/backend_file.cpp
+				backend/storage/tuple.cpp
 
 storage_INCLUDES = \
 				   -I$(srcdir)/backend/storage

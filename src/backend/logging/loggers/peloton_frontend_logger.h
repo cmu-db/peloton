@@ -16,7 +16,6 @@
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/log_record_pool.h"
-#include "backend/storage/backend_file.h"
 
 namespace peloton {
 namespace logging {

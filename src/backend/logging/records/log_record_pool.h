@@ -15,7 +15,7 @@
 #include <map>
 
 #include "backend/logging/records/tuple_record.h"
-#include "backend/storage/backend_file.h"
+#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace logging {
@@ -70,7 +70,7 @@ class LogRecordList {
 
   void SetCommitting(bool _isCommitting) {
     iscommitting = _isCommitting;
-    storage::BackendFile::GetInstance().Sync(this);
+    storage::Backend::GetInstance().Sync(this);
   }
 
   txn_id_t GetTxnID() const {
@@ -87,7 +87,7 @@ class LogRecordList {
 
   void SetNextList(LogRecordList* next) {
     next_list = next;
-    storage::BackendFile::GetInstance().Sync(this);
+    storage::Backend::GetInstance().Sync(this);
   }
 
   LogRecordList* GetPrevList() const {
@@ -96,7 +96,7 @@ class LogRecordList {
 
   void SetPrevList(LogRecordList* prev) {
     prev_list = prev;
-    storage::BackendFile::GetInstance().Sync(this);
+    storage::Backend::GetInstance().Sync(this);
   }
 
   int AddLogRecord(TupleRecord *record);
