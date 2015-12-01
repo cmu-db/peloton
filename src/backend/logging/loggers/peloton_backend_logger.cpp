@@ -30,6 +30,8 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
  * @param log record 
  */
 void PelotonBackendLogger::Log(LogRecord* record){
+  // Enqueue the serialized log record into the queue
+  record->Serialize(output_buffer);
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     local_queue.push_back(record);

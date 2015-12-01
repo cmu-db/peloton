@@ -12,19 +12,21 @@ namespace test {
 // Logging Test 
 //===--------------------------------------------------------------------===//
 
+std::string peloton_log_file_name = "/tmp/peloton.log";
+
 /**
  * @brief writing a simple log with multiple threads
  */
 TEST(PelotonLoggingTest, writing_log_file) {
   // Test a simple log process
-  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON));
+  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON, peloton_log_file_name));
 }
 
 /**
  * @brief recovery test
  */
 TEST(PelotonLoggingTest, recovery) {
-  LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON);
+  LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
 }
 
 }  // End test namespace

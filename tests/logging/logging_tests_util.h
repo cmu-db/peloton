@@ -59,13 +59,8 @@ public:
     // check if the count matches after recovery
     bool check_tuple_count;
 
-    // SUSPEND_COMMIT: suspend final step in transaction commit,
-    // so that it only get committed during recovery
-    bool suspend_commit;
-
-    // enable file backend ?
-    bool file_backend;
-
+    // REDO_ALL: redo all logs in the log file
+    bool redo_all;
    };
 
 private:

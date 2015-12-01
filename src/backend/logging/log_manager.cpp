@@ -359,12 +359,12 @@ void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
   }
 }
 
-void LogManager::SetTestInterruptCommit(bool test_suspend_commit) {
+void LogManager::SetTestRedoAllLogs(bool test_redo_all) {
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
     FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
 
-    frontend->SetTestInterruptCommit(test_suspend_commit);
+    frontend->SetTestRedoAllLogs(test_redo_all);
   }
 }
 
