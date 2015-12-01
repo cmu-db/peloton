@@ -51,18 +51,22 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    void FlushRecords(std::vector<txn_id_t> committing_list);
+    size_t FlushRecords(std::vector<txn_id_t> committing_list);
 
     void CommitRecords(std::vector<txn_id_t> committing_list);
 
   private:
     std::string GetLogFileName(void);
 
+    bool DoNeedRecovery(void);
+
     void WriteTxnLog(TransactionRecord txnLog);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
     //===--------------------------------------------------------------------===//
+
+    CopySerializeOutput output_buffer;
 
     // File pointer and descriptor
     FILE* log_file;
