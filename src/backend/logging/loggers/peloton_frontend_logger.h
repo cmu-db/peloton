@@ -69,7 +69,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     int log_file_fd;
 
     // Global pool
-    static LogRecordPool global_plog_pool;
+    LogRecordPool global_plog_pool;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery
