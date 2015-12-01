@@ -45,6 +45,8 @@ public:
 
 private:
     PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
+
+    CopySerializeOutput output_buffer;
 };
 
 }  // namespace logging
