@@ -26,8 +26,6 @@
 namespace peloton {
 namespace logging {
 
-LogRecordPool PelotonFrontendLogger::global_plog_pool;
-
 /**
  * @brief create NVM backed log pool
  */
@@ -102,10 +100,13 @@ void PelotonFrontendLogger::Flush(void) {
   FlushRecords(committing_list);
   // write a committing log to file
   WriteTxnLog(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT));
-  // commit all records
-  CommitRecords(committing_list);
-  // write a commit done log to file
-  WriteTxnLog(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
+  // For testing recovery, do not commit. Redo all logs in recovery.
+  if (!redo_all_logs) {
+    // commit all records
+    CommitRecords(committing_list);
+    // write a commit done log to file
+    WriteTxnLog(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
+  }
   // remove any finished txn logs
   for (txn_id_t txn_id : deleting_list) {
     global_plog_pool.RemoveTxnLogList(txn_id);
@@ -229,6 +230,7 @@ void PelotonFrontendLogger::DoRecovery() {
 }
 
 cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
+  // XXX Do we need to lock tile before operating?
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
@@ -240,10 +242,12 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
   if( max_oid < location.block ){
     max_oid = location.block;
   }
+  // TODO sync change
   return tile_group_header->GetBeginCommitId(location.offset);
 }
 
 cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
+  // XXX Do we need to lock tile before operating?
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
@@ -255,6 +259,7 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
   if( max_oid < location.block ){
     max_oid = location.block;
   }
+  // TODO sync change
   return tile_group_header->GetEndCommitId(location.offset);
 }
 
