@@ -26,8 +26,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type,
-                                std::string log_file = "peloton.log");
+  static bool PrepareLogFile(LoggingType logging_type, std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -35,8 +34,7 @@ public:
 
   static void ResetSystem(void);
 
-  static void CheckRecovery(LoggingType logging_type,
-                                std::string log_file = "peloton.log");
+  static void CheckRecovery(LoggingType logging_type, std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // Configuration
@@ -61,6 +59,9 @@ public:
 
     // REDO_ALL: redo all logs in the log file
     bool redo_all;
+
+    // log file dir
+    std::string file_dir;
    };
 
 private:
