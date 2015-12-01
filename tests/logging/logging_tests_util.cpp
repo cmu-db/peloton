@@ -67,8 +67,8 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
-  if (state.suspend_commit) {
-    log_manager.SetTestInterruptCommit(true);
+  if (state.redo_all) {
+    log_manager.SetTestRedoAllLogs(true);
   }
 
   // STANDBY -> RECOVERY mode
@@ -133,7 +133,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
   // always enable commit when testing recovery
-  log_manager.SetTestInterruptCommit(false);
+  log_manager.SetTestRedoAllLogs(false);
 
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
@@ -197,13 +197,9 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   // not just the default tile group
   storage::DataTable* table = CreateSimpleTable(db_oid, table_oid);
   db->AddTable(table);
-  db->DropTableWithOid(table_oid);
-  table = CreateSimpleTable(db_oid, table_oid);
 
   // Execute the workload to build the log
   LaunchParallelTest(state.backend_count, RunBackends, table);
-
-  db->AddTable(table);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -511,10 +507,9 @@ static void Usage(FILE *out) {
           "   -h --help              :  Print help message \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
-          "   -z --tuple-size        :  Tuple size \n"
+          "   -z --tuple-size        :  Tuple size (does not work) \n"
           "   -c --check-tuple-count :  Check tuple count \n"
-          "   -s --suspend-commit    :  Suspend commit \n"
-          "   -f --file-backend      :  File backend \n"
+          "   -r --redo-all-logs     :  Redo all logs \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -524,8 +519,7 @@ static struct option opts[] = {
     { "backend-count", optional_argument, NULL, 'b' },
     { "tuple-size", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
-    { "suspend-commit", optional_argument, NULL, 's' },
-    { "file-backend", optional_argument, NULL, 'f' },
+    { "redo-all-logs", optional_argument, NULL, 'r' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -541,9 +535,7 @@ static void PrintConfiguration(){
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "suspend_commit " << " : " << state.suspend_commit << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "file_backend " << " : " << state.file_backend << std::endl;
+      << "redo_all_logs " << " : " << state.redo_all << std::endl;
 
 }
 
@@ -554,11 +546,10 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   state.backend_count = 4;
 
-  state.tuple_size = 50;
+  state.tuple_size = 100;
 
   state.check_tuple_count = true;
-  state.suspend_commit = false;
-  state.file_backend = false;
+  state.redo_all = false;
 
   // Parse args
   while (1) {
@@ -582,11 +573,8 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
       case 'c':
         state.check_tuple_count  = atoi(optarg);
         break;
-      case 's':
-        state.suspend_commit  = atoi(optarg);
-        break;
-      case 'f':
-        state.file_backend  = atoi(optarg);
+      case 'r':
+        state.redo_all  = atoi(optarg);
         break;
 
       case 'h':
