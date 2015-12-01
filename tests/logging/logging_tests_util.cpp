@@ -42,8 +42,16 @@ LoggingTestsUtil::logging_test_configuration state;
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
-                                      std::string log_file){
+bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file_name){
+  std::string file_path = state.file_dir + file_name;
+
+  std::ifstream log_file(file_path);
+
+  // Reset the log file if exists
+  if( log_file.good() ){
+    EXPECT_TRUE(std::remove(file_path.c_str()) == 0 );
+  }
+  log_file.close();
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -54,7 +62,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type,
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(log_file);
+  log_manager.SetLogFile(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
@@ -109,8 +117,15 @@ void LoggingTestsUtil::ResetSystem(){
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
-                                     std::string log_file){
+void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_name){
+  std::string file_path = state.file_dir + file_name;
+
+  std::ifstream log_file(file_path);
+
+  // Reset the log file if exists
+  EXPECT_TRUE(log_file.good());
+  log_file.close();
+
   LoggingTestsUtil::CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 
   // start a thread for logging
@@ -121,7 +136,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(log_file);
+  log_manager.SetLogFile(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
@@ -505,13 +520,14 @@ void LoggingTestsUtil::DropDatabase(oid_t db_oid){
 //===--------------------------------------------------------------------===//
 
 static void Usage(FILE *out) {
-  fprintf(out, "Command line options : hyadapt <options> \n"
+  fprintf(out, "Command line options :  hyadapt <options> \n"
           "   -h --help              :  Print help message \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
           "   -z --tuple-size        :  Tuple size (does not work) \n"
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -r --redo-all-logs     :  Redo all logs \n"
+          "   -d --dir              :  log file dir \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -522,6 +538,7 @@ static struct option opts[] = {
     { "tuple-size", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
     { "redo-all-logs", optional_argument, NULL, 'r' },
+    { "dir", optional_argument, NULL, 'd' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -538,7 +555,8 @@ static void PrintConfiguration(){
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "redo_all_logs " << " : " << state.redo_all << std::endl;
-
+  std::cout << std::setw(width) << std::left
+      << "dir " << " : " << state.file_dir << std::endl;
 }
 
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
@@ -553,10 +571,12 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.check_tuple_count = true;
   state.redo_all = false;
 
+  state.file_dir = "/tmp/";
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aht:b:z:c:r:", opts,
+    int c = getopt_long(argc, argv, "aht:b:z:c:r:d:", opts,
                         &idx);
 
     if (c == -1)
@@ -577,6 +597,9 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         break;
       case 'r':
         state.redo_all  = atoi(optarg);
+        break;
+      case 'd':
+        state.file_dir = optarg;
         break;
 
       case 'h':
