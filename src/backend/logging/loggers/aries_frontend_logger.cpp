@@ -615,7 +615,7 @@ size_t GetNextFrameSize(FILE *log_file){
   char buffer[sizeof(int32_t)];
 
   // Check if the frame size is broken
-  if( IsFileTruncated(log_file, sizeof(int32_t)) ){
+  if( IsFileTruncated(log_file, sizeof(buffer)) ){
     return 0;
   }
 
@@ -626,20 +626,21 @@ size_t GetNextFrameSize(FILE *log_file){
   }
 
   // Read next 4 bytes as an integer
-  CopySerializeInputBE frameCheck(buffer, sizeof(int32_t));
-  frame_size = (frameCheck.ReadInt())+sizeof(int32_t);;
+  CopySerializeInputBE frameCheck(buffer, sizeof(buffer));
+  frame_size = (frameCheck.ReadInt())+sizeof(buffer);;
+
+  // Move back by 4 bytes
+  // So that tuple deserializer works later as expected
+  int res = fseek(log_file, -sizeof(buffer), SEEK_CUR);
+  if(res == -1){
+    LOG_ERROR("Error occured in fseek ");
+  }
 
   // Check if the frame is broken
   if( IsFileTruncated(log_file, frame_size) ){
     return 0;
   }
 
-  // Move back by 4 bytes
-  // So that tuple deserializer works later as expected
-  int res = fseek(log_file, -sizeof(int32_t), SEEK_CUR);
-  if(res == -1){
-    LOG_ERROR("Error occured in fseek ");
-  }
   return frame_size;
 }
 

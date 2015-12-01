@@ -133,7 +133,9 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type,
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
   // always enable commit when testing recovery
-  log_manager.SetTestRedoAllLogs(false);
+  if (state.redo_all) {
+    log_manager.SetTestRedoAllLogs(true);
+  }
 
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
