@@ -242,23 +242,22 @@ class TileGroupHeader {
                 at_lcid, tuple_end_cid);
     }
 
-    // Visible iff past Insert || Own Insert
-    bool visible = !(tuple_txn_id == INVALID_TXN_ID)
-        && ((!own && activated && !invalidated)
-            || (own && !activated && !invalidated));
-
-    // overwrite visible if using peloton logging
+    // overwrite activated/invalidated if using peloton logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
       if (log_manager.GetDefaultLoggingType() == LOGGING_TYPE_PELOTON) {
         bool insert_commit = GetInsertCommit(tuple_slot_id);
         bool delete_commit = GetDeleteCommit(tuple_slot_id);
-        if (!insert_commit || delete_commit) {
-          LOG_TRACE("Uncommited:: tuple begin cid : %lu", tuple_begin_cid);
-          visible = false;
-        }
+        
+        activated = activated && insert_commit;
+        invalidated = invalidated && delete_commit;
       }
     }
+
+    // Visible iff past Insert || Own Insert
+    bool visible = !(tuple_txn_id == INVALID_TXN_ID)
+        && ((!own && activated && !invalidated)
+            || (own && !activated && !invalidated));
 
     LOG_INFO(
         "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, %lu), visible = %d",

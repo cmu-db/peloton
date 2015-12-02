@@ -188,8 +188,8 @@ void PelotonFrontendLogger::CommitRecords(std::vector<txn_id_t> committing_list)
           current_cid = SetDeleteCommitMark(record->GetDeleteLocation());
           break;
         case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-          current_cid = SetInsertCommitMark(record->GetInsertLocation());
           SetDeleteCommitMark(record->GetDeleteLocation());
+          current_cid = SetInsertCommitMark(record->GetInsertLocation());
           break;
         default:
           break;
@@ -209,7 +209,7 @@ bool PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
   }
   if (record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT
       || record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE
-      || (record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE)) {
+      || record->GetType() == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE) {
     return global_plog_pool.AddLogRecord(record) == 0;
   } else {
     return false;
@@ -262,8 +262,8 @@ void PelotonFrontendLogger::DoRecovery() {
           {
             TupleRecord update_record(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
             ReadTupleRecordHeader(update_record, log_file);
-            current_cid = SetInsertCommitMark(update_record.GetInsertLocation());
             SetDeleteCommitMark(update_record.GetDeleteLocation());
+            current_cid = SetInsertCommitMark(update_record.GetInsertLocation());
           }
             break;
           default:
