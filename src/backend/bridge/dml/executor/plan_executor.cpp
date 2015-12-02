@@ -123,6 +123,14 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_HASH:
+      child_executor = new executor::HashExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_HASHJOIN:
+      child_executor = new executor::HashJoinExecutor(plan, executor_context);
+      break;
+
     case PLAN_NODE_TYPE_PROJECTION:
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
@@ -199,6 +207,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
 
   switch (type) {
     case PLAN_NODE_TYPE_MERGEJOIN:
+    case PLAN_NODE_TYPE_HASHJOIN:
     case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:

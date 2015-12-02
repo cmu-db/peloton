@@ -57,23 +57,24 @@ bool HashExecutor::DExecute() {
      * attributes of the underlying table.
      * The hash table builds on these attributes */
     auto &hashkeys = node.GetHashKeys();
-    std::vector<oid_t> column_ids;
     for (auto &hashkey : hashkeys) {
       assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
       auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
-      assert(tuple_value->GetTupleIdx() == 0);
-      column_ids.push_back(tuple_value->GetColumnId());
+      //assert(tuple_value->GetTupleIdx() == 0);
+      column_ids_.push_back(tuple_value->GetColumnId());
     }
 
     for (size_t i = 0; i < child_tiles_.size(); i++) {
       auto tile = child_tiles_[i].get();
       for (oid_t tuple_id : *tile) {
-        htable_[HashMapType::key_type(tile, tuple_id, &column_ids)].insert(std::make_pair(i, tuple_id));
+        htable_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(i, tuple_id));
       }
     }
 
     done_ = true;
   }
+
+  DumpHashTable();
 
   while (result_itr < child_tiles_.size()) {
     if (child_tiles_[result_itr]->GetTupleCount() == 0) {
@@ -88,6 +89,13 @@ bool HashExecutor::DExecute() {
 }
 
 
+void HashExecutor::DumpHashTable() const {
+  assert(done_);
+  for (auto &kv : htable_) {
+    LOG_INFO("Key %lu, Num of tuple: %lu", kv.first.HashCode(), kv.second.size());
+  }
+
+}
 
 } /* namespace executor */
 } /* namespace peloton */

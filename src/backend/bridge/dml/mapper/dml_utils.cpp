@@ -451,6 +451,9 @@ MergeJoinPlanState* DMLUtils::PrepareMergeJoinState(MergeJoinState* mj_state) {
 HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info = (HashJoinPlanState*) palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
+  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
+                               hj_state->js);
+
 
   return info;
 }
