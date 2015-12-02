@@ -134,7 +134,7 @@ class LogManager{
 
     bool syncronization_commit = false;
 
-    std::string log_file_name = "peloton.log";
+    std::string log_file_name = "/tmp/general-peloton.log";
 };
 
 
