@@ -53,7 +53,7 @@ bool HashJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool HashJoinExecutor::DExecute() {
-  LOG_INFO("********** Merge Join executor :: 2 children \n");
+  LOG_INFO("********** Hash Join executor :: 2 children \n");
 
 
   /* Hash right tiles and get right tiles */
