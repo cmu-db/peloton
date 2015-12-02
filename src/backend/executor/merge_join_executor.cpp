@@ -200,8 +200,10 @@ bool MergeJoinExecutor::DExecute() {
 
     // sub tile matched, do a Cartesian product
     // Go over every pair of tuples in left and right logical tiles
-    for (auto left_tile_row_itr : *left_tile) {
-      for (auto right_tile_row_itr : *right_tile) {
+    for (size_t left_tile_row_itr = left_start_row;
+            left_tile_row_itr < left_end_row; left_tile_row_itr++) {
+          for (size_t right_tile_row_itr = right_start_row;
+              right_tile_row_itr < right_end_row; right_tile_row_itr++) {
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
         for (size_t output_tile_column_itr = 0;
