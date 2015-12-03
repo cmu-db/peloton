@@ -1,0 +1,4 @@
+obj_pool/TEST5: START: obj_pool
+ ./obj_pool$(nW) c /NULL/testfile test 20 0640
+/NULL/testfile: pmemobj_create: No such file or directory
+obj_pool/TEST5: Done

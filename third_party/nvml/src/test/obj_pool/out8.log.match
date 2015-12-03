@@ -1,0 +1,4 @@
+obj_pool/TEST8: START: obj_pool
+ ./obj_pool$(nW) c $(nW)/testfile test 0 0640
+$(nW)/testfile: file size 8388608 mode 0640
+obj_pool/TEST8: Done

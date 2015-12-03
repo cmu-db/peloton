@@ -1,0 +1,4 @@
+pmem_is_pmem/TEST1: START: pmem_is_pmem
+ ./pmem_is_pmem$(nW) $(nW)/testfile1
+1
+pmem_is_pmem/TEST1: Done

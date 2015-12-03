@@ -1,0 +1,25 @@
+Linux NVM Library
+
+This is examples/libpmemobj/pminvaders/README.
+
+This directory contains an example application implemented using libpmemobj,
+it's a game in which all the objects are stored on persistent memory.
+This means that the game process can be safely killed and then resumed.
+
+To launch the game:
+	./pminvaders [game session file]
+
+The file with the game session will either be created if it doesn't exist
+or opened if it contains a valid pool.
+
+Controls:
+	move - arrow keys
+	shoot - spacebar
+	quit - 'q'
+
+This game demonstrates the usage of the very basics of the pmemobj library,
+that includes the pool management (open/create/close), type-safety macros,
+non-transactional allocations and internal collections.
+
+If you want to run this demo on non-pmem storage, set the PMEM_IS_PMEM_FORCE
+environment variable, so that the library does not issue msync calls.

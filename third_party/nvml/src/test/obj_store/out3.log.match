@@ -1,0 +1,3 @@
+obj_store/TEST3: START: obj_store
+ ./obj_store$(nW) $(nW)/testfile1 u
+obj_store/TEST3: Done

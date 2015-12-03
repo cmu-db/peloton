@@ -1,0 +1,3 @@
+util_poolset_parse/TEST0: START: util_poolset_parse
+ ./util_poolset_parse$(nW) ./pool0.set ./pool1.set ./pool2.set ./pool3.set ./pool4.set ./pool5.set ./pool6.set ./pool7.set ./pool8.set ./pool9.set ./pool10.set ./pool11.set ./pool12.set ./pool13.set ./pool14.set ./pool15.set ./pool16.set ./pool17.set ./pool18.set ./pool19.set ./pool20.set ./pool21.set ./pool22.set ./pool23.set ./pool24.set ./pool25.set ./pool26.set ./pool27.set ./pool28.set ./pool29.set ./pool30.set ./pool31.set ./pool32.set ./pool33.set ./pool34.set ./pool35.set
+util_poolset_parse/TEST0: Done

@@ -1,0 +1,56 @@
+Linux NVM Library
+
+This is src/test/log_pool/README.
+
+This directory contains a unit test for pmemlog_create() and pmemlog_open().
+
+The program in log_pool.c takes: operation, path, poolsize, mode
+Operation can be:
+    c - create
+    o - open
+
+For example:
+
+	./log_pool c /my/file 20 0640
+
+This calls pmemlog_create() with the given arguments.  Note that poolsize
+is given in megabytes.
+
+Test cases:
+
+- pmemlog_create:
+
+TEST0 (pass)	non-existing file, poolsize >= min required size
+TEST1 (pass)	existing file, file length >= min required size, poolsize == 0
+TEST2 (fail)	non-existing file, poolsize == 0
+TEST3 (fail)	existing file, file length >= min required size, poolsize != 0
+TEST4 (fail)	existing file, file length < min required size, poolsize == 0
+TEST5 (fail)	non-existing file, poolsize >= min required size
+		(path is invalid, directory does not exist)
+TEST6 (fail)	existing file, file length >= min required size, poolsize == 0
+		(file contains garbage)
+TEST7 (pass)	existing file, file length >= min required size, poolsize == 0
+		(file contains garbage, except for header)
+TEST8 (fail)	non-existing file, poolsize < min required size
+TEST9 (fail)	existing file, file length >= min required size, poolsize == 0
+		(no read permissions)
+TEST10 (fail)	existing file, file length >= min required size, poolsize == 0
+		(no write permissions)
+
+- pmemlog_open:
+
+TEST20 (fail)	non-existing file
+TEST21 (fail)	existing file, file length < min required size
+TEST22 (fail)	existing file, file length < min required size
+		(valid pool header)
+TEST23 (fail)	existing file, file length >= min required size
+		(empty pool header)
+TEST24 (fail)	existing file, file length >= min required size
+		(no read permissions)
+TEST25 (fail)	existing file, file length >= min required size
+		(no write permissions)
+TEST26 (pass)	existing file, file length >= min required size
+
+- each case outputs:
+	- error, if error happened
+	- resulting file size, mode, consistency check results

@@ -1,0 +1,3 @@
+obj_many_size_allocs/TEST2: START: obj_many_size_allocs
+ ./obj_many_size_allocs$(nW) $(nW)/testset1
+obj_many_size_allocs/TEST2: Done

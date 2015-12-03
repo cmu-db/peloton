@@ -1,0 +1,3 @@
+obj_realloc/TEST1: START: obj_realloc
+ ./obj_realloc$(nW) $(*)
+obj_realloc/TEST1: Done
