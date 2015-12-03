@@ -1,0 +1,13 @@
+blk_non_zero/TEST2: START: blk_non_zero
+ ./blk_non_zero$(nW) 512 $(nW)/testfile1 o w:0 r:4 r:3 r:2 r:1 r:0 w:0 r:0
+512 block size 512 usable blocks 2080567
+is zeroed:	0
+write     lba 0: {1}
+read      lba 4: {5}
+read      lba 3: {4}
+read      lba 2: {3}
+read      lba 1: {2}
+read      lba 0: {1}
+write     lba 0: {2}
+read      lba 0: {2}
+blk_non_zero/TEST2: Done

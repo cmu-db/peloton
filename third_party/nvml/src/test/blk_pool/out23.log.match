@@ -1,0 +1,4 @@
+blk_pool/TEST23: START: blk_pool
+ ./blk_pool$(nW) o $(nW)/testfile 0
+$(nW)/testfile: pmemblk_open: Invalid argument
+blk_pool/TEST23: Done

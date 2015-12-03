@@ -1,0 +1,10 @@
+$(*)
+$(*)
+$(*)
+$(OPT)$(*) compiled with support for Valgrind pmemcheck
+$(OPT)$(*) compiled with support for Valgrind helgrind
+$(OPT)$(*) compiled with support for Valgrind memcheck
+$(*)Log level NONE
+$(*)Log level ERROR
+$(*)Log level WARNING
+$(*)Log level INFO

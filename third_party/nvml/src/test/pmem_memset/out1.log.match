@@ -1,0 +1,3 @@
+pmem_memset/TEST1: START: pmem_memset
+ ./pmem_memset$(nW) $(nW)/testfile1 13 4096
+pmem_memset/TEST1: Done

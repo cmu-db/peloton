@@ -1,0 +1,36 @@
+Linux NVM Library
+
+This is src/test/obj_list_macro/README.
+
+This directory contains a unit test for persistent atomic lists
+functions using macros.
+
+Syntax:
+$ obj_list_macro <fname> <operation>..
+
+Operations:
+ - P:<list>        - print all elements from <list> in normal order
+ - R:<list>        - print all elements from <list> in reverse order
+ - n               - insert a new element to list
+ - n:<where>:<num>[:<id>]
+                   - insert a new element to first list before/after the
+		     <num> element, optionally set the id to <id> using constructor
+ - i:<where>:<num>[:<id>]
+                   - insert element to first list before/afterr the <num> element,
+		     optionally set the id to <id> using constructor
+ - f:<list>:<num>
+                   - remove and free the <num> element on <list>
+ - r:<num>         - remove the <num> element from <list>
+ - m:<num>:<where>:<dest>
+                   - move <num> element from one list before/after <dest> on the second
+<num>:
+ - >=0 - index of element on list in normal order
+ -  <0 - index of element on list in reverse order
+
+<where>:
+ - 0 - after the element
+ - 1 - before the element
+
+<list>:
+- 1 - first list
+- 2 - second list

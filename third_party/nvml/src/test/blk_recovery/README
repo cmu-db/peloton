@@ -1,0 +1,23 @@
+Linux NVM Library
+
+This is src/test/blk_recovery/README.
+
+This directory contains a unit test for pmemblk recovery. It works only
+in non-debug mode.
+
+The program in blk_recovery.c takes a block size, file and two LBAs.
+A write to the first LBA is performed, then the arena map data structure
+protections are modified to be read-only, then the remaining LBA is written.
+
+For example:
+
+	./blk_recovery 4096 file1 5 10
+
+this will call pmemblk_open() on file1, call pmemblk_write() for LBA 5
+(causing all the layout to be written), then it will change the memory
+protection on the arena map area to read-only.  Next, pmemblk_write()
+is called for for LBA 10 and SIGSEGV is caught and reported.  Finally,
+pmemblk_check() is called.
+
+This is not a perfect simulation of a system interruption, but does allow
+creating a file where a write was interrupted before updating the map.

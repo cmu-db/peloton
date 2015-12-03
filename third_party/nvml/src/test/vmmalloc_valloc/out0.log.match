@@ -1,0 +1,4 @@
+vmmalloc_valloc/TEST0: START: vmmalloc_valloc
+ ./vmmalloc_valloc$(nW) v
+testing valloc
+vmmalloc_valloc/TEST0: Done

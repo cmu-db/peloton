@@ -1,0 +1,62 @@
+obj_list_valgrind/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0 n:0:0 n:1:-1 s:0:1:2:2:10:0 s:1:1:2:2:11:1 s:2:1:2:2:12:0 P:1 R:1 P:2 R:2 s:0:1:2:3:20:0 s:1:1:2:3:21:1 s:2:1:2:3:22:0 P:1 R:1 P:2 R:2
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+prealloc(id = 0, size = 2) = true
+realloc_constructor(id = 0)
+realloc(id = 10)
+prealloc(id = 1, size = 2) = true
+realloc_constructor(id = 1)
+realloc(id = 11)
+prealloc(id = 2, size = 2) = true
+realloc_constructor(id = 2)
+realloc(id = 12)
+oob list:
+id = 10
+id = 11
+id = 12
+oob list reverse:
+id = 12
+id = 11
+id = 10
+list:
+id = 10
+id = 12
+id = 11
+list reverse:
+id = 11
+id = 12
+id = 10
+prealloc(id = 10, size = 3) = false
+pmalloc(id = 3)
+realloc_constructor(id = 10)
+pfree(id = 10)
+realloc(id = 20)
+prealloc(id = 11, size = 3) = false
+pmalloc(id = 4)
+realloc_constructor(id = 11)
+pfree(id = 11)
+realloc(id = 21)
+prealloc(id = 12, size = 3) = false
+pmalloc(id = 5)
+realloc_constructor(id = 12)
+pfree(id = 12)
+realloc(id = 22)
+oob list:
+id = 20
+id = 21
+id = 22
+oob list reverse:
+id = 22
+id = 21
+id = 20
+list:
+id = 20
+id = 22
+id = 21
+list reverse:
+id = 21
+id = 22
+id = 20
+obj_list_valgrind/TEST7: Done

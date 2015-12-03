@@ -1,0 +1,4 @@
+log_pool/TEST1: START: log_pool
+ ./log_pool$(nW) c $(nW)/testfile 0 0640
+$(nW)/testfile: file size 2147483648 usable space 2147475456 mode 0640
+log_pool/TEST1: Done
