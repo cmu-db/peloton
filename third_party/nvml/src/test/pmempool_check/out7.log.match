@@ -1,0 +1,50 @@
+$(*)file.pool: spoil: pool_hdr.uuid=ERROR
+incorrect pool header checksum
+$(*)file.pool: not consistent
+checking pool header
+incorrect pool header checksum
+UUID values don't match
+setting UUIDs to $(*)
+$(*)file.pool: repaired
+checking pool header
+pool header checksum correct
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+BTT Layout not written
+$(*)file.pool: consistent
+$(*)file.pool: spoil: pool_hdr.prev_part_uuid=ERROR_PREV
+$(*)file.pool: spoil: pool_hdr.next_part_uuid=ERROR_NEXT
+incorrect pool header checksum
+$(*)file.pool: not consistent
+checking pool header
+incorrect pool header checksum
+UUID values don't match
+setting UUIDs to $(*)
+$(*)file.pool: repaired
+checking pool header
+pool header checksum correct
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+BTT Layout not written
+$(*)file.pool: consistent
+$(*)file.pool: spoil: pool_hdr.prev_part_uuid=ERROR_PREV
+$(*)file.pool: spoil: pool_hdr.next_part_uuid=ERROR_NEXT
+$(*)file.pool: spoil: pool_hdr.prev_repl_uuid=ERROR_RPREV
+$(*)file.pool: spoil: pool_hdr.next_repl_uuid=ERROR_RNEXT
+incorrect pool header checksum
+$(*)file.pool: not consistent
+checking pool header
+incorrect pool header checksum
+UUID values don't match
+setting UUIDs to: $(*)
+setting pool_hdr.checksum to: $(*)
+$(*)file.pool: repaired
+checking pool header
+pool header checksum correct
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+BTT Layout not written
+$(*)file.pool: consistent

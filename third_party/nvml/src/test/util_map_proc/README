@@ -1,0 +1,14 @@
+Linux NVM Library
+
+This is src/test/util_map_proc/README.
+
+This directory contains a unit test for util_map_hint().
+
+The program in util_map_proc.c takes a fake /proc/self/maps file
+as an argument, along with a length.  It arranges for util_map_hint()
+to open the fake /proc file when looking up the range.
+
+	usage: util_map_proc maps_file len [len]...
+
+len is interpreted as a decimal value unless it starts with 0x.
+Each len is tested against the given maps-file.

@@ -1,0 +1,25 @@
+==$(N)== Memcheck, a memory error detector
+==$(N)== Copyright $(*)
+==$(N)== Using $(*)
+==$(N)== Command:$(*)
+==$(N)== Parent PID: $(N)
+==$(N)== 
+$(OPT)==$(N)== 
+==$(N)== HEAP SUMMARY:
+==$(N)==     in use at exit: $(N) bytes in $(N) blocks
+==$(N)==   total heap usage: $(N) allocs, $(N) frees, $(*) bytes allocated
+==$(N)== 
+==$(N)== $(N) bytes in 1 blocks are definitely lost in loss record 1 of $(N)
+==$(N)==    at 0x$(X): je_vmem_pool_malloc $(*)
+$(OPT)==$(N)==    by 0x$(X): vmem_malloc $(*)
+==$(N)==    by 0x$(X): main (vmem_valgrind.c:$(N))
+==$(N)== 
+==$(N)== LEAK SUMMARY:
+==$(N)==    definitely lost: 8 bytes in 1 blocks
+==$(N)==    indirectly lost: 0 bytes in 0 blocks
+==$(N)==      possibly lost: 0 bytes in 0 blocks
+==$(N)==    still reachable: 0 bytes in 0 blocks
+==$(N)==         suppressed: $(N) bytes in $(N) blocks
+==$(N)== 
+==$(N)== For counts of detected and suppressed errors, rerun with: -v
+==$(N)== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: $(N) from $(N))

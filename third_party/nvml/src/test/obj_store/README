@@ -1,0 +1,33 @@
+Linux NVM Library
+
+This is src/test/obj_store/README.
+
+This directory contains unit tests for object store functions.
+
+The program in obj_store.c takes a file name and an operation encoded
+by a character as arguments. For example:
+
+	./obj_store file1 r
+
+The following characters and operations can be used:
+	r - tests root object functions:
+		- pmemobj_root
+		- pmemobj_root_size
+	a - tests the following functions:
+		- pmemobj_alloc
+		- pmemobj_free
+		- pmemobj_first
+		- pmemobj_next
+	f - tests FOREACH macros:
+		- POBJ_FOREACH
+		- POBJ_FOREACH_TYPE
+		- POBJ_FOREACH_SAFE
+	u - tests user list macros:
+		- POBJ_LIST_INSERT_NEW_HEAD
+		- POBJ_LIST_FOREACH
+		- POBJ_LIST_FOREACH_REVERSE
+	n - tests handling OID_NULL by 3 pmemobj functions:
+		- pmemobj_free
+		- pmemobj_alloc_usable_size
+		- pmemobj_next
+	s - tests pmemobj_strdup

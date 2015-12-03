@@ -1,0 +1,197 @@
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+Lane:
+
+ Lane section             : allocator
+  Redo log entries         : 4
+  0000000000: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000001: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000002: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000003: Offset: $(*) Value: $(*) Finish flag: 0
+
+ Lane section             : list
+  Object offset            : $(*)
+  Object size              : $(*)
+  Redo log entries         : 63
+  0000000000: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000001: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000002: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000003: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000004: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000005: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000006: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000007: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000008: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000009: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000010: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000011: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000012: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000013: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000014: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000015: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000016: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000017: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000018: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000019: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000020: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000021: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000022: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000023: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000024: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000025: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000026: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000027: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000028: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000029: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000030: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000031: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000032: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000033: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000034: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000035: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000036: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000037: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000038: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000039: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000040: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000041: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000042: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000043: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000044: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000045: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000046: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000047: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000048: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000049: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000050: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000051: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000052: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000053: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000054: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000055: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000056: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000057: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000058: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000059: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000060: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000061: Offset: $(*) Value: $(*) Finish flag: 0
+  0000000062: Offset: $(*) Value: $(*) Finish flag: 0
+
+ Lane section             : tx
+  State                    : none
+  Undo Log - alloc         : 1 element
+
+   Object                   : 0
+   Offset                   : $(*)
+    
+OOB Header:
+    Next                     : off: $(*) pool_uuid_lo: $(*) [OK]
+    Prev                     : off: $(*) pool_uuid_lo: $(*) [OK]
+    Internal Type            : none
+    User Type                : 1
+
+  Undo Log - free          : 0 elements
+  Undo Log - set           : 0 elements
+
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+Lane:
+
+ Lane section             : tx
+  State                    : none
+  Undo Log - alloc         : 0 elements
+  Undo Log - free          : 1 element
+
+   Object                   : 0
+   Offset                   : $(*)
+    
+OOB Header:
+    Next                     : off: $(*) pool_uuid_lo: $(*) [OK]
+    Prev                     : off: $(*) pool_uuid_lo: $(*) [OK]
+    Internal Type            : allocated
+    User Type                : 1
+
+  Undo Log - set           : 0 elements

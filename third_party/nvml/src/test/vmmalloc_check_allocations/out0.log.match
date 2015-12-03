@@ -1,0 +1,24 @@
+vmmalloc_check_allocations/TEST0: START: vmmalloc_check_allocations
+ ./vmmalloc_check_allocations$(nW)
+size 4194304
+size 2097152
+size 1048576
+size 524288
+size 262144
+size 131072
+size 65536
+size 32768
+size 16384
+size 8192
+size 4096
+size 2048
+size 1024
+size 512
+size 256
+size 128
+size 64
+size 32
+size 16
+size 8
+size 4
+vmmalloc_check_allocations/TEST0: Done

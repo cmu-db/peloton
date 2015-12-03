@@ -1,0 +1,28 @@
+==$(N)== Memcheck, a memory error detector
+==$(N)== Copyright $(*)
+==$(N)== Using $(*)
+==$(N)== Command:$(*)
+==$(N)== Parent PID: $(N)
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): main (vmmalloc_valgrind.c:$(N))
+==$(N)==  Address 0x$(X) is 0 bytes after $(*) block of size $(N) alloc'd
+==$(N)==    at 0x$(X): je_vmem_pool_malloc $(*)
+$(OPT)==$(N)==    by 0x$(X): malloc $(*)
+==$(N)==    by 0x$(X): main (vmmalloc_valgrind.c:$(N))
+==$(N)== 
+==$(N)== 
+==$(N)== HEAP SUMMARY:
+==$(N)==     in use at exit: $(N) bytes in $(N) blocks
+==$(N)==   total heap usage: $(N) allocs, $(N) frees, $(*) bytes allocated
+==$(N)== 
+$(OPT)==$(N)== All heap blocks were freed -- no leaks are possible
+$(OPT)==$(N)== LEAK SUMMARY:
+$(OPT)==$(N)==    definitely lost: 0 bytes in 0 blocks
+$(OPT)==$(N)==    indirectly lost: 0 bytes in 0 blocks
+$(OPT)==$(N)==      possibly lost: 0 bytes in 0 blocks
+$(OPT)==$(N)==    still reachable: 0 bytes in 0 blocks
+$(OPT)==$(N)==         suppressed: $(N) bytes in $(N) blocks
+==$(N)== 
+==$(N)== For counts of detected and suppressed errors, rerun with: -v
+==$(N)== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: $(N) from $(N))

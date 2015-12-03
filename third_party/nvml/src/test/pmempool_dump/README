@@ -1,0 +1,8 @@
+Linux NVM Library
+
+This is src/test/pmempool_dump/README.
+
+This directory contains a unit test for 'pmempool dump' command.
+
+The tests in this directory check the output format of 'dump' command and
+verify parsing of the range format.
