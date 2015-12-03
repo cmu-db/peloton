@@ -1,0 +1,10 @@
+Linux NVM Library
+
+This is src/test/pmem_movnt/README.
+
+This directory contains a unit test for MOVNT threshold check.
+
+The program in pmem_movnt.c verifies if the correct variant of
+pmem_memcpy, pmem_memmove and pmem_memset functions is used
+depending on function arguments and the PMEM_MOVNT_THRESHOLD
+environment variable settings.

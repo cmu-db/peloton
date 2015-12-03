@@ -1,0 +1,25 @@
+traces_custom_function/TEST0: START: traces_custom_function
+ ./traces_custom_function$(nW) p
+CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] pid $(N): program: $(nW)
+
+CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] trace_func version $(S)
+
+CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] src version SRCVERSION:utversion
+
+$(OPT)CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] compiled with support for Valgrind pmemcheck
+$(OPT)
+$(OPT)CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] compiled with support for Valgrind helgrind
+$(OPT)
+$(OPT)CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) out_init] compiled with support for Valgrind memcheck
+$(OPT)
+CUSTOM_PRINT: <trace_func>: <0> [$(nW):$(N) main] Log level NONE
+
+CUSTOM_PRINT: <trace_func>: <1> [$(nW):$(N) main] Log level ERROR
+
+CUSTOM_PRINT: <trace_func>: <2> [$(nW):$(N) main] Log level WARNING
+
+CUSTOM_PRINT: <trace_func>: <3> [$(nW):$(N) main] Log level INFO
+
+CUSTOM_PRINT: <trace_func>: <4> [$(nW):$(N) main] Log level DEBUG
+
+traces_custom_function/TEST0: Done

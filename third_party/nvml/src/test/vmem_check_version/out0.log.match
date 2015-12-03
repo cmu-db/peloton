@@ -1,0 +1,5 @@
+vmem_check_version/TEST0: START: vmem_check_version
+ ./vmem_check_version$(nW)
+compile-time libvmem version is 1.0
+for major version 2, vmem_check_version returned: libvmem major version mismatch (need 2, found 1)
+vmem_check_version/TEST0: Done

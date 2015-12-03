@@ -1,0 +1,30 @@
+Linux NVM Library
+
+This is src/test/obj_debug/README.
+
+This directory contains unit tests for debug features.
+
+The program in obj_debug.c takes a file name and an operation encoded
+by a character as arguments. For example:
+
+	./obj_debug file1 f
+
+The following characters and operations can be used:
+	f - tests notice messages for FOREACH macros:
+		- POBJ_FOREACH
+		- POBJ_FOREACH_SAFE
+		- POBJ_FOREACH_TYPE
+		- POBJ_FOREACH_SAFE_TYPE
+		- POBJ_LIST_FOREACH
+		- POBJ_LIST_FOREACH_REVERSE
+	l - tests notice messages for the non-TX functions:
+		- pmemobj_alloc
+		- pmemobj_free
+		- pmemobj_list_insert_new
+		- pmemobj_list_insert
+		- pmemobj_list_move
+		- pmemobj_list_remove
+	r - tests notice messages for the function:
+		- pmemobj_tx_add_common
+	a - tests notice of atomic allocation in tx:
+		- pmemobj_alloc

@@ -1,0 +1,3 @@
+vmem_out_of_memory/TEST0: START: vmem_out_of_memory
+ ./vmem_out_of_memory$(nW)
+vmem_out_of_memory/TEST0: Done

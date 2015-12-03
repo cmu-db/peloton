@@ -1,0 +1,67 @@
+obj_list_move/TEST1: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile i:0:0 i:0:0 i:0:-1 i:0:-1 P:2 R:2 P:4 R:4 m:0:1:0 P:2 R:2 P:4 R:4 m:-1:1:0 P:2 R:2 P:4 R:4 m:1:1:1 P:2 R:2 P:4 R:4 m:0:1:-1 P:2 R:2 P:4 R:4
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+pmalloc(id = 3)
+list:
+id = 0
+id = 1
+id = 2
+id = 3
+list reverse:
+id = 3
+id = 2
+id = 1
+id = 0
+list sec:
+list sec reverse:
+list:
+id = 1
+id = 2
+id = 3
+list reverse:
+id = 3
+id = 2
+id = 1
+list sec:
+id = 0
+list sec reverse:
+id = 0
+list:
+id = 1
+id = 2
+list reverse:
+id = 2
+id = 1
+list sec:
+id = 3
+id = 0
+list sec reverse:
+id = 0
+id = 3
+list:
+id = 1
+list reverse:
+id = 1
+list sec:
+id = 3
+id = 2
+id = 0
+list sec reverse:
+id = 0
+id = 2
+id = 3
+list:
+list reverse:
+list sec:
+id = 3
+id = 2
+id = 1
+id = 0
+list sec reverse:
+id = 0
+id = 1
+id = 2
+id = 3
+obj_list_move/TEST1: Done

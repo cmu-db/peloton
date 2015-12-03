@@ -1,0 +1,35 @@
+obj_list_insert_new/TEST0: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n P:1 R:1 n P:1 R:1 n P:1 R:1 n P:1 R:1
+pmalloc(id = 0)
+oob list:
+id = 0
+oob list reverse:
+id = 0
+pmalloc(id = 1)
+oob list:
+id = 0
+id = 1
+oob list reverse:
+id = 1
+id = 0
+pmalloc(id = 2)
+oob list:
+id = 0
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+id = 0
+pmalloc(id = 3)
+oob list:
+id = 0
+id = 1
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+id = 1
+id = 0
+obj_list_insert_new/TEST0: Done

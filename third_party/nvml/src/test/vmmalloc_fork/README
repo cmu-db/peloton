@@ -1,0 +1,28 @@
+Linux NVM Library
+
+This is src/test/vmmalloc_fork/README.
+
+This directory contains a multithreaded unit test for libvmmalloc fork() support.
+
+The program in vmmalloc_fork.c takes: 'operation', 'nfork' and 'nthread' arguments.
+Operation can be:
+    c - child process is a duplicate of the parent
+    e - child process calls execl() immediately after fork
+
+The test allocates some amount of memory first, then spawns a number of threads,
+that also allocate memory in a loop.  While the new threads are running, the main
+thread creates a new process by calling fork().
+
+If 'operation' is 'c', then each child process performs the same
+actions as parent, spawning new threads and a new process, until some predefined
+number of processes is reached.  'nfork' argument defines a maximum height of
+the process tree, so eventually, there could be 2^nfork processes created,
+each running 'nthread' threads.
+
+For example:
+	./vmmalloc_fork c 4 2
+
+This will create 16 (2^4) processes, each running 3 threads (1 + 2).
+
+If 'operation' is 'e', then when the 'nfork' limit is reached, the child process
+calls execl() immediately after fork(), executing another program.
