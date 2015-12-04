@@ -61,7 +61,7 @@ public:
 
   ~TupleRecord(){
     // Clean up the message
-    delete message;
+    delete[] message;
   }
 
   //===--------------------------------------------------------------------===//

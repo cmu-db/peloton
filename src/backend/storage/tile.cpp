@@ -21,7 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/storage_manager.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 
@@ -53,7 +53,7 @@ Tile::Tile(TileGroupHeader *tile_header,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::Backend::GetInstance().Allocate(tile_size);
+  data = (char *)storage::StorageManager::GetInstance().Allocate(tile_size, BACKEND_TYPE_VM);
   assert(data != NULL);
 
   // initialize it
@@ -65,7 +65,7 @@ Tile::Tile(TileGroupHeader *tile_header,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::Backend::GetInstance().Free(data);
+  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)

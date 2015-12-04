@@ -19,7 +19,7 @@ class TransactionRecord : public LogRecord {
 
   ~TransactionRecord(){
     // Clean up the message
-    delete message;
+    delete[] message;
   }
 
   //===--------------------------------------------------------------------===//
