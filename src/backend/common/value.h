@@ -374,29 +374,7 @@ class Value {
    * @brief Do a deep copy of the given value.
    * Uninlined data will be allocated in the provided memory pool.
    */
-  static Value Clone(const Value &src, VarlenPool *dataPool) {
-    Value rv = src;  // Shallow copy first
-    auto value_type = src.GetValueType();
-
-    switch (value_type) {
-      case VALUE_TYPE_VARBINARY:
-      case VALUE_TYPE_VARCHAR:
-        break;  // "real" deep copy is needed only for these types
-
-      default:
-        return rv;
-    }
-
-    if (src.m_sourceInlined || src.IsNull()) {
-      return rv;  // also, shallow copy for inlined or null data
-    }
-
-    Varlen *src_sref = *reinterpret_cast<Varlen *const *>(src.m_data);
-    Varlen *new_sref = Varlen::Clone(*src_sref, dataPool);
-
-    rv.SetObjectValue(new_sref);
-    return rv;
-  }
+  static Value Clone(const Value &src, VarlenPool *dataPool);
 
   // Get min value
   static Value GetMinValue(ValueType);
@@ -766,11 +744,7 @@ class Value {
    * Private constructor that initializes storage and the specifies the type of value
    * that will be stored in this instance
    */
-  Value(const ValueType type) {
-    ::memset( m_data, 0, 16);
-    SetValueType(type);
-    m_sourceInlined = false;
-  }
+  Value(const ValueType type);
 
   /**
    * Set the type of the value that will be stored in this instance.
@@ -2303,6 +2277,7 @@ class Value {
     Value retval(type);
     char* storage = retval.AllocateValueStorage((int32_t)size, stringPool);
     ::memcpy(storage, value, (int32_t)size);
+    retval.SetSourceInlined(false);
     return retval;
   }
 
@@ -2355,16 +2330,6 @@ class Value {
   static Value trimWithOptions(const std::vector<Value>& arguments, bool leading, bool trailing);
 
 };
-
-/**
- * Public constructor that initializes to an Value that is unusable
- * with other Values.  Useful for declaring storage for an Value.
- */
-inline Value::Value() {
-  ::memset( m_data, 0, 16);
-  SetValueType(VALUE_TYPE_INVALID);
-  m_sourceInlined = false;
-}
 
 /**
  * Retrieve a boolean Value that is true
@@ -2668,6 +2633,7 @@ inline Value Value::InitFromTupleStorage(const void *storage, ValueType type, bo
 
       //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
       retval.SetObjectLength(length); // this unSets the null tag.
+      retval.SetSourceInlined(false);
       break;
     }
     case VALUE_TYPE_TIMESTAMP:
