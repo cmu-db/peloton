@@ -369,7 +369,7 @@ class Value {
    * @brief Do a deep copy of the given value.
    * Uninlined data will be allocated in the provided memory pool.
    */
-  static Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
+  static Value Clone(const Value &src, VarlenPool *dataPool) {
     Value rv = src;  // Shallow copy first
     auto value_type = src.GetValueType();
 

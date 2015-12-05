@@ -69,7 +69,7 @@ Agg::~Agg() {
 void Agg::Advance(const Value val) {
   if (is_distinct_) {
     // Insert a deep copy
-    distinct_set_.insert(ValueFactory::Clone(val));
+    distinct_set_.insert(ValueFactory::Clone(val, nullptr));
   } else {
     DAdvance(val);
   }
@@ -203,7 +203,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     // Make a deep copy of the first tuple we meet
     for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
       aggregate_list->first_tuple_values.push_back(
-          ValueFactory::Clone(cur_tuple->GetValue(col_id)));
+          ValueFactory::Clone(cur_tuple->GetValue(col_id), nullptr));
     };
 
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
@@ -337,7 +337,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
 
     for(oid_t col_id = 0; col_id < num_input_columns_; col_id++){
       Value val = next_tuple->GetValue(col_id);
-      delegate_tuple_values_.push_back(ValueFactory::Clone(val));
+      delegate_tuple_values_.push_back(ValueFactory::Clone(val, nullptr));
     }
   }
 
