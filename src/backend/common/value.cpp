@@ -24,17 +24,42 @@
 namespace peloton {
 
 /**
+ * Public constructor that initializes to an Value that is unusable
+ * with other Values.  Useful for declaring storage for an Value.
+ */
+Value::Value() {
+  ::memset( m_data, 0, 16);
+  SetValueType(VALUE_TYPE_INVALID);
+  m_sourceInlined = false;
+}
+
+/**
+ * Private constructor that initializes storage and the specifies the type of value
+ * that will be stored in this instance
+ */
+Value::Value(const ValueType type) {
+  ::memset( m_data, 0, 16);
+  SetValueType(type);
+  m_sourceInlined = false;
+}
+
+/**
  * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
  * the object to the heap
  */
 void Value::Free() const {
+
+  if(m_sourceInlined == true)
+    return;
+
+  std::cout << "Free \n";
+
   switch (GetValueType())
   {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     case VALUE_TYPE_ARRAY:
     {
-      assert(!m_sourceInlined);
       Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
       if (sref != NULL)
       {
@@ -42,6 +67,7 @@ void Value::Free() const {
       }
     }
     break;
+
     default:
       return;
   }
@@ -49,6 +75,8 @@ void Value::Free() const {
 
 /* Release memory associated to object type Values */
 Value::~Value() {
+
+    //Free();
 
 }
 
@@ -73,6 +101,31 @@ Value::Value(const Value& other) {
   m_valueType = other.m_valueType;
   std::copy(other.m_data, other.m_data + 16, m_data);
 
+}
+
+Value Value::Clone(const Value &src, VarlenPool *dataPool) {
+  Value rv = src;  // Shallow copy first
+  auto value_type = src.GetValueType();
+
+  switch (value_type) {
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_ARRAY:
+      break;  // "real" deep copy is needed only for these types
+
+    default:
+      return rv;
+  }
+
+  if (src.m_sourceInlined || src.IsNull()) {
+    return rv;  // also, shallow copy for inlined or null data
+  }
+
+  Varlen *src_sref = *reinterpret_cast<Varlen *const *>(src.m_data);
+  Varlen *new_sref = Varlen::Clone(*src_sref, dataPool);
+
+  rv.SetObjectValue(new_sref);
+  return rv;
 }
 
 // For x<op>y where x is an integer,
@@ -733,32 +786,32 @@ std::ostream &operator<<(std::ostream &os, const Value &value) {
 Value Value::GetMinValue(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-          return GetTinyIntValue(PELOTON_INT8_MIN);
+                      return GetTinyIntValue(PELOTON_INT8_MIN);
     break;
     case (VALUE_TYPE_SMALLINT):
-          return GetSmallIntValue(PELOTON_INT16_MIN);
+                      return GetSmallIntValue(PELOTON_INT16_MIN);
     break;
     case (VALUE_TYPE_INTEGER):
-          return GetIntegerValue(PELOTON_INT32_MIN);
+                      return GetIntegerValue(PELOTON_INT32_MIN);
     break;
     break;
     case (VALUE_TYPE_BIGINT):
-          return GetBigIntValue(PELOTON_INT64_MIN);
+                      return GetBigIntValue(PELOTON_INT64_MIN);
     break;
     case (VALUE_TYPE_DOUBLE):
-          return GetDoubleValue(-DBL_MAX);
+                      return GetDoubleValue(-DBL_MAX);
     break;
     case (VALUE_TYPE_VARCHAR):
-          return GetTempStringValue("", 2);
+                      return GetTempStringValue("", 2);
     break;
     case (VALUE_TYPE_TIMESTAMP):
-          return GetTimestampValue(PELOTON_INT64_MIN);
+                      return GetTimestampValue(PELOTON_INT64_MIN);
     break;
     case (VALUE_TYPE_DECIMAL):
-          return GetDecimalValue(DECIMAL_MIN);
+                      return GetDecimalValue(DECIMAL_MIN);
     break;
     case (VALUE_TYPE_BOOLEAN):
-          return GetFalse();
+                      return GetFalse();
     break;
 
     case (VALUE_TYPE_INVALID):
