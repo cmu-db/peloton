@@ -37,14 +37,14 @@ void deserDecHelper(Value nv, ValueType &vt, TTInt &value, std::string &str) {
 
 TEST(ValueTest, CloneInt) {
   Value v1 = ValueFactory::GetIntegerValue(1234);
-  Value v2 = ValueFactory::Clone(v1);
+  Value v2 = ValueFactory::Clone(v1, nullptr);
 
   ASSERT_TRUE(v1 == v2);
 }
 
 TEST(ValueTest, CloneString) {
   Value v1 = ValueFactory::GetStringValue("This string has 30 chars long.");
-  Value v2 = ValueFactory::Clone(v1);
+  Value v2 = ValueFactory::Clone(v1, nullptr);
 
   ASSERT_TRUE(v1 == v2);
   ASSERT_TRUE(ValuePeeker::PeekObjectLengthWithoutNull(v1) ==
