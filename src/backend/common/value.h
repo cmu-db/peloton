@@ -226,7 +226,12 @@ class Value {
   /* Create a default Value */
   Value();
 
-  // todo: Free() should not really be const
+  /* Release memory associated to object type Values */
+  ~Value();
+
+  Value& operator= (const Value & other);
+
+  Value(const Value& other);
 
   /* Release memory associated to object type Values */
   void Free() const;
@@ -2408,30 +2413,6 @@ inline bool Value::IsBooleanNULL() const {
 
 inline bool Value::GetSourceInlined() const {
   return m_sourceInlined;
-}
-
-/**
- * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
- * the object to the heap
- */
-inline void Value::Free() const {
-  switch (GetValueType())
-  {
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    case VALUE_TYPE_ARRAY:
-    {
-      assert(!m_sourceInlined);
-      Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
-      if (sref != NULL)
-      {
-        Varlen::Destroy(sref);
-      }
-    }
-    break;
-    default:
-      return;
-  }
 }
 
 inline void Value::FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects)
