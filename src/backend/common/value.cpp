@@ -23,6 +23,58 @@
 
 namespace peloton {
 
+/**
+ * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
+ * the object to the heap
+ */
+void Value::Free() const {
+  switch (GetValueType())
+  {
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_ARRAY:
+    {
+      assert(!m_sourceInlined);
+      Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
+      if (sref != NULL)
+      {
+        Varlen::Destroy(sref);
+      }
+    }
+    break;
+    default:
+      return;
+  }
+}
+
+/* Release memory associated to object type Values */
+Value::~Value() {
+
+}
+
+Value& Value::operator=(const Value &other) {
+
+  // protect against invalid self-assignment
+  if (this != &other) {
+
+    m_sourceInlined = other.m_sourceInlined;
+    m_valueType = other.m_valueType;
+    std::copy(other.m_data, other.m_data + 16, m_data);
+
+  }
+
+  // by convention, always return *this
+  return *this;
+}
+
+Value::Value(const Value& other) {
+
+  m_sourceInlined = other.m_sourceInlined;
+  m_valueType = other.m_valueType;
+  std::copy(other.m_data, other.m_data + 16, m_data);
+
+}
+
 // For x<op>y where x is an integer,
 // promote x and y to s_intPromotionTable[y]
 ValueType Value::s_intPromotionTable[] = {
@@ -681,33 +733,33 @@ std::ostream &operator<<(std::ostream &os, const Value &value) {
 Value Value::GetMinValue(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-      return GetTinyIntValue(PELOTON_INT8_MIN);
-      break;
+          return GetTinyIntValue(PELOTON_INT8_MIN);
+    break;
     case (VALUE_TYPE_SMALLINT):
-      return GetSmallIntValue(PELOTON_INT16_MIN);
-      break;
+          return GetSmallIntValue(PELOTON_INT16_MIN);
+    break;
     case (VALUE_TYPE_INTEGER):
-      return GetIntegerValue(PELOTON_INT32_MIN);
-      break;
-      break;
+          return GetIntegerValue(PELOTON_INT32_MIN);
+    break;
+    break;
     case (VALUE_TYPE_BIGINT):
-      return GetBigIntValue(PELOTON_INT64_MIN);
-      break;
+          return GetBigIntValue(PELOTON_INT64_MIN);
+    break;
     case (VALUE_TYPE_DOUBLE):
-      return GetDoubleValue(-DBL_MAX);
-      break;
+          return GetDoubleValue(-DBL_MAX);
+    break;
     case (VALUE_TYPE_VARCHAR):
-      return GetTempStringValue("", 2);
-      break;
+          return GetTempStringValue("", 2);
+    break;
     case (VALUE_TYPE_TIMESTAMP):
-      return GetTimestampValue(PELOTON_INT64_MIN);
-      break;
+          return GetTimestampValue(PELOTON_INT64_MIN);
+    break;
     case (VALUE_TYPE_DECIMAL):
-      return GetDecimalValue(DECIMAL_MIN);
-      break;
+          return GetDecimalValue(DECIMAL_MIN);
+    break;
     case (VALUE_TYPE_BOOLEAN):
-      return GetFalse();
-      break;
+          return GetFalse();
+    break;
 
     case (VALUE_TYPE_INVALID):
     case (VALUE_TYPE_NULL):
