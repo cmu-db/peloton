@@ -30,7 +30,7 @@ namespace peloton {
 Value::Value() {
   ::memset( m_data, 0, 16);
   SetValueType(VALUE_TYPE_INVALID);
-  m_sourceInlined = false;
+  m_sourceInlined = true;
 }
 
 /**
@@ -40,7 +40,7 @@ Value::Value() {
 Value::Value(const ValueType type) {
   ::memset( m_data, 0, 16);
   SetValueType(type);
-  m_sourceInlined = false;
+  m_sourceInlined = true;
 }
 
 /**
