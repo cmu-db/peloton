@@ -30,7 +30,7 @@ class ConstantValueExpression : public AbstractExpression {
      * if the expression will live longer than the passed value
      * or if uninlined value will be freed somewhere else
      */
-    this->value = ValueFactory::Clone(value);
+    this->value = ValueFactory::Clone(value, nullptr);
   }
 
   virtual ~ConstantValueExpression() {

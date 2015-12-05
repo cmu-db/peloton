@@ -23,7 +23,7 @@ namespace peloton {
 class ValueFactory {
  public:
 
-  static inline Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
+  static inline Value Clone(const Value &src, VarlenPool *dataPool) {
     return Value::Clone(src, dataPool);
   }
 
