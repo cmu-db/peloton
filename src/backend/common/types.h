@@ -253,7 +253,8 @@ enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
   BACKEND_TYPE_VM = 1,  // on volatile memory
-  BACKEND_TYPE_NVM = 2  // on non-volatile memory
+  BACKEND_TYPE_NVM = 2, // on non-volatile memory
+  BACKEND_TYPE_FILE = 3 // on mmap file
 };
 
 //===--------------------------------------------------------------------===//

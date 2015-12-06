@@ -18,6 +18,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/common/abstract_tuple.h"
 
 namespace peloton {
 namespace bridge {
@@ -42,7 +43,7 @@ class TupleTransformer {
   static storage::Tuple *GetPelotonTuple(TupleTableSlot *slot,
                                          const catalog::Schema *schema);
 
-  static TupleTableSlot *GetPostgresTuple(storage::Tuple *tuple,
+  static TupleTableSlot *GetPostgresTuple(AbstractTuple *tuple,
                                           TupleDesc tuple_desc);
 };
 
