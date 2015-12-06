@@ -54,8 +54,8 @@ class FrontendLogger : public Logger{
 
     void NotifyFrontend(bool hasNewLog = false);
 
-    void SetTestInterruptCommit(bool suspend) {
-      suspend_committing = suspend;
+    void SetTestRedoAllLogs(bool redo) {
+      redo_all_logs = redo;
     }
 
     //===--------------------------------------------------------------------===//
@@ -90,8 +90,8 @@ class FrontendLogger : public Logger{
     uint32 wait_timeout = 5; // in seconds
     bool log_collect_request = false; // used to indicate if backend has new logs
 
-    // for testing
-    bool suspend_committing = false;
+    // redo all logs when recovery
+    bool redo_all_logs = false;
 };
 
 }  // namespace logging

@@ -107,7 +107,8 @@ void TupleRecord::DeserializeHeader(CopySerializeInputBE& input) {
 // Used for peloton logging
 size_t TupleRecord::GetTupleRecordSize(void){
   // log_record_type + header_legnth + db_oid + table_oid + txn_id + insert_location + delete_location 
-  return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) + sizeof(txn_id_t) + sizeof(oid_t)*2;
+  return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) + sizeof(txn_id_t)
+                + sizeof(ItemPointer) * 2;
 }
 
 //just for debugging

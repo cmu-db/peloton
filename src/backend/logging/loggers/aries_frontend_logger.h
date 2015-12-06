@@ -65,12 +65,11 @@ class AriesFrontendLogger : public FrontendLogger{
 
  private:
 
+  std::string GetLogFileName(void);
+
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
-
-  // FIXME :: Hard coded file name
-  std::string file_name = "aries.log";
 
   // File pointer and descriptor
   FILE* log_file;

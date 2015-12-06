@@ -121,17 +121,22 @@ peloton_ddl(Node *parsetree) {
   }
 
   if(logging_on){
-    /* TODO: Handle logging
+    /*
     // Launching a thread for logging
     auto& log_manager = peloton::logging::LogManager::GetInstance();
-    log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_ARIES);
-    log_manager.SetSyncCommit(syncronization_commit);
-
-    std::thread(&peloton::logging::LogManager::StartStandbyMode,
+    if (!log_manager.IsInLoggingMode()) {
+      log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_PELOTON);
+      log_manager.SetSyncCommit(true);
+      std::thread(&peloton::logging::LogManager::StartStandbyMode,
                 &log_manager,
                 log_manager.GetDefaultLoggingType()).detach();
+      log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY);
+      log_manager.StartRecoveryMode();
+      log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING);
+    }
     */
   }
+
 
   try {
     /* Process the utility statement */
