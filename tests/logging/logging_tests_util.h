@@ -26,7 +26,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type);
+  static bool PrepareLogFile(LoggingType logging_type, std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -34,7 +34,35 @@ public:
 
   static void ResetSystem(void);
 
-  static void CheckRecovery(LoggingType logging_type);
+  static void CheckRecovery(LoggingType logging_type, std::string file_name);
+
+  //===--------------------------------------------------------------------===//
+  // Configuration
+  //===--------------------------------------------------------------------===//
+
+  static void ParseArguments(int argc, char* argv[]);
+
+  class logging_test_configuration {
+   public:
+
+    // # of tuples
+    int tuple_count;
+
+    // # of backends (i.e. backend loggers)
+    int backend_count;
+
+    // tuple size
+    int tuple_size;
+
+    // check if the count matches after recovery
+    bool check_tuple_count;
+
+    // REDO_ALL: redo all logs in the log file
+    bool redo_all;
+
+    // log file dir
+    std::string file_dir;
+   };
 
 private:
 
@@ -64,21 +92,14 @@ private:
 
   static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> GetTuple(catalog::Schema* schema, oid_t num_of_tuples);
+  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void DropDatabase(oid_t db_oid);
 
-  static uint GetTestThreadNumber();
-
-  static oid_t GetTestTupleNumber();
-
-  static bool DoCheckTupleNumber();
-
-  static bool DoTestSuspendCommit();
-
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
+
 };
 
 }  // End test namespace

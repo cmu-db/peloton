@@ -34,15 +34,15 @@ class Backend  {
     return backend;
   }
 
-  void *Allocate(size_t size) { return ::operator new(size); }
+  virtual void *Allocate(size_t size) { return ::operator new(size); }
 
-  void Free(void *ptr) { ::operator delete(ptr); }
+  virtual void Free(void *ptr) { ::operator delete(ptr); }
 
-  void Sync(void *ptr __attribute__((unused))) {
+  virtual void Sync(void *ptr __attribute__((unused))) {
     // does nothing
   }
 
-  std::string GetBackendType() const {
+  virtual std::string GetBackendType() const {
     return BackendTypeToString(BACKEND_TYPE_VM);
   }
 };
