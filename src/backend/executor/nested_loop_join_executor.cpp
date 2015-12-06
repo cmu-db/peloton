@@ -207,10 +207,12 @@ bool NestedLoopJoinExecutor::DExecute() {
           }
         }
 
-        // If we are doing right or outer join, remove a matched right row
+        // Right Outer Join, Full Outer Join:
+        // Remove a matched right row
         if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
           no_match_rows.erase(right_tile_row_itr);
         }
+        // Left Outer Join, Full Outer Join:
         has_right_match = true;
 
         // Insert a tuple into the output logical tile
@@ -233,6 +235,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         }
       } // inner loop of NLJ
 
+      // Left Outer Join, Full Outer Join:
       if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER) && has_right_match) {
         // no right tuple matched, if we are doing left outer join or full outer join
         // we should also emit a tuple in which right parts are null
@@ -254,7 +257,8 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     } // outer loop of NLJ
 
-    // If we are doing right or outer join, for each row in right tile
+    // Right Outer Join, Full Outer Join:
+    // For each row in right tile
     // it it has no match in left, we should emit a row whose left parts
     // are null
     if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
