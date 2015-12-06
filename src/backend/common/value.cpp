@@ -51,7 +51,7 @@ Value::Value(const ValueType type) {
  */
 void Value::Free() const {
 
-  if(m_sourceInlined == true)
+  if(m_sourceInlined == true || m_cleanUp == false)
     return;
 
   printf("Free : %s \n", Debug().c_str());
@@ -65,7 +65,7 @@ void Value::Free() const {
       Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
       if (sref != NULL)
       {
-        Varlen::Destroy(sref);
+        delete sref;
       }
     }
     break;
