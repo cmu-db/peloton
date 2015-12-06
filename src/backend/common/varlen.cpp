@@ -41,21 +41,21 @@ Varlen *Varlen::Clone(const Varlen &src, VarlenPool *data_pool) {
 
 Varlen::Varlen(size_t size) {
   varlen_size = size + sizeof(Varlen *);
-  varlen_temp_pool = false;
+  varlen_temp_pool = true;
   varlen_string_ptr = new char[varlen_size];
   SetBackPtr();
 }
 
 Varlen::Varlen(std::size_t size, VarlenPool *data_pool) {
   varlen_size = size + sizeof(Varlen *);
-  varlen_temp_pool = true;
+  varlen_temp_pool = false;
   varlen_string_ptr =
       reinterpret_cast<char *>(data_pool->Allocate(varlen_size));
   SetBackPtr();
 }
 
 Varlen::~Varlen() {
-  if (!varlen_temp_pool) {
+  if (varlen_temp_pool == true) {
     delete[] varlen_string_ptr;
   }
 }

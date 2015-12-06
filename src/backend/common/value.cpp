@@ -31,6 +31,7 @@ Value::Value() {
   ::memset( m_data, 0, 16);
   SetValueType(VALUE_TYPE_INVALID);
   m_sourceInlined = true;
+  m_cleanUp = true;
 }
 
 /**
@@ -41,6 +42,7 @@ Value::Value(const ValueType type) {
   ::memset( m_data, 0, 16);
   SetValueType(type);
   m_sourceInlined = true;
+  m_cleanUp = true;
 }
 
 /**
@@ -52,7 +54,7 @@ void Value::Free() const {
   if(m_sourceInlined == true)
     return;
 
-  std::cout << "Free \n";
+  printf("Free : %p \n", this);
 
   switch (GetValueType())
   {
@@ -76,7 +78,8 @@ void Value::Free() const {
 /* Release memory associated to object type Values */
 Value::~Value() {
 
-    //Free();
+  if(m_cleanUp)
+    Free();
 
 }
 
@@ -87,7 +90,32 @@ Value& Value::operator=(const Value &other) {
 
     m_sourceInlined = other.m_sourceInlined;
     m_valueType = other.m_valueType;
+    m_cleanUp = true;
     std::copy(other.m_data, other.m_data + 16, m_data);
+
+    // Deep copy if needed
+    if(m_sourceInlined == false && other.IsNull() == false) {
+
+      printf("Copy assignment : %p \n", this);
+
+      switch (m_valueType) {
+        case VALUE_TYPE_VARBINARY:
+        case VALUE_TYPE_VARCHAR:
+        case VALUE_TYPE_ARRAY:
+        {
+          Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+          Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+          SetCleanUp(true);
+          SetObjectValue(new_sref);
+        }
+          break;
+
+        default:
+          break;
+      }
+
+    }
 
   }
 
@@ -99,33 +127,166 @@ Value::Value(const Value& other) {
 
   m_sourceInlined = other.m_sourceInlined;
   m_valueType = other.m_valueType;
+  m_cleanUp = true;
   std::copy(other.m_data, other.m_data + 16, m_data);
+
+  // Deep copy if needed
+  if(m_sourceInlined == false && other.IsNull() == false) {
+
+    printf("Copy constructor : %p \n", this);
+
+    switch (m_valueType) {
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+      case VALUE_TYPE_ARRAY:
+      {
+        Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+        Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+        SetCleanUp(true);
+        SetObjectValue(new_sref);
+      }
+        break;
+
+      default:
+        break;
+    }
+
+  }
 
 }
 
-Value Value::Clone(const Value &src, VarlenPool *dataPool) {
-  Value rv = src;  // Shallow copy first
-  auto value_type = src.GetValueType();
+Value Value::Clone(const Value &src, VarlenPool *dataPool __attribute__((unused))) {
+  Value rv = src;
 
-  switch (value_type) {
-    case VALUE_TYPE_VARBINARY:
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_ARRAY:
-      break;  // "real" deep copy is needed only for these types
-
-    default:
-      return rv;
-  }
-
-  if (src.m_sourceInlined || src.IsNull()) {
-    return rv;  // also, shallow copy for inlined or null data
-  }
-
-  Varlen *src_sref = *reinterpret_cast<Varlen *const *>(src.m_data);
-  Varlen *new_sref = Varlen::Clone(*src_sref, dataPool);
-
-  rv.SetObjectValue(new_sref);
   return rv;
+}
+
+/**
+ * Initialize an Value of the specified type from the tuple
+ * storage area provided. If this is an Object type then the third
+ * argument indicates whether the object is stored in the tuple inline.
+ */
+Value Value::InitFromTupleStorage(const void *storage, ValueType type, bool isInlined)
+{
+  Value retval(type);
+  switch (type)
+  {
+    case VALUE_TYPE_INTEGER:
+      if ((retval.GetInteger() = *reinterpret_cast<const int32_t*>(storage)) == INT32_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_BIGINT:
+      if ((retval.GetBigInt() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_DOUBLE:
+      if ((retval.GetDouble() = *reinterpret_cast<const double*>(storage)) <= DOUBLE_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    {
+      //Potentially non-inlined type requires special handling
+      if (isInlined) {
+        //If it is inlined the storage area contains the actual data so copy a reference
+        //to the storage area
+        const char* inline_data = reinterpret_cast<const char*>(storage);
+        *reinterpret_cast<const char**>(retval.m_data) = inline_data;
+        retval.SetSourceInlined(true);
+        /**
+         * If a string is inlined in its storage location there will be no pointer to
+         * check for NULL. The length preceding value must be used instead.
+         */
+        if ((inline_data[0] & OBJECT_NULL_BIT) != 0) {
+          retval.tagAsNull();
+          break;
+        }
+        int length = inline_data[0];
+        //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
+        retval.SetObjectLength(length); // this unSets the null tag.
+        break;
+      }
+
+      // If it isn't inlined the storage area contains a pointer to the
+      // Varlen object containing the string's memory
+      Varlen* sref = *reinterpret_cast<Varlen**>(const_cast<void*>(storage));
+      *reinterpret_cast<Varlen**>(retval.m_data) = sref;
+      // If the Varlen pointer is null, that's because this
+      // was a null value; otherwise Get the right char* from the Varlen
+      if (sref == NULL) {
+        retval.tagAsNull();
+        break;
+      }
+
+      // Cache the object length in the Value.
+
+      /* The format for a length preceding value is a 1-byte short representation
+       * with the the 7th bit used to indicate a null value and the 8th bit used
+       * to indicate that this is part of a long representation and that 3 bytes
+       * follow. 6 bits are available to represent length for a maximum length
+       * of 63 bytes representable with a single byte length. 30 bits are available
+       * when the continuation bit is Set and 3 bytes follow.
+       *
+       * The value is converted to network byte order so that the code
+       * will always know which byte contains the most signficant digits.
+       */
+
+      /*
+       * Generated mask that removes the null and continuation bits
+       * from a single byte length value
+       */
+      const char mask = ~static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
+
+      char* data = sref->Get();
+      int32_t length = 0;
+      if ((data[0] & OBJECT_CONTINUATION_BIT) != 0) {
+        char numberBytes[4];
+        numberBytes[0] = static_cast<char>(data[0] & mask);
+        numberBytes[1] = data[1];
+        numberBytes[2] = data[2];
+        numberBytes[3] = data[3];
+        length = ntohl(*reinterpret_cast<int32_t*>(numberBytes));
+      } else {
+        length = data[0] & mask;
+      }
+
+      //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
+      retval.SetObjectLength(length); // this unSets the null tag.
+      retval.SetSourceInlined(false);
+      retval.SetCleanUp(false);
+      break;
+    }
+    case VALUE_TYPE_TIMESTAMP:
+      if ((retval.GetTimestamp() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_TINYINT:
+      if ((retval.GetTinyInt() = *reinterpret_cast<const int8_t*>(storage)) == INT8_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_SMALLINT:
+      if ((retval.GetSmallInt() = *reinterpret_cast<const int16_t*>(storage)) == INT16_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_DECIMAL:
+    {
+      ::memcpy(retval.m_data, storage, sizeof(TTInt));
+      break;
+    }
+    default:
+      throw Exception(
+          "Value::InitFromTupleStorage() invalid column type " +
+          ValueTypeToString(type));
+      /* no break */
+  }
+  return retval;
 }
 
 // For x<op>y where x is an integer,

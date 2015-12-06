@@ -5,11 +5,15 @@
 ######################################################################
 
 check_PROGRAMS += \
+        value_copy_test \
 		tuple_test \
 		tile_test \
 		tile_group_test \
 		data_table_test \
 		tile_group_iterator_test
+
+value_copy_test_SOURCES = \
+		storage/value_copy_test.cpp
 
 tuple_test_SOURCES = \
 		storage/tuple_test.cpp
