@@ -54,7 +54,7 @@ void Value::Free() const {
   if(m_sourceInlined == true)
     return;
 
-  printf("Free : %p \n", this);
+  printf("Free : %s \n", Debug().c_str());
 
   switch (GetValueType())
   {
@@ -109,7 +109,7 @@ Value& Value::operator=(const Value &other) {
           SetCleanUp(true);
           SetObjectValue(new_sref);
         }
-          break;
+        break;
 
         default:
           break;
@@ -146,7 +146,7 @@ Value::Value(const Value& other) {
         SetCleanUp(true);
         SetObjectValue(new_sref);
       }
-        break;
+      break;
 
       default:
         break;
