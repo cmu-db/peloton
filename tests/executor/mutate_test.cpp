@@ -94,7 +94,6 @@ void InsertTuple(storage::DataTable *table) {
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
 
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 
@@ -215,7 +214,6 @@ TEST(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  tuple->FreeUninlinedData();
   delete tuple;
 
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
@@ -230,7 +228,6 @@ TEST(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  tuple->FreeUninlinedData();
   delete tuple;
 
   txn_manager.CommitTransaction();

@@ -48,7 +48,6 @@ TEST(ValueCopyTests, VarcharTest) {
 
   std::cout << tuple->GetValue(0);
 
-  tuple->FreeUninlinedData();
   delete tuple;
   delete schema;
 
