@@ -64,17 +64,16 @@ TEST(ValueArrayTest, BasicTest) {
     EXPECT_FALSE(array1 > array2);
     EXPECT_FALSE(array1 == array2);
 
+    array2[1].Free();
+
     cachedStringValues.push_back(ValueFactory::GetStringValue("str1"));
     array2[1] = cachedStringValues.back();
     array2[2] = ValueFactory::GetDoubleValue(0.01f);
     EXPECT_TRUE(array1 == array2);
     EXPECT_FALSE(array1 != array2);
 
-    for (std::vector<Value>::const_iterator i = cachedStringValues.begin();
-         i != cachedStringValues.end();
-         i++) {
-        (*i).Free();
-    }
+    array1[1].Free();
+    array2[1].Free();
 
 }
 

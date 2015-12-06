@@ -313,7 +313,6 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 
@@ -414,7 +413,6 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 }

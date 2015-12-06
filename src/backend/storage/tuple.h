@@ -69,12 +69,8 @@ class Tuple : public AbstractTuple {
   }
 
   // Deletes tuple data
-  // Does not delete either SCHEMA or UNINLINED data
-  // Tile or larger entities must take care of this
-  ~Tuple() {
-    // delete the tuple data
-    if (allocated) delete[] tuple_data;
-  }
+  // Does not delete either SCHEMA
+  ~Tuple();
 
   // Setup the tuple given the specified data location and schema
   Tuple(char *data, catalog::Schema *schema);
