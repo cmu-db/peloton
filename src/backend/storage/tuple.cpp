@@ -39,12 +39,12 @@ const Value Tuple::GetValue(const oid_t column_id) const {
 }
 
 // Set scalars by value and uninlined columns by reference into this tuple.
-void Tuple::SetValue(const oid_t column_id, Value value) {
+void Tuple::SetValue(const oid_t column_id, const Value& value) {
   assert(tuple_schema);
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
-  value = value.CastAs(type);
+  Value casted_value = value.CastAs(type);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
@@ -55,17 +55,18 @@ void Tuple::SetValue(const oid_t column_id, Value value) {
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+  casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+  casted_value.SetCleanUp(false);
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValueAllocate(const oid_t column_id, Value value,
+void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
                              VarlenPool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
-  value = value.CastAs(type);
+  Value casted_value = value.CastAs(type);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
@@ -76,8 +77,8 @@ void Tuple::SetValueAllocate(const oid_t column_id, Value value,
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                  is_in_bytes, dataPool);
+  casted_value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
+                                                         is_in_bytes, dataPool);
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
