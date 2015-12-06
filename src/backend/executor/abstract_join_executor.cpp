@@ -47,6 +47,7 @@ bool AbstractJoinExecutor::DInit() {
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
   proj_info_ = node.GetProjInfo();
+  join_type_ = node.GetJoinType();
 
   return true;
 }
