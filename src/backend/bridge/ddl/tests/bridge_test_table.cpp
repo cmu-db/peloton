@@ -16,6 +16,7 @@
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_table.h"
 #include "backend/catalog/manager.h"
+#include "backend/common/exception.h"
 #include "backend/storage/database.h"
 
 namespace peloton {
@@ -46,7 +47,8 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_INVALID_OID() {
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
 
   // CHECK :: status must be false
-  assert(status == false);
+  if(status != false)
+    throw CatalogException("Could create table");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
@@ -70,14 +72,18 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
 
   // Create a table
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Could not create table");
 
   // Get the table pointer
   storage::DataTable *table = db->GetTableWithOid(table_oid);
 
   // Check the table name and oid
-  assert(strcmp((table->GetName()).c_str(), table_name.c_str()) == 0);
-  assert(table->GetOid() == table_oid);
+  if(strcmp((table->GetName()).c_str(), table_name.c_str()) != 0)
+    throw CatalogException("Name check failed");
+
+  if(table->GetOid() != table_oid)
+    throw CatalogException("Oid check failed");
 
   // Get the table's schema to get a column
   catalog::Schema *schema = table->GetSchema();
@@ -85,23 +91,28 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
 
   // Check the first column' name, length and value type
   catalog::Column column = schema->GetColumn(0);
-  assert(CheckColumn(column, "id", 4, VALUE_TYPE_INTEGER));
+  if(CheckColumn(column, "id", 4, VALUE_TYPE_INTEGER) == false)
+    throw CatalogException("Column check failed");
 
   // Check the second column' name, length and value type
   column = schema->GetColumn(1);
-  assert(CheckColumn(column, "name", 68, VALUE_TYPE_VARCHAR));
+  if(CheckColumn(column, "name", 68, VALUE_TYPE_VARCHAR) == false)
+    throw CatalogException("Column check failed");
 
   // Check the third column' name, length and value type
   column = schema->GetColumn(2);
-  assert(CheckColumn(column, "time", 8, VALUE_TYPE_TIMESTAMP));
+  if(CheckColumn(column, "time", 8, VALUE_TYPE_TIMESTAMP) == false)
+    throw CatalogException("Column check failed");
 
   // Check the fourth column' name, length and value type
   column = schema->GetColumn(3);
-  assert(CheckColumn(column, "salary", 8, VALUE_TYPE_DOUBLE));
+  if(CheckColumn(column, "salary", 8, VALUE_TYPE_DOUBLE) == false)
+    throw CatalogException("Column check failed");
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  assert(status);
+  if(status == false)
+    throw CatalogException("Drop table failed");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }

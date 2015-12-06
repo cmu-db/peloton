@@ -150,6 +150,8 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
 
   return tuple_slot_id;
 }
@@ -196,6 +198,8 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
   tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
   tile_group_header->SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
   return tuple_slot_id;
