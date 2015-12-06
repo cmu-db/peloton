@@ -108,7 +108,7 @@ class Tuple : public AbstractTuple {
   const Value GetValue(const oid_t column_id) const;
 
   // Set appropriate column in tuple
-  void SetValue(const oid_t column_id, Value value);
+  void SetValue(const oid_t column_id, const Value& value);
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -119,7 +119,7 @@ class Tuple : public AbstractTuple {
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValueAllocate(const oid_t column_id, Value value, VarlenPool *dataPool);
+  void SetValueAllocate(const oid_t column_id, const Value& value, VarlenPool *dataPool);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
