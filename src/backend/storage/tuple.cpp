@@ -24,6 +24,16 @@
 namespace peloton {
 namespace storage {
 
+// Does not delete SCHEMA
+Tuple::~Tuple(){
+
+  // delete any uninlined data
+  FreeUninlinedData();
+
+  // delete the tuple data
+   if (allocated) delete[] tuple_data;
+ }
+
 // Get the value of a specified column (const)
 // (expensive) checks the schema to see how to return the Value.
 const Value Tuple::GetValue(const oid_t column_id) const {
@@ -52,6 +62,8 @@ void Tuple::SetValue(const oid_t column_id, const Value& value) {
 
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
+
+  GetValue(column_id).Free();
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
