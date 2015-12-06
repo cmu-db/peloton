@@ -198,6 +198,10 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     } break;
 
+    case VALUE_TYPE_NULL:
+      datum = PointerGetDatum(nullptr);
+      break;
+
     default:
       datum = PointerGetDatum(nullptr);
       LOG_ERROR("Unrecognized value type : %u\n", value_type);
@@ -267,7 +271,8 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
     assert(tuple_desc->attrs[att_itr]->attbyval == true
            || value.GetValueType() == VALUE_TYPE_VARCHAR
            || value.GetValueType() == VALUE_TYPE_VARBINARY
-           || value.GetValueType() == VALUE_TYPE_DECIMAL);
+           || value.GetValueType() == VALUE_TYPE_DECIMAL
+           || value.GetValueType() == VALUE_TYPE_NULL);
 
     datums[att_itr] = datum;
     nulls[att_itr] = value.IsNull() ? true : false;
@@ -290,6 +295,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
       assert(tuple_desc->attrs[att_itr]->attbyval == false);
+      if (nulls[att_itr]) continue;
 
       pfree((void *)(datums[att_itr]));
     }
