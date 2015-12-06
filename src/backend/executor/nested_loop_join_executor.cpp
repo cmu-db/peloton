@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <vector>
+#include <unordered_set>
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
@@ -57,7 +58,7 @@ bool NestedLoopJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_TRACE("********** Nested Loop Join executor :: 2 children \n");
+  LOG_INFO("********** Nested Loop %s Join executor :: 2 children \n", GetJoinTypeString());
 
   for(;;){  // Loop until we have non-empty result tile or exit
 
@@ -173,7 +174,19 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     unsigned int removed = 0;
     // Go over every pair of tuples in left and right logical tiles
+
+    // Right Join, Outer Join
+    // this set contains row id in right tile that none of the row in left tile matches
+    // this set is initialized with all ids in right tile and
+    // as the nested loop goes, id in the set are removed if a match is made,
+    // After nested looping, ids left are rows with no matching.
+    std::unordered_set<oid_t> no_match_rows;
+    // only initialize if we are doing right or outer join
+    if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
+      no_match_rows.insert(right_tile->begin(), right_tile->end());
+    }
     for(auto left_tile_row_itr : *left_tile){
+      bool has_right_match = false;
       for(auto right_tile_row_itr : *right_tile){
         // TODO: OPTIMIZATION : Can split the control flow into two paths -
         // one for Cartesian product and one for join
@@ -194,6 +207,12 @@ bool NestedLoopJoinExecutor::DExecute() {
           }
         }
 
+        // If we are doing right or outer join, remove a matched right row
+        if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
+          no_match_rows.erase(right_tile_row_itr);
+        }
+        has_right_match = true;
+
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
         for (size_t output_tile_column_itr = 0;
@@ -213,7 +232,48 @@ bool NestedLoopJoinExecutor::DExecute() {
                                                   [right_tile_row_itr]);
         }
       } // inner loop of NLJ
+
+      if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER) && has_right_match) {
+        // no right tuple matched, if we are doing left outer join or full outer join
+        // we should also emit a tuple in which right parts are null
+         for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < left_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[output_tile_column_itr].push_back(
+              left_tile_position_lists[output_tile_column_itr]
+                                      [left_tile_row_itr]);
+        }
+
+        // Then, copy the elements in right logical tile's tuple
+        for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < right_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[left_tile_column_count + output_tile_column_itr]
+              .push_back(NULL_OID);
+      }
+      }
     } // outer loop of NLJ
+
+    // If we are doing right or outer join, for each row in right tile
+    // it it has no match in left, we should emit a row whose left parts
+    // are null
+    if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
+      for (auto left_null_row_itr : no_match_rows) {
+        for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < left_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[output_tile_column_itr].push_back(NULL_OID);
+        }
+
+        for (size_t output_tile_column_itr = 0;
+             output_tile_column_itr < right_tile_column_count;
+             output_tile_column_itr++) {
+          position_lists[left_tile_column_count + output_tile_column_itr]
+              .push_back(right_tile_position_lists[output_tile_column_itr][left_null_row_itr]);
+        }
+      }
+    }
+
 
     LOG_INFO("Predicate removed %d rows", removed);
 
