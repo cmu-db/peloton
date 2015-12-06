@@ -236,7 +236,8 @@ bool NestedLoopJoinExecutor::DExecute() {
       } // inner loop of NLJ
 
       // Left Outer Join, Full Outer Join:
-      if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER) && has_right_match) {
+      if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER) && !has_right_match) {
+        LOG_INFO("Left or ful outer: Null row, left id %lu", left_tile_row_itr);
         // no right tuple matched, if we are doing left outer join or full outer join
         // we should also emit a tuple in which right parts are null
          for (size_t output_tile_column_itr = 0;
@@ -253,7 +254,7 @@ bool NestedLoopJoinExecutor::DExecute() {
              output_tile_column_itr++) {
           position_lists[left_tile_column_count + output_tile_column_itr]
               .push_back(NULL_OID);
-      }
+        }
       }
     } // outer loop of NLJ
 
@@ -263,6 +264,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     // are null
     if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
       for (auto left_null_row_itr : no_match_rows) {
+        LOG_INFO("right or full outer: Null row, right id %lu", left_null_row_itr);
         for (size_t output_tile_column_itr = 0;
              output_tile_column_itr < left_tile_column_count;
              output_tile_column_itr++) {
