@@ -54,14 +54,12 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple1.SetValue(0, ValueFactory::GetIntegerValue(1));
   tuple1.SetValue(1, ValueFactory::GetIntegerValue(1));
   tuple1.SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1.SetValue(
-      3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
+  tuple1.SetValueAllocate(3, ValueFactory::GetStringValue("tuple 1"), tile_group->GetTilePool(1));
 
   tuple2.SetValue(0, ValueFactory::GetIntegerValue(2));
   tuple2.SetValue(1, ValueFactory::GetIntegerValue(2));
   tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2.SetValue(
-      3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
+  tuple2.SetValueAllocate(3, ValueFactory::GetStringValue("tuple 2"), tile_group->GetTilePool(1));
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();

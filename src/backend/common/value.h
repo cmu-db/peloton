@@ -2393,7 +2393,7 @@ inline void Value::FreeObjectsFromTupleStorage(std::vector<char*> const &oldObje
   for (std::vector<char*>::const_iterator it = oldObjects.begin(); it != oldObjects.end(); ++it) {
     Varlen* sref = reinterpret_cast<Varlen*>(*it);
     if (sref != NULL) {
-      Varlen::Destroy(sref);
+      delete sref;
     }
   }
 }
