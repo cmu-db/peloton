@@ -244,7 +244,7 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(
  * @param tuple Peloton tuple
  * @return a Postgres tuple
  */
-TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
+TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
                                                    TupleDesc tuple_desc) {
   assert(tuple);
   assert(tuple_desc);
@@ -254,12 +254,6 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   const unsigned int natts = tuple_desc->natts;
   Datum *datums;
   bool *nulls;
-
-  if (tuple->GetColumnCount() != natts) {
-    LOG_WARN("tuple attr count : %lu , tuple desc attr count : %d \n",
-             tuple->GetColumnCount(), natts);
-    return nullptr;
-  }
 
   // Allocate space for datums
   datums = (Datum *)palloc0(natts * sizeof(Datum));
@@ -276,7 +270,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
            || value.GetValueType() == VALUE_TYPE_DECIMAL);
 
     datums[att_itr] = datum;
-    nulls[att_itr] = tuple->IsNull(att_itr) ? true : false;
+    nulls[att_itr] = value.IsNull() ? true : false;
   }
 
   // Construct tuple
@@ -308,6 +302,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
 
   return slot;
 }
+
 
 }  // namespace bridge
 }  // namespace peloton

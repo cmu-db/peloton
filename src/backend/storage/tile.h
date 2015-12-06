@@ -18,7 +18,6 @@
 #include "backend/common/pool.h"
 
 #include <mutex>
-#include "backend.h"
 
 namespace peloton {
 namespace storage {
