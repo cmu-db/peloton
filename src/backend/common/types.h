@@ -583,6 +583,8 @@ static const oid_t INVALID_OID = std::numeric_limits<oid_t>::max();
 
 static const oid_t MAX_OID = std::numeric_limits<oid_t>::max() - 1;
 
+#define NULL_OID MAX_OID
+
 // For transaction id
 
 typedef uint64_t txn_id_t;
