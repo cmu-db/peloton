@@ -19,6 +19,7 @@
 #include "backend/common/value.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile.h"
+#include "backend/common/value_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -160,9 +161,11 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   storage::Tile *base_tile = cp.base_tile;
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
-  Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
-
-  return value;
+  if (base_tuple_id == NULL_OID) {
+    return ValueFactory::GetNullValue();
+  } else {
+    return base_tile->GetValue(base_tuple_id, cp.origin_column_id);
+  }
 }
 
 /**
