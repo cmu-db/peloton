@@ -34,7 +34,6 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   virtual ~ConstantValueExpression() {
-    value.Free();
   }
 
   Value
