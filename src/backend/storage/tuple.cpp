@@ -54,7 +54,6 @@ void Tuple::SetValue(const oid_t column_id, const Value& value) {
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
-  Value casted_value = value.CastAs(type);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
@@ -67,8 +66,14 @@ void Tuple::SetValue(const oid_t column_id, const Value& value) {
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
-  casted_value.SetCleanUp(false);
+  if(type == value.GetValueType()) {
+    value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+  }
+  else {
+    Value casted_value = value.CastAs(type);
+    casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+    casted_value.SetCleanUp(false);
+  }
 }
 
 // Set all columns by value into this tuple.
@@ -78,7 +83,6 @@ void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
-  Value casted_value = value.CastAs(type);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
@@ -89,8 +93,14 @@ void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  casted_value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                         is_in_bytes, dataPool);
+  if(type == value.GetValueType()) {
+    value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
+                                                    is_in_bytes, dataPool);
+  }
+  else {
+    value.CastAs(type).SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
+                                                                 is_in_bytes, dataPool);
+  }
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
@@ -407,14 +417,7 @@ int Tuple::Compare(const Tuple &other,
 
 // Release to the heap any memory allocated for any uninlined columns.
 void Tuple::FreeUninlinedData() {
-  if (tuple_data == nullptr) return;
 
-  const uint16_t unlinlined_column_count =
-      tuple_schema->GetUninlinedColumnCount();
-
-  for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
-    GetValue(tuple_schema->GetUninlinedColumn(column_itr)).Free();
-  }
 }
 
 size_t Tuple::HashCode(size_t seed) const {
