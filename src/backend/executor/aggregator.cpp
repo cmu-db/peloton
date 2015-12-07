@@ -60,7 +60,8 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 /* Handle distinct */
 Agg::~Agg() {
   if (is_distinct_) {
-    for (auto val : distinct_set_) {
+    for (auto& val : distinct_set_) {
+      // TODO: Not sure if we need to do this ?
       val.Free();
     }
   }
@@ -173,9 +174,6 @@ HashAggregator::~HashAggregator() {
     }
     delete[] entry.second->aggregates;
 
-    for (auto &v : entry.second->first_tuple_values) {
-      v.Free();
-    }
     delete entry.second;
   }
 }
@@ -277,10 +275,6 @@ SortedAggregator::~SortedAggregator() {
   }
   delete[] aggregates;
 
-  // Clean current group keys
-  for(auto value : delegate_tuple_values_){
-    value.Free();
-  }
 }
 
 bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
@@ -330,9 +324,6 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     }
 
     // Update delegate tuple values
-    for(auto value : delegate_tuple_values_){
-      value.Free();
-    }
     delegate_tuple_values_.clear();
 
     for(oid_t col_id = 0; col_id < num_input_columns_; col_id++){

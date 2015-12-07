@@ -20,6 +20,7 @@
 
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/pool.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/delete_executor.h"
@@ -79,14 +80,14 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table) {
+void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
-    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
 
     auto project_info = MakeProjectInfoFromTuple(tuple);
 
@@ -196,6 +197,8 @@ TEST(MutateTests, StressTests) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
+  auto pool = new VarlenPool();
+
   // Create insert node for this test.
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
@@ -216,7 +219,7 @@ TEST(MutateTests, StressTests) {
 
   delete tuple;
 
-  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
   project_info = MakeProjectInfoFromTuple(tuple);
   planner::InsertPlan node2(table, project_info);
   executor::InsertExecutor executor2(&node2, context.get());
@@ -234,7 +237,7 @@ TEST(MutateTests, StressTests) {
 
   std::cout << "Start tests \n";
 
-  LaunchParallelTest(1, InsertTuple, table);
+  LaunchParallelTest(1, InsertTuple, table, pool);
   // std::cout << (*table);
 
   LOG_INFO("---------------------------------------------\n");
@@ -281,6 +284,8 @@ TEST(MutateTests, StressTests) {
   delete key_schema;
 
   delete table;
+
+  delete pool;
 }
 
 // Insert a logical tile into a table
