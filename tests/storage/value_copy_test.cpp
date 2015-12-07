@@ -42,11 +42,13 @@ TEST(ValueCopyTests, VarcharTest) {
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
 
-  tuple->SetValue(0, val);
+  Value val2 = ValueFactory::GetStringValue("hello hello world", nullptr);
 
-  std::cout << "Going to get value \n";
+  tuple->SetValueAllocate(0, val, pool);
 
-  std::cout << tuple->GetValue(0);
+  //std::cout << "Going to get value \n";
+
+  //std::cout << tuple->GetValue(0);
 
   delete tuple;
   delete schema;
