@@ -472,7 +472,6 @@ TEST(TileGroupTests, TileCopyTest) {
   // 2. Information (Value objects, lengths, pointers to Varlen objects, stored
   // data)
   int uninlined_col_index;
-  Value uninlined_col_value, new_uninlined_col_value;
   size_t uninlined_col_object_len, new_uninlined_col_object_len;
   unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
 
@@ -485,6 +484,8 @@ TEST(TileGroupTests, TileCopyTest) {
 
     // Iterate over all the tuples for the current uninlined column in the tile
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
+      Value uninlined_col_value, new_uninlined_col_value;
+
       uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
       uninlined_col_object_len =
           ValuePeeker::PeekObjectLengthWithoutNull(uninlined_col_value);
