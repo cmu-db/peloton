@@ -204,7 +204,7 @@ TEST(MutateTests, StressTests) {
 
   // Pass through insert executor.
   storage::Tuple *tuple;
-  tuple = ExecutorTestsUtil::GetNullTuple(table);
+  tuple = ExecutorTestsUtil::GetNullTuple(table, pool);
 
   auto project_info = MakeProjectInfoFromTuple(tuple);
 
