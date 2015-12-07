@@ -258,8 +258,8 @@ TEST(MutateTests, StressTests) {
   storage::Tuple *key1 = new storage::Tuple(key_schema, true);
   storage::Tuple *key2 = new storage::Tuple(key_schema, true);
 
-  key1->SetValue(0, ValueFactory::GetIntegerValue(10));
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100));
+  key1->SetValueAllocate(0, ValueFactory::GetIntegerValue(10), nullptr);
+  key2->SetValueAllocate(0, ValueFactory::GetIntegerValue(100), nullptr);
 
   delete key1;
   delete key2;
@@ -274,10 +274,10 @@ TEST(MutateTests, StressTests) {
   storage::Tuple *key3 = new storage::Tuple(key_schema, true);
   storage::Tuple *key4 = new storage::Tuple(key_schema, true);
 
-  key3->SetValue(0, ValueFactory::GetIntegerValue(10));
-  key3->SetValue(1, ValueFactory::GetIntegerValue(11));
-  key4->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key4->SetValue(1, ValueFactory::GetIntegerValue(101));
+  key3->SetValueAllocate(0, ValueFactory::GetIntegerValue(10), nullptr);
+  key3->SetValueAllocate(1, ValueFactory::GetIntegerValue(11), nullptr);
+  key4->SetValueAllocate(0, ValueFactory::GetIntegerValue(100), nullptr);
+  key4->SetValueAllocate(1, ValueFactory::GetIntegerValue(101), nullptr);
 
   delete key3;
   delete key4;
