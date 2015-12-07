@@ -46,9 +46,11 @@ TEST(ValueCopyTests, VarcharTest) {
 
   tuple->SetValueAllocate(0, val, pool);
 
-  //std::cout << "Going to get value \n";
+  std::cout << "Going to get value \n";
 
-  //std::cout << tuple->GetValue(0);
+  Value val3 = tuple->GetValue(0);
+
+  std::cout << val3;
 
   delete tuple;
   delete schema;
