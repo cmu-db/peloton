@@ -45,36 +45,8 @@ const Value Tuple::GetValue(const oid_t column_id) const {
   return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
 }
 
-// Set scalars by value and uninlined columns by reference into this tuple.
-void Tuple::SetValue(const oid_t column_id, const Value& value) {
-  assert(tuple_schema);
-  assert(tuple_data);
-
-  const ValueType type = tuple_schema->GetType(column_id);
-
-  const bool is_inlined = tuple_schema->IsInlined(column_id);
-  char *dataPtr = GetDataPtr(column_id);
-  int32_t column_length = tuple_schema->GetLength(column_id);
-
-  if (is_inlined == false)
-    column_length = tuple_schema->GetVariableLength(column_id);
-
-  GetValue(column_id).Free();
-
-  // TODO: Not sure about arguments
-  const bool is_in_bytes = false;
-  if(type == value.GetValueType()) {
-    value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
-  }
-  else {
-    Value casted_value = value.CastAs(type);
-    casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
-    casted_value.SetCleanUp(false);
-  }
-}
-
 // Set all columns by value into this tuple.
-void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
+void Tuple::SetValue(const oid_t column_id, const Value& value,
                              VarlenPool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
@@ -120,7 +92,7 @@ void Tuple::SetFromTuple(const storage::Tuple *tuple,
   // this tuple's schema
   oid_t this_col_itr = 0;
   for (auto col : columns) {
-    SetValueAllocate(this_col_itr, tuple->GetValue(col), pool);
+    SetValue(this_col_itr, tuple->GetValue(col), pool);
     this_col_itr++;
   }
 }
@@ -152,7 +124,7 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
       Value value = GetValue(unlineable_column_id);
 
       // Make a copy of the value at a new location in uninlined pool
-      SetValueAllocate(unlineable_column_id, value, pool);
+      SetValue(unlineable_column_id, value, pool);
     }
   }
 }
@@ -388,7 +360,7 @@ void Tuple::SetAllNulls() {
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
     Value value = Value::GetNullValue(tuple_schema->GetType(column_itr));
-    SetValueAllocate(column_itr, value, nullptr);
+    SetValue(column_itr, value, nullptr);
   }
 }
 

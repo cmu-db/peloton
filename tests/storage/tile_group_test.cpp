@@ -91,15 +91,15 @@ TEST(TileGroupTests, BasicTest) {
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   auto pool = tile_group->GetTilePool(1);
 
-  tuple1->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValueAllocate(3, ValueFactory::GetStringValue("tuple 1"), pool);
+  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1"), pool);
 
-  tuple2->SetValueAllocate(0, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValueAllocate(1, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
-  tuple2->SetValueAllocate(3, ValueFactory::GetStringValue("tuple 2"), pool);
+  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   // TRANSACTION
 
@@ -142,10 +142,10 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   cid_t commit_id = txn->GetCommitId();
   auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
                           pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
@@ -274,10 +274,10 @@ TEST(TileGroupTests, MVCCInsert) {
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("abc"), pool);
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(3, ValueFactory::GetStringValue("abc"), pool);
 
   oid_t tuple_slot_id = INVALID_OID;
 
@@ -286,15 +286,15 @@ TEST(TileGroupTests, MVCCInsert) {
   txn_id_t txn_id1 = txn->GetTransactionId();
   cid_t cid1 = txn->GetLastCommitId();
 
-  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(0), pool);
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(0), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(0, tuple_slot_id);
 
-  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(1), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(1, tuple_slot_id);
 
-  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(2), pool);
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(2), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(2, tuple_slot_id);
 
@@ -401,23 +401,23 @@ TEST(TileGroupTests, TileCopyTest) {
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
 
-  tuple1->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValueAllocate(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
-  tuple1->SetValueAllocate(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
+  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
+  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
 
-  tuple2->SetValueAllocate(0, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValueAllocate(1, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
-  tuple2->SetValueAllocate(3, ValueFactory::GetStringValue("ming fang"), pool);
-  tuple2->SetValueAllocate(4, ValueFactory::GetStringValue("ming fang again"), pool);
+  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang"), pool);
+  tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again"), pool);
 
-  tuple3->SetValueAllocate(0, ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValueAllocate(1, ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValueAllocate(2, ValueFactory::GetTinyIntValue(3), pool);
-  tuple3->SetValueAllocate(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
-  tuple3->SetValueAllocate(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
+  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
+  tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);

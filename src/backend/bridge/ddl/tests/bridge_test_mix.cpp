@@ -175,10 +175,10 @@ void BridgeTest::DDL_MIX_TEST_2() {
     Value timestampValue = ValueFactory::GetTimestampValue(10.22);
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
 
-    tuple.SetValueAllocate(0, integerValue, pool.get());
-    tuple.SetValueAllocate(1, stringValue, pool.get());
-    tuple.SetValueAllocate(2, timestampValue, pool.get());
-    tuple.SetValueAllocate(3, doubleValue, pool.get());
+    tuple.SetValue(0, integerValue, pool.get());
+    tuple.SetValue(1, stringValue, pool.get());
+    tuple.SetValue(2, timestampValue, pool.get());
+    tuple.SetValue(3, doubleValue, pool.get());
 
     table->InsertTuple(txn, &tuple);
 

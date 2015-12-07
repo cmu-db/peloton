@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/logger.h"
+#include "backend/common/pool.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/order_by_executor.h"
@@ -116,6 +117,8 @@ bool OrderByExecutor::DoSort() {
   }
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
 
+  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+
   // Extract all valid tuples into a single std::vector (the sort buffer)
   sort_buffer_.reserve(count);
   for (oid_t tile_id = 0; tile_id < input_tiles_.size(); tile_id++) {
@@ -124,8 +127,9 @@ bool OrderByExecutor::DoSort() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(sort_key_tuple_schema_.get(), true));
       for (oid_t id = 0; id < node.GetSortKeys().size(); id++) {
-        tuple->SetValue(id, input_tiles_[tile_id]->GetValue(
-                                tuple_id, node.GetSortKeys()[id]));
+        tuple->SetValue(id,
+                                input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]),
+                                pool.get());
       }
       // Inert the sort key tuple into sort buffer
       sort_buffer_.emplace_back(sort_buffer_entry_t(

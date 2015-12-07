@@ -112,6 +112,7 @@ void LoadTable() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool());
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
@@ -121,7 +122,7 @@ void LoadTable() {
 
     for(oid_t col_itr = 0 ; col_itr < col_count; col_itr++) {
       auto value = ValueFactory::GetIntegerValue(populate_value);
-      tuple.SetValue(col_itr, value);
+      tuple.SetValue(col_itr, value, pool.get());
     }
 
     ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(txn, &tuple);

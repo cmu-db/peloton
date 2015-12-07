@@ -43,15 +43,15 @@ TEST(TupleTests, BasicTest) {
   storage::Tuple *tuple(new storage::Tuple(schema, true));
   auto pool = new peloton::VarlenPool();
 
-  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(23), pool);
-  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(45), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
 
   EXPECT_EQ(tuple->GetValue(0), ValueFactory::GetIntegerValue(23));
   EXPECT_EQ(tuple->GetValue(1), ValueFactory::GetIntegerValue(45));
   EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(1));
 
-  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
 
   EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
 
@@ -83,18 +83,18 @@ TEST(TupleTests, VarcharTest) {
   storage::Tuple *tuple(new storage::Tuple(schema, true));
   auto pool = new peloton::VarlenPool();
 
-  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(23), pool);
-  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(45), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
-  tuple->SetValueAllocate(3, val, pool);
+  tuple->SetValue(3, val, pool);
   EXPECT_EQ(tuple->GetValue(3), val);
 
   std::cout << (*tuple);
 
   Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
-  tuple->SetValueAllocate(3, val2, pool);
+  tuple->SetValue(3, val2, pool);
 
   EXPECT_NE(tuple->GetValue(3), val);
   EXPECT_EQ(tuple->GetValue(3), val2);

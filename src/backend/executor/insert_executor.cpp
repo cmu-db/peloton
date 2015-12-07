@@ -85,7 +85,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple->SetValueAllocate(column_itr, cur_tuple.GetValue(column_itr), temp_pool.get());
+        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr), temp_pool.get());
 
       peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
@@ -117,7 +117,7 @@ bool InsertExecutor::DExecute() {
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
           target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValueAllocate(target.first, value, temp_pool.get());
+      tuple->SetValue(target.first, value, temp_pool.get());
     }
 
     // Bulk Insert Mode

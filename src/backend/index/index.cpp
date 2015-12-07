@@ -142,12 +142,12 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
 
     // fill in the placeholders
     if (placeholder == true) {
-      index_key->SetValueAllocate(column_itr, value, GetPool());
+      index_key->SetValue(column_itr, value, GetPool());
     }
     // get the min value
     else {
       auto value_type = schema->GetType(column_itr);
-      index_key->SetValueAllocate(column_itr, Value::GetMinValue(value_type), GetPool());
+      index_key->SetValue(column_itr, Value::GetMinValue(value_type), GetPool());
     }
   }
 
