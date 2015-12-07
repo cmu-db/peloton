@@ -28,6 +28,8 @@ namespace peloton {
  * with other Values.  Useful for declaring storage for an Value.
  */
 Value::Value() {
+  printf("Default constructor \n");
+
   ::memset( m_data, 0, 16);
   SetValueType(VALUE_TYPE_INVALID);
   m_sourceInlined = true;
@@ -39,6 +41,8 @@ Value::Value() {
  * that will be stored in this instance
  */
 Value::Value(const ValueType type) {
+  printf("Overloaded constructor \n");
+
   ::memset( m_data, 0, 16);
   SetValueType(type);
   m_sourceInlined = true;

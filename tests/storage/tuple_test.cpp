@@ -87,13 +87,13 @@ TEST(TupleTests, VarcharTest) {
   auto pool = new peloton::VarlenPool();
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
-  tuple->SetValue(3, val);
+  tuple->SetValueAllocate(3, val, pool);
   EXPECT_EQ(tuple->GetValue(3), val);
 
   std::cout << (*tuple);
 
   Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
-  tuple->SetValue(3, val2);
+  tuple->SetValueAllocate(3, val2, pool);
 
   EXPECT_NE(tuple->GetValue(3), val);
   EXPECT_EQ(tuple->GetValue(3), val2);
