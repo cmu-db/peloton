@@ -286,15 +286,15 @@ TEST(TileGroupTests, MVCCInsert) {
   txn_id_t txn_id1 = txn->GetTransactionId();
   cid_t cid1 = txn->GetLastCommitId();
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(0));
+  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(0), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(0, tuple_slot_id);
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(1));
+  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(1), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(1, tuple_slot_id);
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(2));
+  tuple->SetValueAllocate(2, ValueFactory::GetIntegerValue(2), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(2, tuple_slot_id);
 
