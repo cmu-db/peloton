@@ -89,18 +89,17 @@ TEST(TileGroupTests, BasicTest) {
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
+  auto pool = tile_group->GetTilePool(1);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
-      3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
+  tuple1->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValueAllocate(3, ValueFactory::GetStringValue("tuple 1"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(
-      3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
+  tuple2->SetValueAllocate(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValueAllocate(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValueAllocate(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   // TRANSACTION
 
@@ -141,13 +140,13 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   cid_t commit_id = txn->GetCommitId();
+  auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple->SetValue(
-      3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id),
-                                      tile_group->GetTilePool(1)));
+  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
+                          pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(txn_id, tuple);
@@ -273,12 +272,12 @@ TEST(TileGroupTests, MVCCInsert) {
       column_map, 3);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
+  auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple->SetValue(
-      3, ValueFactory::GetStringValue("abc", tile_group->GetTilePool(1)));
+  tuple->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("abc"), pool);
 
   oid_t tuple_slot_id = INVALID_OID;
 
@@ -396,34 +395,29 @@ TEST(TileGroupTests, TileCopyTest) {
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id1 = txn->GetTransactionId();
   oid_t tuple_slot_id = INVALID_OID;
+  auto pool = tile->GetPool();
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
-      3, ValueFactory::GetStringValue("vivek sengupta", tile->GetPool()));
-  tuple1->SetValue(
-      4, ValueFactory::GetStringValue("vivek sengupta again", tile->GetPool()));
+  tuple1->SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValueAllocate(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
+  tuple1->SetValueAllocate(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(3,
-                   ValueFactory::GetStringValue("ming fang", tile->GetPool()));
-  tuple2->SetValue(
-      4, ValueFactory::GetStringValue("ming fang again", tile->GetPool()));
+  tuple2->SetValueAllocate(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValueAllocate(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValueAllocate(3, ValueFactory::GetStringValue("ming fang"), pool);
+  tuple2->SetValueAllocate(4, ValueFactory::GetStringValue("ming fang again"), pool);
 
-  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3));
-  tuple3->SetValue(
-      3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
-  tuple3->SetValue(
-      4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
+  tuple3->SetValueAllocate(0, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValueAllocate(1, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValueAllocate(2, ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValueAllocate(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
+  tuple3->SetValueAllocate(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);
