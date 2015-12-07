@@ -15,6 +15,7 @@
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value_peeker.h"
+#include "backend/common/pool.h"
 #include "backend/storage/tuple.h"
 #include "backend/common/types.h"
 #include "backend/bridge/ddl/ddl.h"
@@ -211,10 +212,11 @@ Datum TupleTransformer::GetDatum(Value value) {
  * @brief Convert a Postgres tuple into Peloton tuple
  * @param slot Postgres tuple
  * @param schema Peloton scheme of the table to which the tuple belongs
+ * @param pool To allocate varlen values
  * @return a Peloton tuple
  */
 storage::Tuple *TupleTransformer::GetPelotonTuple(
-    TupleTableSlot *slot, const catalog::Schema *schema) {
+    TupleTableSlot *slot, const catalog::Schema *schema, VarlenPool *pool) {
   assert(slot);
 
   TupleDesc tuple_desc = slot->tts_tupleDescriptor;
@@ -233,7 +235,7 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(
     Oid attribute_type_id = attribute_info->atttypid;
 
     Value value = GetValue(attr, attribute_type_id);
-    tuple->SetValue(att_itr++, value);
+    tuple->SetValueAllocate(att_itr++, value, pool);
   }
 
   return tuple;
