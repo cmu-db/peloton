@@ -13,6 +13,7 @@
 #include "backend/index/index.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/pool.h"
 #include "backend/catalog/schema.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/tuple.h"
@@ -21,6 +22,14 @@
 
 namespace peloton {
 namespace index {
+
+Index::~Index() {
+  // clean up metadata
+  delete metadata;
+
+  // clean up pool
+  delete pool;
+}
 
 IndexMetadata::~IndexMetadata() {
    // clean up key schema
@@ -133,12 +142,12 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
 
     // fill in the placeholders
     if (placeholder == true) {
-      index_key->SetValue(column_itr, value);
+      index_key->SetValueAllocate(column_itr, value, GetPool());
     }
     // get the min value
     else {
       auto value_type = schema->GetType(column_itr);
-      index_key->SetValue(column_itr, Value::GetMinValue(value_type));
+      index_key->SetValueAllocate(column_itr, Value::GetMinValue(value_type), GetPool());
     }
   }
 
@@ -152,6 +161,9 @@ Index::Index(IndexMetadata *metadata) : metadata(metadata) {
   index_oid = metadata->GetOid();
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
+
+  // initialize pool
+  pool = new VarlenPool();
 }
 
 std::ostream &operator<<(std::ostream &os, const Index &index) {
