@@ -14,6 +14,7 @@
 
 #include "backend/concurrency/transaction.h"
 #include "backend/common/value_vector.h"
+#include "backend/common/pool.h"
 
 namespace peloton {
 namespace executor {
@@ -40,6 +41,14 @@ class ExecutorContext {
 
   const ValueArray &GetParams() const { return params_; }
 
+  void SetPool(VarlenPool *pool) {
+    pool_ = pool;
+  }
+
+  VarlenPool *GetPool() const {
+    return pool_;
+  }
+
   ~ExecutorContext(){
     for(int i=0; i < params_.GetSize(); i++){
       params_[i].Free();
@@ -60,6 +69,8 @@ class ExecutorContext {
   // params
   ValueArray params_;
 
+  // pool
+  VarlenPool *pool_ = nullptr;
 };
 
 }  // namespace executor

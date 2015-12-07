@@ -14,6 +14,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
+#include "backend/common/pool.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
@@ -71,6 +72,7 @@ bool InsertExecutor::DExecute() {
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
+    std::unique_ptr<VarlenPool> temp_pool(new VarlenPool());
     assert(logical_tile.get() != nullptr);
     auto target_table_schema = target_table_->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
@@ -83,7 +85,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr));
+        tuple->SetValueAllocate(column_itr, cur_tuple.GetValue(column_itr), temp_pool.get());
 
       peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
@@ -105,6 +107,7 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table_->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    std::unique_ptr<VarlenPool> temp_pool(new VarlenPool());
     auto project_info = node.GetProjectInfo();
 
     // There should be no direct maps
@@ -114,7 +117,7 @@ bool InsertExecutor::DExecute() {
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
           target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(target.first, value);
+      tuple->SetValueAllocate(target.first, value, temp_pool.get());
     }
 
     // Bulk Insert Mode
