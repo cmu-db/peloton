@@ -51,9 +51,6 @@ TEST(ValueTest, CloneString) {
               ValuePeeker::PeekObjectLengthWithoutNull(v2));
   ASSERT_FALSE(ValuePeeker::PeekObjectValue(v1) ==
                ValuePeeker::PeekObjectValue(v2));
-
-  v1.Free();
-  v2.Free();
 }
 
 TEST(ValueTest, DeserializeDecimal) {
@@ -273,9 +270,6 @@ TEST(ValueTest, TestCastToBigInt) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToInteger) {
@@ -355,9 +349,6 @@ TEST(ValueTest, TestCastToInteger) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToSmallInt) {
@@ -464,9 +455,6 @@ TEST(ValueTest, TestCastToSmallInt) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToTinyInt) {
@@ -593,9 +581,6 @@ TEST(ValueTest, TestCastToTinyInt) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToDouble) {
@@ -645,9 +630,6 @@ TEST(ValueTest, TestCastToDouble) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToString) {
@@ -661,7 +643,6 @@ TEST(ValueTest, TestCastToString) {
   try {
     Value cast = ValueFactory::CastAsString(tinyInt);
     std::cout << cast << std::endl;
-    cast.Free();
   } catch (...) {
     caught = true;
   }
@@ -671,7 +652,6 @@ TEST(ValueTest, TestCastToString) {
   try {
     Value cast = ValueFactory::CastAsString(smallInt);
     std::cout << cast << std::endl;
-    cast.Free();
   } catch (...) {
     caught = true;
   }
@@ -681,7 +661,6 @@ TEST(ValueTest, TestCastToString) {
   try {
     Value cast = ValueFactory::CastAsString(integer);
     std::cout << cast << std::endl;
-    cast.Free();
   } catch (...) {
     caught = true;
   }
@@ -691,14 +670,11 @@ TEST(ValueTest, TestCastToString) {
   try {
     Value cast = ValueFactory::CastAsString(bigInt);
     std::cout << cast << std::endl;
-    cast.Free();
   } catch (...) {
     caught = true;
   }
   EXPECT_FALSE(caught);
 
-  // Make valgrind happy
-  stringValue.Free();
 }
 
 TEST(ValueTest, TestCastToDecimal) {
@@ -737,9 +713,6 @@ TEST(ValueTest, TestCastToDecimal) {
     caught = true;
   }
   EXPECT_TRUE(caught);
-
-  // Make valgrind happy
-  stringValue.Free();
 
   // Now run a series of tests to make sure that out of range casts fail
   // For Decimal only a double, BigInt, and Integer can be out of range.
