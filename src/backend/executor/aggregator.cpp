@@ -59,12 +59,6 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 
 /* Handle distinct */
 Agg::~Agg() {
-  if (is_distinct_) {
-    for (auto& val : distinct_set_) {
-      // TODO: Not sure if we need to do this ?
-      val.Free();
-    }
-  }
 }
 
 void Agg::Advance(const Value val) {
