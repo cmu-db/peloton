@@ -90,14 +90,27 @@ void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
 
   // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  if(type == value.GetValueType()) {
-    value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                    is_in_bytes, dataPool);
+  if(dataPool == nullptr) {
+    if(type == value.GetValueType()) {
+      value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+    }
+    else {
+      Value casted_value = value.CastAs(type);
+      casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+      casted_value.SetCleanUp(false);
+    }
   }
   else {
-    value.CastAs(type).SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                                 is_in_bytes, dataPool);
+    if(type == value.GetValueType()) {
+      value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
+                                                      is_in_bytes, dataPool);
+    }
+    else {
+      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
+                                                                   is_in_bytes, dataPool);
+    }
   }
+
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
@@ -374,7 +387,7 @@ void Tuple::SetAllNulls() {
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
     Value value = Value::GetNullValue(tuple_schema->GetType(column_itr));
-    SetValue(column_itr, value);
+    SetValueAllocate(column_itr, value, nullptr);
   }
 }
 
