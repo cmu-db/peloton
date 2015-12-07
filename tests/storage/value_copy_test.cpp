@@ -44,7 +44,7 @@ TEST(ValueCopyTests, VarcharTest) {
 
   Value val2 = ValueFactory::GetStringValue("hello hello world", nullptr);
 
-  tuple->SetValueAllocate(0, val, pool);
+  tuple->SetValue(0, val, pool);
 
   std::cout << "Going to get value \n";
 
