@@ -353,22 +353,22 @@ storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table,
                                             oid_t tuple_id,
                                             VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValue(0,
-                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));
-  tuple->SetValue(1,
-                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)));
-  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)));
+  tuple->SetValueAllocate(0,
+                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)), pool);
+  tuple->SetValueAllocate(1,
+                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)), pool);
+  tuple->SetValueAllocate(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)), pool);
   tuple->SetValueAllocate(3, ValueFactory::GetStringValue("12345"), pool);
 
   return tuple;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table) {
+storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table, VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValue(0, ValueFactory::GetNullValue());
-  tuple->SetValue(1, ValueFactory::GetNullValue());
-  tuple->SetValue(2, ValueFactory::GetNullValue());
-  tuple->SetValue(3, ValueFactory::GetNullStringValue());
+  tuple->SetValueAllocate(0, ValueFactory::GetNullValue(), pool);
+  tuple->SetValueAllocate(1, ValueFactory::GetNullValue(), pool);
+  tuple->SetValueAllocate(2, ValueFactory::GetNullValue(), pool);
+  tuple->SetValueAllocate(3, ValueFactory::GetNullStringValue(), pool);
 
   return tuple;
 }
