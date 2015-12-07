@@ -163,6 +163,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool());
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
@@ -172,27 +173,28 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) {
       // First column has only two distinct values
-      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(int(populate_value/(num_rows/2)), 0)));
+      tuple.SetValue(0,ValueFactory::GetIntegerValue(PopulatedValue(
+          int(populate_value/(num_rows/2)), 0)), pool.get());
 
     } else {
       // First column is unique in this case
       tuple.SetValue(
-          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
+          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)), pool.get());
     }
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
         1, ValueFactory::GetIntegerValue(PopulatedValue(
-               random ? std::rand() % (num_rows / 3) : populate_value, 1)));
+               random ? std::rand() % (num_rows / 3) : populate_value, 1)), pool.get());
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-                          random ? std::rand() : populate_value, 2)));
+                          random ? std::rand() : populate_value, 2)), pool.get());
 
     // In case of random, make sure this column has duplicated values
     Value string_value =
         ValueFactory::GetStringValue(std::to_string(PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
-    tuple.SetValue(3, string_value);
+    tuple.SetValue(3, string_value, pool.get());
 
     if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
 
@@ -226,17 +228,18 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetCommitId();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool());
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(0,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)));
+                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)), pool.get());
     tuple.SetValue(1,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)));
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)));
+                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)), pool.get());
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)), pool.get());
     Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(col_itr, 3)));
-    tuple.SetValue(3, string_value);
+    tuple.SetValue(3, string_value, pool.get());
 
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
     tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
@@ -353,22 +356,22 @@ storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table,
                                             oid_t tuple_id,
                                             VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValueAllocate(0,
+  tuple->SetValue(0,
                   ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)), pool);
-  tuple->SetValueAllocate(1,
+  tuple->SetValue(1,
                   ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)), pool);
-  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("12345"), pool);
+  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)), pool);
+  tuple->SetValue(3, ValueFactory::GetStringValue("12345"), pool);
 
   return tuple;
 }
 
 storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table, VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValueAllocate(0, ValueFactory::GetNullValue(), pool);
-  tuple->SetValueAllocate(1, ValueFactory::GetNullValue(), pool);
-  tuple->SetValueAllocate(2, ValueFactory::GetNullValue(), pool);
-  tuple->SetValueAllocate(3, ValueFactory::GetNullStringValue(), pool);
+  tuple->SetValue(0, ValueFactory::GetNullValue(), pool);
+  tuple->SetValue(1, ValueFactory::GetNullValue(), pool);
+  tuple->SetValue(2, ValueFactory::GetNullValue(), pool);
+  tuple->SetValue(3, ValueFactory::GetNullStringValue(), pool);
 
   return tuple;
 }
