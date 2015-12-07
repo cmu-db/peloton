@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "backend/common/types.h"
+#include "backend/common/pool.h"
 
 namespace peloton {
 
@@ -87,7 +88,8 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
+  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
+                                  VarlenPool *pool);
   static storage::Tuple *GetNullTuple(storage::DataTable *table);
 
   /** Print the tuples from a vector of logical tiles */

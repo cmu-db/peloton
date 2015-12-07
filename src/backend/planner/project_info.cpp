@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/planner/project_info.h"
+#include "backend/executor/executor_context.h"
 
 namespace peloton {
 namespace planner {
@@ -44,6 +45,9 @@ ProjectInfo::~ProjectInfo() {
 bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
+  // Get varlen pool
+  auto pool = econtext->GetPool();
+
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
@@ -51,7 +55,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
     // FIXME: Should we use SetValueAllocate() here and below?
-    dest->SetValue(col_id, value);
+    dest->SetValueAllocate(col_id, value, pool);
   }
 
   // (B) Execute direct map
@@ -64,7 +68,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
                                      : tuple2->GetValue(src_col_id);
 
-    dest->SetValue(dest_col_id, value);
+    dest->SetValueAllocate(dest_col_id, value, pool);
   }
 
   return true;

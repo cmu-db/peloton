@@ -350,14 +350,15 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 }
 
 storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table,
-                                            oid_t tuple_id) {
+                                            oid_t tuple_id,
+                                            VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0,
                   ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));
   tuple->SetValue(1,
                   ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)));
   tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)));
-  tuple->SetValue(3, ValueFactory::GetStringValue("12345"));
+  tuple->SetValueAllocate(3, ValueFactory::GetStringValue("12345"), pool);
 
   return tuple;
 }
