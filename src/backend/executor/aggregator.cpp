@@ -176,6 +176,7 @@ HashAggregator::~HashAggregator() {
 
     delete entry.second;
   }
+
 }
 
 bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
