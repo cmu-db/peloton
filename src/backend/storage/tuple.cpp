@@ -42,7 +42,7 @@ const Value Tuple::GetValue(const oid_t column_id) const {
   const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema->IsInlined(column_id);
 
-  return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
+  return std::move(Value::InitFromTupleStorage(data_ptr, column_type, is_inlined));
 }
 
 // Set all columns by value into this tuple.
