@@ -90,8 +90,6 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
                                     tuple_value_expr,
                                     constant_value_expr);
 
-  constant_value.Free();
-
   return predicate;
 }
 
