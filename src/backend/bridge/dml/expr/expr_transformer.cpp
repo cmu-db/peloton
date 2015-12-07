@@ -24,6 +24,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/expression/cast_expression.h"
 
 namespace peloton {
@@ -60,6 +61,74 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
     case T_OpExpr:
       peloton_expr = TransformOp(expr_state);
+      break;
+
+    case T_ScalarArrayOpExpr:
+      peloton_expr = TransformScalarArrayOp(expr_state);
+      break;
+
+    case T_Var:
+      peloton_expr = TransformVar(expr_state);
+      break;
+
+    case T_BoolExpr:
+      peloton_expr = TransformBool(expr_state);
+      break;
+
+    case T_Param:
+      peloton_expr = TransformParam(expr_state);
+      break;
+
+    case T_RelabelType:
+      peloton_expr = TransformRelabelType(expr_state);
+      break;
+
+    case T_FuncExpr:
+      peloton_expr = TransformFunc(expr_state);
+      break;
+
+    case T_Aggref:
+      peloton_expr = TransformAggRef(expr_state);
+      break;
+
+    default:
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+                nodeTag(expr_state->expr))
+      ;
+  }
+
+  return peloton_expr;
+}
+
+expression::AbstractExpression* ExprTransformer::TransformExpr(
+    const ExprState* expr_state) {
+  if (nullptr == expr_state) {
+    LOG_TRACE("Null expression");
+    return nullptr;
+  }
+
+  expression::AbstractExpression* peloton_expr = nullptr;
+
+  /* Special case:
+   * Input is a list of expressions.
+   * Transform it to a conjunction tree.
+   */
+  if (expr_state->type == T_List) {
+    peloton_expr = TransformList(expr_state);
+    return peloton_expr;
+  }
+
+  switch (nodeTag(expr_state->expr)) {
+    case T_Const:
+      peloton_expr = TransformConst(expr_state);
+      break;
+
+    case T_OpExpr:
+      peloton_expr = TransformOp(expr_state);
+      break;
+
+    case T_ScalarArrayOpExpr:
+      peloton_expr = TransformScalarArrayOp(expr_state);
       break;
 
     case T_Var:
@@ -144,6 +213,54 @@ expression::AbstractExpression* ExprTransformer::TransformOp(
 
   return ReMapPgFunc(pg_func_id, func_state->args);
 }
+
+//added by michael for IN operator
+expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
+    const ExprState* es) {
+  LOG_TRACE("Transform ScalarArrayOp \n");
+
+  auto op_expr = reinterpret_cast<const ScalarArrayOpExpr*>(es->expr);
+  //auto saop_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
+
+  assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
+
+  auto pg_func_id = op_expr->opfuncid;
+
+  const List* list = op_expr->args;
+  std::list<expression::AbstractExpression*> exprs;
+  ListCell* l;
+
+  foreach (l, list)
+  {
+      const Expr* ex = reinterpret_cast<const Expr*>(lfirst(l));
+      //exprs.push_back(ex);
+      std::printf("expression: %d", nodeTag(ex));
+  }
+
+  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
+
+   // Extract function arguments (at most two)
+   expression::AbstractExpression* lc = nullptr;
+   expression::AbstractExpression* rc = nullptr;
+   int i = 0;
+   ListCell* arg;
+   foreach (arg, list)
+   {
+     Expr* argstate = (Expr*) lfirst(arg);
+
+     if (i >= list_length(list))
+       break;
+     if (i == 0)
+       lc = TransformExpr(argstate);
+     else if (i == 1)
+       rc = TransformExpr(argstate);
+     else break;
+
+     i++;
+   }
+
+}
+
 
 expression::AbstractExpression* ExprTransformer::TransformFunc(
     const ExprState* es) {
