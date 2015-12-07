@@ -114,12 +114,13 @@ void Tuple::SetValueAllocate(const oid_t column_id, const Value& value,
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
-                         const std::vector<oid_t> &columns) {
+                         const std::vector<oid_t> &columns,
+                         VarlenPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
   for (auto col : columns) {
-    SetValue(this_col_itr, tuple->GetValue(col));
+    SetValueAllocate(this_col_itr, tuple->GetValue(col), pool);
     this_col_itr++;
   }
 }

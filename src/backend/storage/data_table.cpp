@@ -229,7 +229,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns);
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
@@ -256,7 +256,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns);
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     auto status = index->InsertEntry(key.get(), location);
     (void) status;
@@ -341,7 +341,7 @@ bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
     auto indexed_columns = index_schema->GetIndexedColumns();
 
     storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     if (index->UpdateEntry(key, location) == false) {
       LOG_TRACE("Same-key update index failed \n");

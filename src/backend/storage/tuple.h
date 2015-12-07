@@ -162,7 +162,8 @@ class Tuple : public AbstractTuple {
 
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const storage::Tuple *tuple,
-                    const std::vector<oid_t> &columns);
+                    const std::vector<oid_t> &columns,
+                    VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);
