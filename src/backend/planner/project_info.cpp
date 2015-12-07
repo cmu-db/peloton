@@ -56,12 +56,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
-    if(pool == nullptr) {
-      dest->SetValue(col_id, value);
-    }
-    else{
-      dest->SetValueAllocate(col_id, value, pool);
-    }
+    dest->SetValueAllocate(col_id, value, pool);
   }
 
   // (B) Execute direct map
@@ -74,12 +69,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
                                      : tuple2->GetValue(src_col_id);
 
-    if(pool == nullptr) {
-      dest->SetValue(dest_col_id, value);
-    }
-    else{
-      dest->SetValueAllocate(dest_col_id, value, pool);
-    }
+    dest->SetValueAllocate(dest_col_id, value, pool);
   }
 
   return true;

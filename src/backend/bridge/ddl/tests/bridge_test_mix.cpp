@@ -164,6 +164,7 @@ void BridgeTest::DDL_MIX_TEST_2() {
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool());
 
   for (int col_itr = 0; col_itr < 5; col_itr++) {
     storage::Tuple tuple(schema, allocate);
@@ -174,10 +175,10 @@ void BridgeTest::DDL_MIX_TEST_2() {
     Value timestampValue = ValueFactory::GetTimestampValue(10.22);
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
 
-    tuple.SetValue(0, integerValue);
-    tuple.SetValue(1, stringValue);
-    tuple.SetValue(2, timestampValue);
-    tuple.SetValue(3, doubleValue);
+    tuple.SetValueAllocate(0, integerValue, pool.get());
+    tuple.SetValueAllocate(1, stringValue, pool.get());
+    tuple.SetValueAllocate(2, timestampValue, pool.get());
+    tuple.SetValueAllocate(3, doubleValue, pool.get());
 
     table->InsertTuple(txn, &tuple);
 
