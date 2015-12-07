@@ -498,10 +498,10 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
     Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+thread_id));
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+thread_id));
 
-    tuple->SetValueAllocate(0, longValue, pool);
-    tuple->SetValueAllocate(1, stringValue, pool);
-    tuple->SetValueAllocate(2, timestampValue, pool);
-    tuple->SetValueAllocate(3, doubleValue, pool);
+    tuple->SetValue(0, longValue, pool);
+    tuple->SetValue(1, stringValue, pool);
+    tuple->SetValue(2, timestampValue, pool);
+    tuple->SetValue(3, doubleValue, pool);
     tuples.push_back(tuple);
   }
 

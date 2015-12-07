@@ -52,15 +52,15 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   storage::Tuple tuple2(schema.get(), allocate);
   auto pool = tile_group->GetTilePool(1);
 
-  tuple1.SetValueAllocate(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValueAllocate(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValueAllocate(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple1.SetValueAllocate(3, ValueFactory::GetStringValue("tuple 1"), pool);
+  tuple1.SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1.SetValue(3, ValueFactory::GetStringValue("tuple 1"), pool);
 
-  tuple2.SetValueAllocate(0, ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValueAllocate(1, ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValueAllocate(2, ValueFactory::GetTinyIntValue(2), pool);
-  tuple2.SetValueAllocate(3, ValueFactory::GetStringValue("tuple 2"), pool);
+  tuple2.SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2.SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();

@@ -70,7 +70,7 @@ TEST(TileGroupIteratorTests, BasicTest) {
 
   for (int i = 0; i < tuple_count; i++) {
     storage::Tuple *tuple = new storage::Tuple(schema, true);
-    tuple->SetValue(0, ValueFactory::GetIntegerValue(i));
+    tuple->SetValue(0, ValueFactory::GetIntegerValue(i), nullptr);
     tile->InsertTuple(0, tuple);
     delete tuple;
   }  // FOR

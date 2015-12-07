@@ -235,7 +235,7 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(
     Oid attribute_type_id = attribute_info->atttypid;
 
     Value value = GetValue(attr, attribute_type_id);
-    tuple->SetValueAllocate(att_itr++, value, pool);
+    tuple->SetValue(att_itr++, value, pool);
   }
 
   return tuple;
