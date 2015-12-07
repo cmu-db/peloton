@@ -27,9 +27,6 @@ namespace storage {
 // Does not delete SCHEMA
 Tuple::~Tuple(){
 
-  // delete any uninlined data
-  FreeUninlinedData();
-
   // delete the tuple data
    if (allocated) delete[] tuple_data;
  }
@@ -413,11 +410,6 @@ int Tuple::Compare(const Tuple &other,
   }
 
   return 0;
-}
-
-// Release to the heap any memory allocated for any uninlined columns.
-void Tuple::FreeUninlinedData() {
-
 }
 
 size_t Tuple::HashCode(size_t seed) const {

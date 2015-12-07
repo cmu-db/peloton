@@ -140,9 +140,6 @@ class Tuple : public AbstractTuple {
   // Return the number of columns in this tuple
   inline oid_t GetColumnCount() const { return tuple_schema->GetColumnCount(); }
 
-  // Release to the heap any memory allocated for any uninlined columns.
-  void FreeUninlinedData();
-
   bool EqualsNoSchemaCheck(const Tuple &other) const;
 
   bool EqualsNoSchemaCheck(const Tuple &other,
