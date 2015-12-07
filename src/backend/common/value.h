@@ -3205,45 +3205,6 @@ inline void Value::HashCombine(std::size_t &seed) const {
   }
 }
 
-
-inline Value Value::CastAs(ValueType type) const {
-  LOG_TRACE("Converting from %s to %s",
-            ValueTypeToString(GetValueType()).c_str(),
-            ValueTypeToString(type).c_str());
-  if (GetValueType() == type) {
-    return *this;
-  }
-  if (IsNull()) {
-    return GetNullValue(type);
-  }
-
-  switch (type) {
-    case VALUE_TYPE_TINYINT:
-      return CastAsTinyInt();
-    case VALUE_TYPE_SMALLINT:
-      return CastAsSmallInt();
-    case VALUE_TYPE_INTEGER:
-      return CastAsInteger();
-    case VALUE_TYPE_BIGINT:
-      return CastAsBigInt();
-    case VALUE_TYPE_TIMESTAMP:
-      return CastAsTimestamp();
-    case VALUE_TYPE_DOUBLE:
-      return CastAsDouble();
-    case VALUE_TYPE_VARCHAR:
-      return CastAsString();
-    case VALUE_TYPE_VARBINARY:
-      return CastAsBinary();
-    case VALUE_TYPE_DECIMAL:
-      return CastAsDecimal();
-    default:
-      char message[128];
-      snprintf(message, 128, "Type %d not a recognized type for casting",
-               (int) type);
-      throw Exception(message);
-  }
-}
-
 inline void* Value::CastAsAddress() const {
   const ValueType type = GetValueType();
   switch (type) {
