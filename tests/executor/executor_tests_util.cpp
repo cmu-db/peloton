@@ -163,7 +163,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+  auto testing_pool = GetTestingPool();
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
@@ -174,27 +174,27 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     if (group_by) {
       // First column has only two distinct values
       tuple.SetValue(0,ValueFactory::GetIntegerValue(PopulatedValue(
-          int(populate_value/(num_rows/2)), 0)), pool.get());
+          int(populate_value/(num_rows/2)), 0)), testing_pool);
 
     } else {
       // First column is unique in this case
       tuple.SetValue(
-          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)), pool.get());
+          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)), testing_pool);
     }
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
         1, ValueFactory::GetIntegerValue(PopulatedValue(
-               random ? std::rand() % (num_rows / 3) : populate_value, 1)), pool.get());
+               random ? std::rand() % (num_rows / 3) : populate_value, 1)), testing_pool);
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-                          random ? std::rand() : populate_value, 2)), pool.get());
+                          random ? std::rand() : populate_value, 2)), testing_pool);
 
     // In case of random, make sure this column has duplicated values
     Value string_value =
         ValueFactory::GetStringValue(std::to_string(PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
-    tuple.SetValue(3, string_value, pool.get());
+    tuple.SetValue(3, string_value, testing_pool);
 
     if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
 
@@ -228,18 +228,18 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetCommitId();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+  auto testing_pool = GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(0,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)), pool.get());
+                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)), testing_pool);
     tuple.SetValue(1,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)), pool.get());
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)), pool.get());
+                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)), testing_pool);
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)), testing_pool);
     Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(col_itr, 3)));
-    tuple.SetValue(3, string_value, pool.get());
+    tuple.SetValue(3, string_value, testing_pool);
 
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
     tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);

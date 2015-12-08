@@ -12,6 +12,8 @@
 
 #include "harness.h"
 
+#include "backend/common/pool.h"
+
 namespace peloton {
 namespace test {
 
@@ -26,6 +28,17 @@ uint64_t GetThreadId() {
   id = id % MAX_THREADS;
 
   return id;
+}
+
+static std::unique_ptr<VarlenPool> pool_;
+
+VarlenPool *GetTestingPool(){
+  // construct pool if needed
+  if(pool_.get() == nullptr)
+    pool_.reset(new VarlenPool());
+
+  // return pool
+  return pool_.get();
 }
 
 }  // End test namespace
