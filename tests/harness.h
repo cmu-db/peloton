@@ -22,6 +22,9 @@
 #include "backend/common/logger.h"
 
 namespace peloton {
+
+class VarlenPool;
+
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -52,6 +55,8 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 }
 
 inline oid_t GetNextTileGroupId() { return ++tile_group_id_counter; }
+
+VarlenPool *GetTestingPool();
 
 }  // End test namespace
 }  // End peloton namespace

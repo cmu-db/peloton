@@ -16,13 +16,14 @@
 #include <memory>
 
 #include "backend/common/types.h"
-#include "backend/common/pool.h"
 
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
+
+class VarlenPool;
 
 namespace catalog {
 class Column;
@@ -95,6 +96,7 @@ class ExecutorTestsUtil {
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
+
 };
 
 }  // namespace test

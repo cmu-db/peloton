@@ -237,8 +237,8 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
-  auto pool = new VarlenPool();
-  auto locations = InsertTuples(table, pool, commit);
+  auto testing_pool = GetTestingPool();
+  auto locations = InsertTuples(table, testing_pool, commit);
 
   // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
@@ -246,11 +246,11 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   // Update the first inserted location if we insert >= 1 tuples
   if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], pool, commit);
+    UpdateTuples(table, locations[0], testing_pool, commit);
 
   // This insert should have no effect
   commit = false;
-  InsertTuples(table, pool, commit);
+  InsertTuples(table, testing_pool, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
@@ -262,9 +262,6 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
     log_manager.RemoveBackendLogger(logger);
   }
-
-  // Clean up pool
-  delete pool;
 
 }
 

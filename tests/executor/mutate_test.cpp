@@ -197,14 +197,14 @@ TEST(MutateTests, StressTests) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  auto pool = new VarlenPool();
+  auto testing_pool = GetTestingPool();
 
   // Create insert node for this test.
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
   storage::Tuple *tuple;
-  tuple = ExecutorTestsUtil::GetNullTuple(table, pool);
+  tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
   auto project_info = MakeProjectInfoFromTuple(tuple);
 
@@ -219,7 +219,7 @@ TEST(MutateTests, StressTests) {
 
   delete tuple;
 
-  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
+  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
   project_info = MakeProjectInfoFromTuple(tuple);
   planner::InsertPlan node2(table, project_info);
   executor::InsertExecutor executor2(&node2, context.get());
@@ -237,7 +237,7 @@ TEST(MutateTests, StressTests) {
 
   std::cout << "Start tests \n";
 
-  LaunchParallelTest(1, InsertTuple, table, pool);
+  LaunchParallelTest(1, InsertTuple, table, testing_pool);
   // std::cout << (*table);
 
   LOG_INFO("---------------------------------------------\n");
@@ -285,7 +285,6 @@ TEST(MutateTests, StressTests) {
 
   delete table;
 
-  delete pool;
 }
 
 // Insert a logical tile into a table
