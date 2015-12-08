@@ -46,39 +46,46 @@ Value Tuple::GetValue(const oid_t column_id) const {
 
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_id, const Value& value,
-                     VarlenPool *dataPool) {
+                     VarlenPool *data_pool) {
   assert(tuple_schema);
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
-  char *dataPtr = GetDataPtr(column_id);
+  char *value_location = GetDataPtr(column_id);
   int32_t column_length = tuple_schema->GetLength(column_id);
 
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
 
   const bool is_in_bytes = false;
-  if(dataPool == nullptr) {
+
+  // Allocate in heap or given data pool depending on whether a pool is provided
+  if(data_pool == nullptr) {
+    // Skip casting if type is same
     if(type == value.GetValueType()) {
-      value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+      value.SerializeToTupleStorage(value_location, is_inlined,
+                                    column_length, is_in_bytes);
     }
     else {
       Value casted_value = value.CastAs(type);
-      casted_value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
+      casted_value.SerializeToTupleStorage(value_location, is_inlined,
+                                           column_length, is_in_bytes);
       casted_value.SetCleanUp(false);
     }
   }
   else {
+    // Skip casting if type is same
     if(type == value.GetValueType()) {
-      // TODO: Not sure about arguments
-      value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                      is_in_bytes, dataPool);
+      value.SerializeToTupleStorageAllocateForObjects(value_location, is_inlined,
+                                                      column_length,
+                                                      is_in_bytes, data_pool);
     }
     else {
-      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                                   is_in_bytes, dataPool);
+      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(value_location, is_inlined,
+                                                                   column_length,
+                                                                   is_in_bytes, data_pool);
     }
   }
 
