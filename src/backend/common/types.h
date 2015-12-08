@@ -117,6 +117,12 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
+  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,      //added by michael: TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,      //added by michael: TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,      //added by michael: TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_OID_ARRAY =1028,        //added by michael: TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE__FLOADT4_ARRAY = 1021,  //added by michael: TEXTARRAYOID in postgres code
+
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
 };

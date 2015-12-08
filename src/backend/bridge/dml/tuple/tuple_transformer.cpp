@@ -102,6 +102,16 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       value = ValueFactory::GetStringValue(str, data_pool);
     } break;
 
+    case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
+      struct varlena *textptr = reinterpret_cast<struct varlena *>(datum);
+      int len = VARSIZE(textptr) - VARHDRSZ;
+      char *varchar = static_cast<char *>(VARDATA(textptr));
+      VarlenPool *data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_TRACE("len = %d , text = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
+    } break;
+
     case POSTGRES_VALUE_TYPE_TIMESTAMPS: {
       long int timestamp = DatumGetInt64(datum);
       value = ValueFactory::GetTimestampValue(timestamp);
