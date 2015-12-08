@@ -37,29 +37,24 @@ Varlen *Varlen::Clone(const Varlen &src, VarlenPool *data_pool) {
   return rv;
 }
 
+// Construct varlen in heap
 Varlen::Varlen(size_t size) {
   varlen_size = size + sizeof(Varlen *);
   varlen_temp_pool = true;
   varlen_string_ptr = new char[varlen_size];
-  printf("varlen heap : %p \n", varlen_string_ptr);
-
   SetBackPtr();
 }
 
+// Construct varlen in given data pool
 Varlen::Varlen(std::size_t size, VarlenPool *data_pool) {
   varlen_size = size + sizeof(Varlen *);
   varlen_temp_pool = false;
   varlen_string_ptr =
       reinterpret_cast<char *>(data_pool->Allocate(varlen_size));
-  printf("varlen pool : %p \n", varlen_string_ptr);
-
   SetBackPtr();
 }
 
 Varlen::~Varlen() {
-
-  std::cout << "TEMP :: " << varlen_temp_pool << "\n";
-  printf("location : %p \n", varlen_string_ptr);
 
   if (varlen_temp_pool == true) {
     delete[] varlen_string_ptr;
