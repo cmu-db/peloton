@@ -20,6 +20,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/materialization_plan.h"
@@ -58,7 +59,7 @@ namespace test {
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
 
-void RunTest() {
+void ExecuteTileGroupTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   const int tuples_per_tilegroup_count = 10;
@@ -124,7 +125,7 @@ void RunTest() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+  auto testing_pool = GetTestingPool();
 
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
@@ -133,7 +134,7 @@ void RunTest() {
 
     for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
       auto value = ValueFactory::GetIntegerValue(populate_value + col_itr);
-      tuple.SetValue(col_itr, value, pool.get());
+      tuple.SetValue(col_itr, value, testing_pool);
     }
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
@@ -212,12 +213,12 @@ void RunTest() {
 
 TEST(TileGroupLayoutTest, RowLayout) {
   peloton_layout = LAYOUT_ROW;
-  RunTest();
+  ExecuteTileGroupTest();
 }
 
 TEST(TileGroupLayoutTest, ColumnLayout) {
   peloton_layout = LAYOUT_COLUMN;
-  RunTest();
+  ExecuteTileGroupTest();
 }
 
 }  // namespace test

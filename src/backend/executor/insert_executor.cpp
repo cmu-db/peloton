@@ -55,6 +55,7 @@ bool InsertExecutor::DExecute() {
   if (done_) return false;
 
   assert(!done_);
+  assert(executor_context_ != nullptr);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table_ = node.GetTable();
@@ -62,6 +63,7 @@ bool InsertExecutor::DExecute() {
   assert(target_table_);
 
   auto transaction_ = executor_context_->GetTransaction();
+  auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
@@ -72,7 +74,6 @@ bool InsertExecutor::DExecute() {
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
-    std::unique_ptr<VarlenPool> temp_pool(new VarlenPool());
     assert(logical_tile.get() != nullptr);
     auto target_table_schema = target_table_->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
@@ -85,7 +86,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr), temp_pool.get());
+        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr), executor_pool);
 
       peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
@@ -107,7 +108,6 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table_->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-    std::unique_ptr<VarlenPool> temp_pool(new VarlenPool());
     auto project_info = node.GetProjectInfo();
 
     // There should be no direct maps
@@ -117,7 +117,7 @@ bool InsertExecutor::DExecute() {
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
           target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(target.first, value, temp_pool.get());
+      tuple->SetValue(target.first, value, executor_pool);
     }
 
     // Bulk Insert Mode

@@ -15,6 +15,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+#include "backend/common/pool.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
@@ -77,6 +78,9 @@ AriesFrontendLogger::AriesFrontendLogger(){
     LOG_ERROR("log_file_fd is -1");
   }
 
+  // allocate pool
+  recovery_pool = new VarlenPool();
+
 }
 
 /**
@@ -93,6 +97,10 @@ AriesFrontendLogger::~AriesFrontendLogger(){
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
+
+  // clean up pool
+  delete recovery_pool;
+
 }
 
 /**
@@ -419,14 +427,12 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   }
 
   auto table = GetTable(tuple_record);
-  VarlenPool *pool = new VarlenPool();
 
   // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
 
   // Check for torn log write
   if (tuple == nullptr) {
-    delete pool;
     return;
   }
 
@@ -460,7 +466,6 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   }
 
   delete tuple;
-  delete pool;
 }
 
 /**
@@ -520,13 +525,11 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tuple_record);
-  VarlenPool *pool = new VarlenPool();
 
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
 
   // Check for torn log write
   if( tuple == nullptr){
-     delete pool;
     return;
   }
 
@@ -566,7 +569,6 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   }
 
   delete tuple;
-  delete pool;
 }
 
 //===--------------------------------------------------------------------===//

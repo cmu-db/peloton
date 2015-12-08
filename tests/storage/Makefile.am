@@ -13,9 +13,11 @@ check_PROGRAMS += \
 		tile_group_iterator_test
 
 value_copy_test_SOURCES = \
+		harness.cpp \
 		storage/value_copy_test.cpp
 
 tuple_test_SOURCES = \
+	    harness.cpp \
 		storage/tuple_test.cpp
 
 tile_test_SOURCES = \

@@ -37,9 +37,6 @@ AggregateExecutor::AggregateExecutor(const planner::AbstractPlan *node,
 AggregateExecutor::~AggregateExecutor() {
   // clean up temporary aggregation table
   delete output_table;
-
-  // clean up pool
-  delete pool;
 }
 
 /**
@@ -70,18 +67,12 @@ bool AggregateExecutor::DInit() {
   // clean up temporary aggregation table
   delete output_table;
 
-  // clean up pool
-  delete pool;
-
   bool own_schema = false;
   bool adapt_table = false;
   output_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
       DEFAULT_TUPLES_PER_TILEGROUP,
       own_schema, adapt_table);
-
-  pool = new VarlenPool();
-  executor_context_->SetPool(pool);
 
   return true;
 }

@@ -31,7 +31,6 @@ namespace bridge {
 void BridgeTest::DDL_MIX_TEST() {
   DDL_MIX_TEST_1();
 
-  DDL_MIX_TEST_2();
 }
 
 /**
@@ -118,87 +117,6 @@ void BridgeTest::DDL_MIX_TEST_1() {
   // Drop the table
   status = DDLTable::DropTable(pktable_oid);
   assert(status);
-
-  LOG_INFO(":::::: %s DONE\n", __func__);
-}
-
-/**
- * @brief Test DDL and DML together. Create a table and drop it. Create a table
- *  again and insert tuple into the table.
- */
-void BridgeTest::DDL_MIX_TEST_2() {
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db =
-      manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-
-  // Get the simple columns
-  std::vector<catalog::Column> columns = CreateSimpleColumns();
-
-  // Table name and oid
-  std::string table_name = "ddl_dml_mix_test_table";
-  oid_t table_oid = 60001;
-
-  // Create a table
-  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-
-  // Drop the table
-  status = DDLTable::DropTable(table_oid);
-  if(status == false)
-    throw CatalogException("Could not drop table");
-
-  // Create a table again
-  status = DDLTable::CreateTable(table_oid, table_name, columns);
-  if(status == false)
-    throw CatalogException("Could not create table");
-
-  // Get the table pointer and schema
-  storage::DataTable *table = db->GetTableWithOid(table_oid);
-  catalog::Schema *schema = table->GetSchema();
-
-  // Ensure that the tile group is as expected.
-  if(schema->GetColumnCount() != 4)
-    throw CatalogException("Schema does not match");
-
-  // Insert tuples
-  const bool allocate = true;
-
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
-
-  for (int col_itr = 0; col_itr < 5; col_itr++) {
-    storage::Tuple tuple(schema, allocate);
-
-    // Setting values
-    Value integerValue = ValueFactory::GetIntegerValue(243432);
-    Value stringValue = ValueFactory::GetStringValue("dude");
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22);
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
-
-    tuple.SetValue(0, integerValue, pool.get());
-    tuple.SetValue(1, stringValue, pool.get());
-    tuple.SetValue(2, timestampValue, pool.get());
-    tuple.SetValue(3, doubleValue, pool.get());
-
-    table->InsertTuple(txn, &tuple);
-
-    if(tuple.GetValue(0) != integerValue)
-      throw CatalogException("Value does not match");
-    if(tuple.GetValue(1) != stringValue)
-      throw CatalogException("Value does not match");
-    if(tuple.GetValue(2) != timestampValue)
-      throw CatalogException("Value does not match");
-    if(tuple.GetValue(3) != doubleValue)
-      throw CatalogException("Value does not match");
-
-  }
-
-  txn_manager.CommitTransaction(txn);
-
-  // Drop the table
-  status = DDLTable::DropTable(table_oid);
-  if(status == false)
-    throw CatalogException("Could not drop table");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
