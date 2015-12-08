@@ -13,6 +13,7 @@
 #include "backend/executor/delete_executor.h"
 #include "backend/executor/executor_context.h"
 
+#include "backend/common/value.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/planner/delete_plan.h"

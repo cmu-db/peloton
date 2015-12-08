@@ -14,7 +14,6 @@
 
 #include "backend/common/value_factory.h"
 #include "backend/common/serializer.h"
-#include "backend/common/value_vector.h"
 #include "backend/storage/tuple.h"
 
 #include "backend/expression/abstract_expression.h"

@@ -62,9 +62,9 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
  */
 executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn) {
-  ValueArray params = PlanTransformer::BuildParams(param_list);
 
-  return new executor::ExecutorContext(txn, params);
+  return new executor::ExecutorContext(txn, PlanTransformer::BuildParams(param_list));
+
 }
 
 /**
