@@ -233,9 +233,6 @@ class Value {
 
   Value(const Value& other);
 
-  /* Release memory associated to object type Values */
-  void Free() const;
-
   /* Release memory associated to object type tuple columns */
   static void FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects);
 
@@ -384,34 +381,34 @@ class Value {
   ////////////////////////////////////////////////////////////
 
   /* Return a boolean Value with the comparison result */
-  Value OpEquals(const Value rhs) const;
-  Value OpNotEquals(const Value rhs) const;
-  Value OpLessThan(const Value rhs) const;
-  Value OpLessThanOrEqual(const Value rhs) const;
-  Value OpGreaterThan(const Value rhs) const;
-  Value OpGreaterThanOrEqual(const Value rhs) const;
+  Value OpEquals(const Value& rhs) const;
+  Value OpNotEquals(const Value& rhs) const;
+  Value OpLessThan(const Value& rhs) const;
+  Value OpLessThanOrEqual(const Value& rhs) const;
+  Value OpGreaterThan(const Value& rhs) const;
+  Value OpGreaterThanOrEqual(const Value& rhs) const;
 
-  Value OpEqualsWithoutNull(const Value rhs) const;
-  Value OpNotEqualsWithoutNull(const Value rhs) const;
-  Value OpLessThanWithoutNull(const Value rhs) const;
-  Value OpLessThanOrEqualWithoutNull(const Value rhs) const;
-  Value OpGreaterThanWithoutNull(const Value rhs) const;
-  Value OpGreaterThanOrEqualWithoutNull(const Value rhs) const;
+  Value OpEqualsWithoutNull(const Value& rhs) const;
+  Value OpNotEqualsWithoutNull(const Value& rhs) const;
+  Value OpLessThanWithoutNull(const Value& rhs) const;
+  Value OpLessThanOrEqualWithoutNull(const Value& rhs) const;
+  Value OpGreaterThanWithoutNull(const Value& rhs) const;
+  Value OpGreaterThanOrEqualWithoutNull(const Value& rhs) const;
 
 
   /* Return a copy of MAX(this, rhs) */
-  Value OpMax(const Value rhs) const;
+  Value OpMax(const Value& rhs) const;
 
   /* Return a copy of MIN(this, rhs) */
-  Value OpMin(const Value rhs) const;
+  Value OpMin(const Value& rhs) const;
 
   /* For number Values, compute new Values for arithmetic operators */
   Value OpIncrement() const;
   Value OpDecrement() const;
-  Value OpSubtract(const Value rhs) const;
-  Value OpAdd(const Value rhs) const;
-  Value OpMultiply(const Value rhs) const;
-  Value OpDivide(const Value rhs) const;
+  Value OpSubtract(const Value& rhs) const;
+  Value OpAdd(const Value& rhs) const;
+  Value OpMultiply(const Value& rhs) const;
+  Value OpDivide(const Value& rhs) const;
   /*
    * This Value must be VARCHAR and the rhs must be VARCHAR.
    * This Value is the value and the rhs is the pattern
@@ -3080,56 +3077,56 @@ inline bool Value::IsNan() const {
 }
 
 // general full comparison
-inline Value Value::OpEquals(const Value rhs) const {
+inline Value Value::OpEquals(const Value& rhs) const {
   return Compare(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpNotEquals(const Value rhs) const {
+inline Value Value::OpNotEquals(const Value& rhs) const {
   return Compare(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThan(const Value rhs) const {
+inline Value Value::OpLessThan(const Value& rhs) const {
   return Compare(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanOrEqual(const Value rhs) const {
+inline Value Value::OpLessThanOrEqual(const Value& rhs) const {
   return Compare(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThan(const Value rhs) const {
+inline Value Value::OpGreaterThan(const Value& rhs) const {
   return Compare(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanOrEqual(const Value rhs) const {
+inline Value Value::OpGreaterThanOrEqual(const Value& rhs) const {
   return Compare(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
 // without null comparison
-inline Value Value::OpEqualsWithoutNull(const Value rhs) const {
+inline Value Value::OpEqualsWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpNotEqualsWithoutNull(const Value rhs) const {
+inline Value Value::OpNotEqualsWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanWithoutNull(const Value rhs) const {
+inline Value Value::OpLessThanWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanOrEqualWithoutNull(const Value rhs) const {
+inline Value Value::OpLessThanOrEqualWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanWithoutNull(const Value rhs) const {
+inline Value Value::OpGreaterThanWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanOrEqualWithoutNull(const Value rhs) const {
+inline Value Value::OpGreaterThanOrEqualWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpMax(const Value rhs) const {
+inline Value Value::OpMax(const Value& rhs) const {
   if (Compare(rhs) > 0) {
     return *this;
   } else {
@@ -3137,7 +3134,7 @@ inline Value Value::OpMax(const Value rhs) const {
   }
 }
 
-inline Value Value::OpMin(const Value rhs) const {
+inline Value Value::OpMin(const Value& rhs) const {
   if (Compare(rhs) < 0) {
     return *this;
   } else {
@@ -3314,7 +3311,7 @@ inline bool Value::IsZero() const {
   }
 }
 
-inline Value Value::OpSubtract(const Value rhs) const {
+inline Value Value::OpSubtract(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3345,7 +3342,7 @@ inline Value Value::OpSubtract(const Value rhs) const {
                               rhs.GetValueType());
 }
 
-inline Value Value::OpAdd(const Value rhs) const {
+inline Value Value::OpAdd(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3376,7 +3373,7 @@ inline Value Value::OpAdd(const Value rhs) const {
                   rhs.GetValueTypeString());
 }
 
-inline Value Value::OpMultiply(const Value rhs) const {
+inline Value Value::OpMultiply(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3407,7 +3404,7 @@ inline Value Value::OpMultiply(const Value rhs) const {
                   rhs.GetValueTypeString());
 }
 
-inline Value Value::OpDivide(const Value rhs) const {
+inline Value Value::OpDivide(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);

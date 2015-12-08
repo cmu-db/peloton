@@ -45,11 +45,10 @@ Value::Value(const ValueType type) {
   m_cleanUp = true;
 }
 
-/**
- * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
- * the object to the heap
- */
-void Value::Free() const {
+
+/* Objects may have storage allocated for them.
+ * Release memory associated to object type Values */
+Value::~Value() {
 
   if(m_sourceInlined == true || m_cleanUp == false)
     return;
@@ -73,18 +72,10 @@ void Value::Free() const {
     default:
       return;
   }
-}
-
-/* Release memory associated to object type Values */
-Value::~Value() {
-
-  Free();
 
 }
 
 Value& Value::operator=(const Value &other) {
-
-  printf("Copy assignment try : %p \n", this);
 
   // protect against invalid self-assignment
   if (this != &other) {
