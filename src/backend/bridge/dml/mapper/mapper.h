@@ -19,7 +19,6 @@
 #include "backend/bridge/dml/mapper/dml_raw_structures.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
-#include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
 #include "backend/common/cache.h"
 #include "backend/planner/project_info.h"
@@ -65,7 +64,7 @@ class PlanTransformer {
 
   static void CleanPlan(const planner::AbstractPlan *root);
 
-  static const ValueArray BuildParams(const ParamListInfo param_list);
+  static std::vector<Value> BuildParams(const ParamListInfo param_list);
 
  private:
   Cache<std::string, const planner::AbstractPlan> plan_cache_;
