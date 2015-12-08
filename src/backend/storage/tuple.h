@@ -101,7 +101,7 @@ class Tuple : public AbstractTuple {
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
-  const Value GetValue(const oid_t column_id) const;
+  Value GetValue(const oid_t column_id) const;
 
   /**
    * Allocate space to copy strings that can't be inlined rather

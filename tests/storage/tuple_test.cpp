@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "backend/storage/tuple.h"
-
+#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -41,7 +41,7 @@ TEST(TupleTests, BasicTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
-  auto pool = new peloton::VarlenPool();
+  auto pool = GetTestingPool();
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
@@ -59,7 +59,6 @@ TEST(TupleTests, BasicTest) {
 
   delete tuple;
   delete schema;
-  delete pool;
 }
 
 TEST(TupleTests, VarcharTest) {
@@ -81,7 +80,7 @@ TEST(TupleTests, VarcharTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
-  auto pool = new peloton::VarlenPool();
+  auto pool = GetTestingPool();
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
@@ -103,8 +102,6 @@ TEST(TupleTests, VarcharTest) {
 
   delete tuple;
   delete schema;
-
-  delete pool;
 }
 
 }  // End test namespace

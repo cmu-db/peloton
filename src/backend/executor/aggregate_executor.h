@@ -66,9 +66,6 @@ class AggregateExecutor : public AbstractExecutor {
   /** @brief Output table. */
   storage::DataTable *output_table = nullptr;
 
-  /** @brief Pool */
-  VarlenPool *pool = nullptr;
-
 };
 
 }  // namespace executor

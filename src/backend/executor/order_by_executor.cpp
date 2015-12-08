@@ -15,8 +15,9 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/order_by_executor.h"
+#include "backend/executor/executor_context.h"
 
-#include "../planner/order_by_plan.h"
+#include "backend/planner/order_by_plan.h"
 #include "backend/storage/tile.h"
 
 namespace peloton {
@@ -28,7 +29,10 @@ namespace executor {
  */
 OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
+
+OrderByExecutor::~OrderByExecutor() {
+}
 
 bool OrderByExecutor::DInit() {
   assert(children_.size() == 1);
@@ -91,6 +95,7 @@ bool OrderByExecutor::DoSort() {
   assert(children_.size() == 1);
   assert(children_[0] != nullptr);
   assert(!sort_done_);
+  assert(executor_context_ != nullptr);
 
   // Extract all data from child
   while (children_[0]->Execute()) {
@@ -116,8 +121,7 @@ bool OrderByExecutor::DoSort() {
     sort_key_columns.push_back(input_schema_->GetColumn(id));
   }
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
-
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+  auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Extract all valid tuples into a single std::vector (the sort buffer)
   sort_buffer_.reserve(count);
@@ -128,8 +132,8 @@ bool OrderByExecutor::DoSort() {
           new storage::Tuple(sort_key_tuple_schema_.get(), true));
       for (oid_t id = 0; id < node.GetSortKeys().size(); id++) {
         tuple->SetValue(id,
-                                input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]),
-                                pool.get());
+                        input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]),
+                        executor_pool);
       }
       // Inert the sort key tuple into sort buffer
       sort_buffer_.emplace_back(sort_buffer_entry_t(
@@ -143,7 +147,7 @@ bool OrderByExecutor::DoSort() {
   // Note: This is a less-than comparer, NOT an equality comparer.
   struct TupleComparer {
     TupleComparer(std::vector<bool> &_descend_flags)
-        : descend_flags(_descend_flags) {}
+    : descend_flags(_descend_flags) {}
 
     bool operator()(const storage::Tuple *ta, const storage::Tuple *tb) {
       for (oid_t id = 0; id < descend_flags.size(); id++) {
@@ -151,16 +155,16 @@ bool OrderByExecutor::DoSort() {
           if (ta->GetValue(id).OpLessThan(tb->GetValue(id)).IsTrue()) {
             return true;
           } else if (ta->GetValue(id)
-                         .OpGreaterThan(tb->GetValue(id))
-                         .IsTrue()) {
+              .OpGreaterThan(tb->GetValue(id))
+              .IsTrue()) {
             return false;
           }
         } else {
           if (tb->GetValue(id).OpLessThan(ta->GetValue(id)).IsTrue()) {
             return true;
           } else if (tb->GetValue(id)
-                         .OpGreaterThan(ta->GetValue(id))
-                         .IsTrue()) {
+              .OpGreaterThan(ta->GetValue(id))
+              .IsTrue()) {
             return false;
           }
         }
@@ -177,8 +181,8 @@ bool OrderByExecutor::DoSort() {
   std::sort(
       sort_buffer_.begin(), sort_buffer_.end(),
       [&comp](const sort_buffer_entry_t &a, const sort_buffer_entry_t &b) {
-        return comp(a.tuple.get(), b.tuple.get());
-      });
+    return comp(a.tuple.get(), b.tuple.get());
+  });
 
   sort_done_ = true;
 

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
+#include "harness.h"
 
 #include <memory>
 
@@ -36,7 +37,7 @@ TEST(ValueCopyTests, VarcharTest) {
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
 
-  auto pool = new peloton::VarlenPool();
+  auto pool = GetTestingPool();
 
   ValueFactory::GetStringValue("hello hello world", pool);
 
@@ -54,8 +55,6 @@ TEST(ValueCopyTests, VarcharTest) {
 
   delete tuple;
   delete schema;
-
-  delete pool;
 
 }
 

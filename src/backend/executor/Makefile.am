@@ -7,6 +7,7 @@
 executor_FILES = \
 		 backend/executor/abstract_executor.cpp \
 		 backend/executor/abstract_join_executor.cpp \
+		 backend/executor/executor_context.cpp \
 		 backend/executor/limit_executor.cpp \
 		 backend/executor/logical_tile.cpp \
 		 backend/executor/logical_tile_factory.cpp \

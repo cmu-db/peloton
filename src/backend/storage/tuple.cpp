@@ -32,8 +32,7 @@ Tuple::~Tuple(){
  }
 
 // Get the value of a specified column (const)
-// (expensive) checks the schema to see how to return the Value.
-const Value Tuple::GetValue(const oid_t column_id) const {
+Value Tuple::GetValue(const oid_t column_id) const {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -47,7 +46,7 @@ const Value Tuple::GetValue(const oid_t column_id) const {
 
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_id, const Value& value,
-                             VarlenPool *dataPool) {
+                     VarlenPool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -60,7 +59,6 @@ void Tuple::SetValue(const oid_t column_id, const Value& value,
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
 
-  // TODO: Not sure about arguments
   const bool is_in_bytes = false;
   if(dataPool == nullptr) {
     if(type == value.GetValueType()) {
@@ -74,6 +72,7 @@ void Tuple::SetValue(const oid_t column_id, const Value& value,
   }
   else {
     if(type == value.GetValueType()) {
+      // TODO: Not sure about arguments
       value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
                                                       is_in_bytes, dataPool);
     }
