@@ -286,7 +286,7 @@ class Value {
        whereas the field in the tuple is not inlined), will be done in
        the temp string pool. */
   void SerializeToTupleStorage(
-      void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, bool cleanup) const;
+      void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes) const;
 
   /* Deserialize a scalar value of the specified type from the
        SerializeInput directly into the tuple storage area
@@ -2273,7 +2273,7 @@ class Value {
 
   static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool);
 
-  char* AllocateValueStorage(int32_t length, VarlenPool* varlen_pool, bool cleanup);
+  char* AllocateValueStorage(int32_t length, VarlenPool* varlen_pool);
 
   static Value GetNullStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
@@ -2599,8 +2599,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
  * in the tuple is not inlined), will be done in the temp string pool.
  */
 inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
-                                           const int32_t maxLength, const bool isInBytes,
-                                           bool cleanup) const
+                                           const int32_t maxLength, const bool isInBytes) const
 {
   const ValueType type = GetValueType();
   switch (type) {
@@ -2648,9 +2647,6 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
         }
         else {
           *reinterpret_cast<Varlen**>(storage) = *reinterpret_cast<Varlen* const*>(m_data);
-
-          // cleanup varlen or not ?
-          (*reinterpret_cast<Varlen**>(storage))->SetCleanup(cleanup);
         }
       }
       break;
@@ -2829,8 +2825,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeIn
         SetNull();
         break;
       }
-      bool varlen_cleanup = (varlen_pool == nullptr);
-      char* storage = AllocateValueStorage(length, varlen_pool, varlen_cleanup);
+      char* storage = AllocateValueStorage(length, varlen_pool);
       const char *str = (const char*) input.GetRawPointer(length);
       ::memcpy(storage, str, length);
       break;

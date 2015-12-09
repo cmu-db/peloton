@@ -55,10 +55,6 @@ class Varlen {
   char *Get();
   const char *Get() const;
 
-  // Clean up varlen or not ? this allows us to delay destruction of
-  // non-inlined values even if they are allocated in temp pool
-  void SetCleanup(bool cleanup);
-
  private:
   Varlen(std::size_t size);
   Varlen(std::size_t size, VarlenPool *data_pool);
@@ -72,8 +68,6 @@ class Varlen {
   std::size_t varlen_size;
 
   bool varlen_temp_pool;
-
-  bool varlen_cleanup = true;
 
   char *varlen_string_ptr;
 };

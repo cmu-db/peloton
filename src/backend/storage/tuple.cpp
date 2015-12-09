@@ -66,12 +66,14 @@ void Tuple::SetValue(const oid_t column_id, const Value& value,
     // Skip casting if type is same
     if(type == value.GetValueType()) {
       value.SerializeToTupleStorage(value_location, is_inlined,
-                                    column_length, is_in_bytes, true);
+                                    column_length, is_in_bytes);
     }
     else {
       Value casted_value = value.CastAs(type);
       casted_value.SerializeToTupleStorage(value_location, is_inlined,
-                                           column_length, is_in_bytes, false);
+                                           column_length, is_in_bytes);
+      // Do not clean up immediately
+      casted_value.SetCleanUp(false);
     }
   }
   else {
