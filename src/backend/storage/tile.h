@@ -76,11 +76,6 @@ class Tile {
   int GetColumnOffset(const std::string &name) const;
 
   /**
-   * Returns tuple present at slot
-   */
-  Tuple *GetTuple(const oid_t tuple_offset);
-
-  /**
    * Returns value present at slot
    */
   Value GetValue(const oid_t tuple_offset,
@@ -98,7 +93,7 @@ class Tile {
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(Value value,
+  void SetValue(const Value& value,
                 const oid_t tuple_offset,
                 const oid_t column_offset);
 
@@ -106,7 +101,7 @@ class Tile {
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(Value value,
+  void SetValueFast(const Value& value,
                     const oid_t tuple_offset,
                     const size_t column_offset,
                     const bool is_inlined,
