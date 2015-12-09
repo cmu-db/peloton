@@ -192,6 +192,100 @@ Value Value::CastAs(ValueType type) const {
   }
 }
 
+/** Reformat an object-typed value from its inlined form to its
+ *  allocated out-of-line form, for use with a wider/widened tuple
+ *  column.  Use the pool specified by the Caller, or the temp string
+ *  pool if none was supplied. **/
+void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
+{
+  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
+    return;
+  }
+  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
+  assert(m_sourceInlined);
+
+  if (IsNull()) {
+    *reinterpret_cast<void**>(m_data) = NULL;
+    // SerializeToTupleStorage fusses about this flag being Set, even for NULLs
+    SetSourceInlined(false);
+    SetCleanUp(pool == nullptr);
+    return;
+  }
+
+  if (pool == NULL) {
+    pool = GetTempStringPool();
+  }
+
+  // When an object is inlined, m_data is a direct pointer into a tuple's storage area.
+  char* source = *reinterpret_cast<char**>(m_data);
+
+  // When it isn't inlined, m_data must contain a pointer to a Varlen object
+  // that contains that same data in that same format.
+
+  int32_t length = GetObjectLengthWithoutNull();
+  // inlined objects always have a minimal (1-byte) length field.
+  Varlen* sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
+  char* storage = sref->Get();
+  // Copy length and value into the allocated out-of-line storage
+  ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
+  SetCleanUp(pool == nullptr);
+}
+
+/** Deep copy an outline object-typed value from its current allocated pool,
+ *  allocate the new outline object in the global temp string pool instead.
+ *  The Caller needs to deallocate the original outline space for the object,
+ *  probably by purging the pool that contains it.
+ *  This function is used in the aggregate function for MIN/MAX functions.
+ *  **/
+void Value::AllocateObjectFromOutlinedValue()
+{
+  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
+    return;
+  }
+  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
+  assert(!m_sourceInlined);
+
+  if (IsNull()) {
+    *reinterpret_cast<void**>(m_data) = NULL;
+    return;
+  }
+
+  // Get the outline data
+  const char* source = (*reinterpret_cast<Varlen* const*>(m_data))->Get();
+
+  const int32_t length = GetObjectLengthWithoutNull() + GetObjectLengthLength();
+  Varlen* sref = Varlen::Create(length, nullptr);
+  char* storage = sref->Get();
+  // Copy the value into the allocated out-of-line storage
+  ::memcpy(storage, source, length);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
+  SetCleanUp(false);
+}
+
+Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
+  Value retval(type);
+  char* storage = retval.AllocateValueStorage((int32_t)size, stringPool);
+  ::memcpy(storage, value, (int32_t)size);
+  retval.SetSourceInlined(false);
+  retval.SetCleanUp(stringPool == nullptr);
+  return retval;
+}
+
+char* Value::AllocateValueStorage(int32_t length, VarlenPool* stringPool) {
+  // This unSets the Value's null tag and returns the length of the length.
+  const int8_t lengthLength = SetObjectLength(length);
+  const int32_t minLength = length + lengthLength;
+  Varlen* sref = Varlen::Create(minLength, stringPool);
+  char* storage = sref->Get();
+  SetObjectLengthToLocation(length, storage);
+  storage += lengthLength;
+  SetObjectValue(sref);
+  return storage;
+}
+
 /**
  * Initialize an Value of the specified type from the tuple
  * storage area provided. If this is an Object type then the third
@@ -778,7 +872,7 @@ void Value::streamTimestamp(std::stringstream& value) const
   value << mbstr;
 }
 
-inline static void throwTimestampFormatError(const std::string &str)
+static void throwTimestampFormatError(const std::string &str)
 {
   char message[4096];
   // No space separator for between the date and time
