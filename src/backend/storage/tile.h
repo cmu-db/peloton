@@ -79,7 +79,7 @@ class Tile {
    * Returns value present at slot
    */
   Value GetValue(const oid_t tuple_offset,
-                 const oid_t column_offset);
+                 const oid_t column_id);
 
   /*
    * Faster way to get value
@@ -95,7 +95,7 @@ class Tile {
    */
   void SetValue(const Value& value,
                 const oid_t tuple_offset,
-                const oid_t column_offset);
+                const oid_t column_id);
 
   /*
    * Faster way to set value
