@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 ## ==============================================
-## GOAL : Test bridge
+## GOAL : Test initdb, pg_ctl start and stop
 ## ==============================================
 
 from __future__ import (absolute_import, division,
@@ -62,7 +62,7 @@ pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
 ## ==============================================
 ## Test cases
 ## ==============================================
-class BridgeTest(unittest.TestCase):
+class BasicTest(unittest.TestCase):
 
     def setUp(self):
         LOG.info("Kill previous Peloton")
@@ -77,9 +77,20 @@ class BridgeTest(unittest.TestCase):
         self.temp_dir_path = tempfile.mkdtemp()
         LOG.info("Temp data dir : %s" % (self.temp_dir_path))
 
-    def test_bridge(self):
+    def test_basic(self):
         LOG.info("Bootstrap data dir using initdb")
         cmd = initdb + ' ' + self.temp_dir_path
+        self.exec_cmd(cmd)
+
+        LOG.info("Starting the Peloton server")
+        cmd = pg_ctl + ' -D ' + self.temp_dir_path + ' -l '+ self.temp_dir_path + '/basic_test_logfile start'
+        self.exec_cmd(cmd)
+
+        LOG.info("Waiting for the server to start")
+        time.sleep(5)
+
+        LOG.info("Stopping the Peloton server")
+        cmd = pg_ctl + ' -D ' + self.temp_dir_path + ' -l '+ self.temp_dir_path+'/basic_test_logfile stop'
         self.exec_cmd(cmd)
 
         LOG.info("Starting the Peloton server in TEST MODE")
@@ -87,12 +98,11 @@ class BridgeTest(unittest.TestCase):
         self.exec_cmd(cmd)
 
         LOG.info("Waiting for the server to start")
-        time.sleep(10)
+        time.sleep(5)
 
         LOG.info("Stopping the Peloton server")
         cmd = pg_ctl + ' -D ' + self.temp_dir_path + ' -l '+ self.temp_dir_path+'/bridge_test_logfile stop'
         self.exec_cmd(cmd)
-
 
     def exec_cmd(self, cmd, check=True):
         """
@@ -122,7 +132,7 @@ class BridgeTest(unittest.TestCase):
 ## ==============================================
 if __name__ == '__main__':
     unittest.main(
-        testRunner=xmlrunner.XMLTestRunner(output='python_tests', outsuffix=""),
+         testRunner=xmlrunner.XMLTestRunner(output='python_tests', outsuffix=""),
         failfast=False, buffer=False, catchbreak=False
     )
 

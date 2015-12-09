@@ -87,22 +87,13 @@ Tile::~Tile() {
  * NOTE : No checks, must be at valid slot.
  */
 void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
+  assert(tuple_offset < GetAllocatedTupleCount());
+
   // Find slot location
   char *location = tuple_offset * tuple_length + data;
 
+  // Copy over the tuple data into the tuple slot in the tile
   std::memcpy(location, tuple->tuple_data, tuple_length);
-}
-
-/**
- * Returns tuple present at slot
- * NOTE : No checks, must be at valid slot and must exist.
- */
-Tuple *Tile::GetTuple(const oid_t tuple_offset) {
-  storage::Tuple *tuple = new storage::Tuple(&schema, true);
-
-  tuple->Copy(GetTupleLocation(tuple_offset), pool);
-
-  return tuple;
 }
 
 /**
@@ -142,15 +133,16 @@ Value Tile::GetValueFast(const oid_t tuple_offset,
 /**
  * Sets value at tuple slot.
  */
-void Tile::SetValue(Value value,
+void Tile::SetValue(const Value& value,
                     const oid_t tuple_offset,
-                    const oid_t column_id) {
+                    const oid_t column_offset) {
   assert(tuple_offset < num_tuple_slots);
+  assert(column_offset < schema.GetColumnCount());
 
   char *tuple_location = GetTupleLocation(tuple_offset);
-  char *field_location = tuple_location + schema.GetOffset(column_id);
-  const bool is_inlined = schema.IsInlined(column_id);
-  size_t column_length = schema.GetAppropriateLength(column_id);
+  char *field_location = tuple_location + schema.GetOffset(column_offset);
+  const bool is_inlined = schema.IsInlined(column_offset);
+  size_t column_length = schema.GetAppropriateLength(column_offset);
 
   const bool is_in_bytes = false;
   value.SerializeToTupleStorageAllocateForObjects(field_location,
@@ -164,12 +156,13 @@ void Tile::SetValue(Value value,
  * Faster way to set value
  * By amortizing schema lookups
  */
-void Tile::SetValueFast(Value value,
+void Tile::SetValueFast(const Value& value,
                         const oid_t tuple_offset,
                         const size_t column_offset,
                         const bool is_inlined,
                         const size_t column_length) {
   assert(tuple_offset < num_tuple_slots);
+  assert(column_offset < schema.GetColumnCount());
 
   char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + column_offset;
