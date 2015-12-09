@@ -50,10 +50,8 @@ Value::Value(const ValueType type) {
  * Release memory associated to object type Values */
 Value::~Value() {
 
-  if(m_sourceInlined == true || IsNull() == true || m_cleanUp == false)
+  if(m_sourceInlined == true || m_cleanUp == false)
     return;
-
-  printf("Free : %s \n", Debug().c_str());
 
   switch (GetValueType())
   {
@@ -88,8 +86,6 @@ Value& Value::operator=(const Value &other) {
     // Deep copy if needed
     if(m_sourceInlined == false && other.IsNull() == false) {
 
-      printf("Copy assignment : %p \n", this);
-
       switch (m_valueType) {
         case VALUE_TYPE_VARBINARY:
         case VALUE_TYPE_VARCHAR:
@@ -123,8 +119,6 @@ Value::Value(const Value& other) {
 
   // Deep copy if needed
   if(m_sourceInlined == false && other.IsNull() == false) {
-
-    printf("Copy constructor : %p \n", this);
 
     switch (m_valueType) {
       case VALUE_TYPE_VARBINARY:
