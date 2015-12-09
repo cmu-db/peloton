@@ -178,11 +178,12 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   AggregateList *aggregate_list;
 
   // Configure a group-by-key and search for the required group.
+  group_by_key_values.clear();
   for (oid_t column_itr = 0; column_itr < node->GetGroupbyColIds().size();
       column_itr++) {
     Value cur_tuple_val = cur_tuple->GetValue(
         node->GetGroupbyColIds()[column_itr]);
-    group_by_key_values[column_itr] = cur_tuple_val;
+    group_by_key_values.push_back(cur_tuple_val);
   }
 
   auto map_itr = aggregates_map.find(group_by_key_values);
