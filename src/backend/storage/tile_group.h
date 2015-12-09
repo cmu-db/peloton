@@ -78,13 +78,6 @@ class TileGroup {
   // used by recovery mode
   oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const Tuple *tuple);
 
-
-  // returns tuple at given slot in tile if it exists
-  Tuple *SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
-
-  // returns tuple at given slot if it exists
-  Tuple *SelectTuple(oid_t tuple_slot_id);
-
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid);
 

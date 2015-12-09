@@ -58,7 +58,7 @@ include $(srcdir)/storage/Makefile.am
 
 include $(srcdir)/postgres/Makefile.am
 
-TESTS = $(check_PROGRAMS) $(check_SCRIPTS)
+TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
 LOG_COMPILER = $(srcdir)/test-driver.sh 
 
 CLEANFILES = /tmp/*.peloton
