@@ -205,47 +205,6 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
   return tuple_slot_id;
 }
 
-
-
-Tuple *TileGroup::SelectTuple(oid_t tile_offset, oid_t tuple_slot_id) {
-  assert(tile_offset < tile_count);
-  assert(tuple_slot_id < num_tuple_slots);
-
-  // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
-
-  Tile *tile = GetTile(tile_offset);
-  assert(tile);
-  Tuple *tuple = tile->GetTuple(tuple_slot_id);
-  return tuple;
-}
-
-Tuple *TileGroup::SelectTuple(oid_t tuple_slot_id) {
-  // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
-
-  // allocate a new copy of the original tuple
-  Tuple *tuple = new Tuple(table->GetSchema(), true);
-  oid_t tuple_attr_itr = 0;
-
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    Tile *tile = GetTile(tile_itr);
-    assert(tile);
-
-    // tile tuple wrapper
-    Tuple tile_tuple(tile->GetSchema(), tile->GetTupleLocation(tuple_slot_id));
-    oid_t tile_tuple_count = tile->GetColumnCount();
-
-    for (oid_t tile_tuple_attr_itr = 0; tile_tuple_attr_itr < tile_tuple_count;
-         tile_tuple_attr_itr++) {
-      Value val = tile_tuple.GetValue(tile_tuple_attr_itr);
-      tuple->SetValue(tuple_attr_itr++, val, nullptr);
-    }
-  }
-
-  return tuple;
-}
-
 // delete tuple at given slot if it is neither already locked nor deleted in future.
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid) {
 
@@ -294,8 +253,9 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
  */
 void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
   tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+
   // undo insert (we don't reset MVCC info currently)
-  //TODO: can reclaim tuple here
+  //TODO: can reclaim tuple here ?
   //ReclaimTuple(tuple_slot_id);
 }
 
