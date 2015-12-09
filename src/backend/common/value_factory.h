@@ -69,7 +69,7 @@ class ValueFactory {
 
   /// Constructs a value copied into temporary thread-local storage.
   static inline Value GetTempStringValue(const std::string value) {
-    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), Value::GetTempStringPool());
+    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), nullptr);
   }
 
   static inline Value GetNullStringValue() {
@@ -92,7 +92,7 @@ class ValueFactory {
     size_t rawLength = value.length() / 2;
     unsigned char rawBuf[rawLength];
     HexDecodeToBinary(rawBuf, value.c_str());
-    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength, Value::GetTempStringPool());
+    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength,  nullptr);
   }
 
   /// Constructs a value copied into long-lived pooled memory (or the heap)

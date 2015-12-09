@@ -212,10 +212,6 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
     return;
   }
 
-  if (pool == NULL) {
-    pool = GetTempStringPool();
-  }
-
   // When an object is inlined, m_data is a direct pointer into a tuple's storage area.
   char* source = *reinterpret_cast<char**>(m_data);
 
