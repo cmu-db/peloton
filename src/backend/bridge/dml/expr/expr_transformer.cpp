@@ -27,6 +27,8 @@
 #include "backend/expression/expression_util_new.h"
 #include "backend/expression/cast_expression.h"
 
+#include "postgres/include/executor/executor.h" //added by michael
+
 namespace peloton {
 namespace bridge {
 
@@ -243,11 +245,17 @@ expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
   LOG_TRACE("Transform ScalarArrayOp \n");
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr*>(es->expr);
-  //auto saop_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
+  auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
+
+  ScalarArrayOpExpr *op_expr2 = (ScalarArrayOpExpr *) sa_state->fxprstate.xprstate.expr;
+  std::cout << op_expr2->opfuncid;
+  auto func_id = sa_state->fxprstate.func.fn_oid;
+  std::cout << func_id;
+
 
   assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
 
-  const List* list = op_expr->args;
+  const List* list = op_expr2->args;
   std::list<expression::AbstractExpression*> exprs;
   ListCell* l;
 
@@ -263,22 +271,96 @@ expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
    // Extract function arguments (at most two)
    //expression::AbstractExpression* lc = nullptr;
    //expression::AbstractExpression* rc = nullptr;
-   int i = 0;
+//   int ic = 0;
    ListCell* arg;
-   foreach (arg, list)
+//   foreach (arg, list)
+//   {
+//     Expr* ex = (Expr*) lfirst(arg);
+//
+//     if (ic >= list_length(list))
+//       break;
+//     if (ic == 0)
+//       TransformExpr(ex);
+//     else if (ic == 1)
+//       TransformScalar(ex);
+//     else break;
+//
+//     ic++;
+//   }
+
+   ///////////////////////////////////////////////
+   ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) sa_state->fxprstate.xprstate.expr;
+   ExprContext *econtext;
+   bool *isNull = false;
+   //ExprDoneCond *isDone;
+   bool        useOr = opexpr->useOr;
+   ArrayType  *arr;
+   int            nitems;
+   //Datum        result;
+   //bool        resultnull;
+   FunctionCallInfo fcinfo;
+   FunctionCallInfoData fdata;
+   //ExprDoneCond argDone;
+   int i=0;
+   //int16        typlen;
+   //bool        typbyval;
+   //char        typalign;
+   //char       *s;
+   //bits8       *bitmap;
+   //int            bitmask;
+
+   /*
+    * Evaluate arguments
+    */
+   fdata = sa_state->fxprstate.fcinfo_data;
+   fcinfo = &fdata;
+   List *argList = sa_state->fxprstate.args;
+
+   foreach(arg, argList)
    {
-     Expr* ex = (Expr*) lfirst(arg);
+           ExprState  *argstate = (ExprState *) lfirst(arg);
+           ExprDoneCond thisArgIsDone;
 
-     if (i >= list_length(list))
-       break;
-     if (i == 0)
-       TransformExpr(ex);
-     else if (i == 1)
-       TransformScalar(ex);
-     else break;
-
-     i++;
+           fcinfo->arg[i] = ExecEvalExpr(argstate,
+                                         econtext,
+                                         &fcinfo->argnull[i],
+                                         &thisArgIsDone);
+           i++;
    }
+
+   Assert(i == fcinfo->nargs);
+   Assert(fcinfo->nargs == 2);
+   /*
+    * If the array is NULL then we return NULL --- it's not very meaningful
+    * to do anything else, even if the operator___ isn't strict.
+    */
+   if (fcinfo->argnull[1])
+   {
+       *isNull = true;
+       return (Datum) 0;
+   }
+  /* Else okay to fetch and detoast the array */
+   arr = DatumGetArrayTypeP(fcinfo->arg[1]);
+
+   /*
+    * If the array is empty, we return either FALSE or TRUE per the useOr
+    * flag.  This is correct even if the scalar is NULL; since we would
+    * evaluate the operator___ zero times, it matters not whether it would want
+    * to return NULL.
+    */
+   nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+   if (nitems <= 0)
+       std::cout << BoolGetDatum(!useOr);
+   /*
+    * If the scalar is NULL, and the function is strict, return NULL; no
+    * point in iterating the loop.
+    */
+   if (fcinfo->argnull[0] && sa_state->fxprstate.func.fn_strict)
+   {
+       *isNull = true;
+       std::cout <<  (Datum) 0;
+   }
+///////////////////////////////////////////////////
 
    //TODO
    //BuildVectorExpr( , lc, rc);
