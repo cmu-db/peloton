@@ -56,16 +56,11 @@ Varlen::Varlen(std::size_t size, VarlenPool *data_pool) {
 
 Varlen::~Varlen() {
 
-  if (varlen_temp_pool == true && varlen_cleanup == true) {
+  if (varlen_temp_pool == true) {
     delete[] varlen_string_ptr;
   }
 
 }
-
-void Varlen::SetCleanup(bool cleanup) {
-  varlen_cleanup = cleanup;
-}
-
 
 char *Varlen::Get() { return varlen_string_ptr + sizeof(Varlen *); }
 

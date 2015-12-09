@@ -221,9 +221,9 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
   char* storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
   ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
-  sref->SetCleanup(false);
   SetObjectValue(sref);
   SetSourceInlined(false);
+  SetCleanUp(false);
 }
 
 /** Deep copy an outline object-typed value from its current allocated pool,
@@ -253,22 +253,21 @@ void Value::AllocateObjectFromOutlinedValue()
   char* storage = sref->Get();
   // Copy the value into the allocated out-of-line storage
   ::memcpy(storage, source, length);
-  sref->SetCleanup(false);
   SetObjectValue(sref);
   SetSourceInlined(false);
+  SetCleanUp(false);
 }
 
 Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool) {
   Value retval(type);
-  bool varlen_cleanup = (varlen_pool == nullptr);
-  char* storage = retval.AllocateValueStorage((int32_t)size, varlen_pool, varlen_cleanup);
+  char* storage = retval.AllocateValueStorage((int32_t)size, varlen_pool);
   ::memcpy(storage, value, (int32_t)size);
   retval.SetSourceInlined(false);
   retval.SetCleanUp(varlen_pool == nullptr);
   return retval;
 }
 
-char* Value::AllocateValueStorage(int32_t length, VarlenPool* varlen_pool, bool varlen_cleanup) {
+char* Value::AllocateValueStorage(int32_t length, VarlenPool* varlen_pool) {
   // This unSets the Value's null tag and returns the length of the length.
   const int8_t lengthLength = SetObjectLength(length);
   const int32_t minLength = length + lengthLength;
@@ -276,7 +275,6 @@ char* Value::AllocateValueStorage(int32_t length, VarlenPool* varlen_pool, bool 
   char* storage = sref->Get();
   SetObjectLengthToLocation(length, storage);
   storage += lengthLength;
-  sref->SetCleanup(varlen_cleanup);
   SetObjectValue(sref);
   return storage;
 }
@@ -767,8 +765,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *va
   ValueType elementType = (ValueType)input.ReadByte();
   size_t length = input.ReadShort();
   int trueSize = ValueList::AllocationSizeForLength(length);
-  bool varlen_cleanup = (varlen_pool == nullptr);
-  char* storage = AllocateValueStorage(trueSize, varlen_pool, varlen_cleanup);
+  char* storage = AllocateValueStorage(trueSize, varlen_pool);
   ::memset(storage, 0, trueSize);
   ValueList* nvset = new (storage) ValueList(length, elementType);
   nvset->DeserializeValues(input, varlen_pool);
@@ -779,8 +776,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *va
 void Value::AllocateANewValueList(size_t length, ValueType elementType)
 {
   int trueSize = ValueList::AllocationSizeForLength(length);
-  bool varlen_cleanup = true;
-  char* storage = AllocateValueStorage(trueSize, nullptr, varlen_cleanup);
+  char* storage = AllocateValueStorage(trueSize, nullptr);
   ::memset(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
