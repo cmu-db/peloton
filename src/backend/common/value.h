@@ -276,7 +276,7 @@ class Value {
        allocated storage for a copy of the object. */
   void SerializeToTupleStorageAllocateForObjects(
       void *storage, const bool isInlined, const int32_t maxLength,
-      const bool isInBytes, VarlenPool *dataPool) const;
+      const bool isInBytes, VarlenPool *varlen_pool) const;
 
   /* Serialize the scalar this Value represents to the storage area
        provided. If the scalar is an Object type then the object will
@@ -295,7 +295,7 @@ class Value {
        heap. This is used to deserialize tables. */
   template <TupleSerializationFormat F, Endianess E>
   static void DeserializeFrom(
-      SerializeInput<E> &input, VarlenPool *dataPool, char *storage,
+      SerializeInput<E> &input, VarlenPool *varlen_pool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
   static void DeserializeFrom(
       SerializeInputBE &input, VarlenPool *dataVarlenPool, char *storage,
@@ -307,8 +307,8 @@ class Value {
   /* Read a ValueType from the SerializeInput stream and deserialize
        a scalar value of the specified type into this Value from the provided
        SerializeInput and perform allocations as necessary. */
-  void DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool);
-  void DeserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *varlen_pool);
+  void DeserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *varlen_pool);
 
   /* Serialize this Value to a SerializeOutput */
   void SerializeTo(SerializeOutput &output) const;
@@ -371,7 +371,7 @@ class Value {
    * @brief Do a deep copy of the given value.
    * Uninlined data will be allocated in the provided memory pool.
    */
-  static Value Clone(const Value &src, VarlenPool *dataPool);
+  static Value Clone(const Value &src, VarlenPool *varlen_pool);
 
   // Get min value
   static Value GetMinValue(ValueType);
@@ -713,7 +713,7 @@ class Value {
 
   // Helpers for InList.
   // These are purposely not inlines to avoid exposure of ValueList details.
-  void DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *varlen_pool);
   void AllocateANewValueList(size_t elementCount, ValueType elementType);
 
   // Promotion Rules. Initialized in Value.cpp
@@ -2271,9 +2271,9 @@ class Value {
     return GetTempBinaryValue(rawBuf, rawLength);
   }
 
-  static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool);
+  static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool);
 
-  char* AllocateValueStorage(int32_t length, VarlenPool* stringPool);
+  char* AllocateValueStorage(int32_t length, VarlenPool* varlen_pool, bool cleanup);
 
   static Value GetNullStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
@@ -2531,7 +2531,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
                                                              const bool isInlined,
                                                              const int32_t maxLength,
                                                              const bool isInBytes,
-                                                             VarlenPool *dataPool) const
+                                                             VarlenPool *varlen_pool) const
 {
   const ValueType type = GetValueType();
 
@@ -2574,7 +2574,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
 
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;
-          Varlen* sref = Varlen::Create(minlength, dataPool);
+          Varlen* sref = Varlen::Create(minlength, varlen_pool);
           char *copy = sref->Get();
           SetObjectLengthToLocation(objLength, copy);
           ::memcpy(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
@@ -2670,12 +2670,12 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline void Value::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool, char *storage,
+inline void Value::DeserializeFrom(SerializeInputBE &input, VarlenPool *varlen_pool, char *storage,
                                    const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
-  DeserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, dataPool, storage, type, isInlined, maxLength, isInBytes);
+  DeserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, varlen_pool, storage, type, isInlined, maxLength, isInBytes);
 }
 
-template <TupleSerializationFormat F, Endianess E> inline void Value::DeserializeFrom(SerializeInput<E> &input, VarlenPool *dataPool,
+template <TupleSerializationFormat F, Endianess E> inline void Value::DeserializeFrom(SerializeInput<E> &input, VarlenPool *varlen_pool,
                                                                                       char *storage,
                                                                                       const ValueType type, bool isInlined,
                                                                                       int32_t maxLength, bool isInBytes) {
@@ -2725,7 +2725,7 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::Deserializ
         checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength, isInBytes);
 
         const int32_t minlength = lengthLength + length;
-        Varlen* sref = Varlen::Create(minlength, dataPool);
+        Varlen* sref = Varlen::Create(minlength, varlen_pool);
         char* copy = sref->Get();
         SetObjectLengthToLocation( length, copy);
         ::memcpy(copy + lengthLength, data, length);
@@ -2771,13 +2771,13 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::Deserializ
  * provided SerializeInput and perform allocations as necessary.
  * This is used to deserialize parameter Sets.
  */
-inline void Value::DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
-  DeserializeFromAllocateForStorage(type, input, dataPool);
+  DeserializeFromAllocateForStorage(type, input, varlen_pool);
 }
 
-inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   SetValueType(type);
   // Parameter array Value elements are reused from one executor Call to the next,
@@ -2829,7 +2829,8 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeIn
         SetNull();
         break;
       }
-      char* storage = AllocateValueStorage(length, dataPool);
+      bool varlen_cleanup = (varlen_pool == nullptr);
+      char* storage = AllocateValueStorage(length, varlen_pool, varlen_cleanup);
       const char *str = (const char*) input.GetRawPointer(length);
       ::memcpy(storage, str, length);
       break;
@@ -2844,7 +2845,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeIn
       break;
     }
     case VALUE_TYPE_ARRAY: {
-      DeserializeIntoANewValueList(input, dataPool);
+      DeserializeIntoANewValueList(input, varlen_pool);
       break;
     }
     default:
