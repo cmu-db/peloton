@@ -221,7 +221,7 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
   char* storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
   ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
-  sref->SetCleanup(pool == nullptr);
+  sref->SetCleanup(false);
   SetObjectValue(sref);
   SetSourceInlined(false);
 }
@@ -253,9 +253,9 @@ void Value::AllocateObjectFromOutlinedValue()
   char* storage = sref->Get();
   // Copy the value into the allocated out-of-line storage
   ::memcpy(storage, source, length);
+  sref->SetCleanup(false);
   SetObjectValue(sref);
   SetSourceInlined(false);
-  SetCleanUp(false);
 }
 
 Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
