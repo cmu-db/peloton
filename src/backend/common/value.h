@@ -318,7 +318,7 @@ class Value {
 
   // See comment with inlined body, below.  If NULL is supplied for
   // the pool, use the temp string pool.
-  void AllocateObjectFromInlinedValue(VarlenPool* pool = NULL);
+  void AllocateObjectFromInlinedValue(VarlenPool* pool);
 
   void AllocateObjectFromOutlinedValue();
 
@@ -696,7 +696,7 @@ class Value {
     if (m_sourceInlined) {
       // The Value storage is inlined (a pointer to the backing tuple storage) and needs
       // to be copied to a local storage
-      copy.AllocateObjectFromInlinedValue(GetTempStringPool());
+      copy.AllocateObjectFromInlinedValue(nullptr);
     }
     return copy;
   }
@@ -2255,17 +2255,12 @@ class Value {
     return retval;
   }
 
-  static VarlenPool* GetTempStringPool() {
-    // TODO: For now, allocate out of heap !
-    return nullptr;
-  }
-
   static Value GetTempStringValue(const char* value, size_t size) {
-    return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, GetTempStringPool());
+    return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, nullptr);
   }
 
   static Value GetTempBinaryValue(const unsigned char* value, size_t size) {
-    return GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, GetTempStringPool());
+    return GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, nullptr);
   }
 
   /// Assumes hex-encoded input
@@ -2646,7 +2641,7 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
         if (m_sourceInlined) {
           // Create a non-const temp here for the outlined value
           Value outlinedValue = *this;
-          outlinedValue.AllocateObjectFromInlinedValue(GetTempStringPool());
+          outlinedValue.AllocateObjectFromInlinedValue(nullptr);
           *reinterpret_cast<Varlen**>(storage) =
               *reinterpret_cast<Varlen* const*>(outlinedValue.m_data);
         }
