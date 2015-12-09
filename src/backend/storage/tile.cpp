@@ -86,9 +86,9 @@ Tile::~Tile() {
  * Insert tuple at slot
  * NOTE : No checks, must be at valid slot.
  */
-void Tile::InsertTuple(const oid_t tuple_slot_id, Tuple *tuple) {
+void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   // Find slot location
-  char *location = tuple_slot_id * tuple_length + data;
+  char *location = tuple_offset * tuple_length + data;
 
   std::memcpy(location, tuple->tuple_data, tuple_length);
 }
@@ -97,10 +97,10 @@ void Tile::InsertTuple(const oid_t tuple_slot_id, Tuple *tuple) {
  * Returns tuple present at slot
  * NOTE : No checks, must be at valid slot and must exist.
  */
-Tuple *Tile::GetTuple(const oid_t tuple_slot_id) {
+Tuple *Tile::GetTuple(const oid_t tuple_offset) {
   storage::Tuple *tuple = new storage::Tuple(&schema, true);
 
-  tuple->Copy(GetTupleLocation(tuple_slot_id), pool);
+  tuple->Copy(GetTupleLocation(tuple_offset), pool);
 
   return tuple;
 }
@@ -108,27 +108,32 @@ Tuple *Tile::GetTuple(const oid_t tuple_slot_id) {
 /**
  * Returns value present at slot
  */
-Value Tile::GetValue(const oid_t tuple_slot_id, const oid_t column_id) {
-  assert(tuple_slot_id < GetAllocatedTupleCount());
-  assert(column_id < schema.GetColumnCount());
+Value Tile::GetValue(const oid_t tuple_offset,
+                     const oid_t column_offset) {
+  assert(tuple_offset < GetAllocatedTupleCount());
+  assert(column_offset < schema.GetColumnCount());
 
-  const ValueType column_type = schema.GetType(column_id);
+  const ValueType column_type = schema.GetType(column_offset);
 
-  const char *tuple_location = GetTupleLocation(tuple_slot_id);
-  const char *field_location = tuple_location + schema.GetOffset(column_id);
-  const bool is_inlined = schema.IsInlined(column_id);
+  const char *tuple_location = GetTupleLocation(tuple_offset);
+  const char *field_location = tuple_location + schema.GetOffset(column_offset);
+  const bool is_inlined = schema.IsInlined(column_offset);
 
   return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
 }
 
-// Faster way to access value
-// By amortizing schema lookups
-Value Tile::GetValueFast(const oid_t tuple_slot_id,
+/*
+ * Faster way to get value
+ * By amortizing schema lookups
+ */
+Value Tile::GetValueFast(const oid_t tuple_offset,
                          const size_t column_offset,
                          const ValueType column_type,
                          const bool is_inlined) {
+  assert(tuple_offset < GetAllocatedTupleCount());
+  assert(column_offset < schema.GetColumnCount());
 
-  const char *tuple_location = GetTupleLocation(tuple_slot_id);
+  const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
   return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
@@ -136,19 +141,17 @@ Value Tile::GetValueFast(const oid_t tuple_slot_id,
 
 /**
  * Sets value at tuple slot.
- * TODO We might want to write an iterator class to amortize the schema
- * lookups when setting values of entire columns.
  */
-void Tile::SetValue(Value value, const oid_t tuple_slot_id,
+void Tile::SetValue(Value value,
+                    const oid_t tuple_offset,
                     const oid_t column_id) {
-  assert(tuple_slot_id < num_tuple_slots);
+  assert(tuple_offset < num_tuple_slots);
 
-  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
   size_t column_length = schema.GetAppropriateLength(column_id);
 
-  // TODO: Not sure about the argument
   const bool is_in_bytes = false;
   value.SerializeToTupleStorageAllocateForObjects(field_location,
                                                   is_inlined,
@@ -157,15 +160,20 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
                                                   pool);
 }
 
-void Tile::SetValueFast(Value value, const oid_t tuple_slot_id,
+/*
+ * Faster way to set value
+ * By amortizing schema lookups
+ */
+void Tile::SetValueFast(Value value,
+                        const oid_t tuple_offset,
                         const size_t column_offset,
                         const bool is_inlined,
                         const size_t column_length) {
+  assert(tuple_offset < num_tuple_slots);
 
-  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + column_offset;
 
-  // TODO: Not sure about the argument
   const bool is_in_bytes = false;
   value.SerializeToTupleStorageAllocateForObjects(field_location,
                                                   is_inlined,
