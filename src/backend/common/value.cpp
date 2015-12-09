@@ -50,7 +50,7 @@ Value::Value(const ValueType type) {
  * Release memory associated to object type Values */
 Value::~Value() {
 
-  if(m_sourceInlined == true || m_cleanUp == false)
+  if(m_sourceInlined == true || IsNull() == true || m_cleanUp == false)
     return;
 
   printf("Free : %s \n", Debug().c_str());
@@ -98,7 +98,6 @@ Value& Value::operator=(const Value &other) {
           Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
           Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
 
-          SetCleanUp(true);
           SetObjectValue(new_sref);
         }
         break;
@@ -135,7 +134,6 @@ Value::Value(const Value& other) {
         Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
         Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
 
-        SetCleanUp(true);
         SetObjectValue(new_sref);
       }
       break;
@@ -208,7 +206,6 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
     *reinterpret_cast<void**>(m_data) = NULL;
     // SerializeToTupleStorage fusses about this flag being Set, even for NULLs
     SetSourceInlined(false);
-    SetCleanUp(pool == nullptr);
     return;
   }
 
@@ -224,9 +221,9 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
   char* storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
   ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
+  sref->SetCleanup(pool == nullptr);
   SetObjectValue(sref);
   SetSourceInlined(false);
-  SetCleanUp(pool == nullptr);
 }
 
 /** Deep copy an outline object-typed value from its current allocated pool,
@@ -374,7 +371,6 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type, bool isIn
         length = data[0] & mask;
       }
 
-      //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
       retval.SetObjectLength(length); // this unSets the null tag.
       retval.SetSourceInlined(false);
       retval.SetCleanUp(false);

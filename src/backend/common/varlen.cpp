@@ -66,6 +66,7 @@ void Varlen::SetCleanup(bool cleanup) {
   varlen_cleanup = cleanup;
 }
 
+
 char *Varlen::Get() { return varlen_string_ptr + sizeof(Varlen *); }
 
 const char *Varlen::Get() const { return varlen_string_ptr + sizeof(Varlen *); }
