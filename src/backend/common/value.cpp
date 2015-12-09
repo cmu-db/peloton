@@ -146,7 +146,7 @@ Value::Value(const Value& other) {
 
 }
 
-Value Value::Clone(const Value &src, VarlenPool *dataPool __attribute__((unused))) {
+Value Value::Clone(const Value &src, VarlenPool *varlen_pool __attribute__((unused))) {
   Value rv = src;
 
   return rv;
@@ -258,23 +258,25 @@ void Value::AllocateObjectFromOutlinedValue()
   SetSourceInlined(false);
 }
 
-Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
+Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool) {
   Value retval(type);
-  char* storage = retval.AllocateValueStorage((int32_t)size, stringPool);
+  bool varlen_cleanup = (varlen_pool == nullptr);
+  char* storage = retval.AllocateValueStorage((int32_t)size, varlen_pool, varlen_cleanup);
   ::memcpy(storage, value, (int32_t)size);
   retval.SetSourceInlined(false);
-  retval.SetCleanUp(stringPool == nullptr);
+  retval.SetCleanUp(varlen_pool == nullptr);
   return retval;
 }
 
-char* Value::AllocateValueStorage(int32_t length, VarlenPool* stringPool) {
+char* Value::AllocateValueStorage(int32_t length, VarlenPool* varlen_pool, bool varlen_cleanup) {
   // This unSets the Value's null tag and returns the length of the length.
   const int8_t lengthLength = SetObjectLength(length);
   const int32_t minLength = length + lengthLength;
-  Varlen* sref = Varlen::Create(minLength, stringPool);
+  Varlen* sref = Varlen::Create(minLength, varlen_pool);
   char* storage = sref->Get();
   SetObjectLengthToLocation(length, storage);
   storage += lengthLength;
+  sref->SetCleanup(varlen_cleanup);
   SetObjectValue(sref);
   return storage;
 }
@@ -714,10 +716,10 @@ struct ValueList {
   ValueList(size_t length, ValueType elementType) : m_length(length), m_elementType(elementType)
   { }
 
-  void DeserializeValues(SerializeInputBE &input, VarlenPool *dataPool)
+  void DeserializeValues(SerializeInputBE &input, VarlenPool *varlen_pool)
   {
     for (size_t ii = 0; ii < m_length; ++ii) {
-      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, dataPool);
+      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, varlen_pool);
     }
   }
 
@@ -760,15 +762,16 @@ bool Value::InList(const Value& rhs) const
   return std::find(listOfValues->begin(), listOfValues->end(), value) != listOfValues->end();
 }
 
-void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool)
+void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   ValueType elementType = (ValueType)input.ReadByte();
   size_t length = input.ReadShort();
   int trueSize = ValueList::AllocationSizeForLength(length);
-  char* storage = AllocateValueStorage(trueSize, dataPool);
+  bool varlen_cleanup = (varlen_pool == nullptr);
+  char* storage = AllocateValueStorage(trueSize, varlen_pool, varlen_cleanup);
   ::memset(storage, 0, trueSize);
   ValueList* nvset = new (storage) ValueList(length, elementType);
-  nvset->DeserializeValues(input, dataPool);
+  nvset->DeserializeValues(input, varlen_pool);
   //TODO: An O(ln(length)) implementation vs. the current O(length) implementation of Value::inList
   // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
@@ -776,7 +779,8 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *da
 void Value::AllocateANewValueList(size_t length, ValueType elementType)
 {
   int trueSize = ValueList::AllocationSizeForLength(length);
-  char* storage = AllocateValueStorage(trueSize, NULL);
+  bool varlen_cleanup = true;
+  char* storage = AllocateValueStorage(trueSize, nullptr, varlen_cleanup);
   ::memset(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
