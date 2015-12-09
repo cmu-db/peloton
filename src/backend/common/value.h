@@ -286,7 +286,7 @@ class Value {
        whereas the field in the tuple is not inlined), will be done in
        the temp string pool. */
   void SerializeToTupleStorage(
-      void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes) const;
+      void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, bool cleanup) const;
 
   /* Deserialize a scalar value of the specified type from the
        SerializeInput directly into the tuple storage area
@@ -2599,7 +2599,8 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
  * in the tuple is not inlined), will be done in the temp string pool.
  */
 inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
-                                           const int32_t maxLength, const bool isInBytes) const
+                                           const int32_t maxLength, const bool isInBytes,
+                                           bool cleanup) const
 {
   const ValueType type = GetValueType();
   switch (type) {
@@ -2647,6 +2648,9 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
         }
         else {
           *reinterpret_cast<Varlen**>(storage) = *reinterpret_cast<Varlen* const*>(m_data);
+
+          // cleanup varlen or not ?
+          (*reinterpret_cast<Varlen**>(storage))->SetCleanup(cleanup);
         }
       }
       break;
