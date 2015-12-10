@@ -58,7 +58,7 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(storage::Tile *base_tile,
+  void AddColumn(std::shared_ptr<storage::Tile> base_tile_ref,
                  oid_t origin_column_id, oid_t position_list_idx);
 
   void AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids);
@@ -150,7 +150,7 @@ class LogicalTile {
      * IMPORTANT: We use a pointer instead of the oid of the tile to minimize
      * indirection.
      */
-    std::shared_ptr<storage::Tile> base_tile;
+    std::shared_ptr<storage::Tile> base_tile_ref;
 
     /** @brief Original column id of this logical tile column in its associated
      * base tile. */
