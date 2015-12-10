@@ -298,7 +298,6 @@ oid_t LogicalTile::iterator::operator*() {
 
 LogicalTile::~LogicalTile() {
   // Automatically drops reference on base tiles for each column
-  printf("Destroying logical tile \n");
 
 }
 
@@ -329,7 +328,6 @@ void LogicalTile::AddColumn(std::shared_ptr<storage::Tile> base_tile_ref,
 
   // Add a reference to the base tile
   cp.base_tile_ref = base_tile_ref;
-  printf("Tile : %p Use Count : %ld \n", cp.base_tile_ref.get(), cp.base_tile_ref.use_count());
 
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
