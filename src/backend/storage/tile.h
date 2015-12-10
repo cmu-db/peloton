@@ -171,13 +171,6 @@ class Tile {
 
   char *GetTupleLocation(const oid_t tuple_offset) const;
 
-  // maintain reference counts for
-  void IncrementRefCount();
-
-  void DecrementRefCount();
-
-  size_t GetRefCount() const;
-
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -226,9 +219,6 @@ class Tile {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
-
-  // references
-  std::atomic<size_t> ref_count;
 
 };
 

@@ -44,19 +44,18 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextOid();
 
-    Tile *tile = storage::TileFactory::GetTile(
+    std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id, tile_group_header,
-        tile_schemas[tile_itr], this, tuple_count);
+        tile_schemas[tile_itr], this, tuple_count));
 
+    // Add a reference to the tile in the tile group
     tiles.push_back(tile);
   }
 }
 
 TileGroup::~TileGroup() {
-  // clean up tiles
-  for (auto tile : tiles) {
-    tile->DecrementRefCount();
-  }
+  // Drop references on all tiles
+  printf("Destroying tile group \n");
 
   // clean up tile group header
   delete tile_group_header;
@@ -297,7 +296,7 @@ Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
 
 Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   assert(tile_offset < tile_count);
-  Tile *tile = tiles[tile_offset];
+  Tile *tile = tiles[tile_offset].get();
   return tile;
 }
 

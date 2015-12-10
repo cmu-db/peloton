@@ -25,6 +25,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
+#include "backend/storage/tile.h"
 
 #include "executor/executor_tests_util.h"
 #include "harness.h"
@@ -93,7 +94,9 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    logical_tile->AddColumn(base_tile, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile,
+                            column_itr,
+                            column_itr);
   }
 
   std::cout << (*logical_tile) << "\n";
@@ -119,12 +122,15 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   oid_t column_count1 = schema1->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
-    logical_tile->AddColumn(base_tile1, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile1,
+                            column_itr,
+                            column_itr);
   }
 
   oid_t column_count2 = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
-    logical_tile->AddColumn(base_tile2, column_itr,
+    logical_tile->AddColumn(base_tile2,
+                            column_itr,
                             column_count1 + column_itr);
   }
 

@@ -140,7 +140,7 @@ void LogicalTile::RemoveVisibility(oid_t tuple_id) {
  * @return Pointer to base tile of specified column.
  */
 storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
-  return schema_[column_id].base_tile;
+  return schema_[column_id].base_tile.get();
 }
 
 /**
@@ -159,7 +159,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
-  storage::Tile *base_tile = cp.base_tile;
+  storage::Tile *base_tile = cp.base_tile.get();
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
@@ -297,12 +297,9 @@ oid_t LogicalTile::iterator::operator*() {
 }
 
 LogicalTile::~LogicalTile() {
+  // Automatically drops reference on base tiles for each column
+  printf("Destroying logical tile \n");
 
-  // Drop reference on base tiles for each column
-  for(auto cp : schema_) {
-    auto base_tile = cp.base_tile;
-    base_tile->DecrementRefCount();
-  }
 }
 
 /**
@@ -311,13 +308,6 @@ LogicalTile::~LogicalTile() {
  */
 void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
   schema_ = schema;
-
-  // Add reference on base tiles for each column
-  for(auto cp : schema_) {
-    auto base_tile = cp.base_tile;
-    base_tile->IncrementRefCount();
-  }
-
 }
 
 /**
@@ -336,13 +326,15 @@ void LogicalTile::AddColumn(storage::Tile *base_tile,
                             oid_t origin_column_id,
                             oid_t position_list_idx) {
   ColumnInfo cp;
-  cp.base_tile = base_tile;
+
+  // Add a reference to the base tile
+  cp.base_tile = std::shared_ptr<storage::Tile>(base_tile);
+  printf("Tile : %p Use Count : %ld \n", cp.base_tile.get(), cp.base_tile.use_count());
+
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
   schema_.push_back(cp);
 
-  // Add a reference to the base tile
-  base_tile->IncrementRefCount();
 }
 
 /**
@@ -372,18 +364,9 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids, 
     auto ret = std::find(original_column_ids.begin(), original_column_ids.end(), id);
     assert(ret != original_column_ids.end());
     new_schema.push_back(schema_[*ret]);
-
-    // add reference to needed base tiles
-    auto cp = schema_[*ret];
-    cp.base_tile->IncrementRefCount();
   }
 
   // remove references to base tiles from columns that are projected away
-  for(auto cp : schema_) {
-    auto base_tile = cp.base_tile;
-    base_tile->DecrementRefCount();
-  }
-
   schema_ = std::move(new_schema);
 }
 

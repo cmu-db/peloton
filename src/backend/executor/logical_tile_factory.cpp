@@ -58,7 +58,7 @@ LogicalTile *LogicalTileFactory::GetTile() {
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles) {
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile*> &base_tiles) {
   assert(base_tiles.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
@@ -73,14 +73,13 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &b
     // Next, we construct the schema.
     int column_count = base_tiles[i]->GetColumnCount();
     for (int col_id = 0; col_id < column_count; col_id++) {
-      new_tile->AddColumn(base_tiles[i], col_id,
+      new_tile->AddColumn(base_tiles[i],
+                          col_id,
                           position_list_idx);
     }
   }
 
   // Drop reference because we created the base tile
-  for(auto base_tile : base_tiles)
-    base_tile->DecrementRefCount();
 
   return new_tile.release();
 }
@@ -103,7 +102,9 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   for (unsigned int i = 0; i < schemas.size(); i++) {
     storage::Tile *base_tile = tile_group->GetTile(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
-      new_tile->AddColumn(base_tile, col_id, position_list_idx);
+      new_tile->AddColumn(base_tile,
+                          col_id,
+                          position_list_idx);
     }
   }
 
