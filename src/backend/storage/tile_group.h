@@ -122,6 +122,9 @@ class TileGroup {
   // Get the tile at given offset in the tile group
   Tile *GetTile(const oid_t tile_itr) const;
 
+  // Get a reference to the tile at the given offset in the tile group
+  std::shared_ptr<Tile> GetTileReference(const oid_t tile_offset) const;
+
   oid_t GetTileId(const oid_t tile_id) const;
 
   peloton::VarlenPool *GetTilePool(const oid_t tile_id) const;

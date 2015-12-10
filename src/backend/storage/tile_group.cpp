@@ -300,6 +300,11 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
+std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset) const {
+  assert(tile_offset < tile_count);
+  return tiles[tile_offset];
+}
+
 double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column_map) {
   double theta = 0;
   size_t capacity = column_map.size();
