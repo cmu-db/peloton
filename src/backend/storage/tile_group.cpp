@@ -55,7 +55,6 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
 
 TileGroup::~TileGroup() {
   // Drop references on all tiles
-  printf("Destroying tile group \n");
 
   // clean up tile group header
   delete tile_group_header;
