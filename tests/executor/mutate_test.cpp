@@ -322,16 +322,12 @@ TEST(MutateTests, InsertTest) {
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
   auto tile_count = physical_tile_group->GetTileCount();
-  std::vector<storage::Tile *> physical_tiles;
+  std::vector<std::shared_ptr<storage::Tile > > physical_tile_refs;
   for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tiles.push_back(physical_tile_group->GetTile(tile_itr));
-
-  // Add a reference because we are going to wrap around it and we don't own it
-  for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tile_group->GetTile(tile_itr);
+    physical_tile_refs.push_back(physical_tile_group->GetTileReference(tile_itr));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(physical_tiles));
+      executor::LogicalTileFactory::WrapTiles(physical_tile_refs));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile.release()));

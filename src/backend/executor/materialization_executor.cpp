@@ -156,7 +156,7 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
       old_column_position_idxs.push_back(column_info.position_list_idx);
 
       // Get old column information
-      storage::Tile *old_tile = column_info.base_tile.get();
+      storage::Tile *old_tile = column_info.base_tile_ref.get();
       old_tiles.push_back(old_tile);
       auto old_schema = old_tile->GetSchema();
       oid_t old_column_id = column_info.origin_column_id;
@@ -248,7 +248,7 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
       auto &column_info = source_tile->GetColumnInfo(old_col_id);
 
       // Amortize schema lookups once per column
-      storage::Tile *old_tile = column_info.base_tile.get();
+      storage::Tile *old_tile = column_info.base_tile_ref.get();
       auto old_schema = old_tile->GetSchema();
 
       // Get old column information
@@ -351,7 +351,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   GenerateTileToColMap(old_to_new_cols, source_tile, tile_to_cols);
 
   // Create new physical tile.
-  std::unique_ptr<storage::Tile> dest_tile(
+  std::shared_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(*output_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
@@ -359,7 +359,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
                      dest_tile.get());
 
   // Wrap physical tile in logical tile.
-  return LogicalTileFactory::WrapTiles({dest_tile.release()});
+  return LogicalTileFactory::WrapTiles({dest_tile});
 }
 
 /**
