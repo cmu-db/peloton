@@ -58,7 +58,6 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   storage::Tile *source_base_tile = tile_group->GetTile(0);
 
   // Add a reference because we are going to wrap around it and we don't own it
-  source_base_tile->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles({source_base_tile}));
 
@@ -107,8 +106,6 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
       tile_group->GetTile(0), tile_group->GetTile(1)};
 
   // Add a reference because we are going to wrap around it and we don't own it
-  tile_group->GetTile(0)->IncrementRefCount();
-  tile_group->GetTile(1)->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles(source_base_tiles));
 
