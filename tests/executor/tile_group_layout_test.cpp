@@ -185,7 +185,8 @@ void ExecuteTileGroupTest() {
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(),
                                         physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);

@@ -328,7 +328,7 @@ TEST(MutateTests, InsertTest) {
 
   // Add a reference because we are going to wrap around it and we don't own it
   for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tile_group->GetTile(tile_itr)->IncrementRefCount();
+    physical_tile_group->GetTile(tile_itr);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles(physical_tiles));
