@@ -60,9 +60,9 @@ bool OrderByExecutor::DExecute() {
   // which have the same physical schema as input tiles.
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
-  storage::Tile *ptile = storage::TileFactory::GetTile(
+  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
       INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, nullptr,
-      *input_schema_, nullptr, tile_size);
+      *input_schema_, nullptr, tile_size));
   for (size_t id = 0; id < tile_size; id++) {
     oid_t source_tile_id =
         sort_buffer_[num_tuples_returned_ + id].item_pointer.block;
@@ -70,14 +70,14 @@ bool OrderByExecutor::DExecute() {
         sort_buffer_[num_tuples_returned_ + id].item_pointer.offset;
     // Insert a physical tuple into physical tile
     for (oid_t col = 0; col < input_schema_->GetColumnCount(); col++) {
-      ptile->SetValue(
+      ptile.get()->SetValue(
           input_tiles_[source_tile_id]->GetValue(source_tuple_id, col), id,
           col);
     }
   }
 
   // Create an owner wrapper of this physical tile
-  std::vector<storage::Tile *> singleton({ptile});
+  std::vector<std::shared_ptr<storage::Tile > > singleton({ptile});
   std::unique_ptr<LogicalTile> ltile(
       LogicalTileFactory::WrapTiles(singleton));
   assert(ltile->GetTupleCount() == tile_size);

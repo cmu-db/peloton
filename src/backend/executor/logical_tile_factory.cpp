@@ -58,8 +58,8 @@ LogicalTile *LogicalTileFactory::GetTile() {
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile*> &base_tiles) {
-  assert(base_tiles.size() > 0);
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<std::shared_ptr<storage::Tile> > &base_tile_refs) {
+  assert(base_tile_refs.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
@@ -67,13 +67,13 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile*> &ba
   // First, we build a position list to be shared by all the tiles.
   const oid_t position_list_idx = 0;
   new_tile->AddPositionList(
-      CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
+      CreateIdentityPositionList(base_tile_refs[0].get()->GetAllocatedTupleCount()));
 
-  for (unsigned int i = 0; i < base_tiles.size(); i++) {
+  for (unsigned int i = 0; i < base_tile_refs.size(); i++) {
     // Next, we construct the schema.
-    int column_count = base_tiles[i]->GetColumnCount();
+    int column_count = base_tile_refs[i].get()->GetColumnCount();
     for (int col_id = 0; col_id < column_count; col_id++) {
-      new_tile->AddColumn(base_tiles[i],
+      new_tile->AddColumn(base_tile_refs[i],
                           col_id,
                           position_list_idx);
     }
@@ -100,9 +100,9 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
   assert(schemas.size() == tile_group->NumTiles());
   for (unsigned int i = 0; i < schemas.size(); i++) {
-    storage::Tile *base_tile = tile_group->GetTile(i);
+    auto base_tile_ref = tile_group->GetTileReference(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
-      new_tile->AddColumn(base_tile,
+      new_tile->AddColumn(base_tile_ref,
                           col_id,
                           position_list_idx);
     }

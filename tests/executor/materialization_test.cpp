@@ -55,7 +55,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from single base tile.
-  storage::Tile *source_base_tile = tile_group->GetTile(0);
+  auto source_base_tile = tile_group->GetTileReference(0);
 
   // Add a reference because we are going to wrap around it and we don't own it
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
@@ -71,7 +71,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   EXPECT_EQ(2, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
-  EXPECT_TRUE(source_base_tile != result_base_tile);
+  EXPECT_TRUE(source_base_tile.get() != result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
   // Check that the base tile has the correct values.
@@ -102,8 +102,8 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from two base tiles.
-  const std::vector<storage::Tile *> source_base_tiles = {
-      tile_group->GetTile(0), tile_group->GetTile(1)};
+  const std::vector<std::shared_ptr<storage::Tile> > source_base_tiles = {
+      tile_group->GetTileReference(0), tile_group->GetTileReference(1)};
 
   // Add a reference because we are going to wrap around it and we don't own it
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
