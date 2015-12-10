@@ -17,6 +17,7 @@
 #include <atomic>
 #include <vector>
 #include <mutex>
+#include <memory>
 
 #include "backend/common/types.h"
 
@@ -172,7 +173,7 @@ class TileGroup {
   std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
-  std::vector<Tile *> tiles;
+  std::vector<std::shared_ptr<Tile> > tiles;
 
   // associated tile group
   TileGroupHeader *tile_group_header;

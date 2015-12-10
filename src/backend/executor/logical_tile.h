@@ -15,6 +15,7 @@
 #include <iterator>
 #include <unordered_set>
 #include <vector>
+#include <memory>
 
 #include "backend/common/types.h"
 
@@ -149,7 +150,7 @@ class LogicalTile {
      * IMPORTANT: We use a pointer instead of the oid of the tile to minimize
      * indirection.
      */
-    storage::Tile *base_tile;
+    std::shared_ptr<storage::Tile> base_tile;
 
     /** @brief Original column id of this logical tile column in its associated
      * base tile. */

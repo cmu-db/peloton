@@ -46,8 +46,7 @@ Tile::Tile(TileGroupHeader *tile_header,
   uninlined_data_size(0),
   column_header(NULL),
   column_header_size(INVALID_OID),
-  tile_group_header(tile_header),
-  ref_count(BASE_REF_COUNT){
+  tile_group_header(tile_header){
   assert(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
@@ -466,22 +465,6 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
     // TRACE("Loaded new tuple #%02d\n%s", tuple_itr,
     // temp_target1.debug(Name()).c_str());
   }
-}
-
-void Tile::IncrementRefCount() {
-  ++ref_count;
-}
-
-void Tile::DecrementRefCount() {
-  // DROP tile when ref count reaches 0
-  // this returns the value immediately preceding the assignment
-  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
-    delete this;
-  }
-}
-
-size_t Tile::GetRefCount() const {
-  return ref_count;
 }
 
 // active tuple slots
