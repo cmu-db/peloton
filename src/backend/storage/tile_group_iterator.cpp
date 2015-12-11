@@ -19,15 +19,16 @@ namespace storage {
 
 bool TileGroupIterator::Next(std::shared_ptr<TileGroup> &tileGroup) {
   if (HasNext()) {
-    auto next = table_->GetTileGroup(tileGroupItr_);
+    auto next = table_->GetTileGroup(tile_group_itr_);
     tileGroup.swap(next);
+    tile_group_itr_++;
     return (true);
   }
   return (false);
 }
 
 bool TileGroupIterator::HasNext() {
-  return (tileGroupItr_ < table_->GetTileGroupCount());
+  return (tile_group_itr_ < table_->GetTileGroupCount());
 }
 
 }  // End storage namespace
