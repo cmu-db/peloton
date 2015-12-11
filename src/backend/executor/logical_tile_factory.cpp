@@ -90,7 +90,7 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<std::shared_ptr<sto
  *
  * @return Logical tile wrapping tile group.
  */
-LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
+LogicalTile *LogicalTileFactory::WrapTileGroup(const std::shared_ptr<storage::TileGroup>& tile_group) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
@@ -135,11 +135,11 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     LogicalTile *logical_tile = LogicalTileFactory::GetTile();
 
     auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroupReference(block.first);
+    auto tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group.get()->GetHeader();
 
     // Add relevant columns to logical tile
-    logical_tile->AddColumns(tile_group.get(), column_ids);
+    logical_tile->AddColumns(tile_group, column_ids);
 
     // Print tile group visibility
     //tile_group_header->PrintVisibility(txn_id, commit_id);

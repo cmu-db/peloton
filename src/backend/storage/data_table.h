@@ -106,11 +106,10 @@ class DataTable : public AbstractTable {
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup>& tile_group);
 
-  // NOTE: This must go through the manager's locator
-  // This allows us to "TRANSFORM" tile groups atomically
-  // WARNING: We should distinguish OFFSET and ID of a tile group
-  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
+  // Offset is a 0-based number local to the table
+  std::shared_ptr<storage::TileGroup> GetTileGroup(oid_t tile_group_offset) const;
 
+  // ID is the global identifier in the entire DBMS
   std::shared_ptr<storage::TileGroup> GetTileGroupById(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;

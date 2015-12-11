@@ -38,7 +38,7 @@ class LogicalTileFactory {
 
   static LogicalTile *WrapTiles(const std::vector<std::shared_ptr<storage::Tile> > &base_tile_refs);
 
-  static LogicalTile *WrapTileGroup(storage::TileGroup *tile_group);
+  static LogicalTile *WrapTileGroup(const std::shared_ptr<storage::TileGroup>& tile_group);
 
   static std::vector<LogicalTile *> WrapTileGroups(
       const std::vector<ItemPointer> tuple_locations,
