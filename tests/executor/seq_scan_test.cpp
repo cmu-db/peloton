@@ -64,15 +64,15 @@ storage::DataTable *CreateTable() {
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1(
       { catalog::Schema( { ExecutorTestsUtil::GetColumnInfo(0),
-          ExecutorTestsUtil::GetColumnInfo(1) }), catalog::Schema(
-          { ExecutorTestsUtil::GetColumnInfo(2),
-              ExecutorTestsUtil::GetColumnInfo(3) }) });
+        ExecutorTestsUtil::GetColumnInfo(1) }), catalog::Schema(
+            { ExecutorTestsUtil::GetColumnInfo(2),
+        ExecutorTestsUtil::GetColumnInfo(3) }) });
 
   // Schema for second tile group. Vertical partition is 1, 3.
   std::vector<catalog::Schema> schemas2( { catalog::Schema( {
-      ExecutorTestsUtil::GetColumnInfo(0) }), catalog::Schema( {
-      ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2),
-      ExecutorTestsUtil::GetColumnInfo(3) }) });
+    ExecutorTestsUtil::GetColumnInfo(0) }), catalog::Schema( {
+    ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2),
+        ExecutorTestsUtil::GetColumnInfo(3) }) });
 
   GetNextTileGroupId();
 
@@ -90,16 +90,18 @@ storage::DataTable *CreateTable() {
 
   // Create tile groups.
   table->AddTileGroup(
-      storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
-                                              GetNextTileGroupId(), table.get(),
-                                              schemas1,
-                                              column_map1, tuple_count));
+      std::shared_ptr<storage::TileGroup>(storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          GetNextTileGroupId(), table.get(),
+          schemas1,
+          column_map1, tuple_count)));
 
   table->AddTileGroup(
-      storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID,
-                                              GetNextTileGroupId(), table.get(),
-                                              schemas2,
-                                              column_map2, tuple_count));
+      std::shared_ptr<storage::TileGroup>(storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          GetNextTileGroupId(), table.get(),
+          schemas2,
+          column_map2, tuple_count)));
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
@@ -147,8 +149,8 @@ expression::AbstractExpression *CreatePredicate(
         even ?
             ValueFactory::GetIntegerValue(
                 ExecutorTestsUtil::PopulatedValue(tuple_id, 0)) :
-            ValueFactory::GetStringValue(
-                std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+                ValueFactory::GetStringValue(
+                    std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
 
     expression::AbstractExpression *constant_value_expr =
         expression::ConstantValueFactory(constant_value);
@@ -214,7 +216,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
 
       int old_tuple_id =
           result_tiles[i]->GetValue(new_tuple_id, 0).GetIntegerForTestsOnly()
-              / 10;
+          / 10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
@@ -272,7 +274,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
   // Create plan node.
   planner::SeqScanPlan node(table, CreatePredicate(g_tuple_ids), column_ids);
-// This table is generated so we can reuse the test data of the test case
+  // This table is generated so we can reuse the test data of the test case
   // where seq scan is a leaf node. We only need the data in the tiles.
   std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
@@ -301,7 +303,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
   EXPECT_CALL(child_executor, GetOutput()).WillOnce(
       Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+          Return(source_logical_tile2.release()));
 
   int expected_column_count = data_table->GetSchema()->GetColumnCount();
 

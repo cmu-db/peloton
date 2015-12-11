@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
@@ -101,15 +103,15 @@ class DataTable : public AbstractTable {
   // coerce into adding a new tile group with a tile group id
   oid_t AddTileGroupWithOid(oid_t tile_group_id);
 
-  // add a customized tile group to table
-  void AddTileGroup(TileGroup *tile_group);
+  // add a tile group to table
+  void AddTileGroup(const std::shared_ptr<TileGroup>& tile_group);
 
   // NOTE: This must go through the manager's locator
   // This allows us to "TRANSFORM" tile groups atomically
   // WARNING: We should distinguish OFFSET and ID of a tile group
   TileGroup *GetTileGroup(oid_t tile_group_offset) const;
 
-  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
+  std::shared_ptr<storage::TileGroup> GetTileGroupById(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
