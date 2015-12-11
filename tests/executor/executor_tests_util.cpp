@@ -212,7 +212,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
  * @param tile_group Tile-group to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
+void ExecutorTestsUtil::PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
                                       int num_rows) {
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();

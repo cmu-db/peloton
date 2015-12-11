@@ -49,10 +49,10 @@ namespace test {
 // there is only one base tile in the logical tile.
 TEST(MaterializationTests, SingleBaseTileTest) {
   const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from single base tile.
   auto source_base_tile = tile_group->GetTileReference(0);
@@ -96,10 +96,10 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 // Also, one of the columns is dropped.
 TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from two base tiles.
   const std::vector<std::shared_ptr<storage::Tile> > source_base_tiles = {

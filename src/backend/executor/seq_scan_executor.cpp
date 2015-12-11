@@ -140,7 +140,7 @@ bool SeqScanExecutor::DExecute() {
           continue;
         }
 
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group,
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                              tuple_id);
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);

@@ -19,7 +19,7 @@ namespace storage {
 
 bool TileGroupIterator::Next(std::shared_ptr<TileGroup> &tileGroup) {
   if (HasNext()) {
-    std::shared_ptr<TileGroup> next(table_->GetTileGroup(tileGroupItr_));
+    auto next = table_->GetTileGroup(tileGroupItr_);
     tileGroup.swap(next);
     return (true);
   }
