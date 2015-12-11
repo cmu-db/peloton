@@ -394,23 +394,6 @@ static const struct config_enum_entry row_security_options[] = {
 };
 
 // TODO: Peloton Changes
-/*
- * Peloton mode options can take values 0,1,2
- * Range of values may be changed
- * Values have to be defined as enum
- */
-/* Possible values for peloton_mode GUC */
-typedef enum PelotonModeType
-{
-  PELOTON_MODE_0,   /* Whatever */
-  PELOTON_MODE_1    /* Whatever */
-} PelotonModeType;
-
-static const struct config_enum_entry peloton_mode_options[] = {
-	{"peloton_mode_0", PELOTON_MODE_0, false},
-	{"peloton_mode_1", PELOTON_MODE_1, false},
-	{NULL, 0, false}
-};
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType
@@ -487,10 +470,15 @@ int			tcp_keepalives_count;
 int			row_security;
 
 // TODO: Peloton Changes
+
 int			peloton_mode;
+
 int     peloton_layout;
+
 double  peloton_projectivity;
+
 int     peloton_num_groups;
+
 bool    peloton_fsm;
 
 /*
@@ -3692,18 +3680,6 @@ struct config_enum ConfigureNamesEnum[] =
 	},
 
 	// TODO: Peloton Changes
-  // Refer guc_tables.h for PELOTON_MODE_OPTIONS declaration
-	{
-		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
-			gettext_noop("Change peloton mode"),
-			gettext_noop("System behavior will be modified depending on the specific peloton mode")
-		},
-		&peloton_mode,
-		PELOTON_MODE_0, peloton_mode_options,
-		// the constant 0 can be replaced by an enum
-		NULL, NULL, NULL
-	},
-
 	{
     {"peloton_tilegroup_layout", PGC_USERSET, PELOTON_TILEGROUP_LAYOUT_OPTIONS,
       gettext_noop("Change peloton tilegroup layout"),
