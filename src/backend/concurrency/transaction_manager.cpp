@@ -164,7 +164,7 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
@@ -173,7 +173,7 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : deleted_tuples) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
@@ -301,7 +301,7 @@ void TransactionManager::AbortTransaction() {
   auto inserted_tuples = current_txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->AbortInsertedTuple(tuple_slot);
   }
@@ -310,7 +310,7 @@ void TransactionManager::AbortTransaction() {
   auto deleted_tuples = current_txn->GetDeletedTuples();
   for (auto entry : current_txn->GetDeletedTuples()) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot, txn_id);
   }

@@ -49,7 +49,7 @@ catalog::Schema *LogicalTile::GetPhysicalSchema() const {
   std::vector<catalog::Column> physical_columns;
 
   for (ColumnInfo column : schema_) {
-    auto schema = column.base_tile_ref->GetSchema();
+    auto schema = column.base_tile->GetSchema();
     auto physical_column = schema->GetColumn(column.origin_column_id);
     physical_columns.push_back(physical_column);
   }
@@ -140,7 +140,7 @@ void LogicalTile::RemoveVisibility(oid_t tuple_id) {
  * @return Pointer to base tile of specified column.
  */
 storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
-  return schema_[column_id].base_tile_ref.get();
+  return schema_[column_id].base_tile.get();
 }
 
 /**
@@ -159,7 +159,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
-  storage::Tile *base_tile = cp.base_tile_ref.get();
+  storage::Tile *base_tile = cp.base_tile.get();
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
@@ -321,13 +321,13 @@ void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
  * The position list corresponding to this column should be added
  * before the metadata.
  */
-void LogicalTile::AddColumn(std::shared_ptr<storage::Tile> base_tile_ref,
+void LogicalTile::AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
                             oid_t origin_column_id,
                             oid_t position_list_idx) {
   ColumnInfo cp;
 
   // Add a reference to the base tile
-  cp.base_tile_ref = base_tile_ref;
+  cp.base_tile = base_tile;
 
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
@@ -338,7 +338,8 @@ void LogicalTile::AddColumn(std::shared_ptr<storage::Tile> base_tile_ref,
 /**
  * @brief Add the column specified in column_ids to this logical tile.
  */
-void LogicalTile::AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids) {
+void LogicalTile::AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
+                             const std::vector<oid_t> &column_ids) {
   const int position_list_idx = 0;
   for (oid_t origin_column_id : column_ids) {
     oid_t base_tile_offset, tile_column_id;
@@ -379,7 +380,7 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   for (unsigned int i = 0; i < lt.schema_.size(); i++) {
     const LogicalTile::ColumnInfo &cp = lt.schema_[i];
     os << "\t Position list idx: " << cp.position_list_idx << ", "
-       << "base tile: " << cp.base_tile_ref << ", " << "origin column id: "
+       << "base tile: " << cp.base_tile << ", " << "origin column id: "
        << cp.origin_column_id << std::endl;
   }
 

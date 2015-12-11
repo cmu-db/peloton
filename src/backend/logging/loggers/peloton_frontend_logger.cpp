@@ -289,7 +289,7 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
   // XXX Do we need to lock tile before operating?
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroupReference(location.block);
+  auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
   if (!tile_group_header->GetInsertCommit(location.offset)) {
     tile_group_header->SetInsertCommit(location.offset, true);
@@ -306,7 +306,7 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
   // XXX Do we need to lock tile before operating?
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroupReference(location.block);
+  auto tile_group = manager.GetTileGroup(location.block);
   auto tile_group_header = tile_group->GetHeader();
   if (!tile_group_header->GetDeleteCommit(location.offset)) {
     tile_group_header->SetDeleteCommit(location.offset, true);

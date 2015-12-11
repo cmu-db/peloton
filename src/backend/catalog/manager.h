@@ -57,11 +57,11 @@ class Manager {
 
   void SetNextOid(oid_t next_oid) { oid = next_oid; }
 
-  void AddTileGroupReference(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location);
+  void AddTileGroup(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location);
 
-  void DropTileGroupReference(const oid_t oid);
+  void DropTileGroup(const oid_t oid);
 
-  std::shared_ptr<storage::TileGroup> GetTileGroupReference(const oid_t oid);
+  std::shared_ptr<storage::TileGroup> GetTileGroup(const oid_t oid);
 
   void ClearTileGroup(void);
 

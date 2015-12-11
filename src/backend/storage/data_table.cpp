@@ -46,7 +46,7 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
     oid_t tile_group_id = loc.block;
     oid_t tuple_offset = loc.offset;
 
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     auto header = tile_group->GetHeader();
 
     auto transaction_id = transaction->GetTransactionId();
@@ -86,7 +86,7 @@ DataTable::~DataTable() {
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
       tile_group_itr++) {
     auto tile_group_id = tile_groups[tile_group_itr];
-    catalog::Manager::GetInstance().DropTileGroupReference(tile_group_id);
+    catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }
 
   // clean up indices
@@ -140,7 +140,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   if (CheckConstraints(tuple) == false)
     return INVALID_ITEMPOINTER;
 
-  TileGroup *tile_group = nullptr;
+  std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
@@ -502,7 +502,7 @@ oid_t DataTable::AddDefaultTileGroup() {
       LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
-      catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
+      catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
       LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
@@ -523,7 +523,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
@@ -555,7 +555,7 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
@@ -570,7 +570,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup>& tile_group) {
     oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group in catalog
-    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 }
@@ -580,15 +580,15 @@ size_t DataTable::GetTileGroupCount() const {
   return size;
 }
 
-TileGroup *DataTable::GetTileGroup(oid_t tile_group_offset) const {
+std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(oid_t tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
   auto tile_group_id = tile_groups[tile_group_offset];
-  return GetTileGroupById(tile_group_id).get();
+  return GetTileGroupById(tile_group_id);
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
-  return manager.GetTileGroupReference(tile_group_id);
+  return manager.GetTileGroup(tile_group_id);
 }
 
 std::ostream &operator<<(std::ostream &os, const DataTable &table) {
@@ -799,7 +799,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group = catalog_manager.GetTileGroupReference(tile_group_id);
+  auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
   auto diff = tile_group->GetSchemaDifference(default_partition);
 
   // Check threshold for transformation
@@ -822,7 +822,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Set the location of the new tile group
   // and clean up the orig tile group
-  catalog_manager.AddTileGroupReference(tile_group_id, new_tile_group);
+  catalog_manager.AddTileGroup(tile_group_id, new_tile_group);
 
   return new_tile_group.get();
 }
