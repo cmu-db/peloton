@@ -26,6 +26,7 @@
 #include "backend/expression/expression_util.h"
 #include "backend/expression/expression_util_new.h"
 #include "backend/expression/cast_expression.h"
+#include "backend/expression/abstract_expression.h"
 
 #include "postgres/include/executor/executor.h" //added by michael
 
@@ -190,6 +191,24 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   }
 
   // A Const Expr has no children.
+  // modified by michael for IN operator
+//  if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY) {
+//	  std::vector<expression::AbstractExpression *> vecExpr;
+//	  int nElements = value.ArrayLength();
+//	  for (int i = 0; i < nElements; i++) {
+//		  Value val = value.ItemAtIndex(i);
+//		  expression::AbstractExpression* ce = expression::ConstantValueFactory(val);
+//		  vecExpr.push_back(ce);
+//	  }
+//	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, (const std::vector<expression::AbstractExpression*>*) &vecExpr);
+//	  value.Free();
+//	  return rv;
+//	  //Free val and vector here?
+//  } else {
+//	  auto rv = expression::ConstantValueFactory(value);
+//	  value.Free();
+//	  return rv;
+//  }
   auto rv = expression::ConstantValueFactory(value);
   value.Free();
   return rv;
@@ -245,128 +264,32 @@ expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
   LOG_TRACE("Transform ScalarArrayOp \n");
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr*>(es->expr);
-  auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
-
-  ScalarArrayOpExpr *op_expr2 = (ScalarArrayOpExpr *) sa_state->fxprstate.xprstate.expr;
-  std::cout << op_expr2->opfuncid;
-  auto func_id = sa_state->fxprstate.func.fn_oid;
-  std::cout << func_id;
-
-
+  //auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
   assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
-
-  const List* list = op_expr2->args;
-  std::list<expression::AbstractExpression*> exprs;
-  ListCell* l;
-
-  foreach (l, list)
-  {
-      const Expr* ex = reinterpret_cast<const Expr*>(lfirst(l));
-      //exprs.push_back(ex);
-      std::printf("expression: %d", nodeTag(ex));
-  }
-
+  const List* list = op_expr->args;
   assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
 
    // Extract function arguments (at most two)
-   //expression::AbstractExpression* lc = nullptr;
-   //expression::AbstractExpression* rc = nullptr;
-//   int ic = 0;
+   expression::AbstractExpression* lc = nullptr;
+   expression::AbstractExpression* rc = nullptr;
+   int ic = 0;
    ListCell* arg;
-//   foreach (arg, list)
-//   {
-//     Expr* ex = (Expr*) lfirst(arg);
-//
-//     if (ic >= list_length(list))
-//       break;
-//     if (ic == 0)
-//       TransformExpr(ex);
-//     else if (ic == 1)
-//       TransformScalar(ex);
-//     else break;
-//
-//     ic++;
-//   }
-
-   ///////////////////////////////////////////////
-   ScalarArrayOpExpr *opexpr = (ScalarArrayOpExpr *) sa_state->fxprstate.xprstate.expr;
-   ExprContext *econtext;
-   bool *isNull = false;
-   //ExprDoneCond *isDone;
-   bool        useOr = opexpr->useOr;
-   ArrayType  *arr;
-   int            nitems;
-   //Datum        result;
-   //bool        resultnull;
-   FunctionCallInfo fcinfo;
-   FunctionCallInfoData fdata;
-   //ExprDoneCond argDone;
-   int i=0;
-   //int16        typlen;
-   //bool        typbyval;
-   //char        typalign;
-   //char       *s;
-   //bits8       *bitmap;
-   //int            bitmask;
-
-   /*
-    * Evaluate arguments
-    */
-   fdata = sa_state->fxprstate.fcinfo_data;
-   fcinfo = &fdata;
-   List *argList = sa_state->fxprstate.args;
-
-   foreach(arg, argList)
+   foreach (arg, list)
    {
-           ExprState  *argstate = (ExprState *) lfirst(arg);
-           ExprDoneCond thisArgIsDone;
+     Expr* ex = (Expr*) lfirst(arg);
 
-           fcinfo->arg[i] = ExecEvalExpr(argstate,
-                                         econtext,
-                                         &fcinfo->argnull[i],
-                                         &thisArgIsDone);
-           i++;
+     if (ic >= list_length(list))
+       break;
+     if (ic == 0)
+       lc = TransformExpr(ex);
+     else if (ic == 1)
+       rc = TransformExpr(ex);
+     else break;
+
+     ic++;
    }
 
-   Assert(i == fcinfo->nargs);
-   Assert(fcinfo->nargs == 2);
-   /*
-    * If the array is NULL then we return NULL --- it's not very meaningful
-    * to do anything else, even if the operator___ isn't strict.
-    */
-   if (fcinfo->argnull[1])
-   {
-       *isNull = true;
-       return (Datum) 0;
-   }
-  /* Else okay to fetch and detoast the array */
-   arr = DatumGetArrayTypeP(fcinfo->arg[1]);
-
-   /*
-    * If the array is empty, we return either FALSE or TRUE per the useOr
-    * flag.  This is correct even if the scalar is NULL; since we would
-    * evaluate the operator___ zero times, it matters not whether it would want
-    * to return NULL.
-    */
-   nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-   if (nitems <= 0)
-       std::cout << BoolGetDatum(!useOr);
-   /*
-    * If the scalar is NULL, and the function is strict, return NULL; no
-    * point in iterating the loop.
-    */
-   if (fcinfo->argnull[0] && sa_state->fxprstate.func.fn_strict)
-   {
-       *isNull = true;
-       std::cout <<  (Datum) 0;
-   }
-///////////////////////////////////////////////////
-
-   //TODO
-   //BuildVectorExpr( , lc, rc);
-
-  auto pg_func_id = op_expr->opfuncid;
-  return ReMapPgFunc(pg_func_id, op_expr->args);
+   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
 }
 
 
