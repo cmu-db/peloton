@@ -46,7 +46,7 @@ bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
     oid_t tile_group_id = loc.block;
     oid_t tuple_offset = loc.offset;
 
-    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group = manager.GetTileGroupReference(tile_group_id);
     auto header = tile_group->GetHeader();
 
     auto transaction_id = transaction->GetTransactionId();
@@ -81,12 +81,12 @@ DataTable::DataTable(catalog::Schema *schema,
 }
 
 DataTable::~DataTable() {
-  // clean up tile groups
+  // clean up tile groups by dropping the references in the catalog
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
       tile_group_itr++) {
-    auto tile_group = GetTileGroup(tile_group_itr);
-    tile_group->DecrementRefCount();
+    auto tile_group_id = tile_groups[tile_group_itr];
+    catalog::Manager::GetInstance().DropTileGroupReference(tile_group_id);
   }
 
   // clean up indices
@@ -157,12 +157,10 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
-    tile_group->IncrementRefCount();
 
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
     tile_group_id = tile_group->GetTileGroupId();
 
-    tile_group->DecrementRefCount();
     if (tuple_slot == INVALID_OID) {
       // XXX Should we put this in a critical section?
       AddDefaultTileGroup();
@@ -485,12 +483,13 @@ oid_t DataTable::AddDefaultTileGroup() {
   column_map_type column_map;
   oid_t tile_group_id = INVALID_OID;
 
-  // First, figure out the partitioning for given tilegroup layout
+  // Figure out the partitioning for given tilegroup layout
   column_map = GetTileGroupLayout((LayoutType) peloton_layout);
 
-  TileGroup *tile_group = GetTileGroupWithLayout(column_map);
-  assert(tile_group);
-  tile_group_id = tile_group->GetTileGroupId();
+  // Create a tile group with that partitioning
+  std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
+  assert(tile_group.get());
+  tile_group_id = tile_group.get()->GetTileGroupId();
 
   LOG_TRACE("Trying to add a tile group \n");
   {
@@ -503,7 +502,7 @@ oid_t DataTable::AddDefaultTileGroup() {
       LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
-      catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+      catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
       LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
@@ -517,7 +516,6 @@ oid_t DataTable::AddDefaultTileGroup() {
     if (active_tuple_count < allocated_tuple_count) {
       LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count,
                 allocated_tuple_count);
-      tile_group->DecrementRefCount();
       return INVALID_OID;
     }
 
@@ -525,7 +523,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
@@ -545,9 +543,9 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
     column_map[col_itr] = std::make_pair(0, col_itr);
   }
 
-  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
+  std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
       database_oid, table_oid, tile_group_id, this, schemas,
-      column_map, tuples_per_tilegroup);
+      column_map, tuples_per_tilegroup));
 
   LOG_TRACE("Trying to add a tile group \n");
   {
@@ -557,22 +555,22 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id){
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
   return tile_group_id;
 }
 
-void DataTable::AddTileGroup(TileGroup *tile_group) {
+void DataTable::AddTileGroup(const std::shared_ptr<TileGroup>& tile_group) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
     tile_groups.push_back(tile_group->GetTileGroupId());
     oid_t tile_group_id = tile_group->GetTileGroupId();
 
-    // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
+    // add tile group in catalog
+    catalog::Manager::GetInstance().AddTileGroupReference(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 }
@@ -585,14 +583,12 @@ size_t DataTable::GetTileGroupCount() const {
 TileGroup *DataTable::GetTileGroup(oid_t tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
   auto tile_group_id = tile_groups[tile_group_offset];
-  return GetTileGroupById(tile_group_id);
+  return GetTileGroupById(tile_group_id).get();
 }
 
-TileGroup *DataTable::GetTileGroupById(oid_t tile_group_id) const {
+std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-  assert(tile_group);
-  return tile_group;
+  return manager.GetTileGroupReference(tile_group_id);
 }
 
 std::ostream &operator<<(std::ostream &os, const DataTable &table) {
@@ -803,7 +799,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
+  auto tile_group = catalog_manager.GetTileGroupReference(tile_group_id);
   auto diff = tile_group->GetSchemaDifference(default_partition);
 
   // Check threshold for transformation
@@ -812,26 +808,23 @@ storage::TileGroup *DataTable::TransformTileGroup(
   }
 
   // Get the schema for the new transformed tile group
-  auto new_schema = TransformTileGroupSchema(tile_group, default_partition);
+  auto new_schema = TransformTileGroupSchema(tile_group.get(), default_partition);
 
   // Allocate space for the transformed tile group
-  auto new_tile_group = TileGroupFactory::GetTileGroup(
+  std::shared_ptr<storage::TileGroup> new_tile_group(TileGroupFactory::GetTileGroup(
       tile_group->GetDatabaseId(), tile_group->GetTableId(),
       tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
       new_schema, default_partition,
-      tile_group->GetAllocatedTupleCount());
+      tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
-  SetTransformedTileGroup(tile_group, new_tile_group);
+  SetTransformedTileGroup(tile_group.get(), new_tile_group.get());
 
   // Set the location of the new tile group
-  catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
+  // and clean up the orig tile group
+  catalog_manager.AddTileGroupReference(tile_group_id, new_tile_group);
 
-  // Clean up the orig tile group
-  tile_group->DecrementRefCount();
-  tile_group = catalog_manager.GetTileGroup(tile_group_id);
-
-  return new_tile_group;
+  return new_tile_group.get();
 }
 
 void DataTable::RecordSample(const brain::Sample& sample) {
