@@ -14,16 +14,10 @@
 
 #include "gtest/gtest.h"
 
-#include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
-#include "backend/storage/tile_group_iterator.h"
 #include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tuple.h"
-
-#include "harness.h"
+#include "executor/executor_tests_util.h"
+#include "backend/storage/tile_group_iterator.h"
 
 namespace peloton {
 namespace test {
@@ -33,63 +27,28 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(TileGroupIteratorTests, BasicTest) {
-  int num_cols = 10;
+  const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;
+  const int expected_tilegroup_count = 5;
+  const int tuple_count = tuples_per_tilegroup * expected_tilegroup_count;
 
-  std::vector<catalog::Column> columns;
-  std::vector<std::string> column_names;
+  // Create a table and wrap it in logical tiles
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count,
+                                   false,
+                                   false,
+                                   true);
 
-  for (int i = 0; i < num_cols; i++) {
-    std::stringstream name;
-    name << "COL_" << i;
+  storage::TileGroupIterator tile_group_itr(data_table.get());
+  std::shared_ptr<storage::TileGroup> tile_group_ptr;
+  int actual_tile_group_count = 0;
+  while (tile_group_itr.Next(tile_group_ptr)) {
+    if (tile_group_ptr.get() != nullptr) {
+      actual_tile_group_count += 1;
+    }
+  } // WHILE
 
-    catalog::Column col(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "A", true);
-    columns.push_back(col);
-    column_names.push_back(name.str());
-  }  // FOR
-
-  // Schema
-  catalog::Schema *schema = new catalog::Schema(columns);
-
-  //     storage::DataTable *table = storage::TableFactory::GetDataTable(
-  //         INVALID_OID,
-  //         INVALID_OID,
-  //         schema,
-  //         "XYZ",
-  //         1);
-
-  // Allocated Tuple Count
-  const int tuple_count = 6;
-
-  storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(tuple_count);
-
-  storage::Tile *tile = storage::TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header,
-      *schema, nullptr, tuple_count);
-
-  for (int i = 0; i < tuple_count; i++) {
-    storage::Tuple *tuple = new storage::Tuple(schema, true);
-    tuple->SetValue(0, ValueFactory::GetIntegerValue(i), nullptr);
-    tile->InsertTuple(0, tuple);
-    delete tuple;
-  }  // FOR
-
-  //     storage::TileGroupIterator itr(table);
-  //     std::shared_ptr<storage::TileGroup> itrPtr;
-  int found = 0;
-  int expected = 0;  // 1;
-                     //     while (itr.Next(itrPtr)) {
-                     //         if (itrPtr.get() != nullptr) {
-                     //             found += 1;
-                     //         }
-                     //     } // WHILE
-
-  EXPECT_EQ(expected, found);
-
-  delete tile;
-  delete header;
-  delete schema;
+  EXPECT_EQ(expected_tilegroup_count, actual_tile_group_count);
 }
 
 }  // End test namespace
