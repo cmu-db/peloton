@@ -196,8 +196,6 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
-
     ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
