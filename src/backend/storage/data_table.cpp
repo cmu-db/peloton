@@ -168,7 +168,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   }
 
   LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
-           tile_group_offset, tile_group->GetTileGroupId(), tile_group);
+           tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
