@@ -67,7 +67,8 @@ class ExecutorTestsUtil {
   static void PopulateTable(storage::DataTable *table, int num_rows,
                             bool mutate, bool random, bool group_by);
 
-  static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
+  static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
+                            int num_rows);
 
   static catalog::Column GetColumnInfo(int index);
 

@@ -15,7 +15,7 @@ namespace test {
 std::string aries_log_file_name = "aries.log";
 
 /**
- * @brief writing a simple log with multiple threads
+ * @brief writing a simple log with multiple threads and then do recovery
  */
 TEST(AriesLoggingTest, writing_logfile) {
 
@@ -24,16 +24,11 @@ TEST(AriesLoggingTest, writing_logfile) {
 
   // Reset data
   LoggingTestsUtil::ResetSystem();
-}
-
-/**
- * @brief recovery test
- */
-TEST(AriesLoggingTest, recovery) {
 
   // Do recovery
   LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
 }
+
 
 }  // End test namespace
 }  // End peloton namespace

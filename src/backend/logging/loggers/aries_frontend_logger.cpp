@@ -361,7 +361,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     for (auto tuple_slot : entry.second) {
       tile_group.get()->AbortInsertedTuple(tuple_slot);
@@ -373,7 +373,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : txn->GetDeletedTuples()) {
     oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroupReference(tile_group_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     for (auto tuple_slot : entry.second) {
       tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
@@ -434,14 +434,15 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  auto tile_group = catalog::Manager::GetInstance().GetTileGroupReference(tile_group_id);
+  auto& manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
 
   auto txn = recovery_txn_table.at(txn_id);
 
   // Create new tile group if table doesn't already have that tile group
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(tile_group_id);
-    tile_group = catalog::Manager::GetInstance().GetTileGroupReference(tile_group_id);
+    tile_group = manager.GetTileGroup(tile_group_id);
     if (max_oid < tile_group_id) {
       max_oid = tile_group_id;
     }
@@ -540,12 +541,13 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
     auto target_location = tuple_record.GetInsertLocation();
     auto tile_group_id = target_location.block;
     auto tuple_slot = target_location.offset;
-    auto tile_group = catalog::Manager::GetInstance().GetTileGroupReference(tile_group_id);
+    auto& manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     // Create new tile group if table doesn't already have that tile group
     if(tile_group == nullptr){
       table->AddTileGroupWithOid(tile_group_id);
-      tile_group = catalog::Manager::GetInstance().GetTileGroupReference(tile_group_id);
+      tile_group = manager.GetTileGroup(tile_group_id);
       if( max_oid < tile_group_id ){
         max_oid = tile_group_id;
       }

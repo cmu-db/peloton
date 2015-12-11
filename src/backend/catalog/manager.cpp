@@ -30,7 +30,7 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::AddTileGroupReference(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location) {
+void Manager::AddTileGroup(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location) {
   std::shared_ptr<storage::TileGroup> old_location;
 
   {
@@ -44,7 +44,7 @@ void Manager::AddTileGroupReference(const oid_t oid, const std::shared_ptr<stora
   }
 }
 
-void Manager::DropTileGroupReference(const oid_t oid) {
+void Manager::DropTileGroup(const oid_t oid) {
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group
@@ -53,7 +53,7 @@ void Manager::DropTileGroupReference(const oid_t oid) {
 }
 
 
-std::shared_ptr<storage::TileGroup> Manager::GetTileGroupReference(const oid_t oid) {
+std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
   {

@@ -156,7 +156,7 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
       old_column_position_idxs.push_back(column_info.position_list_idx);
 
       // Get old column information
-      storage::Tile *old_tile = column_info.base_tile_ref.get();
+      storage::Tile *old_tile = column_info.base_tile.get();
       old_tiles.push_back(old_tile);
       auto old_schema = old_tile->GetSchema();
       oid_t old_column_id = column_info.origin_column_id;
@@ -248,7 +248,7 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
       auto &column_info = source_tile->GetColumnInfo(old_col_id);
 
       // Amortize schema lookups once per column
-      storage::Tile *old_tile = column_info.base_tile_ref.get();
+      storage::Tile *old_tile = column_info.base_tile.get();
       auto old_schema = old_tile->GetSchema();
 
       // Get old column information
