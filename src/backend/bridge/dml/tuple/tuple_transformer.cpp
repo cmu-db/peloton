@@ -25,6 +25,8 @@
 #include "utils/numeric.h"
 #include "postgres_ext.h"
 
+#include "postgres/include/utils/array.h"  //added by michael. use peloton not postgres?
+
 
 namespace peloton {
 namespace bridge {
@@ -103,11 +105,32 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     } break;
 
     case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
-    	oidvector *tptr = reinterpret_cast<oidvector *>(datum);
-    	std::cout << tptr->elemtype;
-    	struct varlena *textptr = reinterpret_cast<struct varlena *>(tptr->values[0]);
-    	char *varchar = static_cast<char *>(VARDATA(textptr));
-    	std::cout << varchar;
+
+		ArrayType  *arr = DatumGetArrayTypeP(datum);
+		int		nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+		Oid arr_type = ARR_ELEMTYPE(arr);
+		Datum *elems;
+		int i;
+		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
+		      LOG_ERROR("expected 1-D text array");
+
+		deconstruct_array(arr, POSTGRES_VALUE_TYPE_TEXT, -1, false, 'i', &elems, NULL, &nelems);
+
+		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+
+		std::vector<Value> vecValue;
+
+		for (i = 0; i < nelems; ++i) {
+			char* pText = TextDatumGetCString(elems[i]);
+			std::string str(pText);
+			std::cout << pText << arr_type << str;
+			VarlenPool *data_pool = nullptr;
+			LOG_TRACE("len = %d , text = \"%s\"", str.length(), str.c_str());
+			Value val = ValueFactory::GetStringValue(str, data_pool);
+			vecValue.push_back(val);
+		}
+
+		value.SetArrayElements(vecValue);
 
     } break;
 
