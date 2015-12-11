@@ -33,4 +33,7 @@ data_table_test_SOURCES = \
 		harness.cpp
 		
 tile_group_iterator_test_SOURCES = \
-		storage/tile_group_iterator_test.cpp
+		storage/tile_group_iterator_test.cpp \
+		executor/executor_tests_util.cpp \
+		harness.cpp
+		
