@@ -17,6 +17,7 @@
 #include <mutex>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "backend/common/types.h"
 
@@ -37,7 +38,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef std::unordered_map<oid_t, storage::TileGroup *> lookup_dir;
+typedef std::unordered_map<oid_t, std::shared_ptr<storage::TileGroup > > lookup_dir;
 
 class Manager {
  public:
@@ -56,9 +57,11 @@ class Manager {
 
   void SetNextOid(oid_t next_oid) { oid = next_oid; }
 
-  void SetTileGroup(const oid_t oid, storage::TileGroup *location);
+  void AddTileGroupReference(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location);
 
-  storage::TileGroup *GetTileGroup(const oid_t oid);
+  void DropTileGroupReference(const oid_t oid);
+
+  std::shared_ptr<storage::TileGroup> GetTileGroupReference(const oid_t oid);
 
   void ClearTileGroup(void);
 

@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <cassert>
+#include <string>
 
+#include "backend/common/exception.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
@@ -28,20 +30,38 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::SetTileGroup(const oid_t oid, storage::TileGroup *location) {
+void Manager::AddTileGroupReference(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location) {
+  std::shared_ptr<storage::TileGroup> old_location;
+
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
+
+    // drop the catalog reference to the old tile group
+    locator.erase(oid);
+
+    // add a catalog reference to the tile group
     locator[oid] = location;
   }
 }
 
-storage::TileGroup *Manager::GetTileGroup(const oid_t oid) {
-  storage::TileGroup *location = nullptr;
+void Manager::DropTileGroupReference(const oid_t oid) {
+  {
+    std::lock_guard<std::mutex> lock(locator_mutex);
+    // drop the catalog reference to the tile group
+    locator.erase(oid);
+  }
+}
+
+
+std::shared_ptr<storage::TileGroup> Manager::GetTileGroupReference(const oid_t oid) {
+  std::shared_ptr<storage::TileGroup> location;
 
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
-    if (locator.find(oid) != locator.end())
+    // Check if the tile group exists in the lookup directory
+    if (locator.find(oid) != locator.end()) {
       location = locator.at(oid);
+    }
   }
 
   return location;
