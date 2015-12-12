@@ -413,11 +413,14 @@ static const struct config_enum_entry peloton_layout_mode_options[] = {
 /* Possible values for peloton_logging_mode GUC */
 typedef enum LoggingType
 {
+  LOGGING_TYPE_INVALID, /* No logging */
+
   LOGGING_TYPE_ARIES,   /* Aries */
   LOGGING_TYPE_PELOTON  /* Peloton */
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
+  {"invalid", LOGGING_TYPE_INVALID, false},
   {"aries", LOGGING_TYPE_ARIES, false},
   {"peloton", LOGGING_TYPE_PELOTON, false},
   {NULL, 0, false}
@@ -426,13 +429,13 @@ static const struct config_enum_entry peloton_logging_mode_options[] = {
 /* Possible values for peloton_caching_mode GUC */
 typedef enum CachingType
 {
-  CACHING_ON,   /* On */
-  CACHING_OFF   /* Off */
+  CACHING_OFF,   /* Off */
+  CACHING_ON   /* On */
 } CachingType;
 
 static const struct config_enum_entry peloton_caching_mode_options[] = {
-  {"on", CACHING_ON, false},
   {"off", CACHING_OFF, false},
+  {"on", CACHING_ON, false},
   {NULL, 0, false}
 };
 
@@ -3743,7 +3746,7 @@ struct config_enum ConfigureNamesEnum[] =
       gettext_noop("This determines the logging mode.")
     },
     &peloton_logging_mode,
-    LOGGING_TYPE_ARIES, peloton_logging_mode_options,
+    LOGGING_TYPE_INVALID, peloton_logging_mode_options,
     NULL, NULL, NULL
   },
 

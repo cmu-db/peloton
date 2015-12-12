@@ -66,7 +66,8 @@
  * Logging Flag
  * ----------
  */
-bool logging_on = true;
+bool logging_module_check = false;
+
 bool syncronization_commit = false;
 
 static void peloton_process_status(const peloton_status& status, PlanState *planstate);
@@ -90,15 +91,32 @@ peloton_bootstrap() {
     // Process the utility statement
     peloton::bridge::Bootstrap::BootstrapPeloton();
 
-    /* TODO: Handle logging
-    if( logging_on){
-      // NOTE:: start logging since bootstrapPeloton is done
-      auto& logManager = peloton::logging::LogManager::GetInstance();
-      if( logManager.IsReadyToLogging() == false){
-        logManager.StartLogging();
+    // Sart logging
+    if(logging_module_check == false){
+
+      elog(WARNING, "Logging Mode : %d", peloton_logging_mode);
+      elog(WARNING, "Caching Mode : %d", peloton_caching_mode);
+      elog(WARNING, "Tile Cache Size : %d", peloton_tile_cache_size);
+
+      // Finished checking logging module
+      logging_module_check = true;
+
+      /*
+      // Launching a thread for logging
+      auto& log_manager = peloton::logging::LogManager::GetInstance();
+      if (!log_manager.IsInLoggingMode()) {
+        log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_PELOTON);
+        log_manager.SetSyncCommit(true);
+        std::thread(&peloton::logging::LogManager::StartStandbyMode,
+                    &log_manager,
+                    log_manager.GetDefaultLoggingType()).detach();
+        log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY);
+        log_manager.StartRecoveryMode();
+        log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING);
       }
+      */
     }
-    */
+
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -119,24 +137,6 @@ peloton_ddl(Node *parsetree) {
   if(parsetree == NULL || nodeTag(parsetree) == T_Invalid) {
     return;
   }
-
-  if(logging_on){
-    /*
-    // Launching a thread for logging
-    auto& log_manager = peloton::logging::LogManager::GetInstance();
-    if (!log_manager.IsInLoggingMode()) {
-      log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_PELOTON);
-      log_manager.SetSyncCommit(true);
-      std::thread(&peloton::logging::LogManager::StartStandbyMode,
-                &log_manager,
-                log_manager.GetDefaultLoggingType()).detach();
-      log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY);
-      log_manager.StartRecoveryMode();
-      log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING);
-    }
-    */
-  }
-
 
   try {
     /* Process the utility statement */
