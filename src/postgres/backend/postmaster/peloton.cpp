@@ -93,28 +93,43 @@ peloton_bootstrap() {
 
     // Sart logging
     if(logging_module_check == false){
-
-      elog(WARNING, "Logging Mode : %d", peloton_logging_mode);
-      elog(WARNING, "Caching Mode : %d", peloton_caching_mode);
-      elog(WARNING, "Tile Cache Size : %d", peloton_tile_cache_size);
+      elog(INFO, "....................................................................................................");
+      elog(INFO, "Logging Mode : %d", peloton_logging_mode);
+      elog(INFO, "Caching Mode : %d", peloton_caching_mode);
+      elog(INFO, "Tile Cache Size : %d", peloton_tile_cache_size);
 
       // Finished checking logging module
       logging_module_check = true;
 
-      /*
-      // Launching a thread for logging
-      auto& log_manager = peloton::logging::LogManager::GetInstance();
-      if (!log_manager.IsInLoggingMode()) {
-        log_manager.SetDefaultLoggingType(peloton::LOGGING_TYPE_PELOTON);
-        log_manager.SetSyncCommit(true);
-        std::thread(&peloton::logging::LogManager::StartStandbyMode,
-                    &log_manager,
-                    log_manager.GetDefaultLoggingType()).detach();
-        log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY);
-        log_manager.StartRecoveryMode();
-        log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING);
+      if(peloton_logging_mode != LOGGING_TYPE_INVALID) {
+
+        // Launching a thread for logging
+        auto& log_manager = peloton::logging::LogManager::GetInstance();
+        if (!log_manager.IsInLoggingMode()) {
+
+          // Set default logging mode
+          log_manager.SetDefaultLoggingType((peloton::LoggingType) peloton_logging_mode);
+          log_manager.SetSyncCommit(true);
+          elog(INFO, "Wait for standby mode");
+
+          // Wait for standby mode
+          std::thread(&peloton::logging::LogManager::StartStandbyMode,
+                      &log_manager,
+                      log_manager.GetDefaultLoggingType()).detach();
+          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY);
+          elog(INFO, "Standby mode");
+
+          // Do any recovery
+          log_manager.StartRecoveryMode();
+          elog(INFO, "Wait for logging mode");
+
+          // Wait for logging mode
+          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING);
+          elog(INFO, "Logging mode");
+        }
+
       }
-      */
+
     }
 
   }
