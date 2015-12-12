@@ -63,6 +63,8 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
   logging_type = LOGGING_TYPE_ARIES;
 
+  LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
+
   // open log file and file descriptor
   // we open it in append + binary mode
   log_file = fopen(GetLogFileName().c_str(),"ab+");
