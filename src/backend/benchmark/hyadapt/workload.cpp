@@ -103,7 +103,7 @@ static void WriteOutput(double duration) {
   duration *= 1000;
 
   std::cout << "----------------------------------------------------------\n";
-  std::cout << state.layout << " "
+  std::cout << state.layout_mode << " "
       << state.operator_type << " "
       << state.projectivity << " "
       << state.selectivity << " "
@@ -119,7 +119,7 @@ static void WriteOutput(double duration) {
       << state.tuples_per_tilegroup << " :: ";
   std::cout << duration << " ms\n";
 
-  out << state.layout << " ";
+  out << state.layout_mode << " ";
   out << state.operator_type << " ";
   out << state.selectivity << " ";
   out << state.projectivity << " ";
@@ -893,8 +893,8 @@ void RunProjectivityExperiment() {
       // Go over all layouts
       for(auto layout : layouts) {
         // Set layout
-        state.layout = layout;
-        peloton_layout = state.layout;
+        state.layout_mode = layout;
+        peloton_layout_mode = state.layout_mode;
 
         for(auto proj : projectivity) {
           // Set proj
@@ -943,8 +943,8 @@ void RunSelectivityExperiment() {
       // Go over all layouts
       for(auto layout : layouts) {
         // Set layout
-        state.layout = layout;
-        peloton_layout = state.layout;
+        state.layout_mode = layout;
+        peloton_layout_mode = state.layout_mode;
 
         for(auto select : selectivity) {
           // Set selectivity
@@ -993,8 +993,8 @@ void RunOperatorExperiment() {
     // Go over all layouts
     for(auto layout : layouts) {
       // Set layout
-      state.layout = layout;
-      peloton_layout = state.layout;
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
 
       for(auto projectivity : op_projectivity) {
         // Set projectivity
@@ -1032,8 +1032,8 @@ void RunVerticalExperiment() {
 
   state.projectivity = 0.1;
   peloton_projectivity = state.projectivity;
-  state.layout = LAYOUT_HYBRID;
-  peloton_layout = state.layout;
+  state.layout_mode = LAYOUT_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
   // Go over all column counts
   for(auto column_count : column_counts) {
@@ -1056,7 +1056,7 @@ void RunVerticalExperiment() {
           state.scale_factor = orig_tuple_count/tuples_per_tg;
 
           // Load in the table with layout
-          CreateAndLoadTable((LayoutType) peloton_layout);
+          CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -1093,8 +1093,8 @@ void RunSubsetExperiment() {
 
   state.write_ratio = 0.0;
 
-  state.layout = LAYOUT_HYBRID;
-  peloton_layout = state.layout;
+  state.layout_mode = LAYOUT_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
   /////////////////////////////////////////////////////////
   // SINGLE GROUP
@@ -1103,7 +1103,7 @@ void RunSubsetExperiment() {
   state.subset_experiment_type = SUBSET_TYPE_SINGLE_GROUP;
 
   // Load in the table with layout
-  CreateAndLoadTable((LayoutType) peloton_layout);
+  CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
   for(auto select : selectivity) {
     // Set selectivity
@@ -1135,7 +1135,7 @@ void RunSubsetExperiment() {
   peloton_projectivity = state.projectivity;
 
   // Load in the table with layout
-  CreateAndLoadTable((LayoutType) peloton_layout);
+  CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
   for(auto select : selectivity) {
     // Set selectivity
@@ -1368,20 +1368,20 @@ void RunAdaptExperiment() {
     // Go over all layouts
     for(auto layout : adapt_layouts) {
       // Set layout
-      state.layout = layout;
-      peloton_layout = state.layout;
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
 
       std::cout << "----------------------------------------- \n\n";
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout);
+      CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1390,7 +1390,7 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
@@ -1432,8 +1432,8 @@ void RunWeightExperiment() {
   std::thread transformer;
 
   state.column_count = column_counts[1];
-  state.layout = LAYOUT_HYBRID;
-  peloton_layout = state.layout;
+  state.layout_mode = LAYOUT_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
   state.transactions = 1000;
   oid_t num_types = 10;
@@ -1527,7 +1527,7 @@ static void Reorg() {
 }
 
 
-std::vector<LayoutType> reorg_layouts = {  LAYOUT_ROW, LAYOUT_HYBRID};
+std::vector<LayoutType> reorg_layout_modes = {  LAYOUT_ROW, LAYOUT_HYBRID};
 
 void RunReorgExperiment() {
 
@@ -1541,8 +1541,8 @@ void RunReorgExperiment() {
   state.adapt = true;
   double theta = 0.0;
 
-  state.layout = LAYOUT_HYBRID;
-  peloton_layout = state.layout;
+  state.layout_mode = LAYOUT_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
   state.column_count = column_counts[1];
 
@@ -1554,13 +1554,13 @@ void RunReorgExperiment() {
     state.scale_factor = tile_group_count;
 
     // Go over all layouts
-    for(auto layout : reorg_layouts) {
+    for(auto layout_mode : reorg_layout_modes) {
       // Set layout
-      state.layout = layout;
-      peloton_layout = state.layout;
+      state.layout_mode = layout_mode;
+      peloton_layout_mode = state.layout_mode;
 
       // Enable reorg mode
-      if(state.layout != LAYOUT_HYBRID) {
+      if(state.layout_mode != LAYOUT_HYBRID) {
         state.reorg = true;
       }
 
@@ -1568,13 +1568,13 @@ void RunReorgExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout);
+      CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1583,14 +1583,14 @@ void RunReorgExperiment() {
       RunReorgTest();
 
       // Stop transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
 
       // Enable reorg mode
-      if(state.layout != LAYOUT_HYBRID) {
+      if(state.layout_mode != LAYOUT_HYBRID) {
         state.reorg = false;
       }
 
@@ -1606,7 +1606,7 @@ void RunReorgExperiment() {
   out.close();
 }
 
-std::vector<LayoutType> distribution_layouts = {  LAYOUT_HYBRID };
+std::vector<LayoutType> distribution_layout_modes = {  LAYOUT_HYBRID };
 
 void RunDistributionExperiment() {
 
@@ -1629,22 +1629,22 @@ void RunDistributionExperiment() {
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for(auto layout : distribution_layouts) {
+    for(auto layout_mode : distribution_layout_modes) {
       // Set layout
-      state.layout = layout;
-      peloton_layout = state.layout;
+      state.layout_mode = layout_mode;
+      peloton_layout_mode = state.layout_mode;
 
       std::cout << "----------------------------------------- \n\n";
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout);
+      CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1653,7 +1653,7 @@ void RunDistributionExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if(state.layout == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();

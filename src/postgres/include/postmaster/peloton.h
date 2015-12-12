@@ -23,10 +23,10 @@
 #include "utils/memutils.h"
 #include "tcop/dest.h"
 
-/* ----------
- * Peloton_Status     Sent by the peloton to share the status with backend.
- * ----------
- */
+//===--------------------------------------------------------------------===//
+// Peloton_Status     Sent by the peloton to share the status with backend.
+//===--------------------------------------------------------------------===//
+
 typedef struct peloton_status {
   peloton::Result m_result;
   List *m_result_slots;
@@ -44,18 +44,16 @@ typedef struct peloton_status {
 
 extern bool logging_on;
 
-/* ----------
- * Functions called from postmaster
- * ----------
- */
+//===--------------------------------------------------------------------===//
+// Functions called from postmaster
+//===--------------------------------------------------------------------===//
 
 extern bool IsPelotonQuery(List *relationOids);
 
+//===--------------------------------------------------------------------===//
+// Functions called from postgres, utility, and execMain
+//===--------------------------------------------------------------------===//
 
-/* ----------
- * Functions called from postgres, utility, and execMain
- * ----------
- */
 extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);

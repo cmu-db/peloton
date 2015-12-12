@@ -26,40 +26,23 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile_group_factory.h"
 
+//===--------------------------------------------------------------------===//
+// Configuration Variables
+//===--------------------------------------------------------------------===//
+
 std::vector<peloton::oid_t> hyadapt_column_ids;
+
+double  peloton_projectivity;
+
+int     peloton_num_groups;
+
+bool    peloton_fsm;
 
 namespace peloton {
 namespace storage {
 
 bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
                           const concurrency::Transaction* transaction);
-
-/**
- * Check if the locations contains at least one visible entry to the transaction
- */
-bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
-                          const concurrency::Transaction* transaction) {
-  auto &manager = catalog::Manager::GetInstance();
-
-  for (auto loc : locations) {
-
-    oid_t tile_group_id = loc.block;
-    oid_t tuple_offset = loc.offset;
-
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto header = tile_group->GetHeader();
-
-    auto transaction_id = transaction->GetTransactionId();
-    auto last_commit_id = transaction->GetLastCommitId();
-    bool visible = header->IsVisible(tuple_offset, transaction_id,
-                                     last_commit_id);
-
-    if (visible)
-      return true;
-  }
-
-  return false;
-}
 
 DataTable::DataTable(catalog::Schema *schema,
                      std::string table_name, oid_t database_oid, oid_t table_oid,
@@ -100,6 +83,33 @@ DataTable::~DataTable() {
   }
 
   // AbstractTable cleans up the schema
+}
+
+/**
+ * Check if the locations contains at least one visible entry to the transaction
+ */
+bool ContainsVisibleEntry(std::vector<ItemPointer>& locations,
+                          const concurrency::Transaction* transaction) {
+  auto &manager = catalog::Manager::GetInstance();
+
+  for (auto loc : locations) {
+
+    oid_t tile_group_id = loc.block;
+    oid_t tuple_offset = loc.offset;
+
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto header = tile_group->GetHeader();
+
+    auto transaction_id = transaction->GetTransactionId();
+    auto last_commit_id = transaction->GetLastCommitId();
+    bool visible = header->IsVisible(tuple_offset, transaction_id,
+                                     last_commit_id);
+
+    if (visible)
+      return true;
+  }
+
+  return false;
 }
 
 //===--------------------------------------------------------------------===//
@@ -484,7 +494,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType) peloton_layout);
+  column_map = GetTileGroupLayout((LayoutType) peloton_layout_mode);
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
