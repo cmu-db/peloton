@@ -71,6 +71,18 @@ public:
         return spacer + "VectorExpression\n";
     }
 
+//    void PrintElementValue() {
+//        for (size_t i = 0; i < m_args.size(); i++) {
+//        	assert(m_args[i]);
+//            ValueType vType = m_args[i]->GetValueType();
+//
+//        }
+//    }
+
+    // for test
+    std::vector<AbstractExpression *> GetArgs() {
+    	return m_args;
+    }
 private:
     const std::vector<AbstractExpression *>& m_args;
     Value m_inList;
