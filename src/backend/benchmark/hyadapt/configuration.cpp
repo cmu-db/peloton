@@ -95,12 +95,12 @@ static void ValidateScaleFactor(const configuration& state) {
 }
 
 static void ValidateLayout(const configuration& state) {
-  if(state.layout < 0 || state.layout > 2) {
-    std::cout << "Invalid layout :: " << state.layout << "\n";
+  if(state.layout_mode < 0 || state.layout_mode > 2) {
+    std::cout << "Invalid layout :: " << state.layout_mode << "\n";
     exit(EXIT_FAILURE);
   }
   else {
-    switch(state.layout) {
+    switch(state.layout_mode) {
       case LAYOUT_ROW:
         std::cout << std::setw(20) << std::left << "layout " << " : " << "ROW" << std::endl;
         break;
@@ -184,7 +184,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.selectivity = 1.0;
   state.projectivity = 1.0;
 
-  state.layout = LAYOUT_ROW;
+  state.layout_mode = LAYOUT_ROW;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
@@ -223,7 +223,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.projectivity  = atof(optarg);
         break;
       case 'l':
-        state.layout  = (LayoutType) atoi(optarg);
+        state.layout_mode  = (LayoutType) atoi(optarg);
         break;
       case 't':
         state.transactions  = atoi(optarg);
