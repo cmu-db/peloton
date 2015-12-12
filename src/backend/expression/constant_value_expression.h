@@ -52,6 +52,10 @@ class ConstantValueExpression : public AbstractExpression {
         value.Debug() + "\n";
   }
 
+  //for test by michael
+  Value GetValue() {
+	  return value;
+  }
  protected:
   Value value;
 };
