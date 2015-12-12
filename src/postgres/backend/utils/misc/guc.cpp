@@ -513,10 +513,13 @@ int     peloton_logging_mode;
 // Caching mode
 int     peloton_caching_mode;
 
-// Cache size for tile cache
 #define DEFAULT_PELOTON_TILE_CACHE_SIZE  1024 * 1024
 
+// Cache size for tile cache
 int     peloton_tile_cache_size;
+
+// Directory for peloton logs
+char    *peloton_log_directory;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -3472,6 +3475,18 @@ struct config_string ConfigureNamesString[] =
 		"",
 		check_cluster_name, NULL, NULL
 	},
+
+	// TODO: Peloton Changes
+  {
+    {"peloton_log_directory", PGC_SIGHUP, LOGGING_WHERE,
+      gettext_noop("Sets the log directory for Peloton."),
+      gettext_noop("Must be specified as an absolute path."),
+      GUC_SUPERUSER_ONLY
+    },
+    &peloton_log_directory,
+    "peloton_log_directory",
+    check_canonical_path, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{

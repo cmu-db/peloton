@@ -368,11 +368,27 @@ void LogManager::SetTestRedoAllLogs(bool test_redo_all) {
   }
 }
 
-void LogManager::SetLogFile(std::string log_file) {
+void LogManager::SetLogFileName(std::string log_file) {
   log_file_name = log_file;
 }
+
 // XXX change to read configuration file
 std::string LogManager::GetLogFileName(void) {
+
+  // Check if we need to build a log file name
+  if(log_file_name.empty()) {
+
+    // If peloton_log_directory is specified
+    if(peloton_log_directory != nullptr) {
+      log_file_name = std::string(peloton_log_directory) + "/" + "peloton.log";
+    }
+    // Else save it in tmp directory
+    else {
+      log_file_name = "/tmp/peloton.log";
+    }
+
+  }
+
   return log_file_name;
 }
 

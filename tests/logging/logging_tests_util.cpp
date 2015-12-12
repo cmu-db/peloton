@@ -62,7 +62,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
+  log_manager.SetLogFileName(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
@@ -136,7 +136,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
+  log_manager.SetLogFileName(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
