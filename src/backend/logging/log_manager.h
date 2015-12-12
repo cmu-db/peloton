@@ -21,6 +21,13 @@
 #include "backend_logger.h"
 #include "frontend_logger.h"
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+// Directory for peloton logs
+extern char    *peloton_log_directory;
+
 namespace peloton {
 namespace logging {
 
@@ -97,7 +104,7 @@ class LogManager{
 
     void SetTestRedoAllLogs(bool test_suspend_commit);
 
-    void SetLogFile(std::string log_file);
+    void SetLogFileName(std::string log_file);
 
     std::string GetLogFileName(void);
 
@@ -134,7 +141,7 @@ class LogManager{
 
     bool syncronization_commit = false;
 
-    std::string log_file_name = "/tmp/general-peloton.log";
+    std::string log_file_name;
 };
 
 
