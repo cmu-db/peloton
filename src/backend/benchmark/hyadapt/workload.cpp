@@ -185,9 +185,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
         result_tiles.emplace_back(result_tile.release());
       }
 
-      status = executor->Execute();
-      if(status == false)
-        throw Exception("Execution failed");
+      // Execute stuff
+      executor->Execute();
     }
 
     // Capture fine-grained stats in adapt experiment
