@@ -32,13 +32,20 @@ typedef enum LayoutType
   LAYOUT_HYBRID  /* Hybrid layout */
 } LayoutType;
 
-extern LayoutType peloton_layout;
+extern LayoutType peloton_layout_mode;
 
-extern double     peloton_projectivity;
+//===--------------------------------------------------------------------===//
+// Configuration Variables
+//===--------------------------------------------------------------------===//
 
-extern int        peloton_num_groups;
+// Projectivity for determining FSM layout
+extern double  peloton_projectivity;
 
-extern bool       peloton_fsm;
+// # of groups
+extern int     peloton_num_groups;
+
+// FSM or not ?
+extern bool    peloton_fsm;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 

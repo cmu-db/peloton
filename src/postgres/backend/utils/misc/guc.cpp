@@ -395,7 +395,7 @@ static const struct config_enum_entry row_security_options[] = {
 
 // TODO: Peloton Changes
 
-/* Possible values for peloton_tilegroup_layout GUC */
+/* Possible values for peloton_layout_mode GUC */
 typedef enum LayoutType
 {
   LAYOUT_ROW,   /* Pure row layout */
@@ -403,10 +403,36 @@ typedef enum LayoutType
   LAYOUT_HYBRID /* Hybrid layout */
 } LayoutType;
 
-static const struct config_enum_entry peloton_tilegroup_layout_options[] = {
+static const struct config_enum_entry peloton_layout_mode_options[] = {
   {"row", LAYOUT_ROW, false},
   {"column", LAYOUT_COLUMN, false},
   {"hybrid", LAYOUT_HYBRID, false},
+  {NULL, 0, false}
+};
+
+/* Possible values for peloton_logging_mode GUC */
+typedef enum LoggingType
+{
+  LOGGING_TYPE_ARIES,   /* Aries */
+  LOGGING_TYPE_PELOTON  /* Peloton */
+} LoggingType;
+
+static const struct config_enum_entry peloton_logging_mode_options[] = {
+  {"aries", LOGGING_TYPE_ARIES, false},
+  {"peloton", LOGGING_TYPE_PELOTON, false},
+  {NULL, 0, false}
+};
+
+/* Possible values for peloton_caching_mode GUC */
+typedef enum CachingType
+{
+  CACHING_ON,   /* On */
+  CACHING_OFF   /* Off */
+} CachingType;
+
+static const struct config_enum_entry peloton_caching_mode_options[] = {
+  {"on", CACHING_ON, false},
+  {"off", CACHING_OFF, false},
   {NULL, 0, false}
 };
 
@@ -471,15 +497,21 @@ int			row_security;
 
 // TODO: Peloton Changes
 
-int			peloton_mode;
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
 
-int     peloton_layout;
+// Layout mode
+int     peloton_layout_mode;
 
-double  peloton_projectivity;
+// Logging mode
+int     peloton_logging_mode;
 
-int     peloton_num_groups;
+// Caching mode
+int     peloton_caching_mode;
 
-bool    peloton_fsm;
+// Cache size for tile cache
+int     peloton_tile_cache_size;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -3681,13 +3713,32 @@ struct config_enum ConfigureNamesEnum[] =
 
 	// TODO: Peloton Changes
 	{
-    {"peloton_tilegroup_layout", PGC_USERSET, PELOTON_TILEGROUP_LAYOUT_OPTIONS,
-      gettext_noop("Change peloton tilegroup layout"),
-      gettext_noop("This determines the tilegroup layout.")
+    {"peloton_layout_mode", PGC_USERSET, PELOTON_LAYOUT_OPTIONS,
+      gettext_noop("Change peloton layout mode"),
+      gettext_noop("This determines the layout mode.")
     },
-    &peloton_layout,
-    LAYOUT_ROW, peloton_tilegroup_layout_options,
-    // the constant 0 can be replaced by an enum
+    &peloton_layout_mode,
+    LAYOUT_ROW, peloton_layout_mode_options,
+    NULL, NULL, NULL
+  },
+
+  {
+    {"peloton_logging_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton logging mode"),
+      gettext_noop("This determines the logging mode.")
+    },
+    &peloton_logging_mode,
+    LOGGING_TYPE_ARIES, peloton_logging_mode_options,
+    NULL, NULL, NULL
+  },
+
+  {
+    {"peloton_caching_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton caching mode"),
+      gettext_noop("This determines the caching mode.")
+    },
+    &peloton_caching_mode,
+    CACHING_OFF, peloton_caching_mode_options,
     NULL, NULL, NULL
   },
 
