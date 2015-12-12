@@ -511,6 +511,8 @@ int     peloton_logging_mode;
 int     peloton_caching_mode;
 
 // Cache size for tile cache
+#define DEFAULT_PELOTON_TILE_CACHE_SIZE  1024 * 1024
+
 int     peloton_tile_cache_size;
 
 /*
@@ -2731,6 +2733,19 @@ struct config_int ConfigureNamesInt[] =
 		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
+
+
+	// TODO: Peloton Changes
+  {
+    {"peloton_tile_cache_size", PGC_USERSET, UNGROUPED,
+      gettext_noop("Size of the tile cache in peloton."),
+      NULL,
+      GUC_UNIT_KB
+    },
+    &peloton_tile_cache_size,
+    DEFAULT_PELOTON_TILE_CACHE_SIZE, 1, INT_MAX,
+    NULL, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{
