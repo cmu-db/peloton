@@ -1,0 +1,31 @@
+Linux NVM Library
+
+This is src/test/vmem_delete/README.
+
+This directory contains a unit test for the vmem_delete() function.
+
+The program in vmem_delete.c takes operations as arguments. Operations
+are encoded by characters. Each of them stands for one VMEM function:
+	'h' - vmem_check()
+	'f' - vmem_free()
+	'm' - vmem_malloc()
+	'c' - vmem_calloc()
+	'r' - vmem_realloc()
+	'a' - vmem_aligned_alloc()
+	's' - vmem_strdup()
+	'd' - vmem_delete()
+
+At the beginning the program creates a memory pool of the minimum size
+(VMEM_MIN_POOL) from an already memory-mapped region using
+vmem_create_in_region(). Then it allocates some memory and deletes
+the pool using vmem_delete(). Now the proper test begins. For each given
+argument the appropriate function is called for the already deleted pool,
+and a return status is printed or SIGSEGV is caught and reported.
+
+For example:
+
+	./vmem_delete f m a
+
+this will call: vmem_free(), vmem_malloc() and vmem_aligned_alloc()
+for the already deleted pool and print their return status. If SIGSEGV occurs,
+it will be caught and reported for each of these functions.

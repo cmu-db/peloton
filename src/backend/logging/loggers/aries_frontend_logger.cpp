@@ -15,6 +15,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+#include "backend/common/pool.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
@@ -55,14 +56,14 @@ storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
 // Wrappers
 storage::DataTable* GetTable(TupleRecord tupleRecord);
 
-storage::TileGroup* GetTileGroup(oid_t tile_group_id);
-
 /**
  * @brief Open logfile and file descriptor
  */
 AriesFrontendLogger::AriesFrontendLogger(){
 
   logging_type = LOGGING_TYPE_ARIES;
+
+  LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
 
   // open log file and file descriptor
   // we open it in append + binary mode
@@ -76,6 +77,9 @@ AriesFrontendLogger::AriesFrontendLogger(){
   if( log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
+
+  // allocate pool
+  recovery_pool = new VarlenPool();
 
 }
 
@@ -93,6 +97,10 @@ AriesFrontendLogger::~AriesFrontendLogger(){
   if( ret != 0 ){
     LOG_ERROR("Error occured while closing LogFile");
   }
+
+  // clean up pool
+  delete recovery_pool;
+
 }
 
 /**
@@ -355,28 +363,24 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction* txn){
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     for (auto tuple_slot : entry.second) {
-      tile_group->AbortInsertedTuple(tuple_slot);
+      tile_group.get()->AbortInsertedTuple(tuple_slot);
     }
 
-    tile_group->DecrementRefCount();
   }
 
   // Record the aborted deletes in recovery txn
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : txn->GetDeletedTuples()) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     for (auto tuple_slot : entry.second) {
-      tile_group->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
+      tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
     }
 
-    tile_group->DecrementRefCount();
   }
 
   // Clear inserted/deleted tuples from txn, just in case
@@ -419,14 +423,12 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   }
 
   auto table = GetTable(tuple_record);
-  VarlenPool *pool = new VarlenPool();
 
   // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
 
   // Check for torn log write
   if (tuple == nullptr) {
-    delete pool;
     return;
   }
 
@@ -434,14 +436,15 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  auto tile_group = GetTileGroup(tile_group_id);
+  auto& manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
 
   auto txn = recovery_txn_table.at(txn_id);
 
   // Create new tile group if table doesn't already have that tile group
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(tile_group_id);
-    tile_group = table->GetTileGroupById(tile_group_id);
+    tile_group = manager.GetTileGroup(tile_group_id);
     if (max_oid < tile_group_id) {
       max_oid = tile_group_id;
     }
@@ -460,7 +463,6 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   }
 
   delete tuple;
-  delete pool;
 }
 
 /**
@@ -520,13 +522,11 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   auto txn = recovery_txn_table.at(txn_id);
 
   auto table = GetTable(tuple_record);
-  VarlenPool *pool = new VarlenPool();
 
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
 
   // Check for torn log write
   if( tuple == nullptr){
-     delete pool;
     return;
   }
 
@@ -543,12 +543,13 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
     auto target_location = tuple_record.GetInsertLocation();
     auto tile_group_id = target_location.block;
     auto tuple_slot = target_location.offset;
-    auto tile_group = GetTileGroup(tile_group_id);
+    auto& manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     // Create new tile group if table doesn't already have that tile group
     if(tile_group == nullptr){
       table->AddTileGroupWithOid(tile_group_id);
-      tile_group = table->GetTileGroupById(tile_group_id);
+      tile_group = manager.GetTileGroup(tile_group_id);
       if( max_oid < tile_group_id ){
         max_oid = tile_group_id;
       }
@@ -566,7 +567,6 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   }
 
   delete tuple;
-  delete pool;
 }
 
 //===--------------------------------------------------------------------===//
@@ -767,17 +767,6 @@ storage::DataTable* GetTable(TupleRecord tuple_record){
   assert(table);
 
   return table;
-}
-
-/**
- * @brief Get tile group - used to check if tile group already exists
- * @param tile group id
- * @return tile group
- */
-storage::TileGroup* GetTileGroup(oid_t tile_group_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  return tile_group;
 }
 
 std::string AriesFrontendLogger::GetLogFileName(void) {

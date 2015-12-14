@@ -1,0 +1,3 @@
+pmem_valgr_simple/TEST0: START: pmem_valgr_simple
+ ./pmem_valgr_simple$(nW) $(nW)/testfile1 60 8
+pmem_valgr_simple/TEST0: Done

@@ -23,10 +23,36 @@
 #include "utils/memutils.h"
 #include "tcop/dest.h"
 
-/* ----------
- * Peloton_Status     Sent by the peloton to share the status with backend.
- * ----------
- */
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+/* Possible values for peloton_logging_mode GUC */
+typedef enum LoggingType
+{
+  LOGGING_TYPE_INVALID, /* No logging */
+
+  LOGGING_TYPE_ARIES,   /* Aries */
+  LOGGING_TYPE_PELOTON  /* Peloton */
+} LoggingType;
+
+extern LoggingType peloton_logging_mode;
+
+/* Possible values for peloton_caching_mode GUC */
+typedef enum CachingType
+{
+  CACHING_OFF,   /* Off */
+  CACHING_ON   /* On */
+} CachingType;
+
+extern CachingType peloton_caching_mode;
+
+extern int peloton_tile_cache_size;
+
+//===--------------------------------------------------------------------===//
+// Peloton_Status     Sent by the peloton to share the status with backend.
+//===--------------------------------------------------------------------===//
+
 typedef struct peloton_status {
   peloton::Result m_result;
   List *m_result_slots;
@@ -44,18 +70,16 @@ typedef struct peloton_status {
 
 extern bool logging_on;
 
-/* ----------
- * Functions called from postmaster
- * ----------
- */
+//===--------------------------------------------------------------------===//
+// Functions called from postmaster
+//===--------------------------------------------------------------------===//
 
 extern bool IsPelotonQuery(List *relationOids);
 
+//===--------------------------------------------------------------------===//
+// Functions called from postgres, utility, and execMain
+//===--------------------------------------------------------------------===//
 
-/* ----------
- * Functions called from postgres, utility, and execMain
- * ----------
- */
 extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);

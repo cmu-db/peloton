@@ -1,0 +1,3 @@
+pmem_memmove/TEST0: START: pmem_memmove
+ ./pmem_memmove$(nW) $(nW)/testfile1 b:4096
+pmem_memmove/TEST0: Done

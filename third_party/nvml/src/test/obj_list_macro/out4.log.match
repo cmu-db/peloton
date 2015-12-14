@@ -1,0 +1,109 @@
+obj_list_macro/TEST4: START: obj_list_macro
+ ../obj_list_macro/obj_list_macro$(nW) $(nW)testfile n:0:0:1 P:1 P:2 n:0:0:2 P:1 P:2 n:0:0:3 P:1 P:2 n:0:0:4 P:1 P:2 n:0:0:5 P:1 P:2 m:3:0:0 P:1 P:2 m:2:0:0 P:1 P:2 m:1:0:1 P:1 P:2 n:0:0:6 P:1 P:2 n:0:0:7 P:1 P:2 m:1:0:1 P:1 P:2 m:0:0:0 P:1 P:2 m:0:0:-3 P:1 P:2 m:0:0:0 P:1 P:2
+constructor(id = 1)
+list:
+id = 1
+list sec:
+constructor(id = 2)
+list:
+id = 1
+id = 2
+list sec:
+constructor(id = 3)
+list:
+id = 1
+id = 3
+id = 2
+list sec:
+constructor(id = 4)
+list:
+id = 1
+id = 4
+id = 3
+id = 2
+list sec:
+constructor(id = 5)
+list:
+id = 1
+id = 5
+id = 4
+id = 3
+id = 2
+list sec:
+list:
+id = 1
+id = 5
+id = 4
+id = 2
+list sec:
+id = 3
+list:
+id = 1
+id = 5
+id = 2
+list sec:
+id = 3
+id = 4
+list:
+id = 1
+id = 2
+list sec:
+id = 3
+id = 4
+id = 5
+constructor(id = 6)
+list:
+id = 1
+id = 6
+id = 2
+list sec:
+id = 3
+id = 4
+id = 5
+constructor(id = 7)
+list:
+id = 1
+id = 7
+id = 6
+id = 2
+list sec:
+id = 3
+id = 4
+id = 5
+list:
+id = 1
+id = 6
+id = 2
+list sec:
+id = 3
+id = 4
+id = 7
+id = 5
+list:
+id = 6
+id = 2
+list sec:
+id = 3
+id = 1
+id = 4
+id = 7
+id = 5
+list:
+id = 2
+list sec:
+id = 3
+id = 1
+id = 4
+id = 6
+id = 7
+id = 5
+list:
+list sec:
+id = 3
+id = 2
+id = 1
+id = 4
+id = 6
+id = 7
+id = 5
+obj_list_macro/TEST4: Done

@@ -81,7 +81,7 @@ class configuration {
   int tuples_per_tilegroup;
 
   // tile group layout
-  LayoutType layout;
+  LayoutType layout_mode;
 
   double selectivity;
 

@@ -1,0 +1,21 @@
+Linux NVM Library
+
+This is src/test/obj_first/README.
+
+This directory contains a unit test for POBJ_FIRST.
+
+Syntax:
+$ obj_first <fname> <operation>..
+
+Operations:
+ - P:<type_num>        - print all objects from <list> in normal order
+ - a:<type_num>:<id>   - allocate a new object with type number equal to <type_num>
+                         and set <id> to id using constructor
+ - r:<type_num>:<num>  - remove <num> object on internal list of objects with type
+                         number equal to <type_num>
+ - f:<type_num>        - return id of first object on internal list of objects with
+                         type_number equal to <type_num>
+
+<list>:
+- 1 - objects with type number equal to 0
+- 2 - objects with type number equal to 1

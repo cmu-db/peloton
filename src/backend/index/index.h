@@ -20,6 +20,7 @@
 namespace peloton {
 
 class AbstractTuple;
+class VarlenPool;
 
 namespace catalog{
 class Schema;
@@ -106,10 +107,7 @@ class Index {
 
   IndexMetadata *GetMetadata() const { return metadata; }
 
-  virtual ~Index() {
-    // clean up metadata
-    delete metadata;
-  }
+  virtual ~Index();
 
   //===--------------------------------------------------------------------===//
   // Mutators
@@ -200,6 +198,8 @@ class Index {
                const std::vector<ExpressionType> &expr_types,
                const std::vector<Value> &values);
 
+  VarlenPool *GetPool() const { return pool; }
+
  protected:
   Index(IndexMetadata *schema);
 
@@ -228,6 +228,9 @@ class Index {
 
   // dirty flag
   bool dirty = false;
+
+  // pool
+  VarlenPool *pool = nullptr;
 };
 
 }  // End index namespace

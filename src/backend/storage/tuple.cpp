@@ -24,9 +24,15 @@
 namespace peloton {
 namespace storage {
 
+// Does not delete SCHEMA
+Tuple::~Tuple(){
+
+  // delete the tuple data
+   if (allocated) delete[] tuple_data;
+ }
+
 // Get the value of a specified column (const)
-// (expensive) checks the schema to see how to return the Value.
-const Value Tuple::GetValue(const oid_t column_id) const {
+Value Tuple::GetValue(const oid_t column_id) const {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -38,55 +44,70 @@ const Value Tuple::GetValue(const oid_t column_id) const {
   return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
 }
 
-// Set scalars by value and uninlined columns by reference into this tuple.
-void Tuple::SetValue(const oid_t column_id, Value value) {
-  assert(tuple_schema);
-  assert(tuple_data);
-
-  const ValueType type = tuple_schema->GetType(column_id);
-  value = value.CastAs(type);
-
-  const bool is_inlined = tuple_schema->IsInlined(column_id);
-  char *dataPtr = GetDataPtr(column_id);
-  int32_t column_length = tuple_schema->GetLength(column_id);
-
-  if (is_inlined == false)
-    column_length = tuple_schema->GetVariableLength(column_id);
-
-  // TODO: Not sure about arguments
-  const bool is_in_bytes = false;
-  value.SerializeToTupleStorage(dataPtr, is_inlined, column_length, is_in_bytes);
-}
-
 // Set all columns by value into this tuple.
-void Tuple::SetValueAllocate(const oid_t column_id, Value value,
-                             VarlenPool *dataPool) {
+void Tuple::SetValue(const oid_t column_id, const Value& value,
+                     VarlenPool *data_pool) {
   assert(tuple_schema);
   assert(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
-  value = value.CastAs(type);
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
-  char *dataPtr = GetDataPtr(column_id);
+  char *value_location = GetDataPtr(column_id);
   int32_t column_length = tuple_schema->GetLength(column_id);
 
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
 
-  // TODO: Not sure about arguments
   const bool is_in_bytes = false;
-  value.SerializeToTupleStorageAllocateForObjects(dataPtr, is_inlined, column_length,
-                                                  is_in_bytes, dataPool);
+
+  // Allocate in heap or given data pool depending on whether a pool is provided
+  if(data_pool == nullptr) {
+    // Skip casting if type is same
+    if(type == value.GetValueType()) {
+      value.SerializeToTupleStorage(value_location,
+                                    is_inlined,
+                                    column_length,
+                                    is_in_bytes);
+    }
+    else {
+      Value casted_value = value.CastAs(type);
+      casted_value.SerializeToTupleStorage(value_location,
+                                           is_inlined,
+                                           column_length,
+                                           is_in_bytes);
+      // Do not clean up immediately
+      casted_value.SetCleanUp(false);
+    }
+  }
+  else {
+    // Skip casting if type is same
+    if(type == value.GetValueType()) {
+      value.SerializeToTupleStorageAllocateForObjects(value_location,
+                                                      is_inlined,
+                                                      column_length,
+                                                      is_in_bytes,
+                                                      data_pool);
+    }
+    else {
+      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(value_location,
+                                                                   is_inlined,
+                                                                   column_length,
+                                                                   is_in_bytes,
+                                                                   data_pool);
+    }
+  }
+
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
-                         const std::vector<oid_t> &columns) {
+                         const std::vector<oid_t> &columns,
+                         VarlenPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
   for (auto col : columns) {
-    SetValue(this_col_itr, tuple->GetValue(col));
+    SetValue(this_col_itr, tuple->GetValue(col), pool);
     this_col_itr++;
   }
 }
@@ -118,7 +139,7 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
       Value value = GetValue(unlineable_column_id);
 
       // Make a copy of the value at a new location in uninlined pool
-      SetValueAllocate(unlineable_column_id, value, pool);
+      SetValue(unlineable_column_id, value, pool);
     }
   }
 }
@@ -354,7 +375,7 @@ void Tuple::SetAllNulls() {
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
     Value value = Value::GetNullValue(tuple_schema->GetType(column_itr));
-    SetValue(column_itr, value);
+    SetValue(column_itr, value, nullptr);
   }
 }
 
@@ -390,18 +411,6 @@ int Tuple::Compare(const Tuple &other,
   }
 
   return 0;
-}
-
-// Release to the heap any memory allocated for any uninlined columns.
-void Tuple::FreeUninlinedData() {
-  if (tuple_data == nullptr) return;
-
-  const uint16_t unlinlined_column_count =
-      tuple_schema->GetUninlinedColumnCount();
-
-  for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
-    GetValue(tuple_schema->GetUninlinedColumn(column_itr)).Free();
-  }
 }
 
 size_t Tuple::HashCode(size_t seed) const {

@@ -62,7 +62,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
+  log_manager.SetLogFileName(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
@@ -136,7 +136,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
+  log_manager.SetLogFileName(file_path);
   log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
@@ -237,7 +237,8 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
-  auto locations = InsertTuples(table, commit);
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  auto locations = InsertTuples(table, testing_pool, commit);
 
   // Delete the second inserted location if we insert >= 2 tuples
   if(locations.size() >= 2)
@@ -245,11 +246,11 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   // Update the first inserted location if we insert >= 1 tuples
   if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], commit);
+    UpdateTuples(table, locations[0], testing_pool, commit);
 
   // This insert should have no effect
   commit = false;
-  InsertTuples(table, commit);
+  InsertTuples(table, testing_pool, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
@@ -265,11 +266,13 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 }
 
 // Do insert and create insert tuple log records
-std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table,
+                                                        VarlenPool *pool,
+                                                        bool committed){
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count);
+  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count, pool);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -313,7 +316,6 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 
@@ -362,7 +364,9 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
   }
 }
 
-void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed){
+void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer location,
+                                    VarlenPool *pool,
+                                    bool committed){
 
   ItemPointer delete_location(location.block,location.offset);
 
@@ -379,7 +383,7 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
 
   // Create Tuples
   oid_t tuple_count = 1;
-  auto tuples = CreateTuples(table->GetSchema(), tuple_count);
+  auto tuples = CreateTuples(table->GetSchema(), tuple_count, pool);
 
   for( auto tuple : tuples){
     ItemPointer location = table->InsertTuple(txn, tuple);
@@ -414,7 +418,6 @@ void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer locat
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 }
@@ -477,9 +480,9 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples) {
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool) {
 
-  oid_t thread_id = (oid_t) GetThreadId();
+  oid_t thread_id = (oid_t) TestingHarness::GetInstance().GetThreadId();
 
   std::vector<storage::Tuple*> tuples;
 
@@ -488,14 +491,14 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
 
     // Setting values in tuple
     Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+thread_id);
-    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+thread_id));
+    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+thread_id), pool);
     Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+thread_id));
     Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+thread_id));
 
-    tuple->SetValue(0, longValue);
-    tuple->SetValue(1, stringValue);
-    tuple->SetValue(2, timestampValue);
-    tuple->SetValue(3, doubleValue);
+    tuple->SetValue(0, longValue, pool);
+    tuple->SetValue(1, stringValue, pool);
+    tuple->SetValue(2, timestampValue, pool);
+    tuple->SetValue(3, doubleValue, pool);
     tuples.push_back(tuple);
   }
 

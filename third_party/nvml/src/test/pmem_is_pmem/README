@@ -1,0 +1,14 @@
+Linux NVM Library
+
+This is src/test/pmem_is_pmem/README.
+
+This directory contains a unit test for pmem_is_pmem().
+
+The program in pmem_is_pmem.c takes a file as an argument, memory
+maps that file, and prints out the return value from pmem_is_pmem()
+on the resulting range.  For true persistent memory, 1 is the expected
+output.  0 is the expected output for everything else.
+
+The tests in this directory also check that the PMEM_IS_PMEM_FORCE
+environment variable can be used to force a specific return value
+from pmem_is_pmem().
