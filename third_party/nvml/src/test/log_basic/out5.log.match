@@ -1,0 +1,4 @@
+log_basic/TEST5: START: log_basic
+ ./log_basic$(nW) $(nW)/testset1 n
+usable size: 2088960
+log_basic/TEST5: Done

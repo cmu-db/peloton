@@ -1,0 +1,39 @@
+out_err_mt/TEST2: START: out_err_mt
+ ./out_err_mt$(nW) $(nW)/testfile1 $(nW)/testfile2 $(nW)/testfile3 $(nW)
+version check
+PMEM: libpmem major version mismatch (need 10000, found $(N))
+PMEMOBJ: libpmemobj major version mismatch (need 10001, found $(N))
+PMEMLOG: libpmemlog major version mismatch (need 10002, found $(N))
+PMEMBLK: libpmemblk major version mismatch (need 10003, found $(N))
+VMEM: libvmem major version mismatch (need 10004, found $(N))
+pmem_msync
+PMEM: msync: Cannot allocate memory
+PMEMOBJ: libpmemobj major version mismatch (need 10001, found $(N))
+PMEMLOG: libpmemlog major version mismatch (need 10002, found $(N))
+PMEMBLK: libpmemblk major version mismatch (need 10003, found $(N))
+VMEM: libvmem major version mismatch (need 10004, found $(N))
+pmemobj_tx_abort
+PMEM: msync: Cannot allocate memory
+PMEMOBJ: pmemobj_first: Invalid argument
+PMEMLOG: libpmemlog major version mismatch (need 10002, found $(N))
+PMEMBLK: libpmemblk major version mismatch (need 10003, found $(N))
+VMEM: libvmem major version mismatch (need 10004, found $(N))
+pmemlog_append
+PMEM: msync: Cannot allocate memory
+PMEMOBJ: pmemobj_first: Invalid argument
+PMEMLOG: pmemlog_append: No space left on device
+PMEMBLK: libpmemblk major version mismatch (need 10003, found $(N))
+VMEM: libvmem major version mismatch (need 10004, found $(N))
+pmemblk_set_error
+PMEM: msync: Cannot allocate memory
+PMEMOBJ: pmemobj_first: Invalid argument
+PMEMLOG: pmemlog_append: No space left on device
+PMEMBLK: lba out of range (nlba 32202)
+VMEM: libvmem major version mismatch (need 10004, found $(N))
+vmem_create_in_region
+PMEM: msync: Cannot allocate memory
+PMEMOBJ: pmemobj_first: Invalid argument
+PMEMLOG: pmemlog_append: No space left on device
+PMEMBLK: lba out of range (nlba 32202)
+VMEM: size 1 smaller than 14680064
+out_err_mt/TEST2: Done

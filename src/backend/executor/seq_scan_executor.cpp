@@ -115,9 +115,8 @@ bool SeqScanExecutor::DExecute() {
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
 
-      storage::TileGroup *tile_group =
+      auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
-      tile_group->IncrementRefCount();
 
       storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
@@ -141,7 +140,7 @@ bool SeqScanExecutor::DExecute() {
           continue;
         }
 
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group,
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                              tuple_id);
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
@@ -153,7 +152,6 @@ bool SeqScanExecutor::DExecute() {
         }
       }
 
-      tile_group->DecrementRefCount();
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles

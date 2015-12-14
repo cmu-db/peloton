@@ -21,6 +21,7 @@
 #include "backend/planner/order_by_plan.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
+#include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -80,8 +81,11 @@ TEST(OrderByTests, IntAscTest) {
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   planner::OrderByPlan node(sort_keys, descend_flags, output_columns);
 
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
   // Create and set up executor
-  executor::OrderByExecutor executor(&node, nullptr);
+  executor::OrderByExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -121,8 +125,11 @@ TEST(OrderByTests, IntDescTest) {
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   planner::OrderByPlan node(sort_keys, descend_flags, output_columns);
 
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
   // Create and set up executor
-  executor::OrderByExecutor executor(&node, nullptr);
+  executor::OrderByExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -162,8 +169,11 @@ TEST(OrderByTests, StringDescTest) {
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   planner::OrderByPlan node(sort_keys, descend_flags, output_columns);
 
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
   // Create and set up executor
-  executor::OrderByExecutor executor(&node, nullptr);
+  executor::OrderByExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -203,8 +213,11 @@ TEST(OrderByTests, IntAscStringDescTest) {
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   planner::OrderByPlan node(sort_keys, descend_flags, output_columns);
 
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
   // Create and set up executor
-  executor::OrderByExecutor executor(&node, nullptr);
+  executor::OrderByExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -246,8 +259,11 @@ TEST(OrderByTests, StringDescIntAscTest) {
   std::vector<oid_t> output_columns({0, 1, 2, 3});
   planner::OrderByPlan node(sort_keys, descend_flags, output_columns);
 
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
   // Create and set up executor
-  executor::OrderByExecutor executor(&node, nullptr);
+  executor::OrderByExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

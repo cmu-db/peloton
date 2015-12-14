@@ -33,27 +33,27 @@ namespace peloton {
  */
 class ValuePeeker {
 public:
-    static inline double PeekDouble(const Value value) {
+    static inline double PeekDouble(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_DOUBLE);
         return value.GetDouble();
     }
 
-    static inline int8_t PeekTinyInt(const Value value) {
+    static inline int8_t PeekTinyInt(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_TINYINT);
         return value.GetTinyInt();
     }
 
-    static inline int16_t PeekSmallInt(const Value value) {
+    static inline int16_t PeekSmallInt(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_SMALLINT);
         return value.GetSmallInt();
     }
 
-    static inline int32_t PeekInteger(const Value value) {
+    static inline int32_t PeekInteger(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_INTEGER);
         return value.GetInteger();
     }
 
-    static inline bool PeekBoolean(const Value value) {
+    static inline bool PeekBoolean(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_BOOLEAN);
         return value.GetBoolean();
     }
@@ -61,33 +61,33 @@ public:
     // cast as int and Peek at value. this is used by index code that need a
     // real number from a tuple and the limit node code used to get the limit
     // from an expression.
-    static inline int32_t PeekAsInteger(const Value value) {
+    static inline int32_t PeekAsInteger(const Value& value) {
         return value.CastAsInteger().GetInteger();
     }
 
-    static inline int64_t PeekBigInt(const Value value) {
+    static inline int64_t PeekBigInt(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_BIGINT);
         return value.GetBigInt();
     }
 
-    static inline int64_t PeekTimestamp(const Value value) {
+    static inline int64_t PeekTimestamp(const Value& value) {
         assert(value.GetValueType() == VALUE_TYPE_TIMESTAMP);
         return value.GetTimestamp();
     }
 
-    static inline void* PeekObjectValue(const Value value) {
+    static inline void* PeekObjectValue(const Value& value) {
         assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
                (value.GetValueType() == VALUE_TYPE_VARBINARY));
         return value.GetObjectValue();
     }
 
-    static inline void* PeekObjectValueWithoutNull(const Value value) {
+    static inline void* PeekObjectValueWithoutNull(const Value& value) {
         assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
                (value.GetValueType() == VALUE_TYPE_VARBINARY));
         return value.GetObjectValueWithoutNull();
     }
 
-    static inline int32_t PeekObjectLengthWithoutNull(const Value value) {
+    static inline int32_t PeekObjectLengthWithoutNull(const Value& value) {
         assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
                (value.GetValueType() == VALUE_TYPE_VARBINARY));
         return value.GetObjectLengthWithoutNull();
@@ -97,7 +97,7 @@ public:
      * This function is only used in 'nvalue_test.cpp', why test a function that
      * is not used in source code? Get rid of it? -xin
      */
-    static std::string PeekStringCopyWithoutNull(const Value value) {
+    static std::string PeekStringCopyWithoutNull(const Value& value) {
         assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
                (value.GetValueType() == VALUE_TYPE_VARBINARY));
         std::string result(reinterpret_cast<const char*>(value.GetObjectValueWithoutNull()),
@@ -105,29 +105,29 @@ public:
         return result;
     }
 
-    static inline ValueType PeekValueType(const Value value) {
+    static inline ValueType PeekValueType(const Value& value) {
         return value.GetValueType();
     }
 
-    static inline TTInt PeekDecimal(const Value value) {
+    static inline TTInt PeekDecimal(const Value& value) {
         return value.GetDecimal();
     }
 
     // exists for test.
-    static inline std::string PeekDecimalString(const Value value) {
+    static inline std::string PeekDecimalString(const Value& value) {
         return value.CreateStringFromDecimal();
     }
 
     // cast as big int and Peek at value. this is used by
     // index code that need a real number from a tuple.
-    static inline int64_t PeekAsBigInt(const Value value) {
+    static inline int64_t PeekAsBigInt(const Value& value) {
         if (value.IsNull()) {
             return INT64_NULL;
         }
         return value.CastAsBigIntAndGetValue();
     }
 
-    static inline int64_t PeekAsRawInt64(const Value value) {
+    static inline int64_t PeekAsRawInt64(const Value& value) {
         return value.CastAsBigIntAndGetValue();
     }
 
@@ -135,7 +135,7 @@ public:
     /// The length of the data bytes via output parameter.
     ///
     /// Assumes that value is not null!!
-    static inline const char* PeekPointerToDataBytes(const Value &value, int32_t *length) {
+    static inline const char* PeekPointerToDataBytes(const Value& value, int32_t *length) {
         ValueType vt = value.GetValueType();
         switch (vt) {
         case VALUE_TYPE_TINYINT:

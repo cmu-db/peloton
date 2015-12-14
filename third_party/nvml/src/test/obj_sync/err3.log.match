@@ -1,0 +1,2 @@
+$(OPT)obj_sync/TEST3: pmemobj_rwlock_wrlock
+$(OPT)obj_sync/TEST3: pmemobj_rwlock_rdlock

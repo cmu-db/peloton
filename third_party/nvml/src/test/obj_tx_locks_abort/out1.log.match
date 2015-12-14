@@ -1,0 +1,22 @@
+obj_tx_locks_abort/TEST1: START: obj_tx_locks_abort
+ ./obj_tx_locks_abort$(nW) $(nW)/testfile1
+initial state
+data = 100
+data = 101
+data = 102
+data = 103
+nested tx
+data = 200
+data = 200
+data = 200
+data = 200
+aborted nested tx
+trylock failed
+trylock failed
+trylock failed
+trylock failed
+data = 200
+data = 200
+data = 200
+data = 200
+obj_tx_locks_abort/TEST1: Done

@@ -20,6 +20,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/materialization_plan.h"
@@ -58,7 +59,7 @@ namespace test {
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
 
-void RunTest() {
+void ExecuteTileGroupTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   const int tuples_per_tilegroup_count = 10;
@@ -124,6 +125,7 @@ void RunTest() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;
@@ -132,7 +134,7 @@ void RunTest() {
 
     for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
       auto value = ValueFactory::GetIntegerValue(populate_value + col_itr);
-      tuple.SetValue(col_itr, value);
+      tuple.SetValue(col_itr, value, testing_pool);
     }
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
@@ -183,7 +185,8 @@ void RunTest() {
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(),
                                         physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
@@ -210,13 +213,13 @@ void RunTest() {
 }
 
 TEST(TileGroupLayoutTest, RowLayout) {
-  peloton_layout = LAYOUT_ROW;
-  RunTest();
+  peloton_layout_mode = LAYOUT_ROW;
+  ExecuteTileGroupTest();
 }
 
 TEST(TileGroupLayoutTest, ColumnLayout) {
-  peloton_layout = LAYOUT_COLUMN;
-  RunTest();
+  peloton_layout_mode = LAYOUT_COLUMN;
+  ExecuteTileGroupTest();
 }
 
 }  // namespace test

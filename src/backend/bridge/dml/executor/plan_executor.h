@@ -42,9 +42,6 @@ class PlanExecutor {
                                     ParamListInfo m_param_list,
                                     TupleDesc m_tuple_desc);
 
-  static executor::AbstractExecutor *AddMaterialization(
-      executor::AbstractExecutor *root);
-
  private:
 };
 

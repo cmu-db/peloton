@@ -16,7 +16,6 @@
 #include <string>
 #include <sstream>
 
-#include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 

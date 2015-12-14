@@ -508,7 +508,7 @@ enum SetOpType {
 //===--------------------------------------------------------------------===//
 
 enum LoggingType{
-  LOGGING_TYPE_INVALID = 0, 
+  LOGGING_TYPE_INVALID = 0,
 
   LOGGING_TYPE_ARIES   = 1,
   LOGGING_TYPE_PELOTON = 2

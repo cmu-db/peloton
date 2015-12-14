@@ -1,0 +1,20 @@
+Linux NVM Library
+
+This is src/README.
+
+This directory contains the source for the NVM Library.
+
+libvmem is largely just a wrapper around a modified jemalloc
+library.  See the "jemalloc" subdirectory and the git change
+log for those files for details.
+
+The subdirectory "include" contains header files that get delivered
+along with the libraries.  Everything else is internal to the libraries
+and lives in this directory.
+
+Two versions of the libraries are built, a debug version and a nondebug
+version.  The object files and the libraries themselves end up in the
+subdirectories "debug" and "nondebug".
+
+See the top-level README for build, test, and installation instructions.
+The basic "make" and "make test" targets also work from this directory.

@@ -71,7 +71,7 @@ bool ProjectionExecutor::DExecute() {
     auto num_tuples = source_tile->GetTupleCount();
 
     // Create new physical tile where we store projected tuples
-    std::unique_ptr<storage::Tile> dest_tile(
+    std::shared_ptr<storage::Tile> dest_tile(
         storage::TileFactory::GetTempTile(*schema_, num_tuples));
 
     // Create projections tuple-at-a-time from original tile
@@ -83,14 +83,14 @@ bool ProjectionExecutor::DExecute() {
       project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
       // Insert projected tuple into the new tile
-      dest_tile->InsertTuple(new_tuple_id, buffer);
+      dest_tile.get()->InsertTuple(new_tuple_id, buffer);
 
       delete buffer;
       new_tuple_id++;
     }
 
     // Wrap physical tile in logical tile and return it
-    SetOutput(LogicalTileFactory::WrapTiles({dest_tile.release()}));
+    SetOutput(LogicalTileFactory::WrapTiles({dest_tile}));
 
     return true;
   }

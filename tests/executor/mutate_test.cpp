@@ -20,6 +20,7 @@
 
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/pool.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/delete_executor.h"
@@ -79,14 +80,14 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table) {
+void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
-    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
 
     auto project_info = MakeProjectInfoFromTuple(tuple);
 
@@ -94,7 +95,6 @@ void InsertTuple(storage::DataTable *table) {
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
 
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 
@@ -197,12 +197,14 @@ TEST(MutateTests, StressTests) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
   // Create insert node for this test.
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
   storage::Tuple *tuple;
-  tuple = ExecutorTestsUtil::GetNullTuple(table);
+  tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
   auto project_info = MakeProjectInfoFromTuple(tuple);
 
@@ -215,10 +217,9 @@ TEST(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  tuple->FreeUninlinedData();
   delete tuple;
 
-  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
   project_info = MakeProjectInfoFromTuple(tuple);
   planner::InsertPlan node2(table, project_info);
   executor::InsertExecutor executor2(&node2, context.get());
@@ -230,14 +231,13 @@ TEST(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  tuple->FreeUninlinedData();
   delete tuple;
 
   txn_manager.CommitTransaction();
 
   std::cout << "Start tests \n";
 
-  LaunchParallelTest(1, InsertTuple, table);
+  LaunchParallelTest(1, InsertTuple, table, testing_pool);
   // std::cout << (*table);
 
   LOG_INFO("---------------------------------------------\n");
@@ -258,8 +258,8 @@ TEST(MutateTests, StressTests) {
   storage::Tuple *key1 = new storage::Tuple(key_schema, true);
   storage::Tuple *key2 = new storage::Tuple(key_schema, true);
 
-  key1->SetValue(0, ValueFactory::GetIntegerValue(10));
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100));
+  key1->SetValue(0, ValueFactory::GetIntegerValue(10), nullptr);
+  key2->SetValue(0, ValueFactory::GetIntegerValue(100), nullptr);
 
   delete key1;
   delete key2;
@@ -274,16 +274,17 @@ TEST(MutateTests, StressTests) {
   storage::Tuple *key3 = new storage::Tuple(key_schema, true);
   storage::Tuple *key4 = new storage::Tuple(key_schema, true);
 
-  key3->SetValue(0, ValueFactory::GetIntegerValue(10));
-  key3->SetValue(1, ValueFactory::GetIntegerValue(11));
-  key4->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key4->SetValue(1, ValueFactory::GetIntegerValue(101));
+  key3->SetValue(0, ValueFactory::GetIntegerValue(10), nullptr);
+  key3->SetValue(1, ValueFactory::GetIntegerValue(11), nullptr);
+  key4->SetValue(0, ValueFactory::GetIntegerValue(100), nullptr);
+  key4->SetValue(1, ValueFactory::GetIntegerValue(101), nullptr);
 
   delete key3;
   delete key4;
   delete key_schema;
 
   delete table;
+
 }
 
 // Insert a logical tile into a table
@@ -321,16 +322,12 @@ TEST(MutateTests, InsertTest) {
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
   auto tile_count = physical_tile_group->GetTileCount();
-  std::vector<storage::Tile *> physical_tiles;
+  std::vector<std::shared_ptr<storage::Tile > > physical_tile_refs;
   for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tiles.push_back(physical_tile_group->GetTile(tile_itr));
-
-  // Add a reference because we are going to wrap around it and we don't own it
-  for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tile_group->GetTile(tile_itr)->IncrementRefCount();
+    physical_tile_refs.push_back(physical_tile_group->GetTileReference(tile_itr));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(physical_tiles));
+      executor::LogicalTileFactory::WrapTiles(physical_tile_refs));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile.release()));

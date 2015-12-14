@@ -1,0 +1,47 @@
+Linux NVM Library
+
+This is src/test/unittest/README.
+
+This directory contains the unit test framework used by
+the NVM Library unit tests.
+
+This framework provides a support for mock objects. To mock an interface use
+FUNC_MOCK_RET_ALWAYS or FUNC_MOCK macros in the test code.
+
+The FUNC_MOCK_RET_ALWAYS is quite straightforward, it simply takes a function
+name and a value that the given function has to return. For example:
+
+    FUNC_MOCK_RET_ALWAYS(malloc, NULL)
+
+This declaration causes all malloc calls to return NULL and thus facilitates
+error path tests.
+
+The rest of FUNC_MOCK set of macros is used in more complicated cases.
+It allows to implement replacement logic for different runs of the given
+function. For example:
+
+    FUNC_MOCK(malloc, void *, size_t size)
+	FUNC_MOCK_RUN_RET_DEFAULT_REAL(malloc, size)
+	FUNC_MOCK_RUN(2) {
+	    ASSERTeq(size, 8);
+	    return NULL;
+	}
+    FUNC_MOCK_END
+
+This declaration causes the third malloc call to return NULL and also verifies
+if the size argument is of expected size. All other mallocs fallback to the
+real implementation.
+Those macros can be used on all non-static functions that are in a different
+compilation unit than the test itself.
+
+Because the mocking framework uses the linker to wrap the functions, all tests
+have to add appropriate linker flags. For convenience, there is a makefile
+function 'extract_funcs' which parses the source file looking for the
+FUNC_MOCK_RET_ALWAYS or FUNC_MOCK and adds the wrap flag for all the encountered
+functions. Test makefile that wishes to use this functionality should
+contain following line:
+
+    LDFLAGS += $(call extract_funcs, [test_name].c)
+
+And after that no changes in makefile is required at all when adding new
+mocks.

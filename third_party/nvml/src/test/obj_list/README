@@ -1,0 +1,67 @@
+Linux NVM Library
+
+This is src/test/obj_list/README.
+
+This directory contains a unit test for persistent atomic lists module.
+
+The obj_list application allocates two lists:
+- "in band" list     - the list entry is after the offset in PMEMoid
+- "out of band" list - the list entry is before the offset in PMEMoid
+
+Syntax:
+$ obj_list <fname> <operation>..
+
+Operations:
+ - P:<list>        - print all elements from <list> in normal order
+ - R:<list>        - print all elements from <list> in reverse order
+ - n               - insert a new element to "out of band" list
+ - n:<where>:<num>[:<id>]
+                   - insert a new element to "in band" list before/after the
+		     <num> element and to "out of band" list, optionally set
+		     the id to <id> using constructor
+ - i:<where>:<num>
+                   - insert element before/after <num> element to "in band" list
+ - f:<list>:<num>:<from>
+                   - remove and free the <num> element on <list> list from <from>
+		     list(s)
+ - r:<num>         - remove the <num> element from "in band" list
+ - m:<num>:<where>:<dest>
+                   - move <num> element from one "in band" list before/after <dest>
+		     on second "in band" list
+ - o:<num>         - move <num> element from one "out of band" list to second
+                     "out of band" list
+ - s:<num>:<list>:<nlists>:<m>:<id>:<constr>
+                   - realloc <num> element on <list> list stored in <nlists> lists
+		     to <m> * size of item size and store new id <id>
+		     By default the allocation size is 2 times the requested size.
+		     If the <constr> value is non zero the constructor will be called.
+ - e:<num>:<size>:<id>:<constr>:<realloc>
+                   - realloc and move <num> element from one "out of band" list
+		     element to second "out of band" list with new size <size> and id <id>.
+		     If the <constr> value is non zero the constructor will be called.
+		     If the <realloc> value is non zero the element  will be reallocated
+		     on the "in band" list.
+ - V               - perform recovery process of list lane section
+ - F:<when>        - simulate application crash when <when> event occurs
+
+<num>, <num oob>:
+ - >=0 - index of element on list in normal order
+ -  <0 - index of element on list in reverse order
+
+<where>, <where oob>:
+ - 0 - after the element
+ - 1 - before the element
+
+ <from>:
+ - 1 - from "out of band" list only
+ - 2 - from "in band" and "out of band" lists
+
+<list>:
+- 1 - "out of band" list
+- 2 - "in band" list
+- 3 - second "out of band" list
+- 4 - second "in band" list
+
+<when>:
+- after_finish  - after redo_log_set_last or redo_log_store_last
+- before_finish - before redo_log_set_last or redo_log_store_last
