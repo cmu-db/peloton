@@ -237,7 +237,7 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
-  auto testing_pool = GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   auto locations = InsertTuples(table, testing_pool, commit);
 
   // Delete the second inserted location if we insert >= 2 tuples
@@ -482,7 +482,7 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
 
 std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool) {
 
-  oid_t thread_id = (oid_t) GetThreadId();
+  oid_t thread_id = (oid_t) TestingHarness::GetInstance().GetThreadId();
 
   std::vector<storage::Tuple*> tuples;
 
