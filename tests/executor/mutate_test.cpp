@@ -197,7 +197,7 @@ TEST(MutateTests, StressTests) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  auto testing_pool = GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Create insert node for this test.
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();

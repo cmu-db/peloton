@@ -132,7 +132,7 @@ TEST(TileGroupTests, BasicTest) {
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
-  uint64_t thread_id = GetThreadId();
+  uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
