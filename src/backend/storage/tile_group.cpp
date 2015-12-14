@@ -36,34 +36,27 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      column_map(column_map),
-      ref_count(BASE_REF_COUNT) {
+      column_map(column_map) {
   tile_count = tile_schemas.size();
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextOid();
 
-    Tile *tile = storage::TileFactory::GetTile(
+    std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id, tile_group_header,
-        tile_schemas[tile_itr], this, tuple_count);
+        tile_schemas[tile_itr], this, tuple_count));
 
+    // Add a reference to the tile in the tile group
     tiles.push_back(tile);
   }
 }
 
 TileGroup::~TileGroup() {
-  // clean up tiles
-  for (auto tile : tiles) {
-    tile->DecrementRefCount();
-  }
+  // Drop references on all tiles
 
   // clean up tile group header
   delete tile_group_header;
-}
-
-void TileGroup::IncrementRefCount() {
-  ++ref_count;
 }
 
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
@@ -78,15 +71,6 @@ peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
 
    return nullptr;
  }
-
-
-void TileGroup::DecrementRefCount() {
-  // DROP tile group when ref count reaches 0
-  // this returns the value immediately preceding the assignment
-  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
-    delete this;
-  }
-}
 
 oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetNextTupleSlot();
@@ -136,7 +120,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      tile_tuple.SetValueAllocate(tile_column_itr, tuple->GetValue(column_itr),
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
                                   tile->GetPool());
       column_itr++;
     }
@@ -188,7 +172,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      tile_tuple.SetValueAllocate(tile_column_itr, tuple->GetValue(column_itr),
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
                                   tile->GetPool());
       column_itr++;
     }
@@ -203,47 +187,6 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
   tile_group_header->SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
   return tuple_slot_id;
-}
-
-
-
-Tuple *TileGroup::SelectTuple(oid_t tile_offset, oid_t tuple_slot_id) {
-  assert(tile_offset < tile_count);
-  assert(tuple_slot_id < num_tuple_slots);
-
-  // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
-
-  Tile *tile = GetTile(tile_offset);
-  assert(tile);
-  Tuple *tuple = tile->GetTuple(tuple_slot_id);
-  return tuple;
-}
-
-Tuple *TileGroup::SelectTuple(oid_t tuple_slot_id) {
-  // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
-
-  // allocate a new copy of the original tuple
-  Tuple *tuple = new Tuple(table->GetSchema(), true);
-  oid_t tuple_attr_itr = 0;
-
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    Tile *tile = GetTile(tile_itr);
-    assert(tile);
-
-    // tile tuple wrapper
-    Tuple tile_tuple(tile->GetSchema(), tile->GetTupleLocation(tuple_slot_id));
-    oid_t tile_tuple_count = tile->GetColumnCount();
-
-    for (oid_t tile_tuple_attr_itr = 0; tile_tuple_attr_itr < tile_tuple_count;
-         tile_tuple_attr_itr++) {
-      Value val = tile_tuple.GetValue(tile_tuple_attr_itr);
-      tuple->SetValueAllocate(tuple_attr_itr++, val, nullptr);
-    }
-  }
-
-  return tuple;
 }
 
 // delete tuple at given slot if it is neither already locked nor deleted in future.
@@ -294,8 +237,9 @@ void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
  */
 void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
   tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+
   // undo insert (we don't reset MVCC info currently)
-  //TODO: can reclaim tuple here
+  //TODO: can reclaim tuple here ?
   //ReclaimTuple(tuple_slot_id);
 }
 
@@ -337,8 +281,13 @@ Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
 
 Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   assert(tile_offset < tile_count);
-  Tile *tile = tiles[tile_offset];
+  Tile *tile = tiles[tile_offset].get();
   return tile;
+}
+
+std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset) const {
+  assert(tile_offset < tile_count);
+  return tiles[tile_offset];
 }
 
 double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column_map) {

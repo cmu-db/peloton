@@ -25,6 +25,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
+#include "backend/storage/tile.h"
 
 #include "executor/executor_tests_util.h"
 #include "harness.h"
@@ -50,18 +51,17 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   const bool allocate = true;
   storage::Tuple tuple1(schema.get(), allocate);
   storage::Tuple tuple2(schema.get(), allocate);
+  auto pool = tile_group->GetTilePool(1);
 
-  tuple1.SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1.SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1.SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1.SetValue(
-      3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
+  tuple1.SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1.SetValue(3, ValueFactory::GetStringValue("tuple 1"), pool);
 
-  tuple2.SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2.SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2.SetValue(
-      3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
+  tuple2.SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2.SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -78,7 +78,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   ////////////////////////////////////////////////////////////////
 
   // Don't transfer ownership of any base tile to logical tile.
-  storage::Tile *base_tile = tile_group->GetTile(1);
+  auto base_tile_ref = tile_group->GetTileReference(1);
 
   std::vector<oid_t> position_list1 = {0, 1};
   std::vector<oid_t> position_list2 = {0, 1};
@@ -94,7 +94,9 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    logical_tile->AddColumn(base_tile, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile_ref,
+                            column_itr,
+                            column_itr);
   }
 
   std::cout << (*logical_tile) << "\n";
@@ -105,8 +107,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   logical_tile.reset(executor::LogicalTileFactory::GetTile());
 
-  storage::Tile *base_tile1 = tile_group->GetTile(0);
-  storage::Tile *base_tile2 = tile_group->GetTile(1);
+  auto base_tile_ref1 = tile_group->GetTileReference(0);
+  auto base_tile_ref2 = tile_group->GetTileReference(1);
 
   position_list1 = {0, 1};
   position_list2 = {0, 1};
@@ -120,12 +122,15 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   oid_t column_count1 = schema1->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
-    logical_tile->AddColumn(base_tile1, column_itr, column_itr);
+    logical_tile->AddColumn(base_tile_ref1,
+                            column_itr,
+                            column_itr);
   }
 
   oid_t column_count2 = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
-    logical_tile->AddColumn(base_tile2, column_itr,
+    logical_tile->AddColumn(base_tile_ref2,
+                            column_itr,
                             column_count1 + column_itr);
   }
 

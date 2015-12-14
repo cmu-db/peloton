@@ -226,10 +226,12 @@ class Value {
   /* Create a default Value */
   Value();
 
-  // todo: Free() should not really be const
-
   /* Release memory associated to object type Values */
-  void Free() const;
+  ~Value();
+
+  Value& operator= (const Value & other);
+
+  Value(const Value& other);
 
   /* Release memory associated to object type tuple columns */
   static void FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects);
@@ -274,7 +276,7 @@ class Value {
        allocated storage for a copy of the object. */
   void SerializeToTupleStorageAllocateForObjects(
       void *storage, const bool isInlined, const int32_t maxLength,
-      const bool isInBytes, VarlenPool *dataPool) const;
+      const bool isInBytes, VarlenPool *varlen_pool) const;
 
   /* Serialize the scalar this Value represents to the storage area
        provided. If the scalar is an Object type then the object will
@@ -293,7 +295,7 @@ class Value {
        heap. This is used to deserialize tables. */
   template <TupleSerializationFormat F, Endianess E>
   static void DeserializeFrom(
-      SerializeInput<E> &input, VarlenPool *dataPool, char *storage,
+      SerializeInput<E> &input, VarlenPool *varlen_pool, char *storage,
       const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
   static void DeserializeFrom(
       SerializeInputBE &input, VarlenPool *dataVarlenPool, char *storage,
@@ -305,8 +307,8 @@ class Value {
   /* Read a ValueType from the SerializeInput stream and deserialize
        a scalar value of the specified type into this Value from the provided
        SerializeInput and perform allocations as necessary. */
-  void DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool);
-  void DeserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *varlen_pool);
+  void DeserializeFromAllocateForStorage(ValueType vt, SerializeInputBE &input, VarlenPool *varlen_pool);
 
   /* Serialize this Value to a SerializeOutput */
   void SerializeTo(SerializeOutput &output) const;
@@ -369,29 +371,7 @@ class Value {
    * @brief Do a deep copy of the given value.
    * Uninlined data will be allocated in the provided memory pool.
    */
-  static Value Clone(const Value &src, VarlenPool *dataPool = nullptr) {
-    Value rv = src;  // Shallow copy first
-    auto value_type = src.GetValueType();
-
-    switch (value_type) {
-      case VALUE_TYPE_VARBINARY:
-      case VALUE_TYPE_VARCHAR:
-        break;  // "real" deep copy is needed only for these types
-
-      default:
-        return rv;
-    }
-
-    if (src.m_sourceInlined || src.IsNull()) {
-      return rv;  // also, shallow copy for inlined or null data
-    }
-
-    Varlen *src_sref = *reinterpret_cast<Varlen *const *>(src.m_data);
-    Varlen *new_sref = Varlen::Clone(*src_sref, dataPool);
-
-    rv.SetObjectValue(new_sref);
-    return rv;
-  }
+  static Value Clone(const Value &src, VarlenPool *varlen_pool);
 
   // Get min value
   static Value GetMinValue(ValueType);
@@ -401,34 +381,34 @@ class Value {
   ////////////////////////////////////////////////////////////
 
   /* Return a boolean Value with the comparison result */
-  Value OpEquals(const Value rhs) const;
-  Value OpNotEquals(const Value rhs) const;
-  Value OpLessThan(const Value rhs) const;
-  Value OpLessThanOrEqual(const Value rhs) const;
-  Value OpGreaterThan(const Value rhs) const;
-  Value OpGreaterThanOrEqual(const Value rhs) const;
+  Value OpEquals(const Value& rhs) const;
+  Value OpNotEquals(const Value& rhs) const;
+  Value OpLessThan(const Value& rhs) const;
+  Value OpLessThanOrEqual(const Value& rhs) const;
+  Value OpGreaterThan(const Value& rhs) const;
+  Value OpGreaterThanOrEqual(const Value& rhs) const;
 
-  Value OpEqualsWithoutNull(const Value rhs) const;
-  Value OpNotEqualsWithoutNull(const Value rhs) const;
-  Value OpLessThanWithoutNull(const Value rhs) const;
-  Value OpLessThanOrEqualWithoutNull(const Value rhs) const;
-  Value OpGreaterThanWithoutNull(const Value rhs) const;
-  Value OpGreaterThanOrEqualWithoutNull(const Value rhs) const;
+  Value OpEqualsWithoutNull(const Value& rhs) const;
+  Value OpNotEqualsWithoutNull(const Value& rhs) const;
+  Value OpLessThanWithoutNull(const Value& rhs) const;
+  Value OpLessThanOrEqualWithoutNull(const Value& rhs) const;
+  Value OpGreaterThanWithoutNull(const Value& rhs) const;
+  Value OpGreaterThanOrEqualWithoutNull(const Value& rhs) const;
 
 
   /* Return a copy of MAX(this, rhs) */
-  Value OpMax(const Value rhs) const;
+  Value OpMax(const Value& rhs) const;
 
   /* Return a copy of MIN(this, rhs) */
-  Value OpMin(const Value rhs) const;
+  Value OpMin(const Value& rhs) const;
 
   /* For number Values, compute new Values for arithmetic operators */
   Value OpIncrement() const;
   Value OpDecrement() const;
-  Value OpSubtract(const Value rhs) const;
-  Value OpAdd(const Value rhs) const;
-  Value OpMultiply(const Value rhs) const;
-  Value OpDivide(const Value rhs) const;
+  Value OpSubtract(const Value& rhs) const;
+  Value OpAdd(const Value& rhs) const;
+  Value OpMultiply(const Value& rhs) const;
+  Value OpDivide(const Value& rhs) const;
   /*
    * This Value must be VARCHAR and the rhs must be VARCHAR.
    * This Value is the value and the rhs is the pattern
@@ -716,7 +696,7 @@ class Value {
     if (m_sourceInlined) {
       // The Value storage is inlined (a pointer to the backing tuple storage) and needs
       // to be copied to a local storage
-      copy.AllocateObjectFromInlinedValue(GetTempStringPool());
+      copy.AllocateObjectFromInlinedValue(nullptr);
     }
     return copy;
   }
@@ -733,7 +713,7 @@ class Value {
 
   // Helpers for InList.
   // These are purposely not inlines to avoid exposure of ValueList details.
-  void DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool);
+  void DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *varlen_pool);
   void AllocateANewValueList(size_t elementCount, ValueType elementType);
 
   // Promotion Rules. Initialized in Value.cpp
@@ -756,16 +736,13 @@ class Value {
   char m_data[16];
   ValueType m_valueType;
   bool m_sourceInlined;
+  bool m_cleanUp;
 
   /**
    * Private constructor that initializes storage and the specifies the type of value
    * that will be stored in this instance
    */
-  Value(const ValueType type) {
-    ::memset( m_data, 0, 16);
-    SetValueType(type);
-    m_sourceInlined = false;
-  }
+  Value(const ValueType type);
 
   /**
    * Set the type of the value that will be stored in this instance.
@@ -786,6 +763,10 @@ class Value {
     return m_valueType;
   }
 
+  void SetCleanUp(bool cleanup) {
+    m_cleanUp = cleanup;
+  }
+
  private:
 
   /**
@@ -800,6 +781,7 @@ class Value {
   {
     m_sourceInlined = sourceInlined;
   }
+
 
   void tagAsNull() { m_data[13] = OBJECT_NULL_BIT; }
 
@@ -2273,17 +2255,12 @@ class Value {
     return retval;
   }
 
-  static VarlenPool* GetTempStringPool() {
-    // TODO: For now, allocate out of heap !
-    return nullptr;
-  }
-
   static Value GetTempStringValue(const char* value, size_t size) {
-    return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, GetTempStringPool());
+    return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, nullptr);
   }
 
   static Value GetTempBinaryValue(const unsigned char* value, size_t size) {
-    return GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, GetTempStringPool());
+    return GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(value), size, nullptr);
   }
 
   /// Assumes hex-encoded input
@@ -2294,25 +2271,9 @@ class Value {
     return GetTempBinaryValue(rawBuf, rawLength);
   }
 
-  static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* stringPool) {
-    Value retval(type);
-    char* storage = retval.AllocateValueStorage((int32_t)size, stringPool);
-    ::memcpy(storage, value, (int32_t)size);
-    return retval;
-  }
+  static Value GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool);
 
-  char* AllocateValueStorage(int32_t length, VarlenPool* stringPool)
-  {
-    // This unSets the Value's null tag and returns the length of the length.
-    const int8_t lengthLength = SetObjectLength(length);
-    const int32_t minLength = length + lengthLength;
-    Varlen* sref = Varlen::Create(minLength, stringPool);
-    char* storage = sref->Get();
-    SetObjectLengthToLocation(length, storage);
-    storage += lengthLength;
-    SetObjectValue(sref);
-    return storage;
-  }
+  char* AllocateValueStorage(int32_t length, VarlenPool* varlen_pool);
 
   static Value GetNullStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
@@ -2350,16 +2311,6 @@ class Value {
   static Value trimWithOptions(const std::vector<Value>& arguments, bool leading, bool trailing);
 
 };
-
-/**
- * Public constructor that initializes to an Value that is unusable
- * with other Values.  Useful for declaring storage for an Value.
- */
-inline Value::Value() {
-  ::memset( m_data, 0, 16);
-  SetValueType(VALUE_TYPE_INVALID);
-  m_sourceInlined = false;
-}
 
 /**
  * Retrieve a boolean Value that is true
@@ -2410,37 +2361,13 @@ inline bool Value::GetSourceInlined() const {
   return m_sourceInlined;
 }
 
-/**
- * Objects may have storage allocated for them. Calling Free causes the Value to return the storage allocated for
- * the object to the heap
- */
-inline void Value::Free() const {
-  switch (GetValueType())
-  {
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    case VALUE_TYPE_ARRAY:
-    {
-      assert(!m_sourceInlined);
-      Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
-      if (sref != NULL)
-      {
-        Varlen::Destroy(sref);
-      }
-    }
-    break;
-    default:
-      return;
-  }
-}
-
 inline void Value::FreeObjectsFromTupleStorage(std::vector<char*> const &oldObjects)
 {
 
   for (std::vector<char*>::const_iterator it = oldObjects.begin(); it != oldObjects.end(); ++it) {
     Varlen* sref = reinterpret_cast<Varlen*>(*it);
     if (sref != NULL) {
-      Varlen::Destroy(sref);
+      delete sref;
     }
   }
 }
@@ -2593,130 +2520,6 @@ inline void Value::SetNull() {
   }
 }
 
-/**
- * Initialize an Value of the specified type from the tuple
- * storage area provided. If this is an Object type then the third
- * argument indicates whether the object is stored in the tuple inline.
- */
-inline Value Value::InitFromTupleStorage(const void *storage, ValueType type, bool isInlined)
-{
-  Value retval(type);
-  switch (type)
-  {
-    case VALUE_TYPE_INTEGER:
-      if ((retval.GetInteger() = *reinterpret_cast<const int32_t*>(storage)) == INT32_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_BIGINT:
-      if ((retval.GetBigInt() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_DOUBLE:
-      if ((retval.GetDouble() = *reinterpret_cast<const double*>(storage)) <= DOUBLE_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
-      //Potentially non-inlined type requires special handling
-      if (isInlined) {
-        //If it is inlined the storage area contains the actual data so copy a reference
-        //to the storage area
-        const char* inline_data = reinterpret_cast<const char*>(storage);
-        *reinterpret_cast<const char**>(retval.m_data) = inline_data;
-        retval.SetSourceInlined(true);
-        /**
-         * If a string is inlined in its storage location there will be no pointer to
-         * check for NULL. The length preceding value must be used instead.
-         */
-        if ((inline_data[0] & OBJECT_NULL_BIT) != 0) {
-          retval.tagAsNull();
-          break;
-        }
-        int length = inline_data[0];
-        //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
-        retval.SetObjectLength(length); // this unSets the null tag.
-        break;
-      }
-
-      // If it isn't inlined the storage area contains a pointer to the
-      // Varlen object containing the string's memory
-      Varlen* sref = *reinterpret_cast<Varlen**>(const_cast<void*>(storage));
-      *reinterpret_cast<Varlen**>(retval.m_data) = sref;
-      // If the Varlen pointer is null, that's because this
-      // was a null value; otherwise Get the right char* from the Varlen
-      if (sref == NULL) {
-        retval.tagAsNull();
-        break;
-      }
-
-      // Cache the object length in the Value.
-
-      /* The format for a length preceding value is a 1-byte short representation
-       * with the the 7th bit used to indicate a null value and the 8th bit used
-       * to indicate that this is part of a long representation and that 3 bytes
-       * follow. 6 bits are available to represent length for a maximum length
-       * of 63 bytes representable with a single byte length. 30 bits are available
-       * when the continuation bit is Set and 3 bytes follow.
-       *
-       * The value is converted to network byte order so that the code
-       * will always know which byte contains the most signficant digits.
-       */
-
-      /*
-       * Generated mask that removes the null and continuation bits
-       * from a single byte length value
-       */
-      const char mask = ~static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
-
-      char* data = sref->Get();
-      int32_t length = 0;
-      if ((data[0] & OBJECT_CONTINUATION_BIT) != 0) {
-        char numberBytes[4];
-        numberBytes[0] = static_cast<char>(data[0] & mask);
-        numberBytes[1] = data[1];
-        numberBytes[2] = data[2];
-        numberBytes[3] = data[3];
-        length = ntohl(*reinterpret_cast<int32_t*>(numberBytes));
-      } else {
-        length = data[0] & mask;
-      }
-
-      //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
-      retval.SetObjectLength(length); // this unSets the null tag.
-      break;
-    }
-    case VALUE_TYPE_TIMESTAMP:
-      if ((retval.GetTimestamp() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_TINYINT:
-      if ((retval.GetTinyInt() = *reinterpret_cast<const int8_t*>(storage)) == INT8_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_SMALLINT:
-      if ((retval.GetSmallInt() = *reinterpret_cast<const int16_t*>(storage)) == INT16_NULL) {
-        retval.tagAsNull();
-      }
-      break;
-    case VALUE_TYPE_DECIMAL:
-    {
-      ::memcpy(retval.m_data, storage, sizeof(TTInt));
-      break;
-    }
-    default:
-      throw Exception(
-          "Value::InitFromTupleStorage() invalid column type " +
-          ValueTypeToString(type));
-      /* no break */
-  }
-  return retval;
-}
 
 /**
  * Serialize the scalar this Value represents to the provided
@@ -2728,7 +2531,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
                                                              const bool isInlined,
                                                              const int32_t maxLength,
                                                              const bool isInBytes,
-                                                             VarlenPool *dataPool) const
+                                                             VarlenPool *varlen_pool) const
 {
   const ValueType type = GetValueType();
 
@@ -2771,7 +2574,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
 
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;
-          Varlen* sref = Varlen::Create(minlength, dataPool);
+          Varlen* sref = Varlen::Create(minlength, varlen_pool);
           char *copy = sref->Get();
           SetObjectLengthToLocation(objLength, copy);
           ::memcpy(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
@@ -2838,7 +2641,7 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
         if (m_sourceInlined) {
           // Create a non-const temp here for the outlined value
           Value outlinedValue = *this;
-          outlinedValue.AllocateObjectFromInlinedValue(GetTempStringPool());
+          outlinedValue.AllocateObjectFromInlinedValue(nullptr);
           *reinterpret_cast<Varlen**>(storage) =
               *reinterpret_cast<Varlen* const*>(outlinedValue.m_data);
         }
@@ -2863,12 +2666,12 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline void Value::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool, char *storage,
+inline void Value::DeserializeFrom(SerializeInputBE &input, VarlenPool *varlen_pool, char *storage,
                                    const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
-  DeserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, dataPool, storage, type, isInlined, maxLength, isInBytes);
+  DeserializeFrom<TUPLE_SERIALIZATION_NATIVE>(input, varlen_pool, storage, type, isInlined, maxLength, isInBytes);
 }
 
-template <TupleSerializationFormat F, Endianess E> inline void Value::DeserializeFrom(SerializeInput<E> &input, VarlenPool *dataPool,
+template <TupleSerializationFormat F, Endianess E> inline void Value::DeserializeFrom(SerializeInput<E> &input, VarlenPool *varlen_pool,
                                                                                       char *storage,
                                                                                       const ValueType type, bool isInlined,
                                                                                       int32_t maxLength, bool isInBytes) {
@@ -2918,7 +2721,7 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::Deserializ
         checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength, isInBytes);
 
         const int32_t minlength = lengthLength + length;
-        Varlen* sref = Varlen::Create(minlength, dataPool);
+        Varlen* sref = Varlen::Create(minlength, varlen_pool);
         char* copy = sref->Get();
         SetObjectLengthToLocation( length, copy);
         ::memcpy(copy + lengthLength, data, length);
@@ -2964,13 +2767,13 @@ template <TupleSerializationFormat F, Endianess E> inline void Value::Deserializ
  * provided SerializeInput and perform allocations as necessary.
  * This is used to deserialize parameter Sets.
  */
-inline void Value::DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
-  DeserializeFromAllocateForStorage(type, input, dataPool);
+  DeserializeFromAllocateForStorage(type, input, varlen_pool);
 }
 
-inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *dataPool)
+inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   SetValueType(type);
   // Parameter array Value elements are reused from one executor Call to the next,
@@ -3022,7 +2825,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeIn
         SetNull();
         break;
       }
-      char* storage = AllocateValueStorage(length, dataPool);
+      char* storage = AllocateValueStorage(length, varlen_pool);
       const char *str = (const char*) input.GetRawPointer(length);
       ::memcpy(storage, str, length);
       break;
@@ -3037,7 +2840,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type, SerializeIn
       break;
     }
     case VALUE_TYPE_ARRAY: {
-      DeserializeIntoANewValueList(input, dataPool);
+      DeserializeIntoANewValueList(input, varlen_pool);
       break;
     }
     default:
@@ -3161,76 +2964,6 @@ inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io) const
   throw Exception("Invalid type in SerializeToExport");
 }
 
-/** Reformat an object-typed value from its inlined form to its
- *  allocated out-of-line form, for use with a wider/widened tuple
- *  column.  Use the pool specified by the Caller, or the temp string
- *  pool if none was supplied. **/
-inline void Value::AllocateObjectFromInlinedValue(VarlenPool* pool = NULL)
-{
-  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
-    return;
-  }
-  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
-  assert(m_sourceInlined);
-
-  if (IsNull()) {
-    *reinterpret_cast<void**>(m_data) = NULL;
-    // SerializeToTupleStorage fusses about this inline flag being Set, even for NULLs
-    SetSourceInlined(false);
-    return;
-  }
-
-  if (pool == NULL) {
-    pool = GetTempStringPool();
-  }
-
-  // When an object is inlined, m_data is a direct pointer into a tuple's inline storage area.
-  char* source = *reinterpret_cast<char**>(m_data);
-
-  // When it isn't inlined, m_data must contain a pointer to a Varlen object
-  // that contains that same data in that same format.
-
-  int32_t length = GetObjectLengthWithoutNull();
-  // inlined objects always have a minimal (1-byte) length field.
-  Varlen* sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
-  char* storage = sref->Get();
-  // Copy length and value into the allocated out-of-line storage
-  ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
-  SetObjectValue(sref);
-  SetSourceInlined(false);
-}
-
-/** Deep copy an outline object-typed value from its current allocated pool,
- *  allocate the new outline object in the global temp string pool instead.
- *  The Caller needs to deallocate the original outline space for the object,
- *  probably by purging the pool that contains it.
- *  This function is used in the aggregate function for MIN/MAX functions.
- *  **/
-inline void Value::AllocateObjectFromOutlinedValue()
-{
-  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
-    return;
-  }
-  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
-  assert(!m_sourceInlined);
-
-  if (IsNull()) {
-    *reinterpret_cast<void**>(m_data) = NULL;
-    return;
-  }
-  VarlenPool* pool = GetTempStringPool();
-
-  // Get the outline data
-  const char* source = (*reinterpret_cast<Varlen* const*>(m_data))->Get();
-
-  const int32_t length = GetObjectLengthWithoutNull() + GetObjectLengthLength();
-  Varlen* sref = Varlen::Create(length, pool);
-  char* storage = sref->Get();
-  // Copy the value into the allocated out-of-line storage
-  ::memcpy(storage, source, length);
-  SetObjectValue(sref);
-  SetSourceInlined(false);
-}
 
 inline bool Value::IsNull() const {
   if (GetValueType() == VALUE_TYPE_DECIMAL) {
@@ -3249,56 +2982,56 @@ inline bool Value::IsNan() const {
 }
 
 // general full comparison
-inline Value Value::OpEquals(const Value rhs) const {
+inline Value Value::OpEquals(const Value& rhs) const {
   return Compare(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpNotEquals(const Value rhs) const {
+inline Value Value::OpNotEquals(const Value& rhs) const {
   return Compare(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThan(const Value rhs) const {
+inline Value Value::OpLessThan(const Value& rhs) const {
   return Compare(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanOrEqual(const Value rhs) const {
+inline Value Value::OpLessThanOrEqual(const Value& rhs) const {
   return Compare(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThan(const Value rhs) const {
+inline Value Value::OpGreaterThan(const Value& rhs) const {
   return Compare(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanOrEqual(const Value rhs) const {
+inline Value Value::OpGreaterThanOrEqual(const Value& rhs) const {
   return Compare(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
 // without null comparison
-inline Value Value::OpEqualsWithoutNull(const Value rhs) const {
+inline Value Value::OpEqualsWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) == 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpNotEqualsWithoutNull(const Value rhs) const {
+inline Value Value::OpNotEqualsWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) != 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanWithoutNull(const Value rhs) const {
+inline Value Value::OpLessThanWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) < 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpLessThanOrEqualWithoutNull(const Value rhs) const {
+inline Value Value::OpLessThanOrEqualWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) <= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanWithoutNull(const Value rhs) const {
+inline Value Value::OpGreaterThanWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) > 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpGreaterThanOrEqualWithoutNull(const Value rhs) const {
+inline Value Value::OpGreaterThanOrEqualWithoutNull(const Value& rhs) const {
   return CompareWithoutNull(rhs) >= 0 ? GetTrue() : GetFalse();
 }
 
-inline Value Value::OpMax(const Value rhs) const {
+inline Value Value::OpMax(const Value& rhs) const {
   if (Compare(rhs) > 0) {
     return *this;
   } else {
@@ -3306,7 +3039,7 @@ inline Value Value::OpMax(const Value rhs) const {
   }
 }
 
-inline Value Value::OpMin(const Value rhs) const {
+inline Value Value::OpMin(const Value& rhs) const {
   if (Compare(rhs) < 0) {
     return *this;
   } else {
@@ -3371,45 +3104,6 @@ inline void Value::HashCombine(std::size_t &seed) const {
       GetDecimal().hash(seed); break;
     default:
       throw Exception("Value::HashCombine unknown type " +  GetValueTypeString());
-  }
-}
-
-
-inline Value Value::CastAs(ValueType type) const {
-  LOG_TRACE("Converting from %s to %s",
-            ValueTypeToString(GetValueType()).c_str(),
-            ValueTypeToString(type).c_str());
-  if (GetValueType() == type) {
-    return *this;
-  }
-  if (IsNull()) {
-    return GetNullValue(type);
-  }
-
-  switch (type) {
-    case VALUE_TYPE_TINYINT:
-      return CastAsTinyInt();
-    case VALUE_TYPE_SMALLINT:
-      return CastAsSmallInt();
-    case VALUE_TYPE_INTEGER:
-      return CastAsInteger();
-    case VALUE_TYPE_BIGINT:
-      return CastAsBigInt();
-    case VALUE_TYPE_TIMESTAMP:
-      return CastAsTimestamp();
-    case VALUE_TYPE_DOUBLE:
-      return CastAsDouble();
-    case VALUE_TYPE_VARCHAR:
-      return CastAsString();
-    case VALUE_TYPE_VARBINARY:
-      return CastAsBinary();
-    case VALUE_TYPE_DECIMAL:
-      return CastAsDecimal();
-    default:
-      char message[128];
-      snprintf(message, 128, "Type %d not a recognized type for casting",
-               (int) type);
-      throw Exception(message);
   }
 }
 
@@ -3522,7 +3216,7 @@ inline bool Value::IsZero() const {
   }
 }
 
-inline Value Value::OpSubtract(const Value rhs) const {
+inline Value Value::OpSubtract(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3553,7 +3247,7 @@ inline Value Value::OpSubtract(const Value rhs) const {
                               rhs.GetValueType());
 }
 
-inline Value Value::OpAdd(const Value rhs) const {
+inline Value Value::OpAdd(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3584,7 +3278,7 @@ inline Value Value::OpAdd(const Value rhs) const {
                   rhs.GetValueTypeString());
 }
 
-inline Value Value::OpMultiply(const Value rhs) const {
+inline Value Value::OpMultiply(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);
@@ -3615,7 +3309,7 @@ inline Value Value::OpMultiply(const Value rhs) const {
                   rhs.GetValueTypeString());
 }
 
-inline Value Value::OpDivide(const Value rhs) const {
+inline Value Value::OpDivide(const Value& rhs) const {
   ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
   if (IsNull() || rhs.IsNull()) {
     return GetNullValue(vt);

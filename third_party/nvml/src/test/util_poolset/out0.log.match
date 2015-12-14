@@ -1,0 +1,66 @@
+util_poolset/TEST0: START: util_poolset
+ ./util_poolset$(nW) c 32768 8192 $(nW)/testset0 $(nW)/testset1 $(nW)/testset2 $(nW)/testset3 $(nW)/testset4 $(nW)/testset5 $(nW)/testset6 -mo:$(nW)/testfile72 $(nW)/testset7 -mf:1073741824 $(nW)/testset8 -mo:$(nW)/testfile102 $(nW)/testset10 $(nW)/testset11 $(nW)/testset12 $(nW)/testset13 $(nW)/testset14 $(nW)/testset15 $(nW)/testset18 $(nW)/testset20 $(nW)/testset21 $(nW)/testset22 -mo:$(nW)/testset23 $(nW)/testset23 $(nW)/testset24 $(nW)/testset25 -mp:98304 $(nW)/testset26
+$(nW)/testset0: util_pool_create: No such file or directory
+$(nW)/testset1: created: hdrsize 8192 nreps 1 poolsize 32768 zeroed 1
+  replica[0]: nparts 1 repsize 32768 is_pmem 0
+    part[0] path $(nW)/testfile11 filesize 32768 size 32768
+$(nW)/testset2: created: hdrsize 8192 nreps 1 poolsize 57344 zeroed 1
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile21 filesize 32768 size 57344
+    part[1] path $(nW)/testfile22 filesize 32768 size 24576
+$(nW)/testset3: created: hdrsize 8192 nreps 1 poolsize 57344 zeroed 0
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile31 filesize 32768 size 57344
+    part[1] path $(nW)/testfile32 filesize 32768 size 24576
+$(nW)/testset4: util_pool_create: Invalid argument
+$(nW)/testset5: util_pool_create: Invalid argument
+$(nW)/testset6: util_pool_create: No such file or directory
+mocked open: $(nW)/testfile72
+$(nW)/testset7: util_pool_create: Permission denied
+mocked fallocate: 1073741824
+$(nW)/testset8: util_pool_create: No space left on device
+mocked open: $(nW)/testfile102
+$(nW)/testset10: util_pool_create: Permission denied
+$(nW)/testset11: util_pool_create: Invalid argument
+$(nW)/testset12: util_pool_create: Invalid argument
+$(nW)/testset13: util_pool_create: Invalid argument
+$(nW)/testset14: created: hdrsize 8192 nreps 1 poolsize 90112 zeroed 0
+  replica[0]: nparts 2 repsize 90112 is_pmem 0
+    part[0] path $(nW)/testfile141 filesize 32768 size 90112
+    part[1] path $(nW)/testfile142 filesize 65536 size 57344
+$(nW)/testset15: created: hdrsize 8192 nreps 1 poolsize 57344 zeroed 0
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile151 filesize 32768 size 57344
+    part[1] path $(nW)/testfile152 filesize 32768 size 24576
+$(nW)/testset18: created: hdrsize 8192 nreps 1 poolsize 57344 zeroed 0
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/subdir1/testfile181 filesize 35840 size 57344
+    part[1] path $(nW)/subdir2/testfile182 filesize 33792 size 24576
+$(nW)/testset20: util_pool_create: Invalid argument
+$(nW)/testset21: util_pool_create: Invalid argument
+$(nW)/testset22: created: hdrsize 8192 nreps 1 poolsize 57344 zeroed 0
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile221 filesize 32768 size 57344
+    part[1] path $(nW)/testfile222 filesize 32768 size 24576
+mocked open: $(nW)/testset23
+$(nW)/testset23: util_pool_create: Permission denied
+$(nW)/testset24: created: hdrsize 8192 nreps 3 poolsize 57344 zeroed 1
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile241 filesize 32768 size 57344
+    part[1] path $(nW)/testfile242 filesize 32768 size 24576
+  replica[1]: nparts 1 repsize 81920 is_pmem 0
+    part[0] path $(nW)/testfile243 filesize 81920 size 81920
+  replica[2]: nparts 2 repsize 65536 is_pmem 0
+    part[0] path $(nW)/testfile244 filesize 40960 size 65536
+    part[1] path $(nW)/testfile245 filesize 32768 size 24576
+$(nW)/testset25: util_pool_create: Invalid argument
+mocked pmem_is_pmem: 98304
+$(nW)/testset26: created: hdrsize 8192 nreps 3 poolsize 40960 zeroed 0
+  replica[0]: nparts 2 repsize 90112 is_pmem 0
+    part[0] path $(nW)/testfile261 filesize 32768 size 90112
+    part[1] path $(nW)/testfile262 filesize 65536 size 57344
+  replica[1]: nparts 1 repsize 40960 is_pmem 0
+    part[0] path $(nW)/testfile263 filesize 40960 size 40960
+  replica[2]: nparts 1 repsize 98304 is_pmem 1
+    part[0] path $(nW)/testfile264 filesize 98304 size 98304
+util_poolset/TEST0: Done

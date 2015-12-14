@@ -1,0 +1,101 @@
+#!/bin/bash -e
+#
+# Copyright (c) 2015, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of Intel Corporation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# src/test/util_poolset/TEST1 -- unit test for util_pool_open()
+#
+export UNITTEST_NAME=util_poolset/TEST1
+export UNITTEST_NUM=1
+
+# standard unit test setup
+. ../unittest/unittest.sh
+
+setup
+
+export TEST_LOG_LEVEL=4
+export TEST_LOG_FILE=./test$UNITTEST_NUM.log
+
+MIN_POOL=$((32 * 1024))
+HDR_SIZE=8192
+
+create_poolset $DIR/testset1 32K:$DIR/testfile11:z:32K # pass
+create_poolset $DIR/testset2 32K:$DIR/testfile21:x \
+	32K:$DIR/testfile22:x # fail - can't read poolset file
+create_poolset $DIR/testset3 32K:$DIR/testfile31:x \
+	32K:$DIR/testfile32:x # fail - no files
+create_poolset $DIR/testset4 32K:$DIR/testfile41:z:32K \
+	32K:$DIR/testfile42:x # fail - no second part
+create_poolset $DIR/testset5 12K:$DIR/testfile51:z:12K \
+	32K:$DIR/testfile52:z:32K # fail - part1 too small
+create_poolset $DIR/testset6 32K:$DIR/testfile61:z:32K \
+	16K:$DIR/testfile62:z:16K # fail - part2 too small
+create_poolset $DIR/testset7 32767:$DIR/testfile71:z:32767 \
+	32K:$DIR/testfile72:z:32K # fail - part1 too small
+create_poolset $DIR/testset8 32K:$DIR/testfile81:z:32K \
+	32K:$DIR/testfile82:z:32K # fail - no access permissions
+create_poolset $DIR/testset9 32K:$DIR/testfile91:z:32K \
+	64K:$DIR/testfile92:z:32K # fail - part2 size doesn't match
+create_poolset $DIR/testset10 32K:$DIR/testfile101:z:32768 \
+	32K:$DIR/testfile102:z:32769 # fail - part2 size doesn't match
+create_poolset $DIR/testset11 32769:$DIR/testfile111:z:32769 \
+	36863:$DIR/testfile112:z:36863 36864:$DIR/testfile113:xz:36864 # pass
+
+
+expect_normal_exit ./util_poolset$EXESUFFIX o $MIN_POOL $HDR_SIZE\
+	$DIR/testset0 $DIR/testset1\
+	-mo:$DIR/testset2 $DIR/testset2\
+	$DIR/testset3 $DIR/testset4\
+	$DIR/testset5 $DIR/testset6\
+	$DIR/testset7\
+	-mo:`readlink -mn $DIR/testfile82` $DIR/testset8\
+	$DIR/testset9 $DIR/testset10\
+	$DIR/testset11
+
+check_files $DIR/testfile11\
+	$DIR/testfile51 $DIR/testfile52\
+	$DIR/testfile61 $DIR/testfile62\
+	$DIR/testfile71 $DIR/testfile72\
+	$DIR/testfile81 $DIR/testfile82\
+	$DIR/testfile91 $DIR/testfile92\
+	$DIR/testfile101 $DIR/testfile102\
+	$DIR/testfile111 $DIR/testfile112
+
+check_no_files $DIR/testfile21 $DIR/testfile22\
+	$DIR/testfile31 $DIR/testfile32\
+	$DIR/testfile42
+
+grep "<1>" $TEST_LOG_FILE | sed -e "s/^.*\]\ //g" > ./grep$UNITTEST_NUM.log
+
+check
+
+pass

@@ -21,6 +21,9 @@
 #include "backend/common/abstract_tuple.h"
 
 namespace peloton {
+
+class VarlenPool;
+
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
@@ -41,7 +44,8 @@ class TupleTransformer {
   static Datum GetDatum(peloton::Value value);
 
   static storage::Tuple *GetPelotonTuple(TupleTableSlot *slot,
-                                         const catalog::Schema *schema);
+                                         const catalog::Schema *schema,
+                                         VarlenPool *pool);
 
   static TupleTableSlot *GetPostgresTuple(AbstractTuple *tuple,
                                           TupleDesc tuple_desc);

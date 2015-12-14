@@ -1,0 +1,24 @@
+Linux NVM Library
+
+This is src/test/pmem_memset/README.
+
+This directory contains a unit test for pmem_memset().
+
+SYNOPSIS:
+pmem_memset file offset length
+
+DESCRIPTION:
+	pmem_memset is the unit test for verifying the functionality of memset for
+	persistent storage using non-temporal instructions.
+
+OPTIONS:
+	file is $DIR/testfile1 in all cases.
+	offset: Is number of bytes for destination address offset based on a 64 byte
+		boundary.
+	length: Is the length specified in bytes. Cannot be less than 4.
+
+In all cases it calls pmem_memset_persist with first a Z character and sets 1/4 of
+the length specified in the destination location. It repeats this with an F character.
+
+The file is read after processing the memcmp and a read of the file to ensure
+contains the correct values.

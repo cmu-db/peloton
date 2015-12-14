@@ -1,0 +1,4 @@
+vmmalloc_valgrind/TEST1: START: vmmalloc_valgrind
+ ./vmmalloc_valgrind$(nW) 1
+memory leaks
+vmmalloc_valgrind/TEST1: Done

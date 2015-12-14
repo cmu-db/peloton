@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/common/serializer.h"
-#include "backend/common/value_vector.h"
 
 #include "backend/expression/abstract_expression.h"
 

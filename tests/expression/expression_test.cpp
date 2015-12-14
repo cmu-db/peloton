@@ -329,13 +329,13 @@ TEST(ExpressionTest, SimpleFilter) {
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(20));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
   std::cout << (*equal);
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(50));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), false);
 
   // delete the root to destroy the full tree.

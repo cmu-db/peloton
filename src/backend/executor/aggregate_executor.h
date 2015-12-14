@@ -14,6 +14,7 @@
 
 #include "backend/executor/abstract_executor.h"
 #include "backend/storage/data_table.h"
+#include "backend/common/pool.h"
 
 #include <vector>
 
@@ -64,6 +65,7 @@ class AggregateExecutor : public AbstractExecutor {
 
   /** @brief Output table. */
   storage::DataTable *output_table = nullptr;
+
 };
 
 }  // namespace executor

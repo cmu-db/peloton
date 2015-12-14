@@ -5,7 +5,7 @@ rm -rf data
 make -j4
 sudo make install
 initdb data
-cp ../postgresql.conf data
+cp ../scripts/oltpbenchmark/postgresql.conf data
 
 pkill -9 peloton
 pg_ctl -D data stop
