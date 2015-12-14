@@ -77,7 +77,7 @@ class ContainerTuple : public AbstractTuple {
         value.HashCombine(seed);
       }
     } else {
-      int column_count = container_->GetColumnCount();
+      oid_t column_count = container_->GetColumnCount();
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
         const Value value = GetValue(column_itr);
         value.HashCombine(seed);
@@ -99,7 +99,7 @@ class ContainerTuple : public AbstractTuple {
         }
       }
     } else {
-      int column_count = container_->GetColumnCount();
+      oid_t column_count = container_->GetColumnCount();
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
         const Value lhs = GetValue(column_itr);
         const Value rhs = other.GetValue(column_itr);
