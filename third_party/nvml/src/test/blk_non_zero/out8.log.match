@@ -1,0 +1,24 @@
+blk_non_zero/TEST8: START: blk_non_zero
+ ./blk_non_zero$(nW) 512 $(nW)/testfile1 c $(N) e:1 r:1 e:2 w:2 r:2 z:3 e:3 r:3 e:4 z:4 r:4 w:5 e:5 z:5 r:5 w:6 z:6 e:6 r:6
+512 block size 512 usable blocks 2080567
+is zeroed:	1
+set_error lba 1
+read      lba 1: Input/output error
+set_error lba 2
+write     lba 2: {1}
+read      lba 2: {1}
+set_zero  lba 3
+set_error lba 3
+read      lba 3: Input/output error
+set_error lba 4
+set_zero  lba 4
+read      lba 4: {0}
+write     lba 5: {2}
+set_error lba 5
+set_zero  lba 5
+read      lba 5: {0}
+write     lba 6: {3}
+set_zero  lba 6
+set_error lba 6
+read      lba 6: Input/output error
+blk_non_zero/TEST8: Done

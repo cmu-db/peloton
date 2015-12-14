@@ -1,0 +1,68 @@
+/*
+ * The @je_@ prefix on the following public symbol declarations is an artifact
+ * of namespace management, and should be omitted in application code unless
+ * JEMALLOC_NO_DEMANGLE is defined (see jemalloc_mangle@install_suffix@.h).
+ */
+extern JEMALLOC_EXPORT const char	*@je_@malloc_conf;
+extern JEMALLOC_EXPORT void		(*@je_@malloc_message)(void *cbopaque,
+    const char *s);
+
+typedef struct pool_s pool_t;
+
+JEMALLOC_EXPORT pool_t	*@je_@pool_create(void *addr, size_t size, int zeroed);
+JEMALLOC_EXPORT int	@je_@pool_delete(pool_t *pool);
+JEMALLOC_EXPORT size_t	@je_@pool_extend(pool_t *pool, void *addr,
+					    size_t size, int zeroed);
+JEMALLOC_EXPORT void	*@je_@pool_malloc(pool_t *pool, size_t size);
+JEMALLOC_EXPORT void	*@je_@pool_calloc(pool_t *pool, size_t nmemb, size_t size);
+JEMALLOC_EXPORT void	*@je_@pool_ralloc(pool_t *pool, void *ptr, size_t size);
+JEMALLOC_EXPORT void	*@je_@pool_aligned_alloc(pool_t *pool,  size_t alignment, size_t size);
+JEMALLOC_EXPORT void	@je_@pool_free(pool_t *pool, void *ptr);
+JEMALLOC_EXPORT size_t	@je_@pool_malloc_usable_size(pool_t *pool, void *ptr);
+JEMALLOC_EXPORT void	@je_@pool_malloc_stats_print(pool_t *pool,
+							void (*write_cb)(void *, const char *),
+							void *cbopaque, const char *opts);
+JEMALLOC_EXPORT void	@je_@pool_set_alloc_funcs(void *(*malloc_func)(size_t),
+							void (*free_func)(void *));
+JEMALLOC_EXPORT int	@je_@pool_check(pool_t *pool);
+
+JEMALLOC_EXPORT void	*@je_@malloc(size_t size) JEMALLOC_ATTR(malloc);
+JEMALLOC_EXPORT void	*@je_@calloc(size_t num, size_t size)
+    JEMALLOC_ATTR(malloc);
+JEMALLOC_EXPORT int	@je_@posix_memalign(void **memptr, size_t alignment,
+    size_t size) JEMALLOC_ATTR(nonnull(1));
+JEMALLOC_EXPORT void	*@je_@aligned_alloc(size_t alignment, size_t size)
+    JEMALLOC_ATTR(malloc);
+JEMALLOC_EXPORT void	*@je_@realloc(void *ptr, size_t size);
+JEMALLOC_EXPORT void	@je_@free(void *ptr);
+
+JEMALLOC_EXPORT void	*@je_@mallocx(size_t size, int flags);
+JEMALLOC_EXPORT void	*@je_@rallocx(void *ptr, size_t size, int flags);
+JEMALLOC_EXPORT size_t	@je_@xallocx(void *ptr, size_t size, size_t extra,
+    int flags);
+JEMALLOC_EXPORT size_t	@je_@sallocx(const void *ptr, int flags);
+JEMALLOC_EXPORT void	@je_@dallocx(void *ptr, int flags);
+JEMALLOC_EXPORT size_t	@je_@nallocx(size_t size, int flags);
+
+JEMALLOC_EXPORT int	@je_@mallctl(const char *name, void *oldp,
+    size_t *oldlenp, void *newp, size_t newlen);
+JEMALLOC_EXPORT int	@je_@mallctlnametomib(const char *name, size_t *mibp,
+    size_t *miblenp);
+JEMALLOC_EXPORT int	@je_@mallctlbymib(const size_t *mib, size_t miblen,
+    void *oldp, size_t *oldlenp, void *newp, size_t newlen);
+JEMALLOC_EXPORT void	@je_@malloc_stats_print(void (*write_cb)(void *,
+    const char *), void *@je_@cbopaque, const char *opts);
+JEMALLOC_EXPORT size_t	@je_@malloc_usable_size(
+    JEMALLOC_USABLE_SIZE_CONST void *ptr);
+
+JEMALLOC_EXPORT int    @je_@navsnprintf(char *str, size_t size,
+    const char *format, va_list ap);
+
+#ifdef JEMALLOC_OVERRIDE_MEMALIGN
+JEMALLOC_EXPORT void *	@je_@memalign(size_t alignment, size_t size)
+    JEMALLOC_ATTR(malloc);
+#endif
+
+#ifdef JEMALLOC_OVERRIDE_VALLOC
+JEMALLOC_EXPORT void *	@je_@valloc(size_t size) JEMALLOC_ATTR(malloc);
+#endif

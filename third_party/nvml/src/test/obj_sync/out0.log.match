@@ -1,0 +1,3 @@
+obj_sync/TEST0: START: obj_sync
+ ./obj_sync$(nW) $(nW) $(N) $(N)
+obj_sync/TEST0: Done

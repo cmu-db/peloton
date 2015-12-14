@@ -1,0 +1,4 @@
+blk_rw_mt/TEST0: START: blk_rw_mt
+ ./blk_rw_mt$(nW) 4096 $(nW)/testfile1 123 5 80
+4096 block size 4096 usable blocks 100
+blk_rw_mt/TEST0: Done

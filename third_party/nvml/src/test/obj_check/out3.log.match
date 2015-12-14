@@ -1,0 +1,20 @@
+obj_check/TEST3: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: list lane: redo log check failed
+obj_check/TEST3: Done
+obj_check/TEST3: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: list lane: redo log check failed
+obj_check/TEST3: Done
+obj_check/TEST3: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: list lane: redo log check failed
+obj_check/TEST3: Done
+obj_check/TEST3: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: list lane: invalid offset 0x400
+obj_check/TEST3: Done
+obj_check/TEST3: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: list lane: invalid offset 0x800000
+obj_check/TEST3: Done

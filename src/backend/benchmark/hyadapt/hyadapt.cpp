@@ -27,7 +27,7 @@ configuration state;
 void RunBenchmark(){
 
   // Initialize settings
-  peloton_layout = state.layout;
+  peloton_layout_mode = state.layout_mode;
   peloton_projectivity = state.projectivity;
 
   // Generate sequence
@@ -35,7 +35,7 @@ void RunBenchmark(){
 
   // Single run
   if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    CreateAndLoadTable((LayoutType) peloton_layout);
+    CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
     switch(state.operator_type) {
       case OPERATOR_TYPE_DIRECT:

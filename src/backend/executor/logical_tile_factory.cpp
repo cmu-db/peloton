@@ -58,8 +58,8 @@ LogicalTile *LogicalTileFactory::GetTile() {
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles) {
-  assert(base_tiles.size() > 0);
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<std::shared_ptr<storage::Tile> > &base_tile_refs) {
+  assert(base_tile_refs.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
@@ -67,20 +67,19 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &b
   // First, we build a position list to be shared by all the tiles.
   const oid_t position_list_idx = 0;
   new_tile->AddPositionList(
-      CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
+      CreateIdentityPositionList(base_tile_refs[0].get()->GetAllocatedTupleCount()));
 
-  for (unsigned int i = 0; i < base_tiles.size(); i++) {
+  for (unsigned int i = 0; i < base_tile_refs.size(); i++) {
     // Next, we construct the schema.
-    int column_count = base_tiles[i]->GetColumnCount();
+    int column_count = base_tile_refs[i].get()->GetColumnCount();
     for (int col_id = 0; col_id < column_count; col_id++) {
-      new_tile->AddColumn(base_tiles[i], col_id,
+      new_tile->AddColumn(base_tile_refs[i],
+                          col_id,
                           position_list_idx);
     }
   }
 
   // Drop reference because we created the base tile
-  for(auto base_tile : base_tiles)
-    base_tile->DecrementRefCount();
 
   return new_tile.release();
 }
@@ -91,7 +90,7 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &b
  *
  * @return Logical tile wrapping tile group.
  */
-LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
+LogicalTile *LogicalTileFactory::WrapTileGroup(const std::shared_ptr<storage::TileGroup>& tile_group) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
@@ -101,9 +100,11 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
   assert(schemas.size() == tile_group->NumTiles());
   for (unsigned int i = 0; i < schemas.size(); i++) {
-    storage::Tile *base_tile = tile_group->GetTile(i);
+    auto base_tile_ref = tile_group->GetTileReference(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
-      new_tile->AddColumn(base_tile, col_id, position_list_idx);
+      new_tile->AddColumn(base_tile_ref,
+                          col_id,
+                          position_list_idx);
     }
   }
 
@@ -134,9 +135,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     LogicalTile *logical_tile = LogicalTileFactory::GetTile();
 
     auto &manager = catalog::Manager::GetInstance();
-    storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
-    tile_group->IncrementRefCount();
-    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+    auto tile_group = manager.GetTileGroup(block.first);
+    storage::TileGroupHeader *tile_group_header = tile_group.get()->GetHeader();
 
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, column_ids);
@@ -152,7 +152,6 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
       }
     }
 
-    tile_group->DecrementRefCount();
     logical_tile->AddPositionList(std::move(position_list));
 
     result.push_back(logical_tile);

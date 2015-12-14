@@ -394,25 +394,8 @@ static const struct config_enum_entry row_security_options[] = {
 };
 
 // TODO: Peloton Changes
-/*
- * Peloton mode options can take values 0,1,2
- * Range of values may be changed
- * Values have to be defined as enum
- */
-/* Possible values for peloton_mode GUC */
-typedef enum PelotonModeType
-{
-  PELOTON_MODE_0,   /* Whatever */
-  PELOTON_MODE_1    /* Whatever */
-} PelotonModeType;
 
-static const struct config_enum_entry peloton_mode_options[] = {
-	{"peloton_mode_0", PELOTON_MODE_0, false},
-	{"peloton_mode_1", PELOTON_MODE_1, false},
-	{NULL, 0, false}
-};
-
-/* Possible values for peloton_tilegroup_layout GUC */
+/* Possible values for peloton_layout_mode GUC */
 typedef enum LayoutType
 {
   LAYOUT_ROW,   /* Pure row layout */
@@ -420,10 +403,39 @@ typedef enum LayoutType
   LAYOUT_HYBRID /* Hybrid layout */
 } LayoutType;
 
-static const struct config_enum_entry peloton_tilegroup_layout_options[] = {
+static const struct config_enum_entry peloton_layout_mode_options[] = {
   {"row", LAYOUT_ROW, false},
   {"column", LAYOUT_COLUMN, false},
   {"hybrid", LAYOUT_HYBRID, false},
+  {NULL, 0, false}
+};
+
+/* Possible values for peloton_logging_mode GUC */
+typedef enum LoggingType
+{
+  LOGGING_TYPE_INVALID, /* No logging */
+
+  LOGGING_TYPE_ARIES,   /* Aries */
+  LOGGING_TYPE_PELOTON  /* Peloton */
+} LoggingType;
+
+static const struct config_enum_entry peloton_logging_mode_options[] = {
+  {"invalid", LOGGING_TYPE_INVALID, false},
+  {"aries", LOGGING_TYPE_ARIES, false},
+  {"peloton", LOGGING_TYPE_PELOTON, false},
+  {NULL, 0, false}
+};
+
+/* Possible values for peloton_caching_mode GUC */
+typedef enum CachingType
+{
+  CACHING_OFF,   /* Off */
+  CACHING_ON   /* On */
+} CachingType;
+
+static const struct config_enum_entry peloton_caching_mode_options[] = {
+  {"off", CACHING_OFF, false},
+  {"on", CACHING_ON, false},
   {NULL, 0, false}
 };
 
@@ -487,11 +499,27 @@ int			tcp_keepalives_count;
 int			row_security;
 
 // TODO: Peloton Changes
-int			peloton_mode;
-int     peloton_layout;
-double  peloton_projectivity;
-int     peloton_num_groups;
-bool    peloton_fsm;
+
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+// Layout mode
+int     peloton_layout_mode;
+
+// Logging mode
+int     peloton_logging_mode;
+
+// Caching mode
+int     peloton_caching_mode;
+
+#define DEFAULT_PELOTON_TILE_CACHE_SIZE  1024 * 1024
+
+// Cache size for tile cache
+int     peloton_tile_cache_size;
+
+// Directory for peloton logs
+char    *peloton_log_directory;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
@@ -2712,6 +2740,19 @@ struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
+
+	// TODO: Peloton Changes
+  {
+    {"peloton_tile_cache_size", PGC_USERSET, UNGROUPED,
+      gettext_noop("Size of the tile cache in peloton."),
+      NULL,
+      GUC_UNIT_KB
+    },
+    &peloton_tile_cache_size,
+    DEFAULT_PELOTON_TILE_CACHE_SIZE, 1, INT_MAX,
+    NULL, NULL, NULL
+  },
+
 	/* End-of-list marker */
 	{
 		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
@@ -3435,6 +3476,18 @@ struct config_string ConfigureNamesString[] =
 		check_cluster_name, NULL, NULL
 	},
 
+	// TODO: Peloton Changes
+  {
+    {"peloton_log_directory", PGC_SIGHUP, LOGGING_WHERE,
+      gettext_noop("Sets the log directory for Peloton."),
+      gettext_noop("Must be specified as an absolute path."),
+      GUC_SUPERUSER_ONLY
+    },
+    &peloton_log_directory,
+    "peloton_log_directory",
+    check_canonical_path, NULL, NULL
+  },
+
 	/* End-of-list marker */
 	{
 		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, NULL, NULL, NULL, NULL
@@ -3692,26 +3745,33 @@ struct config_enum ConfigureNamesEnum[] =
 	},
 
 	// TODO: Peloton Changes
-  // Refer guc_tables.h for PELOTON_MODE_OPTIONS declaration
 	{
-		{"peloton_mode", PGC_USERSET, PELOTON_MODE_OPTIONS,
-			gettext_noop("Change peloton mode"),
-			gettext_noop("System behavior will be modified depending on the specific peloton mode")
-		},
-		&peloton_mode,
-		PELOTON_MODE_0, peloton_mode_options,
-		// the constant 0 can be replaced by an enum
-		NULL, NULL, NULL
-	},
-
-	{
-    {"peloton_tilegroup_layout", PGC_USERSET, PELOTON_TILEGROUP_LAYOUT_OPTIONS,
-      gettext_noop("Change peloton tilegroup layout"),
-      gettext_noop("This determines the tilegroup layout.")
+    {"peloton_layout_mode", PGC_USERSET, PELOTON_LAYOUT_OPTIONS,
+      gettext_noop("Change peloton layout mode"),
+      gettext_noop("This determines the layout mode.")
     },
-    &peloton_layout,
-    LAYOUT_ROW, peloton_tilegroup_layout_options,
-    // the constant 0 can be replaced by an enum
+    &peloton_layout_mode,
+    LAYOUT_ROW, peloton_layout_mode_options,
+    NULL, NULL, NULL
+  },
+
+  {
+    {"peloton_logging_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton logging mode"),
+      gettext_noop("This determines the logging mode.")
+    },
+    &peloton_logging_mode,
+    LOGGING_TYPE_INVALID, peloton_logging_mode_options,
+    NULL, NULL, NULL
+  },
+
+  {
+    {"peloton_caching_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton caching mode"),
+      gettext_noop("This determines the caching mode.")
+    },
+    &peloton_caching_mode,
+    CACHING_OFF, peloton_caching_mode_options,
     NULL, NULL, NULL
   },
 

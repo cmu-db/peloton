@@ -15,19 +15,14 @@ namespace test {
 std::string peloton_log_file_name = "peloton.log";
 
 /**
- * @brief writing a simple log with multiple threads
+ * @brief writing a simple log with multiple threads and then do recovery
  */
 TEST(PelotonLoggingTest, writing_log_file) {
 
   // Test a simple log process
   EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON, peloton_log_file_name));
-}
 
-/**
- * @brief recovery test
- */
-TEST(PelotonLoggingTest, recovery) {
-
+  // Do recovery
   LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
 }
 
