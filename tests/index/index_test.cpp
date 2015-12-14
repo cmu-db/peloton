@@ -61,7 +61,7 @@ TEST(IndexTests, BtreeIndexTest) {
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, unique_keys);
-  auto pool = GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 

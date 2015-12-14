@@ -138,7 +138,9 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, GetNextTileGroupId(), nullptr, schemas,
+      INVALID_OID, INVALID_OID,
+      TestingHarness::GetInstance().GetNextTileGroupId(),
+      nullptr, schemas,
       column_map, tuple_count);
 
   return tile_group;
@@ -163,7 +165,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  auto testing_pool = GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
@@ -226,7 +228,7 @@ void ExecutorTestsUtil::PopulateTiles(std::shared_ptr<storage::TileGroup> tile_g
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetCommitId();
-  auto testing_pool = GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);

@@ -41,7 +41,7 @@ TEST(TupleTests, BasicTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
-  auto pool = GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
@@ -80,7 +80,7 @@ TEST(TupleTests, VarcharTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
-  auto pool = GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);

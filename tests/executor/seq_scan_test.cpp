@@ -74,7 +74,7 @@ storage::DataTable *CreateTable() {
     ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2),
         ExecutorTestsUtil::GetColumnInfo(3) }) });
 
-  GetNextTileGroupId();
+  TestingHarness::GetInstance().GetNextTileGroupId();
 
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map1;
   column_map1[0] = std::make_pair(0, 0);
@@ -92,14 +92,14 @@ storage::DataTable *CreateTable() {
   table->AddTileGroup(
       std::shared_ptr<storage::TileGroup>(storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
-          GetNextTileGroupId(), table.get(),
+          TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
           schemas1,
           column_map1, tuple_count)));
 
   table->AddTileGroup(
       std::shared_ptr<storage::TileGroup>(storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
-          GetNextTileGroupId(), table.get(),
+          TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
           schemas2,
           column_map2, tuple_count)));
 

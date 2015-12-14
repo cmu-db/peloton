@@ -19,7 +19,6 @@
 #include <atomic>
 
 #include "backend/common/types.h"
-#include "backend/common/logger.h"
 
 namespace peloton {
 
@@ -33,11 +32,41 @@ namespace test {
 
 #define MAX_THREADS 1024
 
-extern std::atomic<txn_id_t> txn_id_counter;
-extern std::atomic<cid_t> cid_counter;
-extern std::atomic<oid_t> tile_group_id_counter;
+/**
+ * Testing Harness
+ */
+class TestingHarness {
 
-uint64_t GetThreadId();
+  public:
+    TestingHarness(const TestingHarness &) = delete;
+    TestingHarness &operator=(const TestingHarness &) = delete;
+    TestingHarness(TestingHarness &&) = delete;
+    TestingHarness &operator=(TestingHarness &&) = delete;
+
+    // global singleton
+    static TestingHarness& GetInstance(void);
+
+    uint64_t GetThreadId();
+
+    VarlenPool *GetTestingPool();
+
+    oid_t GetNextTileGroupId();
+
+  private:
+    TestingHarness();
+
+    // Txn id counter
+    std::atomic<txn_id_t> txn_id_counter;
+
+    // Commit id counter
+    std::atomic<cid_t> cid_counter;
+
+    // Tile group id counter
+    std::atomic<oid_t> tile_group_id_counter;
+
+    // Testing pool
+    std::unique_ptr<VarlenPool> pool_;
+};
 
 template <typename... Args>
 void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
@@ -53,10 +82,6 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
     thread_group[thread_itr].join();
   }
 }
-
-inline oid_t GetNextTileGroupId() { return ++tile_group_id_counter; }
-
-VarlenPool *GetTestingPool();
 
 }  // End test namespace
 }  // End peloton namespace
