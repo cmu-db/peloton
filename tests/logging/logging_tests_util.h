@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "backend/common/types.h"
+#include "backend/common/pool.h"
 
 namespace peloton {
 
@@ -74,11 +75,11 @@ private:
 
   static void RunBackends(storage::DataTable* table);
 
-  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, bool committed);
+  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, VarlenPool *pool, bool committed);
 
   static void DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed);
 
-  static void UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed);
+  static void UpdateTuples(storage::DataTable* table, ItemPointer location, VarlenPool *pool, bool committed);
   
   //===--------------------------------------------------------------------===//
   // Utility functions
@@ -92,7 +93,7 @@ private:
 
   static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples);
+  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 

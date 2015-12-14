@@ -35,12 +35,15 @@ class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
   TileGroupIterator() = delete;
 
  public:
-  TileGroupIterator(const DataTable *table) : table_(table), tileGroupItr_(0) {
+  TileGroupIterator(const DataTable *table) :
+    table_(table),
+    tile_group_itr_(0) {
     // More Wu Tang!
   }
 
   TileGroupIterator(const TileGroupIterator &other)
-      : table_(other.table_), tileGroupItr_(other.tileGroupItr_) {
+      : table_(other.table_),
+        tile_group_itr_(other.tile_group_itr_) {
     // More Wu Tang!
   }
 
@@ -53,8 +56,11 @@ class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
   bool HasNext();
 
  private:
+  // Table
   const DataTable *table_;
-  oid_t tileGroupItr_;
+
+  // Tile group iterator
+  oid_t tile_group_itr_;
 };
 
 }  // End storage namespace

@@ -17,6 +17,9 @@
 #include "backend/storage/tuple.h"
 
 namespace peloton {
+
+class VarlenPool;
+
 namespace executor {
 
 /**
@@ -36,6 +39,8 @@ class OrderByExecutor : public AbstractExecutor {
 
   explicit OrderByExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
+
+  ~OrderByExecutor();
 
  protected:
   bool DInit();
@@ -90,6 +95,7 @@ class OrderByExecutor : public AbstractExecutor {
 
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
+
 };
 
 } /* namespace executor */

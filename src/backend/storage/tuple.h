@@ -69,12 +69,8 @@ class Tuple : public AbstractTuple {
   }
 
   // Deletes tuple data
-  // Does not delete either SCHEMA or UNINLINED data
-  // Tile or larger entities must take care of this
-  ~Tuple() {
-    // delete the tuple data
-    if (allocated) delete[] tuple_data;
-  }
+  // Does not delete either SCHEMA
+  ~Tuple();
 
   // Setup the tuple given the specified data location and schema
   Tuple(char *data, catalog::Schema *schema);
@@ -105,10 +101,7 @@ class Tuple : public AbstractTuple {
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
-  const Value GetValue(const oid_t column_id) const;
-
-  // Set appropriate column in tuple
-  void SetValue(const oid_t column_id, Value value);
+  Value GetValue(const oid_t column_id) const;
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -119,7 +112,7 @@ class Tuple : public AbstractTuple {
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValueAllocate(const oid_t column_id, Value value, VarlenPool *dataPool);
+  void SetValue(const oid_t column_id, const Value& value, VarlenPool *dataPool);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
@@ -144,9 +137,6 @@ class Tuple : public AbstractTuple {
   // Return the number of columns in this tuple
   inline oid_t GetColumnCount() const { return tuple_schema->GetColumnCount(); }
 
-  // Release to the heap any memory allocated for any uninlined columns.
-  void FreeUninlinedData();
-
   bool EqualsNoSchemaCheck(const Tuple &other) const;
 
   bool EqualsNoSchemaCheck(const Tuple &other,
@@ -169,7 +159,8 @@ class Tuple : public AbstractTuple {
 
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const storage::Tuple *tuple,
-                    const std::vector<oid_t> &columns);
+                    const std::vector<oid_t> &columns,
+                    VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);

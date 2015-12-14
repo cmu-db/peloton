@@ -1,0 +1,7 @@
+Linux NVM Library
+
+This is src/test/obj_list_insert/README.
+
+This directory contains unit tests for list_insert() function.
+
+The unit tests utilizes an application from src/test/obj_list directory.

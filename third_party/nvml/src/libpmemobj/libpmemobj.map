@@ -1,0 +1,105 @@
+#
+# Copyright (c) 2014-2015, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of Intel Corporation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#
+# src/libpmemobj.map -- linker map file for libpmemobj
+#
+libpmemobj.so {
+	global:
+		pmemobj_check_version;
+		pmemobj_set_funcs;
+		pmemobj_errormsg;
+		pmemobj_create;
+		pmemobj_open;
+		pmemobj_close;
+		pmemobj_check;
+		pmemobj_mutex_zero;
+		pmemobj_mutex_lock;
+		pmemobj_mutex_trylock;
+		pmemobj_mutex_unlock;
+		pmemobj_rwlock_zero;
+		pmemobj_rwlock_rdlock;
+		pmemobj_rwlock_wrlock;
+		pmemobj_rwlock_timedrdlock;
+		pmemobj_rwlock_timedwrlock;
+		pmemobj_rwlock_tryrdlock;
+		pmemobj_rwlock_trywrlock;
+		pmemobj_rwlock_unlock;
+		pmemobj_cond_zero;
+		pmemobj_cond_broadcast;
+		pmemobj_cond_signal;
+		pmemobj_cond_timedwait;
+		pmemobj_cond_wait;
+		pmemobj_pool_by_oid;
+		pmemobj_pool_by_ptr;
+		pmemobj_direct;
+		pmemobj_alloc;
+		pmemobj_zalloc;
+		pmemobj_realloc;
+		pmemobj_zrealloc;
+		pmemobj_strdup;
+		pmemobj_free;
+		pmemobj_alloc_usable_size;
+		pmemobj_type_num;
+		pmemobj_root;
+		pmemobj_root_construct;
+		pmemobj_root_size;
+		pmemobj_first;
+		pmemobj_next;
+		pmemobj_list_insert;
+		pmemobj_list_insert_new;
+		pmemobj_list_remove;
+		pmemobj_list_move;
+		pmemobj_tx_begin;
+		pmemobj_tx_stage;
+		pmemobj_tx_abort;
+		pmemobj_tx_commit;
+		pmemobj_tx_end;
+		pmemobj_tx_process;
+		pmemobj_tx_add_range;
+		pmemobj_tx_add_range_direct;
+		pmemobj_tx_alloc;
+		pmemobj_tx_zalloc;
+		pmemobj_tx_realloc;
+		pmemobj_tx_zrealloc;
+		pmemobj_tx_strdup;
+		pmemobj_tx_free;
+		pmemobj_memcpy_persist;
+		pmemobj_memset_persist;
+		pmemobj_persist;
+		pmemobj_flush;
+		pmemobj_drain;
+		_pobj_cached_pool;
+		_pobj_cache_invalidate;
+		_pobj_debug_notice;
+	local:
+		*;
+};

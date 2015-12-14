@@ -1,0 +1,3 @@
+vmem_strdup/TEST0: START: vmem_strdup
+ ./vmem_strdup$(nW)
+vmem_strdup/TEST0: Done

@@ -33,7 +33,7 @@ template<> inline Value Value::Call<FUNC_DECODE>(const std::vector<Value>& argum
         Value defaultResult = arguments[size-1];
         // See the comment above about the reason for un-inlining, here.
         if ( defaultResult.m_sourceInlined ) {
-            defaultResult.AllocateObjectFromInlinedValue();
+            defaultResult.AllocateObjectFromInlinedValue(nullptr);
         }
         return defaultResult;
     }

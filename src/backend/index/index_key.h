@@ -402,15 +402,6 @@ class GenericKey {
     ::memcpy(data, tuple->GetData(), KeySize);
   }
 
-  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
-                           const catalog::Schema *key_schema) {
-    storage::Tuple key_tuple(key_schema);
-    key_tuple.MoveToTuple(reinterpret_cast<void *>(data));
-    for (int col_itr = 0; col_itr < key_schema->GetColumnCount(); col_itr++) {
-      key_tuple.SetValue(col_itr, tuple->GetValue(indices[col_itr]));
-    }
-  }
-
   const storage::Tuple GetTupleForComparison(
       const catalog::Schema *key_schema) {
     return storage::Tuple(key_schema, data);
