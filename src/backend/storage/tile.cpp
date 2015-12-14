@@ -21,7 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/storage_manager.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 
@@ -46,14 +46,13 @@ Tile::Tile(TileGroupHeader *tile_header,
   uninlined_data_size(0),
   column_header(NULL),
   column_header_size(INVALID_OID),
-  tile_group_header(tile_header),
-  ref_count(BASE_REF_COUNT){
+  tile_group_header(tile_header){
   assert(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::Backend::GetInstance().Allocate(tile_size);
+  data = (char *)storage::StorageManager::GetInstance().Allocate(tile_size, BACKEND_TYPE_VM);
   assert(data != NULL);
 
   // initialize it
@@ -65,7 +64,7 @@ Tile::Tile(TileGroupHeader *tile_header,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::Backend::GetInstance().Free(data);
+  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
@@ -86,49 +85,47 @@ Tile::~Tile() {
  * Insert tuple at slot
  * NOTE : No checks, must be at valid slot.
  */
-void Tile::InsertTuple(const oid_t tuple_slot_id, Tuple *tuple) {
+void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
+  assert(tuple_offset < GetAllocatedTupleCount());
+
   // Find slot location
-  char *location = tuple_slot_id * tuple_length + data;
+  char *location = tuple_offset * tuple_length + data;
 
+  // Copy over the tuple data into the tuple slot in the tile
   std::memcpy(location, tuple->tuple_data, tuple_length);
-}
-
-/**
- * Returns tuple present at slot
- * NOTE : No checks, must be at valid slot and must exist.
- */
-Tuple *Tile::GetTuple(const oid_t tuple_slot_id) {
-  storage::Tuple *tuple = new storage::Tuple(&schema, true);
-
-  tuple->Copy(GetTupleLocation(tuple_slot_id), pool);
-
-  return tuple;
 }
 
 /**
  * Returns value present at slot
  */
-Value Tile::GetValue(const oid_t tuple_slot_id, const oid_t column_id) {
-  assert(tuple_slot_id < GetAllocatedTupleCount());
+// column id is a 0-based column number
+Value Tile::GetValue(const oid_t tuple_offset,
+                     const oid_t column_id) {
+  assert(tuple_offset < GetAllocatedTupleCount());
   assert(column_id < schema.GetColumnCount());
 
   const ValueType column_type = schema.GetType(column_id);
 
-  const char *tuple_location = GetTupleLocation(tuple_slot_id);
+  const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
   return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
 }
 
-// Faster way to access value
-// By amortizing schema lookups
-Value Tile::GetValueFast(const oid_t tuple_slot_id,
+/*
+ * Faster way to get value
+ * By amortizing schema lookups
+ */
+// column offset is the actual offset of the column within the tuple slot
+Value Tile::GetValueFast(const oid_t tuple_offset,
                          const size_t column_offset,
                          const ValueType column_type,
                          const bool is_inlined) {
+  assert(tuple_offset < GetAllocatedTupleCount());
+  assert(column_offset < schema.GetLength());
 
-  const char *tuple_location = GetTupleLocation(tuple_slot_id);
+  const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
   return Value::InitFromTupleStorage(field_location, column_type, is_inlined);
@@ -136,19 +133,19 @@ Value Tile::GetValueFast(const oid_t tuple_slot_id,
 
 /**
  * Sets value at tuple slot.
- * TODO We might want to write an iterator class to amortize the schema
- * lookups when setting values of entire columns.
  */
-void Tile::SetValue(Value value, const oid_t tuple_slot_id,
+// column id is a 0-based column number
+void Tile::SetValue(const Value& value,
+                    const oid_t tuple_offset,
                     const oid_t column_id) {
-  assert(tuple_slot_id < num_tuple_slots);
+  assert(tuple_offset < num_tuple_slots);
+  assert(column_id < schema.GetColumnCount());
 
-  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
   size_t column_length = schema.GetAppropriateLength(column_id);
 
-  // TODO: Not sure about the argument
   const bool is_in_bytes = false;
   value.SerializeToTupleStorageAllocateForObjects(field_location,
                                                   is_inlined,
@@ -157,15 +154,22 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
                                                   pool);
 }
 
-void Tile::SetValueFast(Value value, const oid_t tuple_slot_id,
+/*
+ * Faster way to set value
+ * By amortizing schema lookups
+ */
+// column offset is the actual offset of the column within the tuple slot
+void Tile::SetValueFast(const Value& value,
+                        const oid_t tuple_offset,
                         const size_t column_offset,
                         const bool is_inlined,
                         const size_t column_length) {
+  assert(tuple_offset < num_tuple_slots);
+  assert(column_offset < schema.GetLength());
 
-  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + column_offset;
 
-  // TODO: Not sure about the argument
   const bool is_in_bytes = false;
   value.SerializeToTupleStorageAllocateForObjects(field_location,
                                                   is_inlined,
@@ -461,22 +465,6 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
     // TRACE("Loaded new tuple #%02d\n%s", tuple_itr,
     // temp_target1.debug(Name()).c_str());
   }
-}
-
-void Tile::IncrementRefCount() {
-  ++ref_count;
-}
-
-void Tile::DecrementRefCount() {
-  // DROP tile when ref count reaches 0
-  // this returns the value immediately preceding the assignment
-  if (ref_count.fetch_sub(1) == BASE_REF_COUNT) {
-    delete this;
-  }
-}
-
-size_t Tile::GetRefCount() const {
-  return ref_count;
 }
 
 // active tuple slots

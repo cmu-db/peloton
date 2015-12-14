@@ -1,0 +1,3 @@
+vmmalloc_init/TEST0: START: vmmalloc_init
+ ./vmmalloc_init$(nW)
+vmmalloc_init/TEST0: Done

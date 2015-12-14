@@ -25,21 +25,21 @@ namespace bridge {
 // Utils
 //===--------------------------------------------------------------------===//
 
-const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
-  ValueArray params;
+std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list) {
+  std::vector<Value> params;
   if (param_list != nullptr) {
-    params.reset(param_list->numParams);
+    params.resize(param_list->numParams);
     ParamExternData *postgres_param = param_list->params;
-    for (int i = 0; i < params.GetSize(); ++i, ++postgres_param) {
+    for (size_t i = 0; i < params.size(); ++i, ++postgres_param) {
       params[i] = TupleTransformer::GetValue(postgres_param->value,
                                              postgres_param->ptype);
     }
 
-    assert(params.GetSize() > 0);
+    assert(params.size() > 0);
   }
 
-  LOG_INFO("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
-  return params;
+  LOG_INFO("Built %lu params \n", params.size());
+  return std::move(params);
 }
 
 /**

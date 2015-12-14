@@ -1,0 +1,1 @@
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] movnt supported

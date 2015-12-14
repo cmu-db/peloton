@@ -57,7 +57,7 @@ public:
     }
 
   private:
-    int m_valueIdx;
+    size_t m_valueIdx;
 
     Value m_paramValue;
 };

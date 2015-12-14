@@ -1,0 +1,20 @@
+checking pool header
+incorrect pool header checksum
+pool_hdr.signature is not valid
+setting pool_hdr.signature to PMEMBLK
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+arena 0: BTT Info header checksum correct
+checking BTT map and flog
+arena 0: checking map and flog
+arena 0: map entry 1 duplicated at 1
+arena 0: invalid flog entry at 0
+arena 0: unmapped block 0
+arena 0: unmapped block $(*)
+arena 0: number of unmapped blocks: 2
+arena 0: number of invalid map entries: 1
+arena 0: number of invalid flog entries: 1
+arena 0: storing $(*) at $(*) entry
+arena 0: repairing flog at $(*) with free block entry $(*)
+$(*): repaired

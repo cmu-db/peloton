@@ -1,0 +1,43 @@
+log_basic/TEST1: START: log_basic
+ ./log_basic$(nW) $(nW)/testfile1 a n t w r t w
+append   str[0] 1st test string
+
+append   str[1] 2nd test string
+
+append   str[2] 3rd test string
+
+append   str[3] 4th test string
+
+append   str[4] 5th test string
+
+append   str[5] 6th test string
+
+usable size: 2088960
+tell 96
+1st test string
+2nd test string
+3rd test string
+4th test string
+5th test string
+6th test string
+
+walk all at once
+1st test string
+
+2nd test string
+
+3rd test string
+
+4th test string
+
+5th test string
+
+6th test string
+
+walk by 16
+rewind
+tell 0
+
+walk all at once
+walk by 16
+log_basic/TEST1: Done

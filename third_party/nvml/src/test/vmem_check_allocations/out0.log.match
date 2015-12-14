@@ -1,0 +1,3 @@
+vmem_check_allocations/TEST0: START: vmem_check_allocations
+ ./vmem_check_allocations$(nW)
+vmem_check_allocations/TEST0: Done

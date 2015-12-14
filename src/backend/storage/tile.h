@@ -63,7 +63,7 @@ class Tile {
    * Insert tuple at slot
    * NOTE : No checks, must be at valid slot.
    */
-  void InsertTuple(const oid_t tuple_slot_id, Tuple *tuple);
+  void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 
   // allocated tuple slots
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
@@ -76,27 +76,33 @@ class Tile {
   int GetColumnOffset(const std::string &name) const;
 
   /**
-   * Returns tuple present at slot
-   * NOTE : No checks, must be at valid slot and must exist.
+   * Returns value present at slot
    */
-  Tuple *GetTuple(const oid_t tuple_slot_id);
+  Value GetValue(const oid_t tuple_offset,
+                 const oid_t column_id);
+
+  /*
+   * Faster way to get value
+   * By amortizing schema lookups
+   */
+  Value GetValueFast(const oid_t tuple_offset,
+                     const size_t column_offset,
+                     const ValueType column_type,
+                     const bool is_inlined);
 
   /**
-   * Returns value present at slot
-   * NOTE : No checks, must be at valid slot and must exist.
+   * Sets value at tuple slot.
    */
-  Value GetValue(const oid_t tuple_slot_id, const oid_t column_id);
+  void SetValue(const Value& value,
+                const oid_t tuple_offset,
+                const oid_t column_id);
 
-  // Faster way to access value
-  // By amortizing schema lookups
-  Value GetValueFast(const oid_t tuple_slot_id, const size_t column_offset,
-                     const ValueType column_type, const bool is_inlined);
-
-  void SetValue(Value value, const oid_t tuple_slot_id, const oid_t column_id);
-
-  // Faster way to set values
-  // By amortizing schema lookups
-  void SetValueFast(Value value, const oid_t tuple_slot_id,
+  /*
+   * Faster way to set value
+   * By amortizing schema lookups
+   */
+  void SetValueFast(const Value& value,
+                    const oid_t tuple_offset,
                     const size_t column_offset,
                     const bool is_inlined,
                     const size_t column_length);
@@ -163,14 +169,7 @@ class Tile {
 
   VarlenPool *GetPool() { return (pool); }
 
-  char *GetTupleLocation(const oid_t tuple_slot_id) const;
-
-  // maintain reference counts for
-  void IncrementRefCount();
-
-  void DecrementRefCount();
-
-  size_t GetRefCount() const;
+  char *GetTupleLocation(const oid_t tuple_offset) const;
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -221,15 +220,12 @@ class Tile {
    */
   TileGroupHeader *tile_group_header;
 
-  // references
-  std::atomic<size_t> ref_count;
-
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
 // is valid.
-inline char *Tile::GetTupleLocation(const oid_t tuple_slot_id) const {
-  char *tuple_location = data + (tuple_slot_id * tuple_length);
+inline char *Tile::GetTupleLocation(const oid_t tuple_offset) const {
+  char *tuple_location = data + (tuple_offset * tuple_length);
 
   return tuple_location;
 }

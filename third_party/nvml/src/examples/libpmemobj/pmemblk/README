@@ -1,0 +1,27 @@
+Linux NVM Library
+
+This is examples/libpmemobj/pmemblk/README.
+
+This directory contains an example implementation of libpmemblk using
+libpmemobj. The implementation has exactly the same API as libpmemblk.
+
+To launch the example:
+	usage: obj_pmemblk [co] file blk_size [cmd[:blk_num[:data]]...]
+
+Where:
+    c - create file
+    o - open file
+
+The "cmd" arguments match the pmemblk functions:
+    w - write to a block
+    r - read a block
+    z - zero a block
+    n - write out number of available blocks
+
+This example demonstrates the usage of the very basics of the pmemobj library.
+That includes the pool management (open/create/close), type-safety macros,
+transactions, transactional allocations and synchronization.
+
+Please take note that this is only an example and does not implement full user
+input validation, so for example creating the same pool twice yields undefined
+behavior.

@@ -27,7 +27,7 @@ bool TransactionRecord::Serialize(CopySerializeOutput& output){
   output.WriteIntAt(start, header_length);
   
   message_length = output.Size();
-  message = (char*) malloc(message_length);
+  message = new char[message_length];
   memcpy(message, output.Data(), message_length);
 
   return status;

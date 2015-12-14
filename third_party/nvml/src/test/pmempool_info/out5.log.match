@@ -1,0 +1,81 @@
+POOL Header:
+00000000$(*)|PMEMLOG.$(*)|
+00000010$(*)|$(*)|
+00000020$(*)|$(*)|
+00000030$(*)|$(*)|
+*
+00000070$(*)|$(*)|
+00000080$(*)|$(*)|
+00000090$(*)|$(*)|
+*
+00000ff0$(*)|$(*)|
+------------------------------------------------------------------------------
+Signature                : PMEMLOG
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM LOG header:
+00001000$(*)|$(*)|
+00001010$(*)|$(*)|
+00001020$(*)|$(*)|
+00001030$(*)|$(*)|
+------------------------------------------------------------------------------
+Start offset             : $(*)
+Write offset             : $(*) [OK]
+End offset               : $(*)
+
+POOL Header:
+00000000$(*)|PMEMBLK.$(*)|
+00000010$(*)|$(*)|
+00000020$(*)|$(*)|
+00000030$(*)|$(*)|
+*
+00000070$(*)|$(*)|
+00000080$(*)|$(*)|
+00000090$(*)|$(*)|
+*
+00000ff0$(*)|$(*)|
+------------------------------------------------------------------------------
+Signature                : PMEMBLK
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM BLK Header:
+00001000$(*)|$(*)|
+00001010$(*)|$(*)|
+00001020$(*)|$(*)|
+00001030$(*)|$(*)|
+00001040$(*)|$(*)|
+------------------------------------------------------------------------------
+Block size               : $(*)
+Is zeroed                : $(*)
+
+<No BTT layout>

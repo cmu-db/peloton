@@ -1,0 +1,105 @@
+==$(N)== Memcheck, a memory error detector
+==$(N)== Copyright $(*)
+==$(N)== Using $(*)
+==$(N)== Command: $(*)
+==$(N)== Parent PID: $(N)
+==$(N)== 
+==$(N)== Conditional jump or move depends on uninitialised value(s)
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is $(N) bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Unaddressable byte(s) found during client check request
+==$(N)==    at 0x$(X): pmem_msync $(*)
+$(OPT)==$(N)==    by 0x$(X): obj_norep_persist $(*)
+$(OPT)==$(N)==    by 0x$(X): pmemobj_persist $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is 0 bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is not stack'd, malloc'd or (recently) free'd
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is not stack'd, malloc'd or (recently) free'd
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is $(N) bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Unaddressable byte(s) found during client check request
+==$(N)==    at 0x$(X): pmem_msync $(*)
+$(OPT)==$(N)==    by 0x$(X): obj_norep_persist $(*)
+$(OPT)==$(N)==    by 0x$(X): pmemobj_persist $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is 0 bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Invalid write of size 4
+==$(N)==    at 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is $(N) bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== Unaddressable byte(s) found during client check request
+==$(N)==    at 0x$(X): pmem_msync $(*)
+$(OPT)==$(N)==    by 0x$(X): obj_norep_persist $(*)
+$(OPT)==$(N)==    by 0x$(X): pmemobj_persist $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)==  Address 0x$(X) is 0 bytes inside a block of size $(N) free'd
+$(OPT)==$(N)==    $(S) 0x$(X): pfree $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): list_remove_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): obj_free $(*)
+$(OPT)==$(N)==    $(S) 0x$(X): pmemobj_free $(*)
+==$(N)==    by 0x$(X): test_everything (obj_memcheck.c:$(N))
+==$(N)==    by 0x$(X): main (obj_memcheck.c:$(N))
+==$(N)== 
+==$(N)== 
+==$(N)== HEAP SUMMARY:
+==$(N)==     in use at exit: 0 bytes in 0 blocks
+==$(N)==   total heap usage: $(*) allocs, $(*) frees, $(*) bytes allocated
+==$(N)== 
+==$(N)== All heap blocks were freed -- no leaks are possible
+==$(N)== 
+==$(N)== For counts of detected and suppressed errors, rerun with: -v
+==$(N)== Use --track-origins=yes to see where uninitialised values come from
+==$(N)== ERROR SUMMARY: 9 errors from 9 contexts (suppressed: $(N) from $(N))

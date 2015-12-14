@@ -1,0 +1,2 @@
+$(OPT)obj_sync/TEST5: pmemobj_cond_signal
+$(OPT)obj_sync/TEST5: pmemobj_cond_wait

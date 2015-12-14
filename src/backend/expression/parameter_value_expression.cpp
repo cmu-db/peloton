@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/logger.h"
-#include "backend/common/value_vector.h"
 #include "backend/expression/parameter_value_expression.h"
 #include "backend/executor/executor_context.h"
 
@@ -29,7 +28,7 @@ namespace expression {
                                             __attribute__((unused)) const AbstractTuple *tuple2,
                                             executor::ExecutorContext *context) const{
       auto params = context->GetParams();
-      assert(m_valueIdx < params.GetSize());
+      assert(m_valueIdx < params.size());
 
       return params[m_valueIdx];
     }

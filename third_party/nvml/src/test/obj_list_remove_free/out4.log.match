@@ -1,0 +1,67 @@
+obj_list_remove_free/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n n n:1:0 n:1:0 n:1:0 P:1 R:1 P:2 R:2 f:2:1:2 P:1 R:1 P:2 R:2 f:2:-1:2 P:1 R:1 P:2 R:2 f:2:0:2 P:1 R:1 P:2 R:2
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+pmalloc(id = 3)
+pmalloc(id = 4)
+oob list:
+id = 0
+id = 1
+id = 2
+id = 3
+id = 4
+oob list reverse:
+id = 4
+id = 3
+id = 2
+id = 1
+id = 0
+list:
+id = 4
+id = 3
+id = 2
+list reverse:
+id = 2
+id = 3
+id = 4
+pfree(id = 3)
+oob list:
+id = 0
+id = 1
+id = 2
+id = 4
+oob list reverse:
+id = 4
+id = 2
+id = 1
+id = 0
+list:
+id = 4
+id = 2
+list reverse:
+id = 2
+id = 4
+pfree(id = 2)
+oob list:
+id = 0
+id = 1
+id = 4
+oob list reverse:
+id = 4
+id = 1
+id = 0
+list:
+id = 4
+list reverse:
+id = 4
+pfree(id = 4)
+oob list:
+id = 0
+id = 1
+oob list reverse:
+id = 1
+id = 0
+list:
+list reverse:
+obj_list_remove_free/TEST4: Done

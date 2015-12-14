@@ -56,7 +56,7 @@ bool TupleRecord::Serialize(CopySerializeOutput& output){
   }
 
   message_length = output.Size();
-  message = (char*)malloc(message_length);
+  message = new char[message_length];
   memcpy( message, output.Data(), message_length);
 
   return status;

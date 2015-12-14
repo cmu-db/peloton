@@ -45,7 +45,7 @@ class Varlen {
   /// varlen must have been allocated and returned by a call to
   /// Varlen::create() and must not have been created in a
   /// temporary Pool
-  static void Destroy(Varlen *varlen);
+  ~Varlen();
 
   /**
    * @brief Clone (deep copy) the source Varlen in the provided data pool.
@@ -58,7 +58,6 @@ class Varlen {
  private:
   Varlen(std::size_t size);
   Varlen(std::size_t size, VarlenPool *data_pool);
-  ~Varlen();
 
   /// Callback used via the back-pointer in order to update the
   /// pointer to the memory backing this string reference

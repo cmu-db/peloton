@@ -16,7 +16,6 @@
 #include "backend/executor/executor_context.h"
 #include "backend/common/logger.h"
 #include "backend/storage/data_table.h"
-#include "backend/storage/backend.h"
 
 namespace peloton {
 namespace executor {
@@ -60,17 +59,12 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 
 /* Handle distinct */
 Agg::~Agg() {
-  if (is_distinct_) {
-    for (auto val : distinct_set_) {
-      val.Free();
-    }
-  }
 }
 
 void Agg::Advance(const Value val) {
   if (is_distinct_) {
     // Insert a deep copy
-    distinct_set_.insert(ValueFactory::Clone(val));
+    distinct_set_.insert(ValueFactory::Clone(val, nullptr));
   } else {
     DAdvance(val);
   }
@@ -174,11 +168,9 @@ HashAggregator::~HashAggregator() {
     }
     delete[] entry.second->aggregates;
 
-    for (auto &v : entry.second->first_tuple_values) {
-      v.Free();
-    }
     delete entry.second;
   }
+
 }
 
 bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
@@ -186,11 +178,12 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   AggregateList *aggregate_list;
 
   // Configure a group-by-key and search for the required group.
+  group_by_key_values.clear();
   for (oid_t column_itr = 0; column_itr < node->GetGroupbyColIds().size();
       column_itr++) {
     Value cur_tuple_val = cur_tuple->GetValue(
         node->GetGroupbyColIds()[column_itr]);
-    group_by_key_values[column_itr] = cur_tuple_val;
+    group_by_key_values.push_back(cur_tuple_val);
   }
 
   auto map_itr = aggregates_map.find(group_by_key_values);
@@ -204,7 +197,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     // Make a deep copy of the first tuple we meet
     for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
       aggregate_list->first_tuple_values.push_back(
-          ValueFactory::Clone(cur_tuple->GetValue(col_id)));
+          ValueFactory::Clone(cur_tuple->GetValue(col_id), nullptr));
     };
 
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
@@ -278,10 +271,6 @@ SortedAggregator::~SortedAggregator() {
   }
   delete[] aggregates;
 
-  // Clean current group keys
-  for(auto value : delegate_tuple_values_){
-    value.Free();
-  }
 }
 
 bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
@@ -331,14 +320,11 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     }
 
     // Update delegate tuple values
-    for(auto value : delegate_tuple_values_){
-      value.Free();
-    }
     delegate_tuple_values_.clear();
 
     for(oid_t col_id = 0; col_id < num_input_columns_; col_id++){
       Value val = next_tuple->GetValue(col_id);
-      delegate_tuple_values_.push_back(ValueFactory::Clone(val));
+      delegate_tuple_values_.push_back(ValueFactory::Clone(val, nullptr));
     }
   }
 
