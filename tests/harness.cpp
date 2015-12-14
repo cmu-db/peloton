@@ -17,11 +17,22 @@
 namespace peloton {
 namespace test {
 
-std::atomic<txn_id_t> txn_id_counter(INVALID_TXN_ID);
-std::atomic<cid_t> cid_counter(INVALID_CID);
-std::atomic<oid_t> tile_group_id_counter(START_OID);
+/**
+ * @brief Return the singleton testing harness instance
+ */
+TestingHarness& TestingHarness::GetInstance(){
+  static TestingHarness testing_harness;
+  return testing_harness;
+}
 
-uint64_t GetThreadId() {
+TestingHarness::TestingHarness()
+: txn_id_counter(INVALID_TXN_ID),
+  cid_counter(INVALID_CID),
+  tile_group_id_counter(START_OID),
+  pool_(new VarlenPool()){
+}
+
+uint64_t TestingHarness::GetThreadId() {
   std::hash<std::thread::id> hash_fn;
 
   uint64_t id = hash_fn(std::this_thread::get_id());
@@ -30,15 +41,13 @@ uint64_t GetThreadId() {
   return id;
 }
 
-static std::unique_ptr<VarlenPool> pool_;
-
-VarlenPool *GetTestingPool(){
-  // construct pool if needed
-  if(pool_.get() == nullptr)
-    pool_.reset(new VarlenPool());
-
+VarlenPool *TestingHarness::GetTestingPool(){
   // return pool
   return pool_.get();
+}
+
+oid_t TestingHarness::GetNextTileGroupId() {
+  return ++tile_group_id_counter;
 }
 
 }  // End test namespace

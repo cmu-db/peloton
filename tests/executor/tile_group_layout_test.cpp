@@ -125,7 +125,7 @@ void ExecuteTileGroupTest() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  auto testing_pool = GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int rowid = 0; rowid < tuple_count; rowid++) {
     int populate_value = rowid;

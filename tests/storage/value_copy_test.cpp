@@ -37,7 +37,7 @@ TEST(ValueCopyTests, VarcharTest) {
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
 
-  auto pool = GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   ValueFactory::GetStringValue("hello hello world", pool);
 

@@ -19,7 +19,7 @@ void *VarlenPool::Allocate(std::size_t size) {
   void *retval = nullptr;
 
   // Protect using pool lock
-  // TODO: Can be make locking more fine-grained
+  // TODO: Can make locking more fine-grained
   {
     std::lock_guard<std::mutex> pool_lock(pool_mutex);
 
