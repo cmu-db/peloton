@@ -1,0 +1,2 @@
+g++ -L /home/ghatage/peloton/build/src/ abstract_message.cpp nanomsg.cpp pushpull_test.cpp -lnanomsg -o pushpull
+./pushpull
