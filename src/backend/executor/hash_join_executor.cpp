@@ -42,8 +42,6 @@ bool HashJoinExecutor::DInit() {
 
   hash_executor_ = reinterpret_cast<HashExecutor*>(children_[1]);
 
-
-
   return true;
 }
 
@@ -95,7 +93,7 @@ bool HashJoinExecutor::DExecute() {
     col.position_list_idx += left_tile->GetPositionLists().size();
   }
 
-  /* build the schema given the projection */
+  // Build the schema given the projection
   auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
 
   // Set the output logical tile schema
@@ -103,43 +101,35 @@ bool HashJoinExecutor::DExecute() {
 
   // Get position list from two logical tiles
   auto &left_tile_position_lists = left_tile->GetPositionLists();
+  auto &right_tile_position_lists = right_tile->GetPositionLists();
 
-  // Compute output tile column count
+  // Compute the output logical tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
-  size_t right_tile_column_count = right_tile->GetPositionLists().size();
+  size_t right_tile_column_count = right_tile_position_lists.size();
   size_t output_tile_column_count = left_tile_column_count
       + right_tile_column_count;
 
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
 
-  // Compute output tile row count
-  //size_t left_tile_row_count = left_tile_position_lists[0].size();
-  //size_t right_tile_row_count = right_tile_position_lists[0].size();
-
   // Construct position lists for output tile
   std::vector<std::vector<oid_t> > position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count;
-      column_itr++)
+  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
-  //LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
-  //          right_tile_column_count);
-  //LOG_INFO("left col count: %lu, right col count: %lu",
-  //          left_tile.get()->GetColumnCount(),
-  //          right_tile.get()->GetColumnCount());
-  //LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
-  //          right_tile_row_count);
-
+  // Get the hash table from the hash executor
   auto &htable = hash_executor_->GetHashTable();
   auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
 
+  // Go over the left tile
   for (auto left_tile_itr : *left_tile) {
      const expression::ContainerTuple<executor::LogicalTile> left_tuple(
-        left_tile, left_tile_itr, &hashed_col_ids);
+         left_tile, left_tile_itr, &hashed_col_ids);
 
+     // Find matching tuples in the hash table built on top of the right table
      auto &set = htable.at(left_tuple);
 
+     // Go over the matching right tuples
      for (auto &location : set) {
        auto &right_tile_position_lists = right_tiles_[location.first]->GetPositionLists();
        for (size_t output_tile_column_itr = 0;
@@ -149,18 +139,18 @@ bool HashJoinExecutor::DExecute() {
               left_tile_position_lists[output_tile_column_itr][left_tile_itr]);
         }
 
-        // Then, copy the elements in left logical tile's tuple
+        // Then, copy the elements in the left logical tile's tuple
         for (size_t output_tile_column_itr = 0;
             output_tile_column_itr < right_tile_column_count;
             output_tile_column_itr++) {
+
           position_lists[left_tile_column_count + output_tile_column_itr]
-              .push_back(
-              right_tile_position_lists[output_tile_column_itr][location.second]);
+                         .push_back(right_tile_position_lists[output_tile_column_itr][location.second]);
         }
      }
   }
 
-  // Check if we have any matching tuples.
+  // Build output logical tile if we have any matching tuples.
   if (position_lists[0].size() > 0) {
     output_tile->SetPositionListsAndVisibility(std::move(position_lists));
     SetOutput(output_tile.release());
