@@ -27,8 +27,8 @@ namespace executor {
  * @brief Constructor
  */
 HashExecutor::HashExecutor(const planner::AbstractPlan *node,
-                                     ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+                           ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.
@@ -36,6 +36,11 @@ HashExecutor::HashExecutor(const planner::AbstractPlan *node,
  */
 bool HashExecutor::DInit() {
   assert(children_.size() == 1);
+
+  // Initialize executor state
+  done_ = false;
+  result_itr = 0;
+
   return true;
 }
 
@@ -45,37 +50,49 @@ bool HashExecutor::DExecute() {
   if (!done_) {
     const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
 
+    // First, get all the input logical tiles
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
 
-    if (child_tiles_.size() == 0) return false;
+    if (child_tiles_.size() == 0)
+      return false;
 
-
-    /* HashKeys should be a vector of TupleValue expr
+    /* *
+     * HashKeys is a vector of TupleValue expr
      * from which we construct a vector of column ids that represent the
      * attributes of the underlying table.
-     * The hash table builds on these attributes */
+     * The hash table is built on top of these hash key attributes
+     * */
     auto &hashkeys = node.GetHashKeys();
+
+    // Construct a logical tile
     for (auto &hashkey : hashkeys) {
       assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
       auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
-      //assert(tuple_value->GetTupleIdx() == 0);
       column_ids_.push_back(tuple_value->GetColumnId());
     }
 
-    for (size_t i = 0; i < child_tiles_.size(); i++) {
-      auto tile = child_tiles_[i].get();
+    // Construct the hash table by going over each child logical tile and hashing
+    for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size(); child_tile_itr++) {
+      auto tile = child_tiles_[child_tile_itr].get();
+
+      // Go over all tuples in the logical tile
       for (oid_t tuple_id : *tile) {
-        htable_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(i, tuple_id));
+        // Key : container tuple with a subset of tuple attributes
+        // Value : < child_tile offset, tuple offset >
+        htable_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(child_tile_itr, tuple_id));
       }
+
     }
 
     done_ = true;
   }
 
+  // Print hash table for debugging
   DumpHashTable();
 
+  // Return logical tiles one at a time
   while (result_itr < child_tiles_.size()) {
     if (child_tiles_[result_itr]->GetTupleCount() == 0) {
       result_itr++;
@@ -85,12 +102,15 @@ bool HashExecutor::DExecute() {
       return true;
     }
   }
+
   return false;
 }
 
 
 void HashExecutor::DumpHashTable() const {
   assert(done_);
+
+  // Go over hash table
   for (auto &kv : htable_) {
     LOG_INFO("Key %lu, Num of tuple: %lu", kv.first.HashCode(), kv.second.size());
   }
