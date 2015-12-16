@@ -90,32 +90,23 @@ bool MergeJoinExecutor::DExecute() {
   // Build output logical tile
   auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
-  // Get position list from two logical tiles
-  auto left_tile_position_lists = left_tile->GetPositionLists();
-  auto right_tile_position_lists = right_tile->GetPositionLists();
+  // Build position lists
+  auto position_lists = BuildPostitionLists(left_tile, right_tile);
 
-  // Compute output tile column count
+  // Get position list from two logical tiles
+  auto &left_tile_position_lists = left_tile->GetPositionLists();
+  auto &right_tile_position_lists = right_tile->GetPositionLists();
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count = left_tile_column_count
-      + right_tile_column_count;
 
-  assert(left_tile_column_count > 0);
-  assert(right_tile_column_count > 0);
-
-  // Construct position lists for output tile
-  std::vector<std::vector<oid_t> > position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count;
-      column_itr++)
-    position_lists.push_back(std::vector<oid_t>());
-
+  // TODO: What are these ?
   size_t left_start_row = 0;
   size_t right_start_row = 0;
 
   size_t left_end_row = Advance(left_tile, left_start_row, true);
   size_t right_end_row = Advance(right_tile, right_start_row, false);
 
-  while (left_end_row > left_start_row && right_end_row > right_start_row) {
+  while ((left_end_row > left_start_row) && (right_end_row > right_start_row)) {
 
     expression::ContainerTuple<executor::LogicalTile> left_tuple(
         left_tile, left_start_row);
@@ -250,7 +241,7 @@ bool is_left) {
     bool diff = false;
 
     for (auto &clause : *join_clauses_) {
-      // Go thru each join clauses
+      // Go through each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
       peloton::Value this_value = expr->Evaluate(&this_tuple, &this_tuple,
                                                  nullptr);
