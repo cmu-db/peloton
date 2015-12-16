@@ -30,6 +30,7 @@
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "postgres/include/executor/executor.h" //added by michael
+#include "backend/expression/comparison_expression.h" //added by michael
 
 namespace peloton {
 namespace bridge {
@@ -68,7 +69,23 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
       break;
 
     case T_ScalarArrayOpExpr:
-      peloton_expr = TransformScalarArrayOp(expr_state);
+      {
+    	  peloton_expr = TransformScalarArrayOp(expr_state);
+          // by michael for test
+          //expression::ComparisonExpression<CmpIn>* ce = expression::ComparisonExpression<CmpIn>*  peloton_expr;
+          const expression::AbstractExpression* rc = peloton_expr->GetRight();
+       	  expression::VectorExpression* ve = (expression::VectorExpression*) rc;
+       	  std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
+       	  size_t i = vec_expr.size();
+       	  for (i = 0; i < vec_expr.size(); i++) {
+       		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
+       		  int value_type = vec_expr[i]->GetValueType();
+       		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
+       		  Value val = pcs->GetValue();
+       		  std::string str = val.Debug();
+       		  std::cout << str << ev_type << value_type;
+       	  }
+      }
       break;
 
     case T_Var:
@@ -129,6 +146,23 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
       ;
   }
 
+  // by michael for test
+  ExpressionType t = peloton_expr->GetExpressionType();
+  if (t == EXPRESSION_TYPE_VALUE_VECTOR) {
+	  expression::VectorExpression* ve = (expression::VectorExpression*) peloton_expr;
+	  const std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
+	  size_t i = vec_expr.size();
+	  for (i = 0; i < vec_expr.size(); i++) {
+		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
+		  int value_type = vec_expr[i]->GetValueType();
+		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
+		  Value val = pcs->GetValue();
+		  std::string str = val.Debug();
+		  std::cout << str << ev_type << value_type;
+	  }
+  }
+
+  //
   return peloton_expr;
 }
 
@@ -193,43 +227,23 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 
   // A Const Expr has no children.
   // modified by michael for IN operator
-  if (false) {
-  //if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY) {
-	  std::vector<expression::AbstractExpression *> vecExpr;
+  //if (false) {
+  if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_INT2_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_INT4_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_FLOADT4_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY ) {
+	  std::vector<expression::AbstractExpression *>* vecExpr = new std::vector<expression::AbstractExpression *>;
 	  Value tmpVal;
 	  int nElements = value.ArrayLength();
 	  for (int i = 0; i < nElements; i++) {
 		  tmpVal = value.ItemAtIndex(i);
 		  std::string str = tmpVal.Debug();
 		  expression::AbstractExpression* ce = expression::ConstantValueFactory(tmpVal);
-		  vecExpr.push_back(ce);
+		  vecExpr->push_back(ce);
 	  }
-	  //for test
-	  for (size_t i = 0; i < vecExpr.size(); i++) {
-		  ExpressionType ev_type = vecExpr[i]->GetExpressionType();
-		  int value_type = vecExpr[i]->GetValueType();
-		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vecExpr[i];
-		  Value val = pcs->GetValue();
-		  std::string str = val.Debug();
-		  std::cout << str << ev_type << value_type;
-	  }
-	  //
-	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, (const std::vector<expression::AbstractExpression*>*) &vecExpr);
-	  //for test
-	  ExpressionType eType = rv->GetExpressionType();
-	  expression::VectorExpression* ve = (expression::VectorExpression*) rv;
-	  std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
-	  for (size_t i = 0; i < vec_expr.size(); i++) {
-		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
-		  int value_type = vec_expr[i]->GetValueType();
-		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
-		  Value val = pcs->GetValue();
-		  std::string str = val.Debug();
-		  std::cout << str << ev_type << value_type;
-	  }
-	  std::cout << eType;
-	  //
 	  value.Free();
+	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
 	  return rv;
 	  //Free val and vector here?
   } else {
@@ -238,36 +252,6 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 	  return rv;
   }
 
-}
-
-expression::AbstractExpression* ExprTransformer::TransformScalar(
-    const Expr* es) {
-  auto const_expr = reinterpret_cast<const Const*>(es);
-
-  Value value;
-
-  if (const_expr->constisnull) {  // Constant is null
-    value = ValueFactory::GetNullValue();
-  } else if (const_expr->constbyval) {  // non null
-    value = TupleTransformer::GetValue(const_expr->constvalue,
-                                       const_expr->consttype);
-  } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
-    value = TupleTransformer::GetValue(const_expr->constvalue,
-                                       const_expr->consttype);
-  } else {
-    LOG_ERROR(
-        "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
-        "%lu \n",
-        const_expr->constlen, const_expr->constbyval,
-        (long unsigned )const_expr->constvalue);
-  }
-
-  // A Const Expr has no children.
-  //auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, const std::vector<AbstractExpression*>* arguments);
-  auto rv = expression::ConstantValueFactory(value);
-  value.Free();
-  return rv;
 }
 
 expression::AbstractExpression* ExprTransformer::TransformOp(
@@ -315,8 +299,21 @@ expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
      ic++;
    }
 
-   //return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
-   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc, rc);
+   //by michael for test
+	  expression::VectorExpression* ve = (expression::VectorExpression*) rc;
+	  std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
+	  size_t i = vec_expr.size();
+	  for (i = 0; i < vec_expr.size(); i++) {
+		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
+		  int value_type = vec_expr[i]->GetValueType();
+		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
+		  Value val = pcs->GetValue();
+		  std::string str = val.Debug();
+		  std::cout << str << ev_type << value_type;
+	  }
+
+   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
+   //return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc, rc);
 }
 
 

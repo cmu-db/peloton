@@ -31,6 +31,8 @@
 #include "backend/expression/cast_expression.h"
 #include "backend/expression/tuple_address_expression.h"
 
+#include "backend/expression/vector_expression.h"
+
 #include <json_spirit.h>
 
 namespace peloton {
@@ -104,30 +106,66 @@ AbstractExpression *ComparisonFactory(ExpressionType c, AbstractExpression *lc,
                                       AbstractExpression *rc) {
   assert(lc);
 
-  // more specialization available?
-  ConstantValueExpression *l_const =
-      dynamic_cast<ConstantValueExpression *>(lc);
-
-  ConstantValueExpression *r_const =
-      dynamic_cast<ConstantValueExpression *>(rc);
-
   TupleValueExpression *l_tuple = dynamic_cast<TupleValueExpression *>(lc);
 
   TupleValueExpression *r_tuple = dynamic_cast<TupleValueExpression *>(rc);
 
-  // this will inline getValue(), hooray!
-  if (l_const != nullptr && r_const != nullptr) {  // CONST-CONST can it happen?
-    return GetMoreSpecialized<ConstantValueExpression, ConstantValueExpression>(
-        c, l_const, r_const);
-  } else if (l_const != nullptr && r_tuple != nullptr) {  // CONST-TUPLE
-    return GetMoreSpecialized<ConstantValueExpression, TupleValueExpression>(
-        c, l_const, r_tuple);
-  } else if (l_tuple != nullptr && r_const != nullptr) {  // TUPLE-CONST
-    return GetMoreSpecialized<TupleValueExpression, ConstantValueExpression>(
-        c, l_tuple, r_const);
-  } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
-    return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
-        c, l_tuple, r_tuple);
+  // more specialization available?
+  ConstantValueExpression *l_const =
+      dynamic_cast<ConstantValueExpression *>(lc);
+
+  switch (c) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+    {
+    	ConstantValueExpression *r_const = dynamic_cast<ConstantValueExpression *>(rc);
+
+    	  // this will inline getValue(), hooray!
+    	  if (l_const != nullptr && r_const != nullptr) {  // CONST-CONST can it happen?
+    	    return GetMoreSpecialized<ConstantValueExpression, ConstantValueExpression>(
+    	        c, l_const, r_const);
+    	  } else if (l_const != nullptr && r_tuple != nullptr) {  // CONST-TUPLE
+    	    return GetMoreSpecialized<ConstantValueExpression, TupleValueExpression>(
+    	        c, l_const, r_tuple);
+    	  } else if (l_tuple != nullptr && r_const != nullptr) {  // TUPLE-CONST
+    	    return GetMoreSpecialized<TupleValueExpression, ConstantValueExpression>(
+    	        c, l_tuple, r_const);
+    	  } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
+    	    return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
+    	        c, l_tuple, r_tuple);
+    	  }
+    }
+    	break;
+
+    case EXPRESSION_TYPE_COMPARE_IN:
+    {
+    	VectorExpression *r_vector = dynamic_cast<VectorExpression *>(rc);
+
+  	  // this will inline getValue(), hooray!
+  	  if (l_const != nullptr && r_vector != nullptr) {  // CONST-CONST can it happen?
+  	    return GetMoreSpecialized<ConstantValueExpression, VectorExpression>(
+  	        c, l_const, r_vector);
+  	  } else if (l_const != nullptr && r_tuple != nullptr) {  // CONST-TUPLE
+  	    return GetMoreSpecialized<ConstantValueExpression, TupleValueExpression>(
+  	        c, l_const, r_tuple);
+  	  } else if (l_tuple != nullptr && r_vector != nullptr) {  // TUPLE-CONST
+  	    return GetMoreSpecialized<TupleValueExpression, VectorExpression>(
+  	        c, l_tuple, r_vector);
+  	  } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
+  	    return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
+  	        c, l_tuple, r_tuple);
+  	  }
+    }
+    	break;
+
+    default:
+      LOG_ERROR(
+          "This Peloton ExpressionType is in our map but not transformed here "
+          ": %u", c);
   }
 
   // okay, still getTypedValue is beneficial.
@@ -450,6 +488,13 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   LOG_TRACE("Created " << ExpressionTypeToString(et)
                        << " expression  : " << ret);
   return ret;
+}
+
+AbstractExpression*
+VectorFactory(ValueType elementType, const std::vector<AbstractExpression*>* arguments)
+{
+    assert(arguments);
+    return new VectorExpression(elementType, *arguments);
 }
 
 }  // End expression namespace
