@@ -14,6 +14,8 @@
 #include "backend/expression/expression_util.h"
 #include "backend/common/value_factory.h"
 
+#include "backend/expression/constant_value_expression.h" // added by michael for test
+
 namespace peloton {
 namespace expression {
 
@@ -38,6 +40,7 @@ public:
             delete m_args[i];
         }
         delete &m_args;
+
         m_inList.Free();
     }
 
@@ -58,6 +61,19 @@ public:
         //TODO: Could make this vector a member, if the memory management implications
         // (of the Value internal state) were clear --Lis there a penalty for longer-lived
         // Values that outweighs the current per-Evaluate allocation penalty?
+
+        //for test michael
+  	  std::vector<expression::AbstractExpression*> vec_expr = this->GetArgs();
+  	  size_t i = vec_expr.size();
+  	  for (i = 0; i < vec_expr.size(); i++) {
+  		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
+  		  int value_type = vec_expr[i]->GetValueType();
+  		  ConstantValueExpression* pcs = (ConstantValueExpression*) vec_expr[i];
+  		  Value val = pcs->GetValue();
+  		  std::string str = val.Debug();
+  		  std::cout << str << ev_type << value_type;
+  	  }
+        //end test
         std::vector<Value> nValues(m_args.size());
         for (size_t i = 0; i < m_args.size(); ++i) {
             nValues[i] = m_args[i]->Evaluate(tuple1, tuple2, context);
@@ -80,20 +96,13 @@ public:
 //    }
 
     // for test
-    std::vector<AbstractExpression *> GetArgs() {
+    std::vector<AbstractExpression *> GetArgs() const {
     	return m_args;
     }
 private:
     const std::vector<AbstractExpression *>& m_args;
     Value m_inList;
 };
-
-AbstractExpression*
-VectorFactory(ValueType elementType, const std::vector<AbstractExpression*>* arguments)
-{
-    assert(arguments);
-    return new VectorExpression(elementType, *arguments);
-}
 
 }  // End expression namespace
 }  // End peloton namespace
