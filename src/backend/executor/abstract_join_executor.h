@@ -53,10 +53,16 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   bool DExecute() = 0;
 
- protected:
   //===--------------------------------------------------------------------===//
-  // Helper
+  // Helper functions
   //===--------------------------------------------------------------------===//
+
+  // Build a join output logical tile
+  std::unique_ptr<LogicalTile> BuildOutputLogicalTile(
+      LogicalTile *left_tile,
+      LogicalTile *right_tile);
+
+  // Build the schema of the joined tile based on the projection info
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
       std::vector<LogicalTile::ColumnInfo> &left,
       std::vector<LogicalTile::ColumnInfo> &right);
