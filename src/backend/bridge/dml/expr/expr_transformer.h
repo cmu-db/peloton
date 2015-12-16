@@ -54,8 +54,6 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
 
-  static expression::AbstractExpression *TransformScalar(const Expr *es);
-
   static expression::AbstractExpression *TransformConst(const Expr *es);
   static expression::AbstractExpression *TransformVar(const Expr *es);
   static expression::AbstractExpression *TransformBool(const Expr *es);

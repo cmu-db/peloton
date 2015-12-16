@@ -1005,7 +1005,7 @@ class Value {
                                     const ValueType newType)
   {
     char msg[1024];
-    snprintf(msg, 1024, "Type %s can't be cast as %s",
+    snprintf(msg, 1024, "Type %s can't be cast as %s...",
              ValueTypeToString(origType).c_str(),
              ValueTypeToString(newType).c_str());
     throw TypeMismatchException(msg, origType, newType);

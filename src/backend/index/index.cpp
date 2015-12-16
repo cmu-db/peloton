@@ -48,13 +48,24 @@ bool Index::Compare(const AbstractTuple &index_key,
     const Value &rhs = values[key_column_itr];
     const ExpressionType expr_type = expr_types[key_column_itr];
 
-    diff = lhs.Compare(rhs);
+    // modified by michael for IN operator
+    if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+    	bool bret = lhs.InList(rhs);
+    	if (bret == true) {
+    		diff = VALUE_COMPARE_EQUAL;
+    	} else {
+    		diff = VALUE_COMPARE_NO_EQUAL;
+    	}
+    } else {
+        diff = lhs.Compare(rhs);
+    }
 
     if (diff == VALUE_COMPARE_EQUAL) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
         case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_IN: // added by michael for IN operator
           continue;
 
         case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -76,6 +87,7 @@ bool Index::Compare(const AbstractTuple &index_key,
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
         case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_IN:
           return false;
 
         default:
@@ -92,13 +104,16 @@ bool Index::Compare(const AbstractTuple &index_key,
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHAN:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_IN:
           return false;
 
         default:
           throw IndexException("Unsupported expression type : " +
                                std::to_string(expr_type));
       }
-    }
+    } else if (diff == VALUE_COMPARE_NO_EQUAL) { // problems here?michael when there are multiple conditions with OR in the query
+  	  return false;
+    } // end VALUE_COMPARE_NO_EQUAL
   }
 
   return true;
