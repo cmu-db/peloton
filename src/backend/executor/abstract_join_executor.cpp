@@ -17,7 +17,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/abstract_join_executor.h"
 
-#include "../planner/abstract_join_plan.h"
+#include "backend/planner/abstract_join_plan.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
 
@@ -82,6 +82,33 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
   }
   return schema;
 }
+
+std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
+    LogicalTile *left_tile,
+    LogicalTile *right_tile) {
+  // Check the input logical tiles.
+  assert(left_tile != nullptr);
+  assert(right_tile != nullptr);
+
+  // Construct output logical tile.
+  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
+
+  auto left_tile_schema = left_tile->GetSchema();
+  auto right_tile_schema = right_tile->GetSchema();
+
+  for (auto &col : right_tile_schema) {
+    col.position_list_idx += left_tile->GetPositionLists().size();
+  }
+
+  /* build the schema given the projection */
+  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
+
+  // Set the output logical tile schema
+  output_tile->SetSchema(std::move(output_tile_schema));
+
+  return output_tile;
+}
+
 
 }  // namespace executor
 }  // namespace peloton
