@@ -118,39 +118,14 @@ bool NestedLoopJoinExecutor::DExecute() {
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
-    // Now, let's compute the position lists for the output tile
-    // Cartesian product
+    // Build position lists
+    auto position_lists = BuildPostitionLists(left_tile, right_tile);
 
-    // Add everything from two logical tiles
-    auto left_tile_position_lists = left_tile->GetPositionLists();
-    auto right_tile_position_lists = right_tile->GetPositionLists();
-
-    // Compute output tile column count
+    // Get position list from two logical tiles
+    auto &left_tile_position_lists = left_tile->GetPositionLists();
+    auto &right_tile_position_lists = right_tile->GetPositionLists();
     size_t left_tile_column_count = left_tile_position_lists.size();
     size_t right_tile_column_count = right_tile_position_lists.size();
-    size_t output_tile_column_count = left_tile_column_count
-        + right_tile_column_count;
-
-    assert(left_tile_column_count > 0);
-    assert(right_tile_column_count > 0);
-
-    // Construct position lists for output tile
-    // TODO: We don't have to copy position lists for each column,
-    // as there are likely duplications of them.
-    // But must pay attention to the output schema (see how it is constructed!)
-    std::vector<std::vector<oid_t>> position_lists;
-    for (size_t column_itr = 0; column_itr < output_tile_column_count;
-        column_itr++)
-      position_lists.push_back(std::vector<oid_t>());
-
-    LOG_TRACE("left col count: %lu, right col count: %lu",
-              left_tile_column_count, right_tile_column_count);
-    LOG_TRACE("left col count: %lu, right col count: %lu",
-              left_tile->GetColumnCount(), right_tile->GetColumnCount());
-    LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
-              right_tile_row_count);
-
-    unsigned int removed = 0;
 
     // Go over every pair of tuples in left and right logical tiles
 
@@ -184,7 +159,6 @@ bool NestedLoopJoinExecutor::DExecute() {
           // Join predicate is false. Skip pair and continue.
           if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
               .IsFalse()) {
-            removed++;
             continue;
           }
         }
@@ -263,8 +237,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         }
       }
     }
-
-    LOG_INFO("Predicate removed %d rows", removed);
 
     // Check if we have any matching tuples.
     if (position_lists[0].size() > 0) {
