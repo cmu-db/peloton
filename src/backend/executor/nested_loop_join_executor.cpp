@@ -15,7 +15,6 @@
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
-#include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/nested_loop_join_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
@@ -116,27 +115,10 @@ bool NestedLoopJoinExecutor::DExecute() {
     left_tile = left_result_tiles_.back();
     right_tile = right_result_tiles_[right_result_itr_];
 
-    // Check the input logical tiles.
-    assert(left_tile != nullptr);
-    assert(right_tile != nullptr);
+    // Build output logical tile
+    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
-    // Construct output logical tile.
-    std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
-
-    auto left_tile_schema = left_tile->GetSchema();
-    auto right_tile_schema = right_tile->GetSchema();
-
-    for (auto &col : right_tile_schema) {
-      col.position_list_idx += left_tile->GetPositionLists().size();
-    }
-
-    /* build the schema given the projection */
-    auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
-
-    // Set the output logical tile schema
-    output_tile->SetSchema(std::move(output_tile_schema));
     // Now, let's compute the position lists for the output tile
-
     // Cartesian product
 
     // Add everything from two logical tiles

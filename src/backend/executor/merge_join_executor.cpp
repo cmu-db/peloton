@@ -87,25 +87,8 @@ bool MergeJoinExecutor::DExecute() {
   LogicalTile *left_tile = left_tiles_.back();
   LogicalTile *right_tile = right_tiles_.back();
 
-  // Check the input logical tiles.
-  assert(left_tile != nullptr);
-  assert(right_tile != nullptr);
-
-  // Construct output logical tile.
-  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
-
-  auto left_tile_schema = left_tile->GetSchema();
-  auto right_tile_schema = right_tile->GetSchema();
-
-  for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile->GetPositionLists().size();
-  }
-
-  /* build the schema given the projection */
-  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
-
-  // Set the output logical tile schema
-  output_tile->SetSchema(std::move(output_tile_schema));
+  // Build output logical tile
+  auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
   // Get position list from two logical tiles
   auto left_tile_position_lists = left_tile->GetPositionLists();
@@ -120,23 +103,11 @@ bool MergeJoinExecutor::DExecute() {
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
 
-  // Compute output tile row count
-  //size_t left_tile_row_count = left_tile_position_lists[0].size();
-  //size_t right_tile_row_count = right_tile_position_lists[0].size();
-
   // Construct position lists for output tile
   std::vector<std::vector<oid_t> > position_lists;
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
       column_itr++)
     position_lists.push_back(std::vector<oid_t>());
-
-  //LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
-  //          right_tile_column_count);
-  //LOG_INFO("left col count: %lu, right col count: %lu",
-  //          left_tile.get()->GetColumnCount(),
-  //          right_tile.get()->GetColumnCount());
-  //LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
-  //          right_tile_row_count);
 
   size_t left_start_row = 0;
   size_t right_start_row = 0;
