@@ -49,11 +49,14 @@ limit_test_SOURCES = \
 
 nested_loop_join_test_SOURCES = \
 								$(executor_tests_common) \
-								executor/nested_loop_join_test.cpp 
+								executor/nested_loop_join_test.cpp  \
+								executor/join_tests_util.cpp
+								
 
 merge_join_test_SOURCES = \
 								$(executor_tests_common) \
-								executor/merge_join_test.cpp 
+								executor/merge_join_test.cpp \
+								executor/join_tests_util.cpp
 
 order_by_test_SOURCES = \
 						$(executor_tests_common) \
