@@ -67,6 +67,11 @@ class AbstractJoinExecutor : public AbstractExecutor {
       std::vector<LogicalTile::ColumnInfo> &left,
       std::vector<LogicalTile::ColumnInfo> &right);
 
+  // Build position lists
+  std::vector<std::vector<oid_t> > BuildPostitionLists(
+      LogicalTile *left_tile,
+      LogicalTile *right_tile);
+
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
