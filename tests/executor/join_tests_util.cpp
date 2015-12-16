@@ -14,6 +14,10 @@
 
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+#include "backend/planner/project_info.h"
 #include "backend/storage/data_table.h"
 
 namespace peloton {
