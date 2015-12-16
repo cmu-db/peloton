@@ -79,25 +79,8 @@ bool HashJoinExecutor::DExecute() {
   LogicalTile *left_tile = left.get();
   LogicalTile *right_tile = right_tiles_.back().get();
 
-  // Check the input logical tiles.
-  assert(left_tile != nullptr);
-  assert(right_tile != nullptr);
-
-  // Construct output logical tile.
-  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
-
-  auto left_tile_schema = left_tile->GetSchema();
-  auto right_tile_schema = right_tile->GetSchema();
-
-  for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile->GetPositionLists().size();
-  }
-
-  // Build the schema given the projection
-  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
-
-  // Set the output logical tile schema
-  output_tile->SetSchema(std::move(output_tile_schema));
+  // Build output logical tile
+  auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
   // Get position list from two logical tiles
   auto &left_tile_position_lists = left_tile->GetPositionLists();
