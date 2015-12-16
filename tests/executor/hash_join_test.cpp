@@ -62,15 +62,27 @@ TEST(HashJoinTests, BasicTest) {
   // Create the hash join hash_join_executor
   executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
 
-  MockExecutor left_executor;
+  MockExecutor left_executor, right_executor;
   hash_join_executor.AddChild(&left_executor);
-  hash_join_executor.AddChild(&hash_join_executor);
+  hash_join_executor.AddChild(&hash_executor);
 
-  EXPECT_CALL(left_executor, DInit()).WillOnce(Return(true));
+  hash_executor.AddChild(&right_executor);
+
+  EXPECT_CALL(left_executor, DInit())
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(right_executor, DInit())
+    .WillOnce(Return(true));
 
   EXPECT_CALL(left_executor, DExecute())
       .WillOnce(Return(true))
-      .WillOnce(Return(true));
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
+
+  EXPECT_CALL(right_executor, DExecute())
+      .WillOnce(Return(true))  // Itr 1
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -98,6 +110,10 @@ TEST(HashJoinTests, BasicTest) {
   EXPECT_CALL(left_executor, GetOutput())
       .WillOnce(Return(left_logical_tile1.release()))
       .WillOnce(Return(left_logical_tile2.release()));
+
+  EXPECT_CALL(right_executor, GetOutput())
+      .WillOnce(Return(right_logical_tile1.release()))
+      .WillOnce(Return(right_logical_tile2.release()));
 
   // Run the hash_join_executor
   EXPECT_TRUE(hash_join_executor.Init());
