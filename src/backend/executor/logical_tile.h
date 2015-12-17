@@ -168,24 +168,32 @@ class LogicalTile {
   //===--------------------------------------------------------------------===//
   class PositionListsBuilder {
    public:
-    PositionListsBuilder(LogicalTile *eft_tile, LogicalTile *right_tile);
+    PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile);
+
+    inline void SetLeftSource(const PositionLists *left_source) {
+      left_source_ = left_source;
+    }
+
+    inline void SetRightSource(const PositionLists *right_source) {
+      right_source_ = right_source;
+    }
 
     inline void AddRow(size_t left_itr, size_t right_itr) {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_.size();
+          output_tile_column_itr < left_source_->size();
           output_tile_column_itr++) {
         output_lists_[output_tile_column_itr].push_back(
-            left_source_[output_tile_column_itr][left_itr]);
+            (*left_source_)[output_tile_column_itr][left_itr]);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_.size();
+          output_tile_column_itr < right_source_->size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
-            right_source_[output_tile_column_itr][right_itr]);
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
       }
     }
 
@@ -193,7 +201,7 @@ class LogicalTile {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_.size();
+          output_tile_column_itr < left_source_->size();
           output_tile_column_itr++) {
         output_lists_[output_tile_column_itr].push_back(
         NULL_OID);
@@ -201,10 +209,10 @@ class LogicalTile {
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_.size();
+          output_tile_column_itr < right_source_->size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
-            right_source_[output_tile_column_itr][right_itr]);
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
       }
     }
 
@@ -212,17 +220,17 @@ class LogicalTile {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_.size();
+          output_tile_column_itr < left_source_->size();
           output_tile_column_itr++) {
         output_lists_[output_tile_column_itr].push_back(NULL_OID);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_.size();
+          output_tile_column_itr < right_source_->size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
-            right_source_[output_tile_column_itr][right_itr]);
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
       }
     }
 
@@ -236,8 +244,8 @@ class LogicalTile {
     }
 
    private:
-    PositionLists left_source_;
-    PositionLists right_source_;
+    const PositionLists *left_source_;
+    const PositionLists *right_source_;
     PositionLists output_lists_;
     bool invalid_ = false;
   };

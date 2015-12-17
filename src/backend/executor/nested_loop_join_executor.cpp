@@ -90,7 +90,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         advance_left_child = true;
       } else {  // Buffer the right child's result
         LOG_TRACE("Retrieve a new tile from right child");
-        right_result_tiles_.push_back(children_[1]->GetOutput());
+        right_result_tiles_.emplace_back(children_[1]->GetOutput());
         right_result_itr_ = right_result_tiles_.size() - 1;
       }
     }
@@ -108,12 +108,12 @@ bool NestedLoopJoinExecutor::DExecute() {
       } else {
         LOG_TRACE("Advance the left child.");
         // Insert left child's result to buffer
-        left_result_tiles_.push_back(children_[0]->GetOutput());
+        left_result_tiles_.emplace_back(children_[0]->GetOutput());
       }
     }
 
-    left_tile = left_result_tiles_.back();
-    right_tile = right_result_tiles_[right_result_itr_];
+    left_tile = left_result_tiles_.back().get();
+    right_tile = right_result_tiles_[right_result_itr_].get();
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -202,20 +202,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     LOG_TRACE("This pair produces empty join result. Loop.");
   } // End large for-loop
-
-}
-
-NestedLoopJoinExecutor::~NestedLoopJoinExecutor() {
-
-  for (auto tile : left_result_tiles_) {
-    delete tile;
-    left_result_tiles_.clear();
-  }
-
-  for (auto tile : right_result_tiles_) {
-    delete tile;
-    right_result_tiles_.clear();
-  }
 
 }
 
