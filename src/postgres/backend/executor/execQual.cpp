@@ -2581,7 +2581,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 		return (Datum) 0;
 	}
 	/* Else okay to fetch and detoast the array */
-	arr = DatumGetArrayType(fcinfo->arg[1]);
+	arr = DatumGetArrayTypeP(fcinfo->arg[1]);
 
 	/*
 	 * If the array is empty, we return either FALSE or TRUE per the useOr
