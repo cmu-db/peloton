@@ -216,21 +216,20 @@ class LogicalTile {
       }
     }
 
-    inline void AddRightNullRow(size_t right_itr) {
+    inline void AddRightNullRow(size_t left_itr) {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < left_source_->size();
           output_tile_column_itr++) {
-        output_lists_[output_tile_column_itr].push_back(NULL_OID);
+        output_lists_[output_tile_column_itr].push_back((*left_source_)[output_tile_column_itr][left_itr]);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < right_source_->size();
           output_tile_column_itr++) {
-        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
-            (*right_source_)[output_tile_column_itr][right_itr]);
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(NULL_OID);
       }
     }
 
