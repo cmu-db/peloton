@@ -29,9 +29,6 @@ class HashJoinExecutor : public AbstractJoinExecutor {
   explicit HashJoinExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
-  ~HashJoinExecutor() {
-  }
-
  protected:
   bool DInit();
 
@@ -45,7 +42,7 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
-  std::vector<std::unique_ptr<LogicalTile>> right_tiles_;
+  std::vector<std::unique_ptr<LogicalTile> > right_tiles_;
 
   HashExecutor *hash_executor_ = nullptr;
 
