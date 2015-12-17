@@ -302,6 +302,33 @@ LogicalTile::~LogicalTile() {
 
 }
 
+
+LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile) {
+  left_source_ = left_tile.GetPositionLists();
+  right_source_ = right_tile.GetPositionLists();
+
+  // Compute the output logical tile column count
+  size_t left_tile_column_count = left_source_.size();
+  size_t right_tile_column_count = right_source_.size();
+  size_t output_tile_column_count = left_tile_column_count
+      + right_tile_column_count;
+
+  assert(left_tile_column_count > 0);
+  assert(right_tile_column_count > 0);
+
+  // Construct position lists for output tile
+  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++) {
+    output_lists_.push_back(std::vector<oid_t>());
+  }
+}
+
+
+void LogicalTile::PositionListsBuilder::AddRow(size_t left_itr, size_t right_irt) {
+
+}
+
+LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile) {
+
 /**
  * @brief Set the schema of the tile.
  * @param ColumnInfo-based schema of the tile.

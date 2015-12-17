@@ -162,6 +162,26 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
+
+  //===--------------------------------------------------------------------===//
+  // Position Lists Builder
+  //===--------------------------------------------------------------------===//
+  class PositionListsBuilder {
+   public:
+    PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile);
+
+    inline void AddRow(size_t left_itr, size_t right_itr);
+    inline void AddLeftNullRow(size_t right_itr);
+    inline void AddRightNullRow(size_t right_itr);
+    inline PositionLists &&Release();
+
+   private:
+    PositionLists left_source_;
+    PositionLists right_source_;
+    PositionLists output_lists_;
+    bool invailed = false;
+  };
+
  private:
   // Dummy default constructor
   LogicalTile(){};
