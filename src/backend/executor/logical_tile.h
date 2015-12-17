@@ -20,7 +20,7 @@
 
 namespace peloton {
 
-namespace catalog{
+namespace catalog {
 class Schema;
 }
 
@@ -69,7 +69,8 @@ class LogicalTile {
   void AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
                   const std::vector<oid_t> &column_ids);
 
-  void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
+  void ProjectColumns(const std::vector<oid_t> &original_column_ids,
+                      const std::vector<oid_t> &column_ids);
 
   int AddPositionList(PositionList &&position_list);
 
@@ -162,16 +163,15 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
-
   //===--------------------------------------------------------------------===//
   // Position Lists Builder
   //===--------------------------------------------------------------------===//
   class PositionListsBuilder {
    public:
-    PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile);
+    PositionListsBuilder(LogicalTile *eft_tile, LogicalTile *right_tile);
 
     inline void AddRow(size_t left_itr, size_t right_itr) {
-      assert(!invalid);
+      assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < left_source_.size();
@@ -184,34 +184,32 @@ class LogicalTile {
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < right_source_.size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr]
-            .push_back(
+        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
             right_source_[output_tile_column_itr][right_itr]);
       }
     }
 
     inline void AddLeftNullRow(size_t right_itr) {
-      assert(!invalid);
+      assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < left_source_.size();
           output_tile_column_itr++) {
         output_lists_[output_tile_column_itr].push_back(
-            NULL_OID);
+        NULL_OID);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < right_source_.size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr]
-            .push_back(
+        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
             right_source_[output_tile_column_itr][right_itr]);
       }
     }
 
     inline void AddRightNullRow(size_t right_itr) {
-          assert(!invalid);
+      assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < left_source_.size();
@@ -223,26 +221,32 @@ class LogicalTile {
       for (size_t output_tile_column_itr = 0;
           output_tile_column_itr < right_source_.size();
           output_tile_column_itr++) {
-        output_lists_[left_source_.size() + output_tile_column_itr]
-            .push_back(
+        output_lists_[left_source_.size() + output_tile_column_itr].push_back(
             right_source_[output_tile_column_itr][right_itr]);
       }
     }
 
     inline PositionLists &&Release() {
+      invalid_ = true;
       return std::move(output_lists_);
+    }
+
+    inline size_t Size() const {
+      return output_lists_[0].size();
     }
 
    private:
     PositionLists left_source_;
     PositionLists right_source_;
     PositionLists output_lists_;
-    bool invail = false;
+    bool invalid_ = false;
   };
 
  private:
   // Dummy default constructor
-  LogicalTile(){};
+  LogicalTile() {
+  }
+  ;
 
   /**
    * @brief Mapping of column ids in this logical tile to the underlying

@@ -119,13 +119,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
     // Build position lists
-    auto position_lists = BuildPostitionLists(left_tile, right_tile);
-
-    // Get position list from two logical tiles
-    auto &left_tile_position_lists = left_tile->GetPositionLists();
-    auto &right_tile_position_lists = right_tile->GetPositionLists();
-    size_t left_tile_column_count = left_tile_position_lists.size();
-    size_t right_tile_column_count = right_tile_position_lists.size();
+    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
 
     // Go over every pair of tuples in left and right logical tiles
 
@@ -174,21 +168,7 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < left_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[output_tile_column_itr].push_back(
-              left_tile_position_lists[output_tile_column_itr][left_tile_row_itr]);
-        }
-
-        // Then, copy the elements in right logical tile's tuple
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < right_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[left_tile_column_count + output_tile_column_itr]
-              .push_back(
-              right_tile_position_lists[output_tile_column_itr][right_tile_row_itr]);
-        }
+        pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
       }  // inner loop of NLJ
 
       // Left Outer Join, Full Outer Join:
@@ -197,20 +177,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         LOG_INFO("Left or ful outer: Null row, left id %lu", left_tile_row_itr);
         // no right tuple matched, if we are doing left outer join or full outer join
         // we should also emit a tuple in which right parts are null
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < left_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[output_tile_column_itr].push_back(
-              left_tile_position_lists[output_tile_column_itr][left_tile_row_itr]);
-        }
-
-        // Then, copy the elements in right logical tile's tuple
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < right_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[left_tile_column_count + output_tile_column_itr]
-              .push_back(NULL_OID);
-        }
+        pos_lists_builder.AddRightNullRow(left_tile_row_itr);
       }
     }  // outer loop of NLJ
 
@@ -222,31 +189,19 @@ bool NestedLoopJoinExecutor::DExecute() {
       for (auto left_null_row_itr : no_match_rows) {
         LOG_INFO("right or full outer: Null row, right id %lu",
                  left_null_row_itr);
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < left_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[output_tile_column_itr].push_back(NULL_OID);
-        }
-
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < right_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[left_tile_column_count + output_tile_column_itr]
-              .push_back(
-              right_tile_position_lists[output_tile_column_itr][left_null_row_itr]);
-        }
+        pos_lists_builder.AddLeftNullRow(left_null_row_itr);
       }
     }
 
     // Check if we have any matching tuples.
-    if (position_lists[0].size() > 0) {
-      output_tile->SetPositionListsAndVisibility(std::move(position_lists));
+    if (pos_lists_builder.Size() > 0) {
+      output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
       SetOutput(output_tile.release());
       return true;
     }
 
     LOG_TRACE("This pair produces empty join result. Loop.");
-  }  // End large for-loop
+  } // End large for-loop
 
 }
 

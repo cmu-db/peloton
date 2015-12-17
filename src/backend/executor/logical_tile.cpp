@@ -303,9 +303,9 @@ LogicalTile::~LogicalTile() {
 }
 
 
-LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile) {
-  left_source_ = left_tile.GetPositionLists();
-  right_source_ = right_tile.GetPositionLists();
+LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile) {
+  left_source_ = left_tile->GetPositionLists();
+  right_source_ = right_tile->GetPositionLists();
 
   // Compute the output logical tile column count
   size_t left_tile_column_count = left_source_.size();
