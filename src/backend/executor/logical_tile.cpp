@@ -322,13 +322,6 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile &left_tile, 
   }
 }
 
-
-void LogicalTile::PositionListsBuilder::AddRow(size_t left_itr, size_t right_irt) {
-
-}
-
-LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile &left_tile, LogicalTile &right_tile) {
-
 /**
  * @brief Set the schema of the tile.
  * @param ColumnInfo-based schema of the tile.
