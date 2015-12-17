@@ -65,8 +65,7 @@ bool MergeJoinExecutor::DExecute() {
       return false;
     }
 
-    std::unique_ptr<LogicalTile> right(children_[1]->GetOutput());
-    right_tiles_.push_back(right.release());
+    right_tiles_.emplace_back(children_[1]->GetOutput());
     LOG_INFO("size of right tiles: %lu", right_tiles_.size());
   }
   LOG_INFO("Got right tile \n");
@@ -78,14 +77,14 @@ bool MergeJoinExecutor::DExecute() {
       return false;
     }
 
-    std::unique_ptr<LogicalTile> left(children_[0]->GetOutput());
-    left_tiles_.push_back(left.release());
+    std::unique_ptr<LogicalTile> left();
+    left_tiles_.emplace_back(children_[0]->GetOutput());
     LOG_INFO("size of right tiles: %lu", left_tiles_.size());
   }
   LOG_INFO("Got left tile \n");
 
-  LogicalTile *left_tile = left_tiles_.back();
-  LogicalTile *right_tile = right_tiles_.back();
+  LogicalTile *left_tile = left_tiles_.back().get();
+  LogicalTile *right_tile = right_tiles_.back().get();
 
   // Build output logical tile
   auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
