@@ -40,8 +40,6 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
  private:
 
-  size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
-
   std::vector<std::unique_ptr<LogicalTile> > right_tiles_;
 
   HashExecutor *hash_executor_ = nullptr;
