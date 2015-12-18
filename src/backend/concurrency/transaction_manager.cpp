@@ -64,8 +64,8 @@ Transaction *TransactionManager::BeginTransaction() {
   // Log the BEGIN TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN,
                                                    next_txn->txn_id);
       logger->Log(record);
@@ -106,8 +106,8 @@ void TransactionManager::EndTransaction(Transaction *txn,
   // Log the END TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END,
                                                    txn->txn_id);
       logger->Log(record);
@@ -181,8 +181,8 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   // Log the COMMIT TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
                                                    txn->txn_id);
       logger->Log(record);
@@ -285,8 +285,8 @@ void TransactionManager::AbortTransaction() {
   // Log the ABORT TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
                                                    current_txn->txn_id);
       logger->Log(record);
