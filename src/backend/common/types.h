@@ -18,6 +18,24 @@
 #include <limits>
 #include <cassert>
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+enum LoggingType{
+  LOGGING_TYPE_INVALID = 0,
+
+  LOGGING_TYPE_ARIES   = 1,
+  LOGGING_TYPE_PELOTON = 2
+};
+
+/* Possible values for peloton_caching_mode GUC */
+typedef enum CachingType
+{
+  CACHING_OFF,   /* Off */
+  CACHING_ON   /* On */
+} CachingType;
+
 namespace peloton {
 
 // forward declare
@@ -505,13 +523,6 @@ enum SetOpType {
 // Log Types
 //===--------------------------------------------------------------------===//
 
-enum LoggingType{
-  LOGGING_TYPE_INVALID = 0,
-
-  LOGGING_TYPE_ARIES   = 1,
-  LOGGING_TYPE_PELOTON = 2
-};
-
 enum LoggingStatus{
   LOGGING_STATUS_TYPE_INVALID = 0, 
 
@@ -696,3 +707,5 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
 #endif
 
 }  // End peloton namespace
+
+
