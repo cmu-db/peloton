@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 
@@ -29,7 +31,9 @@ class Logger{
 
     LoggerType GetLoggerType(void) const;
 
-    virtual ~Logger(void){};
+    virtual ~Logger(){
+      std::cout << "Logger \n";
+    };
 
   protected:
 

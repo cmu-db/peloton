@@ -37,8 +37,14 @@ class FrontendLogger : public Logger{
     FrontendLogger(){ logger_type = LOGGER_TYPE_FRONTEND; }
 
     ~FrontendLogger(){
-      for(auto backend_logger : backend_loggers){
-        delete backend_logger;
+
+      std::cout << "Frontend Logger \n";
+
+      {
+        std::lock_guard<std::mutex> lock(backend_logger_mutex);
+        for(auto backend_logger : backend_loggers){
+          delete backend_logger;
+        }
       }
     }
 
@@ -76,6 +82,7 @@ class FrontendLogger : public Logger{
 
     // Associated backend loggers
     std::vector<BackendLogger*> backend_loggers;
+
     // Since backend loggers can add themselves into the list above
     // via log manager, we need to protect the backend_loggers list
     std::mutex backend_logger_mutex;

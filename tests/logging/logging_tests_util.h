@@ -54,7 +54,7 @@ public:
     // # of backends (i.e. backend loggers)
     int backend_count;
 
-    // tuple size
+    // # of columns in each tuple
     oid_t column_count;
 
     // check if the count matches after recovery
@@ -73,19 +73,25 @@ private:
   // WRITING LOG RECORD
   //===--------------------------------------------------------------------===//
 
-  static void BuildLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type);
+  static void BuildLog(LoggingType logging_type,
+                       oid_t db_oid,
+                       oid_t table_oid);
 
-  static void RunBackends(storage::DataTable* table);
+  static void RunBackends(LoggingType logging_type,
+                          storage::DataTable* table);
 
-  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
+  static std::vector<ItemPointer> InsertTuples(LoggingType logging_type,
+                                               storage::DataTable* table,
                                                VarlenPool *pool,
                                                bool committed);
 
-  static void DeleteTuples(storage::DataTable* table,
+  static void DeleteTuples(LoggingType logging_type,
+                           storage::DataTable* table,
                            const std::vector<ItemPointer>& locations,
                            bool committed);
 
-  static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
+  static std::vector<ItemPointer> UpdateTuples(LoggingType logging_type,
+                                               storage::DataTable* table,
                                                const std::vector<ItemPointer>& locations,
                                                VarlenPool *pool,
                                                bool committed);
