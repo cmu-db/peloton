@@ -5,15 +5,9 @@
 ######################################################################
 
 check_PROGRAMS += \
-	        aries_logging_test \
-	        peloton_logging_test
+	       logging_test
 
-aries_logging_test_SOURCES = \
+logging_test_SOURCES = \
            logging/logging_tests_util.cpp \
-           logging/aries_logging_test.cpp \
-           harness.cpp
-
-peloton_logging_test_SOURCES = \
-           logging/logging_tests_util.cpp \
-           logging/peloton_logging_test.cpp \
+           logging/logging_test.cpp \
            harness.cpp
