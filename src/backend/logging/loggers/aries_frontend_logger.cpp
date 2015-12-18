@@ -88,6 +88,8 @@ AriesFrontendLogger::AriesFrontendLogger(){
  */
 AriesFrontendLogger::~AriesFrontendLogger(){
 
+  std::cout << "Aries Frontend Logger \n";
+
   for(auto log_record : global_queue){
     delete log_record;
   }

@@ -30,10 +30,7 @@ LogManager& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartStandbyMode(LoggingType logging_type){
-  if(logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
@@ -42,13 +39,24 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
   // as the given logging type exists or not ?
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
+
     // find frontend logger inside log manager
     frontend_logger = GetFrontendLogger(logging_type);
 
     // If frontend logger doesn't exist
     if( frontend_logger == nullptr ){
+
       frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
       frontend_loggers.push_back(frontend_logger);
+
+      // We are adding a peloton frontend logger
+      if(logging_type == LOGGING_TYPE_PELOTON)
+        has_peloton_frontend_logger = true;
+
+      // Set has_frontend_logger
+      if(frontend_loggers.empty() == false)
+        has_frontend_logger = true;
+
     } else{
       frontend_exists = true;
     }
@@ -68,22 +76,20 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
 }
 
 void LogManager::StartRecoveryMode(LoggingType logging_type) {
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   // Toggle the status after STANDBY
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_RECOVERY);
 }
 
 bool LogManager::IsInLoggingMode(LoggingType logging_type){
-  if(logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    if(logging_type == LOGGING_TYPE_INVALID)
-      return false;
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
+  // Fast check
+  if(has_frontend_logger == false)
+    return false;
+
+  // Slow check for specific logging_type
   if(GetStatus(logging_type) == LOGGING_STATUS_TYPE_LOGGING)
     return true;
   else
@@ -91,10 +97,7 @@ bool LogManager::IsInLoggingMode(LoggingType logging_type){
 }
 
 void LogManager::TerminateLoggingMode(LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
@@ -103,17 +106,15 @@ void LogManager::TerminateLoggingMode(LoggingType logging_type){
 
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
-  WaitForMode(LOGGING_STATUS_TYPE_SLEEP, logging_type);
+  WaitForMode(LOGGING_STATUS_TYPE_SLEEP, true, logging_type);
 }
 
-void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
-                                                          LoggingType logging_type) {
+void LogManager::WaitForMode(LoggingStatus logging_status,
+                             bool is_equal,
+                             LoggingType logging_type) {
 
   // check logging type
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   // wait for mode change
   {
@@ -121,8 +122,8 @@ void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
 
     while(logging_statuses.find(logging_type) == logging_statuses.end() ||
         (logging_statuses.find(logging_type) != logging_statuses.end() &&
-        ((!is_equal && logging_statuses[logging_type] == logging_status) ||
-          (is_equal && logging_statuses[logging_type] != logging_status)))){
+            ((!is_equal && logging_statuses[logging_type] == logging_status) ||
+                (is_equal && logging_statuses[logging_type] != logging_status)))){
       logging_status_cv.wait(wait_lock);
     }
   }
@@ -134,10 +135,7 @@ void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
  * Disconnect backend loggers and frontend logger from log manager
  */
 bool LogManager::EndLogging(LoggingType logging_type ){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   // Wait if current status is recovery
   WaitForMode(LOGGING_STATUS_TYPE_RECOVERY, false, logging_type);
@@ -146,7 +144,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
            LoggingStatusToString(GetStatus(logging_type)).c_str());
 
   // Wait for the frontend logger to enter sleep mode
-  TerminateLoggingMode();
+  TerminateLoggingMode(logging_type);
 
   LOG_INFO("Escaped from MainLoop(%s)",
            LoggingStatusToString(GetStatus(logging_type)).c_str());
@@ -172,10 +170,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   FrontendLogger* frontend_logger = nullptr;
   BackendLogger* backend_logger =  nullptr;
@@ -203,10 +198,7 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
 }
 
 bool LogManager::RemoveBackendLogger(BackendLogger* backend_logger, LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   bool status = false;
 
@@ -248,11 +240,19 @@ bool LogManager::RemoveFrontendLogger(LoggingType logging_type ){
     for(auto frontend_logger : frontend_loggers){
       if( frontend_logger->GetLoggingType() == logging_type){
         delete frontend_logger;
+
+        // We are removing a peloton frontend logger
+        if(logging_type == LOGGING_TYPE_PELOTON)
+          has_peloton_frontend_logger = false;
         break;
       }else{
         offset++;
       }
     }
+
+    // Set has_frontend_logger
+    if(frontend_loggers.empty() == true)
+      has_frontend_logger = false;
 
     // Remove the entry in the frontend logger list
     if( offset >= frontend_loggers.size()){
@@ -280,16 +280,6 @@ void LogManager::ResetLoggingStatusMap(LoggingType logging_type ) {
     logging_status_cv.notify_all();
   }
 
-  // Reset default logging type as well
-  default_logging_type = LOGGING_TYPE_INVALID;
-}
-
-void LogManager::SetDefaultLoggingType(LoggingType logging_type){
-  default_logging_type = logging_type;
-}
-
-LoggingType LogManager::GetDefaultLoggingType(void){
-  return default_logging_type;
 }
 
 size_t LogManager::ActiveFrontendLoggerCount(void) {
@@ -301,10 +291,7 @@ size_t LogManager::ActiveFrontendLoggerCount(void) {
  * @brief mark Peloton is ready, so that frontend logger can start logging
  */
 LoggingStatus LogManager::GetStatus(LoggingType logging_type) {
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   // Get the status from the map
   {
@@ -323,10 +310,7 @@ LoggingStatus LogManager::GetStatus(LoggingType logging_type) {
 }
 
 void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
+  assert(logging_type != LOGGING_TYPE_INVALID);
 
   // Set the status in the log manager map
   {
@@ -359,10 +343,10 @@ void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
   }
 }
 
-void LogManager::SetTestRedoAllLogs(bool test_redo_all) {
+void LogManager::SetTestRedoAllLogs(LoggingType logging_type, bool test_redo_all) {
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-    FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
+    FrontendLogger *frontend = GetFrontendLogger(logging_type);
 
     frontend->SetTestRedoAllLogs(test_redo_all);
   }
