@@ -565,13 +565,13 @@ static void PrintConfiguration(){
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   // Default Values
-  state.tuple_count = 20;
+  state.tuple_count = 100;
 
   state.backend_count = 4;
 
   state.tuple_size = 100;
 
-  state.check_tuple_count = true;
+  state.check_tuple_count = false;
   state.redo_all = false;
 
   state.file_dir = "/tmp/";

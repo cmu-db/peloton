@@ -109,16 +109,20 @@ void PelotonFrontendLogger::Flush(void) {
   if (!committing_list.empty()) {
     // flush and commit all committed logs
     size_t flush_count = FlushRecords(committing_list);
-    // write a committing log to file
+
+    // write a committing log entry to file
+
     // piggyback the number of committing logs count as txn_id in this log
     WriteTxnLog(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, flush_count));
+
     // For testing recovery, do not commit. Redo all logs in recovery.
-    if (!redo_all_logs) {
+    if (redo_all_logs == false) {
       // commit all records
       CommitRecords(committing_list);
       // write a commit done log to file
       WriteTxnLog(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
     }
+
   }
   // remove any finished txn logs
   for (txn_id_t txn_id : deleting_list) {
@@ -337,15 +341,19 @@ bool PelotonFrontendLogger::DoNeedRecovery(void) {
   // If the previous run break
   if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT){
     TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+
     // read the last commit transaction log
     if( ReadTransactionRecordHeader(txn_record, log_file) == false ) {
       return false;
     }
+
     // get tuple log count from txn_id
     size_t tuple_log_count = txn_record.GetTransactionId();
+
     // Peloton log items have fixed size.
     size_t rollback_size = tuple_log_count * TupleRecord::GetTupleRecordSize()
                                     + TransactionRecord::GetTransactionRecordSize();
+
     fseek(log_file, -rollback_size, SEEK_END);
     return true;
   } else {
