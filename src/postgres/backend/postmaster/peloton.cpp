@@ -108,7 +108,7 @@ peloton_bootstrap() {
         if (!log_manager.IsInLoggingMode()) {
 
           // Set default logging mode
-          log_manager.SetDefaultLoggingType((peloton::LoggingType) peloton_logging_mode);
+          log_manager.SetDefaultLoggingType(peloton_logging_mode);
           log_manager.SetSyncCommit(true);
           elog(INFO, "Wait for standby mode");
 
