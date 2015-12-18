@@ -68,8 +68,9 @@ class LogManager{
     void TerminateLoggingMode(LoggingType logging_type);
 
     // Used to wait for a certain mode (or not certain mode if is_equal is false)
-    void WaitForMode(LoggingStatus logging_status, bool is_equal = true,
-                               LoggingType logging_type = LOGGING_TYPE_INVALID);
+    void WaitForMode(LoggingStatus logging_status,
+                     bool is_equal,
+                     LoggingType logging_type);
 
     // End the actual logging
     bool EndLogging(LoggingType logging_type);
