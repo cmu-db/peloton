@@ -27,7 +27,23 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
+/* Possible values for peloton_logging_mode GUC */
+typedef enum LoggingType
+{
+  LOGGING_TYPE_INVALID, /* No logging */
+
+  LOGGING_TYPE_ARIES,   /* Aries */
+  LOGGING_TYPE_PELOTON  /* Peloton */
+} LoggingType;
+
 extern LoggingType peloton_logging_mode;
+
+/* Possible values for peloton_caching_mode GUC */
+typedef enum CachingType
+{
+  CACHING_OFF,   /* Off */
+  CACHING_ON   /* On */
+} CachingType;
 
 extern CachingType peloton_caching_mode;
 
