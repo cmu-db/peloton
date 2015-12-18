@@ -103,11 +103,12 @@ void LogManager::TerminateLoggingMode(LoggingType logging_type){
 
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
-  WaitForMode(LOGGING_STATUS_TYPE_SLEEP, logging_type);
+  WaitForMode(LOGGING_STATUS_TYPE_SLEEP, true, logging_type);
 }
 
-void LogManager::WaitForMode(LoggingStatus logging_status, bool is_equal,
-                                                          LoggingType logging_type) {
+void LogManager::WaitForMode(LoggingStatus logging_status,
+                             bool is_equal,
+                             LoggingType logging_type) {
 
   // check logging type
   if( logging_type == LOGGING_TYPE_INVALID){

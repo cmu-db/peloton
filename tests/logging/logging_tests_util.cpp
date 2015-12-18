@@ -71,7 +71,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
                      log_manager.GetDefaultLoggingType());
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, LOGGING_TYPE_INVALID);
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
@@ -83,7 +83,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
   log_manager.StartRecoveryMode(logging_type);
 
   // Wait for the frontend logger to enter LOGGING mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, LOGGING_TYPE_INVALID);
 
   // Build the log
   LoggingTestsUtil::BuildLog(logging_type,
@@ -145,7 +145,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
                      log_manager.GetDefaultLoggingType());
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, LOGGING_TYPE_INVALID);
 
   // always enable commit when testing recovery
   if (state.redo_all) {
@@ -156,7 +156,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   log_manager.StartRecoveryMode(logging_type);
 
   // Wait for the frontend logger to enter LOGGING mode after recovery
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, LOGGING_TYPE_INVALID);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
