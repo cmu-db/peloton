@@ -63,34 +63,35 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
+  log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode,
                      &log_manager,
-                     logging_type);
+                     log_manager.GetDefaultLoggingType());
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(logging_type, true);
+    log_manager.SetTestRedoAllLogs(true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode(logging_type);
+  log_manager.StartRecoveryMode();
 
   // Wait for the frontend logger to enter LOGGING mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Build the log
-  LoggingTestsUtil::BuildLog(logging_type,
-                             LOGGING_TESTS_DATABASE_OID,
-                             LOGGING_TESTS_TABLE_OID);
+  LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
+                             LOGGING_TESTS_TABLE_OID,
+                             logging_type);
 
   //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-  if(log_manager.EndLogging(logging_type)){
+  if(log_manager.EndLogging()){
     thread.join();
     return true;
   }
@@ -136,25 +137,26 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
+  log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
-                     logging_type);
+                     log_manager.GetDefaultLoggingType());
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
 
   // always enable commit when testing recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(logging_type, true);
+    log_manager.SetTestRedoAllLogs(true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode(logging_type);
+  log_manager.StartRecoveryMode();
 
   // Wait for the frontend logger to enter LOGGING mode after recovery
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -169,7 +171,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
-  if( log_manager.EndLogging(logging_type) ){
+  if( log_manager.EndLogging() ){
     thread.join();
   }else{
     LOG_ERROR("Failed to terminate logging thread");
@@ -199,8 +201,8 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
 // WRITING LOG RECORD
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::BuildLog(LoggingType logging_type,
-                                oid_t db_oid, oid_t table_oid){
+void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
+                                LoggingType logging_type){
 
   // Create db
   CreateDatabase(db_oid);
@@ -214,7 +216,7 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
   db->AddTable(table);
 
   // Execute the workload to build the log
-  LaunchParallelTest(state.backend_count, RunBackends, logging_type, table);
+  LaunchParallelTest(state.backend_count, RunBackends, table);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -232,25 +234,24 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
 }
 
 
-void LoggingTestsUtil::RunBackends(LoggingType logging_type,
-                                   storage::DataTable* table){
+void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Insert tuples
-  auto locations = InsertTuples(logging_type, table, testing_pool, commit);
+  auto locations = InsertTuples(table, testing_pool, commit);
 
   // Update tuples
-  locations = UpdateTuples(logging_type, table, locations, testing_pool, commit);
+  locations = UpdateTuples(table, locations, testing_pool, commit);
 
   // Delete tuples
-  DeleteTuples(logging_type, table, locations, commit);
+  DeleteTuples(table, locations, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
-  if(log_manager.IsInLoggingMode(logging_type)){
-    auto logger = log_manager.GetBackendLogger(logging_type);
+  if(log_manager.IsInLoggingMode()){
+    auto logger = log_manager.GetBackendLogger();
 
     // Wait until frontend logger collects the data
     logger->WaitForFlushing();
@@ -261,8 +262,7 @@ void LoggingTestsUtil::RunBackends(LoggingType logging_type,
 }
 
 // Do insert and create insert tuple log records
-std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type,
-                                                        storage::DataTable* table,
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table,
                                                         VarlenPool *pool,
                                                         bool committed){
   std::vector<ItemPointer> locations;
@@ -289,8 +289,8 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
@@ -319,8 +319,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type
   return locations;
 }
 
-void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
-                                    storage::DataTable* table,
+void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, 
                                     const std::vector<ItemPointer>& locations,
                                     bool committed){
 
@@ -342,8 +341,8 @@ void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                              txn->GetTransactionId(),
                                              table->GetOid(),
@@ -365,11 +364,10 @@ void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
 
 }
 
-std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(LoggingType logging_type,
-                                                        storage::DataTable* table,
-                                                        const std::vector<ItemPointer>& deleted_locations,
-                                                        VarlenPool *pool,
-                                                        bool committed){
+std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* table,
+                                    const std::vector<ItemPointer>& deleted_locations,
+                                    VarlenPool *pool,
+                                    bool committed){
 
   // Inserted locations
   std::vector<ItemPointer> inserted_locations;
@@ -409,8 +407,8 @@ std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(LoggingType logging_type
     // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              txn->GetTransactionId(),
                                              table->GetOid(),
@@ -551,10 +549,10 @@ static void Usage(FILE *out) {
           "   -l --logging-type      :  Logging type \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
-          "   -z --column_count      :  Column count \n"
+          "   -z --tuple-size        :  Tuple size (does not work) \n"
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -r --redo-all-logs     :  Redo all logs \n"
-          "   -d --dir               :  log file dir \n"
+          "   -d --dir              :  log file dir \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -590,7 +588,7 @@ static void PrintConfiguration(){
   std::cout << std::setw(width) << std::left
       << "backend_count " << " : " << state.backend_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "column_count " << " : " << state.column_count << std::endl;
+      << "tuple_size " << " : " << state.column_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
@@ -607,7 +605,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.logging_type = LOGGING_TYPE_ARIES;
   state.backend_count = 2;
 
-  state.column_count = 10;
+  state.column_count = 100;
 
   state.check_tuple_count = false;
   state.redo_all = false;
