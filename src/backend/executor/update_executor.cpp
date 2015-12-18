@@ -122,8 +122,8 @@ bool UpdateExecutor::DExecute() {
    {
       auto& logManager = logging::LogManager::GetInstance();
 
-      if(logManager.IsInLoggingMode(peloton_logging_mode)){
-        auto logger = logManager.GetBackendLogger(peloton_logging_mode);
+      if(logManager.IsInLoggingMode()){
+        auto logger = logManager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),
