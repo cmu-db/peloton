@@ -549,10 +549,10 @@ static void Usage(FILE *out) {
           "   -l --logging-type      :  Logging type \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
-          "   -z --tuple-size        :  Tuple size (does not work) \n"
+          "   -z --column-count      :  # of columns per tuple \n"
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -r --redo-all-logs     :  Redo all logs \n"
-          "   -d --dir              :  log file dir \n"
+          "   -d --dir               :  log file dir \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -561,7 +561,7 @@ static struct option opts[] = {
     { "logging-type", optional_argument, NULL, 'l' },
     { "tuple-count", optional_argument, NULL, 't' },
     { "backend-count", optional_argument, NULL, 'b' },
-    { "tuple-size", optional_argument, NULL, 'z' },
+    { "column-count", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
     { "redo-all-logs", optional_argument, NULL, 'r' },
     { "dir", optional_argument, NULL, 'd' },
@@ -588,7 +588,7 @@ static void PrintConfiguration(){
   std::cout << std::setw(width) << std::left
       << "backend_count " << " : " << state.backend_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "tuple_size " << " : " << state.column_count << std::endl;
+      << "column_count " << " : " << state.column_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
@@ -605,7 +605,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.logging_type = LOGGING_TYPE_ARIES;
   state.backend_count = 2;
 
-  state.column_count = 100;
+  state.column_count = 10;
 
   state.check_tuple_count = false;
   state.redo_all = false;
