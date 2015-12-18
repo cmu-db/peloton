@@ -45,6 +45,8 @@ public:
 
   class logging_test_configuration {
    public:
+    // logging type
+    LoggingType logging_type;
 
     // # of tuples
     int tuple_count;
@@ -102,6 +104,9 @@ private:
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 
 };
+
+// configuration for testing
+extern LoggingTestsUtil::logging_test_configuration state;
 
 }  // End test namespace
 }  // End peloton namespace
