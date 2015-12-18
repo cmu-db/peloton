@@ -54,7 +54,7 @@ public:
     // # of backends (i.e. backend loggers)
     int backend_count;
 
-    // tuple size
+    // # of columns in each tuple
     oid_t column_count;
 
     // check if the count matches after recovery
