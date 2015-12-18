@@ -525,6 +525,7 @@ void LoggingTestsUtil::DropDatabase(oid_t db_oid){
 static void Usage(FILE *out) {
   fprintf(out, "Command line options :  hyadapt <options> \n"
           "   -h --help              :  Print help message \n"
+          "   -l --logging-type      :  Logging type \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
           "   -z --tuple-size        :  Tuple size (does not work) \n"
@@ -536,6 +537,7 @@ static void Usage(FILE *out) {
 }
 
 static struct option opts[] = {
+    { "logging-type", optional_argument, NULL, 'l' },
     { "tuple-count", optional_argument, NULL, 't' },
     { "backend-count", optional_argument, NULL, 'b' },
     { "tuple-size", optional_argument, NULL, 'z' },
@@ -547,6 +549,18 @@ static struct option opts[] = {
 
 static void PrintConfiguration(){
   int width = 25;
+
+  std::cout << std::setw(width) << std::left
+      << "logging_type " << " : ";
+
+  if(state.logging_type == LOGGING_TYPE_ARIES)
+    std::cout << "ARIES" << std::endl;
+  else if(state.logging_type == LOGGING_TYPE_PELOTON)
+    std::cout << "PELOTON" << std::endl;
+  else {
+    std::cout << "INVALID" << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
   std::cout << std::setw(width) << std::left
       << "tuple_count " << " : " << state.tuple_count << std::endl;
@@ -567,7 +581,8 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Default Values
   state.tuple_count = 100;
 
-  state.backend_count = 4;
+  state.logging_type = LOGGING_TYPE_ARIES;
+  state.backend_count = 2;
 
   state.tuple_size = 100;
 
@@ -579,13 +594,16 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aht:b:z:c:r:d:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:r:d:", opts,
                         &idx);
 
     if (c == -1)
       break;
 
     switch (c) {
+      case 'l':
+        state.logging_type = (LoggingType) atoi(optarg);
+        break;
       case 't':
         state.tuple_count  = atoi(optarg);
         break;

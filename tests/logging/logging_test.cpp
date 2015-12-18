@@ -14,19 +14,35 @@ namespace test {
 
 std::string aries_log_file_name = "aries.log";
 
+std::string peloton_log_file_name = "peloton.log";
+
 /**
  * @brief writing a simple log with multiple threads and then do recovery
  */
-TEST(AriesLoggingTest, writing_logfile) {
+TEST(LoggingTests, writing_logfile) {
 
-  // Prepare a simple log file
-  EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES, aries_log_file_name));
+  if(state.logging_type == LOGGING_TYPE_ARIES) {
 
-  // Reset data
-  LoggingTestsUtil::ResetSystem();
+    // Prepare a simple log file
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES, aries_log_file_name));
 
-  // Do recovery
-  LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
+    // Reset data
+    LoggingTestsUtil::ResetSystem();
+
+    // Do recovery
+    LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
+
+  }
+  else if(state.logging_type == LOGGING_TYPE_PELOTON) {
+
+    // Test a simple log process
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON, peloton_log_file_name));
+
+    // Do recovery
+    LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
+
+  }
+
 }
 
 
