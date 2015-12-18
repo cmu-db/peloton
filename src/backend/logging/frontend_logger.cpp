@@ -56,19 +56,13 @@ void FrontendLogger::MainLoop(void) {
 
   LOG_TRACE("Frontendlogger] Standby Mode");
 
-  std::cout << "Mainloop - A \n";
-
   // Standby before we need to do RECOVERY
-  logManager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false, GetLoggingType());
-
-  std::cout << "Mainloop - B \n";
+  logManager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
-  switch(logManager.GetStatus(GetLoggingType())){
+  switch(logManager.GetStatus()){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
-
-      std::cout << "Mainloop - C \n";
 
       /////////////////////////////////////////////////////////////////////
       // RECOVERY MODE
@@ -77,19 +71,13 @@ void FrontendLogger::MainLoop(void) {
       // First, do recovery if needed
       DoRecovery();
 
-      std::cout << "Mainloop - D \n";
-
       // Now, enter LOGGING mode
       logManager.SetLoggingStatus(GetLoggingType(), LOGGING_STATUS_TYPE_LOGGING);
-
-      std::cout << "Mainloop - E \n";
 
       break;
     }
 
     case LOGGING_STATUS_TYPE_LOGGING:{
-      std::cout << "Mainloop - F \n";
-
       LOG_TRACE("Frontendlogger] Logging Mode");
     }
     break;
@@ -98,8 +86,6 @@ void FrontendLogger::MainLoop(void) {
     break;
   }
 
-  std::cout << "Mainloop - G \n";
-
   /////////////////////////////////////////////////////////////////////
   // LOGGING MODE
   /////////////////////////////////////////////////////////////////////
@@ -107,16 +93,12 @@ void FrontendLogger::MainLoop(void) {
   // Periodically, wake up and do logging
   while(logManager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_LOGGING){
 
-    std::cout << "Mainloop - H \n";
-
     // Collect LogRecords from all backend loggers
     CollectLogRecord();
 
     // Flush the data to the file
     Flush();
   }
-
-  std::cout << "Mainloop - I \n";
 
   /////////////////////////////////////////////////////////////////////
   // TERMINATE MODE
