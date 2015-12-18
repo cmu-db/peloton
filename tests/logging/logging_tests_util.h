@@ -77,11 +77,18 @@ private:
 
   static void RunBackends(storage::DataTable* table);
 
-  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, VarlenPool *pool, bool committed);
+  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
+                                               VarlenPool *pool,
+                                               bool committed);
 
-  static void DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed);
+  static void DeleteTuples(storage::DataTable* table,
+                           const std::vector<ItemPointer>& locations,
+                           bool committed);
 
-  static void UpdateTuples(storage::DataTable* table, ItemPointer location, VarlenPool *pool, bool committed);
+  static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
+                                               const std::vector<ItemPointer>& locations,
+                                               VarlenPool *pool,
+                                               bool committed);
   
   //===--------------------------------------------------------------------===//
   // Utility functions
