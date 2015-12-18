@@ -146,7 +146,7 @@ bool LogManager::EndLogging(LoggingType logging_type ){
            LoggingStatusToString(GetStatus(logging_type)).c_str());
 
   // Wait for the frontend logger to enter sleep mode
-  TerminateLoggingMode();
+  TerminateLoggingMode(logging_type);
 
   LOG_INFO("Escaped from MainLoop(%s)",
            LoggingStatusToString(GetStatus(logging_type)).c_str());

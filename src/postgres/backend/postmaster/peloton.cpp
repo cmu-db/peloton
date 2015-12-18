@@ -105,7 +105,7 @@ peloton_bootstrap() {
 
         // Launching a thread for logging
         auto& log_manager = peloton::logging::LogManager::GetInstance();
-        if (!log_manager.IsInLoggingMode()) {
+        if (!log_manager.IsInLoggingMode(peloton_logging_mode)) {
 
           // Set default logging mode
           log_manager.SetDefaultLoggingType(peloton_logging_mode);
@@ -120,7 +120,7 @@ peloton_bootstrap() {
           elog(INFO, "Standby mode");
 
           // Do any recovery
-          log_manager.StartRecoveryMode();
+          log_manager.StartRecoveryMode(peloton_logging_mode);
           elog(INFO, "Wait for logging mode");
 
           // Wait for logging mode
