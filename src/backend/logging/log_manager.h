@@ -25,6 +25,8 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
+extern LoggingType peloton_logging_mode;
+
 // Directory for peloton logs
 extern char    *peloton_log_directory;
 
