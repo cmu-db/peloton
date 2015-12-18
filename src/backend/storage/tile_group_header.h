@@ -245,7 +245,7 @@ class TileGroupHeader {
     // overwrite activated/invalidated if using peloton logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
-      if (log_manager.GetDefaultLoggingType() == LOGGING_TYPE_PELOTON) {
+      if (log_manager.HasPelotonFrontendLogger()) {
         bool insert_commit = GetInsertCommit(tuple_slot_id);
         bool delete_commit = GetDeleteCommit(tuple_slot_id);
         
