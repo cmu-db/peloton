@@ -57,7 +57,7 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger] Standby Mode");
 
   // Standby before we need to do RECOVERY
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false, LOGGING_TYPE_INVALID);
 
   // Do recovery if we can, otherwise terminate
   switch(log_manager.GetStatus(logging_type)){
