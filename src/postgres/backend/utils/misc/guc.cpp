@@ -508,7 +508,7 @@ int			row_security;
 int     peloton_layout_mode;
 
 // Logging mode
-int     peloton_logging_mode;
+LoggingType     peloton_logging_mode;
 
 // Caching mode
 int     peloton_caching_mode;
@@ -3760,7 +3760,7 @@ struct config_enum ConfigureNamesEnum[] =
       gettext_noop("Change peloton logging mode"),
       gettext_noop("This determines the logging mode.")
     },
-    &peloton_logging_mode,
+    reinterpret_cast<int *>(&peloton_logging_mode),
     LOGGING_TYPE_INVALID, peloton_logging_mode_options,
     NULL, NULL, NULL
   },
