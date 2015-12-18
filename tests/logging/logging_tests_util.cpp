@@ -212,7 +212,7 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   // Create table, drop it and create again
   // so that table can have a newly added tile group and
   // not just the default tile group
-  storage::DataTable* table = CreateSimpleTable(db_oid, table_oid);
+  storage::DataTable* table = CreateUserTable(db_oid, table_oid);
   db->AddTable(table);
 
   // Execute the workload to build the log
@@ -447,12 +447,12 @@ void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
 
-  auto table = CreateSimpleTable(db_oid, table_oid);
+  auto table = CreateUserTable(db_oid, table_oid);
 
   db->AddTable(table);
 }
 
-storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
+storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid, oid_t table_oid){
 
   auto column_infos = LoggingTestsUtil::CreateSchema();
 
@@ -464,7 +464,7 @@ storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t tabl
   auto schema = new catalog::Schema(column_infos);
   storage::DataTable *table = storage::TableFactory::GetDataTable(db_oid, table_oid,
                                                                   schema,
-                                                                  std::to_string(table_oid),
+                                                                  "USERTABLE",
                                                                   tuples_per_tilegroup_count,
                                                                   own_schema,
                                                                   adapt_table);
@@ -478,41 +478,48 @@ void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
 }
 
 std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
-  // Column
+  // Columns
   std::vector<catalog::Column> columns;
+  const size_t field_length = 100;
 
-  catalog::Column column1(VALUE_TYPE_BIGINT, 8, "id");
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
-  catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
-  catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
+  // User Id
+  catalog::Column user_id(VALUE_TYPE_INTEGER,
+                          GetTypeSize(VALUE_TYPE_INTEGER),
+                          "YCSB_KEY",
+                          true);
 
-  columns.push_back(column1);
-  columns.push_back(column2);
-  columns.push_back(column3);
-  columns.push_back(column4);
+  columns.push_back(user_id);
+
+  // Field
+  for(oid_t col_itr = 0 ; col_itr < state.column_count ; col_itr++) {
+    catalog::Column field(VALUE_TYPE_VARCHAR,
+                          field_length,
+                          "FIELD" + std::to_string(col_itr),
+                          false);
+
+    columns.push_back(field);
+  }
 
   return columns;
 }
 
 std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool) {
 
-  oid_t thread_id = (oid_t) TestingHarness::GetInstance().GetThreadId();
-
   std::vector<storage::Tuple*> tuples;
+  const bool allocate = true;
 
-  for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
-    storage::Tuple *tuple = new storage::Tuple(schema, true);
+  for (oid_t tuple_itr = 0; tuple_itr < num_of_tuples; tuple_itr++) {
+    // Build tuple
+    storage::Tuple *tuple = new storage::Tuple(schema, allocate);
 
-    // Setting values in tuple
-    Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+thread_id);
-    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+thread_id), pool);
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+thread_id));
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+thread_id));
+    Value user_id_value = ValueFactory::GetIntegerValue(tuple_itr);
+    tuple->SetValue(0, user_id_value, nullptr);
 
-    tuple->SetValue(0, longValue, pool);
-    tuple->SetValue(1, stringValue, pool);
-    tuple->SetValue(2, timestampValue, pool);
-    tuple->SetValue(3, doubleValue, pool);
+    for(oid_t col_itr = 1 ; col_itr < state.column_count; col_itr++) {
+      Value field_value = ValueFactory::GetStringValue(std::to_string(tuple_itr), pool);
+      tuple->SetValue(col_itr, field_value, pool);
+    }
+
     tuples.push_back(tuple);
   }
 
@@ -581,7 +588,7 @@ static void PrintConfiguration(){
   std::cout << std::setw(width) << std::left
       << "backend_count " << " : " << state.backend_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "tuple_size " << " : " << state.tuple_size << std::endl;
+      << "tuple_size " << " : " << state.column_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
@@ -598,7 +605,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.logging_type = LOGGING_TYPE_ARIES;
   state.backend_count = 2;
 
-  state.tuple_size = 100;
+  state.column_count = 100;
 
   state.check_tuple_count = false;
   state.redo_all = false;
@@ -625,7 +632,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         state.backend_count  = atoi(optarg);
         break;
       case 'z':
-        state.tuple_size  = atoi(optarg);
+        state.column_count  = atoi(optarg);
         break;
       case 'c':
         state.check_tuple_count  = atoi(optarg);

@@ -55,7 +55,7 @@ public:
     int backend_count;
 
     // tuple size
-    int tuple_size;
+    oid_t column_count;
 
     // check if the count matches after recovery
     bool check_tuple_count;
@@ -98,7 +98,7 @@ private:
 
   static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
-  static storage::DataTable* CreateSimpleTable(oid_t db_oid, oid_t table_oid);
+  static storage::DataTable* CreateUserTable(oid_t db_oid, oid_t table_oid);
 
   static std::vector<catalog::Column> CreateSchema(void);
 
