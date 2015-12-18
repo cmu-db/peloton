@@ -238,19 +238,15 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  // Insert tuples
   auto locations = InsertTuples(table, testing_pool, commit);
 
-  // Delete the second inserted location if we insert >= 2 tuples
-  if(locations.size() >= 2)
-    DeleteTuples(table, locations[1], commit);
+  // Update tuples
+  locations = UpdateTuples(table, locations, testing_pool, commit);
 
-  // Update the first inserted location if we insert >= 1 tuples
-  if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], testing_pool, commit);
-
-  // This insert should have no effect
-  commit = false;
-  InsertTuples(table, testing_pool, commit);
+  // Delete tuples
+  DeleteTuples(table, locations, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
@@ -281,12 +277,13 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     ItemPointer location = table->InsertTuple(txn, tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
-      continue;
+      std::cout << "Insert failed \n";
+      exit(EXIT_FAILURE);
     }
 
-    locations.push_back(location);
-
     txn->RecordInsert(location);
+
+    locations.push_back(location);
 
     // Logging 
     {
@@ -323,103 +320,120 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 }
 
 void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, 
-                                    ItemPointer location, 
+                                    const std::vector<ItemPointer>& locations,
                                     bool committed){
 
-  // Location of tuple that needs to be deleted
-  ItemPointer delete_location(location.block, location.offset);
+  for(auto delete_location : locations) {
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
 
-  bool status = table->DeleteTuple(txn, delete_location);
-  if (status == false) {
-    txn->SetResult(Result::RESULT_FAILURE);
-    return;
-  }
-
-  txn->RecordDelete(delete_location);
-
-  // Logging 
-  {
-    auto& log_manager = logging::LogManager::GetInstance();
-
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
-      auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                           txn->GetTransactionId(),
-                                           table->GetOid(),
-                                           INVALID_ITEMPOINTER,
-                                           delete_location,
-                                           nullptr,
-                                           LOGGING_TESTS_DATABASE_OID);
-      logger->Log(record);
+    bool status = table->DeleteTuple(txn, delete_location);
+    if (status == false) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      std::cout << "Delete failed \n";
+      exit(EXIT_FAILURE);
     }
+
+    txn->RecordDelete(delete_location);
+
+    // Logging
+    {
+      auto& log_manager = logging::LogManager::GetInstance();
+
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
+                                             txn->GetTransactionId(),
+                                             table->GetOid(),
+                                             INVALID_ITEMPOINTER,
+                                             delete_location,
+                                             nullptr,
+                                             LOGGING_TESTS_DATABASE_OID);
+        logger->Log(record);
+      }
+    }
+
+    if(committed){
+      txn_manager.CommitTransaction();
+    }else{
+      txn_manager.AbortTransaction();
+    }
+
   }
 
-  if(committed){
-    txn_manager.CommitTransaction();
-  }else{
-    txn_manager.AbortTransaction();
-  }
 }
 
-void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer location,
+std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* table,
+                                    const std::vector<ItemPointer>& deleted_locations,
                                     VarlenPool *pool,
                                     bool committed){
 
-  ItemPointer delete_location(location.block,location.offset);
-
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  bool status = table->DeleteTuple(txn, delete_location);
-  if (status == false) {
-    txn->SetResult(Result::RESULT_FAILURE);
-    return;
-  }
-
-  txn->RecordDelete(delete_location);
+  // Inserted locations
+  std::vector<ItemPointer> inserted_locations;
 
   // Create Tuples
-  oid_t tuple_count = 1;
+  auto tuple_count = deleted_locations.size();
   auto tuples = CreateTuples(table->GetSchema(), tuple_count, pool);
 
-  for( auto tuple : tuples){
-    ItemPointer location = table->InsertTuple(txn, tuple);
-    if (location.block == INVALID_OID) {
-      txn->SetResult(Result::RESULT_FAILURE);
-      continue;
-    }
-    txn->RecordInsert(location);
+  size_t tuple_itr = 0;
+  for(auto delete_location : deleted_locations) {
 
-    // Logging 
+    auto tuple = tuples[tuple_itr];
+    tuple_itr++;
+
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    bool status = table->DeleteTuple(txn, delete_location);
+    if (status == false) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      std::cout << "Delete failed \n";
+      exit(EXIT_FAILURE);
+    }
+
+    txn->RecordDelete(delete_location);
+
+    ItemPointer insert_location = table->InsertTuple(txn, tuple);
+    if (insert_location.block == INVALID_OID) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      std::cout << "Insert failed \n";
+      exit(EXIT_FAILURE);
+    }
+    txn->RecordInsert(insert_location);
+
+    inserted_locations.push_back(insert_location);
+
+    // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
       if(log_manager.IsInLoggingMode()){
         auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
-                                             txn->GetTransactionId(), 
+                                             txn->GetTransactionId(),
                                              table->GetOid(),
-                                             location,
+                                             insert_location,
                                              delete_location,
                                              tuple,
                                              LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
     }
-  }
 
-  if(committed){
-    txn_manager.CommitTransaction();
-  } else{
-    txn_manager.AbortTransaction();
+
+    if(committed){
+      txn_manager.CommitTransaction();
+    } else{
+      txn_manager.AbortTransaction();
+    }
   }
 
   // Clean up data
   for( auto tuple : tuples){
     delete tuple;
   }
+
+  return inserted_locations;
 }
 
 //===--------------------------------------------------------------------===//
