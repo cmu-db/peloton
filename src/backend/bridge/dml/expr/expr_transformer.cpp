@@ -207,13 +207,11 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 		  expression::AbstractExpression* ce = expression::ConstantValueFactory(tmpVal);
 		  vecExpr->push_back(ce);
 	  }
-	  value.Free();
 	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
 	  return rv;
 	  //Free val and vector here ?michael vector_expression delete vecExpr
   } else {
 	  auto rv = expression::ConstantValueFactory(value);
-	  value.Free();
 	  return rv;
   }
 

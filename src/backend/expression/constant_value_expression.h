@@ -16,6 +16,7 @@
 #include "backend/common/value_factory.h"
 
 #include <string>
+#include <sstream>
 
 namespace peloton {
 namespace expression {
@@ -50,10 +51,12 @@ class ConstantValueExpression : public AbstractExpression {
         value.Debug() + "\n";
   }
 
-  //for test by michael
-  Value GetValue() {
-	  return value;
+  friend std::ostream &operator<<(std::ostream &os, const ConstantValueExpression &expr) {
+    os << expr.DebugInfo(" ");
+    return os;
   }
+
+
  protected:
   Value value;
 };
