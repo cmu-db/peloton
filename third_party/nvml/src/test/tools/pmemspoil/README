@@ -1,0 +1,50 @@
+Linux NVM Library
+
+This is src/test/tools/pmemspoil/README.
+
+This directory contains a simple application for corrupting pool files.
+
+This application may be used for testing purposes. One allows to modify every
+single field in all structures used by NVML library.
+
+Usage:
+	$ pmemspoil <file> <field>=<value>...
+
+<file>		- pool file
+<field>		- name of field in structure to modify
+<value>		- new value, for numerical fields you can use either decimal or
+		  hexadecimal format with 0x prefix.
+
+You can specify more than one field to modify at single call.
+
+The format of <field> may contain multiple levels of structure fields and may
+contain index of specified structure if there is more than one in a pool file.
+
+The pmemspoil supports the following structures:
+	- pool_hdr		- see util.h for details
+	- pmemlog		- see log.h for details
+	- pmemblk		- see blk.h for details
+	- arena			- specify arena index
+	- btt_info		- see btt_layout.h for details
+	- btt_info_backup	- the same as btt_info but refers to BTT Info
+				  backup header
+	- btt_flog		- see btt_layout.h for details
+	- btt_flog_prime	- the same as btt_flog but refers to second
+				  instance of FLOG entry
+	- btt_map		- BTT Map entries, see btt_layout.h for details
+
+
+Examples:
+
+In order to change pool_hdr's signature and start offset of pmemlog pool:
+	$ pmemspoil /path/to/file pool_hdr.signature=ERROR\
+				pmemlog.start_offset=0x0
+
+For pmemblk pool file you can modify a signature in BTT Info header of second
+arena using the following command:
+	$ pmemspoil /path/to/file "arena(1).btt_info.sig=ERROR"
+
+In order to change BTT Map entry number 20 and 5th flog sequence number in 3rd
+arena:
+	$ pmemspoil /path/to/file "arena(3).btt_map(20)=0x0"\
+				"arena(3).btt_flog(5).seq=0xff"

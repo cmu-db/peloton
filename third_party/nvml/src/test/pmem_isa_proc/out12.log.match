@@ -1,0 +1,5 @@
+pmem_isa_proc/TEST12: START: pmem_isa_proc
+ ./pmem_isa_proc$(nW)
+redirected /proc/cpuinfo to cpuinfo_all
+has_hw_drain: 1
+pmem_isa_proc/TEST12: Done

@@ -1,0 +1,8 @@
+==$(nW)== pmemcheck-$(nW), a simple persistent store checker
+==$(nW)== Copyright (c) $(nW), Intel Corporation
+==$(nW)== Using Valgrind-$(nW) and LibVEX; rerun with -h for copyright info
+==$(nW)== Command: ../obj_list/obj_list$(nW) $(nW)testfile i:0:0 i:0:0 i:0:0 i:0:0 P:2 R:2 P:4 R:4 m:0:0:0 m:-1:1:-1 m:1:1:1 m:0:0:2 P:2 R:2 P:4 R:4
+==$(nW)== Parent PID: $(nW)
+==$(nW)== 
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0

@@ -1,0 +1,4 @@
+blk_pool/TEST28: START: blk_pool
+ ./blk_pool$(nW) o $(nW)/testfile 300
+$(nW)/testfile: pmemblk_open: Success
+blk_pool/TEST28: Done

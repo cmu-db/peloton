@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
@@ -20,8 +21,6 @@
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
-
-#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -89,18 +88,17 @@ TEST(TileGroupTests, BasicTest) {
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
+  auto pool = tile_group->GetTilePool(1);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
-      3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
+  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(
-      3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
+  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   // TRANSACTION
 
@@ -134,20 +132,20 @@ TEST(TileGroupTests, BasicTest) {
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
-  uint64_t thread_id = GetThreadId();
+  uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   cid_t commit_id = txn->GetCommitId();
+  auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple->SetValue(
-      3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id),
-                                      tile_group->GetTilePool(1)));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
+                          pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(txn_id, tuple);
@@ -273,12 +271,12 @@ TEST(TileGroupTests, MVCCInsert) {
       column_map, 3);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
+  auto pool =  tile_group->GetTilePool(1);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple->SetValue(
-      3, ValueFactory::GetStringValue("abc", tile_group->GetTilePool(1)));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(3, ValueFactory::GetStringValue("abc"), pool);
 
   oid_t tuple_slot_id = INVALID_OID;
 
@@ -287,15 +285,15 @@ TEST(TileGroupTests, MVCCInsert) {
   txn_id_t txn_id1 = txn->GetTransactionId();
   cid_t cid1 = txn->GetLastCommitId();
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(0));
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(0), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(0, tuple_slot_id);
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(1));
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(1), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(1, tuple_slot_id);
 
-  tuple->SetValue(2, ValueFactory::GetIntegerValue(2));
+  tuple->SetValue(2, ValueFactory::GetIntegerValue(2), pool);
   tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
   EXPECT_EQ(2, tuple_slot_id);
 
@@ -306,21 +304,8 @@ TEST(TileGroupTests, MVCCInsert) {
 
   // SELECT
 
-  storage::Tuple *result = nullptr;
-  result = tile_group->SelectTuple(1, 1);
-  EXPECT_NE(result, nullptr);
-  delete result;
-
   header->SetBeginCommitId(0, cid1);
   header->SetBeginCommitId(2, cid1);
-
-  result = tile_group->SelectTuple(1, 1);
-  EXPECT_NE(result, nullptr);
-  delete result;
-
-  result = tile_group->SelectTuple(1, 0);
-  EXPECT_NE(result, nullptr);
-  delete result;
 
   txn_manager.CommitTransaction();
 
@@ -396,34 +381,29 @@ TEST(TileGroupTests, TileCopyTest) {
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id1 = txn->GetTransactionId();
   oid_t tuple_slot_id = INVALID_OID;
+  auto pool = tile->GetPool();
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
-      3, ValueFactory::GetStringValue("vivek sengupta", tile->GetPool()));
-  tuple1->SetValue(
-      4, ValueFactory::GetStringValue("vivek sengupta again", tile->GetPool()));
+  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
+  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(3,
-                   ValueFactory::GetStringValue("ming fang", tile->GetPool()));
-  tuple2->SetValue(
-      4, ValueFactory::GetStringValue("ming fang again", tile->GetPool()));
+  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang"), pool);
+  tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again"), pool);
 
-  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3));
-  tuple3->SetValue(
-      3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
-  tuple3->SetValue(
-      4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
+  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
+  tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);
@@ -472,7 +452,6 @@ TEST(TileGroupTests, TileCopyTest) {
   // 2. Information (Value objects, lengths, pointers to Varlen objects, stored
   // data)
   int uninlined_col_index;
-  Value uninlined_col_value, new_uninlined_col_value;
   size_t uninlined_col_object_len, new_uninlined_col_object_len;
   unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
 
@@ -485,6 +464,8 @@ TEST(TileGroupTests, TileCopyTest) {
 
     // Iterate over all the tuples for the current uninlined column in the tile
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
+      Value uninlined_col_value, new_uninlined_col_value;
+
       uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
       uninlined_col_object_len =
           ValuePeeker::PeekObjectLengthWithoutNull(uninlined_col_value);

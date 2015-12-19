@@ -23,6 +23,8 @@ namespace peloton {
 // Utils
 //===--------------------------------------------------------------------===//
 
+class VarlenPool;
+
 namespace catalog {
 class Column;
 class Manager;
@@ -65,7 +67,8 @@ class ExecutorTestsUtil {
   static void PopulateTable(storage::DataTable *table, int num_rows,
                             bool mutate, bool random, bool group_by);
 
-  static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
+  static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
+                            int num_rows);
 
   static catalog::Column GetColumnInfo(int index);
 
@@ -87,12 +90,14 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table);
+  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
+                                  VarlenPool *pool);
+  static storage::Tuple *GetNullTuple(storage::DataTable *table, VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
+
 };
 
 }  // namespace test

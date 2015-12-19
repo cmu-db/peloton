@@ -1,0 +1,31 @@
+obj_basic_integration/TEST4: START: obj_basic_integration
+ ./obj_basic_integration$(nW) $(nW)/testset1
+alloc: 128, size: 192
+realloc: 128 => 655360, size: 786368
+realloc: 655360 => 1, size: 786368
+free
+realloc: 0 => 777, size: 960
+realloc: 777 => 1, size: 960
+free
+realloc: 0 => 1, size: 64
+realloc: 1 => 1, size: 64
+free
+POBJ_LIST_FOREACH: dummy_node 0
+POBJ_LIST_FOREACH: dummy_node 5
+POBJ_LIST_FOREACH: dummy_node 6
+POBJ_LIST_NEXT: dummy_node 0
+POBJ_LIST_NEXT: dummy_node 5
+POBJ_LIST_NEXT: dummy_node 6
+POBJ_LIST_FOREACH_REVERSE: dummy_node 6
+POBJ_LIST_FOREACH_REVERSE: dummy_node 5
+POBJ_LIST_PREV: dummy_node 5
+POBJ_LIST_PREV: dummy_node 6
+POBJ_LIST_FOREACH_REVERSE: dummy_node 6
+POBJ_LIST_FOREACH_REVERSE: dummy_node 8
+POBJ_LIST_FOREACH_REVERSE: dummy_node 7
+POBJ_LIST_FOREACH_REVERSE: dummy_node 5
+POBJ_LIST_PREV: dummy_node 6
+POBJ_LIST_PREV: dummy_node 8
+POBJ_LIST_PREV: dummy_node 7
+POBJ_LIST_PREV: dummy_node 5
+obj_basic_integration/TEST4: Done

@@ -17,6 +17,7 @@
 #include <atomic>
 #include <vector>
 #include <mutex>
+#include <memory>
 
 #include "backend/common/types.h"
 
@@ -78,13 +79,6 @@ class TileGroup {
   // used by recovery mode
   oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const Tuple *tuple);
 
-
-  // returns tuple at given slot in tile if it exists
-  Tuple *SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
-
-  // returns tuple at given slot if it exists
-  Tuple *SelectTuple(oid_t tuple_slot_id);
-
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid);
 
@@ -128,6 +122,9 @@ class TileGroup {
   // Get the tile at given offset in the tile group
   Tile *GetTile(const oid_t tile_itr) const;
 
+  // Get a reference to the tile at the given offset in the tile group
+  std::shared_ptr<Tile> GetTileReference(const oid_t tile_offset) const;
+
   oid_t GetTileId(const oid_t tile_id) const;
 
   peloton::VarlenPool *GetTilePool(const oid_t tile_id) const;
@@ -159,10 +156,6 @@ class TileGroup {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  void IncrementRefCount();
-
-  void DecrementRefCount();
-
   double GetSchemaDifference(const storage::column_map_type& new_column_map);
 
  protected:
@@ -179,7 +172,7 @@ class TileGroup {
   std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
-  std::vector<Tile *> tiles;
+  std::vector<std::shared_ptr<Tile> > tiles;
 
   // associated tile group
   TileGroupHeader *tile_group_header;
@@ -198,9 +191,6 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
-
-  // references
-  std::atomic<size_t> ref_count;
 
 };
 

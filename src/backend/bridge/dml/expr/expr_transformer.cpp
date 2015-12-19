@@ -164,7 +164,6 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 
   // A Const Expr has no children.
   auto rv = expression::ConstantValueFactory(value);
-  value.Free();
   return rv;
 }
 

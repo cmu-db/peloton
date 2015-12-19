@@ -1,0 +1,8 @@
+Linux NVM Library
+
+This is src/test/pmempool_create/README.
+
+This directory contains a unit test for 'pmempool create' command.
+
+The tests in this directory check the 'create' command by creating all
+supported pool types using all available features.

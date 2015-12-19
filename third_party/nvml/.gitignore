@@ -1,0 +1,14 @@
+*.swp
+*.o
+make.out
+core
+a.out
+.cproject
+.project
+.settings/
+nbproject/
+rpmbuild/
+dpkgbuild/
+rpm/
+dpkg/
+.deps

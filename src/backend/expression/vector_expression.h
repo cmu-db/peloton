@@ -40,8 +40,6 @@ public:
             delete m_args[i];
         }
         delete &m_args;
-
-        m_inList.Free();
     }
 
     virtual bool HasParameter() const

@@ -1,0 +1,27 @@
+Linux NVM Library
+
+This is src/test/obj_tx_locks_abort/README.
+
+This directory contains a unit test for handling transaction locks in case
+of aborted nested transactions.
+
+At the beginning of each transaction, the user may provide an arbitrary number of mutexes
+and/or rwlocks, which will be taken before the transaction starts and released
+at transaction end.
+In case of nested transactions, it may happen that the snapshot of the object
+containing the lock passed to pmemobj_tx_begin() is already added to the undo log.
+If the transaction is aborted, the object data will be restored first (which also restores
+the PMEM lock in non-locked state.  Once the undo log processing is completed,
+all the transaction locks are unlocked.  So, this may result in calling the unlock()
+on the lock that is not held by current thread, which may lead to an undefined behavior.
+The libpmemobj library implements mechanisms to prevent such scenario, and this is
+what is tested here.
+
+The obj_tx_locks_abort application takes as command line arguments the file where the pool
+will be created and the type of test to be performed:
+
+$ obj_tx_locks_abort <file>
+
+Some of the tests are performed using valgrind and its following tools:
+	- drd
+	- helgrind

@@ -1,0 +1,8 @@
+Linux NVM Library
+
+This is src/test/obj_list_valgrind/README.
+
+This directory contains unit tests for list module with
+valgrind pmemcheck tool.
+
+The unit tests utilizes an application from src/test/obj_list directory.

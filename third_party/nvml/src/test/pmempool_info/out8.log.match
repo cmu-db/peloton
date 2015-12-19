@@ -1,0 +1,87 @@
+Number of LBAs: $(*)
+Number of LBAs in map: $(*)
+Number of LBAs [zero]: $(*)
+Number of LBAs [error]: 1
+Number of LBAs [no flag]: 1
+POOL Header:
+Signature                : PMEMBLK
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM BLK Header:
+Block size               : $(*)
+Is zeroed                : $(*)
+
+[ARENA 0]
+PMEM BLK BTT Info Header:
+Signature                : BTT_ARENA_INFO
+UUID of container        : $(*)
+Flags                    : $(*)
+Major                    : $(*)
+Minor                    : $(*)
+External LBA size        : $(*)
+External LBA count       : $(*)
+Internal LBA size        : $(*)
+Internal LBA count       : $(*)
+Free blocks              : $(*)
+Info block size          : $(*)
+Next arena offset        : $(*)
+Arena data offset        : $(*)
+Area map offset          : $(*)
+Area flog offset         : $(*)
+Info block backup offset : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM BLK blocks data:
+Block          1: offset: $(*) state: error
+$(*)  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+$(*)  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+------------------------------------------------------------------------------
+Block          2: offset: $(*)
+$(*)|TEST$(*)|
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)
+$(OPT)$(*)

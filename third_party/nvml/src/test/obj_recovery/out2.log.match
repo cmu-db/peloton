@@ -1,0 +1,3 @@
+obj_recovery/TEST2: START: obj_recovery
+ ./obj_recovery$(nW) $(nW)/testfile y o f
+obj_recovery/TEST2: Done
