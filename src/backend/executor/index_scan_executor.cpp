@@ -38,6 +38,10 @@ IndexScanExecutor::IndexScanExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
     : AbstractScanExecutor(node, executor_context) {}
 
+IndexScanExecutor::~IndexScanExecutor() {
+  // Nothing to do here
+}
+
 /**
  * @brief Let base class Dinit() first, then do my job.
  * @return true on success, false otherwise.

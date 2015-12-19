@@ -26,80 +26,64 @@ namespace expression {
  * IN filterLis not index-optimized and when the list element expression are not all constants.
  */
 class VectorExpression : public AbstractExpression {
-public:
-    VectorExpression(ValueType elementType, const std::vector<AbstractExpression *>& arguments)
-        : AbstractExpression(EXPRESSION_TYPE_VALUE_VECTOR), m_args(arguments)
-    {
-        m_inList = ValueFactory::GetArrayValueFromSizeAndType(arguments.size(), elementType);
+ public:
+  VectorExpression(ValueType elementType, const std::vector<AbstractExpression *>& arguments)
+ : AbstractExpression(EXPRESSION_TYPE_VALUE_VECTOR), arguments(arguments) {
+    in_list = ValueFactory::GetArrayValueFromSizeAndType(arguments.size(), elementType);
+ }
+
+  virtual ~VectorExpression() {
+    for(auto argument : arguments)
+      delete argument;
+  }
+
+  virtual bool HasParameter() const {
+    for(auto argument : arguments){
+      assert(argument);
+      if(argument->HasParameter()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Value Evaluate(const AbstractTuple *tuple1,
+                 const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+
+    for(auto argument : arguments) {
+      ExpressionType expression_type = argument->GetExpressionType();
+      int value_type = argument->GetValueType();
+      ConstantValueExpression* pcs = (ConstantValueExpression*) argument;
+      std::cout << *pcs << expression_type << value_type;
     }
 
-    virtual ~VectorExpression()
-    {
-        size_t i = m_args.size();
-        while (i--) {
-            delete m_args[i];
-        }
-        delete &m_args;
+    std::vector<Value> in_values;
+    for(auto argument : arguments){
+      auto in_value = argument->Evaluate(tuple1, tuple2, context);
+      in_values.push_back(ValueFactory::Clone(in_value, nullptr));
     }
 
-    virtual bool HasParameter() const
-    {
-        for (size_t i = 0; i < m_args.size(); i++) {
-            assert(m_args[i]);
-            if (m_args[i]->HasParameter()) {
-                return true;
-            }
-        }
-        return false;
-    }
+    in_list.SetArrayElements(in_values);
+    return in_list;
+  }
 
-    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                   executor::ExecutorContext *context) const
-    {
-        //TODO: Could make this vector a member, if the memory management implications
-        // (of the Value internal state) were clear --Lis there a penalty for longer-lived
-        // Values that outweighs the current per-Evaluate allocation penalty?
+  std::string DebugInfo(const std::string &spacer) const {
+    return spacer + "VectorExpression\n";
+  }
 
-        //for test michael
-  	  std::vector<expression::AbstractExpression*> vec_expr = this->GetArgs();
-  	  size_t i = vec_expr.size();
-  	  for (i = 0; i < vec_expr.size(); i++) {
-  		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
-  		  int value_type = vec_expr[i]->GetValueType();
-  		  ConstantValueExpression* pcs = (ConstantValueExpression*) vec_expr[i];
-  		  Value val = pcs->GetValue();
-  		  std::string str = val.Debug();
-  		  std::cout << str << ev_type << value_type;
-  	  }
-        //end test
-        std::vector<Value> nValues(m_args.size());
-        for (size_t i = 0; i < m_args.size(); ++i) {
-            nValues[i] = m_args[i]->Evaluate(tuple1, tuple2, context);
-        }
-        m_inList.SetArrayElements(nValues);
-        return m_inList;
-    }
+  // for test
+  std::vector<AbstractExpression *> GetArgs() const {
+    return arguments;
+  }
 
-    std::string DebugInfo(const std::string &spacer) const
-    {
-        return spacer + "VectorExpression\n";
-    }
+ private:
 
-//    void PrintElementValue() {
-//        for (size_t i = 0; i < m_args.size(); i++) {
-//        	assert(m_args[i]);
-//            ValueType vType = m_args[i]->GetValueType();
-//
-//        }
-//    }
+  // Arguments
+  std::vector<AbstractExpression *> arguments;
 
-    // for test
-    std::vector<AbstractExpression *> GetArgs() const {
-    	return m_args;
-    }
-private:
-    const std::vector<AbstractExpression *>& m_args;
-    Value m_inList;
+  // In list
+  Value in_list;
 };
 
 }  // End expression namespace
