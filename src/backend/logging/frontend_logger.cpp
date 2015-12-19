@@ -57,7 +57,7 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger] Standby Mode");
 
   // Standby before we need to do RECOVERY
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false, LOGGING_TYPE_INVALID);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false, logging_type);
 
   // Do recovery if we can, otherwise terminate
   switch(log_manager.GetStatus(logging_type)){
@@ -158,7 +158,7 @@ void FrontendLogger::CollectLogRecord() {
    */
   if (!log_collect_request) {
     backend_notify_cv.wait_for(wait_lock,
-                             std::chrono::seconds(wait_timeout)); // timeout
+                               std::chrono::milliseconds(wait_timeout)); // timeout
   }
 
   {
