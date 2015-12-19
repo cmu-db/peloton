@@ -69,23 +69,7 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
       break;
 
     case T_ScalarArrayOpExpr:
-      {
-    	  peloton_expr = TransformScalarArrayOp(expr_state);
-          // by michael for test
-          //expression::ComparisonExpression<CmpIn>* ce = expression::ComparisonExpression<CmpIn>*  peloton_expr;
-          const expression::AbstractExpression* rc = peloton_expr->GetRight();
-       	  expression::VectorExpression* ve = (expression::VectorExpression*) rc;
-       	  std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
-       	  size_t i = vec_expr.size();
-       	  for (i = 0; i < vec_expr.size(); i++) {
-       		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
-       		  int value_type = vec_expr[i]->GetValueType();
-       		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
-       		  Value val = pcs->GetValue();
-       		  std::string str = val.Debug();
-       		  std::cout << str << ev_type << value_type;
-       	  }
-      }
+      peloton_expr = TransformScalarArrayOp(expr_state);
       break;
 
     case T_Var:
@@ -139,30 +123,12 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
       peloton_expr = TransformVar(expr);
       break;
 
-
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
                 nodeTag(expr))
       ;
   }
 
-  // by michael for test
-  ExpressionType t = peloton_expr->GetExpressionType();
-  if (t == EXPRESSION_TYPE_VALUE_VECTOR) {
-	  expression::VectorExpression* ve = (expression::VectorExpression*) peloton_expr;
-	  const std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
-	  size_t i = vec_expr.size();
-	  for (i = 0; i < vec_expr.size(); i++) {
-		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
-		  int value_type = vec_expr[i]->GetValueType();
-		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
-		  Value val = pcs->GetValue();
-		  std::string str = val.Debug();
-		  std::cout << str << ev_type << value_type;
-	  }
-  }
-
-  //
   return peloton_expr;
 }
 
@@ -245,7 +211,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 	  value.Free();
 	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
 	  return rv;
-	  //Free val and vector here?
+	  //Free val and vector here ?michael vector_expression delete vecExpr
   } else {
 	  auto rv = expression::ConstantValueFactory(value);
 	  value.Free();
@@ -298,19 +264,6 @@ expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
 
      ic++;
    }
-
-   //by michael for test
-	  expression::VectorExpression* ve = (expression::VectorExpression*) rc;
-	  std::vector<expression::AbstractExpression*> vec_expr = ve->GetArgs();
-	  size_t i = vec_expr.size();
-	  for (i = 0; i < vec_expr.size(); i++) {
-		  ExpressionType ev_type = vec_expr[i]->GetExpressionType();
-		  int value_type = vec_expr[i]->GetValueType();
-		  expression::ConstantValueExpression* pcs = (expression::ConstantValueExpression*) vec_expr[i];
-		  Value val = pcs->GetValue();
-		  std::string str = val.Debug();
-		  std::cout << str << ev_type << value_type;
-	  }
 
    return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
    //return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc, rc);
