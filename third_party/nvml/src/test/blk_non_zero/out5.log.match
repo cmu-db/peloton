@@ -1,0 +1,12 @@
+blk_non_zero/TEST5: START: blk_non_zero
+ ./blk_non_zero$(nW) 512 $(nW)/testfile1 c $(N) r:0 r:1 r:32201 r:32202 z:0 z:1 r:0
+512 block size 512 usable blocks 32202
+is zeroed:	1
+read      lba 0: {0}
+read      lba 1: {0}
+read      lba 32201: {0}
+read      lba 32202: Invalid argument
+set_zero  lba 0
+set_zero  lba 1
+read      lba 0: {0}
+blk_non_zero/TEST5: Done

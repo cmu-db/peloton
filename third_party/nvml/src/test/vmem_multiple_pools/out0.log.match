@@ -1,0 +1,4 @@
+vmem_multiple_pools/TEST0: START: vmem_multiple_pools
+ ./vmem_multiple_pools$(nW) $(nW) 128 1
+create 128 pools in 1 thread(s)
+vmem_multiple_pools/TEST0: Done

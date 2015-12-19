@@ -1,0 +1,3 @@
+vmem_pages_purging/TEST0: START: vmem_pages_purging
+ ./vmem_pages_purging$(nW) $(nW)
+vmem_pages_purging/TEST0: Done

@@ -1,0 +1,20 @@
+Linux NVM Library
+
+This is src/test/log_recovery/README.
+
+This directory contains a unit test for pmemlog recovery. It works only
+in non-debug mode.
+
+The program in log_recovery.c takes a file name and an operation as arguments.
+An operation is encoded as a character 'a' or 'v'. The first one means that
+pmemlog_append() will be used to append data and the second one means that
+pmemlog_appendv() will be used to do that. For example:
+
+	./log_recovery file1 a
+
+this will call pmemlog_open() on file1, call pmemlog_append() to append
+six strings to the log and pmemlog_tell() to check the current write point,
+then it will change the memory protection on the metadata area to read-only.
+Next, pmemlog_append() is called again and SIGSEGV is caught and reported.
+Finally, pmemblk_check() and pmemlog_tell() are called to make sure there are
+no partial log entries.

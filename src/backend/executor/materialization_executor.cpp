@@ -102,10 +102,10 @@ void MaterializationExecutor::MaterializeByTiles(
   oid_t column_count_threshold = 20;
   bool row_wise_materialization = true;
 
-  if(peloton_layout == LAYOUT_COLUMN)
+  if(peloton_layout_mode == LAYOUT_COLUMN)
       row_wise_materialization = false;
 
-  if(peloton_layout == LAYOUT_HYBRID &&
+  if(peloton_layout_mode == LAYOUT_HYBRID &&
       dest_tile_column_count < column_count_threshold)
     row_wise_materialization = false;
 
@@ -156,7 +156,7 @@ void MaterializeRowAtAtATime(LogicalTile *source_tile,
       old_column_position_idxs.push_back(column_info.position_list_idx);
 
       // Get old column information
-      storage::Tile *old_tile = column_info.base_tile;
+      storage::Tile *old_tile = column_info.base_tile.get();
       old_tiles.push_back(old_tile);
       auto old_schema = old_tile->GetSchema();
       oid_t old_column_id = column_info.origin_column_id;
@@ -248,7 +248,7 @@ void MaterializeColumnAtATime(LogicalTile *source_tile,
       auto &column_info = source_tile->GetColumnInfo(old_col_id);
 
       // Amortize schema lookups once per column
-      storage::Tile *old_tile = column_info.base_tile;
+      storage::Tile *old_tile = column_info.base_tile.get();
       auto old_schema = old_tile->GetSchema();
 
       // Get old column information
@@ -351,7 +351,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   GenerateTileToColMap(old_to_new_cols, source_tile, tile_to_cols);
 
   // Create new physical tile.
-  std::unique_ptr<storage::Tile> dest_tile(
+  std::shared_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(*output_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
@@ -359,7 +359,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
                      dest_tile.get());
 
   // Wrap physical tile in logical tile.
-  return LogicalTileFactory::WrapTiles({dest_tile.release()});
+  return LogicalTileFactory::WrapTiles({dest_tile});
 }
 
 /**

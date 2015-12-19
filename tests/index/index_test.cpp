@@ -61,8 +61,7 @@ TEST(IndexTests, BtreeIndexTest) {
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, unique_keys);
-
-  peloton::VarlenPool *pool = new peloton::VarlenPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -77,19 +76,19 @@ TEST(IndexTests, BtreeIndexTest) {
   storage::Tuple *key4 = new storage::Tuple(key_schema, true);
   storage::Tuple *keynonce = new storage::Tuple(key_schema, true);
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key3->SetValue(0, ValueFactory::GetIntegerValue(400));
-  key4->SetValue(0, ValueFactory::GetIntegerValue(500));
-  keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000));
+  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key3->SetValue(0, ValueFactory::GetIntegerValue(400), pool);
+  key4->SetValue(0, ValueFactory::GetIntegerValue(500), pool);
+  keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000), pool);
 
-  key0->SetValue(1, ValueFactory::GetStringValue("a", pool));
-  key1->SetValue(1, ValueFactory::GetStringValue("b", pool));
-  key2->SetValue(1, ValueFactory::GetStringValue("c", pool));
-  key3->SetValue(1, ValueFactory::GetStringValue("d", pool));
-  key4->SetValue(1, ValueFactory::GetStringValue("e", pool));
-  keynonce->SetValue(1, ValueFactory::GetStringValue("f", pool));
+  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
+  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
+  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key3->SetValue(1, ValueFactory::GetStringValue("d"), pool);
+  key4->SetValue(1, ValueFactory::GetStringValue("e"), pool);
+  keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
 
   ItemPointer item0(120, 5);
   ItemPointer item1(120, 7);
@@ -139,8 +138,6 @@ TEST(IndexTests, BtreeIndexTest) {
   delete key3;
   delete key4;
   delete keynonce;
-
-  delete pool;
 
   delete tuple_schema;
 

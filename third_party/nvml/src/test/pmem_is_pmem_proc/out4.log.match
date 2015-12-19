@@ -1,0 +1,11 @@
+pmem_is_pmem_proc/TEST4: START: pmem_is_pmem_proc
+ ./pmem_is_pmem_proc$(nW) smaps_no_vmflags 7fff77424000 2147479552 7fff77424000 8192 7fff77423000 8192 7fff77423000 4096
+redirecting /proc/self/smaps to smaps_no_vmflags
+addr 0x7fff77424000, len 2147479552: 0
+redirecting /proc/self/smaps to smaps_no_vmflags
+addr 0x7fff77424000, len 8192: 0
+redirecting /proc/self/smaps to smaps_no_vmflags
+addr 0x7fff77423000, len 8192: 0
+redirecting /proc/self/smaps to smaps_no_vmflags
+addr 0x7fff77423000, len 4096: 0
+pmem_is_pmem_proc/TEST4: Done

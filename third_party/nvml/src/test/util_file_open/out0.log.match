@@ -1,0 +1,11 @@
+util_file_open/TEST0: START: util_file_open
+ ./util_file_open$(nW) 0x4000 $(nW)/testdir1 /dev/zero $(nW)/testlink0 $(nW)/testlink1 $(nW)/testlink2 $(nW)/testfile0 $(nW)/testfile1 $(nW)/testfile2
+$(nW)/testdir1: util_file_open: Is a directory
+/dev/zero: util_file_open: Invalid argument
+$(nW)/testlink0: util_file_open: No such file or directory
+$(nW)/testlink1: util_file_open: Is a directory
+$(nW)/testlink2: util_file_open: Invalid argument
+$(nW)/testfile0: util_file_open: No such file or directory
+$(nW)/testfile1: util_file_open: Invalid argument
+$(nW)/testfile2: open, len 32768
+util_file_open/TEST0: Done

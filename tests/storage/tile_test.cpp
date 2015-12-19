@@ -67,30 +67,25 @@ TEST(TileTests, BasicTest) {
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
+  auto pool = tile->GetPool();
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
-      3, ValueFactory::GetStringValue("vivek sengupta", tile->GetPool()));
-  tuple1->SetValue(
-      4, ValueFactory::GetStringValue("vivek sengupta again", tile->GetPool()));
+  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
+  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(3,
-                   ValueFactory::GetStringValue("ming fang", tile->GetPool()));
-  tuple2->SetValue(
-      4, ValueFactory::GetStringValue("ming fang again", tile->GetPool()));
+  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang"), pool);
+  tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again"), pool);
 
-  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3));
-  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3));
-  tuple3->SetValue(
-      3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
-  tuple3->SetValue(
-      4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
+  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
+  tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);

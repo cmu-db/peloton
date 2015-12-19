@@ -1,0 +1,5 @@
+$(*): Persistent Memory Pool file, type: BLK, version 0x1
+$(*): Persistent Memory Pool file, type: LOG, version 0x1
+$(*): Persistent Memory Pool file, type: OBJ, version 0x1
+$(*): Persistent Memory Poolset file
+$(*): Persistent Memory Poolset file with replica
