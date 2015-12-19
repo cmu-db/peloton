@@ -63,12 +63,11 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
-  log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode,
                      &log_manager,
-                     log_manager.GetDefaultLoggingType());
+                     logging_type);
 
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
@@ -76,7 +75,7 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
+    log_manager.SetTestRedoAllLogs(logging_type, true);
   }
 
   // STANDBY -> RECOVERY mode
@@ -137,19 +136,18 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
-  log_manager.SetDefaultLoggingType(logging_type);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
-                     log_manager.GetDefaultLoggingType());
+                     logging_type);
 
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
 
   // always enable commit when testing recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
+    log_manager.SetTestRedoAllLogs(logging_type, true);
   }
 
   // STANDBY -> RECOVERY mode

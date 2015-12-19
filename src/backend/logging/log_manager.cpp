@@ -45,6 +45,15 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
     if( frontend_logger == nullptr ){
       frontend_logger = FrontendLogger::GetFrontendLogger(logging_type);
       frontend_loggers.push_back(frontend_logger);
+
+      // We are adding a peloton frontend logger
+      if(logging_type == LOGGING_TYPE_PELOTON)
+        has_peloton_frontend_logger = true;
+
+      // Set has_frontend_logger
+      if(frontend_loggers.empty() == false)
+        has_frontend_logger = true;
+
     } else{
       frontend_exists = true;
     }
@@ -69,6 +78,12 @@ void LogManager::StartRecoveryMode(LoggingType logging_type) {
 }
 
 bool LogManager::IsInLoggingMode(LoggingType logging_type){
+
+  // Fast check
+  if(has_frontend_logger == false)
+    return false;
+
+  // Slow check for specific type
   if(GetStatus(logging_type) == LOGGING_STATUS_TYPE_LOGGING)
     return true;
   else
@@ -207,11 +222,20 @@ bool LogManager::RemoveFrontendLogger(LoggingType logging_type ){
     for(auto frontend_logger : frontend_loggers){
       if( frontend_logger->GetLoggingType() == logging_type){
         delete frontend_logger;
+
+        // We are removing a peloton frontend logger
+        if(logging_type == LOGGING_TYPE_PELOTON)
+          has_peloton_frontend_logger = false;
+
         break;
       }else{
         offset++;
       }
     }
+
+    // Unset has_frontend_logger if needed
+    if(frontend_loggers.empty() == true)
+      has_frontend_logger = false;
 
     // Remove the entry in the frontend logger list
     if( offset >= frontend_loggers.size()){
@@ -239,14 +263,6 @@ void LogManager::ResetLoggingStatusMap(LoggingType logging_type ) {
     logging_status_cv.notify_all();
   }
 
-}
-
-void LogManager::SetDefaultLoggingType(LoggingType logging_type){
-  default_logging_type = logging_type;
-}
-
-LoggingType LogManager::GetDefaultLoggingType(void){
-  return default_logging_type;
 }
 
 size_t LogManager::ActiveFrontendLoggerCount(void) {
@@ -308,10 +324,10 @@ void LogManager::NotifyFrontendLogger(LoggingType logging_type, bool newLog) {
   }
 }
 
-void LogManager::SetTestRedoAllLogs(bool test_redo_all) {
+void LogManager::SetTestRedoAllLogs(LoggingType logging_type, bool test_redo_all) {
   {
     std::lock_guard<std::mutex> lock(frontend_logger_mutex);
-    FrontendLogger *frontend = GetFrontendLogger(default_logging_type);
+    FrontendLogger *frontend = GetFrontendLogger(logging_type);
 
     frontend->SetTestRedoAllLogs(test_redo_all);
   }
