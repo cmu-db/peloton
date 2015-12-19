@@ -86,11 +86,6 @@ class LogManager{
 
     void ResetLoggingStatusMap(LoggingType logging_type);
 
-    // Default protocol or logging type for member function calls
-    void SetDefaultLoggingType(LoggingType logging_type);
-
-    LoggingType GetDefaultLoggingType(void);
-
     // Whether to enable or disable synchronous commit ?
     void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
 
@@ -105,11 +100,15 @@ class LogManager{
 
     void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
 
-    void SetTestRedoAllLogs(bool test_suspend_commit);
+    void SetTestRedoAllLogs(LoggingType logging_type, bool test_suspend_commit);
 
     void SetLogFileName(std::string log_file);
 
     std::string GetLogFileName(void);
+
+    bool HasPelotonFrontendLogger() const {
+      return has_peloton_frontend_logger;
+    }
 
   private:
 
@@ -126,10 +125,12 @@ class LogManager{
     //===--------------------------------------------------------------------===//
     // Data members
     //===--------------------------------------------------------------------===//
-    // default logging type for new logging
-    // this is used instead when the argument passed to member functions
-    // is LOGGING_TYPE_INVALID
-    LoggingType default_logging_type = LOGGING_TYPE_INVALID;
+
+    // has frontend logger ?
+    bool has_frontend_logger = false;
+
+    // has peloton frontend logger
+    bool has_peloton_frontend_logger = false;
 
     // There is only one frontend_logger for each type of logging
     // like -- stdout, aries, peloton
