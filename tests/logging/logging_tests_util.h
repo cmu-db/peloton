@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "backend/common/types.h"
+#include "backend/common/pool.h"
 
 namespace peloton {
 
@@ -44,6 +45,8 @@ public:
 
   class logging_test_configuration {
    public:
+    // logging type
+    LoggingType logging_type;
 
     // # of tuples
     int tuple_count;
@@ -51,8 +54,8 @@ public:
     // # of backends (i.e. backend loggers)
     int backend_count;
 
-    // tuple size
-    int tuple_size;
+    // # of columns in each tuple
+    oid_t column_count;
 
     // check if the count matches after recovery
     bool check_tuple_count;
@@ -70,15 +73,28 @@ private:
   // WRITING LOG RECORD
   //===--------------------------------------------------------------------===//
 
-  static void BuildLog(oid_t db_oid, oid_t table_oid, LoggingType logging_type);
+  static void BuildLog(LoggingType logging_type,
+                       oid_t db_oid,
+                       oid_t table_oid);
 
-  static void RunBackends(storage::DataTable* table);
+  static void RunBackends(LoggingType logging_type,
+                          storage::DataTable* table);
 
-  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table, bool committed);
+  static std::vector<ItemPointer> InsertTuples(LoggingType logging_type,
+                                               storage::DataTable* table,
+                                               VarlenPool *pool,
+                                               bool committed);
 
-  static void DeleteTuples(storage::DataTable* table, ItemPointer location, bool committed);
+  static void DeleteTuples(LoggingType logging_type,
+                           storage::DataTable* table,
+                           const std::vector<ItemPointer>& locations,
+                           bool committed);
 
-  static void UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed);
+  static std::vector<ItemPointer> UpdateTuples(LoggingType logging_type,
+                                               storage::DataTable* table,
+                                               const std::vector<ItemPointer>& locations,
+                                               VarlenPool *pool,
+                                               bool committed);
   
   //===--------------------------------------------------------------------===//
   // Utility functions
@@ -88,11 +104,11 @@ private:
 
   static void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
-  static storage::DataTable* CreateSimpleTable(oid_t db_oid, oid_t table_oid);
+  static storage::DataTable* CreateUserTable(oid_t db_oid, oid_t table_oid);
 
   static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples);
+  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
@@ -101,6 +117,9 @@ private:
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
 
 };
+
+// configuration for testing
+extern LoggingTestsUtil::logging_test_configuration state;
 
 }  // End test namespace
 }  // End peloton namespace

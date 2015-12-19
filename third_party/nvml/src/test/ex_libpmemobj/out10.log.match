@@ -1,0 +1,27 @@
+nblocks: 92160
+write: 0:Hello
+write: 13:World!
+write: 20:foo
+write: 30:bar
+read: 13
+World!
+read: 0
+Hello
+read: 30
+bar
+read: 20
+foo
+read: 1
+
+zero: 20
+zero: 30
+read: 13
+World!
+read: 0
+Hello
+read: 30
+
+read: 20
+
+read: 1
+

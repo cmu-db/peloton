@@ -13,7 +13,7 @@
 #pragma once
 
 #include "backend/concurrency/transaction.h"
-#include "backend/common/value_vector.h"
+#include "backend/common/pool.h"
 
 namespace peloton {
 namespace executor {
@@ -29,22 +29,19 @@ class ExecutorContext {
   ExecutorContext(ExecutorContext &&) = delete;
   ExecutorContext &operator=(ExecutorContext &&) = delete;
 
-  ExecutorContext(concurrency::Transaction *transaction)
-      : transaction_(transaction) {}
+  ExecutorContext(concurrency::Transaction *transaction);
 
   ExecutorContext(concurrency::Transaction *transaction,
-                  const ValueArray &params)
-      : transaction_(transaction), params_(params) {}
+                  const std::vector<Value> &params);
+
+  ~ExecutorContext();
 
   concurrency::Transaction *GetTransaction() const { return transaction_; }
 
-  const ValueArray &GetParams() const { return params_; }
+  const std::vector<Value> &GetParams() const { return params_; }
 
-  ~ExecutorContext(){
-    for(int i=0; i < params_.GetSize(); i++){
-      params_[i].Free();
-    }
-  }
+  // Get a varlen pool (will construct the pool only if needed)
+  VarlenPool *GetExecutorContextPool();
 
   // num of tuple processed
   uint32_t num_processed = 0;
@@ -58,8 +55,10 @@ class ExecutorContext {
   concurrency::Transaction *transaction_;
 
   // params
-  ValueArray params_;
+  std::vector<Value> params_;
 
+  // pool
+  std::unique_ptr<VarlenPool> pool_;
 };
 
 }  // namespace executor

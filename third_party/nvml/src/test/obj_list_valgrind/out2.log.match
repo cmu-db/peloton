@@ -1,0 +1,47 @@
+obj_list_valgrind/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0 n:0:0 n:1:-1 n:0:-1 n:1:2 n:0:1 P:1 R:1 P:2 R:2 f:1:2:2 f:2:2:2 f:1:-1:2 f:2:-1:2 f:1:0:2 f:2:0:2 P:1 R:1 P:2 R:2
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+pmalloc(id = 3)
+pmalloc(id = 4)
+pmalloc(id = 5)
+oob list:
+id = 0
+id = 1
+id = 2
+id = 3
+id = 4
+id = 5
+oob list reverse:
+id = 5
+id = 4
+id = 3
+id = 2
+id = 1
+id = 0
+list:
+id = 0
+id = 2
+id = 5
+id = 4
+id = 1
+id = 3
+list reverse:
+id = 3
+id = 1
+id = 4
+id = 5
+id = 2
+id = 0
+pfree(id = 2)
+pfree(id = 4)
+pfree(id = 5)
+pfree(id = 3)
+pfree(id = 0)
+pfree(id = 1)
+oob list:
+oob list reverse:
+list:
+list reverse:
+obj_list_valgrind/TEST2: Done

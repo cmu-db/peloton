@@ -1,0 +1,7 @@
+Linux NVM Library
+
+This is src/test/obj_list_remove_free/README.
+
+This directory contains unit tests for list_remove_free() function.
+
+The unit tests utilizes an application from src/test/obj_list directory.

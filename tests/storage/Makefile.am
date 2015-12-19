@@ -5,13 +5,19 @@
 ######################################################################
 
 check_PROGRAMS += \
+        value_copy_test \
 		tuple_test \
 		tile_test \
 		tile_group_test \
 		data_table_test \
 		tile_group_iterator_test
 
+value_copy_test_SOURCES = \
+		harness.cpp \
+		storage/value_copy_test.cpp
+
 tuple_test_SOURCES = \
+	    harness.cpp \
 		storage/tuple_test.cpp
 
 tile_test_SOURCES = \
@@ -27,4 +33,7 @@ data_table_test_SOURCES = \
 		harness.cpp
 		
 tile_group_iterator_test_SOURCES = \
-		storage/tile_group_iterator_test.cpp
+		storage/tile_group_iterator_test.cpp \
+		executor/executor_tests_util.cpp \
+		harness.cpp
+		

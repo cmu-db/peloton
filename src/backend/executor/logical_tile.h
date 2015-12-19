@@ -15,6 +15,7 @@
 #include <iterator>
 #include <unordered_set>
 #include <vector>
+#include <memory>
 
 #include "backend/common/types.h"
 
@@ -57,10 +58,11 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(storage::Tile *base_tile,
+  void AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
                  oid_t origin_column_id, oid_t position_list_idx);
 
-  void AddColumns(storage::TileGroup *tile_group, const std::vector<oid_t> &column_ids);
+  void AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
+                  const std::vector<oid_t> &column_ids);
 
   void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
@@ -149,7 +151,7 @@ class LogicalTile {
      * IMPORTANT: We use a pointer instead of the oid of the tile to minimize
      * indirection.
      */
-    storage::Tile *base_tile;
+    std::shared_ptr<storage::Tile> base_tile;
 
     /** @brief Original column id of this logical tile column in its associated
      * base tile. */

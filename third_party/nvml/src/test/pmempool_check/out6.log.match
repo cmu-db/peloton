@@ -1,0 +1,17 @@
+PMEMLOG: pool_hdr
+$(*)pool.set: spoil: pool_hdr.signature=ERROR
+replica 0 part 0: incorrect pool header checksum
+$(*)pool.set: not consistent
+incorrect pool header checksum
+$(*)pool.part1: not consistent
+PMEMLOG: pmemlog
+$(*)pool.set: spoil: pmemlog.start_offset=0
+$(*)pool.set: spoil: pmemlog.end_offset=0
+invalid pmemlog.start_offset: 0x0
+$(*)pool.set: not consistent
+PMEMBLK: pool_hdr
+$(*)pool.set: spoil: pool_hdr.signature=ERROR
+replica 0 part 0: incorrect pool header checksum
+$(*)pool.set: not consistent
+incorrect pool header checksum
+$(*)pool.part1: not consistent

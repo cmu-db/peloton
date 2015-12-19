@@ -1,0 +1,31 @@
+Linux NVM Library
+
+This is examples/libpmemlog/logfile/README.
+
+The example in this directory uses persistent memory to implement a
+simple log file using libpmemlog.  To run this example, follow these steps:
+
+0. Build the example with "make".  The libraries must be built first (i.e.
+   by running "make" in ../../..).
+
+1. Create the log file.  This can be anywhere but the point is it
+   will be a much faster log file if it is created on a pmem-aware
+   file system.  For example, if /pmem is the mount point for a
+   pmem-aware file system:
+
+	$ fallocate -l 1G /pmem/logfile
+
+2. Append to the log file as many times as you like:
+
+	$ addlog /pmem/logfile "Hello there."
+	$ addlog /pmem/logfile "First line." "Second line."
+	...
+
+3. Print the contents of the log any time using:
+
+	$ printlog /pmem/logfile
+
+4. The printlog command will throw away the current log file contents
+   after printing it if given the -t argument:
+
+	$ printlog -t /pmem/logfile

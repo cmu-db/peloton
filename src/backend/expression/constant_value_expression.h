@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/common/value_vector.h"
 #include "backend/common/value_factory.h"
 
 #include <string>
@@ -30,11 +29,10 @@ class ConstantValueExpression : public AbstractExpression {
      * if the expression will live longer than the passed value
      * or if uninlined value will be freed somewhere else
      */
-    this->value = ValueFactory::Clone(value);
+    this->value = ValueFactory::Clone(value, nullptr);
   }
 
   virtual ~ConstantValueExpression() {
-    value.Free();
   }
 
   Value

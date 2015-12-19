@@ -1,0 +1,20 @@
+pid $(N): program: $(nW)/util_poolset$(nW)
+ut version 1.0
+src version SRCVERSION:utversion
+$(OPT)compiled with support for Valgrind pmemcheck
+$(OPT)compiled with support for Valgrind helgrind
+$(OPT)compiled with support for Valgrind memcheck
+open $(nW)/testset0: No such file or directory
+size 12288 smaller than 32768
+size 16384 smaller than 32768
+open $(nW)/nodir/testfile62: No such file or directory
+open /proc/testfile72: Permission denied
+posix_fallocate: No space left on device
+open $(nW)/testfile102: Permission denied
+size 16384 smaller than 32768
+size 8192 smaller than 32768
+size 8192 smaller than 32768
+Non-empty file detected
+Non-empty file detected
+open $(nW)/testset23: Permission denied
+size 16384 smaller than 32768
