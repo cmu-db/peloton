@@ -30,10 +30,6 @@ LogManager& LogManager::GetInstance(){
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartStandbyMode(LoggingType logging_type){
-  if(logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
 
   FrontendLogger* frontend_logger = nullptr;
   bool frontend_exists = false;
@@ -68,22 +64,11 @@ void LogManager::StartStandbyMode(LoggingType logging_type){
 }
 
 void LogManager::StartRecoveryMode(LoggingType logging_type) {
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   // Toggle the status after STANDBY
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_RECOVERY);
 }
 
 bool LogManager::IsInLoggingMode(LoggingType logging_type){
-  if(logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    if(logging_type == LOGGING_TYPE_INVALID)
-      return false;
-  }
-
   if(GetStatus(logging_type) == LOGGING_STATUS_TYPE_LOGGING)
     return true;
   else
@@ -91,11 +76,6 @@ bool LogManager::IsInLoggingMode(LoggingType logging_type){
 }
 
 void LogManager::TerminateLoggingMode(LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   SetLoggingStatus(logging_type, LOGGING_STATUS_TYPE_TERMINATE);
 
   // notify frontend to exit current waiting
@@ -109,13 +89,6 @@ void LogManager::TerminateLoggingMode(LoggingType logging_type){
 void LogManager::WaitForMode(LoggingStatus logging_status,
                              bool is_equal,
                              LoggingType logging_type) {
-
-  // check logging type
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   // wait for mode change
   {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
@@ -135,11 +108,6 @@ void LogManager::WaitForMode(LoggingStatus logging_status,
  * Disconnect backend loggers and frontend logger from log manager
  */
 bool LogManager::EndLogging(LoggingType logging_type ){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   // Wait if current status is recovery
   WaitForMode(LOGGING_STATUS_TYPE_RECOVERY, false, logging_type);
 
@@ -173,11 +141,6 @@ bool LogManager::EndLogging(LoggingType logging_type ){
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   FrontendLogger* frontend_logger = nullptr;
   BackendLogger* backend_logger =  nullptr;
 
@@ -204,11 +167,6 @@ BackendLogger* LogManager::GetBackendLogger(LoggingType logging_type){
 }
 
 bool LogManager::RemoveBackendLogger(BackendLogger* backend_logger, LoggingType logging_type){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
-
   bool status = false;
 
   // Check whether the corresponding frontend logger exists or not
@@ -281,8 +239,6 @@ void LogManager::ResetLoggingStatusMap(LoggingType logging_type ) {
     logging_status_cv.notify_all();
   }
 
-  // Reset default logging type as well
-  default_logging_type = LOGGING_TYPE_INVALID;
 }
 
 void LogManager::SetDefaultLoggingType(LoggingType logging_type){
@@ -302,10 +258,6 @@ size_t LogManager::ActiveFrontendLoggerCount(void) {
  * @brief mark Peloton is ready, so that frontend logger can start logging
  */
 LoggingStatus LogManager::GetStatus(LoggingType logging_type) {
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
 
   // Get the status from the map
   {
@@ -324,10 +276,6 @@ LoggingStatus LogManager::GetStatus(LoggingType logging_type) {
 }
 
 void LogManager::SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status){
-  if( logging_type == LOGGING_TYPE_INVALID){
-    logging_type = default_logging_type;
-    assert(logging_type);
-  }
 
   // Set the status in the log manager map
   {
