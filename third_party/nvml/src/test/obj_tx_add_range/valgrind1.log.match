@@ -1,0 +1,30 @@
+==$(nW)== pmemcheck-$(nW), a simple persistent store checker
+==$(nW)== Copyright (c) $(nW), Intel Corporation
+==$(nW)== Using Valgrind-$(nW) and LibVEX; rerun with -h for copyright info
+==$(nW)== Command: ./obj_tx_add_range$(nW) $(nW)testfile1
+==$(nW)== Parent PID: $(nW)
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0
+==$(nW)== 
+==$(nW)== 
+==$(nW)== Number of stores not made persistent: 0

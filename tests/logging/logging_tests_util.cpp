@@ -62,36 +62,35 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
-  log_manager.SetDefaultLoggingType(logging_type);
+  log_manager.SetLogFileName(file_path);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode,
                      &log_manager,
-                     log_manager.GetDefaultLoggingType());
+                     logging_type);
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
+    log_manager.SetTestRedoAllLogs(logging_type, true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode();
+  log_manager.StartRecoveryMode(logging_type);
 
   // Wait for the frontend logger to enter LOGGING mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
 
   // Build the log
-  LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
-                             LOGGING_TESTS_TABLE_OID,
-                             logging_type);
+  LoggingTestsUtil::BuildLog(logging_type,
+                             LOGGING_TESTS_DATABASE_OID,
+                             LOGGING_TESTS_TABLE_OID);
 
   //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-  if(log_manager.EndLogging()){
+  if(log_manager.EndLogging(logging_type)){
     thread.join();
     return true;
   }
@@ -136,27 +135,26 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   }
 
   // set log file and logging type
-  log_manager.SetLogFile(file_path);
-  log_manager.SetDefaultLoggingType(logging_type);
+  log_manager.SetLogFileName(file_path);
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode, 
                      &log_manager,
-                     log_manager.GetDefaultLoggingType());
+                     logging_type);
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
 
   // always enable commit when testing recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
+    log_manager.SetTestRedoAllLogs(logging_type, true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode();
+  log_manager.StartRecoveryMode(logging_type);
 
   // Wait for the frontend logger to enter LOGGING mode after recovery
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -171,7 +169,7 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
-  if( log_manager.EndLogging() ){
+  if( log_manager.EndLogging(logging_type) ){
     thread.join();
   }else{
     LOG_ERROR("Failed to terminate logging thread");
@@ -201,8 +199,9 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
 // WRITING LOG RECORD
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
-                                LoggingType logging_type){
+void LoggingTestsUtil::BuildLog(LoggingType logging_type,
+                                oid_t db_oid,
+                                oid_t table_oid){
 
   // Create db
   CreateDatabase(db_oid);
@@ -212,11 +211,11 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
   // Create table, drop it and create again
   // so that table can have a newly added tile group and
   // not just the default tile group
-  storage::DataTable* table = CreateSimpleTable(db_oid, table_oid);
+  storage::DataTable* table = CreateUserTable(db_oid, table_oid);
   db->AddTable(table);
 
   // Execute the workload to build the log
-  LaunchParallelTest(state.backend_count, RunBackends, table);
+  LaunchParallelTest(state.backend_count, RunBackends, logging_type, table);
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -234,42 +233,43 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid,
 }
 
 
-void LoggingTestsUtil::RunBackends(storage::DataTable* table){
+void LoggingTestsUtil::RunBackends(LoggingType logging_type,
+                                   storage::DataTable* table){
 
   bool commit = true;
-  auto locations = InsertTuples(table, commit);
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-  // Delete the second inserted location if we insert >= 2 tuples
-  if(locations.size() >= 2)
-    DeleteTuples(table, locations[1], commit);
+  // Insert tuples
+  auto locations = InsertTuples(logging_type, table, testing_pool, commit);
 
-  // Update the first inserted location if we insert >= 1 tuples
-  if(locations.size() >= 1)
-    UpdateTuples(table, locations[0], commit);
+  // Update tuples
+  locations = UpdateTuples(logging_type,table, locations, testing_pool, commit);
 
-  // This insert should have no effect
-  commit = false;
-  InsertTuples(table, commit);
+  // Delete tuples
+  DeleteTuples(logging_type, table, locations, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
-  if(log_manager.IsInLoggingMode()){
-    auto logger = log_manager.GetBackendLogger();
+  if(log_manager.IsInLoggingMode(logging_type)){
+    auto logger = log_manager.GetBackendLogger(logging_type);
 
     // Wait until frontend logger collects the data
     logger->WaitForFlushing();
 
-    log_manager.RemoveBackendLogger(logger);
+    log_manager.RemoveBackendLogger(logger, logging_type);
   }
 
 }
 
 // Do insert and create insert tuple log records
-std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table, bool committed){
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type,
+                                                        storage::DataTable* table,
+                                                        VarlenPool *pool,
+                                                        bool committed){
   std::vector<ItemPointer> locations;
 
   // Create Tuples
-  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count);
+  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count, pool);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -278,19 +278,20 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     ItemPointer location = table->InsertTuple(txn, tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
-      continue;
+      std::cout << "Insert failed \n";
+      exit(EXIT_FAILURE);
     }
 
-    locations.push_back(location);
-
     txn->RecordInsert(location);
+
+    locations.push_back(location);
 
     // Logging 
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode()){
-        auto logger = log_manager.GetBackendLogger();
+      if(log_manager.IsInLoggingMode(logging_type)){
+        auto logger = log_manager.GetBackendLogger(logging_type);
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
@@ -313,110 +314,129 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
 
   return locations;
 }
 
-void LoggingTestsUtil::DeleteTuples(storage::DataTable* table, 
-                                    ItemPointer location, 
+void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
+                                    storage::DataTable* table,
+                                    const std::vector<ItemPointer>& locations,
                                     bool committed){
 
-  // Location of tuple that needs to be deleted
-  ItemPointer delete_location(location.block, location.offset);
+  for(auto delete_location : locations) {
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
 
-  bool status = table->DeleteTuple(txn, delete_location);
-  if (status == false) {
-    txn->SetResult(Result::RESULT_FAILURE);
-    return;
-  }
-
-  txn->RecordDelete(delete_location);
-
-  // Logging 
-  {
-    auto& log_manager = logging::LogManager::GetInstance();
-
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
-      auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                           txn->GetTransactionId(),
-                                           table->GetOid(),
-                                           INVALID_ITEMPOINTER,
-                                           delete_location,
-                                           nullptr,
-                                           LOGGING_TESTS_DATABASE_OID);
-      logger->Log(record);
-    }
-  }
-
-  if(committed){
-    txn_manager.CommitTransaction();
-  }else{
-    txn_manager.AbortTransaction();
-  }
-}
-
-void LoggingTestsUtil::UpdateTuples(storage::DataTable* table, ItemPointer location, bool committed){
-
-  ItemPointer delete_location(location.block,location.offset);
-
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  bool status = table->DeleteTuple(txn, delete_location);
-  if (status == false) {
-    txn->SetResult(Result::RESULT_FAILURE);
-    return;
-  }
-
-  txn->RecordDelete(delete_location);
-
-  // Create Tuples
-  oid_t tuple_count = 1;
-  auto tuples = CreateTuples(table->GetSchema(), tuple_count);
-
-  for( auto tuple : tuples){
-    ItemPointer location = table->InsertTuple(txn, tuple);
-    if (location.block == INVALID_OID) {
+    bool status = table->DeleteTuple(txn, delete_location);
+    if (status == false) {
       txn->SetResult(Result::RESULT_FAILURE);
-      continue;
+      std::cout << "Delete failed \n";
+      exit(EXIT_FAILURE);
     }
-    txn->RecordInsert(location);
 
-    // Logging 
+    txn->RecordDelete(delete_location);
+
+    // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
-      if(log_manager.IsInLoggingMode()){
-        auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
-                                             txn->GetTransactionId(), 
+
+      if(log_manager.IsInLoggingMode(logging_type)){
+        auto logger = log_manager.GetBackendLogger(logging_type);
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
+                                             txn->GetTransactionId(),
                                              table->GetOid(),
-                                             location,
+                                             INVALID_ITEMPOINTER,
+                                             delete_location,
+                                             nullptr,
+                                             LOGGING_TESTS_DATABASE_OID);
+        logger->Log(record);
+      }
+    }
+
+    if(committed){
+      txn_manager.CommitTransaction();
+    }else{
+      txn_manager.AbortTransaction();
+    }
+
+  }
+
+}
+
+std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(LoggingType logging_type,
+                                                        storage::DataTable* table,
+                                                        const std::vector<ItemPointer>& deleted_locations,
+                                                        VarlenPool *pool,
+                                                        bool committed){
+
+  // Inserted locations
+  std::vector<ItemPointer> inserted_locations;
+
+  // Create Tuples
+  auto tuple_count = deleted_locations.size();
+  auto tuples = CreateTuples(table->GetSchema(), tuple_count, pool);
+
+  size_t tuple_itr = 0;
+  for(auto delete_location : deleted_locations) {
+
+    auto tuple = tuples[tuple_itr];
+    tuple_itr++;
+
+    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    bool status = table->DeleteTuple(txn, delete_location);
+    if (status == false) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      std::cout << "Delete failed \n";
+      exit(EXIT_FAILURE);
+    }
+
+    txn->RecordDelete(delete_location);
+
+    ItemPointer insert_location = table->InsertTuple(txn, tuple);
+    if (insert_location.block == INVALID_OID) {
+      txn->SetResult(Result::RESULT_FAILURE);
+      std::cout << "Insert failed \n";
+      exit(EXIT_FAILURE);
+    }
+    txn->RecordInsert(insert_location);
+
+    inserted_locations.push_back(insert_location);
+
+    // Logging
+    {
+      auto& log_manager = logging::LogManager::GetInstance();
+      if(log_manager.IsInLoggingMode(logging_type)){
+        auto logger = log_manager.GetBackendLogger(logging_type);
+        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+                                             txn->GetTransactionId(),
+                                             table->GetOid(),
+                                             insert_location,
                                              delete_location,
                                              tuple,
                                              LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
     }
-  }
 
-  if(committed){
-    txn_manager.CommitTransaction();
-  } else{
-    txn_manager.AbortTransaction();
+
+    if(committed){
+      txn_manager.CommitTransaction();
+    } else{
+      txn_manager.AbortTransaction();
+    }
   }
 
   // Clean up data
   for( auto tuple : tuples){
-    tuple->FreeUninlinedData();
     delete tuple;
   }
+
+  return inserted_locations;
 }
 
 //===--------------------------------------------------------------------===//
@@ -430,12 +450,12 @@ void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_oid);
 
-  auto table = CreateSimpleTable(db_oid, table_oid);
+  auto table = CreateUserTable(db_oid, table_oid);
 
   db->AddTable(table);
 }
 
-storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t table_oid){
+storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid, oid_t table_oid){
 
   auto column_infos = LoggingTestsUtil::CreateSchema();
 
@@ -447,7 +467,7 @@ storage::DataTable* LoggingTestsUtil::CreateSimpleTable(oid_t db_oid, oid_t tabl
   auto schema = new catalog::Schema(column_infos);
   storage::DataTable *table = storage::TableFactory::GetDataTable(db_oid, table_oid,
                                                                   schema,
-                                                                  std::to_string(table_oid),
+                                                                  "USERTABLE",
                                                                   tuples_per_tilegroup_count,
                                                                   own_schema,
                                                                   adapt_table);
@@ -461,41 +481,48 @@ void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
 }
 
 std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
-  // Column
+  // Columns
   std::vector<catalog::Column> columns;
+  const size_t field_length = 100;
 
-  catalog::Column column1(VALUE_TYPE_BIGINT, 8, "id");
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
-  catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
-  catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
+  // User Id
+  catalog::Column user_id(VALUE_TYPE_INTEGER,
+                          GetTypeSize(VALUE_TYPE_INTEGER),
+                          "YCSB_KEY",
+                          true);
 
-  columns.push_back(column1);
-  columns.push_back(column2);
-  columns.push_back(column3);
-  columns.push_back(column4);
+  columns.push_back(user_id);
+
+  // Field
+  for(oid_t col_itr = 0 ; col_itr < state.column_count ; col_itr++) {
+    catalog::Column field(VALUE_TYPE_VARCHAR,
+                          field_length,
+                          "FIELD" + std::to_string(col_itr),
+                          false);
+
+    columns.push_back(field);
+  }
 
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples) {
-
-  oid_t thread_id = (oid_t) GetThreadId();
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool) {
 
   std::vector<storage::Tuple*> tuples;
+  const bool allocate = true;
 
-  for (oid_t col_itr = 0; col_itr < num_of_tuples; col_itr++) {
-    storage::Tuple *tuple = new storage::Tuple(schema, true);
+  for (oid_t tuple_itr = 0; tuple_itr < num_of_tuples; tuple_itr++) {
+    // Build tuple
+    storage::Tuple *tuple = new storage::Tuple(schema, allocate);
 
-    // Setting values in tuple
-    Value longValue = ValueFactory::GetBigIntValue(243432l+col_itr+thread_id);
-    Value stringValue = ValueFactory::GetStringValue("dude"+std::to_string(col_itr+thread_id));
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22+(double)(col_itr+thread_id));
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236+(double)(col_itr+thread_id));
+    Value user_id_value = ValueFactory::GetIntegerValue(tuple_itr);
+    tuple->SetValue(0, user_id_value, nullptr);
 
-    tuple->SetValue(0, longValue);
-    tuple->SetValue(1, stringValue);
-    tuple->SetValue(2, timestampValue);
-    tuple->SetValue(3, doubleValue);
+    for(oid_t col_itr = 1 ; col_itr < state.column_count; col_itr++) {
+      Value field_value = ValueFactory::GetStringValue(std::to_string(tuple_itr), pool);
+      tuple->SetValue(col_itr, field_value, pool);
+    }
+
     tuples.push_back(tuple);
   }
 
@@ -522,20 +549,22 @@ void LoggingTestsUtil::DropDatabase(oid_t db_oid){
 static void Usage(FILE *out) {
   fprintf(out, "Command line options :  hyadapt <options> \n"
           "   -h --help              :  Print help message \n"
+          "   -l --logging-type      :  Logging type \n"
           "   -t --tuple-count       :  Tuple count \n"
           "   -b --backend-count     :  Backend count \n"
-          "   -z --tuple-size        :  Tuple size (does not work) \n"
+          "   -z --column-count      :  # of columns per tuple \n"
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -r --redo-all-logs     :  Redo all logs \n"
-          "   -d --dir              :  log file dir \n"
+          "   -d --dir               :  log file dir \n"
   );
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
+    { "logging-type", optional_argument, NULL, 'l' },
     { "tuple-count", optional_argument, NULL, 't' },
     { "backend-count", optional_argument, NULL, 'b' },
-    { "tuple-size", optional_argument, NULL, 'z' },
+    { "column-count", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
     { "redo-all-logs", optional_argument, NULL, 'r' },
     { "dir", optional_argument, NULL, 'd' },
@@ -546,11 +575,23 @@ static void PrintConfiguration(){
   int width = 25;
 
   std::cout << std::setw(width) << std::left
+      << "logging_type " << " : ";
+
+  if(state.logging_type == LOGGING_TYPE_ARIES)
+    std::cout << "ARIES" << std::endl;
+  else if(state.logging_type == LOGGING_TYPE_PELOTON)
+    std::cout << "PELOTON" << std::endl;
+  else {
+    std::cout << "INVALID" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(width) << std::left
       << "tuple_count " << " : " << state.tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "backend_count " << " : " << state.backend_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "tuple_size " << " : " << state.tuple_size << std::endl;
+      << "column_count " << " : " << state.column_count << std::endl;
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
@@ -562,13 +603,14 @@ static void PrintConfiguration(){
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   // Default Values
-  state.tuple_count = 20;
+  state.tuple_count = 100;
 
-  state.backend_count = 4;
+  state.logging_type = LOGGING_TYPE_ARIES;
+  state.backend_count = 2;
 
-  state.tuple_size = 100;
+  state.column_count = 10;
 
-  state.check_tuple_count = true;
+  state.check_tuple_count = false;
   state.redo_all = false;
 
   state.file_dir = "/tmp/";
@@ -576,13 +618,16 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aht:b:z:c:r:d:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:r:d:", opts,
                         &idx);
 
     if (c == -1)
       break;
 
     switch (c) {
+      case 'l':
+        state.logging_type = (LoggingType) atoi(optarg);
+        break;
       case 't':
         state.tuple_count  = atoi(optarg);
         break;
@@ -590,7 +635,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         state.backend_count  = atoi(optarg);
         break;
       case 'z':
-        state.tuple_size  = atoi(optarg);
+        state.column_count  = atoi(optarg);
         break;
       case 'c':
         state.check_tuple_count  = atoi(optarg);

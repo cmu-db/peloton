@@ -87,7 +87,8 @@ class FrontendLogger : public Logger{
     // are ready
     std::mutex backend_notify_mutex;
     std::condition_variable backend_notify_cv;
-    uint32 wait_timeout = 5; // in seconds
+
+    uint32 wait_timeout = 5; // in milliseconds
     bool log_collect_request = false; // used to indicate if backend has new logs
 
     // redo all logs when recovery

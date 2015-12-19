@@ -1,0 +1,9 @@
+Linux NVM Library
+
+This is src/test/pmempool_info/README.
+
+This directory contains a unit tests for 'pmempool info' command.
+
+The tests in this directory check output format of 'info' command for all
+supported pool types and using command line arguments for adjusting output
+format.

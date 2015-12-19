@@ -1,0 +1,9 @@
+==$(N)== drd, a thread error detector
+==$(N)== Copyright $(*)
+==$(N)== Using $(*)
+==$(N)== Command:$(*)
+$(OPT)==$(N)== Parent PID: $(N)
+==$(N)== 
+==$(N)== 
+==$(N)== For counts of detected and suppressed errors, rerun with: -v
+==$(N)== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: $(N) from $(N))

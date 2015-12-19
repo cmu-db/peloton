@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "harness.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace test {

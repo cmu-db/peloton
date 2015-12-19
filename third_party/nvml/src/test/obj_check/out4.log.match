@@ -1,0 +1,12 @@
+obj_check/TEST4: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: allocator lane: redo log check failed
+obj_check/TEST4: Done
+obj_check/TEST4: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: allocator lane: redo log check failed
+obj_check/TEST4: Done
+obj_check/TEST4: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: allocator lane: redo log check failed
+obj_check/TEST4: Done

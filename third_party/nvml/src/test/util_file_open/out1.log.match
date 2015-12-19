@@ -1,0 +1,7 @@
+util_file_open/TEST1: START: util_file_open
+ ./util_file_open$(nW) 0x4000 $(nW)/testlink1 $(nW)/testlink2 $(nW)/testfile1 $(nW)/testfile2
+$(nW)/testlink1: util_file_open: Permission denied
+$(nW)/testlink2: util_file_open: Permission denied
+$(nW)/testfile1: util_file_open: Permission denied
+$(nW)/testfile2: util_file_open: Permission denied
+util_file_open/TEST1: Done

@@ -1,0 +1,5 @@
+pmem_isa_proc/TEST1: START: pmem_isa_proc
+ ./pmem_isa_proc$(nW)
+redirected /proc/cpuinfo to cpuinfo_clflushopt
+has_hw_drain: 0
+pmem_isa_proc/TEST1: Done

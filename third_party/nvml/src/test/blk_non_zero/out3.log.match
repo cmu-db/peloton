@@ -1,0 +1,29 @@
+blk_non_zero/TEST3: START: blk_non_zero
+ ./blk_non_zero$(nW) 512 $(nW)/testfile1 c 0 w:100 w:200 w:300 w:400 r:100 r:200 r:300 r:400 w:100 z:200 w:300 z:400 r:100 r:200 r:300 r:400 e:100 w:200 e:300 w:400 r:100 r:200 r:300 r:400
+512 block size 512 usable blocks 2080567
+is zeroed:	0
+write     lba 100: {1}
+write     lba 200: {2}
+write     lba 300: {3}
+write     lba 400: {4}
+read      lba 100: {1}
+read      lba 200: {2}
+read      lba 300: {3}
+read      lba 400: {4}
+write     lba 100: {5}
+set_zero  lba 200
+write     lba 300: {6}
+set_zero  lba 400
+read      lba 100: {5}
+read      lba 200: {0}
+read      lba 300: {6}
+read      lba 400: {0}
+set_error lba 100
+write     lba 200: {7}
+set_error lba 300
+write     lba 400: {8}
+read      lba 100: Input/output error
+read      lba 200: {7}
+read      lba 300: Input/output error
+read      lba 400: {8}
+blk_non_zero/TEST3: Done

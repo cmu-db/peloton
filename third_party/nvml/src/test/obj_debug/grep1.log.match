@@ -1,0 +1,6 @@
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_list_insert_new)
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_alloc)
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_list_insert)
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_list_move)
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_list_remove)
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_free)
