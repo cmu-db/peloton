@@ -34,9 +34,7 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
 
  private:
 
-  bool left_child_done_ = false;
-  bool right_child_done_ = false;
-  size_t right_result_itr_ = 0;
+ size_t right_result_itr_ = 0;
 
 };
 
