@@ -201,8 +201,12 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
       return BuildLeftJoinOutPut();
     case JOIN_TYPE_RIGHT:
       return BuildRightJoinOutPut();
-    case JOIN_TYPE_OUTER:
-      return BuildLeftJoinOutPut() || BuildRightJoinOutPut();
+    case JOIN_TYPE_OUTER: {
+      bool status = BuildLeftJoinOutPut();
+      if (status) return status;
+      else return BuildRightJoinOutPut();
+      break;
+    }
     default:
       break;
   }
@@ -248,7 +252,7 @@ bool AbstractJoinExecutor::BuildRightJoinOutPut() {
 
     LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
     for (auto right_row_itr : no_matching_right_row_sets_[right_matching_idx]) {
-      pos_lists_builder.AddRightNullRow(right_row_itr);
+      pos_lists_builder.AddLeftNullRow(right_row_itr);
     }
 
     assert(pos_lists_builder.Size() > 0);
