@@ -34,17 +34,9 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
   bool DExecute();
 
-  bool left_end_ = false;
-
-  bool right_end_ = false;
-
  private:
 
-  std::vector<std::unique_ptr<LogicalTile> > right_tiles_;
-
   HashExecutor *hash_executor_ = nullptr;
-
-  bool hashed_ = false;
 };
 
 }  // namespace executor
