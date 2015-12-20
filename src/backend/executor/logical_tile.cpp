@@ -162,7 +162,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
-    return ValueFactory::GetNullValue();
+    return ValueFactory::GetNullValueByType(base_tile->GetSchema()->GetType(column_id));
   } else {
     return base_tile->GetValue(base_tuple_id, cp.origin_column_id);
   }
