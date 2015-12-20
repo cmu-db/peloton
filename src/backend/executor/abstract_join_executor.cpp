@@ -133,7 +133,130 @@ std::vector<std::vector<oid_t> > AbstractJoinExecutor::BuildPostitionLists(
   return position_lists;
 }
 
+void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
+  assert(join_type_ != JOIN_TYPE_INVALID);
+  left_result_tiles_.emplace_back(left_tile);
+  switch (join_type_) {
+    case JOIN_TYPE_LEFT:
+    case JOIN_TYPE_OUTER:
+      UpdateLeftJoinRowSets();
+      break;
+    default:
+      break;
+  }
+}
 
+void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
+  assert(join_type_ != JOIN_TYPE_INVALID);
+  right_result_tiles_.emplace_back(right_tile);
+  switch (join_type_) {
+    case JOIN_TYPE_RIGHT:
+    case JOIN_TYPE_OUTER:
+      UpdateRightJoinRowSets();
+      break;
+    default:
+      break;
+  }
+}
+
+void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
+  assert(left_result_tiles_.size() - no_matching_left_row_sets_.size() == 1);
+  no_matching_right_row_sets_.emplace_back(left_result_tiles_.back()->begin(),
+                                           left_result_tiles_.back()->end());
+}
+
+void AbstractJoinExecutor::UpdateRightJoinRowSets() {
+  assert(right_result_tiles_.size() - no_matching_right_row_sets_.size() == 1);
+  no_matching_left_row_sets_.emplace_back(right_result_tiles_.back()->begin(),
+                                          right_result_tiles_.back()->end());
+}
+
+
+void AbstractJoinExecutor::UpdateFullJoinRowSets() {
+  UpdateLeftJoinRowSets();
+  UpdateRightJoinRowSets();
+}
+
+void AbstractJoinExecutor::UpdateJoinRowSets() {
+  assert(join_type_ != JOIN_TYPE_INVALID);
+  switch (join_type_) {
+    case JOIN_TYPE_LEFT:
+      UpdateLeftJoinRowSets();
+      break;
+    case JOIN_TYPE_RIGHT:
+      UpdateRightJoinRowSets();
+      break;
+    case JOIN_TYPE_OUTER:
+      UpdateFullJoinRowSets();
+      break;
+    default:
+      break;
+  }
+}
+
+bool AbstractJoinExecutor::BuildOuterJoinOutput() {
+  assert(join_type_ != JOIN_TYPE_INVALID);
+  switch (join_type_) {
+    case JOIN_TYPE_LEFT:
+      return BuildLeftJoinOutPut();
+    case JOIN_TYPE_RIGHT:
+      return BuildRightJoinOutPut();
+    default:
+      break;
+  }
+
+  return false;
+}
+
+bool AbstractJoinExecutor::BuildLeftJoinOutPut() {
+  static size_t idx = 0;
+  while (idx < no_matching_left_row_sets_.size()) {
+    if (no_matching_left_row_sets_[idx].empty()) {
+      idx++;
+      continue;
+    }
+    assert(right_result_tiles_.size() > 0);
+    auto left_tile = left_result_tiles_[idx].get();
+    auto right_tile = right_result_tiles_.front().get();
+    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+
+    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
+    for (auto left_row_itr : no_matching_left_row_sets_[idx]) {
+      pos_lists_builder.AddRightNullRow(left_row_itr);
+    }
+
+    assert(pos_lists_builder.Size() > 0);
+    output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+    SetOutput(output_tile.release());
+    return true;
+  }
+  return false;
+}
+
+bool AbstractJoinExecutor::BuildRightJoinOutPut() {
+  static size_t idx = 0;
+  while (idx < no_matching_right_row_sets_.size()) {
+    if (no_matching_right_row_sets_[idx].empty()) {
+      idx++;
+      continue;
+    }
+    assert(left_result_tiles_.size() > 0);
+    auto left_tile = left_result_tiles_.front().get();
+    auto right_tile = right_result_tiles_[idx].get();
+    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+
+    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
+    for (auto right_row_itr : no_matching_right_row_sets_[idx]) {
+      pos_lists_builder.AddRightNullRow(right_row_itr);
+    }
+
+    assert(pos_lists_builder.Size() > 0);
+    output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+    SetOutput(output_tile.release());
+    return true;
+  }
+  return false;
+}
 
 }  // namespace executor
 }  // namespace peloton
