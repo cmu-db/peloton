@@ -40,6 +40,8 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
   auto projection = JoinTestsUtil::CreateProjection();
   planner::NestedLoopJoinPlan node(nullptr, projection);
 
+  node.SetJoinType(JOIN_TYPE_INNER);
+
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
 
@@ -122,6 +124,7 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   // Create plan node.
   planner::NestedLoopJoinPlan node(predicate, projection);
 
+  node.SetJoinType(JOIN_TYPE_INNER);
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
 
