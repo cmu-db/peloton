@@ -17,6 +17,7 @@
 #include "backend/planner/project_info.h"
 
 #include <vector>
+#include <unordered_set>
 
 namespace peloton {
 namespace executor {
@@ -49,6 +50,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   }
 
  protected:
+  typedef std::vector<std::unordered_set<oid_t> > RowSets;
+
   bool DInit();
 
   bool DExecute() = 0;
@@ -72,6 +75,40 @@ class AbstractJoinExecutor : public AbstractExecutor {
       LogicalTile *left_tile,
       LogicalTile *right_tile);
 
+  void BufferLeftTile(LogicalTile *left_tile);
+  void BufferRightTile(LogicalTile *right_tile);
+
+  void UpdateJoinRowSets();
+  void UpdateLeftJoinRowSets();
+  void UpdateRightJoinRowSets();
+  void UpdateFullJoinRowSets();
+
+  inline void RecordMatchedLeftRow(size_t tile_idx, oid_t row_idx) {
+    switch (join_type_) {
+      case JOIN_TYPE_LEFT:
+      case JOIN_TYPE_OUTER:
+        no_matching_left_row_sets_[tile_idx].erase(row_idx);
+        break;
+      default:
+        break;
+    }
+  }
+
+  inline void RecordMatchedRightRow(size_t tile_idx, oid_t row_idx) {
+    switch (join_type_) {
+      case JOIN_TYPE_RIGHT:
+      case JOIN_TYPE_OUTER:
+        no_matching_right_row_sets_[tile_idx].erase(row_idx);
+        break;
+      default:
+        break;
+    }
+  }
+
+  bool BuildOuterJoinOutput();
+  bool BuildLeftJoinOutPut();
+  bool BuildRightJoinOutPut();
+
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -91,6 +128,17 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   /* @brief Join Type */
   PelotonJoinType join_type_;
+
+  RowSets no_matching_left_row_sets_;
+  RowSets no_matching_right_row_sets_;
+
+  /* Buffer to store left child's result tiles */
+  std::vector<std::unique_ptr<executor::LogicalTile> > left_result_tiles_;
+  /* Buffer to store right child's result tiles */
+  std::vector<std::unique_ptr<executor::LogicalTile> > right_result_tiles_;
+
+
+
 };
 
 }  // namespace executor
