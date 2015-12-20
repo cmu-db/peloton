@@ -58,6 +58,7 @@ TEST(HashJoinTests, BasicTest) {
   // Create hash join plan node.
   auto projection = JoinTestsUtil::CreateProjection();
   planner::HashJoinPlan hash_join_plan_node(nullptr, projection);
+  hash_join_plan_node.SetJoinType(JOIN_TYPE_INNER);
 
   // Create the hash join hash_join_executor
   executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
