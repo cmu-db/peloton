@@ -2582,6 +2582,9 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(void *storage,
         }
       }
       break;
+    case VALUE_TYPE_NULL: // TODO: add by Ming
+      *reinterpret_cast<void**>(storage) = NULL;
+      break;
     default: {
       throw Exception(
           "Value::SerializeToTupleStorageAllocateForObjects() unrecognized type " +
