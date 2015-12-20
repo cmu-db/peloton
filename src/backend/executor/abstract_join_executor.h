@@ -127,17 +127,20 @@ class AbstractJoinExecutor : public AbstractExecutor {
   const planner::ProjectInfo *proj_info_ = nullptr;
 
   /* @brief Join Type */
-  PelotonJoinType join_type_;
+  PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
 
   RowSets no_matching_left_row_sets_;
   RowSets no_matching_right_row_sets_;
+  size_t left_matching_idx = 0;
+  size_t right_matching_idx = 0;
 
   /* Buffer to store left child's result tiles */
   std::vector<std::unique_ptr<executor::LogicalTile> > left_result_tiles_;
   /* Buffer to store right child's result tiles */
   std::vector<std::unique_ptr<executor::LogicalTile> > right_result_tiles_;
 
-
+  bool left_child_done_ = false;
+  bool right_child_done_ = false;
 
 };
 
