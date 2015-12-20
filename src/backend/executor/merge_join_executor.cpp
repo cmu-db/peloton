@@ -44,9 +44,6 @@ bool MergeJoinExecutor::DInit() {
   if (join_clauses_ == nullptr)
     return false;
 
-  left_end_ = true;
-  right_end_ = true;
-
   return true;
 }
 
@@ -56,48 +53,57 @@ bool MergeJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool MergeJoinExecutor::DExecute() {
-  LOG_INFO("********** Merge Join executor :: 2 children \n");
+  LOG_INFO("********** Merge Join executor :: 2 children \n"
+      "left:: start: %lu, end: %lu, done: %d\n"
+      "right:: start: %lu, end: %lu, done: %d\n", left_start_row, left_end_row, left_child_done_,
+      right_start_row, right_end_row, right_child_done_);
 
-  if (right_end_) {
+  if (right_child_done_ && left_child_done_) {
+    return BuildOuterJoinOutput();
+  }
+
+  if ((!right_child_done_ && right_start_row == right_end_row) ||
+      left_child_done_) {
     // Try to get next tile from RIGHT child
     if (children_[1]->Execute() == false) {
       LOG_INFO("Did not get right tile \n");
-      return false;
+      right_child_done_ = true;
+      return DExecute();
     }
 
-    right_tiles_.emplace_back(children_[1]->GetOutput());
-    LOG_INFO("size of right tiles: %lu", right_tiles_.size());
+    LOG_INFO("Got right tile \n");
+    auto tile = children_[1]->GetOutput();
+    BufferRightTile(tile);
+    right_start_row = 0;
+    right_end_row = Advance(tile, right_start_row, false);
+    LOG_INFO("size of right tiles: %lu", right_result_tiles_.size());
   }
-  LOG_INFO("Got right tile \n");
 
-  if (left_end_) {
+  if ((!left_child_done_ && left_start_row == left_end_row) ||
+      right_child_done_) {
     // Try to get next tile from LEFT child
     if (children_[0]->Execute() == false) {
       LOG_INFO("Did not get left tile \n");
-      return false;
+      left_child_done_ = true;
+      return DExecute();
     }
 
-    std::unique_ptr<LogicalTile> left();
-    left_tiles_.emplace_back(children_[0]->GetOutput());
-    LOG_INFO("size of right tiles: %lu", left_tiles_.size());
+    LOG_INFO("Got left tile \n");
+    auto tile = children_[0]->GetOutput();
+    BufferLeftTile(tile);
+    left_start_row = 0;
+    left_end_row = Advance(tile, left_start_row, true);
+    LOG_INFO("size of right tiles: %lu", left_result_tiles_.size());
   }
-  LOG_INFO("Got left tile \n");
 
-  LogicalTile *left_tile = left_tiles_.back().get();
-  LogicalTile *right_tile = right_tiles_.back().get();
+  LogicalTile *left_tile = left_result_tiles_.back().get();
+  LogicalTile *right_tile = right_result_tiles_.back().get();
 
   // Build output logical tile
   auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
   // Build position lists
   LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
-
-  // TODO: What are these ?
-  size_t left_start_row = 0;
-  size_t right_start_row = 0;
-
-  size_t left_end_row = Advance(left_tile, left_start_row, true);
-  size_t right_end_row = Advance(right_tile, right_start_row, false);
 
   while ((left_end_row > left_start_row) && (right_end_row > right_start_row)) {
 
@@ -160,8 +166,9 @@ bool MergeJoinExecutor::DExecute() {
           for (size_t right_tile_row_itr = right_start_row;
               right_tile_row_itr < right_end_row; right_tile_row_itr++) {
         // Insert a tuple into the output logical tile
-        // First, copy the elements in left logical tile's tuple
         pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
+        RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_row_itr);
+        RecordMatchedRightRow(right_result_tiles_.size() - 1, right_tile_row_itr);
       }
     }
 
@@ -172,17 +179,6 @@ bool MergeJoinExecutor::DExecute() {
     right_end_row = Advance(right_tile, right_start_row, false);
   }
 
-  // set the corresponding flags if left or right is end
-  // so that next execution time, it will be re executed
-  if (left_end_row == left_start_row) {
-    left_end_ = true;
-  }
-
-  if (right_end_row == right_start_row) {
-    right_end_ = true;
-  }
-
-  // Check if we have any matching tuples.
   if (pos_lists_builder.Size() > 0) {
     output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
     SetOutput(output_tile.release());
