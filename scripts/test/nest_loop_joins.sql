@@ -7,10 +7,30 @@ create table B(id INT PRIMARY KEY, data TEXT);
 
 -- load in the data
 INSERT INTO A VALUES(0, 'Ming says Hello World 0');
+INSERT INTO B VALUES(0, 'Joy says World Hello 0');
+
+
+-- nested loop join left outer join
+SELECT A.* FROM A LEFT OUTER JOIN B ON A.id != B.id;
+SELECT B.* FROM B LEFT OUTER JOIN A ON A.id != B.id;
+SELECT A.id, B.id FROM A LEFT OUTER JOIN B ON A.id != B.id;
+SELECT A.id, B.data FROM A LEFT OUTER JOIN B ON A.id != B.id;
+SELECT A.id, A.id, B.data, B.data FROM A LEFT OUTER JOIN B ON A.id != B.id;
+SELECT A.*, B.* FROM A LEFT OUTER JOIN B ON A.id != B.id;
+
+-- nested loop join with right outer join
+SELECT A.* FROM A RIGHT OUTER JOIN B ON A.id != B.id;
+SELECT B.* FROM B RIGHT OUTER JOIN A ON A.id != B.id;
+SELECT A.id, B.id FROM A RIGHT OUTER JOIN B ON A.id != B.id;
+SELECT A.id, B.data FROM A RIGHT OUTER JOIN B ON A.id != B.id;
+SELECT A.id, A.id, B.data, B.data FROM A RIGHT OUTER JOIN B ON A.id != B.id;
+SELECT A.*, B.* FROM A RIGHT OUTER JOIN B ON A.id != B.id;
+
+
+-- load more data
 INSERT INTO A VALUES(1, 'Ming says Hello World 1');
 INSERT INTO A VALUES(2, 'Ming says Hello World 2');
 INSERT INTO A VALUES(3, 'Ming says Hello World 3');
-INSERT INTO B VALUES(0, 'Joy says World Hello 0');
 INSERT INTO B VALUES(1, 'Joy says World Hello 1');
 INSERT INTO B VALUES(2, 'Joy says World Hello 2');
 INSERT INTO B VALUES(3, 'Joy says World Hello 3');
@@ -49,24 +69,3 @@ SELECT A.*, B.* FROM A,B WHERE A.id > 2;
 
 
 
--- merge join
-SELECT * FROM (SELECT * FROM A ORDER BY id) AS aa JOIN (SELECT * FROM B ORDER BY id) AS bb ON aa.id = bb.id;
-SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-
-
--- merge join with projections
-SELECT a.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT b.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.*,b.* FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.id,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.data,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.id,b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.data,b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-SELECT a.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-
-SELECT * FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-
-SELECT b.data FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
-
-SELECT b.id FROM a,b WHERE a.id=b.id ORDER BY a.id, b.id;
