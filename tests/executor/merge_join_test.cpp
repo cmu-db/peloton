@@ -53,6 +53,7 @@ TEST(MergeJoinTests, BasicTest) {
   auto join_clauses = CreateJoinClauses();
   planner::MergeJoinPlan node(nullptr, projection, join_clauses);
 
+  node.SetJoinType(JOIN_TYPE_INNER);
   // Run the executor
   executor::MergeJoinExecutor executor(&node, nullptr);
 
@@ -65,7 +66,8 @@ TEST(MergeJoinTests, BasicTest) {
 
   EXPECT_CALL(left_executor, DExecute())
       .WillOnce(Return(true))
-      .WillOnce(Return(true));
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   EXPECT_CALL(right_executor, DExecute())
       .WillOnce(Return(true))  // Itr 1
