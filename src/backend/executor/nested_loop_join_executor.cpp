@@ -61,6 +61,9 @@ bool NestedLoopJoinExecutor::DExecute() {
            GetJoinTypeString());
 
   for (;;) {  // Loop until we have non-empty result tile or exit
+    if (left_child_done_ && right_child_done_) {
+      return BuildOuterJoinOutput();
+    }
 
     LogicalTile* left_tile = nullptr;
     LogicalTile* right_tile = nullptr;
@@ -90,7 +93,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         advance_left_child = true;
       } else {  // Buffer the right child's result
         LOG_TRACE("Retrieve a new tile from right child");
-        right_result_tiles_.emplace_back(children_[1]->GetOutput());
+        BufferRightTile(children_[1]->GetOutput());
         right_result_itr_ = right_result_tiles_.size() - 1;
       }
     }
@@ -104,11 +107,12 @@ bool NestedLoopJoinExecutor::DExecute() {
         // The whole executor is done.
         // Release cur left tile. Clear right child's result buffer and return.
         assert(right_result_tiles_.size() > 0);
-        return false;
+        left_child_done_ = true;
+        return BuildOuterJoinOutput();
       } else {
         LOG_TRACE("Advance the left child.");
         // Insert left child's result to buffer
-        left_result_tiles_.emplace_back(children_[0]->GetOutput());
+        BufferLeftTile(children_[0]->GetOutput());
       }
     }
 
@@ -128,12 +132,12 @@ bool NestedLoopJoinExecutor::DExecute() {
     // this set is initialized with all ids in right tile and
     // as the nested loop goes, id in the set are removed if a match is made,
     // After nested looping, ids left are rows with no matching.
-    std::unordered_set<oid_t> no_match_rows;
+    //std::unordered_set<oid_t> no_match_rows;
 
     // only initialize if we are doing right or outer join
-    if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
-      no_match_rows.insert(right_tile->begin(), right_tile->end());
-    }
+    //if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
+    //  no_match_rows.insert(right_tile->begin(), right_tile->end());
+    //}
 
     for (auto left_tile_row_itr : *left_tile) {
       bool has_right_match = false;
@@ -157,12 +161,7 @@ bool NestedLoopJoinExecutor::DExecute() {
           }
         }
 
-        // Right Outer Join, Full Outer Join:
-        // Remove a matched right row
-        if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
-          no_match_rows.erase(right_tile_row_itr);
-        }
-
+        RecordMatchedRightRow(right_result_itr_, right_tile_row_itr);
         // Left Outer Join, Full Outer Join:
         has_right_match = true;
 
@@ -170,6 +169,10 @@ bool NestedLoopJoinExecutor::DExecute() {
         // First, copy the elements in left logical tile's tuple
         pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
       }  // inner loop of NLJ
+
+      if (has_right_match) {
+        RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_row_itr);
+      }
 
       // Left Outer Join, Full Outer Join:
       if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER)
@@ -185,13 +188,13 @@ bool NestedLoopJoinExecutor::DExecute() {
     // For each row in right tile
     // it it has no match in left, we should emit a row whose left parts
     // are null
-    if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
-      for (auto left_null_row_itr : no_match_rows) {
-        LOG_INFO("right or full outer: Null row, right id %lu",
-                 left_null_row_itr);
-        pos_lists_builder.AddLeftNullRow(left_null_row_itr);
-      }
-    }
+    //if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
+    //  for (auto left_null_row_itr : no_match_rows) {
+    //    LOG_INFO("right or full outer: Null row, right id %lu",
+    //             left_null_row_itr);
+    //    pos_lists_builder.AddLeftNullRow(left_null_row_itr);
+    //  }
+    //}
 
     // Check if we have any matching tuples.
     if (pos_lists_builder.Size() > 0) {
