@@ -170,11 +170,15 @@ Datum TupleTransformer::GetDatum(Value value) {
     } break;
 
     case VALUE_TYPE_VARCHAR: {
-      char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
-      auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
-      // NB: Peloton object don't have terminating-null's, so
-      // we should use PG functions that take explicit length.
-      datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
+      if (value.IsNull()) {
+        datum = PointerGetDatum(nullptr);
+      } else {
+        char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
+        auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
+        // NB: Peloton object don't have terminating-null's, so
+        // we should use PG functions that take explicit length.
+        datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
+      }
     } break;
 
     case VALUE_TYPE_TIMESTAMP: {
