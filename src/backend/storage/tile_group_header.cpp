@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/storage_manager.h"
 #include "backend/storage/tile_group_header.h"
 
 namespace peloton {
@@ -28,8 +28,7 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  auto backend = storage::Backend::GetInstance();
-  data = (char *) backend.Allocate(header_size);
+  data = (char *) storage::StorageManager::GetInstance().Allocate(header_size, BACKEND_TYPE_VM);
   // initialize data with zero
   memset(data, 0, header_size);
   assert(data != nullptr);
@@ -48,8 +47,7 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  auto backend = storage::Backend::GetInstance();
-  backend.Free(data);
+  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
   data = nullptr;
 }
 

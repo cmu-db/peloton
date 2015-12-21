@@ -1,0 +1,18 @@
+pid $(N): program: $(nW)/util_poolset$(nW)
+ut version 1.0
+src version SRCVERSION:utversion
+$(OPT)compiled with support for Valgrind pmemcheck
+$(OPT)compiled with support for Valgrind helgrind
+$(OPT)compiled with support for Valgrind memcheck
+open $(nW)/testset0: No such file or directory
+invalid major version (0)
+open $(nW)/testset2: Permission denied
+open $(nW)/testfile31: No such file or directory
+open $(nW)/testfile42: No such file or directory
+size 12288 smaller than 32768
+size 16384 smaller than 32768
+size 32767 smaller than 32768
+open $(nW)/testfile82: Permission denied
+invalid major version (0)
+invalid major version (0)
+open $(nW)/testfile113: No such file or directory

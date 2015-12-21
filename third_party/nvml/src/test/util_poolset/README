@@ -1,0 +1,21 @@
+Linux NVM Library
+
+This is src/test/util_poolset/README.
+
+This directory contains a unit test for util_pool_create()
+and util_pool_open().
+
+The program in util_poolset.c takes a command, minimal pool size, pool header
+size along with the list of poolset file paths.
+
+The 'command' could be:
+    c - util_poolset_create()
+    o - util_poolset_open()
+
+For example:
+	./util_poolset c minlen hdrsize path1
+
+This will call util_pool_create() on path1 using minlen as minimal pool size
+and hdrsize as pool header size.
+
+minlen and hdrsize are interpreted as a decimal values unless they start with 0x.

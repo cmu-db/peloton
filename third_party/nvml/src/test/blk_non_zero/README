@@ -1,0 +1,22 @@
+Linux NVM Library
+
+This is src/test/blk_non_zero/README.
+
+This directory contains a unit test for pmemblk_read/write/set_zero/set_error
+with a deliberately non-zero filled map.
+
+The program in blk_non_zero.c takes a block size, file and a list of
+operation:LBA pairs.  For example:
+
+	./blk_non_zero 4096 file1 r:0 w:5 z:9 e:100
+
+this will call pmemblk_open() on file1 and then pmemblk_read() for LBA 0,
+pmemblk_write() for LBA 5, pmemblk_set_zero() for LBA 9, and pmem_set_error()
+for LBA 100.
+
+In tests 0-4 the map is filled with pseudo-random data before any read/write
+operation is made. In tests 5-8 the pool is created by the NVML library and
+is zero filled. Each block written is filled up with the ordinal number of
+the write operation (a block full of 8-bit 1s, then a block filled with 8-bit
+2s, etc.).  When a block is read, the number it was filled with is  reported
+(and the program verifies the entire block is filled with that  number).

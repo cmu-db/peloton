@@ -1,0 +1,13 @@
+Linux NVM Library
+
+This is src/test/blk_nblock/README.
+
+This directory contains a unit test for pmemblk_nblock().
+
+The program in blk_nblock.c takes a list of block size file pairs.
+For example:
+
+	./blk_nblock 4096:file1
+
+this will call pmemblk_open() on file1 and then report what pmemblk_nblock()
+reports back as the usable size.

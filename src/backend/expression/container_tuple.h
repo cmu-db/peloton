@@ -47,7 +47,7 @@ class ContainerTuple : public AbstractTuple {
   oid_t GetTupleId() const { return tuple_id_; }
 
   /** @brief Get the value at the given column id. */
-  const Value GetValue(oid_t column_id) const override {
+  Value GetValue(oid_t column_id) const override {
     assert(container_ != nullptr);
 
     return container_->GetValue(tuple_id_, column_id);
@@ -146,7 +146,7 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   }
 
   /** @brief Get the value at the given column id. */
-  const Value GetValue(oid_t column_id) const override {
+  Value GetValue(oid_t column_id) const override {
     assert(container_ != nullptr);
     assert(column_id < container_->size());
 

@@ -1,0 +1,22 @@
+Entry from pid: $(N)
+       Created: $(*)
+      Contents:
+Hello
+World!
+foo
+bar
+Entry from pid: $(N)
+       Created: $(*)
+      Contents:
+Hello
+World!
+foo
+bar
+Entry from pid: $(N)
+       Created: $(*)
+      Contents:
+PMEMLOG
+Entry from pid: $(N)
+       Created: $(*)
+      Contents:
+NVML

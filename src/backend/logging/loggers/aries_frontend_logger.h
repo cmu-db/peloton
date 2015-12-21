@@ -16,6 +16,8 @@
 
 namespace peloton {
 
+class VarlenPool;
+
 namespace concurrency{
 class Transaction;
 }
@@ -82,6 +84,8 @@ class AriesFrontendLogger : public FrontendLogger{
   // For active processing after recovery
   oid_t max_oid = 0;
 
+  // pool for allocating non-inlined values
+  VarlenPool *recovery_pool;
 };
 
 }  // namespace logging

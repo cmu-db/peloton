@@ -1,0 +1,4 @@
+log_pool/TEST25: START: log_pool
+ ./log_pool$(nW) o $(nW)/testfile
+$(nW)/testfile: pmemlog_open: Permission denied
+log_pool/TEST25: Done
