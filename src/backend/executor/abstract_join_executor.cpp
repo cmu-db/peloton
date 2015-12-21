@@ -133,6 +133,11 @@ std::vector<std::vector<oid_t> > AbstractJoinExecutor::BuildPostitionLists(
   return position_lists;
 }
 
+/**
+ * Buffer logical tiles got from executing child executors
+ * This will also initialize a new join row set that belongs
+ * to the new result tile
+ */
 void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
   assert(join_type_ != JOIN_TYPE_INVALID);
   left_result_tiles_.emplace_back(left_tile);
@@ -146,6 +151,11 @@ void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
   }
 }
 
+/**
+ * Buffer logical tiles got from executing child executors
+ * This will also initialize a new join row set that belongs
+ * to the new result tile
+ */
 void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
   assert(join_type_ != JOIN_TYPE_INVALID);
   right_result_tiles_.emplace_back(right_tile);
@@ -153,6 +163,30 @@ void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
     case JOIN_TYPE_RIGHT:
     case JOIN_TYPE_OUTER:
       UpdateRightJoinRowSets();
+      break;
+    default:
+      break;
+  }
+}
+
+/**
+ * Update join row sets depending on types of join.
+ * When new result tile is buffered, matching status of the
+ * rows in the new tile should be tracked.
+ * This is called by BufferTile routines, as join row sets
+ * should be updated when new result tile is buffered
+ */
+void AbstractJoinExecutor::UpdateJoinRowSets() {
+  assert(join_type_ != JOIN_TYPE_INVALID);
+  switch (join_type_) {
+    case JOIN_TYPE_LEFT:
+      UpdateLeftJoinRowSets();
+      break;
+    case JOIN_TYPE_RIGHT:
+      UpdateRightJoinRowSets();
+      break;
+    case JOIN_TYPE_OUTER:
+      UpdateFullJoinRowSets();
       break;
     default:
       break;
@@ -171,29 +205,18 @@ void AbstractJoinExecutor::UpdateRightJoinRowSets() {
                                           right_result_tiles_.back()->end());
 }
 
-
 void AbstractJoinExecutor::UpdateFullJoinRowSets() {
   UpdateLeftJoinRowSets();
   UpdateRightJoinRowSets();
 }
 
-void AbstractJoinExecutor::UpdateJoinRowSets() {
-  assert(join_type_ != JOIN_TYPE_INVALID);
-  switch (join_type_) {
-    case JOIN_TYPE_LEFT:
-      UpdateLeftJoinRowSets();
-      break;
-    case JOIN_TYPE_RIGHT:
-      UpdateRightJoinRowSets();
-      break;
-    case JOIN_TYPE_OUTER:
-      UpdateFullJoinRowSets();
-      break;
-    default:
-      break;
-  }
-}
-
+/**
+ * In some case, outer join results can be determined only after all inner
+ * join results are constructed, because, in order to build outer join result,
+ * we need to know the rows from one side that cannot be matched by rows from
+ * the other side. If inner join part has not finished, we cannot know whether
+ * there will be a match later.
+ */
 bool AbstractJoinExecutor::BuildOuterJoinOutput() {
   assert(join_type_ != JOIN_TYPE_INVALID);
   switch (join_type_) {
