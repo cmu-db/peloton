@@ -28,8 +28,11 @@
 namespace peloton {
 namespace storage {
 
-#define PMEM_FILE "/mnt/pmfs/peloton.pmem"
+#define PMEM_DIR "/mnt/pmfs/"
+#define TMP_DIR  "/tmp/"
+
 #define PMEM_LEN  1024 * 1024 * 1024 * UINT64_C(4) // 4 GB
+#define PMEM_FILENAME "peloton.pmem"
 
 // global singleton
 StorageManager& StorageManager::GetInstance(void) {
@@ -40,10 +43,21 @@ StorageManager& StorageManager::GetInstance(void) {
 StorageManager::StorageManager()
 : pmem_address(nullptr) {
   int pmem_fd;
+  std::string pmem_file_name;
+  struct stat pmfs_fd;
+
+  // check for pmfs ?
+  int status = stat(PMEM_DIR, &pmfs_fd);
+  if (status == 0 && S_ISDIR(pmfs_fd.st_mode)) {
+    pmem_file_name = std::string(PMEM_DIR) + std::string(PMEM_FILENAME);
+  }
+  else {
+    pmem_file_name = std::string(TMP_DIR) + std::string(PMEM_FILENAME);
+  }
 
   // create a pmem file
-  if ((pmem_fd = open(PMEM_FILE, O_CREAT | O_RDWR, 0666)) < 0) {
-    perror(PMEM_FILE);
+  if ((pmem_fd = open(pmem_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
+    perror(pmem_file_name.c_str());
     exit(EXIT_FAILURE);
   }
 

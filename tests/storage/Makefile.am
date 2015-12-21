@@ -10,7 +10,8 @@ check_PROGRAMS += \
 		tile_test \
 		tile_group_test \
 		data_table_test \
-		tile_group_iterator_test
+		tile_group_iterator_test \
+		storage_manager_test
 
 value_copy_test_SOURCES = \
 		harness.cpp \
@@ -36,4 +37,7 @@ tile_group_iterator_test_SOURCES = \
 		storage/tile_group_iterator_test.cpp \
 		executor/executor_tests_util.cpp \
 		harness.cpp
+		
+storage_manager_test_SOURCES = \
+		storage/storage_manager_test.cpp
 		
