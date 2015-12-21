@@ -126,19 +126,6 @@ bool NestedLoopJoinExecutor::DExecute() {
     LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
 
     // Go over every pair of tuples in left and right logical tiles
-
-    // Right Join, Outer Join
-    // this set contains row id in right tile that none of the row in left tile matches
-    // this set is initialized with all ids in right tile and
-    // as the nested loop goes, id in the set are removed if a match is made,
-    // After nested looping, ids left are rows with no matching.
-    //std::unordered_set<oid_t> no_match_rows;
-
-    // only initialize if we are doing right or outer join
-    //if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
-    //  no_match_rows.insert(right_tile->begin(), right_tile->end());
-    //}
-
     for (auto left_tile_row_itr : *left_tile) {
       bool has_right_match = false;
 
@@ -173,28 +160,7 @@ bool NestedLoopJoinExecutor::DExecute() {
       if (has_right_match) {
         RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_row_itr);
       }
-
-      // Left Outer Join, Full Outer Join:
-      if ((join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_OUTER)
-          && !has_right_match) {
-        LOG_INFO("Left or ful outer: Null row, left id %lu", left_tile_row_itr);
-        // no right tuple matched, if we are doing left outer join or full outer join
-        // we should also emit a tuple in which right parts are null
-        pos_lists_builder.AddRightNullRow(left_tile_row_itr);
-      }
     }  // outer loop of NLJ
-
-    // Right Outer Join, Full Outer Join:
-    // For each row in right tile
-    // it it has no match in left, we should emit a row whose left parts
-    // are null
-    //if (join_type_ == JOIN_TYPE_RIGHT || join_type_ == JOIN_TYPE_OUTER) {
-    //  for (auto left_null_row_itr : no_match_rows) {
-    //    LOG_INFO("right or full outer: Null row, right id %lu",
-    //             left_null_row_itr);
-    //    pos_lists_builder.AddLeftNullRow(left_null_row_itr);
-    //  }
-    //}
 
     // Check if we have any matching tuples.
     if (pos_lists_builder.Size() > 0) {
