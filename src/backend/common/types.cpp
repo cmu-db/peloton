@@ -154,10 +154,10 @@ std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
   switch (type) {
-    case (BACKEND_TYPE_VM):
-      return "VOLATILE";
-    case (BACKEND_TYPE_NVM):
-      return "NON-VOLATILE";
+    case (BACKEND_TYPE_MM):
+      return "MM";
+    case (BACKEND_TYPE_FILE):
+      return "FILE";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
     default: {
@@ -172,10 +172,10 @@ std::string BackendTypeToString(BackendType type) {
 BackendType StringToBackendType(std::string str) {
   if (str == "INVALID") {
     return BACKEND_TYPE_INVALID;
-  } else if (str == "VOLATILE") {
-    return BACKEND_TYPE_VM;
-  } else if (str == "NON-VOLATILE") {
-    return BACKEND_TYPE_NVM;
+  } else if (str == "MM") {
+    return BACKEND_TYPE_MM;
+  } else if (str == "FILE") {
+    return BACKEND_TYPE_FILE;
   }
   return BACKEND_TYPE_INVALID;
 }

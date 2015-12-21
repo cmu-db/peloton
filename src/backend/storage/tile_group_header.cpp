@@ -28,7 +28,7 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  data = (char *) storage::StorageManager::GetInstance().Allocate(header_size, BACKEND_TYPE_VM);
+  data = (char *) storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, header_size);
   // initialize data with zero
   memset(data, 0, header_size);
   assert(data != nullptr);
@@ -47,7 +47,7 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
+  storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, data);
   data = nullptr;
 }
 
