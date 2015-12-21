@@ -50,6 +50,14 @@ class AbstractJoinExecutor : public AbstractExecutor {
   }
 
  protected:
+  /**
+   * A RowSet is a set of oid_t representing rows that have no matching row
+   * when doing joins. Half of rows in the set should be set
+   * as NULL and output in corresponding types of joins.
+   *
+   * The number of tile should be identical to the number of row sets,
+   * as a row can be uniquely identified by tile id and row oid.
+   */
   typedef std::vector<std::unordered_set<oid_t> > RowSets;
 
   bool DInit();
@@ -75,6 +83,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
       LogicalTile *left_tile,
       LogicalTile *right_tile);
 
+
   void BufferLeftTile(LogicalTile *left_tile);
   void BufferRightTile(LogicalTile *right_tile);
 
@@ -83,6 +92,10 @@ class AbstractJoinExecutor : public AbstractExecutor {
   void UpdateRightJoinRowSets();
   void UpdateFullJoinRowSets();
 
+  /**
+   * Record a matched left row, which should not be constructed
+   * when building join outputs
+   */
   inline void RecordMatchedLeftRow(size_t tile_idx, oid_t row_idx) {
     switch (join_type_) {
       case JOIN_TYPE_LEFT:
@@ -94,6 +107,10 @@ class AbstractJoinExecutor : public AbstractExecutor {
     }
   }
 
+  /**
+   * Record a matched right row, which should not be constructed
+   * when building join outputs
+   */
   inline void RecordMatchedRightRow(size_t tile_idx, oid_t row_idx) {
     switch (join_type_) {
       case JOIN_TYPE_RIGHT:
@@ -105,6 +122,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
     }
   }
 
+
   bool BuildOuterJoinOutput();
   bool BuildLeftJoinOutPut();
   bool BuildRightJoinOutPut();
@@ -113,7 +131,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   // Executor State
   //===--------------------------------------------------------------------===//
 
-  /** @brief Result of  join. */
+  /** @brief Result of join. */
   std::vector<LogicalTile *> result;
 
   //===--------------------------------------------------------------------===//
