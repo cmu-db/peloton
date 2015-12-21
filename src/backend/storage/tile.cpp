@@ -52,7 +52,7 @@ Tile::Tile(TileGroupHeader *tile_header,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::StorageManager::GetInstance().Allocate(tile_size, BACKEND_TYPE_VM);
+  data = (char *)storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, tile_size);
   assert(data != NULL);
 
   // initialize it
@@ -64,7 +64,7 @@ Tile::Tile(TileGroupHeader *tile_header,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
+  storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, data);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
