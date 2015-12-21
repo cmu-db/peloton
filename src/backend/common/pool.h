@@ -84,16 +84,16 @@ class VarlenPool {
   }
 
   void Init() {
-    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(allocation_size, BACKEND_TYPE_VM);
+    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, allocation_size);
     chunks.push_back(Chunk(allocation_size, storage));
   }
 
   ~VarlenPool() {
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(chunks[ii].chunk_data, BACKEND_TYPE_VM);
+      storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, chunks[ii].chunk_data);
     }
     for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(oversize_chunks[ii].chunk_data, BACKEND_TYPE_VM);
+      storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, oversize_chunks[ii].chunk_data);
     }
   }
 

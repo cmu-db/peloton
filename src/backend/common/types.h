@@ -270,9 +270,8 @@ enum ExpressionType {
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
-  BACKEND_TYPE_VM = 1,  // on volatile memory
-  BACKEND_TYPE_NVM = 2, // on non-volatile memory
-  BACKEND_TYPE_FILE = 3 // on mmap file
+  BACKEND_TYPE_MM = 1,  // on volatile memory
+  BACKEND_TYPE_FILE = 2 // on mmap file
 };
 
 //===--------------------------------------------------------------------===//

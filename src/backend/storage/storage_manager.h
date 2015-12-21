@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 #pragma once
-#include <string>
+
+#include <mutex>
 
 #include "backend/common/types.h"
 
@@ -24,20 +25,28 @@ namespace storage {
 /// Stores data on different backends
 class StorageManager  {
  public:
-  virtual ~StorageManager(){};
-
   // global singleton
-  static StorageManager& GetInstance(void) {
-    static StorageManager storage_manager;
-    return storage_manager;
-  }
+  static StorageManager& GetInstance(void);
 
-  void *Allocate(size_t size, BackendType type);
+  StorageManager();
+  ~StorageManager();
 
-  void Release(void *ptr, BackendType type);
+  void *Allocate(BackendType type, size_t size);
 
-  void Sync(void *ptr, BackendType type);
+  void Release(BackendType type, void *address);
 
+  void Sync(BackendType type, void *address, size_t length);
+
+ private:
+
+  // pmem file address
+  char *pmem_address;
+
+  // pmem file synch mutex
+  std::mutex pmem_mutex;
+
+  // is it actually pmem ?
+  int is_pmem;
 };
 
 }  // End storage namespace
