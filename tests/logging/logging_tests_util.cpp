@@ -39,11 +39,28 @@ namespace test {
 // configuration for testing
 LoggingTestsUtil::logging_test_configuration state;
 
+
+std::string GetFilePath(std::string directory_path, std::string file_name){
+
+  std::string file_path = directory_path;
+
+  // Add a trailing slash to a file path if needed
+  if (!file_path.empty() && file_path.back() != '/')
+    file_path += '/';
+
+  file_path += file_name;
+
+  //std::cout << "File Path :: " << file_path << "\n";
+
+  return file_path;
+}
+
 /**
  * @brief writing a simple log file 
  */
 bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file_name){
-  std::string file_path = state.file_dir + file_name;
+
+  auto file_path = GetFilePath(state.file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
@@ -117,7 +134,8 @@ void LoggingTestsUtil::ResetSystem(){
  * @brief recover the database and check the tuples
  */
 void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_name){
-  std::string file_path = state.file_dir + file_name;
+
+  auto file_path = GetFilePath(state.file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
