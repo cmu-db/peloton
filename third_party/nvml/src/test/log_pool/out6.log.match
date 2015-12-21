@@ -1,0 +1,4 @@
+log_pool/TEST6: START: log_pool
+ ./log_pool$(nW) c $(nW)/testfile 0 0640
+$(nW)/testfile: pmemlog_create: Invalid argument
+log_pool/TEST6: Done

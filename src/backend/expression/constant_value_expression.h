@@ -13,10 +13,10 @@
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/common/value_vector.h"
 #include "backend/common/value_factory.h"
 
 #include <string>
+#include <sstream>
 
 namespace peloton {
 namespace expression {
@@ -30,11 +30,10 @@ class ConstantValueExpression : public AbstractExpression {
      * if the expression will live longer than the passed value
      * or if uninlined value will be freed somewhere else
      */
-    this->value = ValueFactory::Clone(value);
+    this->value = ValueFactory::Clone(value, nullptr);
   }
 
   virtual ~ConstantValueExpression() {
-    value.Free();
   }
 
   Value
@@ -52,10 +51,12 @@ class ConstantValueExpression : public AbstractExpression {
         value.Debug() + "\n";
   }
 
-  //for test by michael
-  Value GetValue() {
-	  return value;
+  friend std::ostream &operator<<(std::ostream &os, const ConstantValueExpression &expr) {
+    os << expr.DebugInfo(" ");
+    return os;
   }
+
+
  protected:
   Value value;
 };

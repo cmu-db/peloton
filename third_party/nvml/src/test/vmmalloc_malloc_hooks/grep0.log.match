@@ -1,0 +1,4 @@
+<libvmmalloc>: <4> [$(*) malloc] size 4321
+<libvmmalloc>: <4> [$(*) calloc] nmemb 1, size 4321
+<libvmmalloc>: <4> [$(*) realloc] ptr 0x0, size 4321
+<libvmmalloc>: <4> [$(*) memalign] boundary 16  size 4321

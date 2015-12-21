@@ -64,8 +64,8 @@ Transaction *TransactionManager::BeginTransaction() {
   // Log the BEGIN TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN,
                                                    next_txn->txn_id);
       logger->Log(record);
@@ -106,8 +106,8 @@ void TransactionManager::EndTransaction(Transaction *txn,
   // Log the END TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END,
                                                    txn->txn_id);
       logger->Log(record);
@@ -164,29 +164,25 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
   auto inserted_tuples = txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
-    tile_group->DecrementRefCount();
   }
 
   // (B) commit deletes
   auto deleted_tuples = txn->GetDeletedTuples();
   for (auto entry : deleted_tuples) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
-    tile_group->DecrementRefCount();
   }
 
   // Log the COMMIT TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
                                                    txn->txn_id);
       logger->Log(record);
@@ -289,8 +285,8 @@ void TransactionManager::AbortTransaction() {
   // Log the ABORT TXN record
   {
     auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
-      auto logger = log_manager.GetBackendLogger();
+    if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+      auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
       auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
                                                    current_txn->txn_id);
       logger->Log(record);
@@ -305,22 +301,18 @@ void TransactionManager::AbortTransaction() {
   auto inserted_tuples = current_txn->GetInsertedTuples();
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->AbortInsertedTuple(tuple_slot);
-    tile_group->DecrementRefCount();
   }
 
   // (B) rollback deletes
   auto deleted_tuples = current_txn->GetDeletedTuples();
   for (auto entry : current_txn->GetDeletedTuples()) {
     oid_t tile_group_id = entry.first;
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
-    tile_group->IncrementRefCount();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot, txn_id);
-    tile_group->DecrementRefCount();
   }
 
   EndTransaction(current_txn, false);

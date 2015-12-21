@@ -1,0 +1,9 @@
+log_basic/TEST0: START: log_basic
+ ./log_basic$(nW) $(nW)/testfile1 n t w r
+usable size: 2088960
+tell 0
+
+walk all at once
+walk by 16
+rewind
+log_basic/TEST0: Done

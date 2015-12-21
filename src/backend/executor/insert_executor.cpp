@@ -14,6 +14,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
+#include "backend/common/pool.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
@@ -54,6 +55,7 @@ bool InsertExecutor::DExecute() {
   if (done_) return false;
 
   assert(!done_);
+  assert(executor_context_ != nullptr);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table_ = node.GetTable();
@@ -61,6 +63,7 @@ bool InsertExecutor::DExecute() {
   assert(target_table_);
 
   auto transaction_ = executor_context_->GetTransaction();
+  auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
@@ -83,7 +86,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr));
+        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr), executor_pool);
 
       peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
@@ -114,7 +117,7 @@ bool InsertExecutor::DExecute() {
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
           target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(target.first, value);
+      tuple->SetValue(target.first, value, executor_pool);
     }
 
     // Bulk Insert Mode
@@ -135,8 +138,8 @@ bool InsertExecutor::DExecute() {
       {
         auto& log_manager = logging::LogManager::GetInstance();
 
-        if(log_manager.IsInLoggingMode()){
-          auto logger = log_manager.GetBackendLogger();
+        if(log_manager.IsInLoggingMode(peloton_logging_mode)){
+          auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
           auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                                transaction_->GetTransactionId(),
                                                target_table_->GetOid(),

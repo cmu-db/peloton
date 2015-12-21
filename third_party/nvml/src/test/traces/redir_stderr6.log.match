@@ -1,0 +1,11 @@
+$(*)
+$(*)
+$(*)
+$(OPT)$(*) compiled with support for Valgrind pmemcheck
+$(OPT)$(*) compiled with support for Valgrind helgrind
+$(OPT)$(*) compiled with support for Valgrind memcheck
+<trace>: <0> [traces.c:$(*) main] Log level NONE
+<trace>: <1> [traces.c:$(*) main] Log level ERROR
+<trace>: <2> [traces.c:$(*) main] Log level WARNING
+<trace>: <3> [traces.c:$(*) main] Log level INFO
+<trace>: <4> [traces.c:$(*) main] Log level DEBUG

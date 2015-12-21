@@ -23,6 +23,382 @@
 
 namespace peloton {
 
+/**
+ * Public constructor that initializes to an Value that is unusable
+ * with other Values.  Useful for declaring storage for an Value.
+ */
+Value::Value() {
+  ::memset( m_data, 0, 16);
+  SetValueType(VALUE_TYPE_INVALID);
+  m_sourceInlined = true;
+  m_cleanUp = true;
+}
+
+/**
+ * Private constructor that initializes storage and the specifies the type of value
+ * that will be stored in this instance
+ */
+Value::Value(const ValueType type) {
+  ::memset( m_data, 0, 16);
+  SetValueType(type);
+  m_sourceInlined = true;
+  m_cleanUp = true;
+}
+
+
+/* Objects may have storage allocated for them.
+ * Release memory associated to object type Values */
+Value::~Value() {
+
+  if(m_sourceInlined == true || m_cleanUp == false)
+    return;
+
+  switch (GetValueType())
+  {
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_ARRAY:
+    {
+      Varlen* sref = *reinterpret_cast<Varlen* const*>(m_data);
+      if (sref != NULL)
+      {
+        delete sref;
+      }
+    }
+    break;
+
+    default:
+      return;
+  }
+
+}
+
+Value& Value::operator=(const Value &other) {
+
+  // protect against invalid self-assignment
+  if (this != &other) {
+
+    m_sourceInlined = other.m_sourceInlined;
+    m_valueType = other.m_valueType;
+    m_cleanUp = true;
+    std::copy(other.m_data, other.m_data + 16, m_data);
+
+    // Deep copy if needed
+    if(m_sourceInlined == false && other.IsNull() == false) {
+
+      switch (m_valueType) {
+        case VALUE_TYPE_VARBINARY:
+        case VALUE_TYPE_VARCHAR:
+        case VALUE_TYPE_ARRAY:
+        {
+          Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+          Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+          SetObjectValue(new_sref);
+        }
+        break;
+
+        default:
+          break;
+      }
+
+    }
+
+  }
+
+  // by convention, always return *this
+  return *this;
+}
+
+Value::Value(const Value& other) {
+
+  m_sourceInlined = other.m_sourceInlined;
+  m_valueType = other.m_valueType;
+  m_cleanUp = true;
+  std::copy(other.m_data, other.m_data + 16, m_data);
+
+  // Deep copy if needed
+  if(m_sourceInlined == false && other.IsNull() == false) {
+
+    switch (m_valueType) {
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+      case VALUE_TYPE_ARRAY:
+      {
+        Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+        Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+        SetObjectValue(new_sref);
+      }
+      break;
+
+      default:
+        break;
+    }
+
+  }
+
+}
+
+Value Value::Clone(const Value &src, VarlenPool *varlen_pool __attribute__((unused))) {
+  Value rv = src;
+
+  return rv;
+}
+
+Value Value::CastAs(ValueType type) const {
+  LOG_TRACE("Converting from %s to %s",
+            ValueTypeToString(GetValueType()).c_str(),
+            ValueTypeToString(type).c_str());
+  if (GetValueType() == type) {
+    return *this;
+  }
+  if (IsNull()) {
+    return GetNullValue(type);
+  }
+
+  switch (type) {
+    case VALUE_TYPE_TINYINT:
+      return CastAsTinyInt();
+    case VALUE_TYPE_SMALLINT:
+      return CastAsSmallInt();
+    case VALUE_TYPE_INTEGER:
+      return CastAsInteger();
+    case VALUE_TYPE_BIGINT:
+      return CastAsBigInt();
+    case VALUE_TYPE_TIMESTAMP:
+      return CastAsTimestamp();
+    case VALUE_TYPE_DOUBLE:
+      return CastAsDouble();
+    case VALUE_TYPE_VARCHAR:
+      return CastAsString();
+    case VALUE_TYPE_VARBINARY:
+      return CastAsBinary();
+    case VALUE_TYPE_DECIMAL:
+      return CastAsDecimal();
+    default:
+      char message[128];
+      snprintf(message, 128, "Type %d not a recognized type for casting",
+               (int) type);
+      throw Exception(message);
+  }
+}
+
+/** Reformat an object-typed value from its inlined form to its
+ *  allocated out-of-line form, for use with a wider/widened tuple
+ *  column.  Use the pool specified by the Caller, or the temp string
+ *  pool if none was supplied. **/
+void Value::AllocateObjectFromInlinedValue(VarlenPool* pool)
+{
+  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
+    return;
+  }
+  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
+  assert(m_sourceInlined);
+
+  if (IsNull()) {
+    *reinterpret_cast<void**>(m_data) = NULL;
+    // SerializeToTupleStorage fusses about this flag being Set, even for NULLs
+    SetSourceInlined(false);
+    return;
+  }
+
+  // When an object is inlined, m_data is a direct pointer into a tuple's storage area.
+  char* source = *reinterpret_cast<char**>(m_data);
+
+  // When it isn't inlined, m_data must contain a pointer to a Varlen object
+  // that contains that same data in that same format.
+
+  int32_t length = GetObjectLengthWithoutNull();
+  // inlined objects always have a minimal (1-byte) length field.
+  Varlen* sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
+  char* storage = sref->Get();
+  // Copy length and value into the allocated out-of-line storage
+  ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
+  SetCleanUp(false);
+}
+
+/** Deep copy an outline object-typed value from its current allocated pool,
+ *  allocate the new outline object in the global temp string pool instead.
+ *  The Caller needs to deallocate the original outline space for the object,
+ *  probably by purging the pool that contains it.
+ *  This function is used in the aggregate function for MIN/MAX functions.
+ *  **/
+void Value::AllocateObjectFromOutlinedValue()
+{
+  if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
+    return;
+  }
+  assert(m_valueType == VALUE_TYPE_VARCHAR || m_valueType == VALUE_TYPE_VARBINARY);
+  assert(!m_sourceInlined);
+
+  if (IsNull()) {
+    *reinterpret_cast<void**>(m_data) = NULL;
+    return;
+  }
+
+  // Get the outline data
+  const char* source = (*reinterpret_cast<Varlen* const*>(m_data))->Get();
+
+  const int32_t length = GetObjectLengthWithoutNull() + GetObjectLengthLength();
+  Varlen* sref = Varlen::Create(length, nullptr);
+  char* storage = sref->Get();
+  // Copy the value into the allocated out-of-line storage
+  ::memcpy(storage, source, length);
+  SetObjectValue(sref);
+  SetSourceInlined(false);
+  SetCleanUp(false);
+}
+
+Value Value::GetAllocatedValue(ValueType type, const char* value, size_t size, VarlenPool* varlen_pool) {
+  Value retval(type);
+  char* storage = retval.AllocateValueStorage((int32_t)size, varlen_pool);
+  ::memcpy(storage, value, (int32_t)size);
+  retval.SetSourceInlined(false);
+  retval.SetCleanUp(varlen_pool == nullptr);
+  return retval;
+}
+
+char* Value::AllocateValueStorage(int32_t length, VarlenPool* varlen_pool) {
+  // This unSets the Value's null tag and returns the length of the length.
+  const int8_t lengthLength = SetObjectLength(length);
+  const int32_t minLength = length + lengthLength;
+  Varlen* sref = Varlen::Create(minLength, varlen_pool);
+  char* storage = sref->Get();
+  SetObjectLengthToLocation(length, storage);
+  storage += lengthLength;
+  SetObjectValue(sref);
+  return storage;
+}
+
+/**
+ * Initialize an Value of the specified type from the tuple
+ * storage area provided. If this is an Object type then the third
+ * argument indicates whether the object is stored in the tuple inline.
+ */
+Value Value::InitFromTupleStorage(const void *storage, ValueType type, bool isInlined)
+{
+  Value retval(type);
+  switch (type)
+  {
+    case VALUE_TYPE_INTEGER:
+      if ((retval.GetInteger() = *reinterpret_cast<const int32_t*>(storage)) == INT32_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_BIGINT:
+      if ((retval.GetBigInt() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_DOUBLE:
+      if ((retval.GetDouble() = *reinterpret_cast<const double*>(storage)) <= DOUBLE_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    {
+      //Potentially non-inlined type requires special handling
+      if (isInlined) {
+        //If it is inlined the storage area contains the actual data so copy a reference
+        //to the storage area
+        const char* inline_data = reinterpret_cast<const char*>(storage);
+        *reinterpret_cast<const char**>(retval.m_data) = inline_data;
+        retval.SetSourceInlined(true);
+        /**
+         * If a string is inlined in its storage location there will be no pointer to
+         * check for NULL. The length preceding value must be used instead.
+         */
+        if ((inline_data[0] & OBJECT_NULL_BIT) != 0) {
+          retval.tagAsNull();
+          break;
+        }
+        int length = inline_data[0];
+        //std::cout << "Value::InitFromTupleStorage: length: " << length << std::endl;
+        retval.SetObjectLength(length); // this unSets the null tag.
+        break;
+      }
+
+      // If it isn't inlined the storage area contains a pointer to the
+      // Varlen object containing the string's memory
+      Varlen* sref = *reinterpret_cast<Varlen**>(const_cast<void*>(storage));
+      *reinterpret_cast<Varlen**>(retval.m_data) = sref;
+      // If the Varlen pointer is null, that's because this
+      // was a null value; otherwise Get the right char* from the Varlen
+      if (sref == NULL) {
+        retval.tagAsNull();
+        break;
+      }
+
+      // Cache the object length in the Value.
+
+      /* The format for a length preceding value is a 1-byte short representation
+       * with the the 7th bit used to indicate a null value and the 8th bit used
+       * to indicate that this is part of a long representation and that 3 bytes
+       * follow. 6 bits are available to represent length for a maximum length
+       * of 63 bytes representable with a single byte length. 30 bits are available
+       * when the continuation bit is Set and 3 bytes follow.
+       *
+       * The value is converted to network byte order so that the code
+       * will always know which byte contains the most signficant digits.
+       */
+
+      /*
+       * Generated mask that removes the null and continuation bits
+       * from a single byte length value
+       */
+      const char mask = ~static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
+
+      char* data = sref->Get();
+      int32_t length = 0;
+      if ((data[0] & OBJECT_CONTINUATION_BIT) != 0) {
+        char numberBytes[4];
+        numberBytes[0] = static_cast<char>(data[0] & mask);
+        numberBytes[1] = data[1];
+        numberBytes[2] = data[2];
+        numberBytes[3] = data[3];
+        length = ntohl(*reinterpret_cast<int32_t*>(numberBytes));
+      } else {
+        length = data[0] & mask;
+      }
+
+      retval.SetObjectLength(length); // this unSets the null tag.
+      retval.SetSourceInlined(false);
+      retval.SetCleanUp(false);
+      break;
+    }
+    case VALUE_TYPE_TIMESTAMP:
+      if ((retval.GetTimestamp() = *reinterpret_cast<const int64_t*>(storage)) == INT64_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_TINYINT:
+      if ((retval.GetTinyInt() = *reinterpret_cast<const int8_t*>(storage)) == INT8_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_SMALLINT:
+      if ((retval.GetSmallInt() = *reinterpret_cast<const int16_t*>(storage)) == INT16_NULL) {
+        retval.tagAsNull();
+      }
+      break;
+    case VALUE_TYPE_DECIMAL:
+    {
+      ::memcpy(retval.m_data, storage, sizeof(TTInt));
+      break;
+    }
+    default:
+      throw Exception(
+          "Value::InitFromTupleStorage() invalid column type " +
+          ValueTypeToString(type));
+      /* no break */
+  }
+  return retval;
+}
+
 // For x<op>y where x is an integer,
 // promote x and y to s_intPromotionTable[y]
 ValueType Value::s_intPromotionTable[] = {
@@ -332,10 +708,10 @@ struct ValueList {
   ValueList(size_t length, ValueType elementType) : m_length(length), m_elementType(elementType)
   { }
 
-  void DeserializeValues(SerializeInputBE &input, VarlenPool *dataPool)
+  void DeserializeValues(SerializeInputBE &input, VarlenPool *varlen_pool)
   {
     for (size_t ii = 0; ii < m_length; ++ii) {
-      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, dataPool);
+      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input, varlen_pool);
     }
   }
 
@@ -378,15 +754,15 @@ bool Value::InList(const Value& rhs) const
   return std::find(listOfValues->begin(), listOfValues->end(), value) != listOfValues->end();
 }
 
-void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *dataPool)
+void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *varlen_pool)
 {
   ValueType elementType = (ValueType)input.ReadByte();
   size_t length = input.ReadShort();
   int trueSize = ValueList::AllocationSizeForLength(length);
-  char* storage = AllocateValueStorage(trueSize, dataPool);
+  char* storage = AllocateValueStorage(trueSize, varlen_pool);
   ::memset(storage, 0, trueSize);
   ValueList* nvset = new (storage) ValueList(length, elementType);
-  nvset->DeserializeValues(input, dataPool);
+  nvset->DeserializeValues(input, varlen_pool);
   //TODO: An O(ln(length)) implementation vs. the current O(length) implementation of Value::inList
   // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
@@ -394,7 +770,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input, VarlenPool *da
 void Value::AllocateANewValueList(size_t length, ValueType elementType)
 {
   int trueSize = ValueList::AllocationSizeForLength(length);
-  char* storage = AllocateValueStorage(trueSize, NULL);
+  char* storage = AllocateValueStorage(trueSize, nullptr);
   ::memset(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
@@ -482,7 +858,7 @@ void Value::streamTimestamp(std::stringstream& value) const
   value << mbstr;
 }
 
-inline static void throwTimestampFormatError(const std::string &str)
+static void throwTimestampFormatError(const std::string &str)
 {
   char message[4096];
   // No space separator for between the date and time
@@ -681,33 +1057,33 @@ std::ostream &operator<<(std::ostream &os, const Value &value) {
 Value Value::GetMinValue(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-      return GetTinyIntValue(PELOTON_INT8_MIN);
-      break;
+                      return GetTinyIntValue(PELOTON_INT8_MIN);
+    break;
     case (VALUE_TYPE_SMALLINT):
-      return GetSmallIntValue(PELOTON_INT16_MIN);
-      break;
+                      return GetSmallIntValue(PELOTON_INT16_MIN);
+    break;
     case (VALUE_TYPE_INTEGER):
-      return GetIntegerValue(PELOTON_INT32_MIN);
-      break;
-      break;
+                      return GetIntegerValue(PELOTON_INT32_MIN);
+    break;
+    break;
     case (VALUE_TYPE_BIGINT):
-      return GetBigIntValue(PELOTON_INT64_MIN);
-      break;
+                      return GetBigIntValue(PELOTON_INT64_MIN);
+    break;
     case (VALUE_TYPE_DOUBLE):
-      return GetDoubleValue(-DBL_MAX);
-      break;
+                      return GetDoubleValue(-DBL_MAX);
+    break;
     case (VALUE_TYPE_VARCHAR):
-      return GetTempStringValue("", 2);
-      break;
+                      return GetTempStringValue("", 2);
+    break;
     case (VALUE_TYPE_TIMESTAMP):
-      return GetTimestampValue(PELOTON_INT64_MIN);
-      break;
+                      return GetTimestampValue(PELOTON_INT64_MIN);
+    break;
     case (VALUE_TYPE_DECIMAL):
-      return GetDecimalValue(DECIMAL_MIN);
-      break;
+                      return GetDecimalValue(DECIMAL_MIN);
+    break;
     case (VALUE_TYPE_BOOLEAN):
-      return GetFalse();
-      break;
+                      return GetFalse();
+    break;
 
     case (VALUE_TYPE_INVALID):
     case (VALUE_TYPE_NULL):

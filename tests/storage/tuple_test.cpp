@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "backend/storage/tuple.h"
-
+#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -41,22 +41,22 @@ TEST(TupleTests, BasicTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
 
   EXPECT_EQ(tuple->GetValue(0), ValueFactory::GetIntegerValue(23));
   EXPECT_EQ(tuple->GetValue(1), ValueFactory::GetIntegerValue(45));
   EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(1));
 
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(2));
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
 
   EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
 
   std::cout << (*tuple);
 
-  tuple->FreeUninlinedData();
   delete tuple;
   delete schema;
 }
@@ -80,21 +80,20 @@ TEST(TupleTests, VarcharTest) {
   catalog::Schema *schema(new catalog::Schema(columns));
 
   storage::Tuple *tuple(new storage::Tuple(schema, true));
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-
-  auto pool = new peloton::VarlenPool();
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
 
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
-  tuple->SetValue(3, val);
+  tuple->SetValue(3, val, pool);
   EXPECT_EQ(tuple->GetValue(3), val);
 
   std::cout << (*tuple);
 
   Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
-  tuple->SetValue(3, val2);
+  tuple->SetValue(3, val2, pool);
 
   EXPECT_NE(tuple->GetValue(3), val);
   EXPECT_EQ(tuple->GetValue(3), val2);
@@ -103,8 +102,6 @@ TEST(TupleTests, VarcharTest) {
 
   delete tuple;
   delete schema;
-
-  delete pool;
 }
 
 }  // End test namespace

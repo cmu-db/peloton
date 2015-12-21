@@ -49,16 +49,15 @@ namespace test {
 // there is only one base tile in the logical tile.
 TEST(MaterializationTests, SingleBaseTileTest) {
   const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from single base tile.
-  storage::Tile *source_base_tile = tile_group->GetTile(0);
+  auto source_base_tile = tile_group->GetTileReference(0);
 
   // Add a reference because we are going to wrap around it and we don't own it
-  source_base_tile->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles({source_base_tile}));
 
@@ -72,7 +71,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   EXPECT_EQ(2, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
-  EXPECT_TRUE(source_base_tile != result_base_tile);
+  EXPECT_TRUE(source_base_tile.get() != result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
   // Check that the base tile has the correct values.
@@ -97,18 +96,16 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 // Also, one of the columns is dropped.
 TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from two base tiles.
-  const std::vector<storage::Tile *> source_base_tiles = {
-      tile_group->GetTile(0), tile_group->GetTile(1)};
+  const std::vector<std::shared_ptr<storage::Tile> > source_base_tiles = {
+      tile_group->GetTileReference(0), tile_group->GetTileReference(1)};
 
   // Add a reference because we are going to wrap around it and we don't own it
-  tile_group->GetTile(0)->IncrementRefCount();
-  tile_group->GetTile(1)->IncrementRefCount();
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles(source_base_tiles));
 
@@ -158,7 +155,6 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
     Value string_value(ValueFactory::GetStringValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value, result_base_tile->GetValue(i, 0));
-    string_value.Free();
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),

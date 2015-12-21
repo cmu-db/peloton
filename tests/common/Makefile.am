@@ -1,7 +1,7 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# COMMON
+# LANGUAGE
 ######################################################################
 
 check_PROGRAMS += \
@@ -9,7 +9,7 @@ check_PROGRAMS += \
 		logger_test \
 		value_test \
 		value_array_test \
-		cache_test 
+		cache_test
 
 sample_test_SOURCES = common/sample_test.cpp
 

@@ -32,12 +32,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
  public:
   explicit IndexScanExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
-  // added by michael
-  ~IndexScanExecutor() {
-	  for(auto value : values_){
-	    value.Free();
-	  }
-  }
+
+  ~IndexScanExecutor();
 
  protected:
   bool DInit();

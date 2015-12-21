@@ -21,6 +21,15 @@
 #include "backend_logger.h"
 #include "frontend_logger.h"
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+extern LoggingType peloton_logging_mode;
+
+// Directory for peloton logs
+extern char    *peloton_log_directory;
+
 namespace peloton {
 namespace logging {
 
@@ -47,23 +56,24 @@ class LogManager{
     static LogManager& GetInstance(void);
 
     // Wait for the system to begin
-    void StartStandbyMode(LoggingType logging_type = LOGGING_TYPE_INVALID );
+    void StartStandbyMode(LoggingType logging_type);
 
     // Start recovery
-    void StartRecoveryMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    void StartRecoveryMode(LoggingType logging_type);
 
     // Check whether the frontend logger is in logging mode
-    bool IsInLoggingMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    bool IsInLoggingMode(LoggingType logging_type);
 
     // Used to terminate current logging and wait for sleep mode
-    void TerminateLoggingMode(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    void TerminateLoggingMode(LoggingType logging_type);
 
     // Used to wait for a certain mode (or not certain mode if is_equal is false)
-    void WaitForMode(LoggingStatus logging_status, bool is_equal = true,
-                               LoggingType logging_type = LOGGING_TYPE_INVALID);
+    void WaitForMode(LoggingStatus logging_status,
+                     bool is_equal,
+                     LoggingType logging_type);
 
     // End the actual logging
-    bool EndLogging(LoggingType logging_type =  LOGGING_TYPE_INVALID);
+    bool EndLogging(LoggingType logging_type);
 
     //===--------------------------------------------------------------------===//
     // Accessors
@@ -72,14 +82,9 @@ class LogManager{
     // Logging status associated with the front end logger of given type
     void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
 
-    LoggingStatus GetStatus(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    LoggingStatus GetStatus(LoggingType logging_type);
 
     void ResetLoggingStatusMap(LoggingType logging_type);
-
-    // Default protocol or logging type for member function calls
-    void SetDefaultLoggingType(LoggingType logging_type);
-
-    LoggingType GetDefaultLoggingType(void);
 
     // Whether to enable or disable synchronous commit ?
     void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
@@ -88,18 +93,22 @@ class LogManager{
 
     size_t ActiveFrontendLoggerCount(void) ;
 
-    BackendLogger* GetBackendLogger(LoggingType logging_type = LOGGING_TYPE_INVALID);
+    BackendLogger* GetBackendLogger(LoggingType logging_type);
 
     bool RemoveBackendLogger(BackendLogger* backend_logger,
-                             LoggingType logging_type = LOGGING_TYPE_INVALID);
+                             LoggingType logging_type);
 
     void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
 
-    void SetTestRedoAllLogs(bool test_suspend_commit);
+    void SetTestRedoAllLogs(LoggingType logging_type, bool test_suspend_commit);
 
-    void SetLogFile(std::string log_file);
+    void SetLogFileName(std::string log_file);
 
     std::string GetLogFileName(void);
+
+    bool HasPelotonFrontendLogger() const {
+      return has_peloton_frontend_logger;
+    }
 
   private:
 
@@ -116,10 +125,12 @@ class LogManager{
     //===--------------------------------------------------------------------===//
     // Data members
     //===--------------------------------------------------------------------===//
-    // default logging type for new logging
-    // this is used instead when the argument passed to member functions
-    // is LOGGING_TYPE_INVALID
-    LoggingType default_logging_type = LOGGING_TYPE_INVALID;
+
+    // has frontend logger ?
+    bool has_frontend_logger = false;
+
+    // has peloton frontend logger
+    bool has_peloton_frontend_logger = false;
 
     // There is only one frontend_logger for each type of logging
     // like -- stdout, aries, peloton
@@ -134,7 +145,7 @@ class LogManager{
 
     bool syncronization_commit = false;
 
-    std::string log_file_name = "/tmp/general-peloton.log";
+    std::string log_file_name;
 };
 
 

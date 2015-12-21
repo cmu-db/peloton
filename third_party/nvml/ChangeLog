@@ -1,0 +1,31 @@
+Sun Sep 13 2015 Andy Rudoff <andy.rudoff@intel.com>
+
+	* Version 0.3
+	NVML is now feature complete, adding support for:
+		- pool sets
+		- pmemobj local replication (active/passive)
+		- experimental valgrind support
+		- pmempool support for all pool types
+	Man pages are all complete.
+	This release is considered "Alpha quality" by the team, having
+	gone through significant validation but only some performance
+	analysis at this point.
+
+Tue Jun 30 2015 Andy Rudoff <andy.rudoff@intel.com>
+
+	* Version 0.2
+	NVML now consists of six libraries:
+		- libpmem                            (basic flushing, etc)
+		- libpmemblk, libpmemlog, libpmemobj (transactions)
+		- libvmem, libvmmalloc               (volatile use of pmem)
+	The "pmempool" command is available for managing pmem files.
+	Man pages for all the above are complete.
+	The only things documented in man pages but not implemented are:
+		- pmem sets (ability to spread a pool over a set of files)
+		- replication (coming for libpmemobj)
+	The pmempool command does not yet support pmemobj type pools.
+
+Thu Sep 11 2014 Andy Rudoff <andy.rudoff@intel.com>
+
+	* Version 0.1
+	Initial development done in 0.1 builds

@@ -12,25 +12,40 @@
 
 #pragma once
 
+#include <memory>
+
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/concurrency/transaction.h"
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType
 {
-  LAYOUT_ROW,   /* Pure row layout */
+  LAYOUT_ROW,    /* Pure row layout */
   LAYOUT_COLUMN, /* Pure column layout */
-  LAYOUT_HYBRID /* Hybrid layout */
+  LAYOUT_HYBRID  /* Hybrid layout */
 } LayoutType;
 
-/* GUC variables */
-extern LayoutType peloton_layout;
-extern double     peloton_projectivity;
-extern int        peloton_num_groups;
-extern bool       peloton_fsm;
+extern LayoutType peloton_layout_mode;
+
+//===--------------------------------------------------------------------===//
+// Configuration Variables
+//===--------------------------------------------------------------------===//
+
+// Projectivity for determining FSM layout
+extern double  peloton_projectivity;
+
+// # of groups
+extern int     peloton_num_groups;
+
+// FSM or not ?
+extern bool    peloton_fsm;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
@@ -101,15 +116,14 @@ class DataTable : public AbstractTable {
   // coerce into adding a new tile group with a tile group id
   oid_t AddTileGroupWithOid(oid_t tile_group_id);
 
-  // add a customized tile group to table
-  void AddTileGroup(TileGroup *tile_group);
+  // add a tile group to table
+  void AddTileGroup(const std::shared_ptr<TileGroup>& tile_group);
 
-  // NOTE: This must go through the manager's locator
-  // This allows us to "TRANSFORM" tile groups atomically
-  // WARNING: We should distinguish OFFSET and ID of a tile group
-  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
+  // Offset is a 0-based number local to the table
+  std::shared_ptr<storage::TileGroup> GetTileGroup(oid_t tile_group_offset) const;
 
-  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
+  // ID is the global identifier in the entire DBMS
+  std::shared_ptr<storage::TileGroup> GetTileGroupById(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
