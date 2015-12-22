@@ -21,14 +21,16 @@
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(int tuple_count)
-    : data(nullptr),
+TileGroupHeader::TileGroupHeader(BackendType backend_type,
+                                 int tuple_count)
+    : backend_type(backend_type),
+      data(nullptr),
       num_tuple_slots(tuple_count),
       next_tuple_slot(0) {
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  data = (char *) storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, header_size);
+  data = (char *) storage::StorageManager::GetInstance().Allocate(backend_type, header_size);
   // initialize data with zero
   memset(data, 0, header_size);
   assert(data != nullptr);
@@ -47,7 +49,7 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, data);
+  storage::StorageManager::GetInstance().Release(backend_type, data);
   data = nullptr;
 }
 

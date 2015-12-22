@@ -29,7 +29,7 @@ TestingHarness::TestingHarness()
 : txn_id_counter(INVALID_TXN_ID),
   cid_counter(INVALID_CID),
   tile_group_id_counter(START_OID),
-  pool_(new VarlenPool()){
+  pool_(new VarlenPool(BACKEND_TYPE_MM)){
 }
 
 uint64_t TestingHarness::GetThreadId() {
