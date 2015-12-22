@@ -59,7 +59,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name){
 /**
  * @brief writing a simple log file 
  */
-bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file_name){
+bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
 
   auto file_path = GetFilePath(state.file_dir, file_name);
 
@@ -84,31 +84,29 @@ bool LoggingTestsUtil::PrepareLogFile(LoggingType logging_type, std::string file
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode,
-                     &log_manager,
-                     logging_type);
+                     &log_manager);
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
 
   // suspend final step in transaction commit,
   // so that it only get committed during recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(logging_type, true);
+    log_manager.SetTestRedoAllLogs(true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode(logging_type);
+  log_manager.StartRecoveryMode();
 
   // Wait for the frontend logger to enter LOGGING mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
 
   // Build the log
-  LoggingTestsUtil::BuildLog(logging_type,
-                             LOGGING_TESTS_DATABASE_OID,
+  LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
                              LOGGING_TESTS_TABLE_OID);
 
   //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-  if(log_manager.EndLogging(logging_type)){
+  if(log_manager.EndLogging()){
     thread.join();
     return true;
   }
@@ -134,7 +132,7 @@ void LoggingTestsUtil::ResetSystem(){
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::DoRecovery(LoggingType logging_type, std::string file_name){
+void LoggingTestsUtil::DoRecovery(std::string file_name){
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
@@ -167,22 +165,21 @@ void LoggingTestsUtil::DoRecovery(LoggingType logging_type, std::string file_nam
 
   // start off the frontend logger of appropriate type in STANDBY mode
   std::thread thread(&logging::LogManager::StartStandbyMode, 
-                     &log_manager,
-                     logging_type);
+                     &log_manager);
 
   // wait for the frontend logger to enter STANDBY mode
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
 
   // always enable commit when testing recovery
   if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(logging_type, true);
+    log_manager.SetTestRedoAllLogs(true);
   }
 
   // STANDBY -> RECOVERY mode
-  log_manager.StartRecoveryMode(logging_type);
+  log_manager.StartRecoveryMode();
 
   // Wait for the frontend logger to enter LOGGING mode after recovery
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
 
   end = std::chrono::system_clock::now();
   elapsed_milliseconds = end-start;
@@ -201,7 +198,7 @@ void LoggingTestsUtil::DoRecovery(LoggingType logging_type, std::string file_nam
   // Check the next oid
   //LoggingTestsUtil::CheckNextOid();
 
-  if( log_manager.EndLogging(logging_type) ){
+  if( log_manager.EndLogging() ){
     thread.join();
   }else{
     LOG_ERROR("Failed to terminate logging thread");
@@ -231,8 +228,7 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
 // WRITING LOG RECORD
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::BuildLog(LoggingType logging_type,
-                                oid_t db_oid,
+void LoggingTestsUtil::BuildLog(oid_t db_oid,
                                 oid_t table_oid){
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -256,7 +252,7 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
   start = std::chrono::system_clock::now();
 
   // Execute the workload to build the log
-  LaunchParallelTest(state.backend_count, RunBackends, logging_type, table);
+  LaunchParallelTest(state.backend_count, RunBackends, table);
 
   end = std::chrono::system_clock::now();
   elapsed_milliseconds = end-start;
@@ -271,44 +267,42 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
   }
 
   // We can only drop the table in case of ARIES
-  if(logging_type == LOGGING_TYPE_ARIES){
+  if(peloton_logging_mode == LOGGING_TYPE_ARIES){
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
 }
 
 
-void LoggingTestsUtil::RunBackends(LoggingType logging_type,
-                                   storage::DataTable* table){
+void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
   bool commit = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Insert tuples
-  auto locations = InsertTuples(logging_type, table, testing_pool, commit);
+  auto locations = InsertTuples(table, testing_pool, commit);
 
   // Update tuples
-  locations = UpdateTuples(logging_type,table, locations, testing_pool, commit);
+  locations = UpdateTuples(table, locations, testing_pool, commit);
 
   // Delete tuples
-  DeleteTuples(logging_type, table, locations, commit);
+  DeleteTuples(table, locations, commit);
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
-  if(log_manager.IsInLoggingMode(logging_type)){
-    auto logger = log_manager.GetBackendLogger(logging_type);
+  if(log_manager.IsInLoggingMode()){
+    auto logger = log_manager.GetBackendLogger();
 
     // Wait until frontend logger collects the data
     logger->WaitForFlushing();
 
-    log_manager.RemoveBackendLogger(logger, logging_type);
+    log_manager.RemoveBackendLogger(logger);
   }
 
 }
 
 // Do insert and create insert tuple log records
-std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type,
-                                                        storage::DataTable* table,
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table,
                                                         VarlenPool *pool,
                                                         bool committed){
   std::vector<ItemPointer> locations;
@@ -335,8 +329,8 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                              txn->GetTransactionId(), 
                                              table->GetOid(),
@@ -365,8 +359,7 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(LoggingType logging_type
   return locations;
 }
 
-void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
-                                    storage::DataTable* table,
+void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
                                     const std::vector<ItemPointer>& locations,
                                     bool committed){
 
@@ -388,8 +381,8 @@ void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                              txn->GetTransactionId(),
                                              table->GetOid(),
@@ -411,8 +404,7 @@ void LoggingTestsUtil::DeleteTuples(LoggingType logging_type,
 
 }
 
-std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(LoggingType logging_type,
-                                                        storage::DataTable* table,
+std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* table,
                                                         const std::vector<ItemPointer>& deleted_locations,
                                                         VarlenPool *pool,
                                                         bool committed){
@@ -455,8 +447,8 @@ std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(LoggingType logging_type
     // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
-      if(log_manager.IsInLoggingMode(logging_type)){
-        auto logger = log_manager.GetBackendLogger(logging_type);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
                                              txn->GetTransactionId(),
                                              table->GetOid(),
