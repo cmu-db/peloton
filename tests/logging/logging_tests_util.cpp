@@ -134,7 +134,7 @@ void LoggingTestsUtil::ResetSystem(){
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_name){
+void LoggingTestsUtil::DoRecovery(LoggingType logging_type, std::string file_name){
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
@@ -156,6 +156,12 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
     return;
   }
 
+  //===--------------------------------------------------------------------===//
+  // RECOVERY
+  //===--------------------------------------------------------------------===//
+
+  start = std::chrono::system_clock::now();
+
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
 
@@ -174,12 +180,6 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
 
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode(logging_type);
-
-  //===--------------------------------------------------------------------===//
-  // RECOVERY
-  //===--------------------------------------------------------------------===//
-
-  start = std::chrono::system_clock::now();
 
   // Wait for the frontend logger to enter LOGGING mode after recovery
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);

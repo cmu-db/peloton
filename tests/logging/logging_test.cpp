@@ -5,6 +5,13 @@
 
 #include <fstream>
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+// Logging mode
+extern LoggingType     peloton_logging_mode;
+
 namespace peloton {
 namespace test {
 
@@ -19,7 +26,10 @@ std::string peloton_log_file_name = "peloton.log";
 /**
  * @brief writing a simple log with multiple threads and then do recovery
  */
-TEST(LoggingTests, writing_logfile) {
+TEST(LoggingTests, LoggingAndRecoveryTest) {
+
+  // First, set the global peloton logging mode
+  peloton_logging_mode = state.logging_type;
 
   if(state.logging_type == LOGGING_TYPE_ARIES) {
 
@@ -30,7 +40,7 @@ TEST(LoggingTests, writing_logfile) {
     LoggingTestsUtil::ResetSystem();
 
     // Do recovery
-    LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
+    LoggingTestsUtil::DoRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
 
   }
   else if(state.logging_type == LOGGING_TYPE_PELOTON) {
@@ -39,7 +49,7 @@ TEST(LoggingTests, writing_logfile) {
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON, peloton_log_file_name));
 
     // Do recovery
-    LoggingTestsUtil::CheckRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
+    LoggingTestsUtil::DoRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
 
   }
 

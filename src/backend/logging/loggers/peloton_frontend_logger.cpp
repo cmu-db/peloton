@@ -28,13 +28,15 @@ namespace logging {
 
 size_t GetLogFileSize(int log_file_fd);
 
-LogRecordType GetNextLogRecordType(FILE *log_file);
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
-                                 FILE *log_file);
+                                 FILE *log_file,
+                                 size_t log_file_size);
 
 bool ReadTupleRecordHeader(TupleRecord& tuple_record,
-                           FILE *log_file);
+                           FILE *log_file,
+                           size_t log_file_size);
 
 /**
  * @brief create NVM backed log pool
@@ -141,7 +143,7 @@ void PelotonFrontendLogger::Flush(void) {
 void PelotonFrontendLogger::WriteTxnLog(TransactionRecord txnLog) {
   txnLog.Serialize(output_buffer);
   fwrite(txnLog.GetMessage(), sizeof(char), txnLog.GetMessageLength(),
-               log_file);
+         log_file);
   // Then, flush
   int ret = fflush(log_file);
   if (ret != 0) {
@@ -228,48 +230,62 @@ bool PelotonFrontendLogger::CollectCommittedTuples(TupleRecord* record) {
  * @brief Recovery system based on log file
  */
 void PelotonFrontendLogger::DoRecovery() {
+
+  // Set log file size
+  log_file_size = GetLogFileSize(log_file_fd);
+
   // Go over the log size if needed
-  if (GetLogFileSize(log_file_fd) > 0) {
+  if (log_file_size > 0) {
     bool reached_end_of_file = false;
+
     // check whether first item is LOGRECORD_TYPE_TRANSACTION_COMMIT
     // if not, no need to recover.
     // if yes, need to recovery all logs before we hit LOGRECORD_TYPE_TRANSACTION_DONE
     if (DoNeedRecovery()) {
+
       TransactionRecord dummy_record(LOGRECORD_TYPE_INVALID);
       cid_t current_cid = INVALID_CID;
+
       // Go over each log record in the log file
       while (!reached_end_of_file) {
+
         // Read the first byte to identify log record type
         // If that is not possible, then wrap up recovery
-        LogRecordType logType = GetNextLogRecordType(log_file);
-        switch (logType) {
+        LogRecordType log_type = GetNextLogRecordType(log_file, log_file_size);
+
+        switch (log_type) {
+
           case LOGRECORD_TYPE_TRANSACTION_DONE:
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
             // read but do nothing
-            ReadTransactionRecordHeader(dummy_record, log_file);
+            ReadTransactionRecordHeader(dummy_record, log_file, log_file_size);
             break;
+
           case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
           {
             TupleRecord insert_record(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
-            ReadTupleRecordHeader(insert_record, log_file);
+            ReadTupleRecordHeader(insert_record, log_file, log_file_size);
             current_cid = SetInsertCommitMark(insert_record.GetInsertLocation());
           }
-            break;
+          break;
+
           case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
           {
             TupleRecord delete_record(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
-            ReadTupleRecordHeader(delete_record, log_file);
+            ReadTupleRecordHeader(delete_record, log_file, log_file_size);
             current_cid = SetDeleteCommitMark(delete_record.GetDeleteLocation());
           }
-            break;
+          break;
+
           case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
           {
             TupleRecord update_record(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
-            ReadTupleRecordHeader(update_record, log_file);
+            ReadTupleRecordHeader(update_record, log_file, log_file_size);
             SetDeleteCommitMark(update_record.GetDeleteLocation());
             current_cid = SetInsertCommitMark(update_record.GetInsertLocation());
           }
-            break;
+          break;
+
           default:
             reached_end_of_file = true;
             break;
@@ -337,14 +353,14 @@ bool PelotonFrontendLogger::DoNeedRecovery(void) {
   // Read the last record type
   fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
 
-  auto log_record_type = GetNextLogRecordType(log_file);
+  auto log_record_type = GetNextLogRecordType(log_file, log_file_size);
 
   // If the previous run break
   if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT){
     TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
 
     // read the last commit transaction log
-    if( ReadTransactionRecordHeader(txn_record, log_file) == false ) {
+    if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ) {
       return false;
     }
 
@@ -353,7 +369,7 @@ bool PelotonFrontendLogger::DoNeedRecovery(void) {
 
     // Peloton log items have fixed size.
     size_t rollback_size = tuple_log_count * TupleRecord::GetTupleRecordSize()
-                                    + TransactionRecord::GetTransactionRecordSize();
+    + TransactionRecord::GetTransactionRecordSize();
 
     fseek(log_file, -rollback_size, SEEK_END);
     return true;
