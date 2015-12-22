@@ -163,7 +163,7 @@ Index::Index(IndexMetadata *metadata) : metadata(metadata) {
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
   // initialize pool
-  pool = new VarlenPool();
+  pool = new VarlenPool(BACKEND_TYPE_MM);
 }
 
 std::ostream &operator<<(std::ostream &os, const Index &index) {

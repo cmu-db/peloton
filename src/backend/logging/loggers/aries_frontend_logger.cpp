@@ -85,7 +85,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
 
 
   // allocate pool
-  recovery_pool = new VarlenPool();
+  recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
 
 }
 

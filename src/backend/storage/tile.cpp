@@ -28,7 +28,8 @@
 namespace peloton {
 namespace storage {
 
-Tile::Tile(TileGroupHeader *tile_header,
+Tile::Tile(BackendType backend_type,
+           TileGroupHeader *tile_header,
            const catalog::Schema &tuple_schema,
            TileGroup *tile_group,
            int tuple_count)
@@ -36,6 +37,7 @@ Tile::Tile(TileGroupHeader *tile_header,
   table_id(INVALID_OID),
   tile_group_id(INVALID_OID),
   tile_id(INVALID_OID),
+  backend_type(backend_type),
   schema(tuple_schema),
   data(NULL),
   tile_group(tile_group),
@@ -52,19 +54,19 @@ Tile::Tile(TileGroupHeader *tile_header,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, tile_size);
+  data = (char *)storage::StorageManager::GetInstance().Allocate(backend_type, tile_size);
   assert(data != NULL);
 
   // initialize it
   std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false) pool = new VarlenPool();
+  if (schema.IsInlined() == false) pool = new VarlenPool(backend_type);
 }
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, data);
+  storage::StorageManager::GetInstance().Release(backend_type, data);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
@@ -178,14 +180,14 @@ void Tile::SetValueFast(const Value& value,
                                                   pool);
 }
 
-Tile *Tile::CopyTile() {
+Tile *Tile::CopyTile(BackendType backend_type) {
   auto schema = GetSchema();
   bool tile_columns_inlined = schema->IsInlined();
   auto allocated_tuple_count = GetAllocatedTupleCount();
 
   // Create a shallow copy of the old tile
   TileGroupHeader *new_header = GetHeader();
-  Tile *new_tile = TileFactory::GetTile(
+  Tile *new_tile = TileFactory::GetTile(backend_type,
       INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, new_header,
       *schema, tile_group, allocated_tuple_count);
 

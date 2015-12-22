@@ -62,7 +62,8 @@ class TileGroup {
 
  public:
   // Tile group constructor
-  TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
+  TileGroup(BackendType backend_type,
+            TileGroupHeader *tile_group_header, AbstractTable *table,
             const std::vector<catalog::Schema> &schemas,
             const column_map_type &column_map, int tuple_count);
 
@@ -167,6 +168,9 @@ class TileGroup {
   oid_t database_id;
   oid_t table_id;
   oid_t tile_group_id;
+
+  // Backend type
+  BackendType backend_type;
 
   // mapping to tile schemas
   std::vector<catalog::Schema> tile_schemas;

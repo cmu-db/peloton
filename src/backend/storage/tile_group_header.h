@@ -48,7 +48,8 @@ class TileGroupHeader {
 
  public:
 
-  TileGroupHeader(int tuple_count);
+  TileGroupHeader(BackendType backend_type,
+                  int tuple_count);
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
@@ -307,6 +308,9 @@ class TileGroupHeader {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+
+  // Backend
+  BackendType backend_type;
 
   size_t header_size;
 
