@@ -47,6 +47,9 @@ class StorageManager  {
 
   // is it actually pmem ?
   int is_pmem;
+
+  // pmem file len
+  size_t pmem_len;
 };
 
 }  // End storage namespace

@@ -34,22 +34,22 @@ TEST(LoggingTests, LoggingAndRecoveryTest) {
   if(state.logging_type == LOGGING_TYPE_ARIES) {
 
     // Prepare a simple log file
-    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_ARIES, aries_log_file_name));
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(aries_log_file_name));
 
     // Reset data
     LoggingTestsUtil::ResetSystem();
 
     // Do recovery
-    LoggingTestsUtil::DoRecovery(LOGGING_TYPE_ARIES, aries_log_file_name);
+    LoggingTestsUtil::DoRecovery(aries_log_file_name);
 
   }
   else if(state.logging_type == LOGGING_TYPE_PELOTON) {
 
     // Test a simple log process
-    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(LOGGING_TYPE_PELOTON, peloton_log_file_name));
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
 
     // Do recovery
-    LoggingTestsUtil::DoRecovery(LOGGING_TYPE_PELOTON, peloton_log_file_name);
+    LoggingTestsUtil::DoRecovery(peloton_log_file_name);
 
   }
 

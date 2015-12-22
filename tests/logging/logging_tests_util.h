@@ -27,7 +27,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type, std::string file_name);
+  static bool PrepareLogFile(std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -35,7 +35,7 @@ public:
 
   static void ResetSystem(void);
 
-  static void DoRecovery(LoggingType logging_type, std::string file_name);
+  static void DoRecovery(std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // Configuration
@@ -73,25 +73,20 @@ private:
   // WRITING LOG RECORD
   //===--------------------------------------------------------------------===//
 
-  static void BuildLog(LoggingType logging_type,
-                       oid_t db_oid,
+  static void BuildLog(oid_t db_oid,
                        oid_t table_oid);
 
-  static void RunBackends(LoggingType logging_type,
-                          storage::DataTable* table);
+  static void RunBackends(storage::DataTable* table);
 
-  static std::vector<ItemPointer> InsertTuples(LoggingType logging_type,
-                                               storage::DataTable* table,
+  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
                                                VarlenPool *pool,
                                                bool committed);
 
-  static void DeleteTuples(LoggingType logging_type,
-                           storage::DataTable* table,
+  static void DeleteTuples(storage::DataTable* table,
                            const std::vector<ItemPointer>& locations,
                            bool committed);
 
-  static std::vector<ItemPointer> UpdateTuples(LoggingType logging_type,
-                                               storage::DataTable* table,
+  static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
                                                const std::vector<ItemPointer>& locations,
                                                VarlenPool *pool,
                                                bool committed);
