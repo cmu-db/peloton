@@ -2,6 +2,7 @@
 #include "harness.h"
 
 #include <thread>
+#include <chrono>
 #include <getopt.h>
 
 #include "logging/logging_tests_util.h"
@@ -135,6 +136,9 @@ void LoggingTestsUtil::ResetSystem(){
  */
 void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_name){
 
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::duration<double, std::milli> elapsed_milliseconds;
+
   auto file_path = GetFilePath(state.file_dir, file_name);
 
   std::ifstream log_file(file_path);
@@ -171,8 +175,18 @@ void LoggingTestsUtil::CheckRecovery(LoggingType logging_type, std::string file_
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode(logging_type);
 
+  //===--------------------------------------------------------------------===//
+  // RECOVERY
+  //===--------------------------------------------------------------------===//
+
+  start = std::chrono::system_clock::now();
+
   // Wait for the frontend logger to enter LOGGING mode after recovery
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true, logging_type);
+
+  end = std::chrono::system_clock::now();
+  elapsed_milliseconds = end-start;
+  std::cout << "Recovery Time  :: " << elapsed_milliseconds.count() << "\n";
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -221,6 +235,9 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
                                 oid_t db_oid,
                                 oid_t table_oid){
 
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::duration<double, std::milli> elapsed_milliseconds;
+
   // Create db
   CreateDatabase(db_oid);
   auto &manager = catalog::Manager::GetInstance();
@@ -232,8 +249,18 @@ void LoggingTestsUtil::BuildLog(LoggingType logging_type,
   storage::DataTable* table = CreateUserTable(db_oid, table_oid);
   db->AddTable(table);
 
+  //===--------------------------------------------------------------------===//
+  // ACTIVE PROCESSING
+  //===--------------------------------------------------------------------===//
+
+  start = std::chrono::system_clock::now();
+
   // Execute the workload to build the log
   LaunchParallelTest(state.backend_count, RunBackends, logging_type, table);
+
+  end = std::chrono::system_clock::now();
+  elapsed_milliseconds = end-start;
+  std::cout << "Build Log Time :: " << elapsed_milliseconds.count() << "\n";
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -629,7 +656,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.column_count = 10;
 
   state.check_tuple_count = false;
-  state.redo_all = false;
+  state.redo_all = true;
 
   state.file_dir = "/tmp/";
 

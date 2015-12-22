@@ -333,6 +333,7 @@ bool PelotonFrontendLogger::DoNeedRecovery(void) {
   if (redo_all_logs) {
     return true;
   }
+
   // Read the last record type
   fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
 
