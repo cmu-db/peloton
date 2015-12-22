@@ -56,35 +56,34 @@ class LogManager{
     static LogManager& GetInstance(void);
 
     // Wait for the system to begin
-    void StartStandbyMode(LoggingType logging_type);
+    void StartStandbyMode();
 
     // Start recovery
-    void StartRecoveryMode(LoggingType logging_type);
+    void StartRecoveryMode();
 
     // Check whether the frontend logger is in logging mode
-    bool IsInLoggingMode(LoggingType logging_type);
+    bool IsInLoggingMode();
 
     // Used to terminate current logging and wait for sleep mode
-    void TerminateLoggingMode(LoggingType logging_type);
+    void TerminateLoggingMode();
 
     // Used to wait for a certain mode (or not certain mode if is_equal is false)
     void WaitForMode(LoggingStatus logging_status,
-                     bool is_equal,
-                     LoggingType logging_type);
+                     bool is_equal);
 
     // End the actual logging
-    bool EndLogging(LoggingType logging_type);
+    bool EndLogging();
 
     //===--------------------------------------------------------------------===//
     // Accessors
     //===--------------------------------------------------------------------===//
 
     // Logging status associated with the front end logger of given type
-    void SetLoggingStatus(LoggingType logging_type, LoggingStatus logging_status);
+    void SetLoggingStatus(LoggingStatus logging_status);
 
-    LoggingStatus GetStatus(LoggingType logging_type);
+    LoggingStatus GetStatus();
 
-    void ResetLoggingStatusMap(LoggingType logging_type);
+    void ResetLoggingStatusMap();
 
     // Whether to enable or disable synchronous commit ?
     void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
@@ -93,52 +92,44 @@ class LogManager{
 
     size_t ActiveFrontendLoggerCount(void) ;
 
-    BackendLogger* GetBackendLogger(LoggingType logging_type);
+    BackendLogger* GetBackendLogger();
 
-    bool RemoveBackendLogger(BackendLogger* backend_logger,
-                             LoggingType logging_type);
+    bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    void NotifyFrontendLogger(LoggingType logging_type, bool newLog = false);
+    void NotifyFrontendLogger(bool newLog = false);
 
-    void SetTestRedoAllLogs(LoggingType logging_type, bool test_suspend_commit);
+    void SetTestRedoAllLogs(bool test_suspend_commit);
 
     void SetLogFileName(std::string log_file);
 
     std::string GetLogFileName(void);
 
     bool HasPelotonFrontendLogger() const {
-      return has_peloton_frontend_logger;
+      return (peloton_logging_mode == LOGGING_TYPE_PELOTON);
     }
 
   private:
 
-    LogManager(){};
+    LogManager();
+    ~LogManager();
 
     //===--------------------------------------------------------------------===//
     // Utility Functions
     //===--------------------------------------------------------------------===//
 
-    FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+    FrontendLogger* GetFrontendLogger();
 
-    bool RemoveFrontendLogger(LoggingType logging_type);
+    bool RemoveFrontendLogger();
 
     //===--------------------------------------------------------------------===//
     // Data members
     //===--------------------------------------------------------------------===//
 
-    // has frontend logger ?
-    bool has_frontend_logger = false;
+    // There is only one frontend_logger of a given type -- stdout, aries, peloton
+    FrontendLogger* frontend_logger = nullptr;
 
-    // has peloton frontend logger
-    bool has_peloton_frontend_logger = false;
+    LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
-    // There is only one frontend_logger for each type of logging
-    // like -- stdout, aries, peloton
-    std::vector<FrontendLogger*> frontend_loggers;
-    // To manage frontend loggers
-    std::mutex frontend_logger_mutex;
-
-    std::map<LoggingType, LoggingStatus> logging_statuses;
     // To synch the status map
     std::mutex logging_status_mutex;
     std::condition_variable logging_status_cv;

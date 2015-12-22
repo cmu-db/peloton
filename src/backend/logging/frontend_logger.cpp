@@ -57,10 +57,10 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger] Standby Mode");
 
   // Standby before we need to do RECOVERY
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false, logging_type);
+  log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
-  switch(log_manager.GetStatus(logging_type)){
+  switch(log_manager.GetStatus()){
     case LOGGING_STATUS_TYPE_RECOVERY:{
       LOG_TRACE("Frontendlogger] Recovery Mode");
 
@@ -72,7 +72,7 @@ void FrontendLogger::MainLoop(void) {
       DoRecovery();
 
       // Now, enter LOGGING mode
-      log_manager.SetLoggingStatus(GetLoggingType(), LOGGING_STATUS_TYPE_LOGGING);
+      log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
 
       break;
     }
@@ -91,7 +91,7 @@ void FrontendLogger::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
 
   // Periodically, wake up and do logging
-  while(log_manager.GetStatus(GetLoggingType()) == LOGGING_STATUS_TYPE_LOGGING){
+  while(log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
 
     // Collect LogRecords from all backend loggers
     CollectLogRecord();
@@ -122,8 +122,7 @@ void FrontendLogger::MainLoop(void) {
   LOG_TRACE("Frontendlogger] Sleep Mode");
 
   //Setting frontend logger status to sleep
-  log_manager.SetLoggingStatus(GetLoggingType(), 
-                              LOGGING_STATUS_TYPE_SLEEP);
+  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_SLEEP);
 }
 
 /**

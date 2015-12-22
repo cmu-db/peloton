@@ -24,6 +24,13 @@
 #include <libpmem.h>
 
 #include <string>
+#include <iostream>
+
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+extern LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace storage {
@@ -41,10 +48,20 @@ StorageManager& StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-: pmem_address(nullptr) {
+: pmem_address(nullptr),
+  is_pmem(false),
+  pmem_len(0) {
+
+  // Check if we need a PMEM pool
+  if(peloton_logging_mode == LOGGING_TYPE_INVALID)
+    return;
+
   int pmem_fd;
   std::string pmem_file_name;
   struct stat pmfs_fd;
+
+  // Initialize pmem file size
+  pmem_len = PMEM_LEN;
 
   // check for pmfs ?
   int status = stat(PMEM_DIR, &pmfs_fd);
@@ -62,7 +79,7 @@ StorageManager::StorageManager()
   }
 
   // allocate the pmem file
-  if ((errno = posix_fallocate(pmem_fd, 0, PMEM_LEN)) != 0) {
+  if ((errno = posix_fallocate(pmem_fd, 0, pmem_len)) != 0) {
     perror("posix_fallocate");
     exit(EXIT_FAILURE);
   }
@@ -74,16 +91,22 @@ StorageManager::StorageManager()
   }
 
   // true only if the entire range [addr, addr+len) consists of persistent memory
-  is_pmem = pmem_is_pmem(pmem_address, PMEM_LEN);
+  is_pmem = pmem_is_pmem(pmem_address, pmem_len);
 
   // close the pmem file -- it will remain mapped
   close(pmem_fd);
+
+
 }
 
 StorageManager::~StorageManager() {
 
+  // Check if we need a PMEM pool
+  if(peloton_logging_mode == LOGGING_TYPE_INVALID)
+    return;
+
   // unmap the pmem file
-  pmem_unmap(pmem_address, PMEM_LEN);
+  pmem_unmap(pmem_address, pmem_len);
 
 }
 
