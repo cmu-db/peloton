@@ -38,7 +38,7 @@ void PelotonBackendLogger::Log(LogRecord* record){
   }
   if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
     auto& log_manager = logging::LogManager::GetInstance();
-    log_manager.NotifyFrontendLogger(logging_type, true);
+    log_manager.NotifyFrontendLogger(true);
   }
 }
 

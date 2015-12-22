@@ -138,8 +138,8 @@ bool InsertExecutor::DExecute() {
       {
         auto& log_manager = logging::LogManager::GetInstance();
 
-        if(log_manager.IsInLoggingMode(peloton_logging_mode)){
-          auto logger = log_manager.GetBackendLogger(peloton_logging_mode);
+        if(log_manager.IsInLoggingMode()){
+          auto logger = log_manager.GetBackendLogger();
           auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
                                                transaction_->GetTransactionId(),
                                                target_table_->GetOid(),
