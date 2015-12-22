@@ -37,21 +37,26 @@ namespace logging {
 
 size_t GetLogFileSize(int log_file_fd);
 
-bool IsFileTruncated(FILE *log_file, size_t size_to_read);
+bool IsFileTruncated(FILE *log_file,
+                     size_t size_to_read,
+                     size_t log_file_size);
 
-size_t GetNextFrameSize(FILE *log_file);
+size_t GetNextFrameSize(FILE *log_file, size_t log_file_size);
 
-LogRecordType GetNextLogRecordType(FILE *log_file);
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
-                                 FILE *log_file);
+                                 FILE *log_file,
+                                 size_t log_file_size);
 
 bool ReadTupleRecordHeader(TupleRecord& tuple_record,
-                           FILE *log_file);
+                           FILE *log_file,
+                           size_t log_file_size);
 
 storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
                                     VarlenPool *pool,
-                                    FILE *log_file);
+                                    FILE *log_file,
+                                    size_t log_file_size);
 
 // Wrappers
 storage::DataTable* GetTable(TupleRecord tupleRecord);
@@ -77,6 +82,7 @@ AriesFrontendLogger::AriesFrontendLogger(){
   if( log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
+
 
   // allocate pool
   recovery_pool = new VarlenPool();
@@ -151,8 +157,12 @@ void AriesFrontendLogger::Flush(void) {
  * @brief Recovery system based on log file
  */
 void AriesFrontendLogger::DoRecovery() {
+
+  // Set log file size
+  log_file_size = GetLogFileSize(log_file_fd);
+
   // Go over the log size if needed
-  if(GetLogFileSize(log_file_fd) > 0){
+  if(log_file_size > 0){
     bool reached_end_of_file = false;
 
     // Start the recovery transaction
@@ -163,11 +173,13 @@ void AriesFrontendLogger::DoRecovery() {
     auto recovery_txn = txn_manager.BeginTransaction();
 
     // Go over each log record in the log file
-    while(!reached_end_of_file){
+    while(reached_end_of_file == false){
 
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
-      switch(GetNextLogRecordType(log_file)){
+      auto record_type = GetNextLogRecordType(log_file, log_file_size);
+
+      switch(record_type){
 
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
           AddTransactionToRecoveryTable();
@@ -226,7 +238,7 @@ void AriesFrontendLogger::AddTransactionToRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_BEGIN);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ){
     return;
   }
 
@@ -246,7 +258,7 @@ void AriesFrontendLogger::RemoveTransactionFromRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_END);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ){
     return;
   }
 
@@ -275,7 +287,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(concurrency::Transact
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ){
     return;
   }
 
@@ -333,7 +345,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable(){
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_ABORT);
 
   // Check for torn log write
-  if( ReadTransactionRecordHeader(txn_record, log_file) == false ){
+  if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ){
     return;
   }
 
@@ -412,20 +424,21 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction* recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_INSERT);
 
   // Check for torn log write
-  if (ReadTupleRecordHeader(tuple_record, log_file) == false) {
+  if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
+    LOG_ERROR("Could not read tuple record header \n");
     return;
   }
 
   auto txn_id = tuple_record.GetTransactionId();
   if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-    LOG_TRACE("Insert txd id %d not found in recovery txn table",(int)txn_id);
+    LOG_ERROR("Insert txd id %d not found in recovery txn table",(int)txn_id);
     return;
   }
 
   auto table = GetTable(tuple_record);
 
   // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file, log_file_size);
 
   // Check for torn log write
   if (tuple == nullptr) {
@@ -474,7 +487,7 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_DELETE);
 
   // Check for torn log write
-  if( ReadTupleRecordHeader(tuple_record, log_file) == false){
+  if( ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false){
     return;
   }
 
@@ -509,7 +522,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
   TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_UPDATE);
 
   // Check for torn log write
-  if( ReadTupleRecordHeader(tuple_record, log_file) == false){
+  if( ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false){
     return;
   }
 
@@ -523,7 +536,7 @@ void AriesFrontendLogger::UpdateTuple(concurrency::Transaction* recovery_txn){
 
   auto table = GetTable(tuple_record);
 
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file);
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file, log_file_size);
 
   // Check for torn log write
   if( tuple == nullptr){
@@ -585,22 +598,19 @@ size_t GetLogFileSize(int log_file_fd){
 }
 
 bool IsFileTruncated(FILE *log_file,
-                     size_t size_to_read){
+                     size_t size_to_read,
+                     size_t log_file_size){
   // Cache current position
   size_t current_position = ftell(log_file);
 
-  // Get expected size of file
-  fseek(log_file, 0L, SEEK_END);
-  size_t file_size = ftell(log_file);
-
   // Check if the actual file size is less than the expected file size
   // Current position + frame length
-  if( current_position + size_to_read > file_size ){
+  if( current_position + size_to_read <= log_file_size ){
+    return false;
+  }
+  else{
     fseek(log_file, 0, SEEK_END);
     return true;
-  }else{
-    fseek(log_file, current_position, SEEK_SET);
-    return false;
   }
 }
 
@@ -610,12 +620,12 @@ bool IsFileTruncated(FILE *log_file,
  *  Transaction Record has a single frame
  * @return the next frame size
  */
-size_t GetNextFrameSize(FILE *log_file){
+size_t GetNextFrameSize(FILE *log_file, size_t log_file_size){
   size_t frame_size;
   char buffer[sizeof(int32_t)];
 
   // Check if the frame size is broken
-  if( IsFileTruncated(log_file, sizeof(buffer)) ){
+  if( IsFileTruncated(log_file, sizeof(buffer), log_file_size) ){
     return 0;
   }
 
@@ -637,7 +647,7 @@ size_t GetNextFrameSize(FILE *log_file){
   }
 
   // Check if the frame is broken
-  if( IsFileTruncated(log_file, frame_size) ){
+  if( IsFileTruncated(log_file, frame_size, log_file_size) ){
     return 0;
   }
 
@@ -649,17 +659,19 @@ size_t GetNextFrameSize(FILE *log_file){
  * @return log record type otherwise return invalid log record type,
  * which menas there is no more log in the log file
  */
-LogRecordType GetNextLogRecordType(FILE *log_file){
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size){
   char buffer;
 
   // Check if the log record type is broken
-  if( IsFileTruncated(log_file, 1) ){
+  if( IsFileTruncated(log_file, 1, log_file_size) ){
+    LOG_ERROR("Log file is truncated");
     return LOGRECORD_TYPE_INVALID;
   }
 
   // Otherwise, read the log record type
   int ret = fread((void*)&buffer, 1, sizeof(char), log_file);
   if( ret <= 0 ){
+    LOG_ERROR("Could not read from log file");
     return LOGRECORD_TYPE_INVALID;
   }
 
@@ -674,10 +686,11 @@ LogRecordType GetNextLogRecordType(FILE *log_file){
  * @param txn_record
  */
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
-                                 FILE *log_file){
+                                 FILE *log_file,
+                                 size_t log_file_size){
 
   // Check if frame is broken
-  auto header_size = GetNextFrameSize(log_file);
+  auto header_size = GetNextFrameSize(log_file, log_file_size);
   if( header_size == 0 ){
     return false;
   }
@@ -700,11 +713,13 @@ bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
  * @param tuple_record
  */
 bool ReadTupleRecordHeader(TupleRecord& tuple_record,
-                           FILE *log_file){
+                           FILE *log_file,
+                           size_t log_file_size){
 
   // Check if frame is broken
-  auto header_size = GetNextFrameSize(log_file);
+  auto header_size = GetNextFrameSize(log_file, log_file_size);
   if( header_size == 0 ){
+    LOG_ERROR("Header size is zero ");
     return false;
   }
 
@@ -729,10 +744,12 @@ bool ReadTupleRecordHeader(TupleRecord& tuple_record,
  */
 storage::Tuple* ReadTupleRecordBody(catalog::Schema* schema,
                                     VarlenPool *pool,
-                                    FILE *log_file){
+                                    FILE *log_file,
+                                    size_t log_file_size){
   // Check if the frame is broken
-  size_t body_size = GetNextFrameSize(log_file);
+  size_t body_size = GetNextFrameSize(log_file, log_file_size);
   if( body_size == 0 ){
+    LOG_ERROR("Body size is zero ");
     return nullptr;
   }
 

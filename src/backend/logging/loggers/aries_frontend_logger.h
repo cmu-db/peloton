@@ -77,6 +77,9 @@ class AriesFrontendLogger : public FrontendLogger{
   FILE* log_file;
   int log_file_fd;
 
+  // Size of the log file
+  size_t log_file_size;
+
   // Txn table during recovery
   std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;
 
