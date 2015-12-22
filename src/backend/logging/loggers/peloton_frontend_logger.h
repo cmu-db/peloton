@@ -72,6 +72,9 @@ class PelotonFrontendLogger : public FrontendLogger {
     FILE* log_file;
     int log_file_fd;
 
+    // Size of the log file
+    size_t log_file_size;
+
     // Global pool
     LogRecordPool global_plog_pool;
 

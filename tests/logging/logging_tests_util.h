@@ -35,7 +35,7 @@ public:
 
   static void ResetSystem(void);
 
-  static void CheckRecovery(LoggingType logging_type, std::string file_name);
+  static void DoRecovery(LoggingType logging_type, std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // Configuration
