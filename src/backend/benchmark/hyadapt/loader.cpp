@@ -112,7 +112,7 @@ void LoadTable() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool());
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {

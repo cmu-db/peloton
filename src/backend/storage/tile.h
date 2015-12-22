@@ -48,7 +48,8 @@ class Tile {
 
  public:
   // Tile creator
-  Tile(TileGroupHeader *tile_header,
+  Tile(BackendType backend_type,
+       TileGroupHeader *tile_header,
        const catalog::Schema &tuple_schema,
        TileGroup *tile_group,
        int tuple_count);
@@ -112,7 +113,7 @@ class Tile {
                          const ItemPointer *tuple_location);
 
   // Copy current tile in given backend and return new tile
-  Tile *CopyTile();
+  Tile *CopyTile(BackendType backend_type);
 
   //===--------------------------------------------------------------------===//
   // Size Stats
@@ -181,6 +182,9 @@ class Tile {
   oid_t table_id;
   oid_t tile_group_id;
   oid_t tile_id;
+
+  // backend type
+  BackendType backend_type;
 
   // tile schema
   catalog::Schema schema;
@@ -264,18 +268,20 @@ class TileFactory {
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
 
-    Tile *tile = GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+    Tile *tile = GetTile(BACKEND_TYPE_MM,
+                         INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
                          header, schema, tile_group, tuple_count);
 
     return tile;
   }
 
-  static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id,
+  static Tile *GetTile(BackendType backend_type,
+                       oid_t database_id, oid_t table_id, oid_t tile_group_id,
                        oid_t tile_id, TileGroupHeader *tile_header,
                        const catalog::Schema &schema,
                        TileGroup *tile_group, int tuple_count) {
     Tile *tile =
-        new Tile(tile_header, schema, tile_group, tuple_count);
+        new Tile(backend_type, tile_header, schema, tile_group, tuple_count);
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
                             schema);
