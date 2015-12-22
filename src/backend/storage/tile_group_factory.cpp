@@ -21,8 +21,11 @@ TileGroup *TileGroupFactory::GetTileGroup(
     AbstractTable *table,
     const std::vector<catalog::Schema> &schemas,
     const column_map_type &column_map, int tuple_count) {
-  TileGroupHeader *tile_header = new TileGroupHeader(tuple_count);
-  TileGroup *tile_group = new TileGroup(tile_header, table, schemas,
+
+  // Allocate based on backend
+  TileGroupHeader *tile_header = new TileGroupHeader(BACKEND_TYPE_MM, tuple_count);
+  TileGroup *tile_group = new TileGroup(BACKEND_TYPE_MM,
+                                        tile_header, table, schemas,
                                         column_map, tuple_count);
 
   tile_group->database_id = database_id;

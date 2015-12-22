@@ -26,12 +26,14 @@
 namespace peloton {
 namespace storage {
 
-TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
+TileGroup::TileGroup(BackendType backend_type,
+                     TileGroupHeader *tile_group_header, AbstractTable *table,
                      const std::vector<catalog::Schema> &schemas,
                      const column_map_type &column_map, int tuple_count)
     : database_id(INVALID_OID),
       table_id(INVALID_OID),
       tile_group_id(INVALID_OID),
+      backend_type(backend_type),
       tile_schemas(schemas),
       tile_group_header(tile_group_header),
       table(table),
@@ -44,6 +46,7 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
     oid_t tile_id = manager.GetNextOid();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
+        backend_type,
         database_id, table_id, tile_group_id, tile_id, tile_group_header,
         tile_schemas[tile_itr], this, tuple_count));
 

@@ -374,6 +374,7 @@ TEST(TileGroupTests, TileCopyTest) {
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   storage::Tile *tile = storage::TileFactory::GetTile(
+      BACKEND_TYPE_MM,
       INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, tile_group_header,
       *schema, nullptr, tuple_count);
 
@@ -425,7 +426,7 @@ TEST(TileGroupTests, TileCopyTest) {
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
-  storage::Tile *new_tile = tile->CopyTile();
+  storage::Tile *new_tile = tile->CopyTile(BACKEND_TYPE_MM);
 
   std::cout << "\t Copied Tile Details ..." << std::endl
             << std::endl;

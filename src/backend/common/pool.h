@@ -68,32 +68,35 @@ class VarlenPool {
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  VarlenPool()
-      : allocation_size(TEMP_POOL_CHUNK_SIZE),
+  VarlenPool(BackendType backend_type)
+      : backend_type(backend_type),
+        allocation_size(TEMP_POOL_CHUNK_SIZE),
         max_chunk_count(1),
         current_chunk_index(0) {
     Init();
   }
 
-  VarlenPool(uint64_t allocation_size,
-       uint64_t max_chunk_count)
-      : allocation_size(allocation_size),
+  VarlenPool(BackendType backend_type,
+             uint64_t allocation_size,
+             uint64_t max_chunk_count)
+      : backend_type(backend_type),
+        allocation_size(allocation_size),
         max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
         current_chunk_index(0) {
     Init();
   }
 
   void Init() {
-    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(BACKEND_TYPE_MM, allocation_size);
+    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(backend_type, allocation_size);
     chunks.push_back(Chunk(allocation_size, storage));
   }
 
   ~VarlenPool() {
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, chunks[ii].chunk_data);
+      storage::StorageManager::GetInstance().Release(backend_type, chunks[ii].chunk_data);
     }
     for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(BACKEND_TYPE_MM, oversize_chunks[ii].chunk_data);
+      storage::StorageManager::GetInstance().Release(backend_type, oversize_chunks[ii].chunk_data);
     }
   }
 
@@ -109,6 +112,9 @@ class VarlenPool {
   int64_t GetAllocatedMemory();
 
  private:
+
+  // backend type
+  BackendType backend_type;
 
   const uint64_t allocation_size;
   std::size_t max_chunk_count;
