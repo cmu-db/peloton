@@ -313,6 +313,15 @@ double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column
   return theta;
 }
 
+void TileGroup::Sync() {
+
+  // Sync the tile group data by syncing all the underlying tiles
+  for(auto tile : tiles) {
+    tile->Sync();
+  }
+
+}
+
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
