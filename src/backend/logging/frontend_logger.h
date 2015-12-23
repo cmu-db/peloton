@@ -46,7 +46,7 @@ class FrontendLogger : public Logger{
 
     void MainLoop(void);
 
-    void CollectLogRecord(void);
+    void CollectLogRecordsFromBackendLoggers(void);
 
     void AddBackendLogger(BackendLogger* backend_logger);
 
@@ -65,7 +65,7 @@ class FrontendLogger : public Logger{
     /**
      * Flush collected LogRecord to stdout or file or nvram
      */
-    virtual void Flush(void) = 0;
+    virtual void FlushLogRecords(void) = 0;
 
     /**
      * Restore database
@@ -89,7 +89,7 @@ class FrontendLogger : public Logger{
     std::condition_variable backend_notify_cv;
 
     uint32 wait_timeout = 5; // in milliseconds
-    bool log_collect_request = false; // used to indicate if backend has new logs
+    bool need_to_collect_new_log_records = false; // used to indicate if backend has new logs
 
     // redo all logs when recovery
     bool redo_all_logs = false;

@@ -223,9 +223,9 @@ void LogManager::SetLoggingStatus(LoggingStatus logging_status_){
   }
 }
 
-void LogManager::NotifyFrontendLogger(bool newLog) {
+void LogManager::NotifyFrontendLogger(bool has_new_log_records) {
   if (frontend_logger != nullptr) {
-    frontend_logger->NotifyFrontend(newLog);
+    frontend_logger->NotifyFrontend(has_new_log_records);
   }
 }
 
