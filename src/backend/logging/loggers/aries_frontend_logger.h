@@ -36,7 +36,7 @@ class AriesFrontendLogger : public FrontendLogger{
 
   ~AriesFrontendLogger(void);
 
-  void Flush(void);
+  void FlushLogRecords(void);
 
   //===--------------------------------------------------------------------===//
   // Recovery
