@@ -32,10 +32,10 @@ class PelotonFrontendLogger : public FrontendLogger {
 
    ~PelotonFrontendLogger(void);
 
-    void Flush(void);
+    void FlushLogRecords(void);
 
     // Used by flush to update the commit mark
-    bool CollectCommittedTuples(TupleRecord* record);
+    bool CollectTupleRecord(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 
@@ -76,7 +76,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     size_t log_file_size;
 
     // Global pool
-    LogRecordPool global_plog_pool;
+    LogRecordPool global_peloton_log_record_pool;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery
