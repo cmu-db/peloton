@@ -60,9 +60,6 @@ public:
     // check if the count matches after recovery
     bool check_tuple_count;
 
-    // REDO_ALL: redo all logs in the log file
-    bool redo_all;
-
     // log file dir
     std::string file_dir;
 

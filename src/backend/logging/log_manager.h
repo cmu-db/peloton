@@ -98,8 +98,6 @@ class LogManager{
 
     void NotifyFrontendLogger(bool newLog = false);
 
-    void SetTestRedoAllLogs(bool test_suspend_commit);
-
     void SetLogFileName(std::string log_file);
 
     std::string GetLogFileName(void);

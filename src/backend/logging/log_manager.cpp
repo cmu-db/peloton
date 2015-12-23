@@ -229,12 +229,6 @@ void LogManager::NotifyFrontendLogger(bool has_new_log_records) {
   }
 }
 
-void LogManager::SetTestRedoAllLogs(bool test_redo_all) {
-  if (frontend_logger != nullptr) {
-    frontend_logger->SetTestRedoAllLogs(test_redo_all);
-  }
-}
-
 void LogManager::SetLogFileName(std::string log_file) {
   log_file_name = log_file;
 }

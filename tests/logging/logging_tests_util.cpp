@@ -89,12 +89,6 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
 
-  // suspend final step in transaction commit,
-  // so that it only get committed during recovery
-  if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
-  }
-
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
 
@@ -169,11 +163,6 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
 
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
-
-  // always enable commit when testing recovery
-  if (state.redo_all) {
-    log_manager.SetTestRedoAllLogs(true);
-  }
 
   // STANDBY -> RECOVERY mode
   log_manager.StartRecoveryMode();
@@ -591,7 +580,6 @@ static void Usage(FILE *out) {
           "   -b --backend-count     :  Backend count \n"
           "   -z --column-count      :  # of columns per tuple \n"
           "   -c --check-tuple-count :  Check tuple count \n"
-          "   -r --redo-all-logs     :  Redo all logs \n"
           "   -d --dir               :  log file dir \n"
           "   -f --pmem-file-size    :  pmem file size (MB) \n"
   );
@@ -604,7 +592,6 @@ static struct option opts[] = {
     { "backend-count", optional_argument, NULL, 'b' },
     { "column-count", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
-    { "redo-all-logs", optional_argument, NULL, 'r' },
     { "dir", optional_argument, NULL, 'd' },
     { "pmem-file-size", optional_argument, NULL, 'f' },
     { NULL, 0, NULL, 0 }
@@ -634,8 +621,6 @@ static void PrintConfiguration(){
   std::cout << std::setw(width) << std::left
       << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
   std::cout << std::setw(width) << std::left
-      << "redo_all_logs " << " : " << state.redo_all << std::endl;
-  std::cout << std::setw(width) << std::left
       << "dir " << " : " << state.file_dir << std::endl;
   std::cout << std::setw(width) << std::left
       << "pmem_file_size " << " : " << state.pmem_file_size << std::endl;
@@ -652,7 +637,6 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.column_count = 10;
 
   state.check_tuple_count = false;
-  state.redo_all = true;
 
   state.file_dir = "/tmp/";
   state.pmem_file_size = 512;
@@ -660,7 +644,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:r:d:f:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:", opts,
                         &idx);
 
     if (c == -1)
@@ -681,9 +665,6 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         break;
       case 'c':
         state.check_tuple_count  = atoi(optarg);
-        break;
-      case 'r':
-        state.redo_all  = atoi(optarg);
         break;
       case 'd':
         state.file_dir = optarg;
