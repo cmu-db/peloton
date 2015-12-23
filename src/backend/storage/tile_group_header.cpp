@@ -30,7 +30,8 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type,
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  data = (char *) storage::StorageManager::GetInstance().Allocate(backend_type, header_size);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, header_size));
   // initialize data with zero
   memset(data, 0, header_size);
   assert(data != nullptr);
@@ -49,7 +50,9 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type,
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  storage::StorageManager::GetInstance().Release(backend_type, data);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Release(backend_type, data);
+
   data = nullptr;
 }
 
@@ -112,6 +115,10 @@ std::ostream &operator<<(std::ostream &os,
   os << "\t-----------------------------------------------------------\n";
 
   return os;
+}
+
+void TileGroupHeader::Sync() {
+  // Nothing to do here !
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
