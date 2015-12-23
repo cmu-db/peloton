@@ -38,7 +38,7 @@ namespace storage {
 #define PMEM_DIR "/mnt/pmfs/"
 #define TMP_DIR  "/tmp/"
 
-#define PMEM_LEN  1024 * 1024 * 1024 * UINT64_C(4) // 4 GB
+#define PMEM_LEN  1024 * 1024 * UINT64_C(512) // 512 MB
 #define PMEM_FILENAME "peloton.pmem"
 
 // global singleton
@@ -50,10 +50,11 @@ StorageManager& StorageManager::GetInstance(void) {
 StorageManager::StorageManager()
 : pmem_address(nullptr),
   is_pmem(false),
-  pmem_len(0) {
+  pmem_len(0),
+  pmem_offset(0) {
 
   // Check if we need a PMEM pool
-  if(peloton_logging_mode == LOGGING_TYPE_INVALID)
+  if(peloton_logging_mode != LOGGING_TYPE_PELOTON)
     return;
 
   int pmem_fd;
@@ -102,7 +103,7 @@ StorageManager::StorageManager()
 StorageManager::~StorageManager() {
 
   // Check if we need a PMEM pool
-  if(peloton_logging_mode == LOGGING_TYPE_INVALID)
+  if(peloton_logging_mode != LOGGING_TYPE_PELOTON)
     return;
 
   // unmap the pmem file
@@ -120,9 +121,12 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
-        void *address = pmem_address;
+        if(pmem_offset >= pmem_len)
+          return nullptr;
+
+        void *address = pmem_address + pmem_offset;
         // offset by requested size
-        pmem_address += size;
+        pmem_offset += size;
         return address;
       }
     }

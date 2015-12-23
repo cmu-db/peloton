@@ -86,10 +86,7 @@ class VarlenPool {
     Init();
   }
 
-  void Init() {
-    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(backend_type, allocation_size);
-    chunks.push_back(Chunk(allocation_size, storage));
-  }
+  void Init();
 
   ~VarlenPool() {
     for (std::size_t ii = 0; ii < chunks.size(); ii++) {
