@@ -45,7 +45,7 @@ class Chunk {
   char *chunk_data;
 };
 
-/// Find next higher power of two
+// Find next higher power of two
 template <class T>
 inline T nexthigher(T k) {
   if (k == 0) return 1;
@@ -86,22 +86,15 @@ class VarlenPool {
     Init();
   }
 
+  ~VarlenPool();
+
   void Init();
 
-  ~VarlenPool() {
-    for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(backend_type, chunks[ii].chunk_data);
-    }
-    for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(backend_type, oversize_chunks[ii].chunk_data);
-    }
-  }
-
-  /// Allocate a continous block of memory of the specified size.
+  // Allocate a continous block of memory of the specified size.
   void *Allocate(std::size_t size);
 
-  /// Allocate a continous block of memory of the specified size conveniently
-  /// initialized to 0s
+  // Allocate a continous block of memory of the specified size conveniently
+  // initialized to 0s
   void *AllocateZeroes(std::size_t size);
 
   void Purge();
@@ -118,7 +111,7 @@ class VarlenPool {
   std::size_t current_chunk_index;
   std::vector<Chunk> chunks;
 
-  /// Oversize chunks that will be freed and not reused.
+  // Oversize chunks that will be freed and not reused.
   std::vector<Chunk> oversize_chunks;
 
   std::mutex pool_mutex;
