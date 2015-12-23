@@ -50,6 +50,10 @@ class StorageManager  {
 
   // pmem file len
   size_t pmem_len;
+
+  // pmem offset
+  size_t pmem_offset;
+
 };
 
 }  // End storage namespace

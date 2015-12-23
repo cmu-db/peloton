@@ -14,6 +14,14 @@
 
 namespace peloton {
 
+void VarlenPool::Init() {
+
+  char *storage = (char *)storage::StorageManager::GetInstance().Allocate(backend_type, allocation_size);
+
+  chunks.push_back(Chunk(allocation_size, storage));
+
+}
+
 /// Allocate a continous block of memory of the specified size.
 void *VarlenPool::Allocate(std::size_t size) {
   void *retval = nullptr;
