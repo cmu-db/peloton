@@ -51,16 +51,16 @@ class PelotonFrontendLogger : public FrontendLogger {
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    size_t FlushRecords(std::vector<txn_id_t> committing_list);
+    size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
 
-    void CommitRecords(std::vector<txn_id_t> committing_list);
+    void ToggleCommitMarks(std::vector<txn_id_t> committing_list);
 
   private:
     std::string GetLogFileName(void);
 
-    bool DoNeedRecovery(void);
+    bool NeedRecovery(void);
 
-    void WriteTxnLog(TransactionRecord txnLog);
+    void WriteTransactionLogRecord(TransactionRecord txnLog);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
@@ -82,7 +82,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     // For active processing after recovery
     oid_t max_oid = INVALID_OID;
     // Keep tracking latest cid for setting next commit in txn manager
-    cid_t latest_cid = INVALID_CID;
+    cid_t latest_commit_id = INVALID_CID;
 };
 
 }  // namespace logging

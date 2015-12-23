@@ -55,7 +55,7 @@ class FrontendLogger : public Logger{
     void NotifyFrontend(bool hasNewLog = false);
 
     void SetTestRedoAllLogs(bool redo) {
-      redo_all_logs = redo;
+      redo_all_log_records = redo;
     }
 
     //===--------------------------------------------------------------------===//
@@ -92,7 +92,7 @@ class FrontendLogger : public Logger{
     bool need_to_collect_new_log_records = false; // used to indicate if backend has new logs
 
     // redo all logs when recovery
-    bool redo_all_logs = false;
+    bool redo_all_log_records = false;
 };
 
 }  // namespace logging
