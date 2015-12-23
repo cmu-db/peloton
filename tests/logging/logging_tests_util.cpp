@@ -593,6 +593,7 @@ static void Usage(FILE *out) {
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -r --redo-all-logs     :  Redo all logs \n"
           "   -d --dir               :  log file dir \n"
+          "   -f --pmem-file-size    :  pmem file size (MB) \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -605,6 +606,7 @@ static struct option opts[] = {
     { "check-tuple-count", optional_argument, NULL, 'c' },
     { "redo-all-logs", optional_argument, NULL, 'r' },
     { "dir", optional_argument, NULL, 'd' },
+    { "pmem-file-size", optional_argument, NULL, 'f' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -635,6 +637,8 @@ static void PrintConfiguration(){
       << "redo_all_logs " << " : " << state.redo_all << std::endl;
   std::cout << std::setw(width) << std::left
       << "dir " << " : " << state.file_dir << std::endl;
+  std::cout << std::setw(width) << std::left
+      << "pmem_file_size " << " : " << state.pmem_file_size << std::endl;
 }
 
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
@@ -651,11 +655,12 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.redo_all = true;
 
   state.file_dir = "/tmp/";
+  state.pmem_file_size = 512;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:r:d:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:r:d:f:", opts,
                         &idx);
 
     if (c == -1)
@@ -682,6 +687,9 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         break;
       case 'd':
         state.file_dir = optarg;
+        break;
+      case 'f':
+        state.pmem_file_size = atoi(optarg);
         break;
 
       case 'h':

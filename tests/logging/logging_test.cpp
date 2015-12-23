@@ -12,6 +12,8 @@
 // Logging mode
 extern LoggingType     peloton_logging_mode;
 
+extern size_t peloton_pmem_file_size;
+
 namespace peloton {
 namespace test {
 
@@ -28,8 +30,9 @@ std::string peloton_log_file_name = "peloton.log";
  */
 TEST(LoggingTests, LoggingAndRecoveryTest) {
 
-  // First, set the global peloton logging mode
+  // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
+  peloton_pmem_file_size = state.pmem_file_size;
 
   if(state.logging_type == LOGGING_TYPE_ARIES) {
 
