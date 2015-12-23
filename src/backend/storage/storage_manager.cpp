@@ -32,6 +32,9 @@
 
 extern LoggingType peloton_logging_mode;
 
+// PMEM file size
+size_t peloton_pmem_file_size = 0;
+
 namespace peloton {
 namespace storage {
 
@@ -62,7 +65,10 @@ StorageManager::StorageManager()
   struct stat pmfs_fd;
 
   // Initialize pmem file size
-  pmem_len = PMEM_LEN;
+  if(peloton_pmem_file_size != 0)
+    pmem_len = peloton_pmem_file_size * 1024 * 1024; // MB
+  else
+    pmem_len = PMEM_LEN;
 
   // check for pmfs ?
   int status = stat(PMEM_DIR, &pmfs_fd);
