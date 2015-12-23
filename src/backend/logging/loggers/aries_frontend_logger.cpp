@@ -112,7 +112,7 @@ AriesFrontendLogger::~AriesFrontendLogger(){
 /**
  * @brief flush all the log records to the file
  */
-void AriesFrontendLogger::Flush(void) {
+void AriesFrontendLogger::FlushLogRecords(void) {
 
   // First, write all the record in the queue
   for( auto record : global_queue ){
