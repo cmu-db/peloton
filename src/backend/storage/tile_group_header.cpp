@@ -32,9 +32,10 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type,
   // allocate storage space for header
   auto& storage_manager = storage::StorageManager::GetInstance();
   data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, header_size));
-  // initialize data with zero
-  memset(data, 0, header_size);
   assert(data != nullptr);
+
+  // zero out the data
+  std::memset(data, 0, header_size);
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
@@ -118,7 +119,11 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 void TileGroupHeader::Sync() {
-  // Nothing to do here !
+
+  // Sync the tile group data
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Sync(backend_type, data, header_size);
+
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {

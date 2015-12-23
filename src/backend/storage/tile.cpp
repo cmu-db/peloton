@@ -58,8 +58,8 @@ Tile::Tile(BackendType backend_type,
   data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, tile_size));
   assert(data != NULL);
 
-  // initialize it
-  std::memset(data, 0, tile_size);
+  // zero out the data
+  //std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
   if (schema.IsInlined() == false) pool = new VarlenPool(backend_type);
@@ -484,7 +484,11 @@ oid_t Tile::GetActiveTupleCount() const {
 }
 
 void Tile::Sync() {
-  // Nothing to do here !
+
+  // Sync the tile data
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Sync(backend_type, data, tile_size);
+
 }
 
 //===--------------------------------------------------------------------===//
