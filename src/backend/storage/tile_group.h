@@ -159,6 +159,9 @@ class TileGroup {
 
   double GetSchemaDifference(const storage::column_map_type& new_column_map);
 
+  // Sync the contents
+  void Sync();
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members

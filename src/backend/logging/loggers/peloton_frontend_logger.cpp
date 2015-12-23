@@ -84,6 +84,7 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
 
   std::vector<txn_id_t> committed_txn_list;
   std::vector<txn_id_t> not_committed_txn_list;
+  std::set<oid_t> modified_tile_group_set;
 
   //===--------------------------------------------------------------------===//
   // Collect the log records
@@ -115,11 +116,14 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
       case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
         // Check the commit information,
-        auto collected_tuple_record = CollectTupleRecord(reinterpret_cast<TupleRecord*>(record));
+        auto tuple_location = CollectTupleRecord(reinterpret_cast<TupleRecord*>(record));
 
-        // Don't delete record if CollectTupleRecord returned true
-        if(collected_tuple_record == false)
+        // Don't delete record if tuple_location is invalid
+        if(tuple_location.block == INVALID_OID)
           delete record;
+
+        // Else, add it to the set of modified tile groups
+        modified_tile_group_set.insert(tuple_location.block);
       }
       break;
 
@@ -141,27 +145,32 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
   // If committed txn list is not empty
   if (committed_txn_list.empty() == false) {
 
-    // First, write out all the committed log records
-    size_t written_log_record_count = WriteLogRecords(committed_txn_list);
+    //===--------------------------------------------------------------------===//
+    // SYNC 1: Sync the TGs
+    //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // TODO: SYNC 1: Sync the TGs
-    //===--------------------------------------------------------------------===//
+    SyncTileGroups(modified_tile_group_set);
 
     //===--------------------------------------------------------------------===//
     // SYNC 2: Sync the log for TXN COMMIT record
     //===--------------------------------------------------------------------===//
 
+    // Write out all the committed log records
+    size_t written_log_record_count = WriteLogRecords(committed_txn_list);
+
     // Now, write a committing log entry to file
     // Piggyback the number of written log records as a "txn_id" in this record
     WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
 
-    // Toggle the commit marks
-    ToggleCommitMarks(committed_txn_list);
+    //===--------------------------------------------------------------------===//
+    // SYNC 3: Sync the changes to TG headers
+    //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // TODO: SYNC 3: Sync the changes to TG headers
-    //===--------------------------------------------------------------------===//
+    // Toggle the commit marks
+    auto tile_group_header_set = ToggleCommitMarks(committed_txn_list);
+
+    // Sync the TG headers
+    SyncTileGroupHeaders(tile_group_header_set);
 
     //===--------------------------------------------------------------------===//
     // SYNC 4 : Sync the log for TXN DONE record
@@ -242,7 +251,10 @@ void PelotonFrontendLogger::WriteTransactionLogRecord(TransactionRecord txn_log_
 }
 
 
-void PelotonFrontendLogger::ToggleCommitMarks(std::vector<txn_id_t> committed_txn_list) {
+std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std::vector<txn_id_t> committed_txn_list) {
+
+  // Headers modified
+  std::set<storage::TileGroupHeader*> tile_group_headers;
 
   // flip commit marks
   for (txn_id_t txn_id : committed_txn_list) {
@@ -261,18 +273,41 @@ void PelotonFrontendLogger::ToggleCommitMarks(std::vector<txn_id_t> committed_tx
 
       auto record_type = record->GetType();
       switch (record_type) {
-        case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-          current_commit_id = SetInsertCommitMark(record->GetInsertLocation());
-          break;
+        case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
+          // Set insert commit mark
+          auto insert_location = record->GetInsertLocation();
+          auto tile_group_header = SetInsertCommitMark(insert_location);
+          current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
 
-        case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-          current_commit_id = SetDeleteCommitMark(record->GetDeleteLocation());
-          break;
+          tile_group_headers.insert(tile_group_header);
+        }
+        break;
 
-        case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
-          SetDeleteCommitMark(record->GetDeleteLocation());
-          current_commit_id = SetInsertCommitMark(record->GetInsertLocation());
-          break;
+        case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
+          // Set delete commit mark
+          auto delete_location = record->GetDeleteLocation();
+          auto tile_group_header = SetDeleteCommitMark(delete_location);
+          current_commit_id = tile_group_header->GetEndCommitId(delete_location.offset);
+
+          tile_group_headers.insert(tile_group_header);
+        }
+        break;
+
+        case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
+          // Set delete commit mark
+          auto delete_location = record->GetDeleteLocation();
+          auto tile_group_header = SetDeleteCommitMark(delete_location);
+
+          tile_group_headers.insert(tile_group_header);
+
+          // Set insert commit mark
+          auto insert_location = record->GetInsertLocation();
+          tile_group_header = SetInsertCommitMark(insert_location);
+          current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
+
+          tile_group_headers.insert(tile_group_header);
+        }
+        break;
 
         default:
           break;
@@ -288,12 +323,36 @@ void PelotonFrontendLogger::ToggleCommitMarks(std::vector<txn_id_t> committed_tx
     global_peloton_log_record_pool.RemoveTransactionLogList(txn_id);
   }
 
+  return tile_group_headers;
 }
 
-bool PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
+void PelotonFrontendLogger::SyncTileGroupHeaders(std::set<storage::TileGroupHeader*> tile_group_header_set){
+
+  // Sync all the tile group headers
+  for(auto tile_group_header : tile_group_header_set) {
+    tile_group_header->Sync();
+  }
+
+}
+
+void PelotonFrontendLogger::SyncTileGroups(std::set<oid_t> tile_group_set) {
+
+  auto &manager = catalog::Manager::GetInstance();
+
+  // Sync all the tile groups
+  for(auto tile_group_block : tile_group_set) {
+    auto tile_group = manager.GetTileGroup(tile_group_block);
+    assert(tile_group != nullptr);
+
+    tile_group->Sync();
+  }
+
+}
+
+ItemPointer PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
 
   if (record == nullptr) {
-    return false;
+    return INVALID_ITEMPOINTER;
   }
 
   auto record_type = record->GetType();
@@ -303,17 +362,24 @@ bool PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
 
     // Collect this log record
     auto status = global_peloton_log_record_pool.AddLogRecord(record);
-    return (status == 0);
+    if(status != 0)
+      return INVALID_ITEMPOINTER;
+
+    // Return the insert location associated with this tuple record
+    // The location is valid only for insert and update records
+    auto insert_location = record->GetInsertLocation();
+    return insert_location;
   }
-  else {
-    return false;
-  }
+
+  return INVALID_ITEMPOINTER;
 }
 
-cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
+storage::TileGroupHeader *PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
+  assert(tile_group != nullptr);
   auto tile_group_header = tile_group->GetHeader();
+  assert(tile_group_header != nullptr);
 
   // Set the commit mark
   if (tile_group_header->GetInsertCommit(location.offset) == false) {
@@ -327,15 +393,16 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
     max_oid = location.block;
   }
 
-  auto begin_commit_id = tile_group_header->GetBeginCommitId(location.offset);
-  return begin_commit_id;
+  return tile_group_header;
 }
 
-cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
+storage::TileGroupHeader *PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
   // Commit Insert Mark
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
+  assert(tile_group != nullptr);
   auto tile_group_header = tile_group->GetHeader();
+  assert(tile_group_header != nullptr);
 
   if (tile_group_header->GetDeleteCommit(location.offset) == false) {
     tile_group_header->SetDeleteCommit(location.offset, true);
@@ -348,8 +415,7 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
     max_oid = location.block;
   }
 
-  auto end_commit_id = tile_group_header->GetEndCommitId(location.offset);
-  return end_commit_id;
+  return tile_group_header;
 }
 
 //===--------------------------------------------------------------------===//
@@ -396,22 +462,32 @@ void PelotonFrontendLogger::DoRecovery() {
           case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
             TupleRecord insert_record(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
             ReadTupleRecordHeader(insert_record, log_file, log_file_size);
-            current_commit_id = SetInsertCommitMark(insert_record.GetInsertLocation());
+
+            auto insert_location = insert_record.GetInsertLocation();
+            auto tile_group_header = SetInsertCommitMark(insert_location);
+            current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
           }
           break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
             TupleRecord delete_record(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
             ReadTupleRecordHeader(delete_record, log_file, log_file_size);
-            current_commit_id = SetDeleteCommitMark(delete_record.GetDeleteLocation());
+
+            auto delete_location = delete_record.GetDeleteLocation();
+            auto tile_group_header = SetDeleteCommitMark(delete_location);
+            current_commit_id = tile_group_header->GetEndCommitId(delete_location.offset);;
           }
           break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
             TupleRecord update_record(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
             ReadTupleRecordHeader(update_record, log_file, log_file_size);
-            SetDeleteCommitMark(update_record.GetDeleteLocation());
-            current_commit_id = SetInsertCommitMark(update_record.GetInsertLocation());
+
+            auto delete_location = update_record.GetDeleteLocation();
+            SetDeleteCommitMark(delete_location);
+            auto insert_location = update_record.GetInsertLocation();
+            auto tile_group_header = SetInsertCommitMark(insert_location);
+            current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
           }
           break;
 

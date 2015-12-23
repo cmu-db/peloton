@@ -12,12 +12,19 @@
 
 #pragma once
 
+#include <set>
+
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/log_record_pool.h"
 
 namespace peloton {
+
+namespace storage{
+class TileGroupHeader;
+}
+
 namespace logging {
 
 //===--------------------------------------------------------------------===//
@@ -34,8 +41,8 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void FlushLogRecords(void);
 
-    // Used by flush to update the commit mark
-    bool CollectTupleRecord(TupleRecord* record);
+    // Collect the tuple log records for flushing
+    ItemPointer CollectTupleRecord(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 
@@ -43,9 +50,9 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void DoRecovery(void);
 
-    cid_t SetInsertCommitMark(ItemPointer location);
+    storage::TileGroupHeader *SetInsertCommitMark(ItemPointer location);
 
-    cid_t SetDeleteCommitMark(ItemPointer location);
+    storage::TileGroupHeader *SetDeleteCommitMark(ItemPointer location);
 
     //===--------------------------------------------------------------------===//
     // Utility functions
@@ -53,7 +60,11 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
 
-    void ToggleCommitMarks(std::vector<txn_id_t> committing_list);
+    std::set<storage::TileGroupHeader*> ToggleCommitMarks(std::vector<txn_id_t> committing_list);
+
+    void SyncTileGroups(std::set<oid_t> tile_group_set);
+
+    void SyncTileGroupHeaders(std::set<storage::TileGroupHeader*> tile_group_header_set);
 
   private:
     std::string GetLogFileName(void);
