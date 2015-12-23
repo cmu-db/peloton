@@ -54,7 +54,8 @@ Tile::Tile(BackendType backend_type,
   tile_size = tuple_count * tuple_length;
 
   // allocate tuple storage space for inlined data
-  data = (char *)storage::StorageManager::GetInstance().Allocate(backend_type, tile_size);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, tile_size));
   assert(data != NULL);
 
   // initialize it
@@ -66,7 +67,8 @@ Tile::Tile(BackendType backend_type,
 
 Tile::~Tile() {
   // reclaim the tile memory (INLINED data)
-  storage::StorageManager::GetInstance().Release(backend_type, data);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Release(backend_type, data);
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
@@ -481,6 +483,9 @@ oid_t Tile::GetActiveTupleCount() const {
   }
 }
 
+void Tile::Sync() {
+  // Nothing to do here !
+}
 
 //===--------------------------------------------------------------------===//
 // Utilities

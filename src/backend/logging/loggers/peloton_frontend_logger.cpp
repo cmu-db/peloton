@@ -144,16 +144,28 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
     // First, write out all the committed log records
     size_t written_log_record_count = WriteLogRecords(committed_txn_list);
 
-    // Now, write a committing log entry to file
-    // piggyback the number of written log records as a "txn_id" in this log
-    WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
+    //===--------------------------------------------------------------------===//
+    // TODO: SYNC 1: Sync the TGs
+    //===--------------------------------------------------------------------===//
 
     //===--------------------------------------------------------------------===//
-    // Toggle the commit marks
+    // SYNC 2: Sync the log for TXN COMMIT record
     //===--------------------------------------------------------------------===//
+
+    // Now, write a committing log entry to file
+    // Piggyback the number of written log records as a "txn_id" in this record
+    WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
 
     // Toggle the commit marks
     ToggleCommitMarks(committed_txn_list);
+
+    //===--------------------------------------------------------------------===//
+    // TODO: SYNC 3: Sync the changes to TG headers
+    //===--------------------------------------------------------------------===//
+
+    //===--------------------------------------------------------------------===//
+    // SYNC 4 : Sync the log for TXN DONE record
+    //===--------------------------------------------------------------------===//
 
     // Write out a transaction done log record to file
     WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
@@ -315,7 +327,6 @@ cid_t PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
     max_oid = location.block;
   }
 
-  // TODO: sync changes
   auto begin_commit_id = tile_group_header->GetBeginCommitId(location.offset);
   return begin_commit_id;
 }
@@ -337,7 +348,6 @@ cid_t PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
     max_oid = location.block;
   }
 
-  // TODO: sync changes
   auto end_commit_id = tile_group_header->GetEndCommitId(location.offset);
   return end_commit_id;
 }
@@ -428,7 +438,6 @@ void PelotonFrontendLogger::DoRecovery() {
 
   }
 
-  // TODO: How to reset transaction manager with latest cid, if no item is recovered
 }
 
 // Check whether need to recovery, if yes, reset fseek to the right place.
