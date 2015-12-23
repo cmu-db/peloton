@@ -148,19 +148,15 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
     // piggyback the number of written log records as a "txn_id" in this log
     WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
 
-    // For testing recovery, do not commit. Redo all log records during recovery.
-    if (redo_all_log_records == false) {
+    //===--------------------------------------------------------------------===//
+    // Toggle the commit marks
+    //===--------------------------------------------------------------------===//
 
-      //===--------------------------------------------------------------------===//
-      // Toggle the commit marks
-      //===--------------------------------------------------------------------===//
+    // Toggle the commit marks
+    ToggleCommitMarks(committed_txn_list);
 
-      // Toggle the commit marks
-      ToggleCommitMarks(committed_txn_list);
-
-      // Write out a transaction done log record to file
-      WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
-    }
+    // Write out a transaction done log record to file
+    WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
 
   }
 
@@ -437,11 +433,6 @@ void PelotonFrontendLogger::DoRecovery() {
 
 // Check whether need to recovery, if yes, reset fseek to the right place.
 bool PelotonFrontendLogger::NeedRecovery(void) {
-
-  // We need recovery if redo_all_log_records is set
-  if (redo_all_log_records) {
-    return true;
-  }
 
   // Otherwise, read the last transaction record
   fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
