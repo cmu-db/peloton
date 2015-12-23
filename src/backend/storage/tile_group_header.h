@@ -37,9 +37,10 @@ namespace storage {
  *
  * Layout :
  *
- * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
- * 	--------------------------------------------------------------------------------------------------------------------------------------------------------
+ * 	-----------------------------------------------------------------------------
+ *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | --
+ *  |InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes) |
+ * 	-----------------------------------------------------------------------------
  *
  */
 
@@ -210,8 +211,6 @@ class TileGroupHeader {
   }
 
   // Visibility check
-  //TODO 
-
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
@@ -289,8 +288,10 @@ class TileGroupHeader {
     return deletable;
   }
 
-  //TODO 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
+
+  // Sync the contents
+  void Sync();
 
   //===--------------------------------------------------------------------===//
   // Utilities

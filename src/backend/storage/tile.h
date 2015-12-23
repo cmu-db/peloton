@@ -172,6 +172,9 @@ class Tile {
 
   char *GetTupleLocation(const oid_t tuple_offset) const;
 
+  // Sync the contents
+  void Sync();
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
