@@ -498,7 +498,7 @@ storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid, oid_t table_
 
   bool own_schema = true;
   bool adapt_table = false;
-  const int tuples_per_tilegroup_count = 10;
+  const int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Construct our schema from vector of ColumnInfo
   auto schema = new catalog::Schema(column_infos);
@@ -640,7 +640,7 @@ static void PrintConfiguration(){
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   // Default Values
-  state.tuple_count = 100;
+  state.tuple_count = 10;
 
   state.logging_type = LOGGING_TYPE_ARIES;
   state.backend_count = 2;
