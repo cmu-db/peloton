@@ -65,6 +65,9 @@ public:
 
     // log file dir
     std::string file_dir;
+
+    // size of the pmem file (in MB)
+    size_t pmem_file_size;
    };
 
 private:
