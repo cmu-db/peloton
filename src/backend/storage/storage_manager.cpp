@@ -120,8 +120,10 @@ StorageManager::~StorageManager() {
 void *StorageManager::Allocate(BackendType type, size_t size) {
 
   switch(type) {
-    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_MM: {
       return ::operator new(size);
+    }
+    break;
 
     case BACKEND_TYPE_FILE: {
       {
@@ -136,10 +138,12 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
         return address;
       }
     }
+    break;
 
     case BACKEND_TYPE_INVALID:
-    default:
+    default: {
       return nullptr;
+    }
   }
 
 }
@@ -147,18 +151,22 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 void StorageManager::Release(BackendType type, void *address) {
 
   switch(type) {
-    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_MM: {
       ::operator delete(address);
-      break;
+    }
+    break;
 
-    case BACKEND_TYPE_FILE:
+    case BACKEND_TYPE_FILE: {
       // Nothing to do here
-      break;
+    }
+    break;
 
     case BACKEND_TYPE_INVALID:
-    default:
+    default: {
       // Nothing to do here
       break;
+    }
+
   }
 
 }
@@ -166,9 +174,10 @@ void StorageManager::Release(BackendType type, void *address) {
 void StorageManager::Sync(BackendType type, void *address, size_t length) {
 
   switch(type) {
-    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_MM: {
       // Nothing to do here
-      break;
+    }
+    break;
 
     case BACKEND_TYPE_FILE: {
       // flush writes for persistence
@@ -180,9 +189,11 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
     break;
 
     case BACKEND_TYPE_INVALID:
-    default:
+    default: {
       // Nothing to do here
-      break;
+    }
+    break;
+
   }
 
 }
