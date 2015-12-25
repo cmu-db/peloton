@@ -42,7 +42,7 @@ class PelotonFrontendLogger : public FrontendLogger {
     void FlushLogRecords(void);
 
     // Collect the tuple log records for flushing
-    ItemPointer CollectTupleRecord(TupleRecord* record);
+    std::pair<bool,ItemPointer> CollectTupleRecord(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 

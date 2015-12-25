@@ -116,14 +116,20 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
       case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
         // Check the commit information,
-        auto tuple_location = CollectTupleRecord(reinterpret_cast<TupleRecord*>(record));
+        auto status = CollectTupleRecord(reinterpret_cast<TupleRecord*>(record));
 
-        // Don't delete record if tuple_location is invalid
-        if(tuple_location.block == INVALID_OID)
+        // Delete record if we did not collect it
+        if(status.first == false) {
           delete record;
-
+        }
         // Else, add it to the set of modified tile groups
-        modified_tile_group_set.insert(tuple_location.block);
+        else {
+          auto location = status.second.block;
+
+          if(location != INVALID_OID)
+            modified_tile_group_set.insert(location);
+        }
+
       }
       break;
 
@@ -349,10 +355,10 @@ void PelotonFrontendLogger::SyncTileGroups(std::set<oid_t> tile_group_set) {
 
 }
 
-ItemPointer PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
+std::pair<bool,ItemPointer> PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
 
   if (record == nullptr) {
-    return INVALID_ITEMPOINTER;
+    return std::make_pair(false, INVALID_ITEMPOINTER);
   }
 
   auto record_type = record->GetType();
@@ -362,16 +368,18 @@ ItemPointer PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
 
     // Collect this log record
     auto status = global_peloton_log_record_pool.AddLogRecord(record);
-    if(status != 0)
-      return INVALID_ITEMPOINTER;
+
+    if(status != 0) {
+      return std::make_pair(false, INVALID_ITEMPOINTER);
+    }
 
     // Return the insert location associated with this tuple record
     // The location is valid only for insert and update records
     auto insert_location = record->GetInsertLocation();
-    return insert_location;
+    return std::make_pair(true, insert_location);
   }
 
-  return INVALID_ITEMPOINTER;
+  return std::make_pair(false, INVALID_ITEMPOINTER);
 }
 
 storage::TileGroupHeader *PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
