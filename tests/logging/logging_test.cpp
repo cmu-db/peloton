@@ -28,7 +28,7 @@ std::string peloton_log_file_name = "peloton.log";
 /**
  * @brief writing a simple log with multiple threads and then do recovery
  */
-TEST(LoggingTests, LoggingAndRecoveryTest) {
+TEST(LoggingTests, RecoveryTest) {
 
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
@@ -52,7 +52,7 @@ TEST(LoggingTests, LoggingAndRecoveryTest) {
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
 
     // Do recovery
-    //LoggingTestsUtil::DoRecovery(peloton_log_file_name);
+    LoggingTestsUtil::DoRecovery(peloton_log_file_name);
 
   }
 
