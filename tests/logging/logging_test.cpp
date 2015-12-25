@@ -52,7 +52,7 @@ TEST(LoggingTests, LoggingAndRecoveryTest) {
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
 
     // Do recovery
-    LoggingTestsUtil::DoRecovery(peloton_log_file_name);
+    //LoggingTestsUtil::DoRecovery(peloton_log_file_name);
 
   }
 

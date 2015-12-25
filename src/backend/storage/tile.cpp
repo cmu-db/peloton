@@ -59,7 +59,7 @@ Tile::Tile(BackendType backend_type,
   assert(data != NULL);
 
   // zero out the data
-  //std::memset(data, 0, tile_size);
+  std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
   if (schema.IsInlined() == false) pool = new VarlenPool(backend_type);
