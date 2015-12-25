@@ -76,10 +76,10 @@ private:
   static void BuildLog(oid_t db_oid,
                        oid_t table_oid);
 
-  static void RunBackends(storage::DataTable* table);
+  static void RunBackends(storage::DataTable* table, const std::vector<storage::Tuple*>& tuples);
 
   static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
-                                               VarlenPool *pool,
+                                               const std::vector<storage::Tuple*>& tuples,
                                                bool committed);
 
   static void DeleteTuples(storage::DataTable* table,
@@ -88,7 +88,7 @@ private:
 
   static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
                                                const std::vector<ItemPointer>& locations,
-                                               VarlenPool *pool,
+                                               const std::vector<storage::Tuple*>& tuples,
                                                bool committed);
   
   //===--------------------------------------------------------------------===//
