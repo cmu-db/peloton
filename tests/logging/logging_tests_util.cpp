@@ -234,6 +234,10 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   storage::DataTable* table = CreateUserTable(db_oid, table_oid);
   db->AddTable(table);
 
+  // Create Tuples
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count, testing_pool);
+
   //===--------------------------------------------------------------------===//
   // ACTIVE PROCESSING
   //===--------------------------------------------------------------------===//
@@ -241,11 +245,16 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   start = std::chrono::system_clock::now();
 
   // Execute the workload to build the log
-  LaunchParallelTest(state.backend_count, RunBackends, table);
+  LaunchParallelTest(state.backend_count, RunBackends, table, tuples);
 
   end = std::chrono::system_clock::now();
   elapsed_milliseconds = end-start;
   std::cout << "Build Log Time :: " << elapsed_milliseconds.count() << "\n";
+
+  // Clean up data
+  for( auto tuple : tuples){
+    delete tuple;
+  }
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -263,16 +272,15 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
 }
 
 
-void LoggingTestsUtil::RunBackends(storage::DataTable* table){
+void LoggingTestsUtil::RunBackends(storage::DataTable* table, const std::vector<storage::Tuple*>& tuples){
 
   bool commit = true;
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Insert tuples
-  auto locations = InsertTuples(table, testing_pool, commit);
+  auto locations = InsertTuples(table, tuples, commit);
 
   // Update tuples
-  locations = UpdateTuples(table, locations, testing_pool, commit);
+  locations = UpdateTuples(table, locations, tuples, commit);
 
   // Delete tuples
   DeleteTuples(table, locations, commit);
@@ -292,12 +300,9 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table){
 
 // Do insert and create insert tuple log records
 std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table,
-                                                        VarlenPool *pool,
+                                                        const std::vector<storage::Tuple*>& tuples,
                                                         bool committed){
   std::vector<ItemPointer> locations;
-
-  // Create Tuples
-  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count, pool);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
@@ -338,11 +343,6 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
     } else{
       txn_manager.AbortTransaction();
     }
-  }
-
-  // Clean up data
-  for( auto tuple : tuples){
-    delete tuple;
   }
 
   return locations;
@@ -395,15 +395,11 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
 
 std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* table,
                                                         const std::vector<ItemPointer>& deleted_locations,
-                                                        VarlenPool *pool,
+                                                        const std::vector<storage::Tuple*>& tuples,
                                                         bool committed){
 
   // Inserted locations
   std::vector<ItemPointer> inserted_locations;
-
-  // Create Tuples
-  auto tuple_count = deleted_locations.size();
-  auto tuples = CreateTuples(table->GetSchema(), tuple_count, pool);
 
   size_t tuple_itr = 0;
   for(auto delete_location : deleted_locations) {
@@ -455,11 +451,6 @@ std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* tabl
     } else{
       txn_manager.AbortTransaction();
     }
-  }
-
-  // Clean up data
-  for( auto tuple : tuples){
-    delete tuple;
   }
 
   return inserted_locations;
