@@ -262,7 +262,7 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
   // Headers modified
   std::set<storage::TileGroupHeader*> tile_group_headers;
 
-  // flip commit marks
+  // Toggle commit marks
   for (txn_id_t txn_id : committed_txn_list) {
 
     auto txn_log_list = global_peloton_log_record_pool.SearchLogRecordList(txn_id);
@@ -282,36 +282,33 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
         case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
           // Set insert commit mark
           auto insert_location = record->GetInsertLocation();
-          auto tile_group_header = SetInsertCommitMark(insert_location);
-          current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
-
-          tile_group_headers.insert(tile_group_header);
+          auto info = SetInsertCommitMark(insert_location);
+          current_commit_id = info.first;
+          tile_group_headers.insert(info.second);
         }
         break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
           // Set delete commit mark
           auto delete_location = record->GetDeleteLocation();
-          auto tile_group_header = SetDeleteCommitMark(delete_location);
-          current_commit_id = tile_group_header->GetEndCommitId(delete_location.offset);
-
-          tile_group_headers.insert(tile_group_header);
+          auto info = SetDeleteCommitMark(delete_location);
+          current_commit_id = info.first;
+          tile_group_headers.insert(info.second);
         }
         break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
           // Set delete commit mark
           auto delete_location = record->GetDeleteLocation();
-          auto tile_group_header = SetDeleteCommitMark(delete_location);
-
-          tile_group_headers.insert(tile_group_header);
+          auto info = SetDeleteCommitMark(delete_location);
+          current_commit_id = info.first;
+          tile_group_headers.insert(info.second);
 
           // Set insert commit mark
           auto insert_location = record->GetInsertLocation();
-          tile_group_header = SetInsertCommitMark(insert_location);
-          current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
-
-          tile_group_headers.insert(tile_group_header);
+          info = SetInsertCommitMark(insert_location);
+          current_commit_id = info.first;
+          tile_group_headers.insert(info.second);
         }
         break;
 
@@ -382,7 +379,7 @@ std::pair<bool,ItemPointer> PelotonFrontendLogger::CollectTupleRecord(TupleRecor
   return std::make_pair(false, INVALID_ITEMPOINTER);
 }
 
-storage::TileGroupHeader *PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
+std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   assert(tile_group != nullptr);
@@ -390,10 +387,7 @@ storage::TileGroupHeader *PelotonFrontendLogger::SetInsertCommitMark(ItemPointer
   assert(tile_group_header != nullptr);
 
   // Set the commit mark
-  if (tile_group_header->GetInsertCommit(location.offset) == false) {
-    tile_group_header->SetInsertCommit(location.offset, true);
-  }
-
+  tile_group_header->SetInsertCommit(location.offset, true);
   LOG_TRACE("<%p, %lu> : slot is insert committed", tile_group.get(), location.offset);
 
   // Update max oid
@@ -401,21 +395,19 @@ storage::TileGroupHeader *PelotonFrontendLogger::SetInsertCommitMark(ItemPointer
     max_oid = location.block;
   }
 
-  return tile_group_header;
+  auto begin_commit_id = tile_group_header->GetBeginCommitId(location.offset);
+  return std::make_pair(begin_commit_id, tile_group_header);
 }
 
-storage::TileGroupHeader *PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
-  // Commit Insert Mark
+std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   assert(tile_group != nullptr);
   auto tile_group_header = tile_group->GetHeader();
   assert(tile_group_header != nullptr);
 
-  if (tile_group_header->GetDeleteCommit(location.offset) == false) {
-    tile_group_header->SetDeleteCommit(location.offset, true);
-  }
-
+  // Set the commit mark
+  tile_group_header->SetDeleteCommit(location.offset, true);
   LOG_TRACE("<%p, %lu> : slot is delete committed", tile_group.get(), location.offset);
 
   // Update max oid
@@ -423,7 +415,8 @@ storage::TileGroupHeader *PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer
     max_oid = location.block;
   }
 
-  return tile_group_header;
+  auto end_commit_id = tile_group_header->GetEndCommitId(location.offset);
+  return std::make_pair(end_commit_id, tile_group_header);
 }
 
 //===--------------------------------------------------------------------===//
@@ -472,8 +465,8 @@ void PelotonFrontendLogger::DoRecovery() {
             ReadTupleRecordHeader(insert_record, log_file, log_file_size);
 
             auto insert_location = insert_record.GetInsertLocation();
-            auto tile_group_header = SetInsertCommitMark(insert_location);
-            current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
+            auto info = SetInsertCommitMark(insert_location);
+            current_commit_id = info.first;
           }
           break;
 
@@ -482,8 +475,8 @@ void PelotonFrontendLogger::DoRecovery() {
             ReadTupleRecordHeader(delete_record, log_file, log_file_size);
 
             auto delete_location = delete_record.GetDeleteLocation();
-            auto tile_group_header = SetDeleteCommitMark(delete_location);
-            current_commit_id = tile_group_header->GetEndCommitId(delete_location.offset);;
+            auto info = SetDeleteCommitMark(delete_location);
+            current_commit_id = info.first;
           }
           break;
 
@@ -493,9 +486,10 @@ void PelotonFrontendLogger::DoRecovery() {
 
             auto delete_location = update_record.GetDeleteLocation();
             SetDeleteCommitMark(delete_location);
+
             auto insert_location = update_record.GetInsertLocation();
-            auto tile_group_header = SetInsertCommitMark(insert_location);
-            current_commit_id = tile_group_header->GetBeginCommitId(insert_location.offset);
+            auto info = SetInsertCommitMark(insert_location);
+            current_commit_id = info.first;
           }
           break;
 
