@@ -131,7 +131,6 @@ void FrontendLogger::MainLoop(void) {
 void FrontendLogger::NotifyFrontend(bool has_new_log_records) {
 
   if (has_new_log_records) {
-
     std::lock_guard<std::mutex> lock(backend_notify_mutex);
 
     // Toggle need_to_collect_new_log_records
