@@ -96,7 +96,7 @@ class LogManager{
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    void NotifyFrontendLogger(bool newLog = false);
+    void NotifyFrontendLogger(bool has_new_log_records);
 
     void SetLogFileName(std::string log_file);
 
