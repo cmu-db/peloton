@@ -52,8 +52,6 @@ class FrontendLogger : public Logger{
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    void NotifyFrontend(bool hasNewLog = false);
-
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
@@ -75,11 +73,6 @@ class FrontendLogger : public Logger{
 
     // Global queue
     std::vector<LogRecord*> global_queue;
-
-    // Used for waking up frontend logger
-    // only when backend loggers are ready
-    std::mutex backend_notify_mutex;
-    std::condition_variable backend_notify_cv;
 
     // period with which it collects log records from backend loggers
     // (in milliseconds)

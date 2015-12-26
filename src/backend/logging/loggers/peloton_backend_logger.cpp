@@ -32,16 +32,12 @@ PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
 void PelotonBackendLogger::Log(LogRecord* record){
   // Enqueue the serialized log record into the queue
   record->Serialize(output_buffer);
+
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     local_queue.push_back(record);
   }
 
-  // Notify the frontend in case the transaction has ended
-  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
-    auto& log_manager = logging::LogManager::GetInstance();
-    log_manager.NotifyFrontendLogger(true);
-  }
 }
 
 LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
