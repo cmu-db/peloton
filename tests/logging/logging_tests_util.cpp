@@ -527,6 +527,8 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
 
   std::vector<storage::Tuple*> tuples;
   const bool allocate = true;
+  const size_t string_length = 100;
+  std::string dummy_string('-', string_length);
 
   for (oid_t tuple_itr = 0; tuple_itr < num_of_tuples; tuple_itr++) {
     // Build tuple
@@ -536,7 +538,7 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
     tuple->SetValue(0, user_id_value, nullptr);
 
     for(oid_t col_itr = 1 ; col_itr < state.column_count; col_itr++) {
-      Value field_value = ValueFactory::GetStringValue(std::to_string(tuple_itr), pool);
+      Value field_value = ValueFactory::GetStringValue(dummy_string, pool);
       tuple->SetValue(col_itr, field_value, pool);
     }
 

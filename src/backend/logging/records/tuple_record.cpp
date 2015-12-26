@@ -57,7 +57,7 @@ bool TupleRecord::Serialize(CopySerializeOutput& output){
 
   message_length = output.Size();
   message = new char[message_length];
-  memcpy( message, output.Data(), message_length);
+  std::memcpy( message, output.Data(), message_length);
 
   return status;
 }
