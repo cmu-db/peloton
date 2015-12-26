@@ -38,10 +38,6 @@ void AriesBackendLogger::Log(LogRecord* record){
     local_queue.push_back(record);
   }
 
-  if(record->GetType() == LOGRECORD_TYPE_TRANSACTION_END)  {
-    auto& log_manager = logging::LogManager::GetInstance();
-    log_manager.NotifyFrontendLogger(true);
-  }
 }
 
 LogRecord* AriesBackendLogger::GetTupleRecord(LogRecordType log_record_type,
