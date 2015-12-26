@@ -10,6 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include <thread>
+
 #include "backend/common/logger.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/frontend_logger.h"
@@ -104,12 +106,8 @@ void FrontendLogger::MainLoop(void) {
   // TERMINATE MODE
   /////////////////////////////////////////////////////////////////////
 
-  {
-    std::lock_guard<std::mutex> lock(backend_notify_mutex);
-
-    // force the last check to be done without waiting
-    need_to_collect_new_log_records = true;
-  }
+  // force the last check to be done without waiting
+  need_to_collect_new_log_records = true;
 
   // flush any remaining log records
   CollectLogRecordsFromBackendLoggers();
@@ -126,33 +124,10 @@ void FrontendLogger::MainLoop(void) {
 }
 
 /**
- * @brief Notify frontend logger to start collect records
- */
-void FrontendLogger::NotifyFrontend(bool has_new_log_records) {
-
-  if (has_new_log_records) {
-    std::lock_guard<std::mutex> lock(backend_notify_mutex);
-
-    // Toggle need_to_collect_new_log_records
-    if (need_to_collect_new_log_records == false) {
-      need_to_collect_new_log_records = true;
-    }
-
-    // Only when new log records appear,
-    // we need lock backend_notify_mutex and notify
-    backend_notify_cv.notify_one();
-  } else {
-    // No need to lock mutex
-    backend_notify_cv.notify_one();
-  }
-}
-
-/**
  * @brief Collect the log records from BackendLoggers
  */
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
-  std::unique_lock<std::mutex> wait_lock(backend_notify_mutex);
   /*
    * Don't use "while(!need_to_collect_new_log_records)",
    * we want the frontend check all backend periodically even no backend notifies.
@@ -160,8 +135,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
    * instead of a huge submission when the txn is committed.
    */
   if (need_to_collect_new_log_records == false) {
-    backend_notify_cv.wait_for(wait_lock,
-                               std::chrono::milliseconds(wait_timeout)); // timeout
+    auto sleep_period = std::chrono::milliseconds(wait_timeout);
+    std::this_thread::sleep_for(sleep_period);
   }
 
   {
