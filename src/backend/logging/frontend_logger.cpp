@@ -156,7 +156,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   /*
    * Don't use "while(!need_to_collect_new_log_records)",
    * we want the frontend check all backend periodically even no backend notifies.
-   * So that large txn will can submit it's logs piece by piece
+   * So that large txn can submit its log records piece by piece
    * instead of a huge submission when the txn is committed.
    */
   if (need_to_collect_new_log_records == false) {
