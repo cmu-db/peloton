@@ -71,7 +71,7 @@ void LogManager::TerminateLoggingMode(){
   SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
 
   // notify frontend to exit current waiting
-  NotifyFrontendLogger();
+  NotifyFrontendLogger(false);
 
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
@@ -204,10 +204,7 @@ size_t LogManager::ActiveFrontendLoggerCount(void) {
 LoggingStatus LogManager::GetStatus() {
 
   // Get the status from the map
-  {
-    return logging_status;
-  }
-
+  return logging_status;
 }
 
 void LogManager::SetLoggingStatus(LoggingStatus logging_status_){
@@ -224,9 +221,7 @@ void LogManager::SetLoggingStatus(LoggingStatus logging_status_){
 }
 
 void LogManager::NotifyFrontendLogger(bool has_new_log_records) {
-  if (frontend_logger != nullptr) {
-    frontend_logger->NotifyFrontend(has_new_log_records);
-  }
+  frontend_logger->NotifyFrontend(has_new_log_records);
 }
 
 void LogManager::SetLogFileName(std::string log_file) {
