@@ -70,9 +70,6 @@ bool LogManager::IsInLoggingMode(){
 void LogManager::TerminateLoggingMode(){
   SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
 
-  // notify frontend to exit current waiting
-  NotifyFrontendLogger(false);
-
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to Sleep mode
   WaitForMode(LOGGING_STATUS_TYPE_SLEEP, true);
@@ -218,10 +215,6 @@ void LogManager::SetLoggingStatus(LoggingStatus logging_status_){
     // notify everyone about the status change
     logging_status_cv.notify_all();
   }
-}
-
-void LogManager::NotifyFrontendLogger(bool has_new_log_records) {
-  frontend_logger->NotifyFrontend(has_new_log_records);
 }
 
 void LogManager::SetLogFileName(std::string log_file) {
