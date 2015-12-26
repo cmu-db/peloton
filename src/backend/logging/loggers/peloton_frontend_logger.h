@@ -50,9 +50,9 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void DoRecovery(void);
 
-    storage::TileGroupHeader *SetInsertCommitMark(ItemPointer location);
+    std::pair<cid_t, storage::TileGroupHeader *> SetInsertCommitMark(ItemPointer location);
 
-    storage::TileGroupHeader *SetDeleteCommitMark(ItemPointer location);
+    std::pair<cid_t, storage::TileGroupHeader *> SetDeleteCommitMark(ItemPointer location);
 
     //===--------------------------------------------------------------------===//
     // Utility functions
