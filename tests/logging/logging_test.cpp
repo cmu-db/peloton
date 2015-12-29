@@ -55,7 +55,12 @@ TEST(LoggingTests, RecoveryTest) {
     LoggingTestsUtil::DoRecovery(peloton_log_file_name);
 
   }
+  else if(state.logging_type == LOGGING_TYPE_INVALID) {
 
+    // Test a simple log process
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
+
+  }
 }
 
 
