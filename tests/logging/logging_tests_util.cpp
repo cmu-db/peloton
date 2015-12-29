@@ -68,13 +68,14 @@ static bool IsRecoveryExperiment(const LoggingTestsUtil::logging_test_configurat
 static void WriteOutput(double duration) {
 
   std::cout << "----------------------------------------------------------\n";
-  std::cout << state.column_count  << " "
+  std::cout
       << state.logging_type << " "
+      << state.column_count  << " "
       << state.backend_count << " :: ";
   std::cout << duration << " ms\n";
 
-  out << state.column_count << " ";
   out << state.logging_type << " ";
+  out << state.column_count << " ";
   out << state.backend_count << " ";
   out << duration << "\n";
   out.flush();
@@ -629,7 +630,6 @@ static void Usage(FILE *out) {
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -d --dir               :  log file dir \n"
           "   -f --pmem-file-size    :  pmem file size (MB) \n"
-          "   -k --scale-factor      :  # of tuples \n"
           "   -e --experiment_type   :  Experiment Type \n"
   );
   exit(EXIT_FAILURE);
@@ -644,7 +644,6 @@ static struct option opts[] = {
     { "dir", optional_argument, NULL, 'd' },
     { "pmem-file-size", optional_argument, NULL, 'f' },
     { "experiment-type", optional_argument, NULL, 'e' },
-    { "scale-factor", optional_argument, NULL, 'k' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -663,17 +662,6 @@ static void ValidateLoggingType(const LoggingTestsUtil::logging_test_configurati
     std::cout << "Invalid logging_type :: " <<  state.logging_type << std::endl;
     exit(EXIT_FAILURE);
   }
-
-}
-
-static void ValidateScaleFactor(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.scale_factor <= 0) {
-    std::cout << "Invalid scale_factor :: " <<  state.scale_factor << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left
-      << "scale_factor " << " : " << state.scale_factor << std::endl;
 
 }
 
@@ -734,7 +722,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.tuple_count = 10;
 
   state.logging_type = LOGGING_TYPE_ARIES;
-  state.backend_count = 2;
+  state.backend_count = 1;
 
   state.column_count = 10;
 
@@ -743,13 +731,12 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.file_dir = "/tmp/";
   state.pmem_file_size = 512;
 
-  state.scale_factor = 1;
   state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:k:e:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:e:", opts,
                         &idx);
 
     if (c == -1)
@@ -777,9 +764,6 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
       case 'f':
         state.pmem_file_size = atoi(optarg);
         break;
-      case 'k':
-        state.scale_factor  = atoi(optarg);
-        break;
       case 'e':
         state.experiment_type = (LoggingExperimentType) atoi(optarg);
         break;
@@ -794,17 +778,15 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
     }
   }
 
+  // Print configuration
+  ValidateLoggingType(state);
+  ValidateColumnCount(state);
+  ValidateTupleCount(state);
+  ValidateBackendCount(state);
+  ValidatePMEMFileSize(state);
+  ValidateFileDir(state);
+
   if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID) {
-    // Print configuration
-    ValidateLoggingType(state);
-    ValidateColumnCount(state);
-    ValidateScaleFactor(state);
-    ValidateTupleCount(state);
-    ValidateBackendCount(state);
-    ValidatePMEMFileSize(state);
-    ValidateFileDir(state);
-  }
-  else{
     ValidateExperiment(state);
   }
 
