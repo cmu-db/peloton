@@ -40,8 +40,14 @@ LogManager::~LogManager() {
 void LogManager::StartStandbyMode(){
 
   // If frontend logger doesn't exist
-  if( frontend_logger == nullptr ){
+  if(frontend_logger == nullptr){
     frontend_logger = FrontendLogger::GetFrontendLogger(peloton_logging_mode);
+  }
+
+  // If frontend logger still doesn't exist, then we disabled logging
+  if(frontend_logger == nullptr){
+    LOG_INFO("We have disabled logging");
+    return;
   }
 
   // Toggle status in log manager map
