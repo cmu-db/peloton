@@ -40,6 +40,46 @@ namespace test {
 // configuration for testing
 LoggingTestsUtil::logging_test_configuration state;
 
+std::ofstream out("outputfile.summary");
+
+
+static bool IsActiveExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
+
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE) {
+    return true;
+  }
+  else {
+    return false;
+  }
+
+}
+
+static bool IsRecoveryExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
+
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_RECOVERY) {
+    return true;
+  }
+  else {
+    return false;
+  }
+
+}
+
+static void WriteOutput(double duration) {
+
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << state.column_count  << " "
+      << state.logging_type << " "
+      << state.backend_count << " :: ";
+  std::cout << duration << " ms\n";
+
+  out << state.column_count << " ";
+  out << state.logging_type << " ";
+  out << state.backend_count << " ";
+  out << duration << "\n";
+  out.flush();
+
+}
 
 std::string GetFilePath(std::string directory_path, std::string file_name){
 
@@ -77,6 +117,14 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
   if( log_manager.ActiveFrontendLoggerCount() > 0){
     LOG_ERROR("another logging thread is running now");
     return false;
+  }
+
+  // INVALID MODE
+  if(peloton_logging_mode == LOGGING_TYPE_INVALID) {
+    LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
+                               LOGGING_TESTS_TABLE_OID);
+
+    return true;
   }
 
   // set log file and logging type
@@ -172,7 +220,10 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
 
   end = std::chrono::system_clock::now();
   elapsed_milliseconds = end-start;
-  std::cout << "Recovery Time  :: " << elapsed_milliseconds.count() << "\n";
+
+  // Recovery time
+  if(IsRecoveryExperiment(state) == true)
+    WriteOutput(elapsed_milliseconds.count());
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -249,7 +300,10 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
 
   end = std::chrono::system_clock::now();
   elapsed_milliseconds = end-start;
-  std::cout << "Build Log Time :: " << elapsed_milliseconds.count() << "\n";
+
+  // Build log time
+  if(IsActiveExperiment(state) == true)
+    WriteOutput(elapsed_milliseconds.count());
 
   // Clean up data
   for( auto tuple : tuples){
@@ -575,6 +629,8 @@ static void Usage(FILE *out) {
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -d --dir               :  log file dir \n"
           "   -f --pmem-file-size    :  pmem file size (MB) \n"
+          "   -k --scale-factor      :  # of tuples \n"
+          "   -e --experiment_type   :  Experiment Type \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -587,36 +643,89 @@ static struct option opts[] = {
     { "check-tuple-count", optional_argument, NULL, 'c' },
     { "dir", optional_argument, NULL, 'd' },
     { "pmem-file-size", optional_argument, NULL, 'f' },
+    { "experiment-type", optional_argument, NULL, 'e' },
+    { "scale-factor", optional_argument, NULL, 'k' },
     { NULL, 0, NULL, 0 }
 };
 
-static void PrintConfiguration(){
-  int width = 25;
-
-  std::cout << std::setw(width) << std::left
+static void ValidateLoggingType(const LoggingTestsUtil::logging_test_configuration& state) {
+  std::cout << std::setw(20) << std::left
       << "logging_type " << " : ";
 
   if(state.logging_type == LOGGING_TYPE_ARIES)
     std::cout << "ARIES" << std::endl;
   else if(state.logging_type == LOGGING_TYPE_PELOTON)
     std::cout << "PELOTON" << std::endl;
-  else {
+  else if(state.logging_type == LOGGING_TYPE_INVALID) {
     std::cout << "INVALID" << std::endl;
+  }
+  else {
+    std::cout << "Invalid logging_type :: " <<  state.logging_type << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(width) << std::left
-      << "tuple_count " << " : " << state.tuple_count << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "backend_count " << " : " << state.backend_count << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "column_count " << " : " << state.column_count << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "check_tuple_count " << " : " << state.check_tuple_count << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "dir " << " : " << state.file_dir << std::endl;
-  std::cout << std::setw(width) << std::left
-      << "pmem_file_size " << " : " << state.pmem_file_size << std::endl;
+}
+
+static void ValidateScaleFactor(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.scale_factor <= 0) {
+    std::cout << "Invalid scale_factor :: " <<  state.scale_factor << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left
+      << "scale_factor " << " : " << state.scale_factor << std::endl;
+
+}
+
+static void ValidateColumnCount(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.column_count <= 0) {
+    std::cout << "Invalid column_count :: " <<  state.column_count << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "column_count " << " : " << state.column_count << std::endl;
+}
+
+static void ValidateTupleCount(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.tuple_count <= 0) {
+    std::cout << "Invalid tuple_count :: " <<  state.tuple_count << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "tuple_count " << " : " << state.tuple_count << std::endl;
+}
+
+static void ValidateBackendCount(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.backend_count <= 0) {
+    std::cout << "Invalid backend_count :: " <<  state.backend_count << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "backend_count " << " : " << state.backend_count << std::endl;
+}
+
+static void ValidatePMEMFileSize(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.pmem_file_size <= 0) {
+    std::cout << "Invalid pmem_file_size :: " <<  state.pmem_file_size << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "pmem_file_size " << " : " << state.pmem_file_size << std::endl;
+}
+
+static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.experiment_type <= 0 || state.experiment_type > 2) {
+    std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
+}
+
+static void ValidateFileDir(const LoggingTestsUtil::logging_test_configuration& state) {
+
+  std::cout << std::setw(20) << std::left << "file_dir " << " : " << state.file_dir << std::endl;
+
 }
 
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
@@ -634,10 +743,13 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.file_dir = "/tmp/";
   state.pmem_file_size = 512;
 
+  state.scale_factor = 1;
+  state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:k:e:", opts,
                         &idx);
 
     if (c == -1)
@@ -665,6 +777,12 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
       case 'f':
         state.pmem_file_size = atoi(optarg);
         break;
+      case 'k':
+        state.scale_factor  = atoi(optarg);
+        break;
+      case 'e':
+        state.experiment_type = (LoggingExperimentType) atoi(optarg);
+        break;
 
       case 'h':
         Usage(stderr);
@@ -676,7 +794,19 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
     }
   }
 
-  PrintConfiguration();
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID) {
+    // Print configuration
+    ValidateLoggingType(state);
+    ValidateColumnCount(state);
+    ValidateScaleFactor(state);
+    ValidateTupleCount(state);
+    ValidateBackendCount(state);
+    ValidatePMEMFileSize(state);
+    ValidateFileDir(state);
+  }
+  else{
+    ValidateExperiment(state);
+  }
 
 }
 

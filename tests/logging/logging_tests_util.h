@@ -19,6 +19,13 @@ class DataTable;
 
 namespace test {
 
+enum LoggingExperimentType{
+  LOGGING_EXPERIMENT_TYPE_INVALID = 0,
+
+  LOGGING_EXPERIMENT_TYPE_ACTIVE = 1,
+  LOGGING_EXPERIMENT_TYPE_RECOVERY = 2
+};
+
 class LoggingTestsUtil{
 
 public:
@@ -45,6 +52,10 @@ public:
 
   class logging_test_configuration {
    public:
+
+    // experiment type
+    LoggingExperimentType experiment_type;
+
     // logging type
     LoggingType logging_type;
 
@@ -65,6 +76,9 @@ public:
 
     // size of the pmem file (in MB)
     size_t pmem_file_size;
+
+    // size of the table
+    int scale_factor;
    };
 
 private:
