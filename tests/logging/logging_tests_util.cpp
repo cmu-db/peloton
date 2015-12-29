@@ -556,12 +556,13 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   // Columns
   std::vector<catalog::Column> columns;
   const size_t field_length = 100;
+  const bool is_inlined = true;
 
   // User Id
   catalog::Column user_id(VALUE_TYPE_INTEGER,
                           GetTypeSize(VALUE_TYPE_INTEGER),
                           "YCSB_KEY",
-                          true);
+                          is_inlined);
 
   columns.push_back(user_id);
 
@@ -570,7 +571,7 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
     catalog::Column field(VALUE_TYPE_VARCHAR,
                           field_length,
                           "FIELD" + std::to_string(col_itr),
-                          false);
+                          is_inlined);
 
     columns.push_back(field);
   }
