@@ -76,9 +76,6 @@ public:
 
     // size of the pmem file (in MB)
     size_t pmem_file_size;
-
-    // size of the table
-    int scale_factor;
    };
 
 private:
