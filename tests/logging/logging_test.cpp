@@ -61,6 +61,7 @@ TEST(LoggingTests, RecoveryTest) {
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
 
   }
+
 }
 
 
