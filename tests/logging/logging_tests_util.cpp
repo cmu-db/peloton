@@ -42,42 +42,21 @@ LoggingTestsUtil::logging_test_configuration state;
 
 std::ofstream out("outputfile.summary");
 
+size_t GetLogFileSize();
 
-static bool IsActiveExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
-
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE) {
-    return true;
-  }
-  else {
-    return false;
-  }
-
-}
-
-static bool IsRecoveryExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
-
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_RECOVERY) {
-    return true;
-  }
-  else {
-    return false;
-  }
-
-}
-
-static void WriteOutput(double duration) {
+static void WriteOutput(double value) {
 
   std::cout << "----------------------------------------------------------\n";
   std::cout
       << state.logging_type << " "
       << state.column_count  << " "
       << state.backend_count << " :: ";
-  std::cout << duration << " ms\n";
+  std::cout << value << "\n";
 
   out << state.logging_type << " ";
   out << state.column_count << " ";
   out << state.backend_count << " ";
-  out << duration << "\n";
+  out << value << "\n";
   out.flush();
 
 }
@@ -223,7 +202,7 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   elapsed_milliseconds = end-start;
 
   // Recovery time
-  if(IsRecoveryExperiment(state) == true)
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_RECOVERY)
     WriteOutput(elapsed_milliseconds.count());
 
   // Check the tuple count if needed
@@ -303,8 +282,14 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   elapsed_milliseconds = end-start;
 
   // Build log time
-  if(IsActiveExperiment(state) == true)
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE) {
     WriteOutput(elapsed_milliseconds.count());
+  }
+  else if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_STORAGE) {
+    auto log_file_size = GetLogFileSize();
+    std::cout << "Log file size :: " << log_file_size << "\n";
+    WriteOutput(log_file_size);
+  }
 
   // Clean up data
   for( auto tuple : tuples){
@@ -615,6 +600,31 @@ void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
 
 void LoggingTestsUtil::DropDatabase(oid_t db_oid){
   bridge::DDLDatabase::DropDatabase(db_oid);
+}
+
+size_t GetLogFileSize(){
+  struct stat log_stats;
+
+  auto& log_manager = logging::LogManager::GetInstance();
+  std::string log_file_name = log_manager.GetLogFileName();
+
+  // open log file and file descriptor
+  // we open it in append + binary mode
+  auto log_file = fopen(log_file_name.c_str(),"r");
+  if(log_file == NULL) {
+    LOG_ERROR("LogFile is NULL");
+  }
+
+  // also, get the descriptor
+  auto log_file_fd = fileno(log_file);
+  if( log_file_fd == -1) {
+    LOG_ERROR("log_file_fd is -1");
+  }
+
+  fstat(log_file_fd, &log_stats);
+  auto log_file_size = log_stats.st_size;
+
+  return log_file_size;
 }
 
 //===--------------------------------------------------------------------===//
