@@ -50,11 +50,13 @@ static void WriteOutput(double value) {
   std::cout
       << state.logging_type << " "
       << state.column_count  << " "
+      << state.tuple_count  << " "
       << state.backend_count << " :: ";
   std::cout << value << "\n";
 
   out << state.logging_type << " ";
   out << state.column_count << " ";
+  out << state.tuple_count  << " ";
   out << state.backend_count << " ";
   out << value << "\n";
   out.flush();
@@ -81,7 +83,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name){
  */
 bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
 
-  auto file_path = GetFilePath(state.file_dir, file_name);
+  auto file_path = GetFilePath(state.pmem_file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
@@ -159,7 +161,7 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
 
-  auto file_path = GetFilePath(state.file_dir, file_name);
+  auto file_path = GetFilePath(state.pmem_file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
@@ -723,7 +725,7 @@ static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuratio
 
 static void ValidateFileDir(const LoggingTestsUtil::logging_test_configuration& state) {
 
-  std::cout << std::setw(20) << std::left << "file_dir " << " : " << state.file_dir << std::endl;
+  std::cout << std::setw(20) << std::left << "file_dir " << " : " << state.pmem_file_dir << std::endl;
 
 }
 
@@ -739,7 +741,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   state.check_tuple_count = false;
 
-  state.file_dir = "/tmp/";
+  state.pmem_file_dir = "/tmp/";
   state.pmem_file_size = 512;
 
   state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
@@ -770,7 +772,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
         state.check_tuple_count  = atoi(optarg);
         break;
       case 'd':
-        state.file_dir = optarg;
+        state.pmem_file_dir = optarg;
         break;
       case 'f':
         state.pmem_file_size = atoi(optarg);

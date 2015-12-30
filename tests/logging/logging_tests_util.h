@@ -73,7 +73,7 @@ public:
     bool check_tuple_count;
 
     // log file dir
-    std::string file_dir;
+    std::string pmem_file_dir;
 
     // size of the pmem file (in MB)
     size_t pmem_file_size;
