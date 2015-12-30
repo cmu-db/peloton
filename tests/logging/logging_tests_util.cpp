@@ -725,7 +725,7 @@ static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuratio
 
 static void ValidateFileDir(const LoggingTestsUtil::logging_test_configuration& state) {
 
-  std::cout << std::setw(20) << std::left << "file_dir " << " : " << state.pmem_file_dir << std::endl;
+  std::cout << std::setw(20) << std::left << "pmem_file_dir " << " : " << state.pmem_file_dir << std::endl;
 
 }
 
