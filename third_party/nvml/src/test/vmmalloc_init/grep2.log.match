@@ -1,1 +1,0 @@
-Error (libvmmalloc): VMMALLOC_POOL_SIZE value is less than minimum (1048576 < 14680064)

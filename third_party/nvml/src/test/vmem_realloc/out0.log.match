@@ -1,3 +1,0 @@
-vmem_realloc/TEST0: START: vmem_realloc
- ./vmem_realloc$(nW)
-vmem_realloc/TEST0: Done
