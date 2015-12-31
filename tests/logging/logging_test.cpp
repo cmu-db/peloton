@@ -33,6 +33,9 @@ TEST(LoggingTests, RecoveryTest) {
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
   peloton_pmem_file_size = state.pmem_file_size;
+  // Set default experiment type
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID)
+    state.experiment_type = LOGGING_EXPERIMENT_TYPE_ACTIVE;
 
   if(state.logging_type == LOGGING_TYPE_ARIES) {
 

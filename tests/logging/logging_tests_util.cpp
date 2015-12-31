@@ -715,7 +715,7 @@ static void ValidatePMEMFileSize(const LoggingTestsUtil::logging_test_configurat
 }
 
 static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.experiment_type <= 0 || state.experiment_type > 2) {
+  if(state.experiment_type < 0 || state.experiment_type > 2) {
     std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -798,10 +798,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   ValidateBackendCount(state);
   ValidatePMEMFileSize(state);
   ValidateFileDir(state);
-
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID) {
-    ValidateExperiment(state);
-  }
+  ValidateExperiment(state);
 
 }
 
