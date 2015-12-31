@@ -1,3 +1,0 @@
-vmmalloc_out_of_memory/TEST0: START: vmmalloc_out_of_memory
- ./vmmalloc_out_of_memory$(nW)
-vmmalloc_out_of_memory/TEST0: Done

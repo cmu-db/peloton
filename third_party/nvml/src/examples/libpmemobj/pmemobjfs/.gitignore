@@ -1,6 +1,0 @@
-pmemobjfs
-pmemobjfs.tx_begin
-pmemobjfs.tx_commit
-pmemobjfs.tx_abort
-mkfs.pmemobjfs
-pmemobjfs.log
