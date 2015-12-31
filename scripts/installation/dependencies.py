@@ -45,11 +45,12 @@ my_env = os.environ.copy()
 ## Utilities
 ## ==============================================
 
-def exec_cmd(cmd, verbose):
+def exec_cmd(cmd):
     """
     Execute the external command and get its exitcode, stdout and stderr.
     """
     args = shlex.split(cmd)
+    verbose = True
 
     # TRY
     FNULL = open(os.devnull, 'w')
@@ -62,7 +63,7 @@ def exec_cmd(cmd, verbose):
     except subprocess.CalledProcessError as e:
         print "Command     :: ", e.cmd
         print "Return Code :: ", e.returncode
-        print "Output      :: ", e.output            
+        print "Output      :: ", e.output
     # Finally
     finally:
         FNULL.close()
@@ -74,20 +75,39 @@ def install_dependencies(TEMPDIR):
     ## ==============================================
     LOG.info("Cloning NVM library")
     cmd = 'git clone https://github.com/pmem/nvml'
-    exec_cmd(cmd, True)
-    
-    LOG.info("Building NVM library")
-    os.chdir('nvml')
-    cmd = 'make -j4'
-    exec_cmd(cmd, True)
+    exec_cmd(cmd)
 
     LOG.info("Installing NVM library")
+    os.chdir('nvml')
+    cmd = 'make -j4'
+    exec_cmd(cmd)
     cmd = 'sudo make install -j4'
-    exec_cmd(cmd, True)
+    exec_cmd(cmd)
     os.chdir('..')
 
     LOG.info("Finished installing NVM library")
-        
+
+    ## ==============================================
+    ## Nanomsg Library
+    ## ==============================================
+    LOG.info("Downloading nanomsg library")
+    cmd = 'wget https://github.com/nanomsg/nanomsg/releases/download/0.8-beta/nanomsg-0.8-beta.tar.gz'
+    exec_cmd(cmd)
+    cmd = 'tar -xzf nanomsg-0.8-beta.tar.gz'
+    exec_cmd(cmd)
+
+    LOG.info("Installing NVM library")
+    os.chdir('nanomsg-0.8-beta')
+    cmd = './configure'
+    exec_cmd(cmd)
+    cmd = 'make -j4'
+    exec_cmd(cmd)
+    cmd = 'sudo make install -j4'
+    exec_cmd(cmd)
+    os.chdir('..')
+
+    LOG.info("Finished installing nanomsg library")
+
 ## ==============================================
 ## MAIN
 ## ==============================================
@@ -102,16 +122,16 @@ if __name__ == '__main__':
         TEMPDIR = tempfile.mkdtemp()
         LOG.info("Building and installing dependencies...")
         LOG.info("Temporary directory : " + str(TEMPDIR))
-        
+
         prev_dir = os.getcwd()
         os.chdir(TEMPDIR)
-        
+
         install_dependencies(TEMPDIR)
-            
+
     finally:
         # Clean up
         shutil.rmtree(TEMPDIR)
-        
+
         # Go back to prev dir
         os.chdir(prev_dir)
-        
+
