@@ -1,8 +1,0 @@
-{
-   Bullseye Coverage - Memory leaks
-   Memcheck:Leak
-   ...
-   fun:cov_probe_v12
-   ...
-}
-
