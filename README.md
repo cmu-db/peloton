@@ -26,7 +26,7 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 
 ## Development / Contributing
 
-Look up the [Contributing Guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
+Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Issues
 
