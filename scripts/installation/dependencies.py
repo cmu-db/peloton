@@ -77,16 +77,14 @@ def install_dependencies(TEMPDIR):
     exec_cmd(cmd, True)
     
     LOG.info("Building NVM library")
-    cmd = 'cd nvml'
-    exec_cmd(cmd, True)
+    os.chdir('nvml')
     cmd = 'make -j4'
     exec_cmd(cmd, True)
 
     LOG.info("Installing NVM library")
     cmd = 'sudo make install -j4'
     exec_cmd(cmd, True)
-    cmd = 'cd ..'
-    exec_cmd(cmd, True)
+    os.chdir('..')
 
     LOG.info("Finished installing NVM library")
         
