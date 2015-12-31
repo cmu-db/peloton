@@ -1,1 +1,0 @@
-<libpmemobj>: <$(N)> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (pmemobj_alloc)
