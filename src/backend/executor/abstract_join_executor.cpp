@@ -14,6 +14,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
+#include "backend/common/exception.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/abstract_join_executor.h"
 
@@ -219,30 +220,50 @@ void AbstractJoinExecutor::UpdateFullJoinRowSets() {
  */
 bool AbstractJoinExecutor::BuildOuterJoinOutput() {
   assert(join_type_ != JOIN_TYPE_INVALID);
+
   switch (join_type_) {
-    case JOIN_TYPE_LEFT:
-      return BuildLeftJoinOutPut();
-    case JOIN_TYPE_RIGHT:
-      return BuildRightJoinOutPut();
+    case JOIN_TYPE_LEFT: {
+      return BuildLeftJoinOutput();
+    }
+
+    case JOIN_TYPE_RIGHT: {
+      return BuildRightJoinOutput();
+    }
+
     case JOIN_TYPE_OUTER: {
-      bool status = BuildLeftJoinOutPut();
-      if (status) return status;
-      else return BuildRightJoinOutPut();
+      bool status = BuildLeftJoinOutput();
+
+      if (status == true) {
+        return status;
+      }
+      else  {
+        return BuildRightJoinOutput();
+      }
       break;
     }
-    default:
+
+    case JOIN_TYPE_INNER: {
+      return false;
+    }
+
+    default: {
+      throw Exception("Unsupported join type : " + std::to_string(join_type_));
       break;
+    }
   }
 
   return false;
 }
 
-bool AbstractJoinExecutor::BuildLeftJoinOutPut() {
+bool AbstractJoinExecutor::BuildLeftJoinOutput() {
+
   while (left_matching_idx < no_matching_left_row_sets_.size()) {
+
     if (no_matching_left_row_sets_[left_matching_idx].empty()) {
       left_matching_idx++;
       continue;
     }
+
     assert(right_result_tiles_.size() > 0);
     auto left_tile = left_result_tiles_[left_matching_idx].get();
     auto right_tile = right_result_tiles_.front().get();
@@ -262,8 +283,10 @@ bool AbstractJoinExecutor::BuildLeftJoinOutPut() {
   return false;
 }
 
-bool AbstractJoinExecutor::BuildRightJoinOutPut() {
+bool AbstractJoinExecutor::BuildRightJoinOutput() {
+
   while (right_matching_idx < no_matching_right_row_sets_.size()) {
+
     if (no_matching_right_row_sets_[right_matching_idx].empty()) {
       right_matching_idx++;
       continue;

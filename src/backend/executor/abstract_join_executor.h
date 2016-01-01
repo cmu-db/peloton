@@ -124,8 +124,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
 
   bool BuildOuterJoinOutput();
-  bool BuildLeftJoinOutPut();
-  bool BuildRightJoinOutPut();
+  bool BuildLeftJoinOutput();
+  bool BuildRightJoinOutput();
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -144,17 +144,21 @@ class AbstractJoinExecutor : public AbstractExecutor {
   /** @brief Projection info */
   const planner::ProjectInfo *proj_info_ = nullptr;
 
-  /* @brief Join Type */
+  /** @brief Join Type */
   PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
 
+  /** @brief Left and right row sets corresponding to tuples with no matching counterpart */
   RowSets no_matching_left_row_sets_;
   RowSets no_matching_right_row_sets_;
+
+  /** @brief Left and right matching iterator */
   size_t left_matching_idx = 0;
   size_t right_matching_idx = 0;
 
-  /* Buffer to store left child's result tiles */
+  /** @brief Buffer to store left child's result tiles */
   std::vector<std::unique_ptr<executor::LogicalTile> > left_result_tiles_;
-  /* Buffer to store right child's result tiles */
+
+  /** @brief Buffer to store right child's result tiles */
   std::vector<std::unique_ptr<executor::LogicalTile> > right_result_tiles_;
 
   bool left_child_done_ = false;

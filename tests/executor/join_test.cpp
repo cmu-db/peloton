@@ -51,85 +51,121 @@ namespace test {
 // join on key (i.e. there will have at most one tuple for each different join key
 TEST(JoinTests, CartesianProductTest) {
 
+  //===--------------------------------------------------------------------===//
+  // Setup join plan nodes and executors
+  //===--------------------------------------------------------------------===//
+
+  // Create hash plan node
   expression::AbstractExpression *right_table_attr_1 =
       new expression::TupleValueExpression(1, 1);
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression> > hashkeys;
-  hashkeys.emplace_back(right_table_attr_1);
+  std::vector<std::unique_ptr<const expression::AbstractExpression> > hash_keys;
+  hash_keys.emplace_back(right_table_attr_1);
 
   // Create hash plan node
-  planner::HashPlan hash_plan_node(hashkeys);
+  planner::HashPlan hash_plan_node(hash_keys);
 
-  // Create the hash hash_join_executor
+  // Construct the hash executor
   executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
   // Create hash join plan node.
   auto projection = JoinTestsUtil::CreateProjection();
   planner::HashJoinPlan hash_join_plan_node(JOIN_TYPE_INNER, nullptr, projection);
 
-  // Create the hash join hash_join_executor
+  // Construct the hash join executor
   executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
 
-  MockExecutor left_executor, right_executor;
-  hash_join_executor.AddChild(&left_executor);
-  hash_join_executor.AddChild(&hash_executor);
+  //===--------------------------------------------------------------------===//
+  // Mock table scan executors
+  //===--------------------------------------------------------------------===//
 
-  hash_executor.AddChild(&right_executor);
-
-  EXPECT_CALL(left_executor, DInit())
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(right_executor, DInit())
-    .WillOnce(Return(true));
-
-  EXPECT_CALL(left_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
-
-  EXPECT_CALL(right_executor, DExecute())
-      .WillOnce(Return(true))  // Itr 1
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
+  MockExecutor left_table_scan_executor, right_table_scan_executor;
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
+
+  // Left table has 3 tiles
   std::unique_ptr<storage::DataTable> left_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3, false,
                                    false, false);
+
+
+  //std::cout << (*left_table);
+
+  // Right table has 2 tiles
   std::unique_ptr<storage::DataTable> right_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2,
                                    false, false, false);
 
-  std::unique_ptr<executor::LogicalTile> left_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
-  std::unique_ptr<executor::LogicalTile> left_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(1)));
+  //std::cout << (*right_table);
 
-  std::unique_ptr<executor::LogicalTile> right_logical_tile1(
+  // Wrap the input tables with logical tiles
+  std::unique_ptr<executor::LogicalTile> left_table_logical_tile1(
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
+  std::unique_ptr<executor::LogicalTile> left_table_logical_tile2(
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(1)));
+  std::unique_ptr<executor::LogicalTile> left_table_logical_tile3(
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(2)));
+
+  std::unique_ptr<executor::LogicalTile> right_table_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
           right_table->GetTileGroup(0)));
-  std::unique_ptr<executor::LogicalTile> right_logical_tile2(
+  std::unique_ptr<executor::LogicalTile> right_table_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
           right_table->GetTileGroup(1)));
 
-  EXPECT_CALL(left_executor, GetOutput())
-      .WillOnce(Return(left_logical_tile1.release()))
-      .WillOnce(Return(left_logical_tile2.release()));
+  // Left scan executor returns logical tiles from the left table
 
-  EXPECT_CALL(right_executor, GetOutput())
-      .WillOnce(Return(right_logical_tile1.release()))
-      .WillOnce(Return(right_logical_tile2.release()));
+  EXPECT_CALL(left_table_scan_executor, DInit())
+  .WillOnce(Return(true));
+
+  EXPECT_CALL(left_table_scan_executor, DExecute())
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
+
+  EXPECT_CALL(left_table_scan_executor, GetOutput())
+  .WillOnce(Return(left_table_logical_tile1.release()))
+  .WillOnce(Return(left_table_logical_tile2.release()))
+  .WillOnce(Return(left_table_logical_tile3.release()));
+
+  // Right scan executor returns logical tiles from the right table
+
+  EXPECT_CALL(right_table_scan_executor, DInit())
+  .WillOnce(Return(true));
+
+  EXPECT_CALL(right_table_scan_executor, DExecute())
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
+
+  EXPECT_CALL(right_table_scan_executor, GetOutput())
+  .WillOnce(Return(right_table_logical_tile1.release()))
+  .WillOnce(Return(right_table_logical_tile2.release()));
+
+  //===--------------------------------------------------------------------===//
+  // Execute test
+  //===--------------------------------------------------------------------===//
+
+  // Construct the executor tree
+  hash_join_executor.AddChild(&left_table_scan_executor);
+  hash_join_executor.AddChild(&hash_executor);
+
+  hash_executor.AddChild(&right_table_scan_executor);
 
   // Run the hash_join_executor
   EXPECT_TRUE(hash_join_executor.Init());
 
-  for (size_t tile_itr = 0; tile_itr < 2; tile_itr++)
+  for (size_t tile_itr = 0; tile_itr < 2; tile_itr++) {
     EXPECT_TRUE(hash_join_executor.Execute());
+  }
 
   EXPECT_FALSE(hash_join_executor.Execute());
+  EXPECT_FALSE(hash_join_executor.Execute());
+
 }
 
 }  // namespace test

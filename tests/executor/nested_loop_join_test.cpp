@@ -56,13 +56,13 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
   std::unique_ptr<storage::DataTable> left_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3, false,
-  false,
+                                   false,
                                    false);
   // Right table has 2 tiles
   std::unique_ptr<storage::DataTable> right_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2,
-  false,
+                                   false,
                                    false, false);
 
   // Wrap the input tables in logical tiles
@@ -84,20 +84,20 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
           right_table->GetTileGroup(1)));
 
   EXPECT_CALL(left_executor, DExecute())
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   EXPECT_CALL(right_executor, DExecute())
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   EXPECT_CALL(left_executor, GetOutput())
-    .WillOnce(Return(left_tile1.release()))
-    .WillOnce(Return(left_tile2.release()))
-    .WillOnce(Return(left_tile3.release()));
+  .WillOnce(Return(left_tile1.release()))
+  .WillOnce(Return(left_tile2.release()))
+  .WillOnce(Return(left_tile3.release()));
 
 
   EXPECT_CALL(right_executor, GetOutput())
@@ -130,17 +130,17 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   executor.AddChild(&right_executor);
 
   EXPECT_CALL(left_executor, DInit())
-    .WillOnce(Return(true));
+  .WillOnce(Return(true));
 
   EXPECT_CALL(right_executor, DInit())
-    .WillOnce(Return(true));
+  .WillOnce(Return(true));
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> left_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3, false,
-  false,
+                                   false,
                                    false);
   bool mutate_table = true;
   std::unique_ptr<storage::DataTable> right_table(
@@ -148,8 +148,8 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2,
                                    mutate_table, false, false);
 
-//  std::cout << *(left_table.get());
-//  std::cout << *(right_table.get());
+  //  std::cout << *(left_table.get());
+  //  std::cout << *(right_table.get());
 
   std::unique_ptr<executor::LogicalTile> left_tile1(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
@@ -170,20 +170,20 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
 
 
   EXPECT_CALL(left_executor, DExecute())
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   EXPECT_CALL(right_executor, DExecute())
-    .WillOnce(Return(true))
-    .WillOnce(Return(true))
-    .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   EXPECT_CALL(left_executor, GetOutput())
-    .WillOnce(Return(left_tile1.release()))
-    .WillOnce(Return(left_tile2.release()))
-    .WillOnce(Return(left_tile3.release()));
+  .WillOnce(Return(left_tile1.release()))
+  .WillOnce(Return(left_tile2.release()))
+  .WillOnce(Return(left_tile3.release()));
 
 
   EXPECT_CALL(right_executor, GetOutput())
