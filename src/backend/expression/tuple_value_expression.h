@@ -60,6 +60,8 @@ class TupleValueExpression : public AbstractExpression {
 
     int GetColumnId() const {return this->value_idx;}
 
+    int GetTupleIdx() const {return this->tuple_idx;}
+
   protected:
 
     const int tuple_idx;           // which tuple. defaults to tuple1
