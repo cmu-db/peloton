@@ -96,10 +96,10 @@ bool DeleteExecutor::DExecute() {
 
     // Logging 
     {
-      auto& logManager = logging::LogManager::GetInstance();
+      auto& log_manager = logging::LogManager::GetInstance();
 
-      if(logManager.IsInLoggingMode(peloton_logging_mode)){
-        auto logger = logManager.GetBackendLogger(peloton_logging_mode);
+      if(log_manager.IsInLoggingMode()){
+        auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
                                              transaction_->GetTransactionId(), 
                                              target_table_->GetOid(),

@@ -8,6 +8,16 @@
 include $(top_srcdir)/common.am
 
 ######################################################################
+# DEPENDENCIES
+######################################################################
+
+all-local:
+	-python ../../scripts/installation/nvml.py --build
+	
+install-exec-local:
+	-python ../../scripts/installation/nvml.py --install
+
+######################################################################
 # SUBDIRS
 ######################################################################
 
@@ -80,7 +90,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm
+libpeloton_la_LDFLAGS = -lm -lpmem
 
 ######################################################################
 # LIBPELOTONPG

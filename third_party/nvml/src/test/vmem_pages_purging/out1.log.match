@@ -1,3 +1,0 @@
-vmem_pages_purging/TEST1: START: vmem_pages_purging
- ./vmem_pages_purging$(nW) -z $(nW)
-vmem_pages_purging/TEST1: Done
