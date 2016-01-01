@@ -25,6 +25,7 @@
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/conjunction_expression.h"
+#include "backend/expression/vector_expression.h"
 
 namespace peloton {
 namespace test {
@@ -333,6 +334,63 @@ TEST(ExpressionTest, SimpleFilter) {
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
   std::cout << (*equal);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), false);
+
+  // delete the root to destroy the full tree.
+  delete equal;
+
+  delete schema;
+  delete tuple;
+}
+
+TEST(ExpressionTest, SimpleInFilter) {
+  // WHERE id in (15, 20)
+
+  // EXPRESSION
+
+  expression::TupleValueExpression *tup_val_exp =
+      new expression::TupleValueExpression(0, 0);
+  expression::ConstantValueExpression *const_val_exp1 =
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(15));
+  expression::ConstantValueExpression *const_val_exp2 =
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(20));
+
+  std::vector<expression::AbstractExpression *> vec_const_exprs;
+  vec_const_exprs.push_back(const_val_exp1);
+  vec_const_exprs.push_back(const_val_exp2);
+
+  expression::VectorExpression *vec_exp =
+      new expression::VectorExpression(
+    		  VALUE_TYPE_ARRAY, vec_const_exprs);
+
+  expression::ComparisonExpression<expression::CmpIn> *equal =
+      new expression::ComparisonExpression<expression::CmpIn>(
+          EXPRESSION_TYPE_COMPARE_IN, tup_val_exp, vec_exp);
+
+  // TUPLE
+
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
+
+  std::cout << (*equal);
+
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);

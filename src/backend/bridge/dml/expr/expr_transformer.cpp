@@ -24,7 +24,13 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/expression/cast_expression.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/vector_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "postgres/include/executor/executor.h" //added by michael
+#include "backend/expression/comparison_expression.h" //added by michael
 
 namespace peloton {
 namespace bridge {
@@ -62,6 +68,10 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
       peloton_expr = TransformOp(expr_state);
       break;
 
+    case T_ScalarArrayOpExpr:
+      peloton_expr = TransformScalarArrayOp(expr_state);
+      break;
+
     case T_Var:
       peloton_expr = TransformVar(expr_state);
       break;
@@ -89,6 +99,33 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
                 nodeTag(expr_state->expr))
+      ;
+  }
+
+  return peloton_expr;
+}
+
+expression::AbstractExpression* ExprTransformer::TransformExpr(
+    const Expr* expr) {
+  if (nullptr == expr) {
+    LOG_TRACE("Null expression");
+    return nullptr;
+  }
+
+  expression::AbstractExpression* peloton_expr = nullptr;
+
+  switch (nodeTag(expr)) {
+    case T_Const:
+      peloton_expr = TransformConst(expr);
+      break;
+
+    case T_Var:
+      peloton_expr = TransformVar(expr);
+      break;
+
+    default:
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+                nodeTag(expr))
       ;
   }
 
@@ -130,6 +167,56 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   return rv;
 }
 
+expression::AbstractExpression* ExprTransformer::TransformConst(
+    const Expr* es) {
+  auto const_expr = reinterpret_cast<const Const*>(es);
+
+  Value value;
+
+  if (const_expr->constisnull) {  // Constant is null
+    value = ValueFactory::GetNullValue();
+  } else if (const_expr->constbyval) {  // non null
+    value = TupleTransformer::GetValue(const_expr->constvalue,
+                                       const_expr->consttype);
+  } else if (const_expr->constlen == -1) {
+    LOG_TRACE("Probably handing a string constant \n");
+    value = TupleTransformer::GetValue(const_expr->constvalue,
+                                       const_expr->consttype);
+  } else {
+    LOG_ERROR(
+        "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
+        "%lu \n",
+        const_expr->constlen, const_expr->constbyval,
+        (long unsigned )const_expr->constvalue);
+  }
+
+  // A Const Expr has no children.
+  // modified by michael for IN operator
+  //if (false) {
+  if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_INT2_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_INT4_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_FLOADT4_ARRAY ||
+		  const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY ) {
+	  std::vector<expression::AbstractExpression *>* vecExpr = new std::vector<expression::AbstractExpression *>;
+	  Value tmpVal;
+	  int nElements = value.ArrayLength();
+	  for (int i = 0; i < nElements; i++) {
+		  tmpVal = value.ItemAtIndex(i);
+		  std::string str = tmpVal.Debug();
+		  expression::AbstractExpression* ce = expression::ConstantValueFactory(tmpVal);
+		  vecExpr->push_back(ce);
+	  }
+	  auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
+	  return rv;
+	  //Free val and vector here ?michael vector_expression delete vecExpr
+  } else {
+	  auto rv = expression::ConstantValueFactory(value);
+	  return rv;
+  }
+
+}
+
 expression::AbstractExpression* ExprTransformer::TransformOp(
     const ExprState* es) {
   LOG_TRACE("Transform Op \n");
@@ -143,6 +230,42 @@ expression::AbstractExpression* ExprTransformer::TransformOp(
 
   return ReMapPgFunc(pg_func_id, func_state->args);
 }
+
+//added by michael for IN operator
+expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
+    const ExprState* es) {
+  LOG_TRACE("Transform ScalarArrayOp \n");
+
+  auto op_expr = reinterpret_cast<const ScalarArrayOpExpr*>(es->expr);
+  //auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
+  assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
+  const List* list = op_expr->args;
+  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
+
+   // Extract function arguments (at most two)
+   expression::AbstractExpression* lc = nullptr;
+   expression::AbstractExpression* rc = nullptr;
+   int ic = 0;
+   ListCell* arg;
+   foreach (arg, list)
+   {
+     Expr* ex = (Expr*) lfirst(arg);
+
+     if (ic >= list_length(list))
+       break;
+     if (ic == 0)
+       lc = TransformExpr(ex);
+     else if (ic == 1)
+       rc = TransformExpr(ex);
+     else break;
+
+     ic++;
+   }
+
+   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
+   //return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc, rc);
+}
+
 
 expression::AbstractExpression* ExprTransformer::TransformFunc(
     const ExprState* es) {
@@ -185,6 +308,32 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
     const ExprState* es) {
   // Var expr only needs default ES
   auto var_expr = reinterpret_cast<const Var*>(es->expr);
+
+  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+
+  /*
+   * Special case: an varattno of zero in PG
+   * means return the whole row.
+   * We don't want that, just return null.
+   */
+  if (!AttributeNumberIsValid(
+      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
+    return nullptr;
+  }
+
+  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
+      var_expr->varattno));
+
+  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+
+  // TupleValue expr has no children.
+  return expression::TupleValueFactory(tuple_idx, value_idx);
+}
+
+expression::AbstractExpression* ExprTransformer::TransformVar(
+    const Expr* es) {
+  // Var expr only needs default ES
+  auto var_expr = reinterpret_cast<const Var*>(es);
 
   oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
