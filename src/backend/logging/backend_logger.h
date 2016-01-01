@@ -85,6 +85,7 @@ class BackendLogger : public Logger{
     // wait for the frontend to flush
     // need to ensure synchronous commit
     bool wait_for_flushing = false;
+
     // Used for notify any waiting thread that backend is flushed
     std::mutex flush_notify_mutex;
     std::condition_variable flush_notify_cv;

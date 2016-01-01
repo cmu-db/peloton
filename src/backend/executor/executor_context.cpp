@@ -33,7 +33,7 @@ VarlenPool *ExecutorContext::GetExecutorContextPool() {
 
   // construct pool if needed
   if(pool_.get() == nullptr)
-    pool_.reset(new VarlenPool());
+    pool_.reset(new VarlenPool(BACKEND_TYPE_MM));
 
   // return pool
   return pool_.get();
