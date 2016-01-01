@@ -32,6 +32,9 @@ class ExprTransformer {
 
   static expression::AbstractExpression *TransformExpr(
       const ExprState *expr_state);
+  //added by michael
+  static expression::AbstractExpression *TransformExpr(
+      const Expr *expr);
   static bool CleanExprTree(expression::AbstractExpression* root);
  private:
   /*
@@ -42,6 +45,7 @@ class ExprTransformer {
 
   static expression::AbstractExpression *TransformConst(const ExprState *es);
   static expression::AbstractExpression *TransformOp(const ExprState *es);
+  static expression::AbstractExpression *TransformScalarArrayOp(const ExprState *es); //added by michael for IN operator
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);
@@ -49,6 +53,12 @@ class ExprTransformer {
       const ExprState *es);
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
+
+  static expression::AbstractExpression *TransformConst(const Expr *es);
+  static expression::AbstractExpression *TransformVar(const Expr *es);
+  static expression::AbstractExpression *TransformBool(const Expr *es);
+  static expression::AbstractExpression *TransformParam(const Expr *es);
+
 
   static expression::AbstractExpression *TransformList(
       const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
