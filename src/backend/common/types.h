@@ -317,6 +317,7 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_NESTLOOP = 20,
   PLAN_NODE_TYPE_NESTLOOPINDEX = 21,
   PLAN_NODE_TYPE_MERGEJOIN = 22,
+  PLAN_NODE_TYPE_HASHJOIN = 23,
 
   // Mutator Nodes
   PLAN_NODE_TYPE_UPDATE = 30,
@@ -341,6 +342,7 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_APPEND = 59,  // append
 
   PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
+  PLAN_NODE_TYPE_HASH = 62,
 
   // Utility
   PLAN_NODE_TYPE_RESULT = 70,
@@ -598,6 +600,8 @@ static const oid_t START_OID = 0;
 static const oid_t INVALID_OID = std::numeric_limits<oid_t>::max();
 
 static const oid_t MAX_OID = std::numeric_limits<oid_t>::max() - 1;
+
+#define NULL_OID MAX_OID
 
 // For transaction id
 

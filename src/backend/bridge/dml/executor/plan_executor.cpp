@@ -240,6 +240,14 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_HASH:
+      child_executor = new executor::HashExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_HASHJOIN:
+      child_executor = new executor::HashJoinExecutor(plan, executor_context);
+      break;
+
     case PLAN_NODE_TYPE_PROJECTION:
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
@@ -258,8 +266,7 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     default:
-      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type)
-      ;
+      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
       break;
   }
 

@@ -21,12 +21,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/nested_loop_join_executor.h"
-#include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
-
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
 
 #include "mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -39,70 +34,11 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-// Create join predicate
-expression::AbstractExpression *CreateJoinPredicate() {
-  expression::AbstractExpression *predicate = nullptr;
-
-  // LEFT.1 == RIGHT.1
-
-  expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1);
-  expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1);
-
-  expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
-
-  // LEFT.3 > 50.0
-
-  expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(0, 1);
-  expression::ConstantValueExpression *const_val_1 =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetDoubleValue(50.0));
-  expression::ComparisonExpression<expression::CmpGt> *comp_b =
-      new expression::ComparisonExpression<expression::CmpGt>(
-          EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
-
-  predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-      EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
-
-  return predicate;
-}
-
-planner::ProjectInfo *CreateProjection() {
-  // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  /////////////////////////////////////////////////////////
-  // PROJECTION 0
-  /////////////////////////////////////////////////////////
-
-  // direct map
-  planner::ProjectInfo::DirectMap direct_map1 = std::make_pair(
-      0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 = std::make_pair(
-      1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 = std::make_pair(
-      2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(
-      3, std::make_pair(0, 0));
-  direct_map_list.push_back(direct_map1);
-  direct_map_list.push_back(direct_map2);
-  direct_map_list.push_back(direct_map3);
-  direct_map_list.push_back(direct_map4);
-
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
-}
-
 // Cartesian Product Test
 TEST(NestedLoopJoinTests, CartesianProductTest) {
   // Create plan node.
-  auto projction = CreateProjection();
-  planner::NestedLoopJoinPlan node(nullptr, projction);
+  auto projection = JoinTestsUtil::CreateProjection();
+  planner::NestedLoopJoinPlan node(nullptr, projection);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
@@ -180,8 +116,8 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
 // Join Predicate Test
 TEST(NestedLoopJoinTests, JoinPredicateTest) {
   // Create predicate
-  auto predicate = CreateJoinPredicate();
-  auto projection = CreateProjection();
+  auto predicate = JoinTestsUtil::CreateJoinPredicate();
+  auto projection = JoinTestsUtil::CreateProjection();
 
   // Create plan node.
   planner::NestedLoopJoinPlan node(predicate, projection);
