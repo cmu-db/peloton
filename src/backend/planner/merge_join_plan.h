@@ -50,10 +50,11 @@ class MergeJoinPlan : public AbstractJoinPlan {
   MergeJoinPlan(MergeJoinPlan &&) = delete;
   MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
 
-  MergeJoinPlan(const expression::AbstractExpression *predicate,
+  MergeJoinPlan(PelotonJoinType join_type,
+                const expression::AbstractExpression *predicate,
                 const ProjectInfo *proj_info,
                 std::vector<JoinClause> &join_clauses)
-  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info),
+  : AbstractJoinPlan(join_type, predicate, proj_info),
     join_clauses_(std::move(join_clauses)) {
     // Nothing to see here...
   }

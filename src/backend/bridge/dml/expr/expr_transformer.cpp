@@ -101,8 +101,7 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
   if (nodeTag(expr_state->expr) == T_List) {
     const List* list = reinterpret_cast<const List*>(expr_state);
     ListCell* l;
-    int length = list_length(list);
-    assert(length > 0);
+    assert(list_length(list) > 0);
     LOG_TRACE("Expression List of length %d", length);
 
     foreach (l, list)

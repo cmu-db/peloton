@@ -71,8 +71,6 @@ class HashExecutor : public AbstractExecutor {
 
   size_t result_itr = 0;
 
-  void DumpHashTable() const;
-
 };
 
 } /* namespace executor */

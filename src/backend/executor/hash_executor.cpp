@@ -89,9 +89,6 @@ bool HashExecutor::DExecute() {
     done_ = true;
   }
 
-  // Print hash table for debugging
-  DumpHashTable();
-
   // Return logical tiles one at a time
   while (result_itr < child_tiles_.size()) {
     if (child_tiles_[result_itr]->GetTupleCount() == 0) {
@@ -106,16 +103,6 @@ bool HashExecutor::DExecute() {
   return false;
 }
 
-
-void HashExecutor::DumpHashTable() const {
-  assert(done_);
-
-  // Go over hash table
-  for (auto &kv : htable_) {
-    LOG_INFO("Key %lu, Num of tuple: %lu", kv.first.HashCode(), kv.second.size());
-  }
-
-}
 
 } /* namespace executor */
 } /* namespace peloton */
