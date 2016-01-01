@@ -34,23 +34,8 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   expression::TupleValueExpression *right_table_attr_1 =
       new expression::TupleValueExpression(1, 1);
 
-  expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(
+  predicate = new expression::ComparisonExpression<expression::CmpEq>(
           EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
-
-  // LEFT.3 > 50.0
-
-  expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(0, 1);
-  expression::ConstantValueExpression *const_val_1 =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetDoubleValue(50.0));
-  expression::ComparisonExpression<expression::CmpGt> *comp_b =
-      new expression::ComparisonExpression<expression::CmpGt>(
-          EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
-
-  predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-      EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
 
   return predicate;
 }
@@ -73,6 +58,7 @@ planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
       2, std::make_pair(1, 0));
   planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(
       3, std::make_pair(0, 0));
+
   direct_map_list.push_back(direct_map1);
   direct_map_list.push_back(direct_map2);
   direct_map_list.push_back(direct_map3);
@@ -81,6 +67,39 @@ planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
 }
+
+// Create complicated join predicate
+expression::AbstractExpression *JoinTestsUtil::CreateComplicatedJoinPredicate() {
+  expression::AbstractExpression *predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+
+  expression::TupleValueExpression *left_table_attr_1 =
+      new expression::TupleValueExpression(0, 1);
+  expression::TupleValueExpression *right_table_attr_1 =
+      new expression::TupleValueExpression(1, 1);
+
+  expression::ComparisonExpression<expression::CmpEq> *comp_a =
+      new expression::ComparisonExpression<expression::CmpEq>(
+          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+
+  // LEFT.3 > 50.0
+
+  expression::TupleValueExpression *left_table_attr_3 =
+      new expression::TupleValueExpression(0, 1);
+  expression::ConstantValueExpression *const_val_1 =
+      new expression::ConstantValueExpression(
+          ValueFactory::GetDoubleValue(50.0));
+  expression::ComparisonExpression<expression::CmpGt> *comp_b =
+      new expression::ComparisonExpression<expression::CmpGt>(
+          EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
+
+  predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+      EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
+
+  return predicate;
+}
+
 
 }  // namespace test
 }  // namespace peloton

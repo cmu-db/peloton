@@ -43,6 +43,9 @@ class JoinTestsUtil {
   // Create projection
   static planner::ProjectInfo *CreateProjection();
 
+  // Create complicated join predicate
+  static expression::AbstractExpression *CreateComplicatedJoinPredicate();
+
 };
 
 }  // namespace test

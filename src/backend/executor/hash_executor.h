@@ -46,7 +46,7 @@ class HashExecutor : public AbstractExecutor {
       expression::ContainerTupleComparator<LogicalTile> > HashMapType;
 
   inline HashMapType &GetHashTable() {
-    return this->htable_;
+    return this->hash_table_;
   }
 
   inline const std::vector<oid_t> &GetHashKeyIds() const {
@@ -60,7 +60,7 @@ class HashExecutor : public AbstractExecutor {
 
  private:
   /** @brief Hash table */
-  HashMapType htable_;
+  HashMapType hash_table_;
 
   /** @brief Input tiles from child node */
   std::vector<std::unique_ptr<LogicalTile> > child_tiles_;
