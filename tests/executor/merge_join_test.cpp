@@ -51,9 +51,8 @@ TEST(MergeJoinTests, BasicTest) {
   // Create plan node.
   auto projection = JoinTestsUtil::CreateProjection();
   auto join_clauses = CreateJoinClauses();
-  planner::MergeJoinPlan node(nullptr, projection, join_clauses);
+  planner::MergeJoinPlan node(JOIN_TYPE_INNER, nullptr, projection, join_clauses);
 
-  node.SetJoinType(JOIN_TYPE_INNER);
   // Run the executor
   executor::MergeJoinExecutor executor(&node, nullptr);
 

@@ -32,9 +32,10 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan(HashJoinPlan &&) = delete;
   HashJoinPlan &operator=(HashJoinPlan &&) = delete;
 
-  HashJoinPlan(const expression::AbstractExpression *predicate,
-                const ProjectInfo *proj_info)
-  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {}
+  HashJoinPlan(PelotonJoinType join_type,
+               const expression::AbstractExpression *predicate,
+               const ProjectInfo *proj_info)
+  : AbstractJoinPlan(join_type, predicate, proj_info) {}
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_HASHJOIN;

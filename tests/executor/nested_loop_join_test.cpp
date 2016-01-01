@@ -38,9 +38,7 @@ namespace test {
 TEST(NestedLoopJoinTests, CartesianProductTest) {
   // Create plan node.
   auto projection = JoinTestsUtil::CreateProjection();
-  planner::NestedLoopJoinPlan node(nullptr, projection);
-
-  node.SetJoinType(JOIN_TYPE_INNER);
+  planner::NestedLoopJoinPlan node(JOIN_TYPE_INNER, nullptr, projection);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
@@ -122,9 +120,8 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   auto projection = JoinTestsUtil::CreateProjection();
 
   // Create plan node.
-  planner::NestedLoopJoinPlan node(predicate, projection);
+  planner::NestedLoopJoinPlan node(JOIN_TYPE_INNER, predicate, projection);
 
-  node.SetJoinType(JOIN_TYPE_INNER);
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
 
