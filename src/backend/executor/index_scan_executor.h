@@ -33,6 +33,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   explicit IndexScanExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
+  ~IndexScanExecutor();
+
  protected:
   bool DInit();
 

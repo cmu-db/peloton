@@ -146,11 +146,52 @@ static void BuildScanKey(
     assert(!(scan_key->sk_flags & SK_SEARCHNULL));
     assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
 
-    Value value =
+	Oid value_type;
+    Value value;
+    // added by michael for IN operator
+    if (scan_key->sk_flags & SK_SEARCHARRAY) {
 
-       TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
-    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno -
-                                             1);  // 1 indexed
+    	switch (scan_key->sk_subtype) {
+
+    		case POSTGRES_VALUE_TYPE_SMALLINT: {
+    			value_type = POSTGRES_VALUE_TYPE_INT2_ARRAY;
+        	} break;
+
+    		case POSTGRES_VALUE_TYPE_INTEGER: {
+    			value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
+    		} break;
+
+    		case POSTGRES_VALUE_TYPE_BIGINT: {
+    			value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
+    		} break;
+
+    		case POSTGRES_VALUE_TYPE_DOUBLE: {
+    			value_type = POSTGRES_VALUE_TYPE_FLOADT4_ARRAY;
+    		} break;
+
+    		case POSTGRES_VALUE_TYPE_BPCHAR: {
+    			//TODO WHICH TYPE SHOULD BE TRANSFORMED? by michael
+    		} break;
+
+    		case POSTGRES_VALUE_TYPE_VARCHAR2: {
+    			//TODO WHICH TYPE SHOULD BE TRANSFORMED? by michael
+    		} break;
+
+    		case POSTGRES_VALUE_TYPE_TEXT: {
+    			value_type = POSTGRES_VALUE_TYPE_TEXT_ARRAY;
+    		} break;
+
+    		default:
+    			LOG_ERROR("Unsupported Postgres Expr Type: %u (see 'nodes.h')\n", scan_key->sk_subtype);
+    	} //end swith
+
+    	value = TupleTransformer::GetValue(scan_key->sk_argument, value_type);
+
+    } else {
+    	value = TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+    }
+
+    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
 
 
     index_scan_desc.values.push_back(value);
@@ -166,16 +207,22 @@ static void BuildScanKey(
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
-      case BTEqualStrategyNumber:
-        LOG_INFO("key = %s", value.Debug().c_str());
-        index_scan_desc.expr_types.push_back(
-            ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-        break;
+      case BTEqualStrategyNumber: {
+    	  if (scan_key->sk_flags & SK_SEARCHARRAY) {
+    		  LOG_INFO("key >= %s", value.Debug().c_str());
+    		  index_scan_desc.expr_types.push_back(
+    				  ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
+    	  } else {
+    		  LOG_INFO("key >= %s", value.Debug().c_str());
+    		  index_scan_desc.expr_types.push_back(
+    				  ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    	  }
+      	} break;
       case BTGreaterEqualStrategyNumber:
         LOG_INFO("key >= %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-        break;
+      	break;
       case BTGreaterStrategyNumber:
         LOG_INFO("key > %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(

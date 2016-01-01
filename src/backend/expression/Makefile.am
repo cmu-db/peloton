@@ -12,7 +12,6 @@ expression_FILES = \
 				   backend/expression/operator_expression.cpp \
 				   backend/expression/subquery_expression.cpp \
 				   backend/expression/function_expression.cpp \
-				   backend/expression/vector_expression.cpp \
 				   backend/expression/tuple_address_expression.cpp
 				   
 expression_INCLUDES = \
