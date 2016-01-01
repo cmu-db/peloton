@@ -11,8 +11,7 @@ check_PROGRAMS += \
 				  seq_scan_test \
 				  index_scan_test \
 				  limit_test \
-				  nested_loop_join_test \
-				  merge_join_test \
+				  join_test \
 				  order_by_test \
 				  hash_set_op_test \
 				  aggregate_test \
@@ -46,14 +45,11 @@ index_scan_test_SOURCES = \
 limit_test_SOURCES = \
 					 $(executor_tests_common) \
 					 executor/limit_test.cpp
-
-nested_loop_join_test_SOURCES = \
-								$(executor_tests_common) \
-								executor/nested_loop_join_test.cpp 
-
-merge_join_test_SOURCES = \
-								$(executor_tests_common) \
-								executor/merge_join_test.cpp 
+								
+join_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/join_test.cpp \
+						executor/join_tests_util.cpp
 
 order_by_test_SOURCES = \
 						$(executor_tests_common) \

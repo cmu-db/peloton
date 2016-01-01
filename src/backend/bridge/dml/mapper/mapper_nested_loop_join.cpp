@@ -74,12 +74,12 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
         nl_plan_state->tts_tupleDescriptor);
 
     result = new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinPlan(predicate, nullptr);
+    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr);
     result->AddChild(plan_node);
   }
   else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::NestedLoopJoinPlan(predicate, project_info.release());
+    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate, project_info.release());
     result = plan_node;
   }
 
@@ -89,7 +89,6 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
       PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state));
 
   /* Add the children nodes */
-  plan_node->SetJoinType(peloton_join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 

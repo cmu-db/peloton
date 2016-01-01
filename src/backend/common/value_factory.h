@@ -111,6 +111,17 @@ class ValueFactory {
     return Value::GetNullValue();
   }
 
+  static inline Value GetNullValueByType(ValueType type) {
+    switch (type) {
+      case VALUE_TYPE_VARCHAR:
+        return GetNullStringValue();
+      case VALUE_TYPE_VARBINARY:
+        return GetNullBinaryValue();
+      default:
+        return GetNullValue();
+    }
+  }
+
   static inline Value GetDecimalValueFromString(const std::string &txt) {
     return Value::GetDecimalValueFromString(txt);
   }

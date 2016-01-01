@@ -31,9 +31,10 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
-  NestedLoopJoinPlan(const expression::AbstractExpression *predicate,
+  NestedLoopJoinPlan(PelotonJoinType join_type,
+                     const expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
-  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {
+  : AbstractJoinPlan(join_type, predicate, proj_info) {
     // Nothing to see here...
   }
 

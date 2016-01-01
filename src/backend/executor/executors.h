@@ -24,6 +24,8 @@
 #include "backend/executor/update_executor.h"
 #include "backend/executor/nested_loop_join_executor.h"
 #include "backend/executor/merge_join_executor.h"
+#include "backend/executor/hash_join_executor.h"
+#include "backend/executor/hash_executor.h"
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/hash_set_op_executor.h"
 #include "backend/executor/append_executor.h"
