@@ -28,34 +28,24 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
   explicit MergeJoinExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context);
 
-  ~MergeJoinExecutor() {
-    for (auto tile : left_tiles_) {
-      delete tile;
-    }
-    for (auto tile : right_tiles_) {
-      delete tile;
-    }
-  }
-
  protected:
   bool DInit();
 
   bool DExecute();
 
-  bool left_end_ = false;
-
-  bool right_end_ = false;
-
  private:
 
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
-  std::vector<LogicalTile*> left_tiles_;
-  std::vector<LogicalTile*> right_tiles_;
-
   /** @brief a vector of join clauses
    * Get this from plan node while init */
   const std::vector<planner::MergeJoinPlan::JoinClause> *join_clauses_;
+
+  size_t left_start_row = 0;
+  size_t right_start_row = 0;
+
+  size_t left_end_row = 0;
+  size_t right_end_row = 0;
 
 };
 

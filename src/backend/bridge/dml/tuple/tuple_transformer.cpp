@@ -279,11 +279,15 @@ Datum TupleTransformer::GetDatum(Value value) {
     } break;
 
     case VALUE_TYPE_VARCHAR: {
-      char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
-      auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
-      // NB: Peloton object don't have terminating-null's, so
-      // we should use PG functions that take explicit length.
-      datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
+      if (value.IsNull()) {
+        datum = PointerGetDatum(nullptr);
+      } else {
+        char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
+        auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
+        // NB: Peloton object don't have terminating-null's, so
+        // we should use PG functions that take explicit length.
+        datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
+      }
     } break;
 
     case VALUE_TYPE_TIMESTAMP: {
@@ -307,6 +311,10 @@ Datum TupleTransformer::GetDatum(Value value) {
 
 
     } break;
+
+    case VALUE_TYPE_NULL:
+      datum = PointerGetDatum(nullptr);
+      break;
 
     default:
       datum = PointerGetDatum(nullptr);
@@ -378,7 +386,8 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
     assert(tuple_desc->attrs[att_itr]->attbyval == true
            || value.GetValueType() == VALUE_TYPE_VARCHAR
            || value.GetValueType() == VALUE_TYPE_VARBINARY
-           || value.GetValueType() == VALUE_TYPE_DECIMAL);
+           || value.GetValueType() == VALUE_TYPE_DECIMAL
+           || value.GetValueType() == VALUE_TYPE_NULL);
 
     datums[att_itr] = datum;
     nulls[att_itr] = value.IsNull() ? true : false;
@@ -401,6 +410,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
       assert(tuple_desc->attrs[att_itr]->attbyval == false);
+      if (nulls[att_itr]) continue;
 
       pfree((void *)(datums[att_itr]));
     }

@@ -16,13 +16,15 @@
 #include <memory>
 
 #include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/storage/data_table.h"
 
 namespace peloton {
 
 namespace expression {
 class AbstractExpression;
+}
+
+namespace planner {
+class ProjectInfo;
 }
 
 namespace storage {
@@ -34,12 +36,16 @@ namespace test {
 
 class JoinTestsUtil {
  public:
-  /** @brief Helper method for performing join tests */
-  static bool ExecuteJoinTest(
-      peloton::storage::DataTable *leftTable,
-      peloton::storage::DataTable *rightTable,
-      peloton::storage::DataTable *expected, peloton::PelotonJoinType joinType,
-      peloton::expression::AbstractExpression *predicate);
+
+  // Create join predicate
+  static expression::AbstractExpression *CreateJoinPredicate();
+
+  // Create projection
+  static planner::ProjectInfo *CreateProjection();
+
+  // Create complicated join predicate
+  static expression::AbstractExpression *CreateComplicatedJoinPredicate();
+
 };
 
 }  // namespace test

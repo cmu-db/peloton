@@ -114,7 +114,6 @@ public class PelotonTest {
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
     pgstmt.setPrepareThreshold(1);
     for (int i = 0; i < n; i++) {
-      /*
       String data1 = "Ming says hello world and id = " + i;
       String data2 = "Joy says hello world and id = " + i;
       stmt.setInt(1, i);
@@ -122,7 +121,7 @@ public class PelotonTest {
       stmt.setString(2, data1);
       stmt.setString(4, data2);
       int ret = stmt.executeUpdate();
-      */
+      /*
       String data = TABLE.A.name() + " says hello world and id = " + i;
       stmtA.setInt(1, i);
       stmtA.setString(2, data);
@@ -133,6 +132,7 @@ public class PelotonTest {
       System.out.println("A Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
       ret = stmtB.executeUpdate();
       System.out.println("B Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
+      */
     }
     conn.commit();
     conn.setAutoCommit(true);
