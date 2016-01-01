@@ -18,13 +18,21 @@
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
+
 #include "backend/executor/hash_join_executor.h"
 #include "backend/executor/hash_executor.h"
+#include "backend/executor/merge_join_executor.h"
+#include "backend/executor/nested_loop_join_executor.h"
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/expression_util.h"
+
 #include "backend/planner/hash_join_plan.h"
 #include "backend/planner/hash_plan.h"
+#include "backend/planner/merge_join_plan.h"
+#include "backend/planner/nested_loop_join_plan.h"
+
 #include "backend/storage/data_table.h"
 
 #include "mock_executor.h"
@@ -41,7 +49,7 @@ namespace test {
 // Basic Test
 // Single join clause, multiple tiles with same tuples per tile,
 // join on key (i.e. there will have at most one tuple for each different join key
-TEST(HashJoinTests, BasicTest) {
+TEST(JoinTests, CartesianProductTest) {
 
   expression::AbstractExpression *right_table_attr_1 =
       new expression::TupleValueExpression(1, 1);
@@ -57,8 +65,7 @@ TEST(HashJoinTests, BasicTest) {
 
   // Create hash join plan node.
   auto projection = JoinTestsUtil::CreateProjection();
-  planner::HashJoinPlan hash_join_plan_node(nullptr, projection);
-  hash_join_plan_node.SetJoinType(JOIN_TYPE_INNER);
+  planner::HashJoinPlan hash_join_plan_node(JOIN_TYPE_INNER, nullptr, projection);
 
   // Create the hash join hash_join_executor
   executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
