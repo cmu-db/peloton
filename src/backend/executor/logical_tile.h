@@ -13,7 +13,6 @@
 #pragma once
 
 #include <iterator>
-#include <unordered_set>
 #include <vector>
 #include <memory>
 
@@ -21,7 +20,7 @@
 
 namespace peloton {
 
-namespace catalog{
+namespace catalog {
 class Schema;
 }
 
@@ -51,6 +50,12 @@ class LogicalTile {
  public:
   struct ColumnInfo;
 
+  /* A vector of position to represent a column */
+  typedef std::vector<oid_t> PositionList;
+
+  /* A vector of column to represent a tile */
+  typedef std::vector<PositionList> PositionLists;
+
   LogicalTile(const LogicalTile &) = delete;
   LogicalTile &operator=(const LogicalTile &) = delete;
   LogicalTile(LogicalTile &&) = delete;
@@ -64,9 +69,10 @@ class LogicalTile {
   void AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
                   const std::vector<oid_t> &column_ids);
 
-  void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
+  void ProjectColumns(const std::vector<oid_t> &original_column_ids,
+                      const std::vector<oid_t> &column_ids);
 
-  int AddPositionList(std::vector<oid_t> &&position_list);
+  int AddPositionList(PositionList &&position_list);
 
   void RemoveVisibility(oid_t tuple_id);
 
@@ -86,14 +92,13 @@ class LogicalTile {
 
   void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
+  const PositionLists &GetPositionLists() const;
 
-  const std::vector<oid_t> &GetPositionList(const oid_t column_id) const;
+  const PositionList &GetPositionList(const oid_t column_id) const;
 
-  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
+  void SetPositionLists(PositionLists &&position_lists);
 
-  void SetPositionListsAndVisibility(
-      std::vector<std::vector<oid_t>> &&position_lists);
+  void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
@@ -158,9 +163,97 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
+  //===--------------------------------------------------------------------===//
+  // Position Lists Builder
+  //===--------------------------------------------------------------------===//
+  class PositionListsBuilder {
+   public:
+    PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile);
+
+    inline void SetLeftSource(const PositionLists *left_source) {
+      left_source_ = left_source;
+    }
+
+    inline void SetRightSource(const PositionLists *right_source) {
+      right_source_ = right_source;
+    }
+
+    inline void AddRow(size_t left_itr, size_t right_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < left_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(
+            (*left_source_)[output_tile_column_itr][left_itr]);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < right_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
+      }
+    }
+
+    inline void AddLeftNullRow(size_t right_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < left_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(
+        NULL_OID);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < right_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
+      }
+    }
+
+    inline void AddRightNullRow(size_t left_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < left_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back((*left_source_)[output_tile_column_itr][left_itr]);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < right_source_->size();
+          output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(NULL_OID);
+      }
+    }
+
+    inline PositionLists &&Release() {
+      invalid_ = true;
+      return std::move(output_lists_);
+    }
+
+    inline size_t Size() const {
+      return output_lists_[0].size();
+    }
+
+   private:
+    const PositionLists *left_source_;
+    const PositionLists *right_source_;
+    PositionLists output_lists_;
+    bool invalid_ = false;
+  };
+
  private:
   // Dummy default constructor
-  LogicalTile(){};
+  LogicalTile() {
+  }
+  ;
 
   /**
    * @brief Mapping of column ids in this logical tile to the underlying
@@ -172,7 +265,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<oid_t>> position_lists_;
+  PositionLists position_lists_;
 
   /**
    * @brief Bit-vector storing visibility of each row in the position lists.

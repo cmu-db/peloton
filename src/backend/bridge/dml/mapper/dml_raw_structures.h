@@ -168,6 +168,10 @@ struct MergeJoinPlanState : public AbstractJoinPlanState {
 
 };
 
+struct HashJoinPlanState : public AbstractJoinPlanState {
+
+};
+
 
 struct AggPlanState : public AbstractPlanState {
   const Agg* agg_plan;
@@ -190,5 +194,8 @@ struct SortPlanState : public AbstractPlanState {
 
 };
 
+struct HashPlanState : public AbstractPlanState {
+  List* hashkeys;
+};
 
 

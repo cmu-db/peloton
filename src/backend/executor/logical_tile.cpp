@@ -19,6 +19,7 @@
 #include "backend/common/value.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile.h"
+#include "backend/common/value_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -63,7 +64,7 @@ catalog::Schema *LogicalTile::GetPhysicalSchema() const {
  * @brief Get the position lists of the tile.
  * @return Position lists of the tile.
  */
-const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
+const LogicalTile::PositionLists &LogicalTile::GetPositionLists() const {
   return position_lists_;
 }
 
@@ -71,7 +72,7 @@ const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
  * @brief Get the position list at given offset in the tile.
  * @return Position list associated with column.
  */
-const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) const {
+const LogicalTile::PositionList &LogicalTile::GetPositionList(const oid_t column_id) const {
   return position_lists_[column_id];
 }
 
@@ -79,13 +80,11 @@ const std::vector<oid_t> &LogicalTile::GetPositionList(const oid_t column_id) co
  * @brief Set the position lists of the tile.
  * @param Position lists.
  */
-void LogicalTile::SetPositionLists(
-    std::vector<std::vector<oid_t>> &&position_lists) {
+void LogicalTile::SetPositionLists(LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
 }
 
-void LogicalTile::SetPositionListsAndVisibility(
-    std::vector<std::vector<oid_t>> &&position_lists) {
+void LogicalTile::SetPositionListsAndVisibility(LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
   if (position_lists.size() > 0) {
     total_tuples_ = position_lists[0].size();
@@ -104,7 +103,7 @@ void LogicalTile::SetPositionListsAndVisibility(
  *
  * @return Position list index of newly added list.
  */
-int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
+int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
   assert(
       position_lists_.size() == 0
           || position_lists_[0].size() == position_list.size());
@@ -162,9 +161,11 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   storage::Tile *base_tile = cp.base_tile.get();
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
-  Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
-
-  return value;
+  if (base_tuple_id == NULL_OID) {
+    return ValueFactory::GetNullValueByType(base_tile->GetSchema()->GetType(column_id));
+  } else {
+    return base_tile->GetValue(base_tuple_id, cp.origin_column_id);
+  }
 }
 
 /**
@@ -299,6 +300,26 @@ oid_t LogicalTile::iterator::operator*() {
 LogicalTile::~LogicalTile() {
   // Automatically drops reference on base tiles for each column
 
+}
+
+
+LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile) :
+  left_source_(&left_tile->GetPositionLists()),
+  right_source_(&right_tile->GetPositionLists()) {
+
+  // Compute the output logical tile column count
+  size_t left_tile_column_count = left_source_->size();
+  size_t right_tile_column_count = right_source_->size();
+  size_t output_tile_column_count = left_tile_column_count
+      + right_tile_column_count;
+
+  assert(left_tile_column_count > 0);
+  assert(right_tile_column_count > 0);
+
+  // Construct position lists for output tile
+  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++) {
+    output_lists_.push_back(std::vector<oid_t>());
+  }
 }
 
 /**
