@@ -77,6 +77,7 @@ class Value;
 #define VALUE_COMPARE_EQUAL 0
 #define VALUE_COMPARE_GREATERTHAN 1
 #define VALUE_COMPARE_INVALID -2
+#define VALUE_COMPARE_NO_EQUAL -3 // assigned when comparing array list and no element matching. by michael
 
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
@@ -134,6 +135,12 @@ enum PostgresValueType {
 
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
+
+  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,      //added by michael: TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,      //added by michael: INT2ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,      //added by michael: INT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_OID_ARRAY =1028,        //added by michael: OIDARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  //added by michael: FLOADT4ARRAYOID in postgres code
 
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
