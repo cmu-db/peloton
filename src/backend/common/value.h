@@ -2252,6 +2252,7 @@ class Value {
   {
     Value retval(VALUE_TYPE_ARRAY);
     retval.AllocateANewValueList(elementCount, elementType);
+    retval.SetSourceInlined(false);
     return retval;
   }
 
