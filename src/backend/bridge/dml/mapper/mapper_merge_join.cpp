@@ -76,11 +76,14 @@ const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
         mj_plan_state->tts_tupleDescriptor);
     result = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
-    plan_node = new planner::MergeJoinPlan(predicate, nullptr, join_clauses);
+    plan_node = new planner::MergeJoinPlan(join_type, predicate,
+                                           nullptr, join_clauses);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::MergeJoinPlan(predicate, project_info.release(),
+    plan_node = new planner::MergeJoinPlan(join_type,
+                                           predicate,
+                                           project_info.release(),
                                            join_clauses);
     result = plan_node;
   }
@@ -91,7 +94,6 @@ const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
       innerAbstractPlanState(mj_plan_state));
 
   /* Add the children nodes */
-  plan_node->SetJoinType(join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 

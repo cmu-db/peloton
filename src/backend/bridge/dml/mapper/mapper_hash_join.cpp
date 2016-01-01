@@ -78,11 +78,11 @@ const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
         hj_plan_state->tts_tupleDescriptor);
     result = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
-    plan_node = new planner::HashJoinPlan(predicate, nullptr);
+    plan_node = new planner::HashJoinPlan(join_type, predicate, nullptr);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::HashJoinPlan(predicate, project_info.release());
+    plan_node = new planner::HashJoinPlan(join_type, predicate, project_info.release());
     result = plan_node;
   }
 
@@ -92,7 +92,6 @@ const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
       innerAbstractPlanState(hj_plan_state));
 
   /* Add the children nodes */
-  plan_node->SetJoinType(join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
