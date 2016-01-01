@@ -60,9 +60,17 @@ bool OrderByExecutor::DExecute() {
   // which have the same physical schema as input tiles.
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
-  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, nullptr,
-      *input_schema_, nullptr, tile_size));
+
+  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(BACKEND_TYPE_MM,
+                                                                     INVALID_OID,
+                                                                     INVALID_OID,
+                                                                     INVALID_OID,
+                                                                     INVALID_OID,
+                                                                     nullptr,
+                                                                     *input_schema_,
+                                                                     nullptr,
+                                                                     tile_size));
+
   for (size_t id = 0; id < tile_size; id++) {
     oid_t source_tile_id =
         sort_buffer_[num_tuples_returned_ + id].item_pointer.block;

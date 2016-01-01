@@ -12,12 +12,19 @@
 
 #pragma once
 
+#include <set>
+
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/log_record_pool.h"
 
 namespace peloton {
+
+namespace storage{
+class TileGroupHeader;
+}
+
 namespace logging {
 
 //===--------------------------------------------------------------------===//
@@ -32,10 +39,10 @@ class PelotonFrontendLogger : public FrontendLogger {
 
    ~PelotonFrontendLogger(void);
 
-    void Flush(void);
+    void FlushLogRecords(void);
 
-    // Used by flush to update the commit mark
-    bool CollectCommittedTuples(TupleRecord* record);
+    // Collect the tuple log records for flushing
+    std::pair<bool,ItemPointer> CollectTupleRecord(TupleRecord* record);
 
     //===--------------------------------------------------------------------===//
     // Recovery 
@@ -43,24 +50,28 @@ class PelotonFrontendLogger : public FrontendLogger {
 
     void DoRecovery(void);
 
-    cid_t SetInsertCommitMark(ItemPointer location);
+    std::pair<cid_t, storage::TileGroupHeader *> SetInsertCommitMark(ItemPointer location);
 
-    cid_t SetDeleteCommitMark(ItemPointer location);
+    std::pair<cid_t, storage::TileGroupHeader *> SetDeleteCommitMark(ItemPointer location);
 
     //===--------------------------------------------------------------------===//
     // Utility functions
     //===--------------------------------------------------------------------===//
 
-    size_t FlushRecords(std::vector<txn_id_t> committing_list);
+    size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
 
-    void CommitRecords(std::vector<txn_id_t> committing_list);
+    std::set<storage::TileGroupHeader*> ToggleCommitMarks(std::vector<txn_id_t> committing_list);
+
+    void SyncTileGroups(std::set<oid_t> tile_group_set);
+
+    void SyncTileGroupHeaders(std::set<storage::TileGroupHeader*> tile_group_header_set);
 
   private:
     std::string GetLogFileName(void);
 
-    bool DoNeedRecovery(void);
+    bool NeedRecovery(void);
 
-    void WriteTxnLog(TransactionRecord txnLog);
+    void WriteTransactionLogRecord(TransactionRecord txnLog);
 
     //===--------------------------------------------------------------------===//
     // Member Variables
@@ -72,14 +83,17 @@ class PelotonFrontendLogger : public FrontendLogger {
     FILE* log_file;
     int log_file_fd;
 
+    // Size of the log file
+    size_t log_file_size;
+
     // Global pool
-    LogRecordPool global_plog_pool;
+    LogRecordPool global_peloton_log_record_pool;
 
     // Keep tracking max oid for setting next_oid in manager
     // For active processing after recovery
     oid_t max_oid = INVALID_OID;
     // Keep tracking latest cid for setting next commit in txn manager
-    cid_t latest_cid = INVALID_CID;
+    cid_t latest_commit_id = INVALID_CID;
 };
 
 }  // namespace logging

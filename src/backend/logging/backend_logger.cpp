@@ -64,9 +64,11 @@ void BackendLogger::TruncateLocalQueue(oid_t offset) {
   std::lock_guard<std::mutex> lock(flush_notify_mutex);
   {
     std::lock_guard < std::mutex > lock(local_queue_mutex);
+
     // cleanup the queue
     local_queue.erase(local_queue.begin(), local_queue.begin() + offset);
   }
+
   // let's wait for the frontend logger to flush !
   // the frontend logger will call our Commit to reset it.
   wait_for_flushing = true;

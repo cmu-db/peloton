@@ -1,3 +1,0 @@
-vmem_aligned_alloc/TEST1: START: vmem_aligned_alloc
- ./vmem_aligned_alloc$(nW) $(nW)
-vmem_aligned_alloc/TEST1: Done
