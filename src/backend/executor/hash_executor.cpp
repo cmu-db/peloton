@@ -81,7 +81,7 @@ bool HashExecutor::DExecute() {
       for (oid_t tuple_id : *tile) {
         // Key : container tuple with a subset of tuple attributes
         // Value : < child_tile offset, tuple offset >
-        htable_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(child_tile_itr, tuple_id));
+        hash_table_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(child_tile_itr, tuple_id));
       }
 
     }
