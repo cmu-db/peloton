@@ -29,20 +29,48 @@ class AbstractJoinExecutor : public AbstractExecutor {
   explicit AbstractJoinExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
-  virtual ~AbstractJoinExecutor(){}
+  virtual ~AbstractJoinExecutor() {
+  }
+
+  const char *GetJoinTypeString() const {
+    switch (join_type_) {
+      case JOIN_TYPE_LEFT:
+        return "JOIN_TYPE_LEFT";
+      case JOIN_TYPE_RIGHT:
+        return "JOIN_TYPE_RIGHT";
+      case JOIN_TYPE_INNER:
+        return "JOIN_TYPE_INNER";
+      case JOIN_TYPE_OUTER:
+        return "JOIN_TYPE_OUTER";
+      case JOIN_TYPE_INVALID:
+      default:
+        return "JOIN_TYPE_INVALID";
+    }
+  }
 
  protected:
   bool DInit();
 
   bool DExecute() = 0;
 
- protected:
   //===--------------------------------------------------------------------===//
-  // Helper
+  // Helper functions
   //===--------------------------------------------------------------------===//
+
+  // Build a join output logical tile
+  std::unique_ptr<LogicalTile> BuildOutputLogicalTile(
+      LogicalTile *left_tile,
+      LogicalTile *right_tile);
+
+  // Build the schema of the joined tile based on the projection info
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
       std::vector<LogicalTile::ColumnInfo> &left,
       std::vector<LogicalTile::ColumnInfo> &right);
+
+  // Build position lists
+  std::vector<std::vector<oid_t> > BuildPostitionLists(
+      LogicalTile *left_tile,
+      LogicalTile *right_tile);
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -50,7 +78,6 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   /** @brief Result of  join. */
   std::vector<LogicalTile *> result;
-
 
   //===--------------------------------------------------------------------===//
   // Plan Info
@@ -61,6 +88,9 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   /** @brief Projection info */
   const planner::ProjectInfo *proj_info_ = nullptr;
+
+  /* @brief Join Type */
+  PelotonJoinType join_type_;
 };
 
 }  // namespace executor

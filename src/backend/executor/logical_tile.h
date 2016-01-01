@@ -13,7 +13,6 @@
 #pragma once
 
 #include <iterator>
-#include <unordered_set>
 #include <vector>
 #include <memory>
 
@@ -51,6 +50,12 @@ class LogicalTile {
  public:
   struct ColumnInfo;
 
+  /* A vector of position to represent a column */
+  typedef std::vector<oid_t> PositionList;
+
+  /* A vector of column to represent a tile */
+  typedef std::vector<PositionList> PositionLists;
+
   LogicalTile(const LogicalTile &) = delete;
   LogicalTile &operator=(const LogicalTile &) = delete;
   LogicalTile(LogicalTile &&) = delete;
@@ -66,7 +71,7 @@ class LogicalTile {
 
   void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
 
-  int AddPositionList(std::vector<oid_t> &&position_list);
+  int AddPositionList(PositionList &&position_list);
 
   void RemoveVisibility(oid_t tuple_id);
 
@@ -86,14 +91,13 @@ class LogicalTile {
 
   void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
+  const PositionLists &GetPositionLists() const;
 
-  const std::vector<oid_t> &GetPositionList(const oid_t column_id) const;
+  const PositionList &GetPositionList(const oid_t column_id) const;
 
-  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
+  void SetPositionLists(PositionLists &&position_lists);
 
-  void SetPositionListsAndVisibility(
-      std::vector<std::vector<oid_t>> &&position_lists);
+  void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
@@ -172,7 +176,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<oid_t>> position_lists_;
+  PositionLists position_lists_;
 
   /**
    * @brief Bit-vector storing visibility of each row in the position lists.
