@@ -1,3 +1,0 @@
-obj_realloc/TEST0: START: obj_realloc
- ./obj_realloc$(nW) $(*)
-obj_realloc/TEST0: Done
