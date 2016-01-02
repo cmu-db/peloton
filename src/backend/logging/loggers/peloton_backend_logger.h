@@ -44,7 +44,7 @@ public:
                             oid_t db_oid = INVALID_OID);
 
 private:
-    PelotonBackendLogger(){ logging_type = LOGGING_TYPE_PELOTON;}
+    PelotonBackendLogger(){ logging_type = LOGGING_TYPE_NVM_NVM;}
 
     CopySerializeOutput output_buffer;
 };

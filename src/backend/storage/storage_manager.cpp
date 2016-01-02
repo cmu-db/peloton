@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "backend/common/logger.h"
 #include "backend/storage/storage_manager.h"
 
 #include <sys/types.h>
@@ -33,16 +34,13 @@
 extern LoggingType peloton_logging_mode;
 
 // PMEM file size
-size_t peloton_pmem_file_size = 0;
+size_t peloton_data_file_size = 0;
 
 namespace peloton {
 namespace storage {
 
-#define PMEM_DIR "/mnt/pmfs/"
-#define TMP_DIR  "/tmp/"
-
-#define PMEM_LEN  1024 * 1024 * UINT64_C(512) // 512 MB
-#define PMEM_FILENAME "peloton.pmem"
+#define DATA_FILE_LEN  1024 * 1024 * UINT64_C(512) // 512 MB
+#define DATA_FILE_NAME "peloton.pmem"
 
 // global singleton
 StorageManager& StorageManager::GetInstance(void) {
@@ -51,57 +49,105 @@ StorageManager& StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-: pmem_address(nullptr),
+: data_file_address(nullptr),
   is_pmem(false),
-  pmem_len(0),
-  pmem_offset(0) {
+  data_file_len(0),
+  data_file_offset(0) {
 
-  // Check if we need a PMEM pool
-  if(peloton_logging_mode != LOGGING_TYPE_PELOTON)
+  // Check if we need a data pool
+  if(IsSimilarToARIES(peloton_logging_mode) == true) {
     return;
+  }
 
-  int pmem_fd;
-  std::string pmem_file_name;
-  struct stat pmfs_fd;
+  int data_fd;
+  std::string data_file_name;
+  struct stat data_stat;
 
-  // Initialize pmem file size
-  if(peloton_pmem_file_size != 0)
-    pmem_len = peloton_pmem_file_size * 1024 * 1024; // MB
+  // Initialize file size
+  if(peloton_data_file_size != 0)
+    data_file_len = peloton_data_file_size * 1024 * 1024; // MB
   else
-    pmem_len = PMEM_LEN;
+    data_file_len = DATA_FILE_LEN;
 
-  // check for pmfs ?
-  int status = stat(PMEM_DIR, &pmfs_fd);
-  if (status == 0 && S_ISDIR(pmfs_fd.st_mode)) {
-    pmem_file_name = std::string(PMEM_DIR) + std::string(PMEM_FILENAME);
-  }
-  else {
-    pmem_file_name = std::string(TMP_DIR) + std::string(PMEM_FILENAME);
+  // Check for relevant file system
+  bool found_file_system = false;
+
+  switch(peloton_logging_mode) {
+
+    // Check for NVM FS
+    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_NVM_SSD: {
+
+      int status = stat(NVM_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    }
+    break;
+
+    // Check for HDD FS
+    case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_HDD_HDD: {
+
+      int status = stat(HDD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    }
+    break;
+
+    // Check for SSD FS
+    case LOGGING_TYPE_SSD_NVM:
+    case LOGGING_TYPE_SSD_SSD: {
+
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    }
+    break;
+
+    default:
+      break;
   }
 
-  // create a pmem file
-  if ((pmem_fd = open(pmem_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
-    perror(pmem_file_name.c_str());
+  // Fallback to tmp if needed
+  if(found_file_system == false) {
+    data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+  }
+
+  LOG_INFO("DATA DIR :: %s \n", data_file_name.c_str());
+
+  // Create a data file
+  if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
+    perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
 
-  // allocate the pmem file
-  if ((errno = posix_fallocate(pmem_fd, 0, pmem_len)) != 0) {
+  // Allocate the data file
+  if ((errno = posix_fallocate(data_fd, 0, data_file_len)) != 0) {
     perror("posix_fallocate");
     exit(EXIT_FAILURE);
   }
 
-  // memory map the pmem file
-  if ((pmem_address = reinterpret_cast<char*>(pmem_map(pmem_fd))) == NULL) {
+  // memory map the data file
+  if ((data_file_address = reinterpret_cast<char*>(pmem_map(data_fd))) == NULL) {
     perror("pmem_map");
     exit(EXIT_FAILURE);
   }
 
   // true only if the entire range [addr, addr+len) consists of persistent memory
-  is_pmem = pmem_is_pmem(pmem_address, pmem_len);
+  is_pmem = pmem_is_pmem(data_file_address, data_file_len);
 
   // close the pmem file -- it will remain mapped
-  close(pmem_fd);
+  close(data_fd);
 
 
 }
@@ -109,11 +155,11 @@ StorageManager::StorageManager()
 StorageManager::~StorageManager() {
 
   // Check if we need a PMEM pool
-  if(peloton_logging_mode != LOGGING_TYPE_PELOTON)
+  if(peloton_logging_mode != LOGGING_TYPE_NVM_NVM)
     return;
 
   // unmap the pmem file
-  pmem_unmap(pmem_address, pmem_len);
+  pmem_unmap(data_file_address, data_file_len);
 
 }
 
@@ -129,12 +175,12 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
-        if(pmem_offset >= pmem_len)
+        if(data_file_offset >= data_file_len)
           return nullptr;
 
-        void *address = pmem_address + pmem_offset;
+        void *address = data_file_address + data_file_offset;
         // offset by requested size
-        pmem_offset += size;
+        data_file_offset += size;
         return address;
       }
     }

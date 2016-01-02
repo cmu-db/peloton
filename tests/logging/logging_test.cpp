@@ -12,7 +12,7 @@
 // Logging mode
 extern LoggingType     peloton_logging_mode;
 
-extern size_t peloton_pmem_file_size;
+extern size_t peloton_data_file_size;
 
 extern int64_t peloton_wait_timeout;
 
@@ -34,14 +34,14 @@ TEST(LoggingTests, RecoveryTest) {
 
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
-  peloton_pmem_file_size = state.pmem_file_size;
+  peloton_data_file_size = state.data_file_size;
   peloton_wait_timeout = state.wait_timeout;
 
   // Set default experiment type
   if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID)
     state.experiment_type = LOGGING_EXPERIMENT_TYPE_ACTIVE;
 
-  if(state.logging_type == LOGGING_TYPE_ARIES) {
+  if(IsSimilarToARIES(peloton_logging_mode)) {
 
     // Prepare a simple log file
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(aries_log_file_name));
@@ -53,7 +53,7 @@ TEST(LoggingTests, RecoveryTest) {
     LoggingTestsUtil::DoRecovery(aries_log_file_name);
 
   }
-  else if(state.logging_type == LOGGING_TYPE_PELOTON) {
+  else if(IsSimilarToPeloton(peloton_logging_mode)) {
 
     // Test a simple log process
     EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
