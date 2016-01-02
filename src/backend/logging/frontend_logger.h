@@ -34,13 +34,9 @@ class FrontendLogger : public Logger{
 
   public:
 
-    FrontendLogger(){ logger_type = LOGGER_TYPE_FRONTEND; }
+    FrontendLogger();
 
-    ~FrontendLogger(){
-      for(auto backend_logger : backend_loggers){
-        delete backend_logger;
-      }
-    }
+    ~FrontendLogger();
 
     static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
 
@@ -75,8 +71,8 @@ class FrontendLogger : public Logger{
     std::vector<LogRecord*> global_queue;
 
     // period with which it collects log records from backend loggers
-    // (in milliseconds)
-    uint32 wait_timeout = 5;
+    // (in microseconds)
+    int64_t wait_timeout = 5;
 
     // used to indicate if backend has new logs
     bool need_to_collect_new_log_records = false;
