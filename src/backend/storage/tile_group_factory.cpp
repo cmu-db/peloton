@@ -29,11 +29,15 @@ TileGroup *TileGroupFactory::GetTileGroup(
     const std::vector<catalog::Schema> &schemas,
     const column_map_type &column_map, int tuple_count) {
 
-  // Backend for allocating data
+  // Default backend for allocating data
+  // This is used for architectures similar to aries logging
+  // Where the data is allocated in MM
   BackendType backend_type = BACKEND_TYPE_MM;
 
-  // Allocate in PMEM if we are using peloton logging
-  if(peloton_logging_mode == LOGGING_TYPE_NVM_NVM) {
+  // Allocate the data file on a mmap'ed file
+  // This is used for architectures similar to peloton logging
+  // Where the data is allocated in NVM or HDD or SSD
+  if(IsSimilarToPeloton(peloton_logging_mode) == true) {
     backend_type = BACKEND_TYPE_FILE;
   }
 
