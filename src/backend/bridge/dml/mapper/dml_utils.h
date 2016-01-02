@@ -18,6 +18,7 @@
 #include "postgres.h"
 #include "c.h"
 #include "nodes/execnodes.h"
+#include "utils/lsyscache.h"
 
 namespace peloton {
 namespace bridge {
@@ -84,9 +85,42 @@ class DMLUtils {
 
   static MergeJoinPlanState *PrepareMergeJoinState(MergeJoinState *mj_state);
 
+  static HashJoinPlanState *PrepareHashJoinState(HashJoinState *hj_state);
+
   static AggPlanState *PrepareAggState(AggState *agg_state);
 
-  static SortPlanState *PrepareSortState(SortState *sort_state);
+  static SortPlanState* PrepareSortState(SortState* sort_plan_state) {
+    SortPlanState* info = (SortPlanState*) (palloc(sizeof(SortPlanState)));
+    info->type = sort_plan_state->ss.ps.type;
+    info->sort = (const Sort*) (copyObject(sort_plan_state->ss.ps.plan));
+    info->reverse_flags = (bool*) (palloc(sizeof(bool) * info->sort->numCols));
+    // Find the reverse flags here
+    for (int i = 0; i < info->sort->numCols; i++) {
+
+      Oid orderingOp = info->sort->sortOperators[i];
+      Oid opfamily;
+      Oid opcintype;
+      int16 strategy;
+
+      /* Find the operator___ in pg_amop */
+      if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
+                                      &strategy)) {
+        elog(ERROR, "operator___ %u is not a valid ordering operator___",
+             orderingOp);
+      }
+
+      bool reverse = (strategy == BTGreaterStrategyNumber);
+
+      info->reverse_flags[i] = reverse;
+
+      elog(INFO, "Sort Col Idx : %d, Sort OperatorOid : %u , reverse : %u",
+           info->sort->sortColIdx[i], orderingOp, reverse);
+    }
+    return info;
+  }
+
+  static HashPlanState *PrepareHashState(HashState *hash_state);
+
 
   static PelotonProjectionInfo *BuildProjectInfo(ProjectionInfo *proj_info,
                                                  int column_count);

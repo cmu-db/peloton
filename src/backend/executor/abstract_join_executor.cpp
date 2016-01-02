@@ -17,7 +17,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/abstract_join_executor.h"
 
-#include "../planner/abstract_join_plan.h"
+#include "backend/planner/abstract_join_plan.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
 
@@ -47,6 +47,7 @@ bool AbstractJoinExecutor::DInit() {
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
   proj_info_ = node.GetProjInfo();
+  join_type_ = node.GetJoinType();
 
   return true;
 }
@@ -81,6 +82,58 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
   }
   return schema;
 }
+
+std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
+    LogicalTile *left_tile,
+    LogicalTile *right_tile) {
+  // Check the input logical tiles.
+  assert(left_tile != nullptr);
+  assert(right_tile != nullptr);
+
+  // Construct output logical tile.
+  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
+
+  auto left_tile_schema = left_tile->GetSchema();
+  auto right_tile_schema = right_tile->GetSchema();
+
+  for (auto &col : right_tile_schema) {
+    col.position_list_idx += left_tile->GetPositionLists().size();
+  }
+
+  /* build the schema given the projection */
+  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
+
+  // Set the output logical tile schema
+  output_tile->SetSchema(std::move(output_tile_schema));
+
+  return output_tile;
+}
+
+std::vector<std::vector<oid_t> > AbstractJoinExecutor::BuildPostitionLists(
+    LogicalTile *left_tile,
+    LogicalTile *right_tile) {
+  // Get position list from two logical tiles
+  auto &left_tile_position_lists = left_tile->GetPositionLists();
+  auto &right_tile_position_lists = right_tile->GetPositionLists();
+
+  // Compute the output logical tile column count
+  size_t left_tile_column_count = left_tile_position_lists.size();
+  size_t right_tile_column_count = right_tile_position_lists.size();
+  size_t output_tile_column_count = left_tile_column_count
+      + right_tile_column_count;
+
+  assert(left_tile_column_count > 0);
+  assert(right_tile_column_count > 0);
+
+  // Construct position lists for output tile
+  std::vector<std::vector<oid_t> > position_lists;
+  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
+    position_lists.push_back(std::vector<oid_t>());
+
+  return position_lists;
+}
+
+
 
 }  // namespace executor
 }  // namespace peloton

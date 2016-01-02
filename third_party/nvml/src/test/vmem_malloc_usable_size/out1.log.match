@@ -1,3 +1,0 @@
-vmem_malloc_usable_size/TEST1: START: vmem_malloc_usable_size
- ./vmem_malloc_usable_size$(nW) $(nW)
-vmem_malloc_usable_size/TEST1: Done

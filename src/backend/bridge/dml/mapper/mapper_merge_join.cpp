@@ -67,7 +67,7 @@ const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
-  LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+  //LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection

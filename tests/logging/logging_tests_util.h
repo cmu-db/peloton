@@ -19,6 +19,14 @@ class DataTable;
 
 namespace test {
 
+enum LoggingExperimentType{
+  LOGGING_EXPERIMENT_TYPE_INVALID = 0,
+
+  LOGGING_EXPERIMENT_TYPE_ACTIVE = 1,
+  LOGGING_EXPERIMENT_TYPE_RECOVERY = 2,
+  LOGGING_EXPERIMENT_TYPE_STORAGE = 3
+};
+
 class LoggingTestsUtil{
 
 public:
@@ -27,7 +35,7 @@ public:
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
 
-  static bool PrepareLogFile(LoggingType logging_type, std::string file_name);
+  static bool PrepareLogFile(std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // CHECK RECOVERY
@@ -35,7 +43,7 @@ public:
 
   static void ResetSystem(void);
 
-  static void CheckRecovery(LoggingType logging_type, std::string file_name);
+  static void DoRecovery(std::string file_name);
 
   //===--------------------------------------------------------------------===//
   // Configuration
@@ -45,6 +53,10 @@ public:
 
   class logging_test_configuration {
    public:
+
+    // experiment type
+    LoggingExperimentType experiment_type;
+
     // logging type
     LoggingType logging_type;
 
@@ -60,11 +72,11 @@ public:
     // check if the count matches after recovery
     bool check_tuple_count;
 
-    // REDO_ALL: redo all logs in the log file
-    bool redo_all;
-
     // log file dir
-    std::string file_dir;
+    std::string pmem_file_dir;
+
+    // size of the pmem file (in MB)
+    size_t pmem_file_size;
    };
 
 private:
@@ -73,27 +85,22 @@ private:
   // WRITING LOG RECORD
   //===--------------------------------------------------------------------===//
 
-  static void BuildLog(LoggingType logging_type,
-                       oid_t db_oid,
+  static void BuildLog(oid_t db_oid,
                        oid_t table_oid);
 
-  static void RunBackends(LoggingType logging_type,
-                          storage::DataTable* table);
+  static void RunBackends(storage::DataTable* table, const std::vector<storage::Tuple*>& tuples);
 
-  static std::vector<ItemPointer> InsertTuples(LoggingType logging_type,
-                                               storage::DataTable* table,
-                                               VarlenPool *pool,
+  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
+                                               const std::vector<storage::Tuple*>& tuples,
                                                bool committed);
 
-  static void DeleteTuples(LoggingType logging_type,
-                           storage::DataTable* table,
+  static void DeleteTuples(storage::DataTable* table,
                            const std::vector<ItemPointer>& locations,
                            bool committed);
 
-  static std::vector<ItemPointer> UpdateTuples(LoggingType logging_type,
-                                               storage::DataTable* table,
+  static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
                                                const std::vector<ItemPointer>& locations,
-                                               VarlenPool *pool,
+                                               const std::vector<storage::Tuple*>& tuples,
                                                bool committed);
   
   //===--------------------------------------------------------------------===//

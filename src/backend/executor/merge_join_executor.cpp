@@ -87,64 +87,26 @@ bool MergeJoinExecutor::DExecute() {
   LogicalTile *left_tile = left_tiles_.back();
   LogicalTile *right_tile = right_tiles_.back();
 
-  // Check the input logical tiles.
-  assert(left_tile != nullptr);
-  assert(right_tile != nullptr);
+  // Build output logical tile
+  auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
-  // Construct output logical tile.
-  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
-
-  auto left_tile_schema = left_tile->GetSchema();
-  auto right_tile_schema = right_tile->GetSchema();
-
-  for (auto &col : right_tile_schema) {
-    col.position_list_idx += left_tile->GetPositionLists().size();
-  }
-
-  /* build the schema given the projection */
-  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
-
-  // Set the output logical tile schema
-  output_tile->SetSchema(std::move(output_tile_schema));
+  // Build position lists
+  auto position_lists = BuildPostitionLists(left_tile, right_tile);
 
   // Get position list from two logical tiles
-  auto left_tile_position_lists = left_tile->GetPositionLists();
-  auto right_tile_position_lists = right_tile->GetPositionLists();
-
-  // Compute output tile column count
+  auto &left_tile_position_lists = left_tile->GetPositionLists();
+  auto &right_tile_position_lists = right_tile->GetPositionLists();
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count = left_tile_column_count
-      + right_tile_column_count;
 
-  assert(left_tile_column_count > 0);
-  assert(right_tile_column_count > 0);
-
-  // Compute output tile row count
-  //size_t left_tile_row_count = left_tile_position_lists[0].size();
-  //size_t right_tile_row_count = right_tile_position_lists[0].size();
-
-  // Construct position lists for output tile
-  std::vector<std::vector<oid_t> > position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count;
-      column_itr++)
-    position_lists.push_back(std::vector<oid_t>());
-
-  //LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
-  //          right_tile_column_count);
-  //LOG_INFO("left col count: %lu, right col count: %lu",
-  //          left_tile.get()->GetColumnCount(),
-  //          right_tile.get()->GetColumnCount());
-  //LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
-  //          right_tile_row_count);
-
+  // TODO: What are these ?
   size_t left_start_row = 0;
   size_t right_start_row = 0;
 
   size_t left_end_row = Advance(left_tile, left_start_row, true);
   size_t right_end_row = Advance(right_tile, right_start_row, false);
 
-  while (left_end_row > left_start_row && right_end_row > right_start_row) {
+  while ((left_end_row > left_start_row) && (right_end_row > right_start_row)) {
 
     expression::ContainerTuple<executor::LogicalTile> left_tuple(
         left_tile, left_start_row);
@@ -200,8 +162,10 @@ bool MergeJoinExecutor::DExecute() {
 
     // sub tile matched, do a Cartesian product
     // Go over every pair of tuples in left and right logical tiles
-    for (auto left_tile_row_itr : *left_tile) {
-      for (auto right_tile_row_itr : *right_tile) {
+    for (size_t left_tile_row_itr = left_start_row;
+            left_tile_row_itr < left_end_row; left_tile_row_itr++) {
+          for (size_t right_tile_row_itr = right_start_row;
+              right_tile_row_itr < right_end_row; right_tile_row_itr++) {
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
         for (size_t output_tile_column_itr = 0;
@@ -277,7 +241,7 @@ bool is_left) {
     bool diff = false;
 
     for (auto &clause : *join_clauses_) {
-      // Go thru each join clauses
+      // Go through each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
       peloton::Value this_value = expr->Evaluate(&this_tuple, &this_tuple,
                                                  nullptr);
