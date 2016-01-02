@@ -48,11 +48,11 @@ static void WriteOutput(double value) {
 
   std::cout << "----------------------------------------------------------\n";
   std::cout
-      << state.logging_type << " "
-      << state.column_count  << " "
-      << state.tuple_count  << " "
-      << state.backend_count << " "
-      << state.wait_timeout << " :: ";
+  << state.logging_type << " "
+  << state.column_count  << " "
+  << state.tuple_count  << " "
+  << state.backend_count << " "
+  << state.wait_timeout << " :: ";
   std::cout << value << "\n";
 
   out << state.logging_type << " ";
@@ -85,7 +85,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name){
  */
 bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
 
-  auto file_path = GetFilePath(state.pmem_file_dir, file_name);
+  auto file_path = GetFilePath(state.log_file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
@@ -163,7 +163,7 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
 
-  auto file_path = GetFilePath(state.pmem_file_dir, file_name);
+  auto file_path = GetFilePath(state.log_file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
@@ -312,7 +312,7 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   }
 
   // We can only drop the table in case of ARIES
-  if(peloton_logging_mode == LOGGING_TYPE_ARIES){
+  if(IsSimilarToARIES(peloton_logging_mode) == true){
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
@@ -646,8 +646,7 @@ static void Usage(FILE *out) {
           "   -b --backend-count     :  Backend count \n"
           "   -z --column-count      :  # of columns per tuple \n"
           "   -c --check-tuple-count :  Check tuple count \n"
-          "   -d --dir               :  log file dir \n"
-          "   -f --pmem-file-size    :  pmem file size (MB) \n"
+          "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
           "   -w --wait-timeout      :  Wait timeout (us) \n"
   );
@@ -660,8 +659,7 @@ static struct option opts[] = {
     { "backend-count", optional_argument, NULL, 'b' },
     { "column-count", optional_argument, NULL, 'z' },
     { "check-tuple-count", optional_argument, NULL, 'c' },
-    { "dir", optional_argument, NULL, 'd' },
-    { "pmem-file-size", optional_argument, NULL, 'f' },
+    { "data-file-size", optional_argument, NULL, 'f' },
     { "experiment-type", optional_argument, NULL, 'e' },
     { "wait-timeout", optional_argument, NULL, 'w' },
     { NULL, 0, NULL, 0 }
@@ -671,17 +669,7 @@ static void ValidateLoggingType(const LoggingTestsUtil::logging_test_configurati
   std::cout << std::setw(20) << std::left
       << "logging_type " << " : ";
 
-  if(state.logging_type == LOGGING_TYPE_ARIES)
-    std::cout << "ARIES" << std::endl;
-  else if(state.logging_type == LOGGING_TYPE_PELOTON)
-    std::cout << "PELOTON" << std::endl;
-  else if(state.logging_type == LOGGING_TYPE_INVALID) {
-    std::cout << "INVALID" << std::endl;
-  }
-  else {
-    std::cout << "Invalid logging_type :: " <<  state.logging_type << std::endl;
-    exit(EXIT_FAILURE);
-  }
+  std::cout << LoggingTypeToString(state.logging_type) << std::endl;
 
 }
 
@@ -712,13 +700,13 @@ static void ValidateBackendCount(const LoggingTestsUtil::logging_test_configurat
   std::cout << std::setw(20) << std::left << "backend_count " << " : " << state.backend_count << std::endl;
 }
 
-static void ValidatePMEMFileSize(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.pmem_file_size <= 0) {
-    std::cout << "Invalid pmem_file_size :: " <<  state.pmem_file_size << std::endl;
+static void ValidateDataFileSize(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.data_file_size <= 0) {
+    std::cout << "Invalid pmem_file_size :: " <<  state.data_file_size << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "pmem_file_size " << " : " << state.pmem_file_size << std::endl;
+  std::cout << std::setw(20) << std::left << "data_file_size " << " : " << state.data_file_size << std::endl;
 }
 
 static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
@@ -739,9 +727,41 @@ static void ValidateWaitTimeout(const LoggingTestsUtil::logging_test_configurati
   std::cout << std::setw(20) << std::left << "wait_timeout " << " : " << state.wait_timeout << std::endl;
 }
 
-static void ValidateFileDir(const LoggingTestsUtil::logging_test_configuration& state) {
+static void ValidateLogFileDir(LoggingTestsUtil::logging_test_configuration& state) {
 
-  std::cout << std::setw(20) << std::left << "pmem_file_dir " << " : " << state.pmem_file_dir << std::endl;
+  // Assign log file dir based on logging type
+  switch(state.logging_type) {
+
+    case LOGGING_TYPE_DRAM_NVM:
+    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_SSD_NVM:
+
+      state.log_file_dir = NVM_DIR;
+      break;
+
+    case LOGGING_TYPE_DRAM_HDD:
+    case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_HDD_HDD:
+
+      state.log_file_dir = HDD_DIR;
+      break;
+
+    case LOGGING_TYPE_DRAM_SSD:
+    case LOGGING_TYPE_NVM_SSD:
+    case LOGGING_TYPE_SSD_SSD:
+
+      state.log_file_dir = SSD_DIR;
+      break;
+
+    case LOGGING_TYPE_INVALID:
+    default:
+
+      state.log_file_dir = TMP_DIR;
+      break;
+  }
+
+  std::cout << std::setw(20) << std::left << "log_file_dir " << " : " << state.log_file_dir << std::endl;
 
 }
 
@@ -750,15 +770,15 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Default Values
   state.tuple_count = 10;
 
-  state.logging_type = LOGGING_TYPE_ARIES;
+  state.logging_type = LOGGING_TYPE_DRAM_NVM;
   state.backend_count = 1;
 
   state.column_count = 10;
 
   state.check_tuple_count = false;
 
-  state.pmem_file_dir = "/tmp/";
-  state.pmem_file_size = 512;
+  state.log_file_dir = "/tmp/";
+  state.data_file_size = 512;
 
   state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 0;
@@ -766,7 +786,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:e:w:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:f:e:w:", opts,
                         &idx);
 
     if (c == -1)
@@ -788,11 +808,8 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
       case 'c':
         state.check_tuple_count  = atoi(optarg);
         break;
-      case 'd':
-        state.pmem_file_dir = optarg;
-        break;
       case 'f':
-        state.pmem_file_size = atoi(optarg);
+        state.data_file_size = atoi(optarg);
         break;
       case 'e':
         state.experiment_type = (LoggingExperimentType) atoi(optarg);
@@ -816,8 +833,8 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   ValidateColumnCount(state);
   ValidateTupleCount(state);
   ValidateBackendCount(state);
-  ValidatePMEMFileSize(state);
-  ValidateFileDir(state);
+  ValidateDataFileSize(state);
+  ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
 

@@ -46,7 +46,7 @@ class AriesBackendLogger : public BackendLogger{
 
  private:
 
-  AriesBackendLogger(){ logging_type = LOGGING_TYPE_ARIES;}
+  AriesBackendLogger(){ logging_type = LOGGING_TYPE_DRAM_NVM;}
 
   CopySerializeOutput output_buffer;
 

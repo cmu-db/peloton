@@ -44,7 +44,7 @@ bool ReadTupleRecordHeader(TupleRecord& tuple_record,
  */
 PelotonFrontendLogger::PelotonFrontendLogger() {
 
-  logging_type = LOGGING_TYPE_PELOTON;
+  logging_type = LOGGING_TYPE_NVM_NVM;
 
   // open log file and file descriptor
   // we open it in append + binary mode

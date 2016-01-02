@@ -95,8 +95,6 @@ peloton_bootstrap() {
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
       elog(DEBUG2, "Logging Mode : %d", peloton_logging_mode);
-      elog(DEBUG2, "Caching Mode : %d", peloton_caching_mode);
-      elog(DEBUG2, "Tile Cache Size : %d", peloton_tile_cache_size);
 
       // Finished checking logging module
       logging_module_check = true;
