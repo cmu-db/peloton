@@ -32,7 +32,7 @@ static void BuildScanKey(
 
 
 static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_runtime_keys,
-    planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
+                            planner::IndexScanPlan::IndexScanDesc &index_scan_desc);
 /**
  * @brief Convert a Postgres IndexScanState into a Peloton IndexScanPlan.
  *        able to handle:
@@ -146,49 +146,48 @@ static void BuildScanKey(
     assert(!(scan_key->sk_flags & SK_SEARCHNULL));
     assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
 
-	Oid value_type;
+    Oid value_type = InvalidOid;
     Value value;
-    // added by michael for IN operator
+
     if (scan_key->sk_flags & SK_SEARCHARRAY) {
 
-    	switch (scan_key->sk_subtype) {
+      switch (scan_key->sk_subtype) {
 
-    		case POSTGRES_VALUE_TYPE_SMALLINT: {
-    			value_type = POSTGRES_VALUE_TYPE_INT2_ARRAY;
-        	} break;
+        case POSTGRES_VALUE_TYPE_SMALLINT: {
+          value_type = POSTGRES_VALUE_TYPE_INT2_ARRAY;
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_INTEGER: {
-    			value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
-    		} break;
+        case POSTGRES_VALUE_TYPE_INTEGER: {
+          value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_BIGINT: {
-    			value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
-    		} break;
+        case POSTGRES_VALUE_TYPE_BIGINT: {
+          value_type = POSTGRES_VALUE_TYPE_INT4_ARRAY;
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_DOUBLE: {
-    			value_type = POSTGRES_VALUE_TYPE_FLOADT4_ARRAY;
-    		} break;
+        case POSTGRES_VALUE_TYPE_DOUBLE: {
+          value_type = POSTGRES_VALUE_TYPE_FLOADT4_ARRAY;
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_BPCHAR: {
-    			//TODO WHICH TYPE SHOULD BE TRANSFORMED? by michael
-    		} break;
+        case POSTGRES_VALUE_TYPE_BPCHAR: {
+          //TODO: WHICH TYPE SHOULD BE TRANSFORMED? by michael
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_VARCHAR2: {
-    			//TODO WHICH TYPE SHOULD BE TRANSFORMED? by michael
-    		} break;
+        case POSTGRES_VALUE_TYPE_VARCHAR2: {
+          //TODO: WHICH TYPE SHOULD BE TRANSFORMED? by michael
+        } break;
 
-    		case POSTGRES_VALUE_TYPE_TEXT: {
-    			value_type = POSTGRES_VALUE_TYPE_TEXT_ARRAY;
-    		} break;
+        case POSTGRES_VALUE_TYPE_TEXT: {
+          value_type = POSTGRES_VALUE_TYPE_TEXT_ARRAY;
+        } break;
 
-    		default:
-    			LOG_ERROR("Unsupported Postgres Expr Type: %u (see 'nodes.h')\n", scan_key->sk_subtype);
-    	} //end swith
+        default:
+          LOG_ERROR("Unsupported Postgres Expr Type: %u (see 'nodes.h')\n", scan_key->sk_subtype);
+      } //end switch
 
-    	value = TupleTransformer::GetValue(scan_key->sk_argument, value_type);
-
+      value = TupleTransformer::GetValue(scan_key->sk_argument, value_type);
     } else {
-    	value = TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+      value = TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
     }
 
     index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
@@ -208,21 +207,21 @@ static void BuildScanKey(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
       case BTEqualStrategyNumber: {
-    	  if (scan_key->sk_flags & SK_SEARCHARRAY) {
-    		  LOG_INFO("key >= %s", value.Debug().c_str());
-    		  index_scan_desc.expr_types.push_back(
-    				  ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
-    	  } else {
-    		  LOG_INFO("key >= %s", value.Debug().c_str());
-    		  index_scan_desc.expr_types.push_back(
-    				  ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    	  }
-      	} break;
+        if (scan_key->sk_flags & SK_SEARCHARRAY) {
+          LOG_INFO("key >= %s", value.Debug().c_str());
+          index_scan_desc.expr_types.push_back(
+              ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
+        } else {
+          LOG_INFO("key >= %s", value.Debug().c_str());
+          index_scan_desc.expr_types.push_back(
+              ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+        }
+      } break;
       case BTGreaterEqualStrategyNumber:
         LOG_INFO("key >= %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-      	break;
+        break;
       case BTGreaterStrategyNumber:
         LOG_INFO("key > %s", value.Debug().c_str());
         index_scan_desc.expr_types.push_back(
@@ -238,7 +237,7 @@ static void BuildScanKey(
 }
 
 static void BuildRuntimeKey(const IndexRuntimeKeyInfo* runtime_keys, int num_runtime_keys,
-    planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
+                            planner::IndexScanPlan::IndexScanDesc &index_scan_desc) {
   for (int i = 0; i < num_runtime_keys; i++) {
     auto expr = ExprTransformer::TransformExpr(runtime_keys[i].key_expr);
     index_scan_desc.runtime_keys.push_back(expr);
@@ -272,7 +271,7 @@ const planner::AbstractPlan *PlanTransformer::TransformIndexOnlyScan(
   Oid database_oid = ioss_plan_state->database_oid;
 
   LOG_TRACE("Index Only Scan :: DB OID :: %u Table OID :: %u",
-           database_oid, table_oid);
+            database_oid, table_oid);
 
   const IndexOnlyScan *ioss_plan = ioss_plan_state->ioss_plan;
 
