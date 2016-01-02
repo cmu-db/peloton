@@ -24,7 +24,8 @@ enum LoggingExperimentType{
 
   LOGGING_EXPERIMENT_TYPE_ACTIVE = 1,
   LOGGING_EXPERIMENT_TYPE_RECOVERY = 2,
-  LOGGING_EXPERIMENT_TYPE_STORAGE = 3
+  LOGGING_EXPERIMENT_TYPE_STORAGE = 3,
+  LOGGING_EXPERIMENT_TYPE_WAIT = 4
 };
 
 class LoggingTestsUtil{
@@ -77,6 +78,9 @@ public:
 
     // size of the pmem file (in MB)
     size_t pmem_file_size;
+
+    // frequency with which the logger flushes
+    int64_t wait_timeout;
    };
 
 private:

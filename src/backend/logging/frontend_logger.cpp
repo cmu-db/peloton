@@ -18,8 +18,26 @@
 #include "backend/logging/loggers/aries_frontend_logger.h"
 #include "backend/logging/loggers/peloton_frontend_logger.h"
 
+// configuration for testing
+int64_t peloton_wait_timeout = 0;
+
 namespace peloton {
 namespace logging {
+
+FrontendLogger::FrontendLogger() {
+  logger_type = LOGGER_TYPE_FRONTEND;
+
+  if(peloton_wait_timeout != 0) {
+    wait_timeout = peloton_wait_timeout;
+  }
+
+}
+
+FrontendLogger::~FrontendLogger(){
+  for(auto backend_logger : backend_loggers){
+    delete backend_logger;
+  }
+}
 
 /** * @brief Return the frontend logger based on logging type
  * @param logging type can be stdout(debug), aries, peloton
@@ -135,7 +153,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
    * instead of a huge submission when the txn is committed.
    */
   if (need_to_collect_new_log_records == false) {
-    auto sleep_period = std::chrono::milliseconds(wait_timeout);
+    auto sleep_period = std::chrono::microseconds(wait_timeout);
     std::this_thread::sleep_for(sleep_period);
   }
 
