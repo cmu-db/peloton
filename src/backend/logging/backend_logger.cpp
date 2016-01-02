@@ -26,19 +26,15 @@ namespace logging {
 BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
   BackendLogger* backendLogger = nullptr;
 
-  switch(logging_type){
-    case LOGGING_TYPE_ARIES:{
-      backendLogger = AriesBackendLogger::GetInstance();
-    }break;
-
-    case LOGGING_TYPE_PELOTON:{
-      backendLogger = PelotonBackendLogger::GetInstance();
-    }break;
-
-    default:
-    LOG_ERROR("Unsupported backend logger type");
-    break;
-  }
+  if(IsSimilarToARIES(logging_type) == true) {
+    backendLogger = AriesBackendLogger::GetInstance();
+   }
+   else if(IsSimilarToPeloton(logging_type) == true) {
+     backendLogger = PelotonBackendLogger::GetInstance();
+   }
+   else {
+     LOG_ERROR("Unsupported logging type");
+   }
 
   return backendLogger;
 }

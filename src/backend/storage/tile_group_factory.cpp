@@ -33,7 +33,7 @@ TileGroup *TileGroupFactory::GetTileGroup(
   BackendType backend_type = BACKEND_TYPE_MM;
 
   // Allocate in PMEM if we are using peloton logging
-  if(peloton_logging_mode == LOGGING_TYPE_PELOTON) {
+  if(peloton_logging_mode == LOGGING_TYPE_NVM_NVM) {
     backend_type = BACKEND_TYPE_FILE;
   }
 
