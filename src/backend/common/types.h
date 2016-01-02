@@ -22,19 +22,29 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
+// Logging type
+// LOGGING_TYPE_AAA_BBB
+// Data stored in AAA
+// Log stored in BBB
 enum LoggingType{
   LOGGING_TYPE_INVALID = 0,
 
-  LOGGING_TYPE_ARIES   = 1,
-  LOGGING_TYPE_PELOTON = 2
-};
+  // NVM-based
+  LOGGING_TYPE_DRAM_NVM = 1,
+  LOGGING_TYPE_NVM_NVM = 2,
 
-/* Possible values for peloton_caching_mode GUC */
-typedef enum CachingType
-{
-  CACHING_OFF,   /* Off */
-  CACHING_ON   /* On */
-} CachingType;
+  // HDD-based
+  LOGGING_TYPE_DRAM_HDD = 3,
+  LOGGING_TYPE_HDD_NVM = 4,
+  LOGGING_TYPE_NVM_HDD = 5,
+  LOGGING_TYPE_HDD_HDD = 6,
+
+  // SSD-based
+  LOGGING_TYPE_DRAM_SSD = 7,
+  LOGGING_TYPE_SSD_NVM = 8,
+  LOGGING_TYPE_NVM_SSD = 9,
+  LOGGING_TYPE_SSD_SSD = 10
+};
 
 namespace peloton {
 
@@ -660,6 +670,10 @@ Value GetRandomValue(ValueType type);
 int64_t GetMaxTypeValue (ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
+
+bool IsSimilarToARIES(LoggingType logging_type);
+
+bool IsSimilarToPeloton(LoggingType logging_type);
 
 //===--------------------------------------------------------------------===//
 // Transformers

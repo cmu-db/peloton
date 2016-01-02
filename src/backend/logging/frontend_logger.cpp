@@ -45,18 +45,14 @@ FrontendLogger::~FrontendLogger(){
 FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
   FrontendLogger* frontendLogger = nullptr;
 
-  switch(logging_type){
-    case LOGGING_TYPE_ARIES:{
-      frontendLogger = new AriesFrontendLogger();
-    }break;
-
-    case LOGGING_TYPE_PELOTON:{
-      frontendLogger = new PelotonFrontendLogger();
-    }break;
-
-    default:
-      LOG_ERROR("Unsupported frontend logging type");
-      break;
+  if(IsSimilarToARIES(logging_type) == true) {
+    frontendLogger = new AriesFrontendLogger();
+  }
+  else if(IsSimilarToPeloton(logging_type) == true) {
+    frontendLogger = new PelotonFrontendLogger();
+  }
+  else {
+    LOG_ERROR("Unsupported logging type");
   }
 
   return frontendLogger;

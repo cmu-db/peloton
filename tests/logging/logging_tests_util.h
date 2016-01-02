@@ -74,10 +74,10 @@ public:
     bool check_tuple_count;
 
     // log file dir
-    std::string pmem_file_dir;
+    std::string log_file_dir;
 
     // size of the pmem file (in MB)
-    size_t pmem_file_size;
+    size_t data_file_size;
 
     // frequency with which the logger flushes
     int64_t wait_timeout;
