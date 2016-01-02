@@ -194,8 +194,6 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_DOUBLE)
 		      LOG_ERROR("expected 1-D floadt4 array");
 
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
-
 		double* pdata = (double *) ARR_DATA_PTR(arr);
 		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
