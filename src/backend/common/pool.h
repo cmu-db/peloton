@@ -45,7 +45,7 @@ class Chunk {
   char *chunk_data;
 };
 
-/// Find next higher power of two
+// Find next higher power of two
 template <class T>
 inline T nexthigher(T k) {
   if (k == 0) return 1;
@@ -68,40 +68,33 @@ class VarlenPool {
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  VarlenPool()
-      : allocation_size(TEMP_POOL_CHUNK_SIZE),
+  VarlenPool(BackendType backend_type)
+      : backend_type(backend_type),
+        allocation_size(TEMP_POOL_CHUNK_SIZE),
         max_chunk_count(1),
         current_chunk_index(0) {
     Init();
   }
 
-  VarlenPool(uint64_t allocation_size,
-       uint64_t max_chunk_count)
-      : allocation_size(allocation_size),
+  VarlenPool(BackendType backend_type,
+             uint64_t allocation_size,
+             uint64_t max_chunk_count)
+      : backend_type(backend_type),
+        allocation_size(allocation_size),
         max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
         current_chunk_index(0) {
     Init();
   }
 
-  void Init() {
-    char *storage = (char *)storage::StorageManager::GetInstance().Allocate(allocation_size, BACKEND_TYPE_VM);
-    chunks.push_back(Chunk(allocation_size, storage));
-  }
+  ~VarlenPool();
 
-  ~VarlenPool() {
-    for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(chunks[ii].chunk_data, BACKEND_TYPE_VM);
-    }
-    for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-      storage::StorageManager::GetInstance().Release(oversize_chunks[ii].chunk_data, BACKEND_TYPE_VM);
-    }
-  }
+  void Init();
 
-  /// Allocate a continous block of memory of the specified size.
+  // Allocate a continous block of memory of the specified size.
   void *Allocate(std::size_t size);
 
-  /// Allocate a continous block of memory of the specified size conveniently
-  /// initialized to 0s
+  // Allocate a continous block of memory of the specified size conveniently
+  // initialized to 0s
   void *AllocateZeroes(std::size_t size);
 
   void Purge();
@@ -110,12 +103,15 @@ class VarlenPool {
 
  private:
 
+  // backend type
+  BackendType backend_type;
+
   const uint64_t allocation_size;
   std::size_t max_chunk_count;
   std::size_t current_chunk_index;
   std::vector<Chunk> chunks;
 
-  /// Oversize chunks that will be freed and not reused.
+  // Oversize chunks that will be freed and not reused.
   std::vector<Chunk> oversize_chunks;
 
   std::mutex pool_mutex;

@@ -46,36 +46,27 @@ class FrontendLogger : public Logger{
 
     void MainLoop(void);
 
-    void CollectLogRecord(void);
+    void CollectLogRecordsFromBackendLoggers(void);
 
     void AddBackendLogger(BackendLogger* backend_logger);
 
     bool RemoveBackendLogger(BackendLogger* backend_logger);
 
-    void NotifyFrontend(bool hasNewLog = false);
-
-    void SetTestRedoAllLogs(bool redo) {
-      redo_all_logs = redo;
-    }
-
     //===--------------------------------------------------------------------===//
     // Virtual Functions
     //===--------------------------------------------------------------------===//
 
-    /**
-     * Flush collected LogRecord to stdout or file or nvram
-     */
-    virtual void Flush(void) = 0;
+    // Flush collected LogRecords
+    virtual void FlushLogRecords(void) = 0;
 
-    /**
-     * Restore database
-     */
+    // Restore database
     virtual void DoRecovery(void) = 0;
 
   protected:
 
     // Associated backend loggers
     std::vector<BackendLogger*> backend_loggers;
+
     // Since backend loggers can add themselves into the list above
     // via log manager, we need to protect the backend_loggers list
     std::mutex backend_logger_mutex;
@@ -83,16 +74,13 @@ class FrontendLogger : public Logger{
     // Global queue
     std::vector<LogRecord*> global_queue;
 
-    // Used for waking up frontend logger only when backend loggers
-    // are ready
-    std::mutex backend_notify_mutex;
-    std::condition_variable backend_notify_cv;
+    // period with which it collects log records from backend loggers
+    // (in milliseconds)
+    uint32 wait_timeout = 5;
 
-    uint32 wait_timeout = 5; // in milliseconds
-    bool log_collect_request = false; // used to indicate if backend has new logs
+    // used to indicate if backend has new logs
+    bool need_to_collect_new_log_records = false;
 
-    // redo all logs when recovery
-    bool redo_all_logs = false;
 };
 
 }  // namespace logging

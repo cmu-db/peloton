@@ -394,7 +394,7 @@ TEST(ExpressionTest, SimpleInFilter) {
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
-  //EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), false);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), false);
 
   // delete the root to destroy the full tree.
   delete equal;

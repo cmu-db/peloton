@@ -21,17 +21,21 @@
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(int tuple_count)
-    : data(nullptr),
+TileGroupHeader::TileGroupHeader(BackendType backend_type,
+                                 int tuple_count)
+    : backend_type(backend_type),
+      data(nullptr),
       num_tuple_slots(tuple_count),
       next_tuple_slot(0) {
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  data = (char *) storage::StorageManager::GetInstance().Allocate(header_size, BACKEND_TYPE_VM);
-  // initialize data with zero
-  memset(data, 0, header_size);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, header_size));
   assert(data != nullptr);
+
+  // zero out the data
+  std::memset(data, 0, header_size);
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
@@ -47,7 +51,9 @@ TileGroupHeader::TileGroupHeader(int tuple_count)
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  storage::StorageManager::GetInstance().Release(data, BACKEND_TYPE_VM);
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Release(backend_type, data);
+
   data = nullptr;
 }
 
@@ -110,6 +116,14 @@ std::ostream &operator<<(std::ostream &os,
   os << "\t-----------------------------------------------------------\n";
 
   return os;
+}
+
+void TileGroupHeader::Sync() {
+
+  // Sync the tile group data
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  storage_manager.Sync(backend_type, data, header_size);
+
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {

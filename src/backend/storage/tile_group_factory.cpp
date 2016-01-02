@@ -13,6 +13,13 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/storage/tile_group_header.h"
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+// Logging mode
+extern LoggingType     peloton_logging_mode;
+
 namespace peloton {
 namespace storage {
 
@@ -21,8 +28,18 @@ TileGroup *TileGroupFactory::GetTileGroup(
     AbstractTable *table,
     const std::vector<catalog::Schema> &schemas,
     const column_map_type &column_map, int tuple_count) {
-  TileGroupHeader *tile_header = new TileGroupHeader(tuple_count);
-  TileGroup *tile_group = new TileGroup(tile_header, table, schemas,
+
+  // Backend for allocating data
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  // Allocate in PMEM if we are using peloton logging
+  if(peloton_logging_mode == LOGGING_TYPE_PELOTON) {
+    backend_type = BACKEND_TYPE_FILE;
+  }
+
+  TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
+  TileGroup *tile_group = new TileGroup(backend_type,
+                                        tile_header, table, schemas,
                                         column_map, tuple_count);
 
   tile_group->database_id = database_id;

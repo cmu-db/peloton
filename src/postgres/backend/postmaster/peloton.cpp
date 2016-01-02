@@ -105,7 +105,7 @@ peloton_bootstrap() {
 
         // Launching a thread for logging
         auto& log_manager = peloton::logging::LogManager::GetInstance();
-        if (!log_manager.IsInLoggingMode(peloton_logging_mode)) {
+        if (!log_manager.IsInLoggingMode()) {
 
           // Set default logging mode
           log_manager.SetSyncCommit(true);
@@ -113,17 +113,16 @@ peloton_bootstrap() {
 
           // Wait for standby mode
           std::thread(&peloton::logging::LogManager::StartStandbyMode,
-                      &log_manager,
-                      peloton_logging_mode).detach();
-          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY, true, peloton_logging_mode);
+                      &log_manager).detach();
+          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
           elog(DEBUG2, "Standby mode");
 
           // Do any recovery
-          log_manager.StartRecoveryMode(peloton_logging_mode);
+          log_manager.StartRecoveryMode();
           elog(DEBUG2, "Wait for logging mode");
 
           // Wait for logging mode
-          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING, true, peloton_logging_mode);
+          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
           elog(DEBUG2, "Logging mode");
         }
 

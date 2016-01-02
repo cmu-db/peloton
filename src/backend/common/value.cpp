@@ -50,8 +50,9 @@ Value::Value(const ValueType type) {
  * Release memory associated to object type Values */
 Value::~Value() {
 
-  if(m_sourceInlined == true || m_cleanUp == false)
+  if(m_sourceInlined == true || m_cleanUp == false) {
     return;
+  }
 
   switch (GetValueType())
   {
