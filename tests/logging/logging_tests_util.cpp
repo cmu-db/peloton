@@ -211,9 +211,7 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
-    oid_t per_thread_expected = state.tuple_count - 1;
-    oid_t total_expected =  per_thread_expected * state.backend_count;
-
+    oid_t total_expected =  0;
     LoggingTestsUtil::CheckTupleCount(LOGGING_TESTS_DATABASE_OID,
                                       LOGGING_TESTS_TABLE_OID,
                                       total_expected);
@@ -237,7 +235,6 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
   auto table = db->GetTableWithOid(table_oid);
 
   oid_t tile_group_count = table->GetTileGroupCount();
-  printf("Tile group count : %lu \n", tile_group_count);
 
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
@@ -271,9 +268,12 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   storage::DataTable* table = CreateUserTable(db_oid, table_oid);
   db->AddTable(table);
 
+  // Tuple count
+  oid_t per_backend_tuple_count = state.tuple_count/state.backend_count;
+
   // Create Tuples
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  auto tuples = CreateTuples(table->GetSchema(), state.tuple_count, testing_pool);
+  auto tuples = CreateTuples(table->GetSchema(), per_backend_tuple_count, testing_pool);
 
   //===--------------------------------------------------------------------===//
   // ACTIVE PROCESSING
@@ -305,10 +305,10 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
-    oid_t per_thread_expected = state.tuple_count - 1;
-    oid_t total_expected =  per_thread_expected * state.backend_count;
-
-    LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
+    oid_t total_expected =  0;
+    LoggingTestsUtil::CheckTupleCount(db_oid,
+                                      table_oid,
+                                      total_expected);
   }
 
   // We can only drop the table in case of ARIES
