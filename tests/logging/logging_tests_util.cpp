@@ -51,13 +51,15 @@ static void WriteOutput(double value) {
       << state.logging_type << " "
       << state.column_count  << " "
       << state.tuple_count  << " "
-      << state.backend_count << " :: ";
+      << state.backend_count << " "
+      << state.wait_timeout << " :: ";
   std::cout << value << "\n";
 
   out << state.logging_type << " ";
   out << state.column_count << " ";
   out << state.tuple_count  << " ";
   out << state.backend_count << " ";
+  out << state.wait_timeout << " ";
   out << value << "\n";
   out.flush();
 
@@ -235,6 +237,8 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
   auto table = db->GetTableWithOid(table_oid);
 
   oid_t tile_group_count = table->GetTileGroupCount();
+  printf("Tile group count : %lu \n", tile_group_count);
+
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
       tile_group_itr++) {
@@ -284,7 +288,8 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   elapsed_milliseconds = end-start;
 
   // Build log time
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE) {
+  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE ||
+      state.experiment_type == LOGGING_EXPERIMENT_TYPE_WAIT) {
     WriteOutput(elapsed_milliseconds.count());
   }
   else if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_STORAGE) {
@@ -644,6 +649,7 @@ static void Usage(FILE *out) {
           "   -d --dir               :  log file dir \n"
           "   -f --pmem-file-size    :  pmem file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
+          "   -w --wait-timeout      :  Wait timeout (us) \n"
   );
   exit(EXIT_FAILURE);
 }
@@ -657,6 +663,7 @@ static struct option opts[] = {
     { "dir", optional_argument, NULL, 'd' },
     { "pmem-file-size", optional_argument, NULL, 'f' },
     { "experiment-type", optional_argument, NULL, 'e' },
+    { "wait-timeout", optional_argument, NULL, 'w' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -715,12 +722,21 @@ static void ValidatePMEMFileSize(const LoggingTestsUtil::logging_test_configurat
 }
 
 static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.experiment_type < 0 || state.experiment_type > 2) {
+  if(state.experiment_type < 0 || state.experiment_type > 4) {
     std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
     exit(EXIT_FAILURE);
   }
 
   std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
+}
+
+static void ValidateWaitTimeout(const LoggingTestsUtil::logging_test_configuration& state) {
+  if(state.wait_timeout < 0) {
+    std::cout << "Invalid wait_timeout :: " <<  state.wait_timeout << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "wait_timeout " << " : " << state.wait_timeout << std::endl;
 }
 
 static void ValidateFileDir(const LoggingTestsUtil::logging_test_configuration& state) {
@@ -745,11 +761,12 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   state.pmem_file_size = 512;
 
   state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
+  state.wait_timeout = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:e:", opts,
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:d:f:e:w:", opts,
                         &idx);
 
     if (c == -1)
@@ -780,6 +797,9 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
       case 'e':
         state.experiment_type = (LoggingExperimentType) atoi(optarg);
         break;
+      case 'w':
+        state.wait_timeout = atoi(optarg);
+        break;
 
       case 'h':
         Usage(stderr);
@@ -798,7 +818,9 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   ValidateBackendCount(state);
   ValidatePMEMFileSize(state);
   ValidateFileDir(state);
+  ValidateWaitTimeout(state);
   ValidateExperiment(state);
+
 
 }
 
