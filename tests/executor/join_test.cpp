@@ -57,14 +57,12 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 
 std::vector<PlanNodeType> join_algorithms = {
     PLAN_NODE_TYPE_NESTLOOP,
-    PLAN_NODE_TYPE_MERGEJOIN
+    PLAN_NODE_TYPE_MERGEJOIN,
+    PLAN_NODE_TYPE_HASHJOIN
 };
 
 std::vector<PelotonJoinType> join_types = {
-    JOIN_TYPE_INNER,
-    JOIN_TYPE_LEFT,
-    JOIN_TYPE_RIGHT,
-    JOIN_TYPE_OUTER
+    JOIN_TYPE_INNER
 };
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, bool compute_cartesian_product);
@@ -97,19 +95,14 @@ TEST(JoinTests, CartesianProductTest) {
   for(auto join_algorithm : join_algorithms) {
     std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm) << "\n";
 
-    // Go over all join types
-    for(auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
-
       // Execute the join test
-      ExecuteJoinTest(join_algorithm, join_type, compute_cartesian_product);
+      ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, compute_cartesian_product);
 
-    }
   }
 
 }
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __attribute__((unused)) bool cartesian_product) {
+void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, bool compute_cartesian_product) {
 
   //===--------------------------------------------------------------------===//
   // Mock table scan executors
@@ -193,14 +186,15 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
   auto result_tuple_count = 0;
   auto projection = JoinTestsUtil::CreateProjection();
 
+  // Construct predicate
+  expression::AbstractExpression *predicate = nullptr;
+  if(compute_cartesian_product == false)
+    predicate = JoinTestsUtil::CreateJoinPredicate();
+
   // Differ based on join algorithm
   switch(join_algorithm) {
 
     case PLAN_NODE_TYPE_NESTLOOP: {
-
-      // Construct predicate
-      expression::AbstractExpression *predicate = nullptr;
-      predicate = JoinTestsUtil::CreateJoinPredicate();
 
       // Create nested loop join plan node.
       planner::NestedLoopJoinPlan nested_loop_join_node(join_type, predicate, projection);
@@ -214,8 +208,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the nested loop join executor
       EXPECT_TRUE(nested_loop_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        nested_loop_join_executor.Execute();
+      while(nested_loop_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(nested_loop_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
@@ -233,7 +226,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
       join_clauses = CreateJoinClauses();
 
       // Create merge join plan node
-      planner::MergeJoinPlan merge_join_node(join_type, nullptr, projection, join_clauses);
+      planner::MergeJoinPlan merge_join_node(join_type, predicate, projection, join_clauses);
 
       // Construct the merge join executor
       executor::MergeJoinExecutor merge_join_executor(&merge_join_node, nullptr);
@@ -244,8 +237,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the merge join executor
       EXPECT_TRUE(merge_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        merge_join_executor.Execute();
+      while(merge_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(merge_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
@@ -273,7 +265,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
       executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
       // Create hash join plan node.
-      planner::HashJoinPlan hash_join_plan_node(join_type, nullptr, projection);
+      planner::HashJoinPlan hash_join_plan_node(join_type, predicate, projection);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
@@ -286,8 +278,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the hash_join_executor
       EXPECT_TRUE(hash_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        hash_join_executor.Execute();
+      while(hash_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(hash_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
@@ -309,26 +300,47 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
   //===--------------------------------------------------------------------===//
 
   // Check output
-  switch(join_type) {
-    case JOIN_TYPE_INNER:
-      EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
-      break;
+  if(compute_cartesian_product == false) {
 
-    case JOIN_TYPE_LEFT:
-      EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
-      break;
+    switch(join_type) {
+       case JOIN_TYPE_INNER:
+         EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+         break;
 
-    case JOIN_TYPE_RIGHT:
-      EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
-      break;
+       case JOIN_TYPE_LEFT:
+         EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+         break;
 
-    case JOIN_TYPE_OUTER:
-      EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
-      break;
+       case JOIN_TYPE_RIGHT:
+         EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+         break;
 
-    default:
-      throw Exception("Unsupported join type : " + std::to_string(join_type));
-      break;
+       case JOIN_TYPE_OUTER:
+         EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+         break;
+
+       default:
+         throw Exception("Unsupported join type : " + std::to_string(join_type));
+         break;
+     }
+
+  }
+  else {
+
+    switch(join_type) {
+       case JOIN_TYPE_INNER:
+       case JOIN_TYPE_LEFT:
+       case JOIN_TYPE_RIGHT:
+       case JOIN_TYPE_OUTER:
+         if(join_algorithm != PLAN_NODE_TYPE_MERGEJOIN)
+           EXPECT_EQ(result_tuple_count, 3 * 2 * tile_group_size * tile_group_size);
+         break;
+
+       default:
+         throw Exception("Unsupported join type : " + std::to_string(join_type));
+         break;
+     }
+
   }
 
 }
