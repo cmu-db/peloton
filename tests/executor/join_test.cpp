@@ -70,6 +70,8 @@ std::vector<PelotonJoinType> join_types = {
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type);
 
+oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
+
 TEST(JoinTests, JoinPredicateTest) {
 
   // Go over all join algorithms
@@ -169,7 +171,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
   // Setup join plan nodes and executors and run them
   //===--------------------------------------------------------------------===//
 
-  auto result_tuple_count = 0;
+  oid_t result_tuple_count = 0;
+  oid_t tuples_with_null = 0;
   auto projection = JoinTestsUtil::CreateProjection();
 
   // Construct predicate
@@ -197,6 +200,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
         }
       }
 
@@ -226,6 +230,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
           //std::cout << (*result_logical_tile);
         }
       }
@@ -267,6 +272,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
           //std::cout << (*result_logical_tile);
         }
       }
@@ -287,18 +293,22 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
   switch(join_type) {
     case JOIN_TYPE_INNER:
       EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 0 * tile_group_size);
       break;
 
     case JOIN_TYPE_LEFT:
       EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 1 * tile_group_size);
       break;
 
     case JOIN_TYPE_RIGHT:
       EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 0 * tile_group_size);
       break;
 
     case JOIN_TYPE_OUTER:
       EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 1 * tile_group_size);
       break;
 
     default:
@@ -307,6 +317,33 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
   }
 
 }
+
+oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
+  assert(logical_tile);
+
+  // Get column count
+  auto column_count = logical_tile->GetColumnCount();
+  oid_t tuples_with_null = 0;
+
+  // Go over the tile
+  for (auto logical_tile_itr : *logical_tile) {
+    const expression::ContainerTuple<executor::LogicalTile> left_tuple(
+        logical_tile, logical_tile_itr);
+
+      // Go over all the fields and check for null values
+      for(oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+        auto val = left_tuple.GetValue(col_itr);
+        if(val.IsNull()) {
+          tuples_with_null++;
+          break;
+        }
+      }
+
+  }
+
+  return tuples_with_null;
+}
+
 
 }  // namespace test
 }  // namespace peloton
