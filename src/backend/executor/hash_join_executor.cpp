@@ -23,8 +23,8 @@ namespace peloton {
 namespace executor {
 
 /**
- * @brief Constructor for nested loop join executor.
- * @param node Nested loop join node corresponding to this executor.
+ * @brief Constructor for hash join executor.
+ * @param node Hash join node corresponding to this executor.
  */
 HashJoinExecutor::HashJoinExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)
