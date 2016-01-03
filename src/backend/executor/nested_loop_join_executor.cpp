@@ -60,64 +60,92 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children \n",
            GetJoinTypeString());
 
-  for (;;) {  // Loop until we have non-empty result tile or exit
+  // Loop until we have non-empty result tile or exit
+  for (;;) {
+
+    // Build outer join output when done
     if (left_child_done_ && right_child_done_) {
       return BuildOuterJoinOutput();
     }
+
+    //===--------------------------------------------------------------------===//
+    // Pick right and left tiles
+    //===--------------------------------------------------------------------===//
 
     LogicalTile* left_tile = nullptr;
     LogicalTile* right_tile = nullptr;
 
     bool advance_left_child = false;
 
-    if (right_child_done_) {  // If we have already retrieved all right child's results in buffer
+    // If we have already retrieved all right child's results in buffer
+    if (right_child_done_ == true) {
       LOG_TRACE("Advance the right buffer iterator.");
+
       assert(!left_result_tiles_.empty());
       assert(!right_result_tiles_.empty());
       right_result_itr_++;
+
       if (right_result_itr_ >= right_result_tiles_.size()) {
         advance_left_child = true;
         right_result_itr_ = 0;
       }
-    } else {  // Otherwise, we must attempt to execute the right child
-      if (false == children_[1]->Execute()) {
-        // right child is finished, no more tiles
-        LOG_TRACE("My right child is exhausted.");
+
+    }
+    // Otherwise, we must attempt to execute the right child
+    else {
+
+      // Right child is finished, no more tiles
+      if (children_[1]->Execute() == false) {
+        LOG_TRACE("Right child is exhausted.");
+
         if (right_result_tiles_.empty()) {
           assert(left_result_tiles_.empty());
-          LOG_TRACE("Right child returns nothing totally. Exit.");
+          LOG_TRACE("Right child returned nothing. Exit.");
           return false;
         }
+
         right_child_done_ = true;
         right_result_itr_ = 0;
         advance_left_child = true;
-      } else {  // Buffer the right child's result
+      }
+      // Buffer the right child's result
+      else {
         LOG_TRACE("Retrieve a new tile from right child");
         BufferRightTile(children_[1]->GetOutput());
         right_result_itr_ = right_result_tiles_.size() - 1;
       }
+
     }
 
-    if (advance_left_child || left_result_tiles_.empty()) {
-      assert(0 == right_result_itr_);
-      // Need to advance the left child
-      if (false == children_[0]->Execute()) {
+    if (advance_left_child == true || left_result_tiles_.empty()) {
+
+      assert(right_result_itr_ == 0);
+
+      // Left child is finished, no more tiles
+      if (children_[0]->Execute() == false) {
         LOG_TRACE("Left child is exhausted. Returning false.");
+
         // Left child exhausted.
-        // The whole executor is done.
         // Release cur left tile. Clear right child's result buffer and return.
         assert(right_result_tiles_.size() > 0);
         left_child_done_ = true;
+
         return BuildOuterJoinOutput();
-      } else {
+      }
+      // Buffer the left child's result
+      else {
         LOG_TRACE("Advance the left child.");
-        // Insert left child's result to buffer
         BufferLeftTile(children_[0]->GetOutput());
       }
+
     }
 
     left_tile = left_result_tiles_.back().get();
     right_tile = right_result_tiles_[right_result_itr_].get();
+
+    //===--------------------------------------------------------------------===//
+    // Build Join Tile
+    //===--------------------------------------------------------------------===//
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -130,10 +158,6 @@ bool NestedLoopJoinExecutor::DExecute() {
       bool has_right_match = false;
 
       for (auto right_tile_row_itr : *right_tile) {
-        // TODO: OPTIMIZATION : Can split the control flow into two paths -
-        // one for Cartesian product and one for join
-        // Then, we can skip this branch atleast for the Cartesian product path.
-
         // Join predicate exists
         if (predicate_ != nullptr) {
           expression::ContainerTuple<executor::LogicalTile> left_tuple(
@@ -149,28 +173,32 @@ bool NestedLoopJoinExecutor::DExecute() {
         }
 
         RecordMatchedRightRow(right_result_itr_, right_tile_row_itr);
-        // Left Outer Join, Full Outer Join:
+
+        // For Left and Full Outer Join
         has_right_match = true;
 
         // Insert a tuple into the output logical tile
         // First, copy the elements in left logical tile's tuple
         pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
-      }  // inner loop of NLJ
+      }  // Inner loop of NLJ
 
+
+      // For Left and Full Outer Join
       if (has_right_match) {
         RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_row_itr);
       }
-    }  // outer loop of NLJ
 
-    // Check if we have any matching tuples.
+    }  // Outer loop of NLJ
+
+    // Check if we have any join tuples.
     if (pos_lists_builder.Size() > 0) {
       output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
       SetOutput(output_tile.release());
       return true;
     }
 
-    LOG_TRACE("This pair produces empty join result. Loop.");
-  } // End large for-loop
+    LOG_TRACE("This pair produces empty join result. Continue the loop.");
+  }
 
 }
 
