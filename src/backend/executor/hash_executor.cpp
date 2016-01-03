@@ -47,7 +47,7 @@ bool HashExecutor::DInit() {
 bool HashExecutor::DExecute() {
   LOG_INFO("Hash Executor");
 
-  if (!done_) {
+  if (done_ == false) {
     const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
 
     // First, get all the input logical tiles
@@ -55,8 +55,10 @@ bool HashExecutor::DExecute() {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
 
-    if (child_tiles_.size() == 0)
+    if (child_tiles_.size() == 0) {
+      LOG_TRACE("Hash Executor : false -- no child tiles \n");
       return false;
+    }
 
     /* *
      * HashKeys is a vector of TupleValue expr
@@ -94,12 +96,15 @@ bool HashExecutor::DExecute() {
     if (child_tiles_[result_itr]->GetTupleCount() == 0) {
       result_itr++;
       continue;
-    } else {
+    }
+    else {
       SetOutput(child_tiles_[result_itr++].release());
+      LOG_TRACE("Hash Executor : true -- return tile one at a time \n");
       return true;
     }
   }
 
+  LOG_TRACE("Hash Executor : false -- done \n");
   return false;
 }
 
