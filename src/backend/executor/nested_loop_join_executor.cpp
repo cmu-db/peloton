@@ -118,7 +118,6 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
 
     if (advance_left_child == true || left_result_tiles_.empty()) {
-
       assert(right_result_itr_ == 0);
 
       // Left child is finished, no more tiles
