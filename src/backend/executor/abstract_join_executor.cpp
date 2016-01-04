@@ -291,6 +291,7 @@ bool AbstractJoinExecutor::BuildRightJoinOutput() {
       right_matching_idx++;
       continue;
     }
+
     assert(left_result_tiles_.size() > 0);
     auto left_tile = left_result_tiles_.front().get();
     auto right_tile = right_result_tiles_[right_matching_idx].get();
