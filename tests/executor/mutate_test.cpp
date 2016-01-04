@@ -70,7 +70,8 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
 }
 
 //===--------------------------------------------------------------------===//
@@ -121,7 +122,8 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
   planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list)));
+      table, new planner::ProjectInfo(std::move(target_list),
+                                      std::move(direct_map_list)));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -284,7 +286,6 @@ TEST(MutateTests, StressTests) {
   delete key_schema;
 
   delete table;
-
 }
 
 // Insert a logical tile into a table
@@ -304,7 +305,6 @@ TEST(MutateTests, InsertTest) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-
   planner::InsertPlan node(dest_data_table.get(), nullptr);
   executor::InsertExecutor executor(&node, context.get());
 
@@ -322,9 +322,10 @@ TEST(MutateTests, InsertTest) {
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
   auto tile_count = physical_tile_group->GetTileCount();
-  std::vector<std::shared_ptr<storage::Tile > > physical_tile_refs;
-  for(oid_t tile_itr = 0 ; tile_itr < tile_count; tile_itr++)
-    physical_tile_refs.push_back(physical_tile_group->GetTileReference(tile_itr));
+  std::vector<std::shared_ptr<storage::Tile> > physical_tile_refs;
+  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++)
+    physical_tile_refs.push_back(
+        physical_tile_group->GetTileReference(tile_itr));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapTiles(physical_tile_refs));

@@ -30,13 +30,11 @@ void Transaction::RecordDelete(ItemPointer location) {
   deleted_tuples[location.block].push_back(location.offset);
 }
 
-const std::map<oid_t, std::vector<oid_t>> &
-Transaction::GetInsertedTuples() {
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetInsertedTuples() {
   return inserted_tuples;
 }
 
-const std::map<oid_t, std::vector<oid_t>> &
-Transaction::GetDeletedTuples() {
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetDeletedTuples() {
   return deleted_tuples;
 }
 

@@ -26,21 +26,18 @@ namespace bridge {
  * @brief Convert a Postgres HashState into a Peloton HashPlanNode
  * @return Pointer to the constructed AbstractPlan
  */
-const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
-    const HashJoinPlanState* hj_plan_state) {
-
-
+const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
+    const HashJoinPlanState *hj_plan_state) {
   planner::AbstractPlan *result = nullptr;
   planner::HashJoinPlan *plan_node = nullptr;
-  PelotonJoinType join_type = PlanTransformer::TransformJoinType(hj_plan_state->jointype);
+  PelotonJoinType join_type =
+      PlanTransformer::TransformJoinType(hj_plan_state->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", hj_plan_state->jointype);
     return nullptr;
   }
 
   LOG_INFO("Handle hash join with join type: %d", join_type);
-
-
 
   /*
   std::vector<planner::HashJoinPlan::JoinClause> join_clauses(
@@ -76,20 +73,21 @@ const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         hj_plan_state->tts_tupleDescriptor);
-    result = new planner::ProjectionPlan(project_info.release(),
-                                         project_schema);
+    result =
+        new planner::ProjectionPlan(project_info.release(), project_schema);
     plan_node = new planner::HashJoinPlan(join_type, predicate, nullptr);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::HashJoinPlan(join_type, predicate, project_info.release());
+    plan_node =
+        new planner::HashJoinPlan(join_type, predicate, project_info.release());
     result = plan_node;
   }
 
-  const planner::AbstractPlan *outer = PlanTransformer::TransformPlan(
-      outerAbstractPlanState(hj_plan_state));
-  const planner::AbstractPlan *inner = PlanTransformer::TransformPlan(
-      innerAbstractPlanState(hj_plan_state));
+  const planner::AbstractPlan *outer =
+      PlanTransformer::TransformPlan(outerAbstractPlanState(hj_plan_state));
+  const planner::AbstractPlan *inner =
+      PlanTransformer::TransformPlan(innerAbstractPlanState(hj_plan_state));
 
   /* Add the children nodes */
   plan_node->AddChild(outer);

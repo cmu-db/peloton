@@ -30,12 +30,12 @@ namespace index {
  *
  * @see Index
  */
-template<typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 class BtreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  //typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
+  // typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
   typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
@@ -43,11 +43,9 @@ class BtreeIndex : public Index {
       : Index(metadata),
         container(KeyComparator(metadata)),
         equals(metadata),
-        comparator(metadata) {
-  }
+        comparator(metadata) {}
 
-  ~BtreeIndex() {
-  }
+  ~BtreeIndex() {}
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
     {
@@ -74,11 +72,12 @@ class BtreeIndex : public Index {
       while (!stop) {
         auto entries = container.equal_range(index_key);
         stop = true;
-        for (auto iterator = entries.first; iterator != entries.second; iterator++) {
+        for (auto iterator = entries.first; iterator != entries.second;
+             iterator++) {
           ItemPointer value = iterator->second;
 
-          if ((value.block == location.block)
-              && (value.offset == location.offset)) {
+          if ((value.block == location.block) &&
+              (value.offset == location.offset)) {
             // remove matching (key, value) entry
             container.erase(iterator);
 
@@ -86,7 +85,6 @@ class BtreeIndex : public Index {
             break;
           }
         }
-
       }
 
       /*
@@ -133,8 +131,8 @@ class BtreeIndex : public Index {
       auto entries = container.equal_range(index_key);
       for (auto entry = entries.first; entry != entries.second; ++entry) {
         ItemPointer value = entry->second;
-        if ((value.block == location.block)
-            && (value.offset == location.offset)) {
+        if ((value.block == location.block) &&
+            (value.offset == location.offset)) {
           index_lock.Unlock();
           return value;
         }
@@ -156,9 +154,8 @@ class BtreeIndex : public Index {
       KeyType index_key;
       // check if we have leading column equality
       oid_t leading_column_id = 0;
-      auto key_column_ids_itr = std::find(key_column_ids.begin(),
-                                          key_column_ids.end(),
-                                          leading_column_id);
+      auto key_column_ids_itr = std::find(
+          key_column_ids.begin(), key_column_ids.end(), leading_column_id);
       bool special_case = false;
       if (key_column_ids_itr != key_column_ids.end()) {
         auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
@@ -175,13 +172,13 @@ class BtreeIndex : public Index {
       if (special_case == true) {
         start_key = new storage::Tuple(metadata->GetKeySchema(), true);
         // set the lower bound tuple
-        auto all_equal = SetLowerBoundTuple(start_key, values, key_column_ids,
-                                            expr_types);
+        auto all_equal =
+            SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
         index_key.SetFromKey(start_key);
 
         // all equal case
         if (all_equal) {
-          //itr_begin = container.find(index_key1);
+          // itr_begin = container.find(index_key1);
           /* 'find' may return any one of the elements with the key */
           auto ret = container.equal_range(index_key);
           itr_begin = ret.first;
@@ -235,7 +232,7 @@ class BtreeIndex : public Index {
   /**
    * @brief Return all locations related to this key.
    */
-  std::vector<ItemPointer> Scan(const storage::Tuple* key) {
+  std::vector<ItemPointer> Scan(const storage::Tuple *key) {
     index_lock.ReadLock();
     KeyType index_key;
 
@@ -252,9 +249,7 @@ class BtreeIndex : public Index {
     return std::move(retval);
   }
 
-  std::string GetTypeName() const {
-    return "BtreeMulti";
-  }
+  std::string GetTypeName() const { return "BtreeMulti"; }
 
  protected:
   MapType container;

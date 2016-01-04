@@ -61,7 +61,7 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt{
+namespace hyadapt {
 
 // Tuple id counter
 oid_t hyadapt_tuple_counter = -1000000;
@@ -70,8 +70,7 @@ static void CollectColumnMapStats();
 
 static void Reorg();
 
-expression::AbstractExpression *CreatePredicate( const int lower_bound) {
-
+expression::AbstractExpression *CreatePredicate(const int lower_bound) {
   // ATTR0 >= LOWER_BOUND
 
   // First, create tuple value expression.
@@ -85,10 +84,9 @@ expression::AbstractExpression *CreatePredicate( const int lower_bound) {
       expression::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate =
-      expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-                                    tuple_value_expr,
-                                    constant_value_expr);
+  expression::AbstractExpression *predicate = expression::ComparisonFactory(
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
+      constant_value_expr);
 
   return predicate;
 }
@@ -98,25 +96,18 @@ std::ofstream out("outputfile.summary");
 oid_t query_itr;
 
 static void WriteOutput(double duration) {
-
   // Convert to ms
   duration *= 1000;
 
   std::cout << "----------------------------------------------------------\n";
-  std::cout << state.layout_mode << " "
-      << state.operator_type << " "
-      << state.projectivity << " "
-      << state.selectivity << " "
-      << state.write_ratio << " "
-      << state.scale_factor << " "
-      << state.column_count << " "
-      << state.subset_experiment_type << " "
-      << state.access_num_groups << " "
-      << state.subset_ratio << " "
-      << state.theta << " "
-      << state.split_point << " "
-      << state.sample_weight << " "
-      << state.tuples_per_tilegroup << " :: ";
+  std::cout << state.layout_mode << " " << state.operator_type << " "
+            << state.projectivity << " " << state.selectivity << " "
+            << state.write_ratio << " " << state.scale_factor << " "
+            << state.column_count << " " << state.subset_experiment_type << " "
+            << state.access_num_groups << " " << state.subset_ratio << " "
+            << state.theta << " " << state.split_point << " "
+            << state.sample_weight << " " << state.tuples_per_tilegroup
+            << " :: ";
   std::cout << duration << " ms\n";
 
   out << state.layout_mode << " ";
@@ -136,7 +127,6 @@ static void WriteOutput(double duration) {
   out << state.scale_factor << " ";
   out << duration << "\n";
   out.flush();
-
 }
 
 static int GetLowerBound() {
@@ -146,9 +136,8 @@ static int GetLowerBound() {
   return lower_bound;
 }
 
-static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
-                        std::vector<double> columns_accessed,
-                        double cost) {
+static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
+                        std::vector<double> columns_accessed, double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
@@ -160,10 +149,9 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
   brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
-  for(oid_t txn_itr = 0 ; txn_itr < txn_count ; txn_itr++) {
-
+  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
     // Reorg mode
-    if(state.reorg == true && txn_itr == 4) {
+    if (state.reorg == true && txn_itr == 4) {
       hyadapt_table->RecordSample(sample);
       Reorg();
     }
@@ -172,16 +160,15 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     query_itr++;
 
     // Run all the executors
-    for(auto executor : executors) {
-
+    for (auto executor : executors) {
       status = executor->Init();
-      if(status == false)
-        throw Exception("Init failed");
+      if (status == false) throw Exception("Init failed");
 
       std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
-      while(executor->Execute() == true) {
-        std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
+      while (executor->Execute() == true) {
+        std::unique_ptr<executor::LogicalTile> result_tile(
+            executor->GetOutput());
         result_tiles.emplace_back(result_tile.release());
       }
 
@@ -190,16 +177,15 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     }
 
     // Capture fine-grained stats in adapt experiment
-    if(state.adapt == true) {
+    if (state.adapt == true) {
       end = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsed_seconds = end-start;
+      std::chrono::duration<double> elapsed_seconds = end - start;
       double time_per_transaction = ((double)elapsed_seconds.count());
 
-      if(state.distribution == false)
-        WriteOutput(time_per_transaction);
+      if (state.distribution == false) WriteOutput(time_per_transaction);
 
       // Record sample
-      if(state.fsm == true && cost != 0) {
+      if (state.fsm == true && cost != 0) {
         hyadapt_table->RecordSample(sample);
       }
 
@@ -207,31 +193,28 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor*>& executors,
     }
   }
 
-  if(state.adapt == false) {
+  if (state.adapt == false) {
     end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    double time_per_transaction = ((double)elapsed_seconds.count())/txn_count;
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
 
     WriteOutput(time_per_transaction);
   }
 
-  if(state.distribution == true)
-    CollectColumnMapStats();
-
+  if (state.distribution == true) CollectColumnMapStats();
 }
 
-std::vector<double> GetColumnsAccessed(const std::vector<oid_t>& column_ids) {
+std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   std::vector<double> columns_accessed;
   std::map<oid_t, oid_t> columns_accessed_map;
 
   // Init map
-  for(auto col : column_ids)
-    columns_accessed_map[col] = 1;
+  for (auto col : column_ids) columns_accessed_map[col] = 1;
 
-  for(int column_itr = 0 ; column_itr < state.column_count; column_itr++){
+  for (int column_itr = 0; column_itr < state.column_count; column_itr++) {
     auto location = columns_accessed_map.find(column_itr);
     auto end = columns_accessed_map.end();
-    if(location != end)
+    if (location != end)
       columns_accessed.push_back(1);
     else
       columns_accessed.push_back(0);
@@ -258,7 +241,7 @@ void RunDirectTest() {
   std::vector<oid_t> column_ids;
   oid_t column_count = state.projectivity * state.column_count;
 
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
@@ -276,7 +259,7 @@ void RunDirectTest() {
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for (auto column_id : column_ids) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "" + std::to_string(column_id), is_inlined);
@@ -289,8 +272,8 @@ void RunDirectTest() {
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -310,18 +293,20 @@ void RunDirectTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info,
+                                  bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
@@ -357,7 +342,7 @@ void RunAggregateTest() {
   oid_t column_count = state.column_count;
 
   column_ids.push_back(0);
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
@@ -383,9 +368,9 @@ void RunAggregateTest() {
   // 2) Set up project info
   planner::ProjectInfo::DirectMapList direct_map_list;
   oid_t col_itr = 0;
-  oid_t tuple_idx = 1; // tuple2
+  oid_t tuple_idx = 1;  // tuple2
   for (col_itr = 0; col_itr < column_count; col_itr++) {
-    direct_map_list.push_back({col_itr, {tuple_idx, col_itr} });
+    direct_map_list.push_back({col_itr, {tuple_idx, col_itr}});
     col_itr++;
   }
 
@@ -397,13 +382,12 @@ void RunAggregateTest() {
   for (auto column_id : column_ids) {
     planner::AggregatePlan::AggTerm max_column_agg(
         EXPRESSION_TYPE_AGGREGATE_MAX,
-        expression::TupleValueFactory(0, column_id),
-        false);
+        expression::TupleValueFactory(0, column_id), false);
     agg_terms.push_back(max_column_agg);
   }
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* aggregate_predicate = nullptr;
+  expression::AbstractExpression *aggregate_predicate = nullptr;
 
   // 5) Create output table schema
   auto data_table_schema = hyadapt_table->GetSchema();
@@ -414,13 +398,12 @@ void RunAggregateTest() {
   auto output_table_schema = new catalog::Schema(columns);
 
   // OK) Create the plan node
-  planner::AggregatePlan aggregation_node(proj_info, aggregate_predicate,
-                                          std::move(agg_terms),
-                                          std::move(group_by_columns),
-                                          output_table_schema,
-                                          AGGREGATE_TYPE_PLAIN);
+  planner::AggregatePlan aggregation_node(
+      proj_info, aggregate_predicate, std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN);
 
-  executor::AggregateExecutor aggregation_executor(&aggregation_node, context.get());
+  executor::AggregateExecutor aggregation_executor(&aggregation_node,
+                                                   context.get());
   aggregation_executor.AddChild(&seq_scan_executor);
 
   /////////////////////////////////////////////////////////
@@ -431,7 +414,7 @@ void RunAggregateTest() {
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   col_itr = 0;
-  for(auto column_id : column_ids) {
+  for (auto column_id : column_ids) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "MAX " + std::to_string(column_id), is_inlined);
@@ -444,8 +427,8 @@ void RunAggregateTest() {
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&aggregation_executor);
@@ -465,18 +448,20 @@ void RunAggregateTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info,
+                                  bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
@@ -512,7 +497,7 @@ void RunArithmeticTest() {
   oid_t column_count = state.column_count;
 
   column_ids.push_back(0);
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
@@ -539,24 +524,26 @@ void RunArithmeticTest() {
   expression::AbstractExpression *sum_expr = nullptr;
   oid_t projection_column_count = state.projectivity * state.column_count;
 
-  // Resize column ids to contain only columns over which we evaluate the expression
+  // Resize column ids to contain only columns over which we evaluate the
+  // expression
   column_ids.resize(projection_column_count);
 
-  for(oid_t col_itr = 0 ; col_itr < projection_column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
     auto column_expr = expression::TupleValueFactory(0, hyadapt_colum_id);
-    if(sum_expr == nullptr)
+    if (sum_expr == nullptr)
       sum_expr = column_expr;
     else {
-      sum_expr = expression::OperatorFactory(
-          EXPRESSION_TYPE_OPERATOR_PLUS, sum_expr, column_expr);
+      sum_expr = expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+                                             sum_expr, column_expr);
     }
   }
 
   planner::ProjectInfo::Target target = std::make_pair(0, sum_expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
 
   planner::ProjectionPlan node(project_info, projection_schema);
 
@@ -573,17 +560,16 @@ void RunArithmeticTest() {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
 
-  auto column =
-      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                      "SUM", is_inlined);
+  auto column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "SUM", is_inlined);
   output_columns.push_back(column);
   old_to_new_cols[col_itr] = col_itr;
 
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&projection_executor);
@@ -603,18 +589,20 @@ void RunArithmeticTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  project_info = new planner::ProjectInfo(std::move(target_list),
+                                          std::move(direct_map_list));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info,
+                                  bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
@@ -630,8 +618,8 @@ void RunArithmeticTest() {
   txn_manager.CommitTransaction(txn);
 }
 
-
-void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num_group) {
+void RunSubsetTest(SubsetType subset_test_type, double fraction,
+                   int peloton_num_group) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -648,39 +636,36 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
 
-  switch(subset_test_type) {
-
-    case SUBSET_TYPE_SINGLE_GROUP:
-    {
+  switch (subset_test_type) {
+    case SUBSET_TYPE_SINGLE_GROUP: {
       oid_t column_count = state.projectivity * state.column_count * fraction;
 
-      for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+      for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
         column_ids.push_back(hyadapt_column_ids[col_itr]);
       }
-    }
-    break;
+    } break;
 
-    case SUBSET_TYPE_MULTIPLE_GROUP:
-    {
+    case SUBSET_TYPE_MULTIPLE_GROUP: {
       oid_t column_count = state.projectivity * state.column_count;
       oid_t column_proj = column_count * fraction;
       oid_t tile_column_count = column_count / peloton_num_group;
       oid_t tile_column_proj = column_proj / peloton_num_group;
 
-      for(int tile_group_itr = 0 ; tile_group_itr < peloton_num_group ; tile_group_itr++) {
+      for (int tile_group_itr = 0; tile_group_itr < peloton_num_group;
+           tile_group_itr++) {
         oid_t column_offset = tile_group_itr * tile_column_count;
 
-        for(oid_t col_itr = 0 ; col_itr < tile_column_proj; col_itr++) {
+        for (oid_t col_itr = 0; col_itr < tile_column_proj; col_itr++) {
           column_ids.push_back(hyadapt_column_ids[column_offset + col_itr]);
         }
       }
 
-    }
-    break;
+    } break;
 
     case SUBSET_TYPE_INVALID:
     default:
-      std::cout << "Unsupported subset experiment type : " << subset_test_type << "\n";
+      std::cout << "Unsupported subset experiment type : " << subset_test_type
+                << "\n";
       break;
   }
 
@@ -698,7 +683,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for (auto column_id : column_ids) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "" + std::to_string(column_id), is_inlined);
@@ -711,8 +696,8 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema.release(),
-                                        physify_flag);
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -721,7 +706,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
 
   /////////////////////////////////////////////////////////
@@ -737,7 +722,6 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction, int peloton_num
 }
 
 void RunInsertTest() {
-
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -764,19 +748,21 @@ void RunInsertTest() {
     column_ids.push_back(col_id);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info, bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table, project_info,
+                                  bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&insert_executor);
 
   /////////////////////////////////////////////////////////
@@ -809,7 +795,7 @@ void RunUpdateTest() {
   oid_t column_count = state.column_count;
 
   column_ids.push_back(0);
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
@@ -829,11 +815,12 @@ void RunUpdateTest() {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  for(oid_t col_itr = 0 ; col_itr < column_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
   planner::UpdatePlan update_node(hyadapt_table, project_info);
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
@@ -844,7 +831,7 @@ void RunUpdateTest() {
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  std::vector<executor::AbstractExecutor*> executors;
+  std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&update_executor);
 
   /////////////////////////////////////////////////////////
@@ -866,36 +853,36 @@ std::vector<oid_t> column_counts = {50, 200};
 
 std::vector<double> write_ratios = {0, 0.1};
 
-std::vector<LayoutType> layouts = { LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
-std::vector<OperatorType> operators = { OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
+std::vector<OperatorType> operators = {
+    OPERATOR_TYPE_DIRECT, OPERATOR_TYPE_AGGREGATE, OPERATOR_TYPE_ARITHMETIC};
 
 std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 std::vector<double> projectivity = {0.02, 0.1, 0.5, 1.0};
 
 void RunProjectivityExperiment() {
-
   state.selectivity = 1.0;
 
   // Go over all column counts
-  for(auto column_count : column_counts) {
+  for (auto column_count : column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all write ratios
-    for(auto write_ratio : write_ratios) {
+    for (auto write_ratio : write_ratios) {
       state.write_ratio = write_ratio;
 
       // Go over all layouts
-      for(auto layout : layouts) {
+      for (auto layout : layouts) {
         // Set layout
         state.layout_mode = layout;
         peloton_layout_mode = state.layout_mode;
 
-        for(auto proj : projectivity) {
+        for (auto proj : projectivity) {
           // Set proj
           state.projectivity = proj;
           peloton_projectivity = state.projectivity;
@@ -913,39 +900,35 @@ void RunProjectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
           RunArithmeticTest();
         }
-
       }
-
     }
-
   }
 
   out.close();
 }
 
 void RunSelectivityExperiment() {
-
   state.projectivity = 0.1;
   peloton_projectivity = state.projectivity;
 
   // Go over all column counts
-  for(auto column_count : column_counts) {
+  for (auto column_count : column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all write ratios
-    for(auto write_ratio : write_ratios) {
+    for (auto write_ratio : write_ratios) {
       state.write_ratio = write_ratio;
 
       // Go over all layouts
-      for(auto layout : layouts) {
+      for (auto layout : layouts) {
         // Set layout
         state.layout_mode = layout;
         peloton_layout_mode = state.layout_mode;
 
-        for(auto select : selectivity) {
+        for (auto select : selectivity) {
           // Set selectivity
           state.selectivity = select;
 
@@ -962,11 +945,8 @@ void RunSelectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
           RunArithmeticTest();
         }
-
       }
-
     }
-
   }
 
   out.close();
@@ -976,31 +956,31 @@ int op_column_count = 100;
 
 std::vector<double> op_projectivity = {0.01, 0.1, 1.0};
 
-std::vector<double> op_selectivity = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+std::vector<double> op_selectivity = {0.1, 0.2, 0.3, 0.4, 0.5,
+                                      0.6, 0.7, 0.8, 0.9, 1.0};
 
 void RunOperatorExperiment() {
-
   state.column_count = op_column_count;
 
   // Generate sequence
   GenerateSequence(state.column_count);
 
   // Go over all write ratios
-  for(auto write_ratio : write_ratios) {
+  for (auto write_ratio : write_ratios) {
     state.write_ratio = write_ratio;
 
     // Go over all layouts
-    for(auto layout : layouts) {
+    for (auto layout : layouts) {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      for(auto projectivity : op_projectivity) {
+      for (auto projectivity : op_projectivity) {
         // Set projectivity
         state.projectivity = projectivity;
         peloton_projectivity = state.projectivity;
 
-        for(auto selectivity : op_selectivity) {
+        for (auto selectivity : op_selectivity) {
           // Set selectivity
           state.selectivity = selectivity;
 
@@ -1012,19 +992,16 @@ void RunOperatorExperiment() {
           RunDirectTest();
         }
       }
-
     }
-
   }
 
   out.close();
 }
 
-std::vector<oid_t> vertical_tuples_per_tilegroup = {10, 100, 1000, 10000, 100000};
-
+std::vector<oid_t> vertical_tuples_per_tilegroup = {10, 100, 1000, 10000,
+                                                    100000};
 
 void RunVerticalExperiment() {
-
   // Cache the original value
   auto orig_tuples_per_tilegroup = state.tuples_per_tilegroup;
   auto orig_tuple_count = state.tuples_per_tilegroup * orig_scale_factor;
@@ -1035,38 +1012,34 @@ void RunVerticalExperiment() {
   peloton_layout_mode = state.layout_mode;
 
   // Go over all column counts
-  for(auto column_count : column_counts) {
+  for (auto column_count : column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all write ratios
-    for(auto write_ratio : write_ratios) {
+    for (auto write_ratio : write_ratios) {
       state.write_ratio = write_ratio;
 
-      for(auto select : selectivity) {
+      for (auto select : selectivity) {
         // Set selectivity
         state.selectivity = select;
 
-        for(auto tuples_per_tg : vertical_tuples_per_tilegroup) {
+        for (auto tuples_per_tg : vertical_tuples_per_tilegroup) {
           // Set tuples per tilegroup and scale factor
           state.tuples_per_tilegroup = tuples_per_tg;
-          state.scale_factor = orig_tuple_count/tuples_per_tg;
+          state.scale_factor = orig_tuple_count / tuples_per_tg;
 
           // Load in the table with layout
-          CreateAndLoadTable((LayoutType) peloton_layout_mode);
+          CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
           RunDirectTest();
-
         }
-
       }
-
     }
-
   }
 
   // Reset
@@ -1081,7 +1054,6 @@ std::vector<double> subset_ratios = {0.2, 0.4, 0.6, 0.8, 1.0};
 std::vector<oid_t> access_num_groups = {1, 2, 4, 8, 16};
 
 void RunSubsetExperiment() {
-
   state.projectivity = 1.0;
   peloton_projectivity = state.projectivity;
 
@@ -1102,20 +1074,19 @@ void RunSubsetExperiment() {
   state.subset_experiment_type = SUBSET_TYPE_SINGLE_GROUP;
 
   // Load in the table with layout
-  CreateAndLoadTable((LayoutType) peloton_layout_mode);
+  CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
-  for(auto select : selectivity) {
+  for (auto select : selectivity) {
     // Set selectivity
     state.selectivity = select;
 
-    for(auto subset_ratio : subset_ratios) {
+    for (auto subset_ratio : subset_ratios) {
       state.subset_ratio = subset_ratio;
 
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
       RunSubsetTest(SUBSET_TYPE_SINGLE_GROUP, subset_ratio, 0);
     }
-
   }
 
   /////////////////////////////////////////////////////////
@@ -1134,20 +1105,19 @@ void RunSubsetExperiment() {
   peloton_projectivity = state.projectivity;
 
   // Load in the table with layout
-  CreateAndLoadTable((LayoutType) peloton_layout_mode);
+  CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
-  for(auto select : selectivity) {
+  for (auto select : selectivity) {
     // Set selectivity
     state.selectivity = select;
 
-    for(auto access_num_group : access_num_groups) {
+    for (auto access_num_group : access_num_groups) {
       state.access_num_groups = access_num_group;
 
       // Go over all ops
       state.operator_type = OPERATOR_TYPE_DIRECT;
       RunSubsetTest(SUBSET_TYPE_MULTIPLE_GROUP, subset_ratio, access_num_group);
     }
-
   }
 
   // Reset
@@ -1160,14 +1130,14 @@ void RunSubsetExperiment() {
 }
 
 static std::map<oid_t, oid_t> GetColumnMapStats(
-    const peloton::storage::column_map_type& column_map) {
+    const peloton::storage::column_map_type &column_map) {
   std::map<oid_t, oid_t> column_map_stats;
 
   // Cluster per-tile column count
-  for(auto entry : column_map){
+  for (auto entry : column_map) {
     auto tile_id = entry.second.first;
     auto column_map_itr = column_map_stats.find(tile_id);
-    if(column_map_itr == column_map_stats.end())
+    if (column_map_itr == column_map_stats.end())
       column_map_stats[tile_id] = 1;
     else
       column_map_stats[tile_id]++;
@@ -1177,15 +1147,14 @@ static std::map<oid_t, oid_t> GetColumnMapStats(
 }
 
 static void CollectColumnMapStats() {
-
   std::map<std::map<oid_t, oid_t>, oid_t> col_map_stats_summary;
 
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
   std::cout << "TG Count :: " << tile_group_count << "\n";
 
-  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
-
+  for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
     auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
     auto col_map = tile_group->GetColumnMap();
 
@@ -1194,27 +1163,24 @@ static void CollectColumnMapStats() {
 
     // Compare stats
     bool found = false;
-    for(auto col_map_stats_summary_itr : col_map_stats_summary) {
-
+    for (auto col_map_stats_summary_itr : col_map_stats_summary) {
       // Compare types
       auto col_map_stats_size = col_map_stats.size();
       auto entry = col_map_stats_summary_itr.first;
       auto entry_size = entry.size();
 
       // Compare sizes
-      if(col_map_stats_size != entry_size)
-        continue;
+      if (col_map_stats_size != entry_size) continue;
 
       // Compare entries
       bool match = true;
-      for(size_t entry_itr = 0; entry_itr < entry_size; entry_itr++) {
-        if(entry[entry_itr] != col_map_stats[entry_itr]) {
+      for (size_t entry_itr = 0; entry_itr < entry_size; entry_itr++) {
+        if (entry[entry_itr] != col_map_stats[entry_itr]) {
           match = false;
           break;
         }
       }
-      if(match == false)
-        continue;
+      if (match == false) continue;
 
       // Match found
       col_map_stats_summary[col_map_stats]++;
@@ -1223,36 +1189,33 @@ static void CollectColumnMapStats() {
     }
 
     // Add new type if not found
-    if(found == false)
-      col_map_stats_summary[col_map_stats] = 1;
-
+    if (found == false) col_map_stats_summary[col_map_stats] = 1;
   }
 
   oid_t type_itr = 0;
   oid_t type_cnt = 5;
-  for(auto col_map_stats_summary_entry : col_map_stats_summary) {
+  for (auto col_map_stats_summary_entry : col_map_stats_summary) {
     // First, print col map stats
     std::cout << "Type " << type_itr << " -- ";
 
-    for(auto col_stats_itr : col_map_stats_summary_entry.first)
+    for (auto col_stats_itr : col_map_stats_summary_entry.first)
       std::cout << col_stats_itr.first << " " << col_stats_itr.second << " :: ";
 
     // Next, print the normalized count
     std::cout << col_map_stats_summary_entry.second << "\n";
-    out << query_itr << " " << type_itr << " " << col_map_stats_summary_entry.second << "\n";
+    out << query_itr << " " << type_itr << " "
+        << col_map_stats_summary_entry.second << "\n";
     type_itr++;
   }
 
   // Fillers for other types
-  for(; type_itr < type_cnt ; type_itr++)
+  for (; type_itr < type_cnt; type_itr++)
     out << query_itr << " " << type_itr << " " << 0 << "\n";
 
   out.flush();
-
 }
 
 static void Transform(double theta) {
-
   // Get column map
   auto table_name = hyadapt_table->GetName();
 
@@ -1263,7 +1226,7 @@ static void Transform(double theta) {
   oid_t update_itr = 0;
 
   // Transform
-  while(state.fsm == true) {
+  while (state.fsm == true) {
     auto tile_group_count = hyadapt_table->GetTileGroupCount();
     auto tile_group_offset = rand() % tile_group_count;
 
@@ -1271,13 +1234,11 @@ static void Transform(double theta) {
 
     // Update partitioning periodically
     update_itr++;
-    if(update_itr == update_period) {
+    if (update_itr == update_period) {
       hyadapt_table->UpdateDefaultPartition();
       update_itr = 0;
     }
-
   }
-
 }
 
 static void RunAdaptTest() {
@@ -1338,15 +1299,14 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
-
 }
 
-std::vector<LayoutType> adapt_layouts = {  LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
+                                         LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {200};
 
 void RunAdaptExperiment() {
-
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1358,14 +1318,14 @@ void RunAdaptExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for(auto column_count : adapt_column_counts) {
+  for (auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for(auto layout : adapt_layouts) {
+    for (auto layout : adapt_layouts) {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
@@ -1374,13 +1334,13 @@ void RunAdaptExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout_mode);
+      CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1389,14 +1349,12 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
-
     }
-
   }
 
   // Reset
@@ -1413,7 +1371,7 @@ brain::Sample GetSample(double projectivity) {
   std::vector<oid_t> columns_accessed;
 
   // Build columns accessed
-  for(auto col_itr = 0; col_itr < col_count ; col_itr++)
+  for (auto col_itr = 0; col_itr < col_count; col_itr++)
     columns_accessed.push_back(col_itr);
 
   // Construct sample
@@ -1426,7 +1384,6 @@ brain::Sample GetSample(double projectivity) {
 std::vector<double> sample_weights = {0.0001, 0.001, 0.01, 0.1};
 
 void RunWeightExperiment() {
-
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1439,14 +1396,14 @@ void RunWeightExperiment() {
   std::vector<brain::Sample> queries;
 
   // Construct sample
-  for(oid_t type_itr = num_types; type_itr >= 1; type_itr--) {
-    auto type_proj = type_itr * ((double) 1.0/num_types);
+  for (oid_t type_itr = num_types; type_itr >= 1; type_itr--) {
+    auto type_proj = type_itr * ((double)1.0 / num_types);
     auto query = GetSample(type_proj);
     queries.push_back(query);
   }
 
   // Go over all layouts
-  for(auto sample_weight : sample_weights) {
+  for (auto sample_weight : sample_weights) {
     state.sample_weight = sample_weight;
 
     // Reset query counter
@@ -1455,14 +1412,12 @@ void RunWeightExperiment() {
     // Clusterer
     oid_t cluster_count = 4;
 
-    brain::Clusterer clusterer(cluster_count,
-                               state.column_count,
+    brain::Clusterer clusterer(cluster_count, state.column_count,
                                sample_weight);
 
     // Go over all query types
-    for(auto query : queries) {
-
-      for(oid_t txn_itr = 0 ; txn_itr < state.transactions; txn_itr++) {
+    for (auto query : queries) {
+      for (oid_t txn_itr = 0; txn_itr < state.transactions; txn_itr++) {
         // Process sample
         clusterer.ProcessSample(query);
 
@@ -1475,21 +1430,17 @@ void RunWeightExperiment() {
         query_itr++;
         WriteOutput(0);
       }
-
     }
-
   }
 
   // Reset query counter
   state.transactions = orig_transactions;
   query_itr = 0;
-
 }
 
-std::vector<oid_t> tile_group_counts = { 1000 };
+std::vector<oid_t> tile_group_counts = {1000};
 
 static void RunReorgTest() {
-
   double direct_low_proj = 0.06;
   double direct_high_proj = 0.3;
 
@@ -1508,28 +1459,24 @@ static void RunReorgTest() {
   state.projectivity = direct_high_proj;
   state.operator_type = OPERATOR_TYPE_ARITHMETIC;
   RunArithmeticTest();
-
 }
 
 static void Reorg() {
-
   // Reorg all the tile groups
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
   double theta = 0.0;
 
   hyadapt_table->UpdateDefaultPartition();
 
-  for(size_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++){
+  for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
     hyadapt_table->TransformTileGroup(tile_group_itr, theta);
   }
-
 }
 
-
-std::vector<LayoutType> reorg_layout_modes = {  LAYOUT_ROW, LAYOUT_HYBRID};
+std::vector<LayoutType> reorg_layout_modes = {LAYOUT_ROW, LAYOUT_HYBRID};
 
 void RunReorgExperiment() {
-
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1549,17 +1496,17 @@ void RunReorgExperiment() {
   GenerateSequence(state.column_count);
 
   // Go over all tile_group_counts
-  for(auto tile_group_count : tile_group_counts) {
+  for (auto tile_group_count : tile_group_counts) {
     state.scale_factor = tile_group_count;
 
     // Go over all layouts
-    for(auto layout_mode : reorg_layout_modes) {
+    for (auto layout_mode : reorg_layout_modes) {
       // Set layout
       state.layout_mode = layout_mode;
       peloton_layout_mode = state.layout_mode;
 
       // Enable reorg mode
-      if(state.layout_mode != LAYOUT_HYBRID) {
+      if (state.layout_mode != LAYOUT_HYBRID) {
         state.reorg = true;
       }
 
@@ -1567,13 +1514,13 @@ void RunReorgExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout_mode);
+      CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1582,19 +1529,17 @@ void RunReorgExperiment() {
       RunReorgTest();
 
       // Stop transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
 
       // Enable reorg mode
-      if(state.layout_mode != LAYOUT_HYBRID) {
+      if (state.layout_mode != LAYOUT_HYBRID) {
         state.reorg = false;
       }
-
     }
-
   }
 
   // Reset
@@ -1605,10 +1550,9 @@ void RunReorgExperiment() {
   out.close();
 }
 
-std::vector<LayoutType> distribution_layout_modes = {  LAYOUT_HYBRID };
+std::vector<LayoutType> distribution_layout_modes = {LAYOUT_HYBRID};
 
 void RunDistributionExperiment() {
-
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1621,14 +1565,14 @@ void RunDistributionExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for(auto column_count : adapt_column_counts) {
+  for (auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for(auto layout_mode : distribution_layout_modes) {
+    for (auto layout_mode : distribution_layout_modes) {
       // Set layout
       state.layout_mode = layout_mode;
       peloton_layout_mode = state.layout_mode;
@@ -1637,13 +1581,13 @@ void RunDistributionExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout_mode);
+      CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1652,14 +1596,12 @@ void RunDistributionExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
-
     }
-
   }
 
   // Reset
@@ -1669,7 +1611,6 @@ void RunDistributionExperiment() {
   query_itr = 0;
 
   out.close();
-
 }
 
 }  // namespace hyadapt

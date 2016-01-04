@@ -24,16 +24,13 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class LogRecordPool {
-
  public:
   //===--------------------------------------------------------------------===//
   // Accessor
   //===--------------------------------------------------------------------===//
   void Clear();
 
-  bool IsEmpty() const {
-    return txn_log_table.empty();
-  }
+  bool IsEmpty() const { return txn_log_table.empty(); }
 
   int CreateTransactionLogList(txn_id_t txn_id);
 
@@ -41,10 +38,9 @@ class LogRecordPool {
 
   void RemoveTransactionLogList(txn_id_t txn_id);
 
-  std::vector<TupleRecord *>* SearchLogRecordList(txn_id_t txn_id);
+  std::vector<TupleRecord *> *SearchLogRecordList(txn_id_t txn_id);
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//

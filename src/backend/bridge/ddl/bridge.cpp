@@ -253,7 +253,6 @@ void Bridge::GetTableList(bool catalog_only) {
 
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
-
 }
 
 /**

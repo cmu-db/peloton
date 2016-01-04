@@ -31,9 +31,9 @@ namespace bridge {
 executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn);
 
-executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              const planner::AbstractPlan *plan,
-                                              executor::ExecutorContext *executor_context);
+executor::AbstractExecutor *BuildExecutorTree(
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
+    executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -41,14 +41,12 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-peloton_status
-PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                          ParamListInfo param_list,
-                          TupleDesc tuple_desc) {
+peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
+                                         ParamListInfo param_list,
+                                         TupleDesc tuple_desc) {
   peloton_status p_status;
 
-  if (plan == nullptr)
-    return p_status;
+  if (plan == nullptr) return p_status;
 
   LOG_TRACE("PlanExecutor Start \n");
 
@@ -73,8 +71,8 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   // Build the executor tree
 
-  executor::AbstractExecutor *executor_tree = BuildExecutorTree(
-      nullptr, plan, executor_context);
+  executor::AbstractExecutor *executor_tree =
+      BuildExecutorTree(nullptr, plan, executor_context);
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -99,7 +97,8 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
       break;
     }
 
-    std::unique_ptr<executor::LogicalTile> logical_tile(executor_tree->GetOutput());
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        executor_tree->GetOutput());
 
     // Some executors don't return logical tiles (e.g., Update).
     if (logical_tile.get() == nullptr) {
@@ -108,7 +107,8 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
     // Go over the logical tile
     for (oid_t tuple_id : *logical_tile) {
-      expression::ContainerTuple<executor::LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(
+          logical_tile.get(), tuple_id);
 
       auto slot = TupleTransformer::GetPostgresTuple(&cur_tuple, tuple_desc);
 
@@ -116,17 +116,17 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
         slots = lappend(slots, slot);
       }
     }
-
   }
 
   // Set the result
   p_status.m_processed = executor_context->num_processed;
   p_status.m_result_slots = slots;
 
-  // final cleanup
-  cleanup:
+// final cleanup
+cleanup:
 
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d", single_statement_txn, init_failure, txn->GetResult());
+  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
+            single_statement_txn, init_failure, txn->GetResult());
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
@@ -161,8 +161,7 @@ PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
  */
 void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
                              std::string prefix) {
-  if (plan == nullptr)
-    return;
+  if (plan == nullptr) return;
 
   prefix += "  ";
 
@@ -180,9 +179,8 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
  */
 executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn) {
-
-  return new executor::ExecutorContext(txn, PlanTransformer::BuildParams(param_list));
-
+  return new executor::ExecutorContext(
+      txn, PlanTransformer::BuildParams(param_list));
 }
 
 /**
@@ -196,8 +194,7 @@ executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context) {
   // Base case
-  if (plan == nullptr)
-    return root;
+  if (plan == nullptr) return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
 
@@ -232,8 +229,8 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan,
-                                                            executor_context);
+      child_executor =
+          new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_MERGEJOIN:
@@ -253,8 +250,8 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PLAN_NODE_TYPE_MATERIALIZE:
-      child_executor = new executor::MaterializationExecutor(plan,
-                                                             executor_context);
+      child_executor =
+          new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_AGGREGATE_V2:
@@ -281,9 +278,7 @@ executor::AbstractExecutor *BuildExecutorTree(
   // Recurse
   auto children = plan->GetChildren();
   for (auto child : children) {
-
     child_executor = BuildExecutorTree(child_executor, child, executor_context);
-
   }
 
   return root;
@@ -295,8 +290,7 @@ executor::AbstractExecutor *BuildExecutorTree(
  * @return none.
  */
 void CleanExecutorTree(executor::AbstractExecutor *root) {
-  if (root == nullptr)
-    return;
+  if (root == nullptr) return;
 
   // Recurse
   auto children = root->GetChildren();

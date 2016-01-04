@@ -18,7 +18,7 @@
 
 namespace peloton {
 
-namespace expression{
+namespace expression {
 class AbstractExpression;
 }
 
@@ -34,54 +34,48 @@ class AggregatePlan : public AbstractPlan {
   class AggTerm {
    public:
     ExpressionType aggtype;
-    const expression::AbstractExpression* expression;
+    const expression::AbstractExpression *expression;
     bool distinct;
 
-    AggTerm(ExpressionType et, expression::AbstractExpression* expr, bool distinct = false)
-        : aggtype(et),
-          expression(expr),
-          distinct(distinct) {
-    }
+    AggTerm(ExpressionType et, expression::AbstractExpression *expr,
+            bool distinct = false)
+        : aggtype(et), expression(expr), distinct(distinct) {}
   };
 
-  AggregatePlan(const planner::ProjectInfo* project_info,
-                const expression::AbstractExpression* predicate,
-                const std::vector<AggTerm>&& unique_agg_terms,
-                const std::vector<oid_t>&& groupby_col_ids,
-                const catalog::Schema* output_schema,
+  AggregatePlan(const planner::ProjectInfo *project_info,
+                const expression::AbstractExpression *predicate,
+                const std::vector<AggTerm> &&unique_agg_terms,
+                const std::vector<oid_t> &&groupby_col_ids,
+                const catalog::Schema *output_schema,
                 PelotonAggType aggregate_strategy)
       : project_info_(project_info),
         predicate_(predicate),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
         output_schema_(output_schema),
-        agg_strategy_(aggregate_strategy) {
+        agg_strategy_(aggregate_strategy) {}
 
-  }
-
-  const std::vector<oid_t>& GetGroupbyColIds() const {
+  const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;
   }
 
-  const expression::AbstractExpression* GetPredicate() const {
+  const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  const planner::ProjectInfo* GetProjectInfo() const {
+  const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
-  const std::vector<AggTerm>& GetUniqueAggTerms() const {
+  const std::vector<AggTerm> &GetUniqueAggTerms() const {
     return unique_agg_terms_;
   }
 
-  const catalog::Schema* GetOutputSchema() const {
+  const catalog::Schema *GetOutputSchema() const {
     return output_schema_.get();
   }
 
-  PelotonAggType GetAggregateStrategy() const {
-    return agg_strategy_;
-  }
+  PelotonAggType GetAggregateStrategy() const { return agg_strategy_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
@@ -93,16 +87,13 @@ class AggregatePlan : public AbstractPlan {
     }
   }
 
-  void SetColumnIds(const std::vector<oid_t>& column_ids) {
+  void SetColumnIds(const std::vector<oid_t> &column_ids) {
     column_ids_ = column_ids;
   }
 
-  const std::vector<oid_t>& GetColumnIds() const {
-    return column_ids_;
-  }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
  private:
-
   /* For projection */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
@@ -123,8 +114,6 @@ class AggregatePlan : public AbstractPlan {
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;
-
 };
-
 }
 }

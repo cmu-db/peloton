@@ -85,8 +85,7 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
 }
 
 std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
-    LogicalTile *left_tile,
-    LogicalTile *right_tile) {
+    LogicalTile *left_tile, LogicalTile *right_tile) {
   // Check the input logical tiles.
   assert(left_tile != nullptr);
   assert(right_tile != nullptr);
@@ -110,9 +109,8 @@ std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
   return output_tile;
 }
 
-std::vector<std::vector<oid_t> > AbstractJoinExecutor::BuildPostitionLists(
-    LogicalTile *left_tile,
-    LogicalTile *right_tile) {
+std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
+    LogicalTile *left_tile, LogicalTile *right_tile) {
   // Get position list from two logical tiles
   auto &left_tile_position_lists = left_tile->GetPositionLists();
   auto &right_tile_position_lists = right_tile->GetPositionLists();
@@ -120,15 +118,16 @@ std::vector<std::vector<oid_t> > AbstractJoinExecutor::BuildPostitionLists(
   // Compute the output logical tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count = left_tile_column_count
-      + right_tile_column_count;
+  size_t output_tile_column_count =
+      left_tile_column_count + right_tile_column_count;
 
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
 
   // Construct position lists for output tile
-  std::vector<std::vector<oid_t> > position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
+  std::vector<std::vector<oid_t>> position_lists;
+  for (size_t column_itr = 0; column_itr < output_tile_column_count;
+       column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
   return position_lists;
@@ -197,13 +196,13 @@ void AbstractJoinExecutor::UpdateJoinRowSets() {
 void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
   assert(left_result_tiles_.size() - no_matching_left_row_sets_.size() == 1);
   no_matching_left_row_sets_.emplace_back(left_result_tiles_.back()->begin(),
-                                           left_result_tiles_.back()->end());
+                                          left_result_tiles_.back()->end());
 }
 
 void AbstractJoinExecutor::UpdateRightJoinRowSets() {
   assert(right_result_tiles_.size() - no_matching_right_row_sets_.size() == 1);
   no_matching_right_row_sets_.emplace_back(right_result_tiles_.back()->begin(),
-                                          right_result_tiles_.back()->end());
+                                           right_result_tiles_.back()->end());
 }
 
 void AbstractJoinExecutor::UpdateFullJoinRowSets() {
@@ -235,8 +234,7 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
 
       if (status == true) {
         return status;
-      }
-      else  {
+      } else {
         return BuildRightJoinOutput();
       }
       break;
@@ -256,9 +254,7 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
 }
 
 bool AbstractJoinExecutor::BuildLeftJoinOutput() {
-
   while (left_matching_idx < no_matching_left_row_sets_.size()) {
-
     if (no_matching_left_row_sets_[left_matching_idx].empty()) {
       left_matching_idx++;
       continue;
@@ -284,9 +280,7 @@ bool AbstractJoinExecutor::BuildLeftJoinOutput() {
 }
 
 bool AbstractJoinExecutor::BuildRightJoinOutput() {
-
   while (right_matching_idx < no_matching_right_row_sets_.size()) {
-
     if (no_matching_right_row_sets_[right_matching_idx].empty()) {
       right_matching_idx++;
       continue;

@@ -21,7 +21,7 @@ namespace peloton {
 namespace mfabric {
 
 class NanoMsg : public AbstractMessage {
-  public:
+ public:
   /** @brief CreateSocket function nanomsg implementation */
   int CreateSocket(int domain, int protocol);
 
@@ -32,7 +32,8 @@ class NanoMsg : public AbstractMessage {
   int SendMessage(int socket, const void *buffer, size_t length, int flags);
 
   /** @brief SetSocket function nanomsg implementation */
-  int SetSocket(int socket, int level, int option, const void *opt_val, size_t opt_val_len);
+  int SetSocket(int socket, int level, int option, const void *opt_val,
+                size_t opt_val_len);
 
   /** @brief ConnectSocket function nanomsg implementation */
   int ConnectSocket(int socket, const char *address);
@@ -44,8 +45,8 @@ class NanoMsg : public AbstractMessage {
   int CloseSocket(int socket);
 
   /** @brief ShutdownSocket function nanomsg implementation */
-  int ShutdownSocket(int socket,int how);
+  int ShutdownSocket(int socket, int how);
 };
 
-} // end of mfabric namespace
-} // end of peloton namespace
+}  // end of mfabric namespace
+}  // end of peloton namespace

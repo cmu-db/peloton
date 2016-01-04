@@ -25,29 +25,29 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 // the return type is the type of operator+(T, U)
-template<class T, class U>
+template <class T, class U>
 auto add(T t, U u) -> decltype(t + u) {
   return t + u;
 }
 
 // same as: double (*get_fun(int))(double)
 auto get_fun(int arg) -> double (*)(double) {
-  switch (arg)
-  {
-    case 1: return std::fabs;
-    case 2: return std::sin;
-    default: return std::cos;
+  switch (arg) {
+    case 1:
+      return std::fabs;
+    case 2:
+      return std::sin;
+    default:
+      return std::cos;
   }
 }
 
-
 TEST(AutoTests, BasicTest) {
-
   auto a = 1 + 2;
   std::cout << "type of a: " << typeid(a).name() << '\n';
   auto b = add(1, 1.2);
   std::cout << "type of b: " << typeid(b).name() << '\n';
-  //auto int c; //compile-time error
+  // auto int c; //compile-time error
   auto d = {1, 2};
   std::cout << "type of d: " << typeid(d).name() << '\n';
 
@@ -57,7 +57,6 @@ TEST(AutoTests, BasicTest) {
   auto my_fun = get_fun(2);
   std::cout << "type of my_fun: " << typeid(my_fun).name() << '\n';
   std::cout << "my_fun: " << my_fun(3) << '\n';
-
 }
 
 }  // End test namespace

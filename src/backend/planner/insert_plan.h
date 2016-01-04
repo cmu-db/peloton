@@ -40,22 +40,17 @@ class InsertPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
-  storage::DataTable *GetTable() const {
-    return target_table_;
-  }
+  storage::DataTable *GetTable() const { return target_table_; }
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
-  oid_t GetBulkInsertCount() const {
-    return bulk_insert_count;
-  }
+  oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
   std::string GetInfo() const { return "InsertPlan"; }
 
  private:
-
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 

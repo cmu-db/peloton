@@ -18,20 +18,18 @@ namespace peloton {
 
 class VarlenPool;
 
-namespace concurrency{
+namespace concurrency {
 class Transaction;
 }
 
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Aries Frontend Logger 
+// Aries Frontend Logger
 //===--------------------------------------------------------------------===//
 
-class AriesFrontendLogger : public FrontendLogger{
-
+class AriesFrontendLogger : public FrontendLogger {
  public:
-
   AriesFrontendLogger(void);
 
   ~AriesFrontendLogger(void);
@@ -48,25 +46,24 @@ class AriesFrontendLogger : public FrontendLogger{
 
   void RemoveTransactionFromRecoveryTable(void);
 
-  void MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction* recovery_txn);
+  void MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction *recovery_txn);
 
   void AbortTuplesFromRecoveryTable(void);
 
-  void MoveTuples(concurrency::Transaction* destination,
-                  concurrency::Transaction* source);
+  void MoveTuples(concurrency::Transaction *destination,
+                  concurrency::Transaction *source);
 
-  void InsertTuple(concurrency::Transaction* recovery_txn);
+  void InsertTuple(concurrency::Transaction *recovery_txn);
 
-  void DeleteTuple(concurrency::Transaction* recovery_txn);
+  void DeleteTuple(concurrency::Transaction *recovery_txn);
 
-  void UpdateTuple(concurrency::Transaction* recovery_txn);
+  void UpdateTuple(concurrency::Transaction *recovery_txn);
 
   void AbortActiveTransactions();
 
-  void AbortTuples(concurrency::Transaction* txn);
+  void AbortTuples(concurrency::Transaction *txn);
 
  private:
-
   std::string GetLogFileName(void);
 
   //===--------------------------------------------------------------------===//
@@ -74,7 +71,7 @@ class AriesFrontendLogger : public FrontendLogger{
   //===--------------------------------------------------------------------===//
 
   // File pointer and descriptor
-  FILE* log_file;
+  FILE *log_file;
   int log_file_fd;
 
   // Size of the log file

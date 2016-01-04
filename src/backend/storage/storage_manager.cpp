@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/logger.h"
 #include "backend/storage/storage_manager.h"
 
@@ -39,23 +38,23 @@ size_t peloton_data_file_size = 0;
 namespace peloton {
 namespace storage {
 
-#define DATA_FILE_LEN  1024 * 1024 * UINT64_C(512) // 512 MB
+#define DATA_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
 #define DATA_FILE_NAME "peloton.pmem"
 
 // global singleton
-StorageManager& StorageManager::GetInstance(void) {
+StorageManager &StorageManager::GetInstance(void) {
   static StorageManager storage_manager;
   return storage_manager;
 }
 
 StorageManager::StorageManager()
-: data_file_address(nullptr),
-  is_pmem(false),
-  data_file_len(0),
-  data_file_offset(0) {
-
+    : data_file_address(nullptr),
+      is_pmem(false),
+      data_file_len(0),
+      data_file_offset(0) {
   // Check if we need a data pool
-  if(IsSimilarToARIES(peloton_logging_mode) == true) {
+  if (IsSimilarToARIES(peloton_logging_mode) == true ||
+      peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
   }
 
@@ -64,62 +63,55 @@ StorageManager::StorageManager()
   struct stat data_stat;
 
   // Initialize file size
-  if(peloton_data_file_size != 0)
-    data_file_len = peloton_data_file_size * 1024 * 1024; // MB
+  if (peloton_data_file_size != 0)
+    data_file_len = peloton_data_file_size * 1024 * 1024;  // MB
   else
     data_file_len = DATA_FILE_LEN;
 
   // Check for relevant file system
   bool found_file_system = false;
 
-  switch(peloton_logging_mode) {
-
+  switch (peloton_logging_mode) {
     // Check for NVM FS
     case LOGGING_TYPE_NVM_NVM:
     case LOGGING_TYPE_NVM_HDD:
     case LOGGING_TYPE_NVM_SSD: {
-
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
         found_file_system = true;
       }
 
-    }
-    break;
+    } break;
 
     // Check for HDD FS
     case LOGGING_TYPE_HDD_NVM:
     case LOGGING_TYPE_HDD_HDD: {
-
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
         found_file_system = true;
       }
 
-    }
-    break;
+    } break;
 
     // Check for SSD FS
     case LOGGING_TYPE_SSD_NVM:
     case LOGGING_TYPE_SSD_SSD: {
-
       int status = stat(SSD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
         found_file_system = true;
       }
 
-    }
-    break;
+    } break;
 
     default:
       break;
   }
 
   // Fallback to tmp if needed
-  if(found_file_system == false) {
+  if (found_file_system == false) {
     data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
   }
 
@@ -138,92 +130,75 @@ StorageManager::StorageManager()
   }
 
   // memory map the data file
-  if ((data_file_address = reinterpret_cast<char*>(pmem_map(data_fd))) == NULL) {
+  if ((data_file_address = reinterpret_cast<char *>(pmem_map(data_fd))) ==
+      NULL) {
     perror("pmem_map");
     exit(EXIT_FAILURE);
   }
 
-  // true only if the entire range [addr, addr+len) consists of persistent memory
+  // true only if the entire range [addr, addr+len) consists of persistent
+  // memory
   is_pmem = pmem_is_pmem(data_file_address, data_file_len);
 
   // close the pmem file -- it will remain mapped
   close(data_fd);
-
-
 }
 
 StorageManager::~StorageManager() {
-
   // Check if we need a PMEM pool
-  if(peloton_logging_mode != LOGGING_TYPE_NVM_NVM)
-    return;
+  if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
 
   // unmap the pmem file
   pmem_unmap(data_file_address, data_file_len);
-
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
-
-  switch(type) {
+  switch (type) {
     case BACKEND_TYPE_MM: {
       return ::operator new(size);
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_FILE: {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
-        if(data_file_offset >= data_file_len)
-          return nullptr;
+        if (data_file_offset >= data_file_len) return nullptr;
 
         void *address = data_file_address + data_file_offset;
         // offset by requested size
         data_file_offset += size;
         return address;
       }
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_INVALID:
-    default: {
-      return nullptr;
-    }
+    default: { return nullptr; }
   }
-
 }
 
 void StorageManager::Release(BackendType type, void *address) {
-
-  switch(type) {
+  switch (type) {
     case BACKEND_TYPE_MM: {
       ::operator delete(address);
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_FILE: {
       // Nothing to do here
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_INVALID:
     default: {
       // Nothing to do here
       break;
     }
-
   }
-
 }
 
 void StorageManager::Sync(BackendType type, void *address, size_t length) {
-
-  switch(type) {
+  switch (type) {
     case BACKEND_TYPE_MM: {
       // Nothing to do here
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_FILE: {
       // flush writes for persistence
@@ -231,17 +206,13 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
         pmem_persist(address, length);
       else
         pmem_msync(address, length);
-    }
-    break;
+    } break;
 
     case BACKEND_TYPE_INVALID:
     default: {
       // Nothing to do here
-    }
-    break;
-
+    } break;
   }
-
 }
 
 }  // End storage namespace

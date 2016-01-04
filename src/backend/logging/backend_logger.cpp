@@ -23,18 +23,16 @@ namespace logging {
  * @brief Return the backend logger based on logging type
  * @param logging type can be stdout(debug), aries, peloton
  */
-BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
-  BackendLogger* backendLogger = nullptr;
+BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
+  BackendLogger *backendLogger = nullptr;
 
-  if(IsSimilarToARIES(logging_type) == true) {
+  if (IsSimilarToARIES(logging_type) == true) {
     backendLogger = AriesBackendLogger::GetInstance();
-   }
-   else if(IsSimilarToPeloton(logging_type) == true) {
-     backendLogger = PelotonBackendLogger::GetInstance();
-   }
-   else {
-     LOG_ERROR("Unsupported logging type");
-   }
+  } else if (IsSimilarToPeloton(logging_type) == true) {
+    backendLogger = PelotonBackendLogger::GetInstance();
+  } else {
+    LOG_ERROR("Unsupported logging type");
+  }
 
   return backendLogger;
 }
@@ -42,10 +40,10 @@ BackendLogger* BackendLogger::GetBackendLogger(LoggingType logging_type){
 /**
  * @brief set the wait flush to false
  */
-void BackendLogger::Commit(void){
+void BackendLogger::Commit(void) {
   std::lock_guard<std::mutex> lock(flush_notify_mutex);
   // Only need to commit if they are waiting for us to flush
-  if(wait_for_flushing){
+  if (wait_for_flushing) {
     wait_for_flushing = false;
     flush_notify_cv.notify_all();
   }
@@ -59,7 +57,7 @@ void BackendLogger::TruncateLocalQueue(oid_t offset) {
   // Lock notify first, make sure is_wait_for_flush will not return premature
   std::lock_guard<std::mutex> lock(flush_notify_mutex);
   {
-    std::lock_guard < std::mutex > lock(local_queue_mutex);
+    std::lock_guard<std::mutex> lock(local_queue_mutex);
 
     // cleanup the queue
     local_queue.erase(local_queue.begin(), local_queue.begin() + offset);
@@ -74,7 +72,7 @@ void BackendLogger::TruncateLocalQueue(oid_t offset) {
  * @brief Get the LogRecord with offset
  * @param offset
  */
-LogRecord* BackendLogger::GetLogRecord(oid_t offset){
+LogRecord *BackendLogger::GetLogRecord(oid_t offset) {
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     assert(offset < local_queue.size());
@@ -91,14 +89,14 @@ bool BackendLogger::IsWaitingForFlushing(void) {
   // wait_for_flushing is false.
   // For example, if backend logger enqueues the log record right after
   // frontend logger collect data and not truncated yet.
-  if(wait_for_flushing || GetLocalQueueSize() > 0) {
+  if (wait_for_flushing || GetLocalQueueSize() > 0) {
     return true;
   } else {
     return false;
   }
 }
 
-bool BackendLogger::IsConnectedToFrontend(void) const{
+bool BackendLogger::IsConnectedToFrontend(void) const {
   return connected_to_frontend;
 }
 
@@ -108,7 +106,7 @@ void BackendLogger::SetConnectedToFrontend(bool isConnected) {
 
 void BackendLogger::WaitForFlushing(void) {
   std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
-  while(IsWaitingForFlushing()){
+  while (IsWaitingForFlushing()) {
     flush_notify_cv.wait(wait_lock);
   }
 }

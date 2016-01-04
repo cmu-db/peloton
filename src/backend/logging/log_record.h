@@ -47,41 +47,37 @@ namespace logging {
 // LogRecord
 //===--------------------------------------------------------------------===//
 
-class LogRecord{
-
+class LogRecord {
  public:
-
-  LogRecord(LogRecordType log_record_type, txn_id_t txn_id) 
- : log_record_type(log_record_type), txn_id(txn_id) {
+  LogRecord(LogRecordType log_record_type, txn_id_t txn_id)
+      : log_record_type(log_record_type), txn_id(txn_id) {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
   }
 
-  virtual ~LogRecord(){}
+  virtual ~LogRecord() {}
 
-  LogRecordType GetType() const{ return log_record_type; }
+  LogRecordType GetType() const { return log_record_type; }
 
-  txn_id_t GetTransactionId() const{ return txn_id; }
+  txn_id_t GetTransactionId() const { return txn_id; }
 
-  virtual bool Serialize(CopySerializeOutput& output) = 0;
+  virtual bool Serialize(CopySerializeOutput &output) = 0;
 
   virtual void Print(void) = 0;
 
-  char* GetMessage(void) const {return message;}
+  char *GetMessage(void) const { return message; }
 
-  size_t GetMessageLength(void) const {return message_length;}
+  size_t GetMessageLength(void) const { return message_length; }
 
  protected:
-
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
   txn_id_t txn_id;
 
   // serialized message
-  char* message = nullptr;
+  char *message = nullptr;
 
   // length of the message
   size_t message_length = 0;
-
 };
 
 }  // namespace logging

@@ -28,7 +28,7 @@
 
 namespace peloton {
 
-namespace executor{
+namespace executor {
 class ExecutorContext;
 }
 
@@ -58,8 +58,8 @@ class AbstractExpression {
   virtual ~AbstractExpression();
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
-                     const AbstractTuple *tuple2,
-                     executor::ExecutorContext *context) const = 0;
+                         const AbstractTuple *tuple2,
+                         executor::ExecutorContext *context) const = 0;
 
   /** return true if self or descendent should be substitute()'d */
   virtual bool HasParameter() const;
@@ -74,52 +74,27 @@ class AbstractExpression {
   /* serialization methods. expression are serialized in java and
        deserialized in the execution engine during startup. */
 
-
   /** accessors */
-  ExpressionType GetExpressionType() const {
-    return m_type;
-  }
+  ExpressionType GetExpressionType() const { return m_type; }
 
-  ValueType GetValueType() const
-  {
-    return m_valueType;
-  }
+  ValueType GetValueType() const { return m_valueType; }
 
-  int GetValueSize() const
-  {
-    return m_valueSize;
-  }
+  int GetValueSize() const { return m_valueSize; }
 
-  bool GetInBytes() const
-  {
-    return m_inBytes;
-  }
+  bool GetInBytes() const { return m_inBytes; }
 
   // These should really be part of the constructor, but plumbing
   // the type and size args through the whole of the expression world.Is
   // not something I'm doing right now.
-  void setValueType(ValueType type)
-  {
-    m_valueType = type;
-  }
+  void setValueType(ValueType type) { m_valueType = type; }
 
-  void setInBytes(bool bytes)
-  {
-    m_inBytes = bytes;
-  }
+  void setInBytes(bool bytes) { m_inBytes = bytes; }
 
-  void setValueSize(int size)
-  {
-    m_valueSize = size;
-  }
+  void setValueSize(int size) { m_valueSize = size; }
 
-  const AbstractExpression *GetLeft() const {
-    return m_left;
-  }
+  const AbstractExpression *GetLeft() const { return m_left; }
 
-  const AbstractExpression *GetRight() const {
-    return m_right;
-  }
+  const AbstractExpression *GetRight() const { return m_right; }
 
   // create an expression tree. call this once with the input
   // stream positioned at the root expression node
@@ -132,8 +107,7 @@ class AbstractExpression {
  protected:
   AbstractExpression();
   AbstractExpression(ExpressionType type);
-  AbstractExpression(ExpressionType type,
-                     AbstractExpression *left,
+  AbstractExpression(ExpressionType type, AbstractExpression *left,
                      AbstractExpression *right);
 
  private:
@@ -143,7 +117,6 @@ class AbstractExpression {
       json_spirit::Object &obj);
 
  protected:
-
   AbstractExpression *m_left = nullptr;
 
   AbstractExpression *m_right = nullptr;
@@ -157,7 +130,6 @@ class AbstractExpression {
   int m_valueSize = 0;
 
   bool m_inBytes = false;
-
 };
 
 }  // End expression namespace

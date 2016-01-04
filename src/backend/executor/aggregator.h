@@ -26,7 +26,7 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 
@@ -40,9 +40,7 @@ class Agg {
  public:
   virtual ~Agg();
 
-  void SetDistinct(bool distinct) {
-    is_distinct_ = distinct;
-  }
+  void SetDistinct(bool distinct) { is_distinct_ = distinct; }
 
   void Advance(const Value val);
   Value Finalize();
@@ -51,19 +49,17 @@ class Agg {
   virtual Value DFinalize() = 0;
 
  private:
-
-  typedef std::unordered_set<Value, Value::hash, Value::equal_to> DistinctSetType;
+  typedef std::unordered_set<Value, Value::hash, Value::equal_to>
+      DistinctSetType;
 
   DistinctSetType distinct_set_;
 
   bool is_distinct_ = false;
-
 };
 
 class SumAgg : public Agg {
  public:
-  SumAgg()
-      : have_advanced(false) {
+  SumAgg() : have_advanced(false) {
     // aggregate initialized on first advance
   }
 
@@ -94,15 +90,11 @@ class SumAgg : public Agg {
 
 class AvgAgg : public Agg {
  public:
-  AvgAgg(bool is_weighted)
-      : is_weighted(is_weighted),
-        count(0) {
+  AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
 
-  void DAdvance(const Value val) {
-    this->DAdvance(val, default_delta);
-  }
+  void DAdvance(const Value val) { this->DAdvance(val, default_delta); }
 
   void DAdvance(const Value val, const Value delta) {
     if (val.IsNull()) {
@@ -153,9 +145,7 @@ class AvgAgg : public Agg {
 // count always holds integer
 class CountAgg : public Agg {
  public:
-  CountAgg()
-      : count(0) {
-  }
+  CountAgg() : count(0) {}
 
   void DAdvance(const Value val) {
     if (val.IsNull()) {
@@ -164,9 +154,7 @@ class CountAgg : public Agg {
     count++;
   }
 
-  Value DFinalize() {
-    return ValueFactory::GetBigIntValue(count);
-  }
+  Value DFinalize() { return ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -174,17 +162,11 @@ class CountAgg : public Agg {
 
 class CountStarAgg : public Agg {
  public:
-  CountStarAgg()
-      : count(0) {
-  }
+  CountStarAgg() : count(0) {}
 
-  void DAdvance(const Value val __attribute__((unused))) {
-    ++count;
-  }
+  void DAdvance(const Value val __attribute__((unused))) { ++count; }
 
-  Value DFinalize() {
-    return ValueFactory::GetBigIntValue(count);
-  }
+  Value DFinalize() { return ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -192,10 +174,7 @@ class CountStarAgg : public Agg {
 
 class MaxAgg : public Agg {
  public:
-  MaxAgg()
-      : have_advanced(false) {
-    aggregate.SetNull();
-  }
+  MaxAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void DAdvance(const Value val) {
     if (val.IsNull()) {
@@ -224,10 +203,7 @@ class MaxAgg : public Agg {
 
 class MinAgg : public Agg {
  public:
-  MinAgg()
-      : have_advanced(false) {
-    aggregate.SetNull();
-  }
+  MinAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void DAdvance(const Value val) {
     if (val.IsNull()) {
@@ -268,18 +244,14 @@ class AbstractAggregator {
  public:
   AbstractAggregator(const planner::AggregatePlan *node,
                      storage::DataTable *output_table,
-                     executor::ExecutorContext* econtext)
-      : node(node),
-        output_table(output_table),
-        executor_context(econtext) {
-  }
+                     executor::ExecutorContext *econtext)
+      : node(node), output_table(output_table), executor_context(econtext) {}
 
   virtual bool Advance(AbstractTuple *next_tuple) = 0;
 
   virtual bool Finalize() = 0;
 
-  virtual ~AbstractAggregator() {
-  }
+  virtual ~AbstractAggregator() {}
 
  protected:
   /** @brief Plan node */
@@ -289,10 +261,8 @@ class AbstractAggregator {
   storage::DataTable *output_table;
 
   /** @brief Executor Context */
-  executor::ExecutorContext* executor_context = nullptr;
-
+  executor::ExecutorContext *executor_context = nullptr;
 };
-
 
 /**
  * @brief Used when input is NOT sorted.
@@ -302,7 +272,7 @@ class HashAggregator : public AbstractAggregator {
  public:
   HashAggregator(const planner::AggregatePlan *node,
                  storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext, size_t num_input_columns);
+                 executor::ExecutorContext *econtext, size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
@@ -323,10 +293,10 @@ class HashAggregator : public AbstractAggregator {
   };
 
   /** Hash function of internal hash table */
-  struct ValueVectorHasher :
-      std::unary_function<std::vector<Value>, std::size_t> {
+  struct ValueVectorHasher
+      : std::unary_function<std::vector<Value>, std::size_t> {
     // Generate a 64-bit number for the a vector of value
-    size_t operator()(const std::vector<Value>& values) const {
+    size_t operator()(const std::vector<Value> &values) const {
       size_t seed = 0;
       for (auto &v : values) {
         v.HashCombine(seed);
@@ -337,14 +307,13 @@ class HashAggregator : public AbstractAggregator {
 
   // Default equal_to should works well
   typedef std::unordered_map<std::vector<Value>, AggregateList *,
-      ValueVectorHasher> HashAggregateMapType;
+                             ValueVectorHasher> HashAggregateMapType;
 
   /** @brief Group by key values used */
   std::vector<Value> group_by_key_values;
 
   /** @brief Hash table */
   HashAggregateMapType aggregates_map;
-
 };
 
 /**
@@ -353,9 +322,9 @@ class HashAggregator : public AbstractAggregator {
 class SortedAggregator : public AbstractAggregator {
  public:
   SortedAggregator(const planner::AggregatePlan *node,
-                 storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext,
-                 size_t num_input_columns);
+                   storage::DataTable *output_table,
+                   executor::ExecutorContext *econtext,
+                   size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
@@ -364,12 +333,11 @@ class SortedAggregator : public AbstractAggregator {
   ~SortedAggregator();
 
  private:
-//  AbstractTuple *prev_tuple = nullptr;
+  //  AbstractTuple *prev_tuple = nullptr;
   std::vector<Value> delegate_tuple_values_;
   const expression::ContainerTuple<std::vector<Value>> delegate_tuple_;
   const size_t num_input_columns_;
-  Agg** aggregates;
-
+  Agg **aggregates;
 };
 
 /**
@@ -378,8 +346,8 @@ class SortedAggregator : public AbstractAggregator {
 class PlainAggregator : public AbstractAggregator {
  public:
   PlainAggregator(const planner::AggregatePlan *node,
-                 storage::DataTable *output_table,
-                 executor::ExecutorContext* econtext);
+                  storage::DataTable *output_table,
+                  executor::ExecutorContext *econtext);
 
   bool Advance(AbstractTuple *next_tuple) override;
 
@@ -388,11 +356,8 @@ class PlainAggregator : public AbstractAggregator {
   ~PlainAggregator();
 
  private:
-  Agg** aggregates;
-
+  Agg **aggregates;
 };
-
-
 }
 // namespace executor
-}// namespace peloton
+}  // namespace peloton

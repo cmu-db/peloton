@@ -24,7 +24,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
-
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   for (oid_t txn_itr = 1; txn_itr <= 1000; txn_itr++) {

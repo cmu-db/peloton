@@ -21,7 +21,7 @@ namespace logging {
  * @brief Serialize given data
  * @return true if we serialize data otherwise false
  */
-bool TupleRecord::Serialize(CopySerializeOutput& output){
+bool TupleRecord::Serialize(CopySerializeOutput &output) {
   bool status = true;
   output.Reset();
 
@@ -29,11 +29,10 @@ bool TupleRecord::Serialize(CopySerializeOutput& output){
   SerializeHeader(output);
 
   // Serialize other parts depends on type
-  switch(GetType()){
-
+  switch (GetType()) {
     case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
-    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:  {
-      storage::Tuple* tuple = (storage::Tuple*)data;
+    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE: {
+      storage::Tuple *tuple = (storage::Tuple *)data;
       tuple->SerializeTo(output);
       break;
     }
@@ -42,13 +41,13 @@ bool TupleRecord::Serialize(CopySerializeOutput& output){
       // Nothing to do here !
       break;
 
-    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:  
-    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:  
+    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
+    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
     case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
       // Nothing to do here !
       break;
 
-    default:  {
+    default: {
       LOG_WARN("Unsupported TUPLE RECORD TYPE\n");
       status = false;
       break;
@@ -57,18 +56,17 @@ bool TupleRecord::Serialize(CopySerializeOutput& output){
 
   message_length = output.Size();
   message = new char[message_length];
-  std::memcpy( message, output.Data(), message_length);
+  std::memcpy(message, output.Data(), message_length);
 
   return status;
 }
 
 /**
  * @brief Serialize LogRecordHeader
- * @param output  
+ * @param output
  */
-void TupleRecord::SerializeHeader(CopySerializeOutput& output){
-
-  // Record LogRecordType first 
+void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
+  // Record LogRecordType first
   output.WriteEnumInSingleByte(log_record_type);
 
   size_t start = output.Position();
@@ -83,14 +81,15 @@ void TupleRecord::SerializeHeader(CopySerializeOutput& output){
   output.WriteLong(delete_location.block);
   output.WriteLong(delete_location.offset);
 
-  output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
+  output.WriteIntAt(
+      start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
 
 /**
  * @brief Deserialize LogRecordHeader
- * @param input  
+ * @param input
  */
-void TupleRecord::DeserializeHeader(CopySerializeInputBE& input) {
+void TupleRecord::DeserializeHeader(CopySerializeInputBE &input) {
   input.ReadInt();
   db_oid = (oid_t)(input.ReadLong());
   assert(db_oid);
@@ -105,14 +104,15 @@ void TupleRecord::DeserializeHeader(CopySerializeInputBE& input) {
 }
 
 // Used for peloton logging
-size_t TupleRecord::GetTupleRecordSize(void){
-  // log_record_type + header_legnth + db_oid + table_oid + txn_id + insert_location + delete_location 
-  return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) + sizeof(txn_id_t)
-                + sizeof(ItemPointer) * 2;
+size_t TupleRecord::GetTupleRecordSize(void) {
+  // log_record_type + header_legnth + db_oid + table_oid + txn_id +
+  // insert_location + delete_location
+  return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) +
+         sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
 }
 
-//just for debugging
-void TupleRecord::Print(){
+// just for debugging
+void TupleRecord::Print() {
   std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
   std::cout << " #Db  ID:" << GetDatabaseOid() << "\n";
   std::cout << " #Tb  ID:" << GetTableId() << "\n";

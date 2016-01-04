@@ -17,7 +17,6 @@
 
 #include "backend/storage/tuple.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -26,7 +25,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(ValueCopyTests, VarcharTest) {
-
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_VARCHAR, 25, "D", false);
@@ -55,7 +53,6 @@ TEST(ValueCopyTests, VarcharTest) {
 
   delete tuple;
   delete schema;
-
 }
 
 }  // End test namespace

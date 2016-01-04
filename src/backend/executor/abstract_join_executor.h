@@ -30,8 +30,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   explicit AbstractJoinExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
-  virtual ~AbstractJoinExecutor() {
-  }
+  virtual ~AbstractJoinExecutor() {}
 
   const char *GetJoinTypeString() const {
     switch (join_type_) {
@@ -58,7 +57,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
    * The number of tile should be identical to the number of row sets,
    * as a row can be uniquely identified by tile id and row oid.
    */
-  typedef std::vector<std::unordered_set<oid_t> > RowSets;
+  typedef std::vector<std::unordered_set<oid_t>> RowSets;
 
   bool DInit();
 
@@ -69,9 +68,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   //===--------------------------------------------------------------------===//
 
   // Build a join output logical tile
-  std::unique_ptr<LogicalTile> BuildOutputLogicalTile(
-      LogicalTile *left_tile,
-      LogicalTile *right_tile);
+  std::unique_ptr<LogicalTile> BuildOutputLogicalTile(LogicalTile *left_tile,
+                                                      LogicalTile *right_tile);
 
   // Build the schema of the joined tile based on the projection info
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
@@ -79,10 +77,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
       std::vector<LogicalTile::ColumnInfo> &right);
 
   // Build position lists
-  std::vector<std::vector<oid_t> > BuildPostitionLists(
-      LogicalTile *left_tile,
-      LogicalTile *right_tile);
-
+  std::vector<std::vector<oid_t>> BuildPostitionLists(LogicalTile *left_tile,
+                                                      LogicalTile *right_tile);
 
   void BufferLeftTile(LogicalTile *left_tile);
   void BufferRightTile(LogicalTile *right_tile);
@@ -122,7 +118,6 @@ class AbstractJoinExecutor : public AbstractExecutor {
     }
   }
 
-
   bool BuildOuterJoinOutput();
   bool BuildLeftJoinOutput();
   bool BuildRightJoinOutput();
@@ -147,7 +142,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
   /** @brief Join Type */
   PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
 
-  /** @brief Left and right row sets corresponding to tuples with no matching counterpart */
+  /** @brief Left and right row sets corresponding to tuples with no matching
+   * counterpart */
   RowSets no_matching_left_row_sets_;
   RowSets no_matching_right_row_sets_;
 
@@ -156,14 +152,13 @@ class AbstractJoinExecutor : public AbstractExecutor {
   size_t right_matching_idx = 0;
 
   /** @brief Buffer to store left child's result tiles */
-  std::vector<std::unique_ptr<executor::LogicalTile> > left_result_tiles_;
+  std::vector<std::unique_ptr<executor::LogicalTile>> left_result_tiles_;
 
   /** @brief Buffer to store right child's result tiles */
-  std::vector<std::unique_ptr<executor::LogicalTile> > right_result_tiles_;
+  std::vector<std::unique_ptr<executor::LogicalTile>> right_result_tiles_;
 
   bool left_child_done_ = false;
   bool right_child_done_ = false;
-
 };
 
 }  // namespace executor

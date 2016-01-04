@@ -21,79 +21,81 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class TileGroupHeader;
 }
 
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Peloton Frontend Logger 
+// Peloton Frontend Logger
 //===--------------------------------------------------------------------===//
 
 class PelotonFrontendLogger : public FrontendLogger {
+ public:
+  PelotonFrontendLogger(void);
 
-  public:
+  ~PelotonFrontendLogger(void);
 
-    PelotonFrontendLogger(void);
+  void FlushLogRecords(void);
 
-   ~PelotonFrontendLogger(void);
+  // Collect the tuple log records for flushing
+  std::pair<bool, ItemPointer> CollectTupleRecord(TupleRecord *record);
 
-    void FlushLogRecords(void);
+  //===--------------------------------------------------------------------===//
+  // Recovery
+  //===--------------------------------------------------------------------===//
 
-    // Collect the tuple log records for flushing
-    std::pair<bool,ItemPointer> CollectTupleRecord(TupleRecord* record);
+  void DoRecovery(void);
 
-    //===--------------------------------------------------------------------===//
-    // Recovery 
-    //===--------------------------------------------------------------------===//
+  std::pair<cid_t, storage::TileGroupHeader *> SetInsertCommitMark(
+      ItemPointer location);
 
-    void DoRecovery(void);
+  std::pair<cid_t, storage::TileGroupHeader *> SetDeleteCommitMark(
+      ItemPointer location);
 
-    std::pair<cid_t, storage::TileGroupHeader *> SetInsertCommitMark(ItemPointer location);
+  //===--------------------------------------------------------------------===//
+  // Utility functions
+  //===--------------------------------------------------------------------===//
 
-    std::pair<cid_t, storage::TileGroupHeader *> SetDeleteCommitMark(ItemPointer location);
+  size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
 
-    //===--------------------------------------------------------------------===//
-    // Utility functions
-    //===--------------------------------------------------------------------===//
+  std::set<storage::TileGroupHeader *> ToggleCommitMarks(
+      std::vector<txn_id_t> committing_list);
 
-    size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
+  void SyncTileGroups(std::set<oid_t> tile_group_set);
 
-    std::set<storage::TileGroupHeader*> ToggleCommitMarks(std::vector<txn_id_t> committing_list);
+  void SyncTileGroupHeaders(
+      std::set<storage::TileGroupHeader *> tile_group_header_set);
 
-    void SyncTileGroups(std::set<oid_t> tile_group_set);
+ private:
+  std::string GetLogFileName(void);
 
-    void SyncTileGroupHeaders(std::set<storage::TileGroupHeader*> tile_group_header_set);
+  bool NeedRecovery(void);
 
-  private:
-    std::string GetLogFileName(void);
+  void WriteTransactionLogRecord(TransactionRecord txnLog);
 
-    bool NeedRecovery(void);
+  //===--------------------------------------------------------------------===//
+  // Member Variables
+  //===--------------------------------------------------------------------===//
 
-    void WriteTransactionLogRecord(TransactionRecord txnLog);
+  CopySerializeOutput output_buffer;
 
-    //===--------------------------------------------------------------------===//
-    // Member Variables
-    //===--------------------------------------------------------------------===//
+  // File pointer and descriptor
+  FILE *log_file;
+  int log_file_fd;
 
-    CopySerializeOutput output_buffer;
+  // Size of the log file
+  size_t log_file_size;
 
-    // File pointer and descriptor
-    FILE* log_file;
-    int log_file_fd;
+  // Global pool
+  LogRecordPool global_peloton_log_record_pool;
 
-    // Size of the log file
-    size_t log_file_size;
-
-    // Global pool
-    LogRecordPool global_peloton_log_record_pool;
-
-    // Keep tracking max oid for setting next_oid in manager
-    // For active processing after recovery
-    oid_t max_oid = INVALID_OID;
-    // Keep tracking latest cid for setting next commit in txn manager
-    cid_t latest_commit_id = INVALID_CID;
+  // Keep tracking max oid for setting next_oid in manager
+  // For active processing after recovery
+  oid_t max_oid = INVALID_OID;
+  // Keep tracking latest cid for setting next commit in txn manager
+  cid_t latest_commit_id = INVALID_CID;
 };
 
 }  // namespace logging

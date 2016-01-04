@@ -36,7 +36,8 @@ const std::vector<LogicalTile::ColumnInfo> &LogicalTile::GetSchema() const {
  * @brief Get the information about the column.
  * @return ColumnInfo of the column.
  */
-const LogicalTile::ColumnInfo &LogicalTile::GetColumnInfo(const oid_t column_id) const {
+const LogicalTile::ColumnInfo &LogicalTile::GetColumnInfo(
+    const oid_t column_id) const {
   return schema_[column_id];
 }
 
@@ -72,7 +73,8 @@ const LogicalTile::PositionLists &LogicalTile::GetPositionLists() const {
  * @brief Get the position list at given offset in the tile.
  * @return Position list associated with column.
  */
-const LogicalTile::PositionList &LogicalTile::GetPositionList(const oid_t column_id) const {
+const LogicalTile::PositionList &LogicalTile::GetPositionList(
+    const oid_t column_id) const {
   return position_lists_[column_id];
 }
 
@@ -80,11 +82,13 @@ const LogicalTile::PositionList &LogicalTile::GetPositionList(const oid_t column
  * @brief Set the position lists of the tile.
  * @param Position lists.
  */
-void LogicalTile::SetPositionLists(LogicalTile::PositionLists &&position_lists) {
+void LogicalTile::SetPositionLists(
+    LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
 }
 
-void LogicalTile::SetPositionListsAndVisibility(LogicalTile::PositionLists &&position_lists) {
+void LogicalTile::SetPositionListsAndVisibility(
+    LogicalTile::PositionLists &&position_lists) {
   position_lists_ = position_lists;
   if (position_lists.size() > 0) {
     total_tuples_ = position_lists[0].size();
@@ -92,7 +96,6 @@ void LogicalTile::SetPositionListsAndVisibility(LogicalTile::PositionLists &&pos
     visible_tuples_ = position_lists_[0].size();
   }
 }
-
 
 /**
  * @brief Adds position list to logical tile.
@@ -104,9 +107,8 @@ void LogicalTile::SetPositionListsAndVisibility(LogicalTile::PositionLists &&pos
  * @return Position list index of newly added list.
  */
 int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
-  assert(
-      position_lists_.size() == 0
-          || position_lists_[0].size() == position_list.size());
+  assert(position_lists_.size() == 0 ||
+         position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
     visible_tuples_ = position_list.size();
@@ -162,7 +164,8 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
-    return ValueFactory::GetNullValueByType(base_tile->GetSchema()->GetType(column_id));
+    return ValueFactory::GetNullValueByType(
+        base_tile->GetSchema()->GetType(column_id));
   } else {
     return base_tile->GetValue(base_tuple_id, cp.origin_column_id);
   }
@@ -173,18 +176,14 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
  *
  * @return Number of tuples.
  */
-size_t LogicalTile::GetTupleCount() {
-  return visible_tuples_;
-}
+size_t LogicalTile::GetTupleCount() { return visible_tuples_; }
 
 /**
  * @brief Returns the number of columns.
  *
  * @return Number of columns.
  */
-size_t LogicalTile::GetColumnCount() {
-  return schema_.size();
-}
+size_t LogicalTile::GetColumnCount() { return schema_.size(); }
 
 /**
  * @brief Returns iterator pointing to first tuple.
@@ -212,8 +211,7 @@ LogicalTile::iterator LogicalTile::end() {
  * @param begin Specifies whether we want the iterator initialized to point
  *              to the first tuple id, or to past-the-last tuple.
  */
-LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
-    : tile_(tile) {
+LogicalTile::iterator::iterator(LogicalTile *tile, bool begin) : tile_(tile) {
   if (!begin) {
     pos_ = INVALID_OID;
     return;
@@ -293,31 +291,28 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
  *
  * @return Id of tuple that iterator is pointing at.
  */
-oid_t LogicalTile::iterator::operator*() {
-  return pos_;
-}
+oid_t LogicalTile::iterator::operator*() { return pos_; }
 
 LogicalTile::~LogicalTile() {
   // Automatically drops reference on base tiles for each column
-
 }
 
-
-LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile) :
-  left_source_(&left_tile->GetPositionLists()),
-  right_source_(&right_tile->GetPositionLists()) {
-
+LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
+                                                        LogicalTile *right_tile)
+    : left_source_(&left_tile->GetPositionLists()),
+      right_source_(&right_tile->GetPositionLists()) {
   // Compute the output logical tile column count
   size_t left_tile_column_count = left_source_->size();
   size_t right_tile_column_count = right_source_->size();
-  size_t output_tile_column_count = left_tile_column_count
-      + right_tile_column_count;
+  size_t output_tile_column_count =
+      left_tile_column_count + right_tile_column_count;
 
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
 
   // Construct position lists for output tile
-  for (size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++) {
+  for (size_t column_itr = 0; column_itr < output_tile_column_count;
+       column_itr++) {
     output_lists_.push_back(std::vector<oid_t>());
   }
 }
@@ -342,9 +337,8 @@ void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
  * The position list corresponding to this column should be added
  * before the metadata.
  */
-void LogicalTile::AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
-                            oid_t origin_column_id,
-                            oid_t position_list_idx) {
+void LogicalTile::AddColumn(const std::shared_ptr<storage::Tile> &base_tile,
+                            oid_t origin_column_id, oid_t position_list_idx) {
   ColumnInfo cp;
 
   // Add a reference to the base tile
@@ -353,14 +347,14 @@ void LogicalTile::AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
   schema_.push_back(cp);
-
 }
 
 /**
  * @brief Add the column specified in column_ids to this logical tile.
  */
-void LogicalTile::AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
-                             const std::vector<oid_t> &column_ids) {
+void LogicalTile::AddColumns(
+    const std::shared_ptr<storage::TileGroup> &tile_group,
+    const std::vector<oid_t> &column_ids) {
   const int position_list_idx = 0;
   for (oid_t origin_column_id : column_ids) {
     oid_t base_tile_offset, tile_column_id;
@@ -368,20 +362,25 @@ void LogicalTile::AddColumns(const std::shared_ptr<storage::TileGroup>& tile_gro
     tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
                                     tile_column_id);
 
-    AddColumn(tile_group->GetTileReference(base_tile_offset),
-              tile_column_id, position_list_idx);
+    AddColumn(tile_group->GetTileReference(base_tile_offset), tile_column_id,
+              position_list_idx);
   }
 }
 
 /**
- * @brief Given the original column ids, reorganize the schema to conform the new column_ids
- * column_ids is a vector of oid_t. Each column_id is the index into the original table schema
- * schema_ is a vector of ColumnInfos. Each ColumnInfo represents a column in the corresponding place in colum_ids.
+ * @brief Given the original column ids, reorganize the schema to conform the
+ * new column_ids
+ * column_ids is a vector of oid_t. Each column_id is the index into the
+ * original table schema
+ * schema_ is a vector of ColumnInfos. Each ColumnInfo represents a column in
+ * the corresponding place in colum_ids.
  */
-void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids) {
+void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
+                                 const std::vector<oid_t> &column_ids) {
   std::vector<ColumnInfo> new_schema;
   for (auto id : column_ids) {
-    auto ret = std::find(original_column_ids.begin(), original_column_ids.end(), id);
+    auto ret =
+        std::find(original_column_ids.begin(), original_column_ids.end(), id);
     assert(ret != original_column_ids.end());
     new_schema.push_back(schema_[*ret]);
   }
@@ -401,8 +400,8 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   for (unsigned int i = 0; i < lt.schema_.size(); i++) {
     const LogicalTile::ColumnInfo &cp = lt.schema_[i];
     os << "\t Position list idx: " << cp.position_list_idx << ", "
-       << "base tile: " << cp.base_tile << ", " << "origin column id: "
-       << cp.origin_column_id << std::endl;
+       << "base tile: " << cp.base_tile << ", "
+       << "origin column id: " << cp.origin_column_id << std::endl;
   }
 
   os << "\t-----------------------------------------------------------\n";

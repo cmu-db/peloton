@@ -71,14 +71,13 @@ void ExecuteTileGroupTest() {
 
   std::vector<catalog::Column> columns;
 
-  for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "FIELD" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
   }
-
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("TEST_TABLE");
@@ -91,8 +90,7 @@ void ExecuteTileGroupTest() {
   bool adapt_table = true;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count,
-      own_schema, adapt_table));
+      tuples_per_tilegroup_count, own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -132,7 +130,7 @@ void ExecuteTileGroupTest() {
 
     storage::Tuple tuple(table_schema, allocate);
 
-    for(oid_t col_itr = 0 ; col_itr <= col_count; col_itr++) {
+    for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
       auto value = ValueFactory::GetIntegerValue(populate_value + col_itr);
       tuple.SetValue(col_itr, value, testing_pool);
     }
@@ -156,8 +154,8 @@ void ExecuteTileGroupTest() {
       new executor::ExecutorContext(txn));
 
   // Column ids to be added to logical tile after scan.
-  //std::vector<oid_t> column_ids;
-  //for(oid_t col_itr = 0 ; col_itr <= 200; col_itr++) {
+  // std::vector<oid_t> column_ids;
+  // for(oid_t col_itr = 0 ; col_itr <= 200; col_itr++) {
   //  column_ids.push_back(col_itr);
   //}
   std::vector<oid_t> column_ids({198, 206});
@@ -172,7 +170,7 @@ void ExecuteTileGroupTest() {
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
-  for(auto column_id : column_ids) {
+  for (auto column_id : column_ids) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "FIELD" + std::to_string(column_id), is_inlined);
@@ -186,8 +184,7 @@ void ExecuteTileGroupTest() {
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(),
-                                        physify_flag);
+                                        output_schema.release(), physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -197,7 +194,8 @@ void ExecuteTileGroupTest() {
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
   for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_TRUE(mat_executor.Execute());
-    std::unique_ptr<executor::LogicalTile> result_tile(mat_executor.GetOutput());
+    std::unique_ptr<executor::LogicalTile> result_tile(
+        mat_executor.GetOutput());
     EXPECT_THAT(result_tile, NotNull());
     result_tiles.emplace_back(result_tile.release());
   }
@@ -207,7 +205,7 @@ void ExecuteTileGroupTest() {
   txn_manager.CommitTransaction();
 
   end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::chrono::duration<double> elapsed_seconds = end - start;
 
   std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }

@@ -25,19 +25,20 @@ namespace peloton {
 namespace expression {
 
 class TupleAddressExpression : public AbstractExpression {
-  public:
-    TupleAddressExpression();
-    ~TupleAddressExpression();
+ public:
+  TupleAddressExpression();
+  ~TupleAddressExpression();
 
-    inline Value Evaluate(const AbstractTuple *tuple1,
-                          __attribute__((unused)) const AbstractTuple *tuple2,
-                          __attribute__((unused)) executor::ExecutorContext *context)  const {
-        return ValueFactory::GetAddressValue(tuple1->GetData());
-    }
+  inline Value Evaluate(const AbstractTuple *tuple1,
+                        __attribute__((unused)) const AbstractTuple *tuple2,
+                        __attribute__((unused))
+                        executor::ExecutorContext *context) const {
+    return ValueFactory::GetAddressValue(tuple1->GetData());
+  }
 
-    std::string DebugInfo(const std::string &spacer) const {
-        return spacer + "TupleAddressExpression\n";
-    }
+  std::string DebugInfo(const std::string &spacer) const {
+    return spacer + "TupleAddressExpression\n";
+  }
 };
 
 }  // End expression namespace
