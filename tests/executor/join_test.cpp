@@ -58,6 +58,8 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 std::vector<PlanNodeType> join_algorithms = {
     PLAN_NODE_TYPE_NESTLOOP,
     PLAN_NODE_TYPE_MERGEJOIN
+    // TODO: Uncomment this to test hash join executor
+    //  PLAN_NODE_TYPE_HASHJOIN
 };
 
 std::vector<PelotonJoinType> join_types = {
@@ -67,12 +69,12 @@ std::vector<PelotonJoinType> join_types = {
     JOIN_TYPE_OUTER
 };
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, bool compute_cartesian_product);
+void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type);
+
+oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
 
 TEST(JoinTests, JoinPredicateTest) {
 
-  const bool compute_cartesian_product = false;
-
   // Go over all join algorithms
   for(auto join_algorithm : join_algorithms) {
     std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm) << "\n";
@@ -82,34 +84,14 @@ TEST(JoinTests, JoinPredicateTest) {
       std::cout << "JOIN TYPE :: " << join_type << "\n";
 
       // Execute the join test
-      ExecuteJoinTest(join_algorithm, join_type, compute_cartesian_product);
+      ExecuteJoinTest(join_algorithm, join_type);
 
     }
   }
 
 }
 
-TEST(JoinTests, CartesianProductTest) {
-
-  const bool compute_cartesian_product = true;
-
-  // Go over all join algorithms
-  for(auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm) << "\n";
-
-    // Go over all join types
-    for(auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
-
-      // Execute the join test
-      ExecuteJoinTest(join_algorithm, join_type, compute_cartesian_product);
-
-    }
-  }
-
-}
-
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __attribute__((unused)) bool cartesian_product) {
+void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type) {
 
   //===--------------------------------------------------------------------===//
   // Mock table scan executors
@@ -190,17 +172,17 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
   // Setup join plan nodes and executors and run them
   //===--------------------------------------------------------------------===//
 
-  auto result_tuple_count = 0;
+  oid_t result_tuple_count = 0;
+  oid_t tuples_with_null = 0;
   auto projection = JoinTestsUtil::CreateProjection();
+
+  // Construct predicate
+  expression::AbstractExpression *predicate = JoinTestsUtil::CreateJoinPredicate();
 
   // Differ based on join algorithm
   switch(join_algorithm) {
 
     case PLAN_NODE_TYPE_NESTLOOP: {
-
-      // Construct predicate
-      expression::AbstractExpression *predicate = nullptr;
-      predicate = JoinTestsUtil::CreateJoinPredicate();
 
       // Create nested loop join plan node.
       planner::NestedLoopJoinPlan nested_loop_join_node(join_type, predicate, projection);
@@ -214,12 +196,12 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the nested loop join executor
       EXPECT_TRUE(nested_loop_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        nested_loop_join_executor.Execute();
+      while(nested_loop_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(nested_loop_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
         }
       }
 
@@ -233,7 +215,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
       join_clauses = CreateJoinClauses();
 
       // Create merge join plan node
-      planner::MergeJoinPlan merge_join_node(join_type, nullptr, projection, join_clauses);
+      planner::MergeJoinPlan merge_join_node(join_type, predicate, projection, join_clauses);
 
       // Construct the merge join executor
       executor::MergeJoinExecutor merge_join_executor(&merge_join_node, nullptr);
@@ -244,12 +226,12 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the merge join executor
       EXPECT_TRUE(merge_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        merge_join_executor.Execute();
+      while(merge_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(merge_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
           //std::cout << (*result_logical_tile);
         }
       }
@@ -273,7 +255,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
       executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
       // Create hash join plan node.
-      planner::HashJoinPlan hash_join_plan_node(join_type, nullptr, projection);
+      planner::HashJoinPlan hash_join_plan_node(join_type, predicate, projection);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node, nullptr);
@@ -286,12 +268,12 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
 
       // Run the hash_join_executor
       EXPECT_TRUE(hash_join_executor.Init());
-      for(oid_t execution_itr = 0 ; execution_itr < 4; execution_itr++) {
-        hash_join_executor.Execute();
+      while(hash_join_executor.Execute() == true) {
         std::unique_ptr<executor::LogicalTile> result_logical_tile(hash_join_executor.GetOutput());
 
         if(result_logical_tile != nullptr) {
           result_tuple_count += result_logical_tile->GetTupleCount();
+          tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
           //std::cout << (*result_logical_tile);
         }
       }
@@ -312,18 +294,22 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
   switch(join_type) {
     case JOIN_TYPE_INNER:
       EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 0 * tile_group_size);
       break;
 
     case JOIN_TYPE_LEFT:
       EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 1 * tile_group_size);
       break;
 
     case JOIN_TYPE_RIGHT:
       EXPECT_EQ(result_tuple_count, 2 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 0 * tile_group_size);
       break;
 
     case JOIN_TYPE_OUTER:
       EXPECT_EQ(result_tuple_count, 3 * tile_group_size);
+      EXPECT_EQ(tuples_with_null, 1 * tile_group_size);
       break;
 
     default:
@@ -332,6 +318,33 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, __a
   }
 
 }
+
+oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
+  assert(logical_tile);
+
+  // Get column count
+  auto column_count = logical_tile->GetColumnCount();
+  oid_t tuples_with_null = 0;
+
+  // Go over the tile
+  for (auto logical_tile_itr : *logical_tile) {
+    const expression::ContainerTuple<executor::LogicalTile> left_tuple(
+        logical_tile, logical_tile_itr);
+
+      // Go over all the fields and check for null values
+      for(oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+        auto val = left_tuple.GetValue(col_itr);
+        if(val.IsNull()) {
+          tuples_with_null++;
+          break;
+        }
+      }
+
+  }
+
+  return tuples_with_null;
+}
+
 
 }  // namespace test
 }  // namespace peloton
