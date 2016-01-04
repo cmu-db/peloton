@@ -11,15 +11,13 @@ namespace peloton {
 namespace bridge {
 
 class raw_database_info {
-
-public:
+ public:
   raw_database_info(const raw_database_info &) = delete;
   raw_database_info &operator=(const raw_database_info &) = delete;
   raw_database_info(raw_database_info &&) = delete;
   raw_database_info &operator=(raw_database_info &&) = delete;
 
-  raw_database_info(Oid database_oid)
-  : database_oid(database_oid)  {
+  raw_database_info(Oid database_oid) : database_oid(database_oid) {
     database_name = get_database_name(database_oid);
   }
 
@@ -38,12 +36,10 @@ public:
   std::vector<raw_column_info> CollectRawColumn(oid_t relation_oid,
                                                 Relation pg_attribute_rel);
 
-  void AddRawTable(oid_t table_oid,
-                   std::string table_name,
+  void AddRawTable(oid_t table_oid, std::string table_name,
                    std::vector<raw_column_info> raw_columns);
 
-  void AddRawIndex(oid_t index_oid,
-                   std::string index_name,
+  void AddRawIndex(oid_t index_oid, std::string index_name,
                    std::vector<raw_column_info> raw_columns);
 
   void AddRawForeignKey(raw_foreign_key_info raw_foreign_key);
@@ -60,15 +56,13 @@ public:
 
   void CreateForeignkeys(void) const;
 
-private:
-
+ private:
   oid_t database_oid;
   std::string database_name;
 
   std::vector<raw_table_info> raw_tables;
   std::vector<raw_index_info> raw_indexes;
   std::vector<raw_foreign_key_info> raw_foreign_keys;
-
 };
 
 }  // namespace bridge

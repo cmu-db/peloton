@@ -83,7 +83,7 @@ bool UpdateExecutor::DExecute() {
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n",
-              visible_tuple_id, physical_tuple_id);
+             visible_tuple_id, physical_tuple_id);
 
     // (A) Try to delete the tuple first
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
@@ -105,8 +105,7 @@ bool UpdateExecutor::DExecute() {
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // (C) finally insert updated tuple into the table
-    ItemPointer location =
-        target_table_->InsertTuple(transaction_, new_tuple);
+    ItemPointer location = target_table_->InsertTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       LOG_INFO("Fail to insert new tuple. Set txn failure.");
@@ -114,23 +113,19 @@ bool UpdateExecutor::DExecute() {
       return false;
     }
 
-    executor_context_->num_processed += 1; // updated one
+    executor_context_->num_processed += 1;  // updated one
 
     transaction_->RecordInsert(location);
 
-   // Logging 
-   {
-      auto& log_manager = logging::LogManager::GetInstance();
+    // Logging
+    {
+      auto &log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode()){
+      if (log_manager.IsInLoggingMode()) {
         auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
-                                             transaction_->GetTransactionId(), 
-                                             target_table_->GetOid(),
-                                             location,
-                                             delete_location, 
-                                             new_tuple);
-
+        auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+            target_table_->GetOid(), location, delete_location, new_tuple);
 
         logger->Log(record);
       }

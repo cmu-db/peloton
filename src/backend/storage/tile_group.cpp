@@ -46,9 +46,8 @@ TileGroup::TileGroup(BackendType backend_type,
     oid_t tile_id = manager.GetNextOid();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
-        backend_type,
-        database_id, table_id, tile_group_id, tile_id, tile_group_header,
-        tile_schemas[tile_itr], this, tuple_count));
+        backend_type, database_id, table_id, tile_group_id, tile_id,
+        tile_group_header, tile_schemas[tile_itr], this, tuple_count));
 
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
@@ -68,12 +67,12 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
 }
 
 peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
-   Tile *tile = GetTile(tile_id);
+  Tile *tile = GetTile(tile_id);
 
-   if (tile != nullptr) return tile->GetPool();
+  if (tile != nullptr) return tile->GetPool();
 
-   return nullptr;
- }
+  return nullptr;
+}
 
 oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetNextTupleSlot();
@@ -99,12 +98,12 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
-  if (tuple_slot_id == INVALID_OID){
+  if (tuple_slot_id == INVALID_OID) {
     LOG_INFO("Failed to get next empty tuple slot within tile group.");
     return INVALID_OID;
   }
 
-  //tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id);
+  // tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -124,7 +123,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                                  tile->GetPool());
+                          tile->GetPool());
       column_itr++;
     }
   }
@@ -143,13 +142,13 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   return tuple_slot_id;
 }
 
-
 /**
  * Grab specific slot and fill in the tuple
  * Used by recovery
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
-oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const Tuple *tuple) {
+oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+                             const Tuple *tuple) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
@@ -176,7 +175,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                                  tile->GetPool());
+                          tile->GetPool());
       column_itr++;
     }
   }
@@ -192,21 +191,25 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const
   return tuple_slot_id;
 }
 
-// delete tuple at given slot if it is neither already locked nor deleted in future.
-bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid) {
-
+// delete tuple at given slot if it is neither already locked nor deleted in
+// future.
+bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+                            cid_t last_cid) {
   // do a dirty delete
   if (tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id)) {
-    if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id, last_cid)) {
+    if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id,
+                                       last_cid)) {
       return true;
     } else {
       LOG_INFO("Delete failed: not deletable");
       tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id);
       return false;
     }
-  } else if (tile_group_header->GetTransactionId(tuple_slot_id) == transaction_id) {
+  } else if (tile_group_header->GetTransactionId(tuple_slot_id) ==
+             transaction_id) {
     // is a own insert, is already latched by myself and is safe to set
-    LOG_INFO("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu", tile_group_header->GetTransactionId(tuple_slot_id),
+    LOG_INFO("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu",
+             tile_group_header->GetTransactionId(tuple_slot_id),
              tile_group_header->GetBeginCommitId(tuple_slot_id),
              tile_group_header->GetEndCommitId(tuple_slot_id));
     assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
@@ -214,8 +217,9 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t 
     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     return true;
   } else {
-    LOG_INFO("Delete failed: Latch failed and Ownership check failed: %lu != %lu",
-             tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
+    LOG_INFO(
+        "Delete failed: Latch failed and Ownership check failed: %lu != %lu",
+        tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
     return false;
   }
 }
@@ -242,11 +246,12 @@ void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
   tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
 
   // undo insert (we don't reset MVCC info currently)
-  //TODO: can reclaim tuple here ?
-  //ReclaimTuple(tuple_slot_id);
+  // TODO: can reclaim tuple here ?
+  // ReclaimTuple(tuple_slot_id);
 }
 
-void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id) {
+void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id,
+                                  txn_id_t transaction_id) {
   // undo deletion
   tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id);
 }
@@ -288,38 +293,37 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
-std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset) const {
+std::shared_ptr<Tile> TileGroup::GetTileReference(
+    const oid_t tile_offset) const {
   assert(tile_offset < tile_count);
   return tiles[tile_offset];
 }
 
-double TileGroup::GetSchemaDifference(const storage::column_map_type& new_column_map) {
+double TileGroup::GetSchemaDifference(
+    const storage::column_map_type &new_column_map) {
   double theta = 0;
   size_t capacity = column_map.size();
   double diff = 0;
 
-  for(oid_t col_itr = 0 ; col_itr < capacity ; col_itr++) {
-    auto& old_col = column_map.at(col_itr);
-    auto& new_col = new_column_map.at(col_itr);
+  for (oid_t col_itr = 0; col_itr < capacity; col_itr++) {
+    auto &old_col = column_map.at(col_itr);
+    auto &new_col = new_column_map.at(col_itr);
 
     // The tile don't match
-    if(old_col.first != new_col.first)
-      diff++;
+    if (old_col.first != new_col.first) diff++;
   }
 
   // compute diff
-  theta = diff/capacity;
+  theta = diff / capacity;
 
   return theta;
 }
 
 void TileGroup::Sync() {
-
   // Sync the tile group data by syncing all the underlying tiles
-  for(auto tile : tiles) {
+  for (auto tile : tiles) {
     tile->Sync();
   }
-
 }
 
 //===--------------------------------------------------------------------===//

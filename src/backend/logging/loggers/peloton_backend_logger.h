@@ -18,35 +18,31 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Peloton Backend Logger 
+// Peloton Backend Logger
 //===--------------------------------------------------------------------===//
 
-class PelotonBackendLogger : public BackendLogger{
-
-public:
+class PelotonBackendLogger : public BackendLogger {
+ public:
   PelotonBackendLogger(const PelotonBackendLogger &) = delete;
   PelotonBackendLogger &operator=(const PelotonBackendLogger &) = delete;
   PelotonBackendLogger(PelotonBackendLogger &&) = delete;
   PelotonBackendLogger &operator=(PelotonBackendLogger &&) = delete;
 
-  static PelotonBackendLogger* GetInstance(void);
+  static PelotonBackendLogger *GetInstance(void);
 
-  void Log(LogRecord* record);
+  void Log(LogRecord *record);
 
   void TruncateLocalQueue(oid_t offset);
 
-  LogRecord* GetTupleRecord(LogRecordType log_record_type, 
-                            txn_id_t txn_id, 
-                            oid_t table_oid, 
-                            ItemPointer insert_location, 
-                            ItemPointer delete_location, 
-                            void* data = nullptr,
+  LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
+                            oid_t table_oid, ItemPointer insert_location,
+                            ItemPointer delete_location, void *data = nullptr,
                             oid_t db_oid = INVALID_OID);
 
-private:
-    PelotonBackendLogger(){ logging_type = LOGGING_TYPE_NVM_NVM;}
+ private:
+  PelotonBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
 
-    CopySerializeOutput output_buffer;
+  CopySerializeOutput output_buffer;
 };
 
 }  // namespace logging

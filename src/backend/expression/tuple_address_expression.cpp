@@ -19,14 +19,8 @@ namespace peloton {
 namespace expression {
 
 TupleAddressExpression::TupleAddressExpression()
-  : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS)
-{
-}
-TupleAddressExpression::~TupleAddressExpression()
-{
-}
+    : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {}
+TupleAddressExpression::~TupleAddressExpression() {}
 
 }  // End expression namespace
 }  // End peloton namespace
-
-

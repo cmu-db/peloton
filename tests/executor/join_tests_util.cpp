@@ -35,7 +35,7 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
       new expression::TupleValueExpression(1, 1);
 
   predicate = new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   return predicate;
 }
@@ -50,14 +50,14 @@ planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
   /////////////////////////////////////////////////////////
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map1 = std::make_pair(
-      0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 = std::make_pair(
-      1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 = std::make_pair(
-      2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(
-      3, std::make_pair(0, 0));
+  planner::ProjectInfo::DirectMap direct_map1 =
+      std::make_pair(0, std::make_pair(0, 1));
+  planner::ProjectInfo::DirectMap direct_map2 =
+      std::make_pair(1, std::make_pair(1, 1));
+  planner::ProjectInfo::DirectMap direct_map3 =
+      std::make_pair(2, std::make_pair(1, 0));
+  planner::ProjectInfo::DirectMap direct_map4 =
+      std::make_pair(3, std::make_pair(0, 0));
 
   direct_map_list.push_back(direct_map1);
   direct_map_list.push_back(direct_map2);
@@ -69,7 +69,8 @@ planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
 }
 
 // Create complicated join predicate
-expression::AbstractExpression *JoinTestsUtil::CreateComplicatedJoinPredicate() {
+expression::AbstractExpression *
+JoinTestsUtil::CreateComplicatedJoinPredicate() {
   expression::AbstractExpression *predicate = nullptr;
 
   // LEFT.1 == RIGHT.1
@@ -99,7 +100,6 @@ expression::AbstractExpression *JoinTestsUtil::CreateComplicatedJoinPredicate() 
 
   return predicate;
 }
-
 
 }  // namespace test
 }  // namespace peloton

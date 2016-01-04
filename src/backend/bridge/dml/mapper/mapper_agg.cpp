@@ -7,11 +7,10 @@
 namespace peloton {
 namespace bridge {
 
-const planner::AbstractPlan*
-PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
-
+const planner::AbstractPlan *PlanTransformer::TransformAgg(
+    const AggPlanState *plan_state) {
   // Alias all I need
-  const Agg* agg = plan_state->agg_plan;
+  const Agg *agg = plan_state->agg_plan;
   auto numphases = plan_state->numphases;
   auto numaggs = plan_state->numaggs;
   auto targetlist = plan_state->ps_targetlist;
@@ -23,8 +22,7 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   LOG_INFO("Number of Agg phases: %d \n", numphases);
 
   // When we'll have >1 phases?
-  if(numphases != 1)
-    return nullptr;
+  if (numphases != 1) return nullptr;
 
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
@@ -48,16 +46,17 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       return nullptr;
     }
 
-    // We don't check whether the mapped exprtype is a valid aggregate type here.
+    // We don't check whether the mapped exprtype is a valid aggregate type
+    // here.
     PltFuncMetaInfo fn_meta = itr->second;
     // We only take the first argument as input to aggregator because
     // we don't have multi-argument aggregator in Peloton at the moment.
     // WARNING: there can be no arguments (e.g., COUNT(*))
     auto arguments = peragg[aggno].aggrefstate->args;
-    expression::AbstractExpression* agg_expr = nullptr;
+    expression::AbstractExpression *agg_expr = nullptr;
     if (arguments) {
-      GenericExprState *gstate = (GenericExprState *) lfirst(
-          list_head(arguments));
+      GenericExprState *gstate =
+          (GenericExprState *)lfirst(list_head(arguments));
       LOG_INFO("Creating Agg Expr");
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
       LOG_INFO("Done creating Agg Expr");
@@ -80,7 +79,8 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
     unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr, distinct);
 
     LOG_INFO(
-        "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, numDistinctCols = %d",
+        "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, "
+        "numDistinctCols = %d",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
         agg_expr ? agg_expr->Debug().c_str() : "<NULL>",
         peragg[aggno].numDistinctCols);
@@ -98,7 +98,8 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
     LOG_INFO("agg.grpColIdx[%d] = %d \n", i, agg->grpColIdx[i]);
 
     auto attrno = agg->grpColIdx[i];
-    if (AttributeNumberIsValid(attrno) && AttrNumberIsForUserDefinedAttr(attrno)) {
+    if (AttributeNumberIsValid(attrno) &&
+        AttrNumberIsForUserDefinedAttr(attrno)) {
       groupby_col_ids.emplace_back(AttrNumberGetAttrOffset(attrno));
     }
   }
@@ -108,9 +109,9 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   /* Map agg stragegy */
-  LOG_INFO(
-      "aggstrategy : %s\n",
-      (AGG_HASHED == aggstrategy) ? "HASH" : (AGG_SORTED ? "SORT" : "PLAIN"));
+  LOG_INFO("aggstrategy : %s\n", (AGG_HASHED == aggstrategy)
+                                     ? "HASH"
+                                     : (AGG_SORTED ? "SORT" : "PLAIN"));
 
   PelotonAggType agg_type = AGGREGATE_TYPE_INVALID;
 
@@ -127,18 +128,16 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
   }
 
   std::vector<oid_t> column_ids;
-  for(auto agg_term : unique_agg_terms){
+  for (auto agg_term : unique_agg_terms) {
     if (agg_term.expression) {
       LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
     }
     BuildColumnListFromExpr(column_ids, agg_term.expression);
   }
 
-  auto retval = new planner::AggregatePlan(proj_info.release(),
-                                           predicate.release(),
-                                           std::move(unique_agg_terms),
-                                           std::move(groupby_col_ids),
-                                           output_schema.release(), agg_type);
+  auto retval = new planner::AggregatePlan(
+      proj_info.release(), predicate.release(), std::move(unique_agg_terms),
+      std::move(groupby_col_ids), output_schema.release(), agg_type);
 
   ((planner::AggregatePlan *)retval)->SetColumnIds(column_ids);
 
@@ -148,6 +147,5 @@ PlanTransformer::TransformAgg(const AggPlanState *plan_state) {
 
   return retval;
 }
-
 }
 }

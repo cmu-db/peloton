@@ -25,67 +25,46 @@ namespace peloton {
 namespace expression {
 
 AbstractExpression::AbstractExpression()
-: m_left(NULL), m_right(NULL),
-  m_type(EXPRESSION_TYPE_INVALID),
-  m_hasParameter(true)
-{
-}
+    : m_left(NULL),
+      m_right(NULL),
+      m_type(EXPRESSION_TYPE_INVALID),
+      m_hasParameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType type)
-: m_left(NULL), m_right(NULL),
-  m_type(type),
-  m_hasParameter(true)
-{
-}
+    : m_left(NULL), m_right(NULL), m_type(type), m_hasParameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType type,
-                                       AbstractExpression* left,
-                                       AbstractExpression* right)
-: m_left(left), m_right(right),
-  m_type(type),
-  m_hasParameter(true)
-{
-}
+                                       AbstractExpression *left,
+                                       AbstractExpression *right)
+    : m_left(left), m_right(right), m_type(type), m_hasParameter(true) {}
 
-AbstractExpression::~AbstractExpression()
-{
+AbstractExpression::~AbstractExpression() {
   delete m_left;
   delete m_right;
 }
 
-bool
-AbstractExpression::HasParameter() const
-{
-  if (m_left && m_left->HasParameter())
-    return true;
+bool AbstractExpression::HasParameter() const {
+  if (m_left && m_left->HasParameter()) return true;
   return (m_right && m_right->HasParameter());
 }
 
-bool
-AbstractExpression::InitParamShortCircuits()
-{
+bool AbstractExpression::InitParamShortCircuits() {
   return (m_hasParameter = HasParameter());
 }
 
-std::string
-AbstractExpression::Debug() const
-{
-  if(this == nullptr)
-    return "";
+std::string AbstractExpression::Debug() const {
+  if (this == nullptr) return "";
   std::ostringstream buffer;
-  buffer << "Expression[" << ExpressionTypeToString(GetExpressionType()) << ", " << GetExpressionType() << "]";
+  buffer << "Expression[" << ExpressionTypeToString(GetExpressionType()) << ", "
+         << GetExpressionType() << "]";
   return (buffer.str());
 }
 
-std::string
-AbstractExpression::Debug(bool traverse) const
-{
+std::string AbstractExpression::Debug(bool traverse) const {
   return (traverse ? Debug(std::string("")) : Debug());
 }
 
-std::string
-AbstractExpression::Debug(const std::string &spacer) const
-{
+std::string AbstractExpression::Debug(const std::string &spacer) const {
   std::ostringstream buffer;
   buffer << spacer << "+ " << Debug() << "\n";
 
@@ -94,10 +73,11 @@ AbstractExpression::Debug(const std::string &spacer) const
 
   // process children
   if (m_left != NULL || m_right != NULL) {
-    buffer << info_spacer << "left:  " <<
-        (m_left != NULL  ? "\n" + m_left->Debug(info_spacer)  : "<NULL>\n");
-    buffer << info_spacer << "right: " <<
-        (m_right != NULL ? "\n" + m_right->Debug(info_spacer) : "<NULL>\n");
+    buffer << info_spacer << "left:  "
+           << (m_left != NULL ? "\n" + m_left->Debug(info_spacer) : "<NULL>\n");
+    buffer << info_spacer
+           << "right: " << (m_right != NULL ? "\n" + m_right->Debug(info_spacer)
+                                            : "<NULL>\n");
   }
   return (buffer.str());
 }

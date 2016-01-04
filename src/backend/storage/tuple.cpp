@@ -25,11 +25,10 @@ namespace peloton {
 namespace storage {
 
 // Does not delete SCHEMA
-Tuple::~Tuple(){
-
+Tuple::~Tuple() {
   // delete the tuple data
-   if (allocated) delete[] tuple_data;
- }
+  if (allocated) delete[] tuple_data;
+}
 
 // Get the value of a specified column (const)
 Value Tuple::GetValue(const oid_t column_id) const {
@@ -45,7 +44,7 @@ Value Tuple::GetValue(const oid_t column_id) const {
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValue(const oid_t column_id, const Value& value,
+void Tuple::SetValue(const oid_t column_id, const Value &value,
                      VarlenPool *data_pool) {
   assert(tuple_schema);
   assert(tuple_data);
@@ -62,47 +61,32 @@ void Tuple::SetValue(const oid_t column_id, const Value& value,
   const bool is_in_bytes = false;
 
   // Allocate in heap or given data pool depending on whether a pool is provided
-  if(data_pool == nullptr) {
+  if (data_pool == nullptr) {
     // Skip casting if type is same
-    if(type == value.GetValueType()) {
-      value.SerializeToTupleStorage(value_location,
-                                    is_inlined,
-                                    column_length,
+    if (type == value.GetValueType()) {
+      value.SerializeToTupleStorage(value_location, is_inlined, column_length,
                                     is_in_bytes);
-    }
-    else {
+    } else {
       Value casted_value = value.CastAs(type);
-      casted_value.SerializeToTupleStorage(value_location,
-                                           is_inlined,
-                                           column_length,
-                                           is_in_bytes);
+      casted_value.SerializeToTupleStorage(value_location, is_inlined,
+                                           column_length, is_in_bytes);
       // Do not clean up immediately
       casted_value.SetCleanUp(false);
     }
-  }
-  else {
+  } else {
     // Skip casting if type is same
-    if(type == value.GetValueType()) {
-      value.SerializeToTupleStorageAllocateForObjects(value_location,
-                                                      is_inlined,
-                                                      column_length,
-                                                      is_in_bytes,
-                                                      data_pool);
-    }
-    else {
-      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(value_location,
-                                                                   is_inlined,
-                                                                   column_length,
-                                                                   is_in_bytes,
-                                                                   data_pool);
+    if (type == value.GetValueType()) {
+      value.SerializeToTupleStorageAllocateForObjects(
+          value_location, is_inlined, column_length, is_in_bytes, data_pool);
+    } else {
+      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(
+          value_location, is_inlined, column_length, is_in_bytes, data_pool);
     }
   }
-
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
-                         const std::vector<oid_t> &columns,
-                         VarlenPool *pool) {
+                         const std::vector<oid_t> &columns, VarlenPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
@@ -131,7 +115,7 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
 
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
-        column_itr++) {
+         column_itr++) {
       const oid_t unlineable_column_id =
           tuple_schema->GetUninlinedColumn(column_itr);
 
@@ -175,8 +159,8 @@ size_t Tuple::ExportSerializationSize() const {
         // 32 bit length preceding value and
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) +
-              ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
+          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
+                                          GetValue(column_itr)));
         }
         break;
 
@@ -200,11 +184,11 @@ size_t Tuple::GetUninlinedMemorySize() const {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
       if ((GetType(column_itr) == VALUE_TYPE_VARCHAR ||
-          (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
+           (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) +
-              ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
+          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
+                                          GetValue(column_itr)));
         }
       }
     }
@@ -237,22 +221,20 @@ void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
     int32_t column_length;
     char *data_ptr = GetDataPtr(column_itr);
 
-    if( is_inlined ){
+    if (is_inlined) {
       column_length = tuple_schema->GetLength(column_itr);
-    }else{
+    } else {
       column_length = tuple_schema->GetVariableLength(column_itr);
     }
 
     // TODO: Not sure about arguments
     const bool is_in_bytes = false;
-    Value::DeserializeFrom(input, dataPool, data_ptr, type,
-                           is_inlined, column_length,
-                           is_in_bytes);
+    Value::DeserializeFrom(input, dataPool, data_ptr, type, is_inlined,
+                           column_length, is_in_bytes);
   }
 }
 
 void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
-
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -269,12 +251,9 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
 
     // TODO: Not sure about arguments
     const bool is_in_bytes = false;
-    Value::DeserializeFrom(
-        input, NULL, data_ptr, type,
-        is_inlined, column_length,
-        is_in_bytes);
+    Value::DeserializeFrom(input, NULL, data_ptr, type, is_inlined,
+                           column_length, is_in_bytes);
   }
-
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {

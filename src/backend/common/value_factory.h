@@ -22,7 +22,6 @@ namespace peloton {
 
 class ValueFactory {
  public:
-
   static inline Value Clone(const Value &src, VarlenPool *dataPool) {
     return Value::Clone(src, dataPool);
   }
@@ -57,19 +56,24 @@ class ValueFactory {
 
   /// Constructs a value copied into long-lived pooled memory (or the heap)
   /// that will require an explicit Value::free.
-  static inline Value GetStringValue(const char *value, VarlenPool* pool = NULL) {
-    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value, (size_t)(value ? strlen(value) : 0), pool);
+  static inline Value GetStringValue(const char *value,
+                                     VarlenPool *pool = NULL) {
+    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value,
+                                    (size_t)(value ? strlen(value) : 0), pool);
   }
 
   /// Constructs a value copied into long-lived pooled memory (or the heap)
   /// that will require an explicit Value::free.
-  static inline Value GetStringValue(const std::string value, VarlenPool* pool = NULL) {
-    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), pool);
+  static inline Value GetStringValue(const std::string value,
+                                     VarlenPool *pool = NULL) {
+    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(),
+                                    value.length(), pool);
   }
 
   /// Constructs a value copied into temporary thread-local storage.
   static inline Value GetTempStringValue(const std::string value) {
-    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), nullptr);
+    return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(),
+                                    value.length(), nullptr);
   }
 
   static inline Value GetNullStringValue() {
@@ -79,7 +83,8 @@ class ValueFactory {
   /// Constructs a value copied into long-lived pooled memory (or the heap)
   /// that will require an explicit Value::free.
   /// Assumes hex-encoded input
-  static inline Value GetBinaryValue(const std::string& value, VarlenPool* pool = NULL) {
+  static inline Value GetBinaryValue(const std::string &value,
+                                     VarlenPool *pool = NULL) {
     size_t rawLength = value.length() / 2;
     unsigned char rawBuf[rawLength];
     HexDecodeToBinary(rawBuf, value.c_str());
@@ -88,18 +93,24 @@ class ValueFactory {
 
   /// Constructs a value copied into temporary string pool
   /// Assumes hex-encoded input
-  static inline Value GetTempBinaryValue(const std::string& value) {
+  static inline Value GetTempBinaryValue(const std::string &value) {
     size_t rawLength = value.length() / 2;
     unsigned char rawBuf[rawLength];
     HexDecodeToBinary(rawBuf, value.c_str());
-    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength,  nullptr);
+    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY,
+                                    reinterpret_cast<const char *>(rawBuf),
+                                    (size_t)rawLength, nullptr);
   }
 
   /// Constructs a value copied into long-lived pooled memory (or the heap)
   /// that will require an explicit Value::free.
   /// Assumes raw byte input
-  static inline Value GetBinaryValue(const unsigned char* rawBuf, int32_t rawLength, VarlenPool* pool = NULL) {
-    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength, pool);
+  static inline Value GetBinaryValue(const unsigned char *rawBuf,
+                                     int32_t rawLength,
+                                     VarlenPool *pool = NULL) {
+    return Value::GetAllocatedValue(VALUE_TYPE_VARBINARY,
+                                    reinterpret_cast<const char *>(rawBuf),
+                                    (size_t)rawLength, pool);
   }
 
   static inline Value GetNullBinaryValue() {
@@ -107,9 +118,7 @@ class ValueFactory {
   }
 
   /** Returns valuetype = VALUE_TYPE_NULL. Careful with this! */
-  static inline Value GetNullValue() {
-    return Value::GetNullValue();
-  }
+  static inline Value GetNullValue() { return Value::GetNullValue(); }
 
   static inline Value GetNullValueByType(ValueType type) {
     switch (type) {
@@ -126,9 +135,10 @@ class ValueFactory {
     return Value::GetDecimalValueFromString(txt);
   }
 
-  static Value GetArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
-  {
-    return Value::GetAllocatedArrayValueFromSizeAndType(elementCount, elementType);
+  static Value GetArrayValueFromSizeAndType(size_t elementCount,
+                                            ValueType elementType) {
+    return Value::GetAllocatedArrayValueFromSizeAndType(elementCount,
+                                                        elementType);
   }
 
   static inline Value GetAddressValue(void *address) {
@@ -193,53 +203,45 @@ class ValueFactory {
     return value.CastAsDecimal();
   }
 
-  static inline Value CastAsString(Value value) {
-    return value.CastAsString();
-  }
+  static inline Value CastAsString(Value value) { return value.CastAsString(); }
 
-  static Value ValueFromSQLDefaultType(const ValueType type, const std::string &value, VarlenPool* pool) {
+  static Value ValueFromSQLDefaultType(const ValueType type,
+                                       const std::string &value,
+                                       VarlenPool *pool) {
     switch (type) {
-      case VALUE_TYPE_NULL:
-      {
+      case VALUE_TYPE_NULL: {
         return GetNullValue();
       }
       case VALUE_TYPE_TINYINT:
       case VALUE_TYPE_SMALLINT:
       case VALUE_TYPE_INTEGER:
       case VALUE_TYPE_BIGINT:
-      case VALUE_TYPE_TIMESTAMP:
-      {
+      case VALUE_TYPE_TIMESTAMP: {
         Value retval(VALUE_TYPE_BIGINT);
         int64_t ival = atol(value.c_str());
         retval = GetBigIntValue(ival);
         return retval.CastAs(type);
       }
-      case VALUE_TYPE_DECIMAL:
-      {
+      case VALUE_TYPE_DECIMAL: {
         return GetDecimalValueFromString(value);
       }
-      case VALUE_TYPE_DOUBLE:
-      {
+      case VALUE_TYPE_DOUBLE: {
         double dval = atof(value.c_str());
         return GetDoubleValue(dval);
       }
-      case VALUE_TYPE_VARCHAR:
-      {
+      case VALUE_TYPE_VARCHAR: {
         return GetStringValue(value.c_str(), pool);
       }
-      case VALUE_TYPE_VARBINARY:
-      {
+      case VALUE_TYPE_VARBINARY: {
         return GetBinaryValue(value, pool);
       }
-      default:
-      {
+      default: {
         // skip to throw
       }
     }
 
     throw Exception("Default value parsing error.");
   }
-
 };
 
 }  // End peloton namespace

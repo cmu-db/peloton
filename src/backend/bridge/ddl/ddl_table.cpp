@@ -104,7 +104,6 @@ bool DDLTable::ExecAlterTableStmt(Node *parsetree,
   storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithOid(relation_oid)) {
-
     {
       std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
       parsetree_stack.push_back(parsetree);
@@ -171,9 +170,9 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
                            catalog::Schema *schema) {
   assert(!table_name.empty());
 
-
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  //if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return false;
+  // if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return
+  // false;
   /* Oid and oit_t have different range */
   if (database_oid == InvalidOid || relation_oid == InvalidOid) return false;
 
@@ -189,8 +188,7 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
   bool adapt_table = true;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
       database_oid, relation_oid, schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema, adapt_table);
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 
   if (table != nullptr) {
     LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid,
@@ -245,8 +243,8 @@ bool DDLTable::DropTable(Oid table_oid) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   if (database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %lu table oid : %u", database_oid,
-             table_oid);
+    LOG_WARN("Could not drop table :: db oid : %lu table oid : %u",
+             database_oid, table_oid);
     return false;
   }
 

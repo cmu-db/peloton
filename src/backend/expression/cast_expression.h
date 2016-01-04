@@ -31,17 +31,17 @@ class CastExpression : public AbstractExpression {
   CastExpression(PostgresValueType type, AbstractExpression *child)
       : AbstractExpression(EXPRESSION_TYPE_CAST), type_(type), child_(child){};
 
-  Value Evaluate(const AbstractTuple *tuple1,
-                 const AbstractTuple *tuple2,
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *econtext) const {
     assert(this->child_);
     Value child_value = this->child_->Evaluate(tuple1, tuple2, econtext);
-    LOG_INFO("CastExpr: cast %d as %d", child_value.GetValueType(), this->type_);
+    LOG_INFO("CastExpr: cast %d as %d", child_value.GetValueType(),
+             this->type_);
     switch (this->type_) {
       case POSTGRES_VALUE_TYPE_BPCHAR:
       case POSTGRES_VALUE_TYPE_VARCHAR2:
       case POSTGRES_VALUE_TYPE_TEXT:
-       return ValueFactory::CastAsString(child_value);
+        return ValueFactory::CastAsString(child_value);
       case POSTGRES_VALUE_TYPE_INTEGER:
         return ValueFactory::CastAsInteger(child_value);
       case POSTGRES_VALUE_TYPE_DECIMAL:
@@ -57,19 +57,17 @@ class CastExpression : public AbstractExpression {
   }
 
   /* @setter for the child expr which will be casted into self.type_
-   * Sometimes, when this expr is constructed, we cannot.Get the child thus child will
-   * set to nullptr. In that case, this method is used to set the child when available.
+   * Sometimes, when this expr is constructed, we cannot.Get the child thus
+   *child will
+   * set to nullptr. In that case, this method is used to set the child when
+   *available.
    **/
-  void SetChild(AbstractExpression *child) {
-    child_ = child;
-  }
+  void SetChild(AbstractExpression *child) { child_ = child; }
 
-   /* @setter for the result type
-    * Same reason as SetChild()
-    **/
-  void SetResultType(PostgresValueType type) {
-    type_ = type;
-  }
+  /* @setter for the result type
+   * Same reason as SetChild()
+   **/
+  void SetResultType(PostgresValueType type) { type_ = type; }
 
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;

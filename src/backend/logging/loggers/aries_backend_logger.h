@@ -18,38 +18,31 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Aries Backend Logger 
+// Aries Backend Logger
 //===--------------------------------------------------------------------===//
 
-
-class AriesBackendLogger : public BackendLogger{
-
+class AriesBackendLogger : public BackendLogger {
  public:
   AriesBackendLogger(const AriesBackendLogger &) = delete;
   AriesBackendLogger &operator=(const AriesBackendLogger &) = delete;
   AriesBackendLogger(AriesBackendLogger &&) = delete;
   AriesBackendLogger &operator=(AriesBackendLogger &&) = delete;
 
-  static AriesBackendLogger* GetInstance(void);
+  static AriesBackendLogger *GetInstance(void);
 
-  void Log(LogRecord* record);
+  void Log(LogRecord *record);
 
   void TruncateLocalQueue(oid_t offset);
 
-  LogRecord* GetTupleRecord(LogRecordType log_record_type,
-                            txn_id_t txn_id,
-                            oid_t table_oid,
-                            ItemPointer insert_location,
-                            ItemPointer delete_location,
-                            void* data = nullptr,
+  LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
+                            oid_t table_oid, ItemPointer insert_location,
+                            ItemPointer delete_location, void *data = nullptr,
                             oid_t db_oid = INVALID_OID);
 
  private:
-
-  AriesBackendLogger(){ logging_type = LOGGING_TYPE_DRAM_NVM;}
+  AriesBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   CopySerializeOutput output_buffer;
-
 };
 
 }  // namespace logging

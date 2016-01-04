@@ -49,18 +49,20 @@ class PlanTransformer {
   /* Plan caching */
   static PlanTransformer &GetInstance();
 
-  std::shared_ptr<const planner::AbstractPlan> GetCachedPlan(const char *prepStmtName);
+  std::shared_ptr<const planner::AbstractPlan> GetCachedPlan(
+      const char *prepStmtName);
 
   /* Plan Mapping */
-  std::shared_ptr<const planner::AbstractPlan> TransformPlan(AbstractPlanState *planstate, const char *prepStmtName);
+  std::shared_ptr<const planner::AbstractPlan> TransformPlan(
+      AbstractPlanState *planstate, const char *prepStmtName);
 
-  static const planner::AbstractPlan *TransformPlan(AbstractPlanState *planstate);
+  static const planner::AbstractPlan *TransformPlan(
+      AbstractPlanState *planstate);
 
   // Analyze the plan
-  static void AnalyzePlan(planner::AbstractPlan *plan,
-                          PlanState *planstate);
+  static void AnalyzePlan(planner::AbstractPlan *plan, PlanState *planstate);
 
-  //static bool CleanPlan(const planner::AbstractPlan *root);
+  // static bool CleanPlan(const planner::AbstractPlan *root);
 
   static void CleanPlan(const planner::AbstractPlan *root);
 
@@ -68,7 +70,6 @@ class PlanTransformer {
 
  private:
   Cache<std::string, const planner::AbstractPlan> plan_cache_;
-
 
   //===--------------------------------------------------------------------===//
   // Options controlling some transform operations
@@ -78,34 +79,27 @@ class PlanTransformer {
    public:
     bool use_projInfo = true;  // Use Plan.projInfo or not
     TransformOptions() = default;
-    TransformOptions(bool pi)
-        : use_projInfo(pi) {
-    }
+    TransformOptions(bool pi) : use_projInfo(pi) {}
   };
 
   static const TransformOptions DefaultOptions;
 
   static const planner::AbstractPlan *TransformPlan(
-      AbstractPlanState *planstate,
-      const TransformOptions options);
+      AbstractPlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
   // MODIFY TABLE FAMILY
   //===--------------------------------------------------------------------===//
 
   static const planner::AbstractPlan *TransformModifyTable(
-      const ModifyTablePlanState *planstate,
-      const TransformOptions options);
+      const ModifyTablePlanState *planstate, const TransformOptions options);
 
   static const planner::AbstractPlan *TransformInsert(
-      const ModifyTablePlanState *planstate,
-      const TransformOptions options);
+      const ModifyTablePlanState *planstate, const TransformOptions options);
   static const planner::AbstractPlan *TransformUpdate(
-      const ModifyTablePlanState *planstate,
-      const TransformOptions options);
+      const ModifyTablePlanState *planstate, const TransformOptions options);
   static const planner::AbstractPlan *TransformDelete(
-      const ModifyTablePlanState *planstate,
-      const TransformOptions options);
+      const ModifyTablePlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
   // SCAN FAMILY
@@ -124,17 +118,13 @@ class PlanTransformer {
    * generate a projection plan node and put it on top of the scan node.
    */
   static const planner::AbstractPlan *TransformSeqScan(
-      const SeqScanPlanState *planstate,
-      const TransformOptions options);
+      const SeqScanPlanState *planstate, const TransformOptions options);
   static const planner::AbstractPlan *TransformIndexScan(
-      const IndexScanPlanState *planstate,
-      const TransformOptions options);
+      const IndexScanPlanState *planstate, const TransformOptions options);
   static const planner::AbstractPlan *TransformIndexOnlyScan(
-      const IndexOnlyScanPlanState *planstate,
-      const TransformOptions options);
+      const IndexOnlyScanPlanState *planstate, const TransformOptions options);
   static const planner::AbstractPlan *TransformBitmapHeapScan(
-      const BitmapHeapScanPlanState *planstate,
-      const TransformOptions options);
+      const BitmapHeapScanPlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
   // JOIN FAMILY
@@ -171,8 +161,7 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformHash(
       const HashPlanState *plan_state);
 
-  static PelotonJoinType TransformJoinType(
-      const JoinType type);
+  static PelotonJoinType TransformJoinType(const JoinType type);
 
   //===--------------------------------------------------------------------===//
   // Common utility functions for Scans
@@ -181,22 +170,20 @@ class PlanTransformer {
   // Analyze the columns in the plan
   static void GetColumnsAccessed(const planner::AbstractPlan *plan,
                                  std::vector<oid_t> &target_list,
-                                 std::vector<oid_t> &qual,
-                                 oid_t &database_oid,
+                                 std::vector<oid_t> &qual, oid_t &database_oid,
                                  oid_t &table_id);
 
   static void GetGenericInfoFromScanState(
       planner::AbstractPlan *&parent,
       expression::AbstractExpression *&predicate,
-      std::vector<oid_t> &out_col_list,
-      const AbstractScanPlanState *sstate,
+      std::vector<oid_t> &out_col_list, const AbstractScanPlanState *sstate,
       bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
       const PelotonProjectionInfo *pi);
 
   static const planner::ProjectInfo::TargetList BuildTargetList(
-      const List* targetList, int column_count);
+      const List *targetList, int column_count);
 
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
@@ -206,11 +193,12 @@ class PlanTransformer {
   static const std::vector<oid_t> BuildColumnListFromTargetList(
       planner::ProjectInfo::TargetList target_list);
 
-  static void BuildColumnListFromExpr(std::vector<oid_t> &col_ids,
-                                      const expression::AbstractExpression *expression);
+  static void BuildColumnListFromExpr(
+      std::vector<oid_t> &col_ids,
+      const expression::AbstractExpression *expression);
 
-  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
-
+  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
+      List *targetLis);
 };
 
 }  // namespace bridge

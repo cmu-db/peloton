@@ -63,10 +63,10 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
+  void AddColumn(const std::shared_ptr<storage::Tile> &base_tile,
                  oid_t origin_column_id, oid_t position_list_idx);
 
-  void AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
+  void AddColumns(const std::shared_ptr<storage::TileGroup> &tile_group,
                   const std::vector<oid_t> &column_ids);
 
   void ProjectColumns(const std::vector<oid_t> &original_column_ids,
@@ -182,16 +182,16 @@ class LogicalTile {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_->size();
-          output_tile_column_itr++) {
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
         output_lists_[output_tile_column_itr].push_back(
             (*left_source_)[output_tile_column_itr][left_itr]);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_->size();
-          output_tile_column_itr++) {
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
         output_lists_[left_source_->size() + output_tile_column_itr].push_back(
             (*right_source_)[output_tile_column_itr][right_itr]);
       }
@@ -201,16 +201,15 @@ class LogicalTile {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_->size();
-          output_tile_column_itr++) {
-        output_lists_[output_tile_column_itr].push_back(
-        NULL_OID);
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(NULL_OID);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_->size();
-          output_tile_column_itr++) {
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
         output_lists_[left_source_->size() + output_tile_column_itr].push_back(
             (*right_source_)[output_tile_column_itr][right_itr]);
       }
@@ -220,16 +219,18 @@ class LogicalTile {
       assert(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_source_->size();
-          output_tile_column_itr++) {
-        output_lists_[output_tile_column_itr].push_back((*left_source_)[output_tile_column_itr][left_itr]);
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(
+            (*left_source_)[output_tile_column_itr][left_itr]);
       }
 
       // Then, copy the elements in right logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_source_->size();
-          output_tile_column_itr++) {
-        output_lists_[left_source_->size() + output_tile_column_itr].push_back(NULL_OID);
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            NULL_OID);
       }
     }
 
@@ -238,9 +239,7 @@ class LogicalTile {
       return std::move(output_lists_);
     }
 
-    inline size_t Size() const {
-      return output_lists_[0].size();
-    }
+    inline size_t Size() const { return output_lists_[0].size(); }
 
    private:
     const PositionLists *left_source_;
@@ -251,9 +250,7 @@ class LogicalTile {
 
  private:
   // Dummy default constructor
-  LogicalTile() {
-  }
-  ;
+  LogicalTile(){};
 
   /**
    * @brief Mapping of column ids in this logical tile to the underlying

@@ -28,7 +28,6 @@
 
 #include "postgres/include/utils/array.h"  //added by michael. use peloton not postgres?
 
-
 namespace peloton {
 namespace bridge {
 
@@ -106,109 +105,115 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     } break;
 
     case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
+      ArrayType *arr = DatumGetArrayTypeP(datum);
+      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+      Oid arr_type = ARR_ELEMTYPE(arr);
+      Datum *elems;
+      int i;
+      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
+        LOG_ERROR("expected 1-D text array");
 
-		ArrayType  *arr = DatumGetArrayTypeP(datum);
-		int		nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-		Oid arr_type = ARR_ELEMTYPE(arr);
-		Datum *elems;
-		int i;
-		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
-		      LOG_ERROR("expected 1-D text array");
+      deconstruct_array(arr, POSTGRES_VALUE_TYPE_TEXT, -1, false, 'i', &elems,
+                        NULL, &nelems);
 
-		deconstruct_array(arr, POSTGRES_VALUE_TYPE_TEXT, -1, false, 'i', &elems, NULL, &nelems);
+      value =
+          ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+      std::vector<Value> vecValue;
 
-		std::vector<Value> vecValue;
+      for (i = 0; i < nelems; ++i) {
+        char *pText = TextDatumGetCString(elems[i]);
+        std::string str(pText);
+        std::cout << pText << arr_type << str;
+        VarlenPool *data_pool = nullptr;
+        LOG_TRACE("len = %d , text = \"%s\"", str.length(), str.c_str());
+        Value val = ValueFactory::GetStringValue(str, data_pool);
+        vecValue.push_back(val);
+      }
 
-		for (i = 0; i < nelems; ++i) {
-			char* pText = TextDatumGetCString(elems[i]);
-			std::string str(pText);
-			std::cout << pText << arr_type << str;
-			VarlenPool *data_pool = nullptr;
-			LOG_TRACE("len = %d , text = \"%s\"", str.length(), str.c_str());
-			Value val = ValueFactory::GetStringValue(str, data_pool);
-			vecValue.push_back(val);
-		}
-
-		value.SetArrayElements(vecValue);
+      value.SetArrayElements(vecValue);
 
     } break;
 
     case POSTGRES_VALUE_TYPE_INT2_ARRAY: {
+      ArrayType *arr = DatumGetArrayTypeP(datum);
+      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+      int i;
+      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_SMALLINT)
+        LOG_ERROR("expected 1-D int2 array");
 
-		ArrayType  *arr = DatumGetArrayTypeP(datum);
-		int		nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-		int i;
-		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_SMALLINT)
-		      LOG_ERROR("expected 1-D int2 array");
+      int16_t *pdata = (int16_t *)ARR_DATA_PTR(arr);
+      value =
+          ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-		int16_t* pdata = (int16_t *) ARR_DATA_PTR(arr);
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+      std::vector<Value> vecValue;
 
-		std::vector<Value> vecValue;
+      for (i = 0; i < nelems; ++i) {
+        int16_t smallint = pdata[i];
+        LOG_TRACE("%d\n", smallint);
+        Value val = ValueFactory::GetSmallIntValue(smallint);
+        vecValue.push_back(val);
+      }
 
-		for (i = 0; i < nelems; ++i) {
-		    int16_t smallint = pdata[i];
-		    LOG_TRACE("%d\n", smallint);
-		    Value val = ValueFactory::GetSmallIntValue(smallint);
-			vecValue.push_back(val);
-		}
-
-		value.SetArrayElements(vecValue);
+      value.SetArrayElements(vecValue);
 
     } break;
 
     case POSTGRES_VALUE_TYPE_INT4_ARRAY: {
+      ArrayType *arr = DatumGetArrayTypeP(datum);
+      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+      // Datum *elems;
+      int i;
+      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_INTEGER)
+        LOG_ERROR("expected 1-D int4 array");
 
-		ArrayType  *arr = DatumGetArrayTypeP(datum);
-		int		nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-		//Datum *elems;
-		int i;
-		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_INTEGER)
-		      LOG_ERROR("expected 1-D int4 array");
+      int32_t *pdata = (int32_t *)ARR_DATA_PTR(arr);
+      value =
+          ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-		int32_t* pdata = (int32_t *) ARR_DATA_PTR(arr);
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+      std::vector<Value> vecValue;
 
-		std::vector<Value> vecValue;
+      for (i = 0; i < nelems; ++i) {
+        // int32_t integer = DatumGetInt32(elems[i]);
+        int32_t integer = pdata[i];
+        LOG_TRACE("%d\n", integer);
+        Value val = ValueFactory::GetIntegerValue(integer);
+        vecValue.push_back(val);
+      }
 
-		for (i = 0; i < nelems; ++i) {
-		    //int32_t integer = DatumGetInt32(elems[i]);
-			int32_t integer = pdata[i];
-		    LOG_TRACE("%d\n", integer);
-		    Value val = ValueFactory::GetIntegerValue(integer);
-			vecValue.push_back(val);
-		}
-
-		value.SetArrayElements(vecValue);
+      value.SetArrayElements(vecValue);
 
     } break;
 
     // FLOADT4 is same with double (8 bytes) ?
     case POSTGRES_VALUE_TYPE_FLOADT4_ARRAY: {
+      ArrayType *arr = DatumGetArrayTypeP(datum);
+      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+      int i;
+      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_DOUBLE)
+        LOG_ERROR("expected 1-D floadt4 array");
 
-		ArrayType  *arr = DatumGetArrayTypeP(datum);
-		int		nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-		int i;
-		if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_DOUBLE)
-		      LOG_ERROR("expected 1-D floadt4 array");
+      value =
+          ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+      double *pdata = (double *)ARR_DATA_PTR(arr);
+      value =
+          ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-		double* pdata = (double *) ARR_DATA_PTR(arr);
-		value = ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+      std::vector<Value> vecValue;
 
-		std::vector<Value> vecValue;
+      for (i = 0; i < nelems; ++i) {
+        double fpnum = pdata[i];
+        LOG_TRACE("%f\n", fpnum);
+        Value val = ValueFactory::GetDoubleValue(fpnum);
+        vecValue.push_back(val);
+      }
 
-		for (i = 0; i < nelems; ++i) {
-		    double fpnum = pdata[i];
-		    LOG_TRACE("%f\n", fpnum);
-		    Value  val = ValueFactory::GetDoubleValue(fpnum);
-			vecValue.push_back(val);
-		}
-
-		value.SetArrayElements(vecValue);
+      value.SetArrayElements(vecValue);
 
     } break;
 
@@ -217,7 +222,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       value = ValueFactory::GetTimestampValue(timestamp);
     } break;
 
-    case POSTGRES_VALUE_TYPE_DECIMAL:{
+    case POSTGRES_VALUE_TYPE_DECIMAL: {
       /*
        * WARNING:
        * Peloton has smaller allowed precision/scale than PG.
@@ -226,7 +231,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
        */
 
       // 1. Get string representation of the PG numeric (this is tricky)
-      char* cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
+      char *cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
 
       LOG_INFO("PG decimal = %s \n", cstr);
 
@@ -282,7 +287,8 @@ Datum TupleTransformer::GetDatum(Value value) {
       if (value.IsNull()) {
         datum = PointerGetDatum(nullptr);
       } else {
-        char *data_ptr = static_cast<char *>(ValuePeeker::PeekObjectValue(value));
+        char *data_ptr =
+            static_cast<char *>(ValuePeeker::PeekObjectValue(value));
         auto data_len = ValuePeeker::PeekObjectLengthWithoutNull(value);
         // NB: Peloton object don't have terminating-null's, so
         // we should use PG functions that take explicit length.
@@ -297,18 +303,15 @@ Datum TupleTransformer::GetDatum(Value value) {
     } break;
 
     case VALUE_TYPE_DECIMAL: {
-
       auto precision = Value::kMaxDecPrec;
       auto scale = Value::kMaxDecScale;
 
       std::string str = ValuePeeker::PeekDecimalString(value);
 
       datum = DirectFunctionCall3(
-          numeric_in,
-          CStringGetDatum(str.c_str()),
+          numeric_in, CStringGetDatum(str.c_str()),
           ObjectIdGetDatum(InvalidOid),
           Int32GetDatum(((precision << 16) | scale) + VARHDRSZ));
-
 
     } break;
 
@@ -332,8 +335,9 @@ Datum TupleTransformer::GetDatum(Value value) {
  * @param pool To allocate varlen values
  * @return a Peloton tuple
  */
-storage::Tuple *TupleTransformer::GetPelotonTuple(
-    TupleTableSlot *slot, const catalog::Schema *schema, VarlenPool *pool) {
+storage::Tuple *TupleTransformer::GetPelotonTuple(TupleTableSlot *slot,
+                                                  const catalog::Schema *schema,
+                                                  VarlenPool *pool) {
   assert(slot);
 
   TupleDesc tuple_desc = slot->tts_tupleDescriptor;
@@ -383,11 +387,11 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
     Value value = tuple->GetValue(att_itr);
     Datum datum = GetDatum(value);
 
-    assert(tuple_desc->attrs[att_itr]->attbyval == true
-           || value.GetValueType() == VALUE_TYPE_VARCHAR
-           || value.GetValueType() == VALUE_TYPE_VARBINARY
-           || value.GetValueType() == VALUE_TYPE_DECIMAL
-           || value.GetValueType() == VALUE_TYPE_NULL);
+    assert(tuple_desc->attrs[att_itr]->attbyval == true ||
+           value.GetValueType() == VALUE_TYPE_VARCHAR ||
+           value.GetValueType() == VALUE_TYPE_VARBINARY ||
+           value.GetValueType() == VALUE_TYPE_DECIMAL ||
+           value.GetValueType() == VALUE_TYPE_NULL);
 
     datums[att_itr] = datum;
     nulls[att_itr] = value.IsNull() ? true : false;
@@ -406,7 +410,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
 
   // Clean up
   // (A) Clean up any possible varlena's
-  //assert(natts == tuple_desc->natts);
+  // assert(natts == tuple_desc->natts);
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
       assert(tuple_desc->attrs[att_itr]->attbyval == false);
@@ -423,7 +427,6 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
 
   return slot;
 }
-
 
 }  // namespace bridge
 }  // namespace peloton

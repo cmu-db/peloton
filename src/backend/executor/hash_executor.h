@@ -40,14 +40,14 @@ class HashExecutor : public AbstractExecutor {
                         ExecutorContext *executor_context);
 
   /** @brief Type definitions for hash table */
-  typedef std::unordered_map<expression::ContainerTuple<LogicalTile>,
-      std::unordered_set<std::pair<size_t, oid_t>, boost::hash<std::pair<size_t, oid_t>>>,
+  typedef std::unordered_map<
+      expression::ContainerTuple<LogicalTile>,
+      std::unordered_set<std::pair<size_t, oid_t>,
+                         boost::hash<std::pair<size_t, oid_t>>>,
       expression::ContainerTupleHasher<LogicalTile>,
-      expression::ContainerTupleComparator<LogicalTile> > HashMapType;
+      expression::ContainerTupleComparator<LogicalTile>> HashMapType;
 
-  inline HashMapType &GetHashTable() {
-    return this->hash_table_;
-  }
+  inline HashMapType &GetHashTable() { return this->hash_table_; }
 
   inline const std::vector<oid_t> &GetHashKeyIds() const {
     return this->column_ids_;
@@ -63,14 +63,13 @@ class HashExecutor : public AbstractExecutor {
   HashMapType hash_table_;
 
   /** @brief Input tiles from child node */
-  std::vector<std::unique_ptr<LogicalTile> > child_tiles_;
+  std::vector<std::unique_ptr<LogicalTile>> child_tiles_;
 
   std::vector<oid_t> column_ids_;
 
   bool done_ = false;
 
   size_t result_itr = 0;
-
 };
 
 } /* namespace executor */

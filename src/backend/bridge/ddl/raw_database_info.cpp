@@ -24,7 +24,7 @@
 //#include <unistd.h>
 //#include <cassert>
 
-//TODO :: Scrubbing header files
+// TODO :: Scrubbing header files
 
 //#include "backend/bridge/ddl/ddl_table.h"
 //#include "backend/storage/database.h"
@@ -34,8 +34,7 @@
 namespace peloton {
 namespace bridge {
 
-void raw_database_info::CollectRawTableAndIndex(void){
-
+void raw_database_info::CollectRawTableAndIndex(void) {
   // Open the pg_class and pg_attribute catalog tables
   Relation pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   Relation pg_attribute_rel = heap_open(AttributeRelationId, AccessShareLock);
@@ -50,13 +49,14 @@ void raw_database_info::CollectRawTableAndIndex(void){
   // So, each tuple can correspond to a table, index, etc.
   while (1) {
     // Get next tuple from pg_class
-    HeapTuple pg_class_tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
+    HeapTuple pg_class_tuple =
+        heap_getnext(pg_class_scan, ForwardScanDirection);
 
     if (!HeapTupleIsValid(pg_class_tuple)) break;
 
     Form_pg_class pg_class = (Form_pg_class)GETSTRUCT(pg_class_tuple);
     std::string relation_name;
-    if( NameStr(pg_class->relname) != NULL){
+    if (NameStr(pg_class->relname) != NULL) {
       relation_name = NameStr(pg_class->relname);
     }
     char relation_kind = pg_class->relkind;
@@ -71,30 +71,29 @@ void raw_database_info::CollectRawTableAndIndex(void){
 
     // We only support tables with atleast one attribute
     int attnum = pg_class->relnatts;
-    if(attnum == 0) {
-      throw CatalogException("We only support tables with atleast one attribute");
+    if (attnum == 0) {
+      throw CatalogException(
+          "We only support tables with atleast one attribute");
     }
 
     // Get the tuple oid
     // This can be a relation oid or index oid etc.
     oid_t relation_oid = HeapTupleHeaderGetOid(pg_class_tuple->t_data);
-    std::vector<raw_column_info> raw_columns = CollectRawColumn(relation_oid, pg_attribute_rel);
+    std::vector<raw_column_info> raw_columns =
+        CollectRawColumn(relation_oid, pg_attribute_rel);
 
     switch (relation_kind) {
-
-      case 'r':  {
+      case 'r': {
         AddRawTable(relation_oid, relation_name, raw_columns);
         break;
       }
 
-      case 'i':  {
+      case 'i': {
         AddRawIndex(relation_oid, relation_name, raw_columns);
         break;
       }
 
-      default:  {
-        break;
-      }
+      default: { break; }
     }
     raw_columns.clear();
   }
@@ -104,7 +103,6 @@ void raw_database_info::CollectRawTableAndIndex(void){
 }
 
 void raw_database_info::CollectRawForeignKeys(void) {
-
   Relation pg_constraint_rel;
   HeapScanDesc pg_constraint_scan;
   HeapTuple pg_constraint_tuple;
@@ -116,7 +114,8 @@ void raw_database_info::CollectRawForeignKeys(void) {
   while (1) {
     Form_pg_constraint pg_constraint;
 
-    pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
+    pg_constraint_tuple =
+        heap_getnext(pg_constraint_scan, ForwardScanDirection);
     if (!HeapTupleIsValid(pg_constraint_tuple)) break;
 
     pg_constraint = (Form_pg_constraint)GETSTRUCT(pg_constraint_tuple);
@@ -126,14 +125,15 @@ void raw_database_info::CollectRawForeignKeys(void) {
 
     // store raw information from here..
 
-
     // TODO :: Find better way..
     // column offsets, count
     bool isNull;
-    Datum curr_datum = heap_getattr(pg_constraint_tuple, Anum_pg_constraint_conkey,
-                                    RelationGetDescr(pg_constraint_rel), &isNull);
-    Datum ref_datum = heap_getattr(pg_constraint_tuple, Anum_pg_constraint_confkey,
-                                    RelationGetDescr(pg_constraint_rel), &isNull);
+    Datum curr_datum =
+        heap_getattr(pg_constraint_tuple, Anum_pg_constraint_conkey,
+                     RelationGetDescr(pg_constraint_rel), &isNull);
+    Datum ref_datum =
+        heap_getattr(pg_constraint_tuple, Anum_pg_constraint_confkey,
+                     RelationGetDescr(pg_constraint_rel), &isNull);
 
     ArrayType *curr_arr = DatumGetArrayTypeP(curr_datum);
     ArrayType *ref_arr = DatumGetArrayTypeP(ref_datum);
@@ -158,17 +158,14 @@ void raw_database_info::CollectRawForeignKeys(void) {
       sink_column_offsets.push_back(attnum);
     }
     std::string fk_name;
-    if( NameStr(pg_constraint->conname) != NULL){
+    if (NameStr(pg_constraint->conname) != NULL) {
       fk_name = std::string(NameStr(pg_constraint->conname));
     }
 
-    raw_foreign_key_info raw_foreignkey(pg_constraint->conrelid,
-                                        pg_constraint->confrelid,
-                                        source_column_offsets,
-                                        sink_column_offsets,
-                                        pg_constraint->confupdtype,
-                                        pg_constraint->confdeltype,
-                                        fk_name);
+    raw_foreign_key_info raw_foreignkey(
+        pg_constraint->conrelid, pg_constraint->confrelid,
+        source_column_offsets, sink_column_offsets, pg_constraint->confupdtype,
+        pg_constraint->confdeltype, fk_name);
     AddRawForeignKey(raw_foreignkey);
   }
 
@@ -182,7 +179,8 @@ void raw_database_info::CollectRawForeignKeys(void) {
  * @param pg_attribute_rel pg_attribute catalog relation
  * @return raw columns
  */
-std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_oid, Relation pg_attribute_rel) {
+std::vector<raw_column_info> raw_database_info::CollectRawColumn(
+    oid_t relation_oid, Relation pg_attribute_rel) {
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
 
@@ -215,8 +213,11 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
           strcmp(NameStr(pg_attribute->attname), "tableoid")) {
         std::vector<raw_constraint_info> raw_constraints;
 
-        PostgresValueFormat postgresValueFormat( pg_attribute->atttypid, pg_attribute->atttypmod, pg_attribute->attlen); 
-        PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+        PostgresValueFormat postgresValueFormat(pg_attribute->atttypid,
+                                                pg_attribute->atttypmod,
+                                                pg_attribute->attlen);
+        PelotonValueFormat pelotonValueFormat =
+            FormatTransformer::TransformValueFormat(postgresValueFormat);
 
         ValueType value_type = pelotonValueFormat.GetType();
         int column_length = pelotonValueFormat.GetLength();
@@ -226,7 +227,8 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
 
         // NOT NULL constraint
         if (pg_attribute->attnotnull) {
-          raw_constraint_info raw_constraint(CONSTRAINT_TYPE_NOTNULL, const_name);
+          raw_constraint_info raw_constraint(CONSTRAINT_TYPE_NOTNULL,
+                                             const_name);
           raw_constraints.push_back(raw_constraint);
         }
 
@@ -235,7 +237,8 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
           // Setting default constraint expression
           Relation relation = heap_open(relation_oid, AccessShareLock);
 
-          raw_constraint_info raw_constraint(CONSTRAINT_TYPE_DEFAULT, const_name);
+          raw_constraint_info raw_constraint(CONSTRAINT_TYPE_DEFAULT,
+                                             const_name);
 
           int num_defva = relation->rd_att->constr->num_defval;
           for (int def_itr = 0; def_itr < num_defva; def_itr++) {
@@ -243,7 +246,8 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
                 relation->rd_att->constr->defval[def_itr].adnum) {
               char *default_expression =
                   relation->rd_att->constr->defval[def_itr].adbin;
-              raw_constraint.SetDefaultExpr(static_cast<Node *>(stringToNode(default_expression)));
+              raw_constraint.SetDefaultExpr(
+                  static_cast<Node *>(stringToNode(default_expression)));
             }
           }
           raw_constraints.push_back(raw_constraint);
@@ -252,15 +256,12 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
         }
 
         std::string colname;
-        if(NameStr(pg_attribute->attname) != NULL){
-          colname = std::string(NameStr(pg_attribute->attname)); 
+        if (NameStr(pg_attribute->attname) != NULL) {
+          colname = std::string(NameStr(pg_attribute->attname));
         }
 
-        raw_column_info raw_column(value_type, 
-                                   column_length, 
-                                   colname,
-                                   is_inlined,
-                                   raw_constraints);
+        raw_column_info raw_column(value_type, column_length, colname,
+                                   is_inlined, raw_constraints);
         raw_constraints.clear();
         raw_columns.push_back(raw_column);
       }
@@ -272,18 +273,14 @@ std::vector<raw_column_info> raw_database_info::CollectRawColumn(oid_t relation_
   return raw_columns;
 }
 
-void raw_database_info::AddRawTable(oid_t table_oid,
-                                    std::string table_name,
-                                    std::vector<raw_column_info> raw_columns){
-
+void raw_database_info::AddRawTable(oid_t table_oid, std::string table_name,
+                                    std::vector<raw_column_info> raw_columns) {
   raw_table_info raw_table(table_oid, table_name, raw_columns);
   raw_tables.push_back(raw_table);
 }
 
-void raw_database_info::AddRawIndex(oid_t index_oid,
-                                    std::string index_name,
-                                    std::vector<raw_column_info> raw_columns){
-
+void raw_database_info::AddRawIndex(oid_t index_oid, std::string index_name,
+                                    std::vector<raw_column_info> raw_columns) {
   Relation pg_index_rel;
   HeapScanDesc pg_index_scan;
   HeapTuple pg_index_tuple;
@@ -326,17 +323,12 @@ void raw_database_info::AddRawIndex(oid_t index_oid,
       // The order of table and index entries in pg_class table can be arbitrary
 
       std::string table_name;
-      if( get_rel_name(pg_index->indrelid) != NULL){
+      if (get_rel_name(pg_index->indrelid) != NULL) {
         table_name = std::string(get_rel_name(pg_index->indrelid));
       }
 
-      raw_index_info raw_index(index_oid, 
-                               index_name,
-                               table_name,
-                               method_type,
-                               type,
-                               pg_index->indisunique,
-                               key_column_names);
+      raw_index_info raw_index(index_oid, index_name, table_name, method_type,
+                               type, pg_index->indisunique, key_column_names);
 
       raw_indexes.push_back(raw_index);
 
@@ -348,29 +340,29 @@ void raw_database_info::AddRawIndex(oid_t index_oid,
   heap_close(pg_index_rel, AccessShareLock);
 }
 
-void raw_database_info::AddRawForeignKey(raw_foreign_key_info raw_foreign_key){
+void raw_database_info::AddRawForeignKey(raw_foreign_key_info raw_foreign_key) {
   raw_foreign_keys.push_back(raw_foreign_key);
 }
 
-bool raw_database_info::CreateDatabase(void) const{
+bool raw_database_info::CreateDatabase(void) const {
   bool status = DDLDatabase::CreateDatabase(GetDbOid());
   return status;
 }
 
-void raw_database_info::CreateTables(void) const{
-  for(auto raw_table : raw_tables){
+void raw_database_info::CreateTables(void) const {
+  for (auto raw_table : raw_tables) {
     raw_table.CreateTable();
   }
 }
 
-void raw_database_info::CreateIndexes(void) const{
-  for(auto raw_index : raw_indexes){
+void raw_database_info::CreateIndexes(void) const {
+  for (auto raw_index : raw_indexes) {
     raw_index.CreateIndex();
   }
 }
 
-void raw_database_info::CreateForeignkeys(void) const{
-  for(auto raw_foreign_key : raw_foreign_keys){
+void raw_database_info::CreateForeignkeys(void) const {
+  for (auto raw_foreign_key : raw_foreign_keys) {
     raw_foreign_key.CreateForeignkey();
   }
 }

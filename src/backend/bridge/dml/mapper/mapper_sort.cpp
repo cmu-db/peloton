@@ -5,13 +5,12 @@
 namespace peloton {
 namespace bridge {
 
-const planner::AbstractPlan*
-PlanTransformer::TransformSort(const SortPlanState *plan_state) {
-
+const planner::AbstractPlan *PlanTransformer::TransformSort(
+    const SortPlanState *plan_state) {
   auto sort = plan_state->sort;
 
   int numCols = sort->numCols;
-  AttrNumber* sortColIdx = sort->sortColIdx;
+  AttrNumber *sortColIdx = sort->sortColIdx;
   bool *reverse_flags = plan_state->reverse_flags;
 
   std::vector<oid_t> sort_keys;
@@ -26,15 +25,13 @@ PlanTransformer::TransformSort(const SortPlanState *plan_state) {
     descend_flags.push_back(reverse_flags[i]);
   }
 
-  auto retval = new planner::OrderByPlan(sort_keys, descend_flags,
-                                         output_col_ids);
+  auto retval =
+      new planner::OrderByPlan(sort_keys, descend_flags, output_col_ids);
 
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
   retval->AddChild(lchild);
 
   return retval;
-
 }
-
 }
 }

@@ -95,7 +95,6 @@ class OrderByExecutor : public AbstractExecutor {
 
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
-
 };
 
 } /* namespace executor */

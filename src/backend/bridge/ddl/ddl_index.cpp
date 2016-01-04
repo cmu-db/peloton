@@ -44,7 +44,6 @@ bool DDLIndex::ExecIndexStmt(Node *parsetree,
   storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithName(Istmt->relation->relname)) {
-
     {
       std::lock_guard<std::mutex> lock(parsetree_stack_mutex);
       parsetree_stack.push_back(parsetree);

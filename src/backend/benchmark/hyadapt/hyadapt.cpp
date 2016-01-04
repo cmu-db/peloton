@@ -19,13 +19,12 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt{
+namespace hyadapt {
 
 configuration state;
 
 // Main Entry Point
-void RunBenchmark(){
-
+void RunBenchmark() {
   // Initialize settings
   peloton_layout_mode = state.layout_mode;
   peloton_projectivity = state.projectivity;
@@ -34,10 +33,10 @@ void RunBenchmark(){
   GenerateSequence(state.column_count);
 
   // Single run
-  if(state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    CreateAndLoadTable((LayoutType) peloton_layout_mode);
+  if (state.experiment_type == EXPERIMENT_TYPE_INVALID) {
+    CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
-    switch(state.operator_type) {
+    switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
         RunDirectTest();
         break;
@@ -58,8 +57,7 @@ void RunBenchmark(){
   }
   // Experiment
   else {
-
-    switch(state.experiment_type) {
+    switch (state.experiment_type) {
       case EXPERIMENT_TYPE_PROJECTIVITY:
         RunProjectivityExperiment();
         break;
@@ -88,7 +86,7 @@ void RunBenchmark(){
         RunWeightExperiment();
         break;
 
-      case  EXPERIMENT_TYPE_REORG:
+      case EXPERIMENT_TYPE_REORG:
         RunReorgExperiment();
         break;
 
@@ -97,14 +95,11 @@ void RunBenchmark(){
         break;
 
       default:
-        std::cout << "Unsupported experiment type : " << state.experiment_type << "\n";
+        std::cout << "Unsupported experiment type : " << state.experiment_type
+                  << "\n";
         break;
     }
-
   }
-
-
-
 }
 
 }  // namespace hyadapt
@@ -112,9 +107,8 @@ void RunBenchmark(){
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-
-  peloton::benchmark::hyadapt::ParseArguments(argc, argv,
-                                              peloton::benchmark::hyadapt::state);
+  peloton::benchmark::hyadapt::ParseArguments(
+      argc, argv, peloton::benchmark::hyadapt::state);
 
   peloton::benchmark::hyadapt::RunBenchmark();
 

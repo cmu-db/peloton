@@ -25,8 +25,7 @@
 //===--------------------------------------------------------------------===//
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType
-{
+typedef enum LayoutType {
   LAYOUT_ROW,    /* Pure row layout */
   LAYOUT_COLUMN, /* Pure column layout */
   LAYOUT_HYBRID  /* Hybrid layout */
@@ -39,13 +38,13 @@ extern LayoutType peloton_layout_mode;
 //===--------------------------------------------------------------------===//
 
 // Projectivity for determining FSM layout
-extern double  peloton_projectivity;
+extern double peloton_projectivity;
 
 // # of groups
-extern int     peloton_num_groups;
+extern int peloton_num_groups;
 
 // FSM or not ?
-extern bool    peloton_fsm;
+extern bool peloton_fsm;
 
 extern std::vector<peloton::oid_t> hyadapt_column_ids;
 
@@ -53,7 +52,7 @@ namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
-namespace index{
+namespace index {
 class Index;
 }
 
@@ -85,10 +84,8 @@ class DataTable : public AbstractTable {
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema,
-            std::string table_name, oid_t database_oid, oid_t table_oid,
-            size_t tuples_per_tilegroup,
-            bool own_schema,
+  DataTable(catalog::Schema *schema, std::string table_name, oid_t database_oid,
+            oid_t table_oid, size_t tuples_per_tilegroup, bool own_schema,
             bool adapt_table);
 
   ~DataTable();
@@ -117,18 +114,20 @@ class DataTable : public AbstractTable {
   oid_t AddTileGroupWithOid(oid_t tile_group_id);
 
   // add a tile group to table
-  void AddTileGroup(const std::shared_ptr<TileGroup>& tile_group);
+  void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
 
   // Offset is a 0-based number local to the table
-  std::shared_ptr<storage::TileGroup> GetTileGroup(oid_t tile_group_offset) const;
+  std::shared_ptr<storage::TileGroup> GetTileGroup(
+      oid_t tile_group_offset) const;
 
   // ID is the global identifier in the entire DBMS
-  std::shared_ptr<storage::TileGroup> GetTileGroupById(oid_t tile_group_id) const;
+  std::shared_ptr<storage::TileGroup> GetTileGroupById(
+      oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
   // Get a tile group with given layout
-  TileGroup *GetTileGroupWithLayout(const column_map_type& partitioning);
+  TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -160,8 +159,7 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(oid_t tile_group_offset,
-                                         double theta);
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_offset, double theta);
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -179,13 +177,13 @@ class DataTable : public AbstractTable {
 
   void ResetDirty();
 
-  const column_map_type& GetDefaultPartition();
+  const column_map_type &GetDefaultPartition();
 
   //===--------------------------------------------------------------------===//
   // Clustering
   //===--------------------------------------------------------------------===//
 
-  void RecordSample(const brain::Sample& sample);
+  void RecordSample(const brain::Sample &sample);
 
   void UpdateDefaultPartition();
 
@@ -199,7 +197,8 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  column_map_type GetStaticColumnMap(std::string table_name, oid_t column_count);
+  column_map_type GetStaticColumnMap(std::string table_name,
+                                     oid_t column_count);
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
@@ -234,8 +233,7 @@ class DataTable : public AbstractTable {
                        const storage::Tuple *tuple, ItemPointer location);
 
   /** @return True if it's a same-key update and it's successful */
-  bool UpdateInIndexes(const storage::Tuple *tuple,
-                       ItemPointer location);
+  bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
  private:
   //===--------------------------------------------------------------------===//
