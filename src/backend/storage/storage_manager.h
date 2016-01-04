@@ -22,21 +22,21 @@ namespace storage {
 // Filesystem directories
 //===--------------------------------------------------------------------===//
 
-#define NVM_DIR     "/mnt/pmfs/"
-#define HDD_DIR     "/data/"
-#define SSD_DIR     "/data1/"
+#define NVM_DIR "/mnt/pmfs/"
+#define HDD_DIR "/data/"
+#define SSD_DIR "/data1/"
 
-#define TMP_DIR     "/tmp/"
+#define TMP_DIR "/tmp/"
 
 //===--------------------------------------------------------------------===//
 // Storage Manager
 //===--------------------------------------------------------------------===//
 
 /// Stores data on different backends
-class StorageManager  {
+class StorageManager {
  public:
   // global singleton
-  static StorageManager& GetInstance(void);
+  static StorageManager &GetInstance(void);
 
   StorageManager();
   ~StorageManager();
@@ -48,7 +48,6 @@ class StorageManager  {
   void Sync(BackendType type, void *address, size_t length);
 
  private:
-
   // pmem file address
   char *data_file_address;
 
@@ -63,7 +62,6 @@ class StorageManager  {
 
   // pmem offset
   size_t data_file_offset;
-
 };
 
 }  // End storage namespace

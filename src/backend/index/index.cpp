@@ -32,15 +32,14 @@ Index::~Index() {
 }
 
 IndexMetadata::~IndexMetadata() {
-   // clean up key schema
-   delete key_schema;
-   // no need to clean the tuple schema
- }
+  // clean up key schema
+  delete key_schema;
+  // no need to clean the tuple schema
+}
 
 oid_t IndexMetadata::GetColumnCount() const {
   return GetKeySchema()->GetColumnCount();
 }
-
 
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
@@ -59,14 +58,14 @@ bool Index::Compare(const AbstractTuple &index_key,
 
     // modified by michael for IN operator
     if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
-    	bool bret = lhs.InList(rhs);
-    	if (bret == true) {
-    		diff = VALUE_COMPARE_EQUAL;
-    	} else {
-    		diff = VALUE_COMPARE_NO_EQUAL;
-    	}
+      bool bret = lhs.InList(rhs);
+      if (bret == true) {
+        diff = VALUE_COMPARE_EQUAL;
+      } else {
+        diff = VALUE_COMPARE_NO_EQUAL;
+      }
     } else {
-        diff = lhs.Compare(rhs);
+      diff = lhs.Compare(rhs);
     }
 
     if (diff == VALUE_COMPARE_EQUAL) {
@@ -74,7 +73,7 @@ bool Index::Compare(const AbstractTuple &index_key,
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
         case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN: // added by michael for IN operator
+        case EXPRESSION_TYPE_COMPARE_IN:  // added by michael for IN operator
           continue;
 
         case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -120,9 +119,12 @@ bool Index::Compare(const AbstractTuple &index_key,
           throw IndexException("Unsupported expression type : " +
                                std::to_string(expr_type));
       }
-    } else if (diff == VALUE_COMPARE_NO_EQUAL) { // problems here?michael when there are multiple conditions with OR in the query
-  	  return false;
-    } // end VALUE_COMPARE_NO_EQUAL
+    } else if (diff == VALUE_COMPARE_NO_EQUAL) {  // problems here?michael when
+                                                  // there are multiple
+                                                  // conditions with OR in the
+                                                  // query
+      return false;
+    }  // end VALUE_COMPARE_NO_EQUAL
   }
 
   return true;
@@ -162,7 +164,8 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
     // get the min value
     else {
       auto value_type = schema->GetType(column_itr);
-      index_key->SetValue(column_itr, Value::GetMinValue(value_type), GetPool());
+      index_key->SetValue(column_itr, Value::GetMinValue(value_type),
+                          GetPool());
     }
   }
 

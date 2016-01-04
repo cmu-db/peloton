@@ -34,7 +34,6 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
   bool DExecute();
 
  private:
-
   size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
 
   /** @brief a vector of join clauses
@@ -46,7 +45,6 @@ class MergeJoinExecutor : public AbstractJoinExecutor {
 
   size_t left_end_row = 0;
   size_t right_end_row = 0;
-
 };
 
 }  // namespace executor

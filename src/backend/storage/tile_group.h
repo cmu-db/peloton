@@ -25,7 +25,7 @@ namespace peloton {
 
 class VarlenPool;
 
-namespace catalog{
+namespace catalog {
 class Manager;
 class Schema;
 }
@@ -62,9 +62,8 @@ class TileGroup {
 
  public:
   // Tile group constructor
-  TileGroup(BackendType backend_type,
-            TileGroupHeader *tile_group_header, AbstractTable *table,
-            const std::vector<catalog::Schema> &schemas,
+  TileGroup(BackendType backend_type, TileGroupHeader *tile_group_header,
+            AbstractTable *table, const std::vector<catalog::Schema> &schemas,
             const column_map_type &column_map, int tuple_count);
 
   ~TileGroup();
@@ -78,17 +77,20 @@ class TileGroup {
 
   // insert tuple at specific tuple slot
   // used by recovery mode
-  oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id, const Tuple *tuple);
+  oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+                    const Tuple *tuple);
 
   // delete tuple at given slot if it is not already locked
-  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id, cid_t last_cid);
+  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+                   cid_t last_cid);
 
   //===--------------------------------------------------------------------===//
   // Transaction Processing
   //===--------------------------------------------------------------------===//
 
   // commit the inserted tuple
-  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id, txn_id_t transaction_id);
+  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id,
+                           txn_id_t transaction_id);
 
   // commit the deleted tuple
   void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
@@ -157,7 +159,7 @@ class TileGroup {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  double GetSchemaDifference(const storage::column_map_type& new_column_map);
+  double GetSchemaDifference(const storage::column_map_type &new_column_map);
 
   // Sync the contents
   void Sync();
@@ -179,7 +181,7 @@ class TileGroup {
   std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
-  std::vector<std::shared_ptr<Tile> > tiles;
+  std::vector<std::shared_ptr<Tile>> tiles;
 
   // associated tile group
   TileGroupHeader *tile_group_header;
@@ -198,7 +200,6 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
-
 };
 
 }  // End storage namespace

@@ -112,7 +112,8 @@ class Tuple : public AbstractTuple {
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValue(const oid_t column_id, const Value& value, VarlenPool *dataPool);
+  void SetValue(const oid_t column_id, const Value &value,
+                VarlenPool *dataPool);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
@@ -159,8 +160,7 @@ class Tuple : public AbstractTuple {
 
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const storage::Tuple *tuple,
-                    const std::vector<oid_t> &columns,
-                    VarlenPool *pool);
+                    const std::vector<oid_t> &columns, VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);

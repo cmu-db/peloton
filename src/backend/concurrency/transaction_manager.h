@@ -105,7 +105,6 @@ class TransactionManager {
   std::map<txn_id_t, Transaction *> txn_table;
 
   std::mutex txn_table_mutex;
-
 };
 
 }  // End concurrency namespace

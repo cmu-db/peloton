@@ -28,7 +28,7 @@
 extern LoggingType peloton_logging_mode;
 
 // Directory for peloton logs
-extern char    *peloton_log_directory;
+extern char *peloton_log_directory;
 
 namespace peloton {
 namespace logging {
@@ -44,97 +44,93 @@ namespace logging {
 /**
  * Global Log Manager
  */
-class LogManager{
+class LogManager {
+ public:
+  LogManager(const LogManager &) = delete;
+  LogManager &operator=(const LogManager &) = delete;
+  LogManager(LogManager &&) = delete;
+  LogManager &operator=(LogManager &&) = delete;
 
-  public:
-    LogManager(const LogManager &) = delete;
-    LogManager &operator=(const LogManager &) = delete;
-    LogManager(LogManager &&) = delete;
-    LogManager &operator=(LogManager &&) = delete;
+  // global singleton
+  static LogManager &GetInstance(void);
 
-    // global singleton
-    static LogManager& GetInstance(void);
+  // Wait for the system to begin
+  void StartStandbyMode();
 
-    // Wait for the system to begin
-    void StartStandbyMode();
+  // Start recovery
+  void StartRecoveryMode();
 
-    // Start recovery
-    void StartRecoveryMode();
+  // Check whether the frontend logger is in logging mode
+  bool IsInLoggingMode();
 
-    // Check whether the frontend logger is in logging mode
-    bool IsInLoggingMode();
+  // Used to terminate current logging and wait for sleep mode
+  void TerminateLoggingMode();
 
-    // Used to terminate current logging and wait for sleep mode
-    void TerminateLoggingMode();
+  // Used to wait for a certain mode (or not certain mode if is_equal is false)
+  void WaitForMode(LoggingStatus logging_status, bool is_equal);
 
-    // Used to wait for a certain mode (or not certain mode if is_equal is false)
-    void WaitForMode(LoggingStatus logging_status,
-                     bool is_equal);
+  // End the actual logging
+  bool EndLogging();
 
-    // End the actual logging
-    bool EndLogging();
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Accessors
-    //===--------------------------------------------------------------------===//
+  // Logging status associated with the front end logger of given type
+  void SetLoggingStatus(LoggingStatus logging_status);
 
-    // Logging status associated with the front end logger of given type
-    void SetLoggingStatus(LoggingStatus logging_status);
+  LoggingStatus GetStatus();
 
-    LoggingStatus GetStatus();
+  void ResetLoggingStatusMap();
 
-    void ResetLoggingStatusMap();
+  // Whether to enable or disable synchronous commit ?
+  void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit; }
 
-    // Whether to enable or disable synchronous commit ?
-    void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit;}
+  bool GetSyncCommit(void) const { return syncronization_commit; }
 
-    bool GetSyncCommit(void) const { return syncronization_commit;}
+  size_t ActiveFrontendLoggerCount(void);
 
-    size_t ActiveFrontendLoggerCount(void) ;
+  BackendLogger *GetBackendLogger();
 
-    BackendLogger* GetBackendLogger();
+  bool RemoveBackendLogger(BackendLogger *backend_logger);
 
-    bool RemoveBackendLogger(BackendLogger* backend_logger);
+  void SetLogFileName(std::string log_file);
 
-    void SetLogFileName(std::string log_file);
+  std::string GetLogFileName(void);
 
-    std::string GetLogFileName(void);
+  bool HasPelotonFrontendLogger() const {
+    return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
+  }
 
-    bool HasPelotonFrontendLogger() const {
-      return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
-    }
+ private:
+  LogManager();
+  ~LogManager();
 
-  private:
+  //===--------------------------------------------------------------------===//
+  // Utility Functions
+  //===--------------------------------------------------------------------===//
 
-    LogManager();
-    ~LogManager();
+  FrontendLogger *GetFrontendLogger();
 
-    //===--------------------------------------------------------------------===//
-    // Utility Functions
-    //===--------------------------------------------------------------------===//
+  bool RemoveFrontendLogger();
 
-    FrontendLogger* GetFrontendLogger();
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
 
-    bool RemoveFrontendLogger();
+  // There is only one frontend_logger of a given type -- stdout, aries, peloton
+  FrontendLogger *frontend_logger = nullptr;
 
-    //===--------------------------------------------------------------------===//
-    // Data members
-    //===--------------------------------------------------------------------===//
+  LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
-    // There is only one frontend_logger of a given type -- stdout, aries, peloton
-    FrontendLogger* frontend_logger = nullptr;
+  // To synch the status map
+  std::mutex logging_status_mutex;
+  std::condition_variable logging_status_cv;
 
-    LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
+  bool syncronization_commit = false;
 
-    // To synch the status map
-    std::mutex logging_status_mutex;
-    std::condition_variable logging_status_cv;
-
-    bool syncronization_commit = false;
-
-    std::string log_file_name;
+  std::string log_file_name;
 };
-
 
 }  // namespace logging
 }  // namespace peloton

@@ -28,8 +28,7 @@ namespace executor {
  */
 NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     const planner::AbstractPlan *node, ExecutorContext *executor_context)
-    : AbstractJoinExecutor(node, executor_context) {
-}
+    : AbstractJoinExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical
@@ -62,7 +61,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
-
     // Build outer join output when done
     if (left_child_done_ && right_child_done_) {
       return BuildOuterJoinOutput();
@@ -72,8 +70,8 @@ bool NestedLoopJoinExecutor::DExecute() {
     // Pick right and left tiles
     //===--------------------------------------------------------------------===//
 
-    LogicalTile* left_tile = nullptr;
-    LogicalTile* right_tile = nullptr;
+    LogicalTile *left_tile = nullptr;
+    LogicalTile *right_tile = nullptr;
 
     bool advance_left_child = false;
 
@@ -93,7 +91,6 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
     // Otherwise, we must attempt to execute the right child
     else {
-
       // Right child is finished, no more tiles
       if (children_[1]->Execute() == false) {
         LOG_TRACE("Right child is exhausted.");
@@ -114,7 +111,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         BufferRightTile(children_[1]->GetOutput());
         right_result_itr_ = right_result_tiles_.size() - 1;
       }
-
     }
 
     if (advance_left_child == true || left_result_tiles_.empty()) {
@@ -136,7 +132,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         LOG_TRACE("Advance the left child.");
         BufferLeftTile(children_[0]->GetOutput());
       }
-
     }
 
     left_tile = left_result_tiles_.back().get();
@@ -166,7 +161,7 @@ bool NestedLoopJoinExecutor::DExecute() {
 
           // Join predicate is false. Skip pair and continue.
           if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-              .IsFalse()) {
+                  .IsFalse()) {
             continue;
           }
         }
@@ -180,7 +175,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         // First, copy the elements in left logical tile's tuple
         pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
       }  // Inner loop of NLJ
-
 
       // For Left and Full Outer Join
       if (has_right_match) {
@@ -198,7 +192,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     LOG_TRACE("This pair produces empty join result. Continue the loop.");
   }
-
 }
 
 }  // namespace executor

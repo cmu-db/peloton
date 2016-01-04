@@ -24,35 +24,30 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class ConfigManager {
+ public:
+  typedef enum {
+    INVALID_TYPE,
+    BOOLEAN_TYPE,
+    INTEGER_TYPE,
+    REAL_TYPE,
+    STRING_TYPE,
+    ENUM_TYPE
+  } config_type;
 
-public:
+  typedef struct {
+    // type of parameter
+    config_type type;
 
-	typedef enum
-	{
-		INVALID_TYPE,
-		BOOLEAN_TYPE,
-		INTEGER_TYPE,
-		REAL_TYPE,
-		STRING_TYPE,
-		ENUM_TYPE
-	} config_type;
+    std::string value;
+  } config_details;
 
-	typedef struct {
-	  // type of parameter
-		config_type type;
+  static std::string GetConfigOption(std::string option_name);
 
-		std::string value;
-	} config_details;
-
-
-	static std::string GetConfigOption(std::string option_name);
-
-	static void SetConfigOption(std::string option_name, std::string option_value);
+  static void SetConfigOption(std::string option_name,
+                              std::string option_value);
 
   static std::map<std::string, config_details> BuildConfigMap();
-
 };
 
-
-} // namespace peloton
-} // namespace bridge
+}  // namespace peloton
+}  // namespace bridge

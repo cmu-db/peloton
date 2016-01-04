@@ -68,15 +68,13 @@ class AbstractPlan {
   //===--------------------------------------------------------------------===//
 
   // Debugging convenience methods
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const AbstractPlan &node);
+  friend std::ostream &operator<<(std::ostream &os, const AbstractPlan &node);
   std::string GetInfo(std::string spacer) const;
 
   // Override in derived plan nodes
   virtual std::string GetInfo() const;
 
  private:
-
   // A plan node can have multiple children
   std::vector<const AbstractPlan *> children_;
 

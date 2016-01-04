@@ -16,20 +16,21 @@
 namespace peloton {
 namespace bridge {
 
-PelotonValueFormat
-FormatTransformer::TransformValueFormat(PostgresValueFormat postgresValueFormat){
-
+PelotonValueFormat FormatTransformer::TransformValueFormat(
+    PostgresValueFormat postgresValueFormat) {
   oid_t postgres_value_type_id = postgresValueFormat.GetTypeId();
   int postgres_column_length = postgresValueFormat.GetLength();
-  int postgres_typemod = postgresValueFormat.GetTypeMod(); 
+  int postgres_typemod = postgresValueFormat.GetTypeMod();
 
-  PostgresValueType postgresValueType = (PostgresValueType)postgres_value_type_id;
-  ValueType peloton_value_type = PostgresValueTypeToPelotonValueType(postgresValueType);
+  PostgresValueType postgresValueType =
+      (PostgresValueType)postgres_value_type_id;
+  ValueType peloton_value_type =
+      PostgresValueTypeToPelotonValueType(postgresValueType);
 
   int peloton_column_length;
   bool peloton_is_inlined = true;
 
-  switch(peloton_value_type){
+  switch (peloton_value_type) {
     case VALUE_TYPE_TINYINT:
       peloton_column_length = 1;
       break;
@@ -60,16 +61,14 @@ FormatTransformer::TransformValueFormat(PostgresValueFormat postgresValueFormat)
   // TODO: Special case for DECIMAL. May move it somewhere else?
   // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
   // This code is duplicated in schema_transformer.cpp
-  if(VALUE_TYPE_DECIMAL == peloton_value_type){
+  if (VALUE_TYPE_DECIMAL == peloton_value_type) {
     LOG_TRACE("Detect a DECIMAL attribute. \n");
     peloton_column_length = 16;
     peloton_is_inlined = true;
   }
 
-  return PelotonValueFormat( peloton_value_type, 
-                             peloton_column_length, 
-                             peloton_is_inlined);
-
+  return PelotonValueFormat(peloton_value_type, peloton_column_length,
+                            peloton_is_inlined);
 }
 
 }  // End bridge namespace

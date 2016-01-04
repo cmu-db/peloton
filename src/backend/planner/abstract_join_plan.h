@@ -39,10 +39,10 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan(PelotonJoinType joinType,
                    const expression::AbstractExpression *predicate,
                    const ProjectInfo *proj_info)
-  : AbstractPlan(),
-    join_type_(joinType),
-    predicate_(predicate),
-    proj_info_(proj_info) {
+      : AbstractPlan(),
+        join_type_(joinType),
+        predicate_(predicate),
+        proj_info_(proj_info) {
     // Fuck off!
   }
 

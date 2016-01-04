@@ -12,7 +12,6 @@
 
 #pragma once
 
-
 #include "backend/common/types.h"
 #include "backend/planner/abstract_plan.h"
 #include "gmock/gmock.h"
@@ -32,20 +31,13 @@ class MockPlan : public planner::AbstractPlan {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_MOCK;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_MOCK; }
 
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  inline std::string GetInfo() const {
-    return "Mock";
-  }
-
-
-
+  inline std::string GetInfo() const { return "Mock"; }
 };
 
 }  // namespace test

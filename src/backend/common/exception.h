@@ -278,7 +278,8 @@ class NumericValueOutOfRangeException : public Exception {
   static const int TYPE_OVERFLOW = 2;
 
   NumericValueOutOfRangeException(std::string msg, int type)
-      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE, msg + " " + std::to_string(type)) {}
+      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+                  msg + " " + std::to_string(type)) {}
 };
 
 class DivideByZeroException : public Exception {

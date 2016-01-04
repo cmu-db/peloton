@@ -21,9 +21,8 @@ int LogRecordPool::CreateTransactionLogList(txn_id_t txn_id) {
   auto existing_list = SearchLogRecordList(txn_id);
 
   if (existing_list == nullptr) {
-    txn_log_table.insert(
-        std::pair<txn_id_t, std::vector<TupleRecord *>>(
-            txn_id, std::vector<TupleRecord *>()));
+    txn_log_table.insert(std::pair<txn_id_t, std::vector<TupleRecord *>>(
+        txn_id, std::vector<TupleRecord *>()));
   }
 
   return 0;
@@ -45,7 +44,6 @@ int LogRecordPool::AddLogRecord(TupleRecord *record) {
 void LogRecordPool::RemoveTransactionLogList(txn_id_t txn_id) {
   // Locate the transaction log list
   if (txn_log_table.find(txn_id) != txn_log_table.end()) {
-
     // Clean the log records in the transaction log list
     std::vector<TupleRecord *> list = txn_log_table.at(txn_id);
 
@@ -58,15 +56,14 @@ void LogRecordPool::RemoveTransactionLogList(txn_id_t txn_id) {
   }
 }
 
-std::vector<TupleRecord *>* LogRecordPool::SearchLogRecordList(txn_id_t txn_id) {
+std::vector<TupleRecord *> *LogRecordPool::SearchLogRecordList(
+    txn_id_t txn_id) {
   // Locate the transaction log list
   if (txn_log_table.find(txn_id) != txn_log_table.end()) {
     return &(txn_log_table.at(txn_id));
-  }
-  else {
+  } else {
     return nullptr;
   }
 }
-
 }
 }

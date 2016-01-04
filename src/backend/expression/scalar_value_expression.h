@@ -20,16 +20,14 @@ namespace peloton {
 namespace expression {
 
 class ScalarValueExpression : public AbstractExpression {
-  public:
-    ScalarValueExpression(AbstractExpression *lc)
-        : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, lc, NULL)
-    {};
+ public:
+  ScalarValueExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, lc, NULL){};
 
-    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                   executor::ExecutorContext *context) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const;
 
-    std::string DebugInfo(const std::string &spacer) const;
-
+  std::string DebugInfo(const std::string &spacer) const;
 };
 
 }  // End expression namespace

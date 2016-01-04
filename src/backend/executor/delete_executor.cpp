@@ -81,7 +81,7 @@ bool DeleteExecutor::DExecute() {
   auto transaction_ = executor_context_->GetTransaction();
 
   LOG_INFO("Source tile : %p Tuples : %lu \n", source_tile.get(),
-            source_tile->GetTupleCount());
+           source_tile->GetTupleCount());
 
   LOG_INFO("Transaction ID: %lu\n", transaction_->GetTransactionId());
 
@@ -90,21 +90,19 @@ bool DeleteExecutor::DExecute() {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n",
-              visible_tuple_id, physical_tuple_id);
+             visible_tuple_id, physical_tuple_id);
 
     peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
-    // Logging 
+    // Logging
     {
-      auto& log_manager = logging::LogManager::GetInstance();
+      auto &log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode()){
+      if (log_manager.IsInLoggingMode()) {
         auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                             transaction_->GetTransactionId(), 
-                                             target_table_->GetOid(),
-                                             INVALID_ITEMPOINTER,
-                                             delete_location);
+        auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
+            target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
 
         logger->Log(record);
       }
@@ -120,7 +118,7 @@ bool DeleteExecutor::DExecute() {
       return false;
     }
 
-    executor_context_->num_processed += 1; // deleted one
+    executor_context_->num_processed += 1;  // deleted one
     transaction_->RecordDelete(delete_location);
   }
 

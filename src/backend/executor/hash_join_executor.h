@@ -27,7 +27,7 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
  public:
   explicit HashJoinExecutor(const planner::AbstractPlan *node,
-                             ExecutorContext *executor_context);
+                            ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -35,7 +35,6 @@ class HashJoinExecutor : public AbstractJoinExecutor {
   bool DExecute();
 
  private:
-
   HashExecutor *hash_executor_ = nullptr;
 };
 

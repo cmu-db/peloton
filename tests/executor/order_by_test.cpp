@@ -115,7 +115,6 @@ TEST(OrderByTests, IntAscTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
 }
 
 TEST(OrderByTests, IntDescTest) {
@@ -159,7 +158,6 @@ TEST(OrderByTests, IntDescTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
 }
 
 TEST(OrderByTests, StringDescTest) {
@@ -203,7 +201,6 @@ TEST(OrderByTests, StringDescTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
 }
 
 TEST(OrderByTests, IntAscStringDescTest) {
@@ -293,7 +290,6 @@ TEST(OrderByTests, StringDescIntAscTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
-
 }
 }
 

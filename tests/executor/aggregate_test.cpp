@@ -43,7 +43,6 @@ namespace peloton {
 namespace test {
 
 TEST(AggregateTests, SortedDistinctTest) {
-
   /*
    * SELECT d, a, b, c FROM table GROUP BY a, b, c, d;
    */
@@ -54,8 +53,7 @@ TEST(AggregateTests, SortedDistinctTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  false,
-                                   true);
+                                   false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -66,11 +64,11 @@ TEST(AggregateTests, SortedDistinctTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 0, 1, 2, 3 };
+  std::vector<oid_t> group_by_columns = {0, 1, 2, 3};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 3 } }, { 1,
-      { 0, 0 } }, { 2, { 0, 1 } }, { 3, { 0, 2 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {
+      {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
 
@@ -82,7 +80,7 @@ TEST(AggregateTests, SortedDistinctTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 3, 0, 1, 2 };
+  std::vector<oid_t> set = {3, 0, 1, 2};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -96,7 +94,7 @@ TEST(AggregateTests, SortedDistinctTest) {
                               AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -107,12 +105,14 @@ TEST(AggregateTests, SortedDistinctTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -123,19 +123,18 @@ TEST(AggregateTests, SortedDistinctTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
 
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 2).OpEquals(ValueFactory::GetIntegerValue(1))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 3).OpEquals(ValueFactory::GetDoubleValue(2))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(5, 2).OpEquals(ValueFactory::GetIntegerValue(51))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(5, 3).OpEquals(ValueFactory::GetDoubleValue(52))
-          .IsTrue());
-
+  EXPECT_TRUE(result_tile->GetValue(0, 2)
+                  .OpEquals(ValueFactory::GetIntegerValue(1))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 3)
+                  .OpEquals(ValueFactory::GetDoubleValue(2))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(5, 2)
+                  .OpEquals(ValueFactory::GetIntegerValue(51))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(5, 3)
+                  .OpEquals(ValueFactory::GetDoubleValue(52))
+                  .IsTrue());
 }
 
 TEST(AggregateTests, SortedSumGroupByTest) {
@@ -148,8 +147,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  false,
-                                   true);
+                                   false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -160,11 +158,11 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 0 };
+  std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 0 } }, { 1,
-      { 1, 0 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 0}},
+                                                         {1, {1, 0}}};
 
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
@@ -180,7 +178,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1 };
+  std::vector<oid_t> set = {0, 1};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -193,7 +191,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
                               AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -204,12 +202,14 @@ TEST(AggregateTests, SortedSumGroupByTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -220,18 +220,18 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 0).OpEquals(ValueFactory::GetIntegerValue(0))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 1).OpEquals(ValueFactory::GetIntegerValue(105))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(1, 0).OpEquals(ValueFactory::GetIntegerValue(10))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(1, 1).OpEquals(ValueFactory::GetIntegerValue(355))
-          .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(0))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 1)
+                  .OpEquals(ValueFactory::GetIntegerValue(105))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(1, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(10))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(1, 1)
+                  .OpEquals(ValueFactory::GetIntegerValue(355))
+                  .IsTrue());
 }
 
 TEST(AggregateTests, SortedSumMaxGroupByTest) {
@@ -244,8 +244,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  false,
-                                   true);
+                                   false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -256,11 +255,11 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 0 };
+  std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 0 } }, { 1,
-      { 1, 0 } }, { 2, { 1, 1 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {
+      {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
@@ -279,7 +278,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1, 2 };
+  std::vector<oid_t> set = {0, 1, 2};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -292,7 +291,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
                               AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -303,12 +302,14 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -319,23 +320,22 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 0).OpEquals(ValueFactory::GetIntegerValue(0))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 1).OpEquals(ValueFactory::GetIntegerValue(105))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 2).OpEquals(ValueFactory::GetDoubleValue(42))
-          .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(0))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 1)
+                  .OpEquals(ValueFactory::GetIntegerValue(105))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 2)
+                  .OpEquals(ValueFactory::GetDoubleValue(42))
+                  .IsTrue());
 
-  EXPECT_TRUE(
-      result_tile->GetValue(1, 0).OpEquals(ValueFactory::GetIntegerValue(10))
-          .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(1, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(10))
+                  .IsTrue());
 }
 
 TEST(AggregateTests, HashDistinctTest) {
-
   /*
    * SELECT d, a, b, c FROM table GROUP BY a, b, c, d;
    */
@@ -346,7 +346,7 @@ TEST(AggregateTests, HashDistinctTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  true,
+                                   true,
                                    true);  // let it be random
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -358,11 +358,11 @@ TEST(AggregateTests, HashDistinctTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 0, 1, 2, 3 };
+  std::vector<oid_t> group_by_columns = {0, 1, 2, 3};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 3 } }, { 1,
-      { 0, 0 } }, { 2, { 0, 1 } }, { 3, { 0, 2 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {
+      {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
 
@@ -374,7 +374,7 @@ TEST(AggregateTests, HashDistinctTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 3, 0, 1, 2 };
+  std::vector<oid_t> set = {3, 0, 1, 2};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -388,7 +388,7 @@ TEST(AggregateTests, HashDistinctTest) {
                               AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -399,12 +399,14 @@ TEST(AggregateTests, HashDistinctTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -417,9 +419,8 @@ TEST(AggregateTests, HashDistinctTest) {
 
   for (auto tuple_id : *result_tile) {
     int colA = ValuePeeker::PeekAsInteger(result_tile->GetValue(tuple_id, 1));
-    (void) colA;
+    (void)colA;
   }
-
 }
 
 TEST(AggregateTests, HashSumGroupByTest) {
@@ -432,8 +433,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  true,
-                                   true);
+                                   true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -444,11 +444,11 @@ TEST(AggregateTests, HashSumGroupByTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 1 };
+  std::vector<oid_t> group_by_columns = {1};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 1 } }, { 1,
-      { 1, 0 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 1}},
+                                                         {1, {1, 0}}};
 
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
@@ -464,7 +464,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 1, 2 };
+  std::vector<oid_t> set = {1, 2};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -477,7 +477,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
                               AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -488,12 +488,14 @@ TEST(AggregateTests, HashSumGroupByTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -504,8 +506,8 @@ TEST(AggregateTests, HashSumGroupByTest) {
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   /* FIXME This should pass */
-//  EXPECT_GE(3, result_tile->GetTupleCount());
-//  std::cout << *result_tile;
+  //  EXPECT_GE(3, result_tile->GetTupleCount());
+  //  std::cout << *result_tile;
 }
 
 TEST(AggregateTests, HashCountDistinctGroupByTest) {
@@ -518,8 +520,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  true,
-                                   true);
+                                   true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -530,11 +531,11 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
   // (1-5) Setup plan node
 
   // 1) Set up group-by columns
-  std::vector<oid_t> group_by_columns = { 0 };
+  std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 0, 0 } }, { 1,
-      { 1, 0 } }, { 2, { 1, 1 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {
+      {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
@@ -555,7 +556,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1, 1 };
+  std::vector<oid_t> set = {0, 1, 1};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -568,7 +569,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
                               AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -579,12 +580,14 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -595,19 +598,19 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 0).OpEquals(ValueFactory::GetIntegerValue(0))
-          .IsTrue()
-          || result_tile->GetValue(0, 0).OpEquals(
-              ValueFactory::GetIntegerValue(10)).IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 1).OpEquals(ValueFactory::GetIntegerValue(5))
-          .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(0))
+                  .IsTrue() ||
+              result_tile->GetValue(0, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(10))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 1)
+                  .OpEquals(ValueFactory::GetIntegerValue(5))
+                  .IsTrue());
 
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 2).OpLessThanOrEqual(
-          ValueFactory::GetIntegerValue(3)).IsTrue());
-
+  EXPECT_TRUE(result_tile->GetValue(0, 2)
+                  .OpLessThanOrEqual(ValueFactory::GetIntegerValue(3))
+                  .IsTrue());
 }
 
 TEST(AggregateTests, PlainSumCountDistinctTest) {
@@ -620,8 +623,7 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-  true,
-                                   true);
+                                   true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -635,8 +637,8 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
   std::vector<oid_t> group_by_columns;
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = { { 0, { 1, 0 } }, { 1,
-      { 1, 1 } }, { 2, { 1, 2 } } };
+  planner::ProjectInfo::DirectMapList direct_map_list = {
+      {0, {1, 0}}, {1, {1, 1}}, {2, {1, 2}}};
 
   auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                                             std::move(direct_map_list));
@@ -661,7 +663,7 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1, 1 };
+  std::vector<oid_t> set = {0, 1, 1};
   std::vector<catalog::Column> columns;
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
@@ -674,7 +676,7 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
                               AGGREGATE_TYPE_PLAIN);
 
   // Create and set up executor
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -685,12 +687,14 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
 
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
-  EXPECT_CALL(child_executor, GetOutput()).WillOnce(
-      Return(source_logical_tile1.release())).WillOnce(
-      Return(source_logical_tile2.release()));
+  EXPECT_CALL(child_executor, GetOutput())
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -701,17 +705,16 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 0).OpEquals(ValueFactory::GetIntegerValue(50))
-          .IsTrue());
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 1).OpEquals(ValueFactory::GetIntegerValue(10))
-          .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 0)
+                  .OpEquals(ValueFactory::GetIntegerValue(50))
+                  .IsTrue());
+  EXPECT_TRUE(result_tile->GetValue(0, 1)
+                  .OpEquals(ValueFactory::GetIntegerValue(10))
+                  .IsTrue());
 
-  EXPECT_TRUE(
-      result_tile->GetValue(0, 2).OpLessThanOrEqual(
-          ValueFactory::GetIntegerValue(3)).IsTrue());
-
+  EXPECT_TRUE(result_tile->GetValue(0, 2)
+                  .OpLessThanOrEqual(ValueFactory::GetIntegerValue(3))
+                  .IsTrue());
 }
 
 }  // namespace test

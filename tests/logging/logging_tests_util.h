@@ -19,7 +19,7 @@ class DataTable;
 
 namespace test {
 
-enum LoggingExperimentType{
+enum LoggingExperimentType {
   LOGGING_EXPERIMENT_TYPE_INVALID = 0,
 
   LOGGING_EXPERIMENT_TYPE_ACTIVE = 1,
@@ -28,10 +28,8 @@ enum LoggingExperimentType{
   LOGGING_EXPERIMENT_TYPE_WAIT = 4
 };
 
-class LoggingTestsUtil{
-
-public:
-
+class LoggingTestsUtil {
+ public:
   //===--------------------------------------------------------------------===//
   // PREPARE LOG FILE
   //===--------------------------------------------------------------------===//
@@ -54,7 +52,6 @@ public:
 
   class logging_test_configuration {
    public:
-
     // experiment type
     LoggingExperimentType experiment_type;
 
@@ -81,32 +78,30 @@ public:
 
     // frequency with which the logger flushes
     int64_t wait_timeout;
-   };
+  };
 
-private:
-
+ private:
   //===--------------------------------------------------------------------===//
   // WRITING LOG RECORD
   //===--------------------------------------------------------------------===//
 
-  static void BuildLog(oid_t db_oid,
-                       oid_t table_oid);
+  static void BuildLog(oid_t db_oid, oid_t table_oid);
 
-  static void RunBackends(storage::DataTable* table, const std::vector<storage::Tuple*>& tuples);
+  static void RunBackends(storage::DataTable* table,
+                          const std::vector<storage::Tuple*>& tuples);
 
-  static std::vector<ItemPointer> InsertTuples(storage::DataTable* table,
-                                               const std::vector<storage::Tuple*>& tuples,
-                                               bool committed);
+  static std::vector<ItemPointer> InsertTuples(
+      storage::DataTable* table, const std::vector<storage::Tuple*>& tuples,
+      bool committed);
 
   static void DeleteTuples(storage::DataTable* table,
                            const std::vector<ItemPointer>& locations,
                            bool committed);
 
-  static std::vector<ItemPointer> UpdateTuples(storage::DataTable* table,
-                                               const std::vector<ItemPointer>& locations,
-                                               const std::vector<storage::Tuple*>& tuples,
-                                               bool committed);
-  
+  static std::vector<ItemPointer> UpdateTuples(
+      storage::DataTable* table, const std::vector<ItemPointer>& locations,
+      const std::vector<storage::Tuple*>& tuples, bool committed);
+
   //===--------------------------------------------------------------------===//
   // Utility functions
   //===--------------------------------------------------------------------===//
@@ -119,14 +114,15 @@ private:
 
   static std::vector<catalog::Column> CreateSchema(void);
 
-  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool);
+  static std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema,
+                                                   oid_t num_of_tuples,
+                                                   VarlenPool* pool);
 
   static void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
   static void DropDatabase(oid_t db_oid);
 
   static void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
-
 };
 
 // configuration for testing

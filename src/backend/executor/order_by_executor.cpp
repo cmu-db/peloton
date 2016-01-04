@@ -29,10 +29,9 @@ namespace executor {
  */
 OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
-OrderByExecutor::~OrderByExecutor() {
-}
+OrderByExecutor::~OrderByExecutor() {}
 
 bool OrderByExecutor::DInit() {
   assert(children_.size() == 1);
@@ -61,15 +60,9 @@ bool OrderByExecutor::DExecute() {
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
 
-  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(BACKEND_TYPE_MM,
-                                                                     INVALID_OID,
-                                                                     INVALID_OID,
-                                                                     INVALID_OID,
-                                                                     INVALID_OID,
-                                                                     nullptr,
-                                                                     *input_schema_,
-                                                                     nullptr,
-                                                                     tile_size));
+  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
+      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      nullptr, *input_schema_, nullptr, tile_size));
 
   for (size_t id = 0; id < tile_size; id++) {
     oid_t source_tile_id =
@@ -85,9 +78,8 @@ bool OrderByExecutor::DExecute() {
   }
 
   // Create an owner wrapper of this physical tile
-  std::vector<std::shared_ptr<storage::Tile > > singleton({ptile});
-  std::unique_ptr<LogicalTile> ltile(
-      LogicalTileFactory::WrapTiles(singleton));
+  std::vector<std::shared_ptr<storage::Tile>> singleton({ptile});
+  std::unique_ptr<LogicalTile> ltile(LogicalTileFactory::WrapTiles(singleton));
   assert(ltile->GetTupleCount() == tile_size);
 
   SetOutput(ltile.release());
@@ -139,8 +131,8 @@ bool OrderByExecutor::DoSort() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(sort_key_tuple_schema_.get(), true));
       for (oid_t id = 0; id < node.GetSortKeys().size(); id++) {
-        tuple->SetValue(id,
-                        input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]),
+        tuple->SetValue(id, input_tiles_[tile_id]->GetValue(
+                                tuple_id, node.GetSortKeys()[id]),
                         executor_pool);
       }
       // Inert the sort key tuple into sort buffer
@@ -155,7 +147,7 @@ bool OrderByExecutor::DoSort() {
   // Note: This is a less-than comparer, NOT an equality comparer.
   struct TupleComparer {
     TupleComparer(std::vector<bool> &_descend_flags)
-    : descend_flags(_descend_flags) {}
+        : descend_flags(_descend_flags) {}
 
     bool operator()(const storage::Tuple *ta, const storage::Tuple *tb) {
       for (oid_t id = 0; id < descend_flags.size(); id++) {
@@ -163,16 +155,16 @@ bool OrderByExecutor::DoSort() {
           if (ta->GetValue(id).OpLessThan(tb->GetValue(id)).IsTrue()) {
             return true;
           } else if (ta->GetValue(id)
-              .OpGreaterThan(tb->GetValue(id))
-              .IsTrue()) {
+                         .OpGreaterThan(tb->GetValue(id))
+                         .IsTrue()) {
             return false;
           }
         } else {
           if (tb->GetValue(id).OpLessThan(ta->GetValue(id)).IsTrue()) {
             return true;
           } else if (tb->GetValue(id)
-              .OpGreaterThan(ta->GetValue(id))
-              .IsTrue()) {
+                         .OpGreaterThan(ta->GetValue(id))
+                         .IsTrue()) {
             return false;
           }
         }
@@ -189,8 +181,8 @@ bool OrderByExecutor::DoSort() {
   std::sort(
       sort_buffer_.begin(), sort_buffer_.end(),
       [&comp](const sort_buffer_entry_t &a, const sort_buffer_entry_t &b) {
-    return comp(a.tuple.get(), b.tuple.get());
-  });
+        return comp(a.tuple.get(), b.tuple.get());
+      });
 
   sort_done_ = true;
 

@@ -23,16 +23,13 @@ namespace test {
 // Based on http://en.cppreference.com/w/cpp/language/rule_of_three
 //===--------------------------------------------------------------------===//
 
-class RuleOfThree
-{
+class RuleOfThree {
  public:
-
   // user-defined constructor
-  RuleOfThree(const char* arg)
- : cstring(new char[std::strlen(arg)+1]) {
+  RuleOfThree(const char* arg) : cstring(new char[std::strlen(arg) + 1]) {
     std::cout << "Constructor \n";
 
-    std::strcpy(cstring, arg); // populate
+    std::strcpy(cstring, arg);  // populate
   }
 
   // destructor
@@ -69,15 +66,11 @@ class RuleOfThree
   //  }
 
  private:
-
   // raw pointer used as a handle to a dynamically-allocated memory block
   char* cstring;
-
 };
 
-
 TEST(RuleTests, RuleOfThreeTest) {
-
   RuleOfThree a("foo");
 
   RuleOfThree b(a);
@@ -89,15 +82,12 @@ TEST(RuleTests, RuleOfThreeTest) {
   RuleOfThree d = c;
 }
 
-class RuleOfFive
-{
+class RuleOfFive {
  public:
-
-  RuleOfFive(const char* arg)
- : cstring(new char[std::strlen(arg)+1]) {
+  RuleOfFive(const char* arg) : cstring(new char[std::strlen(arg) + 1]) {
     std::cout << "Constructor \n";
 
-    std::strcpy(cstring, arg); // populate
+    std::strcpy(cstring, arg);  // populate
   }
 
   ~RuleOfFive() {
@@ -107,7 +97,7 @@ class RuleOfFive
   }
 
   // copy constructor
-  RuleOfFive(const RuleOfFive& other)   {
+  RuleOfFive(const RuleOfFive& other) {
     std::cout << "Copy Constructor \n";
 
     cstring = new char[std::strlen(other.cstring) + 1];
@@ -150,14 +140,11 @@ class RuleOfFive
   //  }
 
  private:
-
   // raw pointer used as a handle to a dynamically-allocated memory block
   char* cstring;
-
 };
 
 TEST(RuleTests, RuleOfFiveTest) {
-
   RuleOfFive a("foo");
 
   RuleOfFive b(std::move(a));

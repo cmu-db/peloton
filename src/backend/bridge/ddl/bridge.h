@@ -54,7 +54,6 @@ class Bridge {
   //===--------------------------------------------------------------------===//
 
   static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
-
 };
 
 }  // namespace bridge

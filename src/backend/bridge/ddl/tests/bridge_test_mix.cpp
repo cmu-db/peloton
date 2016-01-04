@@ -28,10 +28,7 @@ namespace bridge {
 /**
  * @brief Test many DDL functions together
  */
-void BridgeTest::DDL_MIX_TEST() {
-  DDL_MIX_TEST_1();
-
-}
+void BridgeTest::DDL_MIX_TEST() { DDL_MIX_TEST_1(); }
 
 /**
  * @brief Create a table with simple columns that contain
@@ -52,8 +49,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Create a table
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-  if(status == false)
-    throw CatalogException("Could not create table");
+  if (status == false) throw CatalogException("Could not create table");
 
   // Get the table pointer and schema
   storage::DataTable *table = db->GetTableWithOid(table_oid);
@@ -61,7 +57,8 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Create the constrains
   std::string constraint_name = "not_null_constraint";
-  catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL, constraint_name);
+  catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL,
+                                         constraint_name);
 
   // Add one constraint to the one column
   schema->AddConstraint("id", notnull_constraint);
@@ -111,8 +108,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  if(status == false)
-    throw CatalogException("Could not drop table");
+  if (status == false) throw CatalogException("Could not drop table");
 
   // Drop the table
   status = DDLTable::DropTable(pktable_oid);

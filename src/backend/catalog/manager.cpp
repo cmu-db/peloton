@@ -30,7 +30,8 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::AddTileGroup(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location) {
+void Manager::AddTileGroup(
+    const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
   std::shared_ptr<storage::TileGroup> old_location;
 
   {
@@ -52,7 +53,6 @@ void Manager::DropTileGroup(const oid_t oid) {
   }
 }
 
-
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
@@ -67,8 +67,8 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   return location;
 }
 
-//used for logging test
-void Manager::ClearTileGroup(){
+// used for logging test
+void Manager::ClearTileGroup() {
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
     locator.clear();

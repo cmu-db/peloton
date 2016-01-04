@@ -28,13 +28,12 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
-    const MergeJoinPlanState* mj_plan_state) {
-
-
+const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
+    const MergeJoinPlanState *mj_plan_state) {
   planner::AbstractPlan *result = nullptr;
   planner::MergeJoinPlan *plan_node = nullptr;
-  PelotonJoinType join_type = PlanTransformer::TransformJoinType(mj_plan_state->jointype);
+  PelotonJoinType join_type =
+      PlanTransformer::TransformJoinType(mj_plan_state->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", mj_plan_state->jointype);
     return nullptr;
@@ -67,31 +66,29 @@ const planner::AbstractPlan* PlanTransformer::TransformMergeJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
-  //LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+  // LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         mj_plan_state->tts_tupleDescriptor);
-    result = new planner::ProjectionPlan(project_info.release(),
-                                         project_schema);
-    plan_node = new planner::MergeJoinPlan(join_type, predicate,
-                                           nullptr, join_clauses);
+    result =
+        new planner::ProjectionPlan(project_info.release(), project_schema);
+    plan_node =
+        new planner::MergeJoinPlan(join_type, predicate, nullptr, join_clauses);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::MergeJoinPlan(join_type,
-                                           predicate,
-                                           project_info.release(),
-                                           join_clauses);
+    plan_node = new planner::MergeJoinPlan(
+        join_type, predicate, project_info.release(), join_clauses);
     result = plan_node;
   }
 
-  const planner::AbstractPlan *outer = PlanTransformer::TransformPlan(
-      outerAbstractPlanState(mj_plan_state));
-  const planner::AbstractPlan *inner = PlanTransformer::TransformPlan(
-      innerAbstractPlanState(mj_plan_state));
+  const planner::AbstractPlan *outer =
+      PlanTransformer::TransformPlan(outerAbstractPlanState(mj_plan_state));
+  const planner::AbstractPlan *inner =
+      PlanTransformer::TransformPlan(innerAbstractPlanState(mj_plan_state));
 
   /* Add the children nodes */
   plan_node->AddChild(outer);
@@ -118,11 +115,9 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
              clause.right_->Debug(" ").c_str());
 
     clauses.push_back(std::move(clause));
-
   }
   LOG_INFO("Build join clauses of size %lu", clauses.size());
   return clauses;
 }
 }  // namespace bridge
 }  // namespace peloton
-

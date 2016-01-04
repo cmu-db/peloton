@@ -11,33 +11,31 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class TransactionRecord : public LogRecord {
-
  public:
-  TransactionRecord( LogRecordType log_record_type,
-                     const txn_id_t txn_id = INVALID_TXN_ID)
- : LogRecord(log_record_type, txn_id) {}
+  TransactionRecord(LogRecordType log_record_type,
+                    const txn_id_t txn_id = INVALID_TXN_ID)
+      : LogRecord(log_record_type, txn_id) {}
 
-  ~TransactionRecord(){
+  ~TransactionRecord() {
     // Clean up the message
     delete[] message;
   }
 
   //===--------------------------------------------------------------------===//
-  // Serial/Deserialization 
+  // Serial/Deserialization
   //===--------------------------------------------------------------------===//
 
-  bool Serialize(CopySerializeOutput& output);
+  bool Serialize(CopySerializeOutput &output);
 
-  void Deserialize(CopySerializeInputBE& input);
+  void Deserialize(CopySerializeInputBE &input);
 
-  static size_t GetTransactionRecordSize(void) ;
+  static size_t GetTransactionRecordSize(void);
 
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
 
   void Print(void);
-
 };
 
 }  // namespace logging

@@ -122,19 +122,20 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   column_map_type partitioning;
   std::map<oid_t, oid_t> tile_column_count_map;
 
-  for(auto entry : column_to_tile_map) {
+  for (auto entry : column_to_tile_map) {
     auto column_id = entry.first;
     auto tile_id = entry.second;
 
     // figure out how many columns in given tile
     auto exists = tile_column_count_map.find(tile_id);
-    if(exists == tile_column_count_map.end())
+    if (exists == tile_column_count_map.end())
       tile_column_count_map[tile_id] = 0;
     else
       tile_column_count_map[tile_id] += 1;
 
     // create an entry for the partitioning map
-    auto partition_entry =  std::make_pair(tile_id, tile_column_count_map[tile_id]);
+    auto partition_entry =
+        std::make_pair(tile_id, tile_column_count_map[tile_id]);
     partitioning[column_id] = partition_entry;
   }
 

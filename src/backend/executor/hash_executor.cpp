@@ -28,7 +28,7 @@ namespace executor {
  */
 HashExecutor::HashExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.
@@ -71,21 +71,25 @@ bool HashExecutor::DExecute() {
     // Construct a logical tile
     for (auto &hashkey : hashkeys) {
       assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
-      auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
+      auto tuple_value =
+          reinterpret_cast<const expression::TupleValueExpression *>(
+              hashkey.get());
       column_ids_.push_back(tuple_value->GetColumnId());
     }
 
-    // Construct the hash table by going over each child logical tile and hashing
-    for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size(); child_tile_itr++) {
+    // Construct the hash table by going over each child logical tile and
+    // hashing
+    for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
+         child_tile_itr++) {
       auto tile = child_tiles_[child_tile_itr].get();
 
       // Go over all tuples in the logical tile
       for (oid_t tuple_id : *tile) {
         // Key : container tuple with a subset of tuple attributes
         // Value : < child_tile offset, tuple offset >
-        hash_table_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(std::make_pair(child_tile_itr, tuple_id));
+        hash_table_[HashMapType::key_type(tile, tuple_id, &column_ids_)].insert(
+            std::make_pair(child_tile_itr, tuple_id));
       }
-
     }
 
     done_ = true;
@@ -96,8 +100,7 @@ bool HashExecutor::DExecute() {
     if (child_tiles_[result_itr]->GetTupleCount() == 0) {
       result_itr++;
       continue;
-    }
-    else {
+    } else {
       SetOutput(child_tiles_[result_itr++].release());
       LOG_TRACE("Hash Executor : true -- return tile one at a time \n");
       return true;
@@ -107,7 +110,6 @@ bool HashExecutor::DExecute() {
   LOG_TRACE("Hash Executor : false -- done \n");
   return false;
 }
-
 
 } /* namespace executor */
 } /* namespace peloton */

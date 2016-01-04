@@ -39,17 +39,15 @@ namespace peloton {
  */
 class PlannerDomValue {
   friend class PlannerDomRoot;
- public:
 
+ public:
   int32_t asInt() const {
     if (m_value.IsNull()) {
       throw Exception("PlannerDomValue: int value is null");
-    }
-    else if (m_value.IsInt()) {
+    } else if (m_value.IsInt()) {
       return m_value.GetInt();
-    }
-    else if (m_value.IsString()) {
-      return (int32_t) strtoimax(m_value.GetString(), NULL, 10);
+    } else if (m_value.IsString()) {
+      return (int32_t)strtoimax(m_value.GetString(), NULL, 10);
     }
     throw Exception("PlannerDomValue: int value is not an integer");
   }
@@ -57,38 +55,29 @@ class PlannerDomValue {
   int64_t asInt64() const {
     if (m_value.IsNull()) {
       throw Exception("PlannerDomValue: int64 value is null");
-    }
-    else if (m_value.IsInt64()) {
+    } else if (m_value.IsInt64()) {
       return m_value.GetInt64();
-    }
-    else if (m_value.IsInt()) {
+    } else if (m_value.IsInt()) {
       return m_value.GetInt();
-    }
-    else if (m_value.IsString()) {
-      return (int64_t) strtoimax(m_value.GetString(), NULL, 10);
+    } else if (m_value.IsString()) {
+      return (int64_t)strtoimax(m_value.GetString(), NULL, 10);
     }
     throw Exception("PlannerDomValue: int64 value is non-integral");
   }
 
   double asDouble() const {
     if (m_value.IsNull()) {
-      throw Exception(
-                                    "PlannerDomValue: double value is null");
-    }
-    else if (m_value.IsDouble()) {
+      throw Exception("PlannerDomValue: double value is null");
+    } else if (m_value.IsDouble()) {
       return m_value.GetDouble();
-    }
-    else if (m_value.IsInt()) {
+    } else if (m_value.IsInt()) {
       return m_value.GetInt();
-    }
-    else if (m_value.IsInt64()) {
-      return (double) m_value.GetInt64();
-    }
-    else if (m_value.IsString()) {
+    } else if (m_value.IsInt64()) {
+      return (double)m_value.GetInt64();
+    } else if (m_value.IsString()) {
       return std::strtod(m_value.GetString(), NULL);
     }
-    throw Exception(
-                                  "PlannerDomValue: double value is not a number");
+    throw Exception("PlannerDomValue: double value is not a number");
   }
 
   bool asBool() const {
@@ -107,12 +96,9 @@ class PlannerDomValue {
       throw Exception(msg);
     }
     return m_value.GetString();
-
   }
 
-  bool hasKey(const char *key) const {
-    return m_value.HasMember(key);
-  }
+  bool hasKey(const char *key) const { return m_value.HasMember(key); }
 
   bool hasNonNullKey(const char *key) const {
     if (!hasKey(key)) {
@@ -158,29 +144,24 @@ class PlannerDomValue {
 
 /**
  * Class that parses the JSON document and provides the root.
- * Also owns the memory, as it's sole member var is not a reference, but a value.
+ * Also owns the memory, as it's sole member var is not a reference, but a
+ * value.
  * This means if you're still using the DOM when this object gets popped off the
  * stack, bad things might happen. Best to use the DOM and be done with it.
  */
 class PlannerDomRoot {
  public:
-  PlannerDomRoot(const char *jsonStr) {
-    m_document.Parse<0>(jsonStr);
-  }
+  PlannerDomRoot(const char *jsonStr) { m_document.Parse<0>(jsonStr); }
 
-  bool isNull() {
-    return m_document.IsNull();
-  }
+  bool isNull() { return m_document.IsNull(); }
 
-  PlannerDomValue rootObject() {
-    return PlannerDomValue(m_document);
-  }
+  PlannerDomValue rootObject() { return PlannerDomValue(m_document); }
 
  private:
   rapidjson::Document m_document;
   // For safety, undefine expensive copy and assignment.
-  PlannerDomRoot(const PlannerDomRoot& other);
-  PlannerDomRoot& operator=(const PlannerDomRoot& other);
+  PlannerDomRoot(const PlannerDomRoot &other);
+  PlannerDomRoot &operator=(const PlannerDomRoot &other);
 };
 
 }  // End peloton namespace
