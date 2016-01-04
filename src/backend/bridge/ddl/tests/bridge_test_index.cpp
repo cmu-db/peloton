@@ -51,8 +51,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_INVALID_OID() {
   bool status = DDLIndex::CreateIndex(*index_info);
 
   // CHECK :: status must be false
-  if(status != false)
-    throw CatalogException("Could create index");
+  if (status != false) throw CatalogException("Could create index");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
@@ -76,8 +75,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
   bool status = DDLIndex::CreateIndex(*index_info);
 
   // CHECK :: status must be false
-  if(status != false)
-    throw CatalogException("Could create index");
+  if (status != false) throw CatalogException("Could create index");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }
@@ -96,8 +94,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
 
   // Create a table
   bool status = DDLTable::CreateTable(table_oid, table_name, columns);
-  if(status == false)
-    throw CatalogException("Could not create table");
+  if (status == false) throw CatalogException("Could not create table");
 
   // Create an index info
   std::vector<std::string> key_column_names;
@@ -113,13 +110,11 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   status = DDLIndex::CreateIndex(*index_info);
 
   // CHECK :: status must be false
-  if(status != false)
-    throw CatalogException("Could create index");
+  if (status != false) throw CatalogException("Could create index");
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
-  if(status == false)
-    throw CatalogException("Could not drop table");
+  if (status == false) throw CatalogException("Could not drop table");
 
   LOG_INFO(":::::: %s DONE\n", __func__);
 }

@@ -52,14 +52,16 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::GetCachedPlan(
   }
 }
 
-const planner::AbstractPlan *PlanTransformer::TransformPlan(AbstractPlanState *planstate) {
+const planner::AbstractPlan *PlanTransformer::TransformPlan(
+    AbstractPlanState *planstate) {
   return TransformPlan(planstate, DefaultOptions);
 }
 
-std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(AbstractPlanState *planstate,
-                                           const char *prepStmtName) {
+std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(
+    AbstractPlanState *planstate, const char *prepStmtName) {
   auto mapped_plan = TransformPlan(planstate, DefaultOptions);
-  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan, CleanPlan);
+  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan,
+                                                               CleanPlan);
   if (prepStmtName) {
     std::string name_str(prepStmtName);
     plan_cache_.insert(std::make_pair(std::move(name_str), mapped_plan_ptr));
@@ -73,12 +75,10 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(Abst
  */
 const planner::AbstractPlan *PlanTransformer::TransformPlan(
     AbstractPlanState *planstate, const TransformOptions options) {
-
   assert(planstate);
 
   // Ignore empty plans
-  if (planstate == nullptr)
-    return nullptr;
+  if (planstate == nullptr) return nullptr;
 
   const planner::AbstractPlan *peloton_plan = nullptr;
 
@@ -130,17 +130,17 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
       break;
     case T_AggState:
       peloton_plan = PlanTransformer::TransformAgg(
-          reinterpret_cast<const AggPlanState*>(planstate));
+          reinterpret_cast<const AggPlanState *>(planstate));
       break;
 
     case T_SortState:
       peloton_plan = PlanTransformer::TransformSort(
-          reinterpret_cast<const SortPlanState*>(planstate));
+          reinterpret_cast<const SortPlanState *>(planstate));
       break;
 
     case T_HashState:
       peloton_plan = PlanTransformer::TransformHash(
-          reinterpret_cast<const HashPlanState*>(planstate));
+          reinterpret_cast<const HashPlanState *>(planstate));
       break;
 
     default: {
@@ -188,7 +188,6 @@ void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
   // Clean the root
   delete root;
 }
-
 
 }  // namespace bridge
 }  // namespace peloton

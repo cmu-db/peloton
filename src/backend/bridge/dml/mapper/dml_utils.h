@@ -41,7 +41,6 @@ class DMLUtils {
   static AbstractPlanState *peloton_prepare_data(PlanState *planstate);
 
  private:
-
   static ModifyTablePlanState *PrepareModifyTableState(
       ModifyTableState *mt_planstate);
 
@@ -56,8 +55,8 @@ class DMLUtils {
 
   static ResultPlanState *PrepareResultState(ResultState *result_state);
 
-  static void PrepareAbstractScanState(AbstractScanPlanState* ss_plan_state,
-                                       const ScanState& ss_state);
+  static void PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
+                                       const ScanState &ss_state);
 
   static SeqScanPlanState *PrepareSeqScanState(SeqScanState *ss_state);
 
@@ -78,8 +77,8 @@ class DMLUtils {
 
   static MaterialPlanState *PrepareMaterialState(MaterialState *material_state);
 
-  static void PrepareAbstractJoinPlanState(AbstractJoinPlanState* j_plan_state,
-                                           const JoinState& j_state);
+  static void PrepareAbstractJoinPlanState(AbstractJoinPlanState *j_plan_state,
+                                           const JoinState &j_state);
 
   static NestLoopPlanState *PrepareNestLoopState(NestLoopState *nl_state);
 
@@ -89,14 +88,13 @@ class DMLUtils {
 
   static AggPlanState *PrepareAggState(AggState *agg_state);
 
-  static SortPlanState* PrepareSortState(SortState* sort_plan_state) {
-    SortPlanState* info = (SortPlanState*) (palloc(sizeof(SortPlanState)));
+  static SortPlanState *PrepareSortState(SortState *sort_plan_state) {
+    SortPlanState *info = (SortPlanState *)(palloc(sizeof(SortPlanState)));
     info->type = sort_plan_state->ss.ps.type;
-    info->sort = (const Sort*) (copyObject(sort_plan_state->ss.ps.plan));
-    info->reverse_flags = (bool*) (palloc(sizeof(bool) * info->sort->numCols));
+    info->sort = (const Sort *)(copyObject(sort_plan_state->ss.ps.plan));
+    info->reverse_flags = (bool *)(palloc(sizeof(bool) * info->sort->numCols));
     // Find the reverse flags here
     for (int i = 0; i < info->sort->numCols; i++) {
-
       Oid orderingOp = info->sort->sortOperators[i];
       Oid opfamily;
       Oid opcintype;
@@ -121,10 +119,8 @@ class DMLUtils {
 
   static HashPlanState *PrepareHashState(HashState *hash_state);
 
-
   static PelotonProjectionInfo *BuildProjectInfo(ProjectionInfo *proj_info,
                                                  int column_count);
-
 };
 
 }  // namespace bridge

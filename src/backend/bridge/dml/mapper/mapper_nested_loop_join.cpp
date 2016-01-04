@@ -28,7 +28,6 @@ namespace bridge {
  */
 const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     const NestLoopPlanState *nl_plan_state) {
-
   PelotonJoinType peloton_join_type =
       PlanTransformer::TransformJoinType(nl_plan_state->jointype);
 
@@ -47,11 +46,9 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   if (join_filter && plan_filter) {
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
                                                join_filter, plan_filter);
-  }
-  else if (join_filter) {
+  } else if (join_filter) {
     predicate = join_filter;
-  }
-  else {
+  } else {
     predicate = plan_filter;
   }
 
@@ -73,13 +70,15 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         nl_plan_state->tts_tupleDescriptor);
 
-    result = new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr);
+    result =
+        new planner::ProjectionPlan(project_info.release(), project_schema);
+    plan_node =
+        new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr);
     result->AddChild(plan_node);
-  }
-  else {
+  } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate, project_info.release());
+    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
+                                                project_info.release());
     result = plan_node;
   }
 
@@ -92,7 +91,8 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
-  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", nl_plan_state->jointype);
+  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d",
+           nl_plan_state->jointype);
   return result;
 }
 

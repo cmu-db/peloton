@@ -31,31 +31,28 @@ size_t GetLogFileSize(int log_file_fd);
 
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
-bool ReadTransactionRecordHeader(TransactionRecord &txn_record,
-                                 FILE *log_file,
+bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
                                  size_t log_file_size);
 
-bool ReadTupleRecordHeader(TupleRecord& tuple_record,
-                           FILE *log_file,
+bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
                            size_t log_file_size);
 
 /**
  * @brief create NVM backed log pool
  */
 PelotonFrontendLogger::PelotonFrontendLogger() {
-
   logging_type = LOGGING_TYPE_NVM_NVM;
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  log_file = fopen(GetLogFileName().c_str(),"ab+");
-  if(log_file == NULL) {
+  log_file = fopen(GetLogFileName().c_str(), "ab+");
+  if (log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
 
   // also, get the descriptor
   log_file_fd = fileno(log_file);
-  if( log_file_fd == -1) {
+  if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
 }
@@ -81,7 +78,6 @@ PelotonFrontendLogger::~PelotonFrontendLogger() {
  * @brief flush all log records to the file
  */
 void PelotonFrontendLogger::FlushLogRecords(void) {
-
   std::vector<txn_id_t> committed_txn_list;
   std::vector<txn_id_t> not_committed_txn_list;
   std::set<oid_t> modified_tile_group_set;
@@ -91,10 +87,10 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
   //===--------------------------------------------------------------------===//
 
   for (auto record : global_queue) {
-
     switch (record->GetType()) {
       case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        global_peloton_log_record_pool.CreateTransactionLogList(record->GetTransactionId());
+        global_peloton_log_record_pool.CreateTransactionLogList(
+            record->GetTransactionId());
         break;
 
       case LOGRECORD_TYPE_TRANSACTION_COMMIT:
@@ -107,8 +103,10 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
 
       case LOGRECORD_TYPE_TRANSACTION_END:
       case LOGRECORD_TYPE_TRANSACTION_DONE:
-        // if a txn is not committed (aborted or active), log records will be removed here
-        // Note that list is not be removed immediately, it is removed only after flush and commit.
+        // if a txn is not committed (aborted or active), log records will be
+        // removed here
+        // Note that list is not be removed immediately, it is removed only
+        // after flush and commit.
         not_committed_txn_list.push_back(record->GetTransactionId());
         break;
 
@@ -116,29 +114,27 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
       case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
         // Check the commit information,
-        auto status = CollectTupleRecord(reinterpret_cast<TupleRecord*>(record));
+        auto status =
+            CollectTupleRecord(reinterpret_cast<TupleRecord *>(record));
 
         // Delete record if we did not collect it
-        if(status.first == false) {
+        if (status.first == false) {
           delete record;
         }
         // Else, add it to the set of modified tile groups
         else {
           auto location = status.second.block;
 
-          if(location != INVALID_OID)
-            modified_tile_group_set.insert(location);
+          if (location != INVALID_OID) modified_tile_group_set.insert(location);
         }
 
-      }
-      break;
+      } break;
 
       case LOGRECORD_TYPE_INVALID:
       default:
         throw Exception("Invalid or unrecogized log record found");
         break;
     }
-
   }
 
   // Clear the global queue
@@ -150,7 +146,6 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
 
   // If committed txn list is not empty
   if (committed_txn_list.empty() == false) {
-
     //===--------------------------------------------------------------------===//
     // SYNC 1: Sync the TGs
     //===--------------------------------------------------------------------===//
@@ -166,7 +161,8 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
 
     // Now, write a committing log entry to file
     // Piggyback the number of written log records as a "txn_id" in this record
-    WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
+    WriteTransactionLogRecord(TransactionRecord(
+        LOGRECORD_TYPE_TRANSACTION_COMMIT, written_log_record_count));
 
     //===--------------------------------------------------------------------===//
     // SYNC 3: Sync the changes to TG headers
@@ -183,8 +179,8 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
     //===--------------------------------------------------------------------===//
 
     // Write out a transaction done log record to file
-    WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
-
+    WriteTransactionLogRecord(
+        TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
   }
 
   //===--------------------------------------------------------------------===//
@@ -203,18 +199,17 @@ void PelotonFrontendLogger::FlushLogRecords(void) {
       backend_logger->Commit();
     }
   }
-
 }
 
-size_t PelotonFrontendLogger::WriteLogRecords(std::vector<txn_id_t> committed_txn_list) {
-
+size_t PelotonFrontendLogger::WriteLogRecords(
+    std::vector<txn_id_t> committed_txn_list) {
   size_t written_log_record_count = 0;
 
   // Write out the log records of all the committed transactions to log file
   for (txn_id_t txn_id : committed_txn_list) {
-
     // Locate the transaction log list for this txn id
-    auto txn_log_list = global_peloton_log_record_pool.SearchLogRecordList(txn_id);
+    auto txn_log_list =
+        global_peloton_log_record_pool.SearchLogRecordList(txn_id);
     if (txn_log_list == nullptr) {
       continue;
     }
@@ -222,14 +217,12 @@ size_t PelotonFrontendLogger::WriteLogRecords(std::vector<txn_id_t> committed_tx
     written_log_record_count += txn_log_list->size();
 
     // Write out all the records in the list
-    for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_list->size();
-        txn_log_list_itr++) {
-
+    for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
+         txn_log_list_itr++) {
       // Write out the log record
       TupleRecord *record = txn_log_list->at(txn_log_list_itr);
-      fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(), log_file);
-
+      fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+             log_file);
     }
   }
 
@@ -237,11 +230,11 @@ size_t PelotonFrontendLogger::WriteLogRecords(std::vector<txn_id_t> committed_tx
   return written_log_record_count;
 }
 
-void PelotonFrontendLogger::WriteTransactionLogRecord(TransactionRecord txn_log_record) {
-
+void PelotonFrontendLogger::WriteTransactionLogRecord(
+    TransactionRecord txn_log_record) {
   txn_log_record.Serialize(output_buffer);
-  fwrite(txn_log_record.GetMessage(), sizeof(char), txn_log_record.GetMessageLength(),
-         log_file);
+  fwrite(txn_log_record.GetMessage(), sizeof(char),
+         txn_log_record.GetMessageLength(), log_file);
 
   // Then, flush
   int ret = fflush(log_file);
@@ -256,23 +249,21 @@ void PelotonFrontendLogger::WriteTransactionLogRecord(TransactionRecord txn_log_
   }
 }
 
-
-std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std::vector<txn_id_t> committed_txn_list) {
-
+std::set<storage::TileGroupHeader *> PelotonFrontendLogger::ToggleCommitMarks(
+    std::vector<txn_id_t> committed_txn_list) {
   // Headers modified
-  std::set<storage::TileGroupHeader*> tile_group_headers;
+  std::set<storage::TileGroupHeader *> tile_group_headers;
 
   // Toggle commit marks
   for (txn_id_t txn_id : committed_txn_list) {
-
-    auto txn_log_list = global_peloton_log_record_pool.SearchLogRecordList(txn_id);
+    auto txn_log_list =
+        global_peloton_log_record_pool.SearchLogRecordList(txn_id);
     if (txn_log_list == nullptr) {
       continue;
     }
 
-    for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_list->size();
-        txn_log_list_itr++) {
+    for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
+         txn_log_list_itr++) {
       // Get the log record
       TupleRecord *record = txn_log_list->at(txn_log_list_itr);
       cid_t current_commit_id = INVALID_CID;
@@ -285,8 +276,7 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
           auto info = SetInsertCommitMark(insert_location);
           current_commit_id = info.first;
           tile_group_headers.insert(info.second);
-        }
-        break;
+        } break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
           // Set delete commit mark
@@ -294,8 +284,7 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
           auto info = SetDeleteCommitMark(delete_location);
           current_commit_id = info.first;
           tile_group_headers.insert(info.second);
-        }
-        break;
+        } break;
 
         case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
           // Set delete commit mark
@@ -309,8 +298,7 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
           info = SetInsertCommitMark(insert_location);
           current_commit_id = info.first;
           tile_group_headers.insert(info.second);
-        }
-        break;
+        } break;
 
         default:
           break;
@@ -329,44 +317,40 @@ std::set<storage::TileGroupHeader*> PelotonFrontendLogger::ToggleCommitMarks(std
   return tile_group_headers;
 }
 
-void PelotonFrontendLogger::SyncTileGroupHeaders(std::set<storage::TileGroupHeader*> tile_group_header_set){
-
+void PelotonFrontendLogger::SyncTileGroupHeaders(
+    std::set<storage::TileGroupHeader *> tile_group_header_set) {
   // Sync all the tile group headers
-  for(auto tile_group_header : tile_group_header_set) {
+  for (auto tile_group_header : tile_group_header_set) {
     tile_group_header->Sync();
   }
-
 }
 
 void PelotonFrontendLogger::SyncTileGroups(std::set<oid_t> tile_group_set) {
-
   auto &manager = catalog::Manager::GetInstance();
 
   // Sync all the tile groups
-  for(auto tile_group_block : tile_group_set) {
+  for (auto tile_group_block : tile_group_set) {
     auto tile_group = manager.GetTileGroup(tile_group_block);
     assert(tile_group != nullptr);
 
     tile_group->Sync();
   }
-
 }
 
-std::pair<bool,ItemPointer> PelotonFrontendLogger::CollectTupleRecord(TupleRecord* record) {
-
+std::pair<bool, ItemPointer> PelotonFrontendLogger::CollectTupleRecord(
+    TupleRecord *record) {
   if (record == nullptr) {
     return std::make_pair(false, INVALID_ITEMPOINTER);
   }
 
   auto record_type = record->GetType();
-  if (record_type == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT
-      || record_type == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE
-      || record_type == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE) {
-
+  if (record_type == LOGRECORD_TYPE_PELOTON_TUPLE_INSERT ||
+      record_type == LOGRECORD_TYPE_PELOTON_TUPLE_DELETE ||
+      record_type == LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE) {
     // Collect this log record
     auto status = global_peloton_log_record_pool.AddLogRecord(record);
 
-    if(status != 0) {
+    if (status != 0) {
       return std::make_pair(false, INVALID_ITEMPOINTER);
     }
 
@@ -379,7 +363,8 @@ std::pair<bool,ItemPointer> PelotonFrontendLogger::CollectTupleRecord(TupleRecor
   return std::make_pair(false, INVALID_ITEMPOINTER);
 }
 
-std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
+std::pair<cid_t, storage::TileGroupHeader *>
+PelotonFrontendLogger::SetInsertCommitMark(ItemPointer location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   assert(tile_group != nullptr);
@@ -388,10 +373,11 @@ std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetInsertCom
 
   // Set the commit mark
   tile_group_header->SetInsertCommit(location.offset, true);
-  LOG_TRACE("<%p, %lu> : slot is insert committed", tile_group.get(), location.offset);
+  LOG_TRACE("<%p, %lu> : slot is insert committed", tile_group.get(),
+            location.offset);
 
   // Update max oid
-  if( max_oid < location.block ){
+  if (max_oid < location.block) {
     max_oid = location.block;
   }
 
@@ -399,7 +385,8 @@ std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetInsertCom
   return std::make_pair(begin_commit_id, tile_group_header);
 }
 
-std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
+std::pair<cid_t, storage::TileGroupHeader *>
+PelotonFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
   assert(tile_group != nullptr);
@@ -408,10 +395,11 @@ std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetDeleteCom
 
   // Set the commit mark
   tile_group_header->SetDeleteCommit(location.offset, true);
-  LOG_TRACE("<%p, %lu> : slot is delete committed", tile_group.get(), location.offset);
+  LOG_TRACE("<%p, %lu> : slot is delete committed", tile_group.get(),
+            location.offset);
 
   // Update max oid
-  if( max_oid < location.block ){
+  if (max_oid < location.block) {
     max_oid = location.block;
   }
 
@@ -420,14 +408,13 @@ std::pair<cid_t, storage::TileGroupHeader *> PelotonFrontendLogger::SetDeleteCom
 }
 
 //===--------------------------------------------------------------------===//
-// Recovery 
+// Recovery
 //===--------------------------------------------------------------------===//
 
 /**
  * @brief Recovery system based on log file
  */
 void PelotonFrontendLogger::DoRecovery() {
-
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
 
@@ -437,28 +424,26 @@ void PelotonFrontendLogger::DoRecovery() {
 
     // check whether first item is LOGRECORD_TYPE_TRANSACTION_COMMIT
     // if not, no need to do recovery.
-    // if yes, need to replay all log records before we hit LOGRECORD_TYPE_TRANSACTION_DONE
+    // if yes, need to replay all log records before we hit
+    // LOGRECORD_TYPE_TRANSACTION_DONE
     bool need_recovery = NeedRecovery();
     if (need_recovery == true) {
-
       TransactionRecord dummy_transaction_record(LOGRECORD_TYPE_INVALID);
       cid_t current_commit_id = INVALID_CID;
 
       // Go over each log record in the log file
       while (reached_end_of_file == false) {
-
         // Read the first byte to identify log record type
         // If that is not possible, then wrap up recovery
         LogRecordType log_type = GetNextLogRecordType(log_file, log_file_size);
 
         switch (log_type) {
-
           case LOGRECORD_TYPE_TRANSACTION_DONE:
           case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
             // read but do nothing
-            ReadTransactionRecordHeader(dummy_transaction_record, log_file, log_file_size);
-          }
-          break;
+            ReadTransactionRecordHeader(dummy_transaction_record, log_file,
+                                        log_file_size);
+          } break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
             TupleRecord insert_record(LOGRECORD_TYPE_PELOTON_TUPLE_INSERT);
@@ -467,8 +452,7 @@ void PelotonFrontendLogger::DoRecovery() {
             auto insert_location = insert_record.GetInsertLocation();
             auto info = SetInsertCommitMark(insert_location);
             current_commit_id = info.first;
-          }
-          break;
+          } break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
             TupleRecord delete_record(LOGRECORD_TYPE_PELOTON_TUPLE_DELETE);
@@ -477,8 +461,7 @@ void PelotonFrontendLogger::DoRecovery() {
             auto delete_location = delete_record.GetDeleteLocation();
             auto info = SetDeleteCommitMark(delete_location);
             current_commit_id = info.first;
-          }
-          break;
+          } break;
 
           case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
             TupleRecord update_record(LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE);
@@ -490,8 +473,7 @@ void PelotonFrontendLogger::DoRecovery() {
             auto insert_location = update_record.GetInsertLocation();
             auto info = SetInsertCommitMark(insert_location);
             current_commit_id = info.first;
-          }
-          break;
+          } break;
 
           default:
             reached_end_of_file = true;
@@ -506,21 +488,19 @@ void PelotonFrontendLogger::DoRecovery() {
 
       // write out a trasaction done log record to file
       // to avoid redo next time during recovery
-      WriteTransactionLogRecord(TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
+      WriteTransactionLogRecord(
+          TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
     }
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
     auto &manager = catalog::Manager::GetInstance();
     manager.SetNextOid(max_oid);
-
   }
-
 }
 
 // Check whether need to recovery, if yes, reset fseek to the right place.
 bool PelotonFrontendLogger::NeedRecovery(void) {
-
   // Otherwise, read the last transaction record
   fseek(log_file, -TransactionRecord::GetTransactionRecordSize(), SEEK_END);
 
@@ -528,11 +508,12 @@ bool PelotonFrontendLogger::NeedRecovery(void) {
   auto log_record_type = GetNextLogRecordType(log_file, log_file_size);
 
   // Check if the previous transaction run is broken
-  if( log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT){
+  if (log_record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
     TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
 
     // read the last written out transaction log record
-    if( ReadTransactionRecordHeader(txn_record, log_file, log_file_size) == false ) {
+    if (ReadTransactionRecordHeader(txn_record, log_file, log_file_size) ==
+        false) {
       return false;
     }
 
@@ -540,24 +521,22 @@ bool PelotonFrontendLogger::NeedRecovery(void) {
     // Compute log offset based on txn_id
     size_t tuple_log_record_count = txn_record.GetTransactionId();
 
-    size_t rollback_offset = tuple_log_record_count * TupleRecord::GetTupleRecordSize()
-    + TransactionRecord::GetTransactionRecordSize();
+    size_t rollback_offset =
+        tuple_log_record_count * TupleRecord::GetTupleRecordSize() +
+        TransactionRecord::GetTransactionRecordSize();
 
     // Rollback to the computed offset
     fseek(log_file, -rollback_offset, SEEK_END);
     return true;
-  }
-  else {
+  } else {
     return false;
   }
-
 }
 
 std::string PelotonFrontendLogger::GetLogFileName(void) {
-  auto& log_manager = logging::LogManager::GetInstance();
+  auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
 }
-
 
 }  // namespace logging
 }  // namespace peloton

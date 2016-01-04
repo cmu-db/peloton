@@ -35,7 +35,7 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 #define LOGGING_TESTS_DATABASE_OID 20000
-#define LOGGING_TESTS_TABLE_OID    10000
+#define LOGGING_TESTS_TABLE_OID 10000
 
 // configuration for testing
 LoggingTestsUtil::logging_test_configuration state;
@@ -45,66 +45,58 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-
   std::cout << "----------------------------------------------------------\n";
-  std::cout
-  << state.logging_type << " "
-  << state.column_count  << " "
-  << state.tuple_count  << " "
-  << state.backend_count << " "
-  << state.wait_timeout << " :: ";
+  std::cout << state.logging_type << " " << state.column_count << " "
+            << state.tuple_count << " " << state.backend_count << " "
+            << state.wait_timeout << " :: ";
   std::cout << value << "\n";
 
   out << state.logging_type << " ";
   out << state.column_count << " ";
-  out << state.tuple_count  << " ";
+  out << state.tuple_count << " ";
   out << state.backend_count << " ";
   out << state.wait_timeout << " ";
   out << value << "\n";
   out.flush();
-
 }
 
-std::string GetFilePath(std::string directory_path, std::string file_name){
-
+std::string GetFilePath(std::string directory_path, std::string file_name) {
   std::string file_path = directory_path;
 
   // Add a trailing slash to a file path if needed
-  if (!file_path.empty() && file_path.back() != '/')
-    file_path += '/';
+  if (!file_path.empty() && file_path.back() != '/') file_path += '/';
 
   file_path += file_name;
 
-  //std::cout << "File Path :: " << file_path << "\n";
+  // std::cout << "File Path :: " << file_path << "\n";
 
   return file_path;
 }
 
 /**
- * @brief writing a simple log file 
+ * @brief writing a simple log file
  */
-bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
-
+bool LoggingTestsUtil::PrepareLogFile(std::string file_name) {
   auto file_path = GetFilePath(state.log_file_dir, file_name);
 
   std::ifstream log_file(file_path);
 
   // Reset the log file if exists
-  if( log_file.good() ){
-    EXPECT_TRUE(std::remove(file_path.c_str()) == 0 );
+  if (log_file.good()) {
+    EXPECT_TRUE(std::remove(file_path.c_str()) == 0);
   }
   log_file.close();
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
 
-  if( log_manager.ActiveFrontendLoggerCount() > 0){
+  if (log_manager.ActiveFrontendLoggerCount() > 0) {
     LOG_ERROR("another logging thread is running now");
     return false;
   }
 
   // INVALID MODE
-  if(peloton_logging_mode == LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode == LOGGING_TYPE_INVALID) {
     LoggingTestsUtil::BuildLog(LOGGING_TESTS_DATABASE_OID,
                                LOGGING_TESTS_TABLE_OID);
 
@@ -115,8 +107,7 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
   log_manager.SetLogFileName(file_path);
 
   // start off the frontend logger of appropriate type in STANDBY mode
-  std::thread thread(&logging::LogManager::StartStandbyMode,
-                     &log_manager);
+  std::thread thread(&logging::LogManager::StartStandbyMode, &log_manager);
 
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
@@ -132,7 +123,7 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
                              LOGGING_TESTS_TABLE_OID);
 
   //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-  if(log_manager.EndLogging()){
+  if (log_manager.EndLogging()) {
     thread.join();
     return true;
   }
@@ -145,21 +136,20 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name){
 // CHECK RECOVERY
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::ResetSystem(){
+void LoggingTestsUtil::ResetSystem() {
   // Initialize oid since we assume that we restart the system
-  auto &manager = catalog::Manager::GetInstance();
+  auto& manager = catalog::Manager::GetInstance();
   manager.SetNextOid(0);
   manager.ClearTileGroup();
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   txn_manager.ResetStates();
 }
 
 /**
  * @brief recover the database and check the tuples
  */
-void LoggingTestsUtil::DoRecovery(std::string file_name){
-
+void LoggingTestsUtil::DoRecovery(std::string file_name) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
 
@@ -171,11 +161,12 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   EXPECT_TRUE(log_file.good());
   log_file.close();
 
-  LoggingTestsUtil::CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
+  LoggingTestsUtil::CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID,
+                                           LOGGING_TESTS_TABLE_OID);
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
-  if( log_manager.ActiveFrontendLoggerCount() > 0){
+  if (log_manager.ActiveFrontendLoggerCount() > 0) {
     LOG_ERROR("another logging thread is running now");
     return;
   }
@@ -190,8 +181,7 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   log_manager.SetLogFileName(file_path);
 
   // start off the frontend logger of appropriate type in STANDBY mode
-  std::thread thread(&logging::LogManager::StartStandbyMode, 
-                     &log_manager);
+  std::thread thread(&logging::LogManager::StartStandbyMode, &log_manager);
 
   // wait for the frontend logger to enter STANDBY mode
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
@@ -203,42 +193,42 @@ void LoggingTestsUtil::DoRecovery(std::string file_name){
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
 
   end = std::chrono::system_clock::now();
-  elapsed_milliseconds = end-start;
+  elapsed_milliseconds = end - start;
 
   // Recovery time
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_RECOVERY)
+  if (state.experiment_type == LOGGING_EXPERIMENT_TYPE_RECOVERY)
     WriteOutput(elapsed_milliseconds.count());
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
-    oid_t total_expected =  0;
+    oid_t total_expected = 0;
     LoggingTestsUtil::CheckTupleCount(LOGGING_TESTS_DATABASE_OID,
-                                      LOGGING_TESTS_TABLE_OID,
-                                      total_expected);
+                                      LOGGING_TESTS_TABLE_OID, total_expected);
   }
 
   // Check the next oid
-  //LoggingTestsUtil::CheckNextOid();
+  // LoggingTestsUtil::CheckNextOid();
 
-  if( log_manager.EndLogging() ){
+  if (log_manager.EndLogging()) {
     thread.join();
-  }else{
+  } else {
     LOG_ERROR("Failed to terminate logging thread");
   }
-  LoggingTestsUtil::DropDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
+  LoggingTestsUtil::DropDatabaseAndTable(LOGGING_TESTS_DATABASE_OID,
+                                         LOGGING_TESTS_TABLE_OID);
 }
 
-void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected){
-
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid,
+                                       oid_t expected) {
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
 
   oid_t tile_group_count = table->GetTileGroupCount();
 
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     auto tile_group = table->GetTileGroup(tile_group_itr);
     active_tuple_count += tile_group->GetActiveTupleCount();
   }
@@ -251,16 +241,14 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expe
 // WRITING LOG RECORD
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::BuildLog(oid_t db_oid,
-                                oid_t table_oid){
-
+void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
 
   // Create db
   CreateDatabase(db_oid);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(db_oid);
 
   // Create table, drop it and create again
   // so that table can have a newly added tile group and
@@ -269,11 +257,12 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   db->AddTable(table);
 
   // Tuple count
-  oid_t per_backend_tuple_count = state.tuple_count/state.backend_count;
+  oid_t per_backend_tuple_count = state.tuple_count / state.backend_count;
 
   // Create Tuples
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  auto tuples = CreateTuples(table->GetSchema(), per_backend_tuple_count, testing_pool);
+  auto tuples =
+      CreateTuples(table->GetSchema(), per_backend_tuple_count, testing_pool);
 
   //===--------------------------------------------------------------------===//
   // ACTIVE PROCESSING
@@ -285,42 +274,38 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid,
   LaunchParallelTest(state.backend_count, RunBackends, table, tuples);
 
   end = std::chrono::system_clock::now();
-  elapsed_milliseconds = end-start;
+  elapsed_milliseconds = end - start;
 
   // Build log time
-  if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE ||
+  if (state.experiment_type == LOGGING_EXPERIMENT_TYPE_ACTIVE ||
       state.experiment_type == LOGGING_EXPERIMENT_TYPE_WAIT) {
     WriteOutput(elapsed_milliseconds.count());
-  }
-  else if(state.experiment_type == LOGGING_EXPERIMENT_TYPE_STORAGE) {
+  } else if (state.experiment_type == LOGGING_EXPERIMENT_TYPE_STORAGE) {
     auto log_file_size = GetLogFileSize();
     std::cout << "Log file size :: " << log_file_size << "\n";
     WriteOutput(log_file_size);
   }
 
   // Clean up data
-  for( auto tuple : tuples){
+  for (auto tuple : tuples) {
     delete tuple;
   }
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
-    oid_t total_expected =  0;
-    LoggingTestsUtil::CheckTupleCount(db_oid,
-                                      table_oid,
-                                      total_expected);
+    oid_t total_expected = 0;
+    LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
   }
 
   // We can only drop the table in case of ARIES
-  if(IsSimilarToARIES(peloton_logging_mode) == true){
+  if (IsSimilarToARIES(peloton_logging_mode) == true) {
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
 }
 
-
-void LoggingTestsUtil::RunBackends(storage::DataTable* table, const std::vector<storage::Tuple*>& tuples){
-
+void LoggingTestsUtil::RunBackends(storage::DataTable* table,
+                                   const std::vector<storage::Tuple*>& tuples) {
   bool commit = true;
 
   // Insert tuples
@@ -334,7 +319,7 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table, const std::vector<
 
   // Remove the backend logger after flushing out all the changes
   auto& log_manager = logging::LogManager::GetInstance();
-  if(log_manager.IsInLoggingMode()){
+  if (log_manager.IsInLoggingMode()) {
     auto logger = log_manager.GetBackendLogger();
 
     // Wait until frontend logger collects the data
@@ -342,18 +327,17 @@ void LoggingTestsUtil::RunBackends(storage::DataTable* table, const std::vector<
 
     log_manager.RemoveBackendLogger(logger);
   }
-
 }
 
 // Do insert and create insert tuple log records
-std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* table,
-                                                        const std::vector<storage::Tuple*>& tuples,
-                                                        bool committed){
+std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(
+    storage::DataTable* table, const std::vector<storage::Tuple*>& tuples,
+    bool committed) {
   std::vector<ItemPointer> locations;
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
 
-  for( auto tuple : tuples){
+  for (auto tuple : tuples) {
     auto txn = txn_manager.BeginTransaction();
     ItemPointer location = table->InsertTuple(txn, tuple);
     if (location.block == INVALID_OID) {
@@ -366,28 +350,24 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
     locations.push_back(location);
 
-    // Logging 
+    // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode()){
+      if (log_manager.IsInLoggingMode()) {
         auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
-                                             txn->GetTransactionId(), 
-                                             table->GetOid(),
-                                             location,
-                                             INVALID_ITEMPOINTER,
-                                             tuple,
-                                             LOGGING_TESTS_DATABASE_OID);
+        auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
+            table->GetOid(), location, INVALID_ITEMPOINTER, tuple,
+            LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
-
       }
     }
 
     // commit or abort as required
-    if(committed){
+    if (committed) {
       txn_manager.CommitTransaction();
-    } else{
+    } else {
       txn_manager.AbortTransaction();
     }
   }
@@ -397,11 +377,9 @@ std::vector<ItemPointer> LoggingTestsUtil::InsertTuples(storage::DataTable* tabl
 
 void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
                                     const std::vector<ItemPointer>& locations,
-                                    bool committed){
-
-  for(auto delete_location : locations) {
-
-    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+                                    bool committed) {
+  for (auto delete_location : locations) {
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
     bool status = table->DeleteTuple(txn, delete_location);
@@ -417,44 +395,37 @@ void LoggingTestsUtil::DeleteTuples(storage::DataTable* table,
     {
       auto& log_manager = logging::LogManager::GetInstance();
 
-      if(log_manager.IsInLoggingMode()){
+      if (log_manager.IsInLoggingMode()) {
         auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                             txn->GetTransactionId(),
-                                             table->GetOid(),
-                                             INVALID_ITEMPOINTER,
-                                             delete_location,
-                                             nullptr,
-                                             LOGGING_TESTS_DATABASE_OID);
+        auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_DELETE, txn->GetTransactionId(),
+            table->GetOid(), INVALID_ITEMPOINTER, delete_location, nullptr,
+            LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
     }
 
-    if(committed){
+    if (committed) {
       txn_manager.CommitTransaction();
-    }else{
+    } else {
       txn_manager.AbortTransaction();
     }
-
   }
-
 }
 
-std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* table,
-                                                        const std::vector<ItemPointer>& deleted_locations,
-                                                        const std::vector<storage::Tuple*>& tuples,
-                                                        bool committed){
-
+std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(
+    storage::DataTable* table,
+    const std::vector<ItemPointer>& deleted_locations,
+    const std::vector<storage::Tuple*>& tuples, bool committed) {
   // Inserted locations
   std::vector<ItemPointer> inserted_locations;
 
   size_t tuple_itr = 0;
-  for(auto delete_location : deleted_locations) {
-
+  for (auto delete_location : deleted_locations) {
     auto tuple = tuples[tuple_itr];
     tuple_itr++;
 
-    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
     bool status = table->DeleteTuple(txn, delete_location);
@@ -479,23 +450,19 @@ std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* tabl
     // Logging
     {
       auto& log_manager = logging::LogManager::GetInstance();
-      if(log_manager.IsInLoggingMode()){
+      if (log_manager.IsInLoggingMode()) {
         auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
-                                             txn->GetTransactionId(),
-                                             table->GetOid(),
-                                             insert_location,
-                                             delete_location,
-                                             tuple,
-                                             LOGGING_TESTS_DATABASE_OID);
+        auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_UPDATE, txn->GetTransactionId(),
+            table->GetOid(), insert_location, delete_location, tuple,
+            LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
     }
 
-
-    if(committed){
+    if (committed) {
       txn_manager.CommitTransaction();
-    } else{
+    } else {
       txn_manager.AbortTransaction();
     }
   }
@@ -507,20 +474,19 @@ std::vector<ItemPointer> LoggingTestsUtil::UpdateTuples(storage::DataTable* tabl
 // Utility functions
 //===--------------------------------------------------------------------===//
 
-void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid){
-
+void LoggingTestsUtil::CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid) {
   // Create database and attach a table
   bridge::DDLDatabase::CreateDatabase(db_oid);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(db_oid);
 
   auto table = CreateUserTable(db_oid, table_oid);
 
   db->AddTable(table);
 }
 
-storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid, oid_t table_oid){
-
+storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid,
+                                                      oid_t table_oid) {
   auto column_infos = LoggingTestsUtil::CreateSchema();
 
   bool own_schema = true;
@@ -529,17 +495,14 @@ storage::DataTable* LoggingTestsUtil::CreateUserTable(oid_t db_oid, oid_t table_
 
   // Construct our schema from vector of ColumnInfo
   auto schema = new catalog::Schema(column_infos);
-  storage::DataTable *table = storage::TableFactory::GetDataTable(db_oid, table_oid,
-                                                                  schema,
-                                                                  "USERTABLE",
-                                                                  tuples_per_tilegroup_count,
-                                                                  own_schema,
-                                                                  adapt_table);
+  storage::DataTable* table = storage::TableFactory::GetDataTable(
+      db_oid, table_oid, schema, "USERTABLE", tuples_per_tilegroup_count,
+      own_schema, adapt_table);
 
   return table;
 }
 
-void LoggingTestsUtil::CreateDatabase(oid_t db_oid){
+void LoggingTestsUtil::CreateDatabase(oid_t db_oid) {
   // Create Database
   bridge::DDLDatabase::CreateDatabase(db_oid);
 }
@@ -551,19 +514,15 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   const bool is_inlined = true;
 
   // User Id
-  catalog::Column user_id(VALUE_TYPE_INTEGER,
-                          GetTypeSize(VALUE_TYPE_INTEGER),
-                          "YCSB_KEY",
-                          is_inlined);
+  catalog::Column user_id(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "YCSB_KEY", is_inlined);
 
   columns.push_back(user_id);
 
   // Field
-  for(oid_t col_itr = 0 ; col_itr < state.column_count ; col_itr++) {
-    catalog::Column field(VALUE_TYPE_VARCHAR,
-                          field_length,
-                          "FIELD" + std::to_string(col_itr),
-                          is_inlined);
+  for (oid_t col_itr = 0; col_itr < state.column_count; col_itr++) {
+    catalog::Column field(VALUE_TYPE_VARCHAR, field_length,
+                          "FIELD" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(field);
   }
@@ -571,8 +530,8 @@ std::vector<catalog::Column> LoggingTestsUtil::CreateSchema() {
   return columns;
 }
 
-std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* schema, oid_t num_of_tuples, VarlenPool *pool) {
-
+std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(
+    catalog::Schema* schema, oid_t num_of_tuples, VarlenPool* pool) {
   std::vector<storage::Tuple*> tuples;
   const bool allocate = true;
   const size_t string_length = 100;
@@ -580,12 +539,12 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
 
   for (oid_t tuple_itr = 0; tuple_itr < num_of_tuples; tuple_itr++) {
     // Build tuple
-    storage::Tuple *tuple = new storage::Tuple(schema, allocate);
+    storage::Tuple* tuple = new storage::Tuple(schema, allocate);
 
     Value user_id_value = ValueFactory::GetIntegerValue(tuple_itr);
     tuple->SetValue(0, user_id_value, nullptr);
 
-    for(oid_t col_itr = 1 ; col_itr < state.column_count; col_itr++) {
+    for (oid_t col_itr = 1; col_itr < state.column_count; col_itr++) {
       Value field_value = ValueFactory::GetStringValue(dummy_string, pool);
       tuple->SetValue(col_itr, field_value, pool);
     }
@@ -596,20 +555,20 @@ std::vector<storage::Tuple*> LoggingTestsUtil::CreateTuples(catalog::Schema* sch
   return tuples;
 }
 
-void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid){
-  auto &manager = catalog::Manager::GetInstance();
+void LoggingTestsUtil::DropDatabaseAndTable(oid_t db_oid, oid_t table_oid) {
+  auto& manager = catalog::Manager::GetInstance();
 
-  storage::Database *db = manager.GetDatabaseWithOid(db_oid);
+  storage::Database* db = manager.GetDatabaseWithOid(db_oid);
   db->DropTableWithOid(table_oid);
 
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
-void LoggingTestsUtil::DropDatabase(oid_t db_oid){
+void LoggingTestsUtil::DropDatabase(oid_t db_oid) {
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
-size_t GetLogFileSize(){
+size_t GetLogFileSize() {
   struct stat log_stats;
 
   auto& log_manager = logging::LogManager::GetInstance();
@@ -617,14 +576,14 @@ size_t GetLogFileSize(){
 
   // open log file and file descriptor
   // we open it in append + binary mode
-  auto log_file = fopen(log_file_name.c_str(),"r");
-  if(log_file == NULL) {
+  auto log_file = fopen(log_file_name.c_str(), "r");
+  if (log_file == NULL) {
     LOG_ERROR("LogFile is NULL");
   }
 
   // also, get the descriptor
   auto log_file_fd = fileno(log_file);
-  if( log_file_fd == -1) {
+  if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
 
@@ -638,8 +597,9 @@ size_t GetLogFileSize(){
 // Configuration
 //===--------------------------------------------------------------------===//
 
-static void Usage(FILE *out) {
-  fprintf(out, "Command line options :  hyadapt <options> \n"
+static void Usage(FILE* out) {
+  fprintf(out,
+          "Command line options :  hyadapt <options> \n"
           "   -h --help              :  Print help message \n"
           "   -l --logging-type      :  Logging type \n"
           "   -t --tuple-count       :  Tuple count \n"
@@ -648,90 +608,102 @@ static void Usage(FILE *out) {
           "   -c --check-tuple-count :  Check tuple count \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
-          "   -w --wait-timeout      :  Wait timeout (us) \n"
-  );
+          "   -w --wait-timeout      :  Wait timeout (us) \n");
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-    { "logging-type", optional_argument, NULL, 'l' },
-    { "tuple-count", optional_argument, NULL, 't' },
-    { "backend-count", optional_argument, NULL, 'b' },
-    { "column-count", optional_argument, NULL, 'z' },
-    { "check-tuple-count", optional_argument, NULL, 'c' },
-    { "data-file-size", optional_argument, NULL, 'f' },
-    { "experiment-type", optional_argument, NULL, 'e' },
-    { "wait-timeout", optional_argument, NULL, 'w' },
-    { NULL, 0, NULL, 0 }
-};
+    {"logging-type", optional_argument, NULL, 'l'},
+    {"tuple-count", optional_argument, NULL, 't'},
+    {"backend-count", optional_argument, NULL, 'b'},
+    {"column-count", optional_argument, NULL, 'z'},
+    {"check-tuple-count", optional_argument, NULL, 'c'},
+    {"data-file-size", optional_argument, NULL, 'f'},
+    {"experiment-type", optional_argument, NULL, 'e'},
+    {"wait-timeout", optional_argument, NULL, 'w'},
+    {NULL, 0, NULL, 0}};
 
-static void ValidateLoggingType(const LoggingTestsUtil::logging_test_configuration& state) {
-  std::cout << std::setw(20) << std::left
-      << "logging_type " << " : ";
+static void ValidateLoggingType(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  std::cout << std::setw(20) << std::left << "logging_type "
+            << " : ";
 
   std::cout << LoggingTypeToString(state.logging_type) << std::endl;
-
 }
 
-static void ValidateColumnCount(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.column_count <= 0) {
-    std::cout << "Invalid column_count :: " <<  state.column_count << std::endl;
+static void ValidateColumnCount(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.column_count <= 0) {
+    std::cout << "Invalid column_count :: " << state.column_count << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "column_count " << " : " << state.column_count << std::endl;
+  std::cout << std::setw(20) << std::left << "column_count "
+            << " : " << state.column_count << std::endl;
 }
 
-static void ValidateTupleCount(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.tuple_count <= 0) {
-    std::cout << "Invalid tuple_count :: " <<  state.tuple_count << std::endl;
+static void ValidateTupleCount(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.tuple_count <= 0) {
+    std::cout << "Invalid tuple_count :: " << state.tuple_count << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "tuple_count " << " : " << state.tuple_count << std::endl;
+  std::cout << std::setw(20) << std::left << "tuple_count "
+            << " : " << state.tuple_count << std::endl;
 }
 
-static void ValidateBackendCount(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.backend_count <= 0) {
-    std::cout << "Invalid backend_count :: " <<  state.backend_count << std::endl;
+static void ValidateBackendCount(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.backend_count <= 0) {
+    std::cout << "Invalid backend_count :: " << state.backend_count
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "backend_count " << " : " << state.backend_count << std::endl;
+  std::cout << std::setw(20) << std::left << "backend_count "
+            << " : " << state.backend_count << std::endl;
 }
 
-static void ValidateDataFileSize(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.data_file_size <= 0) {
-    std::cout << "Invalid pmem_file_size :: " <<  state.data_file_size << std::endl;
+static void ValidateDataFileSize(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.data_file_size <= 0) {
+    std::cout << "Invalid pmem_file_size :: " << state.data_file_size
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "data_file_size " << " : " << state.data_file_size << std::endl;
+  std::cout << std::setw(20) << std::left << "data_file_size "
+            << " : " << state.data_file_size << std::endl;
 }
 
-static void ValidateExperiment(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.experiment_type < 0 || state.experiment_type > 4) {
-    std::cout << "Invalid experiment_type :: " <<  state.experiment_type << std::endl;
+static void ValidateExperiment(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.experiment_type < 0 || state.experiment_type > 4) {
+    std::cout << "Invalid experiment_type :: " << state.experiment_type
+              << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type " << " : " << state.experiment_type << std::endl;
+  std::cout << std::setw(20) << std::left << "experiment_type "
+            << " : " << state.experiment_type << std::endl;
 }
 
-static void ValidateWaitTimeout(const LoggingTestsUtil::logging_test_configuration& state) {
-  if(state.wait_timeout < 0) {
-    std::cout << "Invalid wait_timeout :: " <<  state.wait_timeout << std::endl;
+static void ValidateWaitTimeout(
+    const LoggingTestsUtil::logging_test_configuration& state) {
+  if (state.wait_timeout < 0) {
+    std::cout << "Invalid wait_timeout :: " << state.wait_timeout << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "wait_timeout " << " : " << state.wait_timeout << std::endl;
+  std::cout << std::setw(20) << std::left << "wait_timeout "
+            << " : " << state.wait_timeout << std::endl;
 }
 
-static void ValidateLogFileDir(LoggingTestsUtil::logging_test_configuration& state) {
-
+static void ValidateLogFileDir(
+    LoggingTestsUtil::logging_test_configuration& state) {
   // Assign log file dir based on logging type
-  switch(state.logging_type) {
-
+  switch (state.logging_type) {
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
     case LOGGING_TYPE_HDD_NVM:
@@ -761,12 +733,11 @@ static void ValidateLogFileDir(LoggingTestsUtil::logging_test_configuration& sta
       break;
   }
 
-  std::cout << std::setw(20) << std::left << "log_file_dir " << " : " << state.log_file_dir << std::endl;
-
+  std::cout << std::setw(20) << std::left << "log_file_dir "
+            << " : " << state.log_file_dir << std::endl;
 }
 
 void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
-
   // Default Values
   state.tuple_count = 10;
 
@@ -786,33 +757,31 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:f:e:w:", opts,
-                        &idx);
+    int c = getopt_long(argc, argv, "ahl:t:b:z:c:f:e:w:", opts, &idx);
 
-    if (c == -1)
-      break;
+    if (c == -1) break;
 
     switch (c) {
       case 'l':
-        state.logging_type = (LoggingType) atoi(optarg);
+        state.logging_type = (LoggingType)atoi(optarg);
         break;
       case 't':
-        state.tuple_count  = atoi(optarg);
+        state.tuple_count = atoi(optarg);
         break;
       case 'b':
-        state.backend_count  = atoi(optarg);
+        state.backend_count = atoi(optarg);
         break;
       case 'z':
-        state.column_count  = atoi(optarg);
+        state.column_count = atoi(optarg);
         break;
       case 'c':
-        state.check_tuple_count  = atoi(optarg);
+        state.check_tuple_count = atoi(optarg);
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
         break;
       case 'e':
-        state.experiment_type = (LoggingExperimentType) atoi(optarg);
+        state.experiment_type = (LoggingExperimentType)atoi(optarg);
         break;
       case 'w':
         state.wait_timeout = atoi(optarg);
@@ -837,10 +806,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
-
-
 }
-
 
 }  // End test namespace
 }  // End peloton namespace

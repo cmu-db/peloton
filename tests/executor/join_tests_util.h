@@ -36,7 +36,6 @@ namespace test {
 
 class JoinTestsUtil {
  public:
-
   // Create join predicate
   static expression::AbstractExpression *CreateJoinPredicate();
 
@@ -45,7 +44,6 @@ class JoinTestsUtil {
 
   // Create complicated join predicate
   static expression::AbstractExpression *CreateComplicatedJoinPredicate();
-
 };
 
 }  // namespace test

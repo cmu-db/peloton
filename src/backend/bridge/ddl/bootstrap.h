@@ -31,9 +31,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class Bootstrap {
-
  public:
-
   static bool BootstrapPeloton(void);
 };
 

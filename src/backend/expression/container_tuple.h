@@ -39,13 +39,11 @@ class ContainerTuple : public AbstractTuple {
   ContainerTuple &operator=(ContainerTuple &&) = default;
 
   ContainerTuple(T *container, oid_t tuple_id)
-      : container_(container),
-        tuple_id_(tuple_id) {}
+      : container_(container), tuple_id_(tuple_id) {}
 
-  ContainerTuple(T *container, oid_t tuple_id, const std::vector<oid_t> *column_ids)
-      : container_(container),
-        tuple_id_(tuple_id),
-        column_ids_(column_ids) {}
+  ContainerTuple(T *container, oid_t tuple_id,
+                 const std::vector<oid_t> *column_ids)
+      : container_(container), tuple_id_(tuple_id), column_ids_(column_ids) {}
 
   /* Accessors */
   T *GetContainer() const { return container_; }
@@ -125,8 +123,7 @@ class ContainerTuple : public AbstractTuple {
    *  This enables this class only looks at a subset of a tuple
    * */
   const std::vector<oid_t> *column_ids_ = nullptr;
-
-  };
+};
 
 //===--------------------------------------------------------------------===//
 // ContainerTuple Hasher
@@ -160,17 +157,15 @@ class ContainerTupleComparator {
  * No need to construct a schema.
  * The caller should make sure there's no out-of-bound calls.
  */
-template<>
-class ContainerTuple< std::vector<Value> > : public AbstractTuple {
+template <>
+class ContainerTuple<std::vector<Value>> : public AbstractTuple {
  public:
   ContainerTuple(const ContainerTuple &) = default;
   ContainerTuple &operator=(const ContainerTuple &) = default;
   ContainerTuple(ContainerTuple &&) = default;
   ContainerTuple &operator=(ContainerTuple &&) = default;
 
-  ContainerTuple(std::vector<Value>* container)
-    : container_(container){
-  }
+  ContainerTuple(std::vector<Value> *container) : container_(container) {}
 
   /** @brief Get the value at the given column id. */
   Value GetValue(oid_t column_id) const override {
@@ -190,7 +185,6 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   }
 
   size_t HashCode(size_t seed = 0) const {
-
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       const Value value = GetValue(column_itr);
       value.HashCombine(seed);
@@ -201,7 +195,8 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   /** @brief Compare whether this tuple equals to other value-wise.
    * Assume the schema of other tuple.Is the same as this. No check.
    */
-  bool EqualsNoSchemaCheck(const ContainerTuple< std::vector<Value> > &other) const {
+  bool EqualsNoSchemaCheck(
+      const ContainerTuple<std::vector<Value>> &other) const {
     assert(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
@@ -215,7 +210,7 @@ class ContainerTuple< std::vector<Value> > : public AbstractTuple {
   }
 
  private:
-  const std::vector<Value>* container_ = nullptr;
+  const std::vector<Value> *container_ = nullptr;
 };
 
 }  // End expression namespace

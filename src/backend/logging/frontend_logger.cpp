@@ -27,14 +27,13 @@ namespace logging {
 FrontendLogger::FrontendLogger() {
   logger_type = LOGGER_TYPE_FRONTEND;
 
-  if(peloton_wait_timeout != 0) {
+  if (peloton_wait_timeout != 0) {
     wait_timeout = peloton_wait_timeout;
   }
-
 }
 
-FrontendLogger::~FrontendLogger(){
-  for(auto backend_logger : backend_loggers){
+FrontendLogger::~FrontendLogger() {
+  for (auto backend_logger : backend_loggers) {
     delete backend_logger;
   }
 }
@@ -42,29 +41,25 @@ FrontendLogger::~FrontendLogger(){
 /** * @brief Return the frontend logger based on logging type
  * @param logging type can be stdout(debug), aries, peloton
  */
-FrontendLogger* FrontendLogger::GetFrontendLogger(LoggingType logging_type){
-  FrontendLogger* frontendLogger = nullptr;
+FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type) {
+  FrontendLogger *frontendLogger = nullptr;
 
-  if(IsSimilarToARIES(logging_type) == true) {
+  if (IsSimilarToARIES(logging_type) == true) {
     frontendLogger = new AriesFrontendLogger();
-  }
-  else if(IsSimilarToPeloton(logging_type) == true) {
+  } else if (IsSimilarToPeloton(logging_type) == true) {
     frontendLogger = new PelotonFrontendLogger();
-  }
-  else {
+  } else {
     LOG_ERROR("Unsupported logging type");
   }
 
   return frontendLogger;
 }
 
-
 /**
  * @brief MainLoop
  */
 void FrontendLogger::MainLoop(void) {
-
-  auto& log_manager = LogManager::GetInstance();
+  auto &log_manager = LogManager::GetInstance();
 
   /////////////////////////////////////////////////////////////////////
   // STANDBY MODE
@@ -76,8 +71,8 @@ void FrontendLogger::MainLoop(void) {
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, false);
 
   // Do recovery if we can, otherwise terminate
-  switch(log_manager.GetStatus()){
-    case LOGGING_STATUS_TYPE_RECOVERY:{
+  switch (log_manager.GetStatus()) {
+    case LOGGING_STATUS_TYPE_RECOVERY: {
       LOG_TRACE("Frontendlogger] Recovery Mode");
 
       /////////////////////////////////////////////////////////////////////
@@ -93,10 +88,9 @@ void FrontendLogger::MainLoop(void) {
       break;
     }
 
-    case LOGGING_STATUS_TYPE_LOGGING:{
+    case LOGGING_STATUS_TYPE_LOGGING: {
       LOG_TRACE("Frontendlogger] Logging Mode");
-    }
-    break;
+    } break;
 
     default:
       break;
@@ -107,8 +101,7 @@ void FrontendLogger::MainLoop(void) {
   /////////////////////////////////////////////////////////////////////
 
   // Periodically, wake up and do logging
-  while(log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING){
-
+  while (log_manager.GetStatus() == LOGGING_STATUS_TYPE_LOGGING) {
     // Collect LogRecords from all backend loggers
     CollectLogRecordsFromBackendLoggers();
 
@@ -133,7 +126,7 @@ void FrontendLogger::MainLoop(void) {
 
   LOG_TRACE("Frontendlogger] Sleep Mode");
 
-  //Setting frontend logger status to sleep
+  // Setting frontend logger status to sleep
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_SLEEP);
 }
 
@@ -141,10 +134,10 @@ void FrontendLogger::MainLoop(void) {
  * @brief Collect the log records from BackendLoggers
  */
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
-
   /*
    * Don't use "while(!need_to_collect_new_log_records)",
-   * we want the frontend check all backend periodically even no backend notifies.
+   * we want the frontend check all backend periodically even no backend
+   * notifies.
    * So that large txn can submit its log records piece by piece
    * instead of a huge submission when the txn is committed.
    */
@@ -157,19 +150,19 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
 
     // Look at the local queues of the backend loggers
-    for( auto backend_logger : backend_loggers) {
+    for (auto backend_logger : backend_loggers) {
       auto local_queue_size = backend_logger->GetLocalQueueSize();
 
       // Skip current backend_logger, nothing to do
-      if(local_queue_size == 0 )
-        continue;
+      if (local_queue_size == 0) continue;
 
       // Shallow copy the log record from backend_logger to here
-      for(oid_t log_record_itr=0; log_record_itr < local_queue_size; log_record_itr++){
+      for (oid_t log_record_itr = 0; log_record_itr < local_queue_size;
+           log_record_itr++) {
         global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
       }
 
-      // truncate the local queue 
+      // truncate the local queue
       backend_logger->TruncateLocalQueue(local_queue_size);
     }
   }
@@ -181,7 +174,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
  * @brief Store backend logger
  * @param backend logger
  */
-void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
+void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
     backend_loggers.push_back(backend_logger);
@@ -189,22 +182,22 @@ void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger){
   }
 }
 
-bool FrontendLogger::RemoveBackendLogger(BackendLogger* _backend_logger){
+bool FrontendLogger::RemoveBackendLogger(BackendLogger *_backend_logger) {
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
-    oid_t offset=0;
+    oid_t offset = 0;
 
-    for(auto backend_logger : backend_loggers){
-      if( backend_logger == _backend_logger){
+    for (auto backend_logger : backend_loggers) {
+      if (backend_logger == _backend_logger) {
         backend_logger->SetConnectedToFrontend(false);
         break;
-      }else{
+      } else {
         offset++;
       }
     }
 
-    assert(offset<backend_loggers.size());
-    backend_loggers.erase(backend_loggers.begin()+offset);
+    assert(offset < backend_loggers.size());
+    backend_loggers.erase(backend_loggers.begin() + offset);
   }
 
   return true;

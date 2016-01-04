@@ -25,19 +25,17 @@ namespace test {
  *
  */
 TEST(StorageManagerTests, BasicTest) {
-
   peloton::storage::StorageManager storage_manager;
 
-  std::vector<peloton::BackendType> backend_types = {peloton::BACKEND_TYPE_MM };
+  std::vector<peloton::BackendType> backend_types = {peloton::BACKEND_TYPE_MM};
 
   size_t length = 256;
   size_t rounds = 100;
 
-  for(auto backend_type : backend_types) {
+  for (auto backend_type : backend_types) {
     std::cout << "Backend :: " << backend_type << "\n";
 
-    for(size_t round_itr = 0; round_itr < rounds ; round_itr++) {
-
+    for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
       // Allocate
       auto location = storage_manager.Allocate(backend_type, length);
 
@@ -49,11 +47,8 @@ TEST(StorageManagerTests, BasicTest) {
 
       // Release
       storage_manager.Release(backend_type, location);
-
     }
-
   }
-
 }
 
 }  // End test namespace

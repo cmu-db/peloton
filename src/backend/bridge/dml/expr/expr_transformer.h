@@ -33,13 +33,12 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformExpr(
       const ExprState *expr_state);
 
-  static expression::AbstractExpression *TransformExpr(
-      const Expr *expr);
+  static expression::AbstractExpression *TransformExpr(const Expr *expr);
 
   static std::vector<std::unique_ptr<const expression::AbstractExpression>>
   TransformExprList(const ExprState *expr_state);
 
-  static bool CleanExprTree(expression::AbstractExpression* root);
+  static bool CleanExprTree(expression::AbstractExpression *root);
 
  private:
   /*
@@ -50,7 +49,8 @@ class ExprTransformer {
 
   static expression::AbstractExpression *TransformConst(const ExprState *es);
   static expression::AbstractExpression *TransformOp(const ExprState *es);
-  static expression::AbstractExpression *TransformScalarArrayOp(const ExprState *es); //added by michael for IN operator
+  static expression::AbstractExpression *TransformScalarArrayOp(
+      const ExprState *es);  // added by michael for IN operator
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);
@@ -64,13 +64,12 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformBool(const Expr *es);
   static expression::AbstractExpression *TransformParam(const Expr *es);
 
-
   static expression::AbstractExpression *TransformList(
       const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
 
   /* Utilities */
-  static expression::AbstractExpression*
-  ReMapPgFunc(Oid pg_func_id, List* args);
+  static expression::AbstractExpression *ReMapPgFunc(Oid pg_func_id,
+                                                     List *args);
 };
 
 }  // namespace bridge

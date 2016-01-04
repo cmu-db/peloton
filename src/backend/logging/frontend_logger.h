@@ -26,57 +26,52 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Frontend Logger 
+// Frontend Logger
 //===--------------------------------------------------------------------===//
 
+class FrontendLogger : public Logger {
+ public:
+  FrontendLogger();
 
-class FrontendLogger : public Logger{
+  ~FrontendLogger();
 
-  public:
+  static FrontendLogger *GetFrontendLogger(LoggingType logging_type);
 
-    FrontendLogger();
+  void MainLoop(void);
 
-    ~FrontendLogger();
+  void CollectLogRecordsFromBackendLoggers(void);
 
-    static FrontendLogger* GetFrontendLogger(LoggingType logging_type);
+  void AddBackendLogger(BackendLogger *backend_logger);
 
-    void MainLoop(void);
+  bool RemoveBackendLogger(BackendLogger *backend_logger);
 
-    void CollectLogRecordsFromBackendLoggers(void);
+  //===--------------------------------------------------------------------===//
+  // Virtual Functions
+  //===--------------------------------------------------------------------===//
 
-    void AddBackendLogger(BackendLogger* backend_logger);
+  // Flush collected LogRecords
+  virtual void FlushLogRecords(void) = 0;
 
-    bool RemoveBackendLogger(BackendLogger* backend_logger);
+  // Restore database
+  virtual void DoRecovery(void) = 0;
 
-    //===--------------------------------------------------------------------===//
-    // Virtual Functions
-    //===--------------------------------------------------------------------===//
+ protected:
+  // Associated backend loggers
+  std::vector<BackendLogger *> backend_loggers;
 
-    // Flush collected LogRecords
-    virtual void FlushLogRecords(void) = 0;
+  // Since backend loggers can add themselves into the list above
+  // via log manager, we need to protect the backend_loggers list
+  std::mutex backend_logger_mutex;
 
-    // Restore database
-    virtual void DoRecovery(void) = 0;
+  // Global queue
+  std::vector<LogRecord *> global_queue;
 
-  protected:
+  // period with which it collects log records from backend loggers
+  // (in microseconds)
+  int64_t wait_timeout = 5;
 
-    // Associated backend loggers
-    std::vector<BackendLogger*> backend_loggers;
-
-    // Since backend loggers can add themselves into the list above
-    // via log manager, we need to protect the backend_loggers list
-    std::mutex backend_logger_mutex;
-
-    // Global queue
-    std::vector<LogRecord*> global_queue;
-
-    // period with which it collects log records from backend loggers
-    // (in microseconds)
-    int64_t wait_timeout = 5;
-
-    // used to indicate if backend has new logs
-    bool need_to_collect_new_log_records = false;
-
+  // used to indicate if backend has new logs
+  bool need_to_collect_new_log_records = false;
 };
 
 }  // namespace logging

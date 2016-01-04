@@ -54,11 +54,15 @@ AbstractExpression *ConjunctionFactory(ExpressionType, AbstractExpression *,
 AbstractExpression *ConjunctionFactory(ExpressionType,
                                        std::list<AbstractExpression *>);
 
-AbstractExpression *CastFactory(PostgresValueType type=POSTGRES_VALUE_TYPE_INVALID, AbstractExpression *child=nullptr);
+AbstractExpression *CastFactory(
+    PostgresValueType type = POSTGRES_VALUE_TYPE_INVALID,
+    AbstractExpression *child = nullptr);
 
-AbstractExpression *FunctionFactory(int functionId, const std::vector<AbstractExpression*>* arguments);
+AbstractExpression *FunctionFactory(
+    int functionId, const std::vector<AbstractExpression *> *arguments);
 
-AbstractExpression *VectorFactory(ValueType elementType, const std::vector<AbstractExpression*>* arguments);
+AbstractExpression *VectorFactory(
+    ValueType elementType, const std::vector<AbstractExpression *> *arguments);
 
 // If the passed vector contains only TupleValueExpression, it
 // returns ColumnIds of them, otherwise NULL.

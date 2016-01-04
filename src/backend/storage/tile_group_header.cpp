@@ -21,8 +21,7 @@
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(BackendType backend_type,
-                                 int tuple_count)
+TileGroupHeader::TileGroupHeader(BackendType backend_type, int tuple_count)
     : backend_type(backend_type),
       data(nullptr),
       num_tuple_slots(tuple_count),
@@ -30,8 +29,9 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type,
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  auto& storage_manager = storage::StorageManager::GetInstance();
-  data = reinterpret_cast<char *>(storage_manager.Allocate(backend_type, header_size));
+  auto &storage_manager = storage::StorageManager::GetInstance();
+  data = reinterpret_cast<char *>(
+      storage_manager.Allocate(backend_type, header_size));
   assert(data != nullptr);
 
   // zero out the data
@@ -39,19 +39,18 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type,
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
-      tuple_slot_id++) {
+       tuple_slot_id++) {
     SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     SetBeginCommitId(tuple_slot_id, MAX_CID);
     SetEndCommitId(tuple_slot_id, MAX_CID);
     SetInsertCommit(tuple_slot_id, false);
     SetDeleteCommit(tuple_slot_id, false);
   }
-
 }
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  auto& storage_manager = storage::StorageManager::GetInstance();
+  auto &storage_manager = storage::StorageManager::GetInstance();
   storage_manager.Release(backend_type, data);
 
   data = nullptr;
@@ -73,8 +72,8 @@ std::ostream &operator<<(std::ostream &os,
     txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
     cid_t beg_commit_id = tile_group_header.GetBeginCommitId(header_itr);
     cid_t end_commit_id = tile_group_header.GetEndCommitId(header_itr);
-    bool insert_commit= tile_group_header.GetInsertCommit(header_itr);
-    bool delete_commit= tile_group_header.GetDeleteCommit(header_itr);
+    bool insert_commit = tile_group_header.GetInsertCommit(header_itr);
+    bool delete_commit = tile_group_header.GetDeleteCommit(header_itr);
 
     int width = 10;
     os << "\t txn id : ";
@@ -119,11 +118,9 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 void TileGroupHeader::Sync() {
-
   // Sync the tile group data
-  auto& storage_manager = storage::StorageManager::GetInstance();
+  auto &storage_manager = storage::StorageManager::GetInstance();
   storage_manager.Sync(backend_type, data, header_size);
-
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
@@ -140,8 +137,8 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     txn_id_t txn_id = GetTransactionId(header_itr);
     cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
-    bool insert_commit= GetInsertCommit(header_itr);
-    bool delete_commit= GetDeleteCommit(header_itr);
+    bool insert_commit = GetInsertCommit(header_itr);
+    bool delete_commit = GetDeleteCommit(header_itr);
 
     int width = 10;
 
@@ -199,17 +196,17 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 }
 
 oid_t TileGroupHeader::GetActiveTupleCount() {
-    oid_t active_tuple_slots = 0;
-    auto &txn_manager = concurrency::TransactionManager::GetInstance();
-    cid_t last_cid = txn_manager.GetLastCommitId();
-    for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
-        tuple_slot_id++) {
-      if (IsVisible(tuple_slot_id, INVALID_TXN_ID, last_cid)) {
-        active_tuple_slots++;
-      }
+  oid_t active_tuple_slots = 0;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  cid_t last_cid = txn_manager.GetLastCommitId();
+  for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+       tuple_slot_id++) {
+    if (IsVisible(tuple_slot_id, INVALID_TXN_ID, last_cid)) {
+      active_tuple_slots++;
     }
-    return active_tuple_slots;
   }
+  return active_tuple_slots;
+}
 
 }  // End storage namespace
 }  // End peloton namespace

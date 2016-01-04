@@ -48,10 +48,8 @@ class Tile {
 
  public:
   // Tile creator
-  Tile(BackendType backend_type,
-       TileGroupHeader *tile_header,
-       const catalog::Schema &tuple_schema,
-       TileGroup *tile_group,
+  Tile(BackendType backend_type, TileGroupHeader *tile_header,
+       const catalog::Schema &tuple_schema, TileGroup *tile_group,
        int tuple_count);
 
   virtual ~Tile();
@@ -79,33 +77,27 @@ class Tile {
   /**
    * Returns value present at slot
    */
-  Value GetValue(const oid_t tuple_offset,
-                 const oid_t column_id);
+  Value GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  Value GetValueFast(const oid_t tuple_offset,
-                     const size_t column_offset,
-                     const ValueType column_type,
-                     const bool is_inlined);
+  Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+                     const ValueType column_type, const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(const Value& value,
-                const oid_t tuple_offset,
+  void SetValue(const Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(const Value& value,
-                    const oid_t tuple_offset,
-                    const size_t column_offset,
-                    const bool is_inlined,
+  void SetValueFast(const Value &value, const oid_t tuple_offset,
+                    const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
   // Get tuple at location
@@ -226,7 +218,6 @@ class Tile {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
-
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
@@ -271,18 +262,17 @@ class TileFactory {
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
 
-    Tile *tile = GetTile(BACKEND_TYPE_MM,
-                         INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-                         header, schema, tile_group, tuple_count);
+    Tile *tile = GetTile(BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID,
+                         INVALID_OID, header, schema, tile_group, tuple_count);
 
     return tile;
   }
 
-  static Tile *GetTile(BackendType backend_type,
-                       oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                       oid_t tile_id, TileGroupHeader *tile_header,
-                       const catalog::Schema &schema,
-                       TileGroup *tile_group, int tuple_count) {
+  static Tile *GetTile(BackendType backend_type, oid_t database_id,
+                       oid_t table_id, oid_t tile_group_id, oid_t tile_id,
+                       TileGroupHeader *tile_header,
+                       const catalog::Schema &schema, TileGroup *tile_group,
+                       int tuple_count) {
     Tile *tile =
         new Tile(backend_type, tile_header, schema, tile_group, tuple_count);
 

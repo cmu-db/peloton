@@ -17,23 +17,22 @@
 namespace peloton {
 namespace expression {
 
-    ParameterValueExpression::ParameterValueExpression(int value_idx)
-        : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
-        m_valueIdx(value_idx), m_paramValue()
-    {
-        LOG_TRACE("ParameterValueExpression %d", value_idx);
-    };
+ParameterValueExpression::ParameterValueExpression(int value_idx)
+    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
+      m_valueIdx(value_idx),
+      m_paramValue() {
+  LOG_TRACE("ParameterValueExpression %d", value_idx);
+};
 
-    Value ParameterValueExpression::Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                                            __attribute__((unused)) const AbstractTuple *tuple2,
-                                            executor::ExecutorContext *context) const{
-      auto params = context->GetParams();
-      assert(m_valueIdx < params.size());
+Value ParameterValueExpression::Evaluate(
+    __attribute__((unused)) const AbstractTuple *tuple1,
+    __attribute__((unused)) const AbstractTuple *tuple2,
+    executor::ExecutorContext *context) const {
+  auto params = context->GetParams();
+  assert(m_valueIdx < params.size());
 
-      return params[m_valueIdx];
-    }
-
+  return params[m_valueIdx];
+}
 
 }  // End expression namespace
 }  // End peloton namespace
-

@@ -28,19 +28,17 @@ namespace executor {
  */
 HashJoinExecutor::HashJoinExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)
-: AbstractJoinExecutor(node, executor_context) {
-}
+    : AbstractJoinExecutor(node, executor_context) {}
 
 bool HashJoinExecutor::DInit() {
   assert(children_.size() == 2);
 
   auto status = AbstractJoinExecutor::DInit();
-  if (status == false)
-    return status;
+  if (status == false) return status;
 
   assert(children_[1]->GetRawNode()->GetPlanNodeType() == PLAN_NODE_TYPE_HASH);
 
-  hash_executor_ = reinterpret_cast<HashExecutor*>(children_[1]);
+  hash_executor_ = reinterpret_cast<HashExecutor *>(children_[1]);
 
   return true;
 }
@@ -51,7 +49,6 @@ bool HashJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool HashJoinExecutor::DExecute() {
-
   // Loop until we have non-empty result join logical tile or exit
 
   // Build outer join output when done
@@ -75,7 +72,8 @@ bool HashJoinExecutor::DExecute() {
   // Get the hash table from the hash executor
 
   // Go over the left logical tile
-  // For each tuple, find matching tuples in the hash table built on top of the right table
+  // For each tuple, find matching tuples in the hash table built on top of the
+  // right table
   // Go over the matching right tuples
 
   // Check if we have any join tuples

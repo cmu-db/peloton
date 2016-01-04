@@ -29,36 +29,34 @@ namespace expression {
  * by invoking its.GetSubqueryOutputTable method.
  */
 class SubqueryExpression : public AbstractExpression {
-    public:
-    SubqueryExpression(ExpressionType subqueryType,
-        int subqueryId,
-        const std::vector<int>& paramIdxs,
-        const std::vector<int>& otherParamIdxs,
-        const std::vector<AbstractExpression*>* tveParams);
+ public:
+  SubqueryExpression(ExpressionType subqueryType, int subqueryId,
+                     const std::vector<int> &paramIdxs,
+                     const std::vector<int> &otherParamIdxs,
+                     const std::vector<AbstractExpression *> *tveParams);
 
-    ~SubqueryExpression();
+  ~SubqueryExpression();
 
-    Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                   executor::ExecutorContext *context) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const;
 
-    std::string DebugInfo(const std::string &spacer) const;
+  std::string DebugInfo(const std::string &spacer) const;
 
-  private:
-    const int m_subqueryId;
+ private:
+  const int m_subqueryId;
 
-    // The .Ist of parameter indexes that need to be set by this subquery
-    // before the expression can be Evaluateuated.
-    std::vector<int> m_paramIdxs;
+  // The .Ist of parameter indexes that need to be set by this subquery
+  // before the expression can be Evaluateuated.
+  std::vector<int> m_paramIdxs;
 
-    // The .Ist of non-set parameter indexes that this subquery depends on,
-    // also including its child subqueries.
-    // T.Is originate at the grandparent levels.
-    std::vector<int> m_otherParamIdxs;
+  // The .Ist of non-set parameter indexes that this subquery depends on,
+  // also including its child subqueries.
+  // T.Is originate at the grandparent levels.
+  std::vector<int> m_otherParamIdxs;
 
-    // The .Ist of the corresponding TVE for each parameter index
-    boost::scoped_ptr<const std::vector<AbstractExpression*> > m_tveParams;
+  // The .Ist of the corresponding TVE for each parameter index
+  boost::scoped_ptr<const std::vector<AbstractExpression *>> m_tveParams;
 };
 
 }  // End expression namespace
 }  // End peloton namespace
-

@@ -62,8 +62,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
  */
 void DDLUtils::ParsingCreateStmt(
 
-    CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos){
-
+    CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos) {
   assert(Cstmt);
 
   //===--------------------------------------------------------------------===//
@@ -93,7 +92,8 @@ void DDLUtils::ParsingCreateStmt(
     if (typelen == -1) typelen = typemod;
 
     PostgresValueFormat postgresValueFormat(typeoid, typelen, typelen);
-    PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+    PelotonValueFormat pelotonValueFormat =
+        FormatTransformer::TransformValueFormat(postgresValueFormat);
 
     ValueType column_valueType = pelotonValueFormat.GetType();
     int column_length = pelotonValueFormat.GetLength();
