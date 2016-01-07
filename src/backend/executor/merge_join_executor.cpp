@@ -51,7 +51,7 @@ bool MergeJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool MergeJoinExecutor::DExecute() {
-  LOG_TRACE(
+  LOG_INFO(
       "********** Merge Join executor :: 2 children \n"
       "left:: start: %lu, end: %lu, done: %d\n"
       "right:: start: %lu, end: %lu, done: %d\n",
@@ -107,6 +107,11 @@ bool MergeJoinExecutor::DExecute() {
     LOG_TRACE("size of left tiles: %lu", left_result_tiles_.size());
   }
 
+  // Check if we have logical tiles to process
+  if(left_result_tiles_.empty() || right_result_tiles_.empty()) {
+    return false;
+  }
+
   LogicalTile *left_tile = left_result_tiles_.back().get();
   LogicalTile *right_tile = right_result_tiles_.back().get();
 
@@ -139,7 +144,7 @@ bool MergeJoinExecutor::DExecute() {
 
       // Left key < Right key, advance left
       if (comparison < 0) {
-        LOG_TRACE("left < right, advance left");
+        LOG_TRACE("left < right, advance left \n");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
         not_matching_tuple_pair = true;
@@ -147,7 +152,7 @@ bool MergeJoinExecutor::DExecute() {
       }
       // Left key > Right key, advance right
       else if (comparison > 0) {
-        LOG_TRACE("left > right, advance right");
+        LOG_TRACE("left > right, advance right \n");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
         not_matching_tuple_pair = true;
@@ -164,7 +169,7 @@ bool MergeJoinExecutor::DExecute() {
     }
 
     // Join clauses matched, try to match predicate
-    LOG_TRACE("one pair of tuples matches join clause");
+    LOG_TRACE("one pair of tuples matches join clause \n");
 
     // Join predicate exists
     if (predicate_ != nullptr) {
@@ -236,7 +241,8 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
   while (end_row < tuple_count) {
     expression::ContainerTuple<executor::LogicalTile> this_tuple(tile,
                                                                  this_row);
-    expression::ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
+    expression::ContainerTuple<executor::LogicalTile> next_tuple(tile,
+                                                                 end_row);
 
     bool diff = false;
 
@@ -244,9 +250,10 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       // Go through each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
       peloton::Value this_value =
-          expr->Evaluate(&this_tuple, &this_tuple, nullptr);
+          expr->Evaluate(&this_tuple, &this_tuple, executor_context_);
       peloton::Value next_value =
-          expr->Evaluate(&next_tuple, &next_tuple, nullptr);
+          expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
+
       if (this_value.Compare(next_value) != 0) {
         diff = true;
         break;
@@ -258,11 +265,11 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
     }
 
     // the two tuples are the same, we advance by 1
-    end_row++;
     this_row = end_row;
+    end_row++;
   }
 
-  LOG_TRACE("Advanced %s with subset size %lu", is_left ? "left" : "right",
+  LOG_TRACE("Advanced %s with subset size %lu \n", is_left ? "left" : "right",
             end_row - start_row);
   return end_row;
 }
