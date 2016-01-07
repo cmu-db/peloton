@@ -17,16 +17,15 @@ SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
 
 -- load in some data
 
-INSERT INTO A VALUES(0, 1);
-
--- merge join with one empty table
+-- nested loop join with empty tables
 SELECT * FROM A INNER JOIN B ON A.value = B.value ORDER BY A.id;
 SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
 SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
 SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
 
--- load in more data
+-- load in the data
 
+INSERT INTO A VALUES(0, 1);
 INSERT INTO A VALUES(1, 11);
 INSERT INTO A VALUES(2, 12);
 INSERT INTO A VALUES(3, 13);
@@ -43,7 +42,7 @@ INSERT INTO B VALUES(2, 12);
 INSERT INTO B VALUES(3, 13);
 INSERT INTO B VALUES(4, 14);
 
--- merge join with non empty tables
+-- hash join with non empty tables
 SELECT * FROM A INNER JOIN B ON A.value = B.value ORDER BY A.id;
 SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
 SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
