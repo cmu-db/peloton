@@ -103,16 +103,13 @@ class DMLUtils {
       /* Find the operator___ in pg_amop */
       if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
                                       &strategy)) {
-        elog(ERROR, "operator___ %u is not a valid ordering operator___",
+        elog(ERROR, "operator %u is not a valid ordering operator",
              orderingOp);
       }
 
       bool reverse = (strategy == BTGreaterStrategyNumber);
 
       info->reverse_flags[i] = reverse;
-
-      elog(INFO, "Sort Col Idx : %d, Sort OperatorOid : %u , reverse : %u",
-           info->sort->sortColIdx[i], orderingOp, reverse);
     }
     return info;
   }
