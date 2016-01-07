@@ -9,11 +9,11 @@ SET ENABLE_NESTLOOP TO TRUE;
 CREATE TABLE A(id INT, value INT);
 CREATE TABLE B(id INT, value INT);
 
--- nested loop join with empty tables
-SELECT * FROM A INNER JOIN B ON A.value = B.value ORDER BY A.id;
-SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
+-- join with empty tables
+SELECT * FROM A INNER JOIN B ON A.value = B.value;
+SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value;
 
 -- load in the data
 
@@ -34,11 +34,11 @@ INSERT INTO B VALUES(2, 12);
 INSERT INTO B VALUES(3, 13);
 INSERT INTO B VALUES(4, 14);
 
--- nested loop join with non empty tables
-SELECT * FROM A INNER JOIN B ON A.value = B.value ORDER BY A.id;
-SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
+-- join with non empty tables
+SELECT * FROM A INNER JOIN B ON A.value = B.value;
+SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value;
 
 -- load in some more data
 
@@ -46,8 +46,8 @@ INSERT INTO B VALUES(5, 15);
 INSERT INTO B VALUES(5, 15);
 INSERT INTO A VALUES(4, 14);
 
--- nested loop join with non empty tables
-SELECT * FROM A INNER JOIN B ON A.value = B.value ORDER BY A.id;
-SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
-SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value ORDER BY A.id;;
+-- join with non empty tables
+SELECT * FROM A INNER JOIN B ON A.value = B.value;
+SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value;
+SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value;
