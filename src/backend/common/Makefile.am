@@ -10,7 +10,8 @@ common_FILES = \
 			   backend/common/varlen.cpp \
 			   backend/common/pool.cpp \
 			   backend/common/serializer.cpp \
-			   backend/common/cache.cpp
+			   backend/common/cache.cpp \
+			   backend/common/thread_manager.cpp
 
 common_INCLUDES = \
 				  -I$(srcdir)/backend/common    
