@@ -56,6 +56,8 @@ class DMLUtils {
 
   static ResultPlanState *PrepareResultState(ResultState *result_state);
 
+  static UniquePlanState *PrepareUniqueState(UniqueState *result_state); // added by michael. It is similar to ResultState now.
+
   static void PrepareAbstractScanState(AbstractScanPlanState* ss_plan_state,
                                        const ScanState& ss_state);
 

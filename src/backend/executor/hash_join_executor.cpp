@@ -93,12 +93,29 @@ bool HashJoinExecutor::DExecute() {
 
   // Get the hash table from the hash executor
   auto &htable = hash_executor_->GetHashTable();
+
+  //Debug
+  hash_executor_->DumpHashTable();
+  int n = htable.size();
+  std::cout << n;
+  //end
+
   auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
 
   // Go over the left tile
   for (auto left_tile_itr : *left_tile) {
      const expression::ContainerTuple<executor::LogicalTile> left_tuple(
          left_tile, left_tile_itr, &hashed_col_ids);
+
+     //Debug by Michael
+     size_t code_left = left_tuple.HashCode();
+     std::cout << code_left;
+//     hash_executor_->HashMapType::iterator it;
+//     for (it=htable.begin(); it!=htable.end(); it++) {
+    	 bool res = htable.begin()->first.EqualsNoSchemaCheck(left_tuple);
+    	 std::cout << res;
+ //    }
+     //end debug
 
      // Find matching tuples in the hash table built on top of the right table
      auto &set = htable.at(left_tuple);

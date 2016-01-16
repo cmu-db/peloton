@@ -51,6 +51,8 @@ bool HashExecutor::DExecute() {
     const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
 
     // First, get all the input logical tiles
+    //AbstractExecutor* pchild = children_[0];
+    //std::cout << pchild;
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
@@ -70,6 +72,10 @@ bool HashExecutor::DExecute() {
     for (auto &hashkey : hashkeys) {
       assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
       auto tuple_value = reinterpret_cast<const expression::TupleValueExpression *>(hashkey.get());
+      // Debug by Michael
+      oid_t cid = tuple_value->GetColumnId();
+      std::cout << cid;
+      // end debug
       column_ids_.push_back(tuple_value->GetColumnId());
     }
 
@@ -112,9 +118,14 @@ void HashExecutor::DumpHashTable() const {
 
   // Go over hash table
   for (__attribute__((unused)) auto &kv : htable_) {
+	size_t code = kv.first.HashCode();
+	size_t sz = kv.second.size();
+	std::cout << code << sz;
     LOG_INFO("Key %lu, Num of tuple: %lu", kv.first.HashCode(), kv.second.size());
   }
 
+  int n = htable_.size();
+  std::cout << n;
 }
 
 } /* namespace executor */

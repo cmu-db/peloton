@@ -398,6 +398,8 @@ PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
       return JOIN_TYPE_LEFT;
     case JOIN_RIGHT:
       return JOIN_TYPE_RIGHT;
+    case JOIN_SEMI:
+      return JOIN_TYPE_SEMI;
     default:
       return JOIN_TYPE_INVALID;
   }
