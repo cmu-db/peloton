@@ -156,6 +156,9 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformLockRows(
       const LockRowsPlanState *planstate);
 
+  static const planner::AbstractPlan *TransformUnique(
+      const UniquePlanState *planstate);
+
   static const planner::AbstractPlan *TransformMaterialization(
       const MaterialPlanState *planstate);
 

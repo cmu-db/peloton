@@ -132,6 +132,11 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
       child_planstate = PrepareHashState(reinterpret_cast<HashState*>(planstate));
       break;
 
+    case T_UniqueState: {
+      // This is not a elegant solution, and should be improved soon. by Michael
+      child_planstate = PrepareUniqueState(reinterpret_cast<UniqueState*>(planstate));
+    } break;
+
     default:
       elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d",
            planstate_type);
@@ -157,9 +162,9 @@ DMLUtils::PreparePlanState(AbstractPlanState *root, PlanState *planstate,
   auto right_tree = innerPlanState(planstate);
 
   if (left_tree)
-    PreparePlanState(child_planstate, left_tree, true);
+	PreparePlanState(child_planstate, left_tree, true);
   if (right_tree)
-    PreparePlanState(child_planstate, right_tree, false);
+	PreparePlanState(child_planstate, right_tree, false);
 
   return root;
 }
@@ -306,6 +311,14 @@ ResultPlanState *
 DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   ResultPlanState *info = (ResultPlanState*) palloc(sizeof(ResultPlanState));
   info->type = result_plan_state->ps.type;
+
+  return info;
+}
+
+UniquePlanState *
+DMLUtils::PrepareUniqueState(UniqueState *unique_plan_state) {
+  UniquePlanState *info = (UniquePlanState*) palloc(sizeof(UniquePlanState));
+  info->type = unique_plan_state->ps.type;
 
   return info;
 }

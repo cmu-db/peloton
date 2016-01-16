@@ -145,6 +145,13 @@ struct ResultPlanState : public AbstractPlanState {
 
 };
 
+/*
+ * UniqueState should be added more? by michael
+ */
+struct UniquePlanState : public AbstractPlanState {
+
+};
+
 struct AbstractJoinPlanState : public AbstractPlanState {
 
   PelotonProjectionInfo *ps_ProjInfo;
