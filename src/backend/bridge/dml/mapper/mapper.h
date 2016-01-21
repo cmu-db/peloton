@@ -209,6 +209,9 @@ class PlanTransformer {
   static const std::vector<oid_t> BuildColumnListFromTargetList(
       planner::ProjectInfo::TargetList target_list);
 
+  static const std::vector<oid_t> BuildColumnListFromExpStateList(
+	      List* expr_state_list); // added by Michael
+
   static void BuildColumnListFromExpr(std::vector<oid_t> &col_ids,
                                       const expression::AbstractExpression *expression);
 

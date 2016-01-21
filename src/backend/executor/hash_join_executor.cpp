@@ -100,7 +100,14 @@ bool HashJoinExecutor::DExecute() {
   std::cout << n;
   //end
 
-  auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
+  // auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
+  const planner::HashJoinPlan &hj_plan_node = GetPlanNode<planner::HashJoinPlan>();
+  std::vector<oid_t> hashed_col_ids = hj_plan_node.GetOuterHashIds();
+
+  for (oid_t item : hashed_col_ids) {
+	  oid_t i = item;
+	  std::cout << i;
+  }
 
   // Go over the left tile
   for (auto left_tile_itr : *left_tile) {

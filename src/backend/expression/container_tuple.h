@@ -59,6 +59,15 @@ class ContainerTuple : public AbstractTuple {
     return container_->GetValue(tuple_id_, column_id);
   }
 
+  /** @brief Get the value at the given column id offset. */
+  Value GetValueByOffset(int offset) const {
+    assert(container_ != nullptr);
+    assert(column_ids_ != nullptr);
+
+    oid_t column_id = (*column_ids_)[offset];
+    return container_->GetValue(tuple_id_, column_id);
+  }
+
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
     // NOTE: We can't.Get a table tuple from a tilegroup or logical tile
@@ -88,12 +97,38 @@ class ContainerTuple : public AbstractTuple {
 
   /** @brief Compare whether this tuple equals to other value-wise.
    * Assume the schema of other tuple.Is the same as this. No check.
-   */
+
   bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
     if (column_ids_) {
       for (auto &column_itr : *column_ids_) {
         const Value lhs = GetValue(column_itr);
         const Value rhs = other.GetValue(column_itr);
+        if (lhs.OpNotEquals(rhs).IsTrue()) {
+          return false;
+        }
+      }
+    } else {
+      oid_t column_count = container_->GetColumnCount();
+      for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
+        const Value lhs = GetValue(column_itr);
+        const Value rhs = other.GetValue(column_itr);
+        if (lhs.OpNotEquals(rhs).IsTrue()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  */
+
+  /** @brief Compare whether this tuple equals to other value-wise.
+   * Assume the schema of other tuple.Is the same as this. No check.
+   */
+  bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
+    if (column_ids_) {
+      for (int i = 0; i < column_ids_->size(); i++) {
+        const Value lhs = GetValueByOffset(i);
+        const Value rhs = other.GetValueByOffset(i);
         if (lhs.OpNotEquals(rhs).IsTrue()) {
           return false;
         }

@@ -71,6 +71,8 @@ const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
+  std::vector<oid_t> outer_hashkeys = BuildColumnListFromExpStateList(hj_plan_state->outer_hashkeys);
+
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
@@ -78,11 +80,11 @@ const planner::AbstractPlan* PlanTransformer::TransformHashJoin(
         hj_plan_state->tts_tupleDescriptor);
     result = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
-    plan_node = new planner::HashJoinPlan(predicate, nullptr);
+    plan_node = new planner::HashJoinPlan(predicate, nullptr, outer_hashkeys);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::HashJoinPlan(predicate, project_info.release());
+    plan_node = new planner::HashJoinPlan(predicate, project_info.release(), outer_hashkeys);
     result = plan_node;
   }
 

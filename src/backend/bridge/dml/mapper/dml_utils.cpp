@@ -19,12 +19,15 @@
 
 #include "postgres.h"
 #include "nodes/execnodes.h"
+#include "nodes/nodes.h"
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 
 #include "executor/nodeAgg.h"
+
+#include "backend/bridge/dml/expr/expr_transformer.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,
@@ -320,6 +323,17 @@ DMLUtils::PrepareUniqueState(UniqueState *unique_plan_state) {
   UniquePlanState *info = (UniquePlanState*) palloc(sizeof(UniquePlanState));
   info->type = unique_plan_state->ps.type;
 
+//  // Copy target list
+//  info->targetlist = CopyExprStateList(unique_plan_state->ps.targetlist);
+//
+//  // Copy tuple desc
+//  auto tup_desc = unique_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+//  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+//
+//  // Construct projection info
+//  info->ps_ProjInfo = BuildProjectInfo(unique_plan_state->ps.ps_ProjInfo,
+//                                               tup_desc->natts);
+
   return info;
 }
 
@@ -427,10 +441,81 @@ void DMLUtils::PrepareAbstractJoinPlanState(AbstractJoinPlanState* j_plan_state,
   j_plan_state->ps_ProjInfo = BuildProjectInfo(j_state.ps.ps_ProjInfo,
                                                tup_desc->natts);
 
+  // Debug by Michael
+  if (j_state.ps.ps_ExprContext != nullptr) {
+	  ParamExecData *param_exec_vals = j_state.ps.ps_ExprContext->ecxt_param_exec_vals;
+
+	  if (param_exec_vals != nullptr) {
+			void *subPlan = param_exec_vals->execPlan;
+			Datum value = param_exec_vals->value;
+			bool isnull = param_exec_vals->isnull;
+
+			std::cout << subPlan << value << isnull;
+	  }
+  }
+  // end debug
+
 }
 
 NestLoopPlanState *
 DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
+
+	// Debug by Michael
+    NestLoop   *nl;
+    PlanState  *innerPlan;
+    PlanState  *outerPlan;
+    //TupleTableSlot *outerTupleSlot;
+    //TupleTableSlot *innerTupleSlot;
+    List       *joinqual;
+    List       *otherqual;
+    ExprContext *econtext;
+    ListCell   *lc;
+
+    nl = (NestLoop *) nl_state->js.ps.plan;
+    joinqual = nl_state->js.joinqual;
+    otherqual = nl_state->js.ps.qual;
+    outerPlan = outerPlanState(nl_state);
+    innerPlan = innerPlanState(nl_state);
+    econtext = nl_state->js.ps.ps_ExprContext;
+    foreach(lc, nl->nestParams)
+    {
+       NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
+       int            paramno = nlp->paramno;
+       Var          *paramval = nlp->paramval;
+
+		  Index varno = paramval->varno;
+		  AttrNumber varattno = paramval->varattno;
+		  Oid vartype = paramval->vartype;
+		  int32 vartypmod = paramval->vartypmod;
+		  Oid varcollid = paramval->varcollid;
+		  Index varlevelsup = paramval->varlevelsup;
+		  Index varnoold = paramval->varnoold;
+		  AttrNumber varoattno = paramval->varoattno; /* original value of varattno */
+		  int location = paramval->location; /* token location, or -1 if unknown */
+
+		  std::cout << varno << varattno << vartype << vartypmod << varcollid << varlevelsup << varnoold << varoattno << location;
+
+       ParamExecData *prm;
+
+       prm = &(econtext->ecxt_param_exec_vals[paramno]);
+       /* Param value should be an OUTER_VAR var */
+       Assert(IsA(nlp->paramval, Var));
+       Assert(nlp->paramval->varno == OUTER_VAR);
+       Assert(nlp->paramval->varattno > 0);
+
+       void *ppp = prm->execPlan;
+       bool bbb = prm->isnull;
+       Datum ddd = prm->value;
+
+
+       if (prm->execPlan != NULL)
+       {
+    	   std::cout << prm << ppp << bbb << ddd;
+       }
+     }
+
+    std::cout << innerPlan << outerPlan << joinqual << otherqual;
+	// end debug
 
   NestLoopPlanState *info = (NestLoopPlanState*) palloc(
       sizeof(NestLoopPlanState));
@@ -464,9 +549,24 @@ MergeJoinPlanState* DMLUtils::PrepareMergeJoinState(MergeJoinState* mj_state) {
 HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info = (HashJoinPlanState*) palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
+  info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join added by Michael
+
+  // Debug by Michael
+  /*
+  expression::AbstractExpression* lc = nullptr;
+
+  ListCell* arg;
+  foreach (arg, info->outer_hashkeys)
+  {
+    ExprState* argstate = (ExprState*) lfirst(arg);
+
+    lc = ExprTransformer::TransformExpr(argstate);
+    std::cout << lc;
+  }
+  */
+  // end debug
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
                                hj_state->js);
-
 
   return info;
 }
@@ -549,6 +649,21 @@ DMLUtils::PrepareIndexScanState(IndexScanState *iss_plan_state) {
   info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
                                           iss_plan_state->iss_NumRuntimeKeys);
 
+  info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
+
+  // Debug by Michael
+  if (info->iss_RuntimeContext != nullptr) {
+	  ParamExecData *param_exec_vals = info->iss_RuntimeContext->ecxt_param_exec_vals;
+
+	  if (param_exec_vals != nullptr) {
+			void *subPlan = param_exec_vals->execPlan;
+			Datum value = param_exec_vals->value;
+			bool isnull = param_exec_vals->isnull;
+
+			std::cout << subPlan << value << isnull;
+	  }
+  }
+  // end debug
   return info;
 }
 
@@ -693,6 +808,22 @@ DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi, int column_count) {
   PelotonProjectionInfo *info = (PelotonProjectionInfo*) palloc(
       sizeof(PelotonProjectionInfo));
 
+  // Debug by Michael
+  /*
+  if (pg_pi->pi_exprContext != nullptr) {
+	  ParamExecData *param_exec_vals = pg_pi->pi_exprContext->ecxt_param_exec_vals;
+
+	  if (param_exec_vals != nullptr) {
+			void *subPlan = param_exec_vals->execPlan;
+			Datum value = param_exec_vals->value;
+			bool isnull = param_exec_vals->isnull;
+
+			std::cout << subPlan << value << isnull;
+	  }
+  }
+  */
+  // end debug
+
   info->expr_states = NIL;
   info->expr_col_ids = NIL;
 
@@ -793,6 +924,7 @@ ExprState *CopyExprState(ExprState *expr_state) {
   // and then deep copy things we need.
   // Copy children as well
   switch (nodeTag(expr_state)) {
+
     case T_BoolExprState: {
       expr_state_copy = (ExprState *) makeNode(BoolExprState);
       BoolExprState *bool_expr_state_copy = (BoolExprState *) expr_state_copy;
@@ -857,9 +989,40 @@ ExprState *CopyExprState(ExprState *expr_state) {
     }
       break;
 
+
     default: {
       LOG_TRACE("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
                nodeTag(expr_state->expr));
+
+  	// Debug by Michael
+  	size_t type = nodeTag(expr_state);
+  	std::cout << type;
+  	size_t type1 = nodeTag(expr_state->expr);
+  	std::cout << type1;
+  	if (nodeTag(expr_state->expr) == T_Var) {
+  	  auto var_expr = reinterpret_cast<const Var*>(expr_state->expr);
+
+  	  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+  	  /*
+  	   * Special case: an varattno of zero in PG
+  	   * means return the whole row.
+  	   * We don't want that, just return null.
+  	   */
+  	  if (!AttributeNumberIsValid(
+  	      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
+  	    return nullptr;
+  	  }
+
+  	  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
+  	      var_expr->varattno));
+
+  	  std::cout << tuple_idx << value_idx;
+  	}
+  	if (nodeTag(expr_state->expr) == T_Param) {
+
+  	}
+  	// end debug
+
       expr_state_copy = (ExprState *) makeNode(ExprState);
       *expr_state_copy = *expr_state;
     }
