@@ -6,7 +6,7 @@ apt-get -y install git g++ autoconf pkg-config libtool libjson-spirit-dev librea
     python-pip python-xmlrunner default-jdk default-jre ant
 
 # Pip
-pip install unittest-xml-reporting
+pip install --upgrade unittest-xml-reporting
 
 # Get dependencies script
 wget https://raw.githubusercontent.com/cmu-db/peloton/master/scripts/installation/dependencies.py
