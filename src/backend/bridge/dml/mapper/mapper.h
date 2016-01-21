@@ -196,19 +196,12 @@ class PlanTransformer {
   static const std::vector<oid_t> BuildColumnListFromTargetList(
       planner::ProjectInfo::TargetList target_list);
 
-<<<<<<< HEAD
-  static const std::vector<oid_t> BuildColumnListFromExpStateList(
-	      List* expr_state_list); // added by Michael
-
-  static void BuildColumnListFromExpr(std::vector<oid_t> &col_ids,
-                                      const expression::AbstractExpression *expression);
-
-  static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(List *targetLis);
-=======
   static void BuildColumnListFromExpr(
       std::vector<oid_t> &col_ids,
       const expression::AbstractExpression *expression);
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
+
+  static const std::vector<oid_t> BuildColumnListFromExpStateList(
+		  List* expr_state_list);
 
   static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
       List *targetLis);

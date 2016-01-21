@@ -75,7 +75,6 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
     LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
         hj_plan_state->tts_tupleDescriptor);
-<<<<<<< HEAD
     result = new planner::ProjectionPlan(project_info.release(),
                                          project_schema);
     plan_node = new planner::HashJoinPlan(predicate, nullptr, outer_hashkeys);
@@ -83,16 +82,6 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node = new planner::HashJoinPlan(predicate, project_info.release(), outer_hashkeys);
-=======
-    result =
-        new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::HashJoinPlan(join_type, predicate, nullptr);
-    result->AddChild(plan_node);
-  } else {
-    LOG_INFO("We have direct mapping projection");
-    plan_node =
-        new planner::HashJoinPlan(join_type, predicate, project_info.release());
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
     result = plan_node;
   }
 
