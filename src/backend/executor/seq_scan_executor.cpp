@@ -80,7 +80,6 @@ bool SeqScanExecutor::DExecute() {
     assert(column_ids_.size() == 0);
 
     while (children_[0]->Execute()) {
-
       std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
       if (predicate_ != nullptr) {
@@ -94,7 +93,7 @@ bool SeqScanExecutor::DExecute() {
         }
       }
 
-      if(0 == tile->GetTupleCount()){ // Avoid returning empty tiles
+      if (0 == tile->GetTupleCount()) {  // Avoid returning empty tiles
         continue;
       }
 
@@ -114,7 +113,6 @@ bool SeqScanExecutor::DExecute() {
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
-
       auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
 
@@ -126,7 +124,7 @@ bool SeqScanExecutor::DExecute() {
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility
-      //tile_group_header->PrintVisibility(txn_id, commit_id);
+      // tile_group_header->PrintVisibility(txn_id, commit_id);
 
       // Construct logical tile.
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
@@ -136,7 +134,8 @@ bool SeqScanExecutor::DExecute() {
       // and applying the predicate.
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-        if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
+        if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) ==
+            false) {
           continue;
         }
 
@@ -144,25 +143,23 @@ bool SeqScanExecutor::DExecute() {
                                                              tuple_id);
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
-        }
-        else {
-          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if(eval == true)
-            position_list.push_back(tuple_id);
+        } else {
+          auto eval =
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          if (eval == true) position_list.push_back(tuple_id);
         }
       }
 
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
-      if(0 == logical_tile->GetTupleCount()){
+      if (0 == logical_tile->GetTupleCount()) {
         continue;
       }
 
       SetOutput(logical_tile.release());
       return true;
     }
-
   }
 
   return false;

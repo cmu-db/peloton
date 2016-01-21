@@ -6,3 +6,5 @@ BasedOnStyle: Google
 # 4 columns tab indentation.
 TabWidth: 4
 
+# No tabs
+UseTab: Never

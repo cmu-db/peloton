@@ -34,6 +34,52 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   expression::TupleValueExpression *right_table_attr_1 =
       new expression::TupleValueExpression(1, 1);
 
+  predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+
+  return predicate;
+}
+
+planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
+  // Create the plan node
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  /////////////////////////////////////////////////////////
+  // PROJECTION 0
+  /////////////////////////////////////////////////////////
+
+  // direct map
+  planner::ProjectInfo::DirectMap direct_map1 =
+      std::make_pair(0, std::make_pair(0, 1));
+  planner::ProjectInfo::DirectMap direct_map2 =
+      std::make_pair(1, std::make_pair(1, 1));
+  planner::ProjectInfo::DirectMap direct_map3 =
+      std::make_pair(2, std::make_pair(1, 0));
+  planner::ProjectInfo::DirectMap direct_map4 =
+      std::make_pair(3, std::make_pair(0, 0));
+
+  direct_map_list.push_back(direct_map1);
+  direct_map_list.push_back(direct_map2);
+  direct_map_list.push_back(direct_map3);
+  direct_map_list.push_back(direct_map4);
+
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
+}
+
+// Create complicated join predicate
+expression::AbstractExpression *
+JoinTestsUtil::CreateComplicatedJoinPredicate() {
+  expression::AbstractExpression *predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+
+  expression::TupleValueExpression *left_table_attr_1 =
+      new expression::TupleValueExpression(0, 1);
+  expression::TupleValueExpression *right_table_attr_1 =
+      new expression::TupleValueExpression(1, 1);
+
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
       new expression::ComparisonExpression<expression::CmpEq>(
           EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
@@ -53,33 +99,6 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
       EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
 
   return predicate;
-}
-
-planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
-  // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  /////////////////////////////////////////////////////////
-  // PROJECTION 0
-  /////////////////////////////////////////////////////////
-
-  // direct map
-  planner::ProjectInfo::DirectMap direct_map1 = std::make_pair(
-      0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 = std::make_pair(
-      1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 = std::make_pair(
-      2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(
-      3, std::make_pair(0, 0));
-  direct_map_list.push_back(direct_map1);
-  direct_map_list.push_back(direct_map2);
-  direct_map_list.push_back(direct_map3);
-  direct_map_list.push_back(direct_map4);
-
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
 }
 
 }  // namespace test

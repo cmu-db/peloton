@@ -38,7 +38,8 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef std::unordered_map<oid_t, std::shared_ptr<storage::TileGroup > > lookup_dir;
+typedef std::unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
+    lookup_dir;
 
 class Manager {
  public:
@@ -57,7 +58,8 @@ class Manager {
 
   void SetNextOid(oid_t next_oid) { oid = next_oid; }
 
-  void AddTileGroup(const oid_t oid, const std::shared_ptr<storage::TileGroup>& location);
+  void AddTileGroup(const oid_t oid,
+                    const std::shared_ptr<storage::TileGroup> &location);
 
   void DropTileGroup(const oid_t oid);
 

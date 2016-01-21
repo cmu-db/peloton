@@ -49,7 +49,8 @@ PlanColumn::PlanColumn(json_spirit::Object &col_object)
     m_inputColumnName = "";
   }
 
-  if(contains_name == false || contains_type == false || contains_size == false)
+  if (contains_name == false || contains_type == false ||
+      contains_size == false)
     throw Exception("Does not contain everything");
 }
 

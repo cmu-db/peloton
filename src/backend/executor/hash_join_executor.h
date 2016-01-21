@@ -27,29 +27,15 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
  public:
   explicit HashJoinExecutor(const planner::AbstractPlan *node,
-                             ExecutorContext *executor_context);
-
-  ~HashJoinExecutor() {
-  }
+                            ExecutorContext *executor_context);
 
  protected:
   bool DInit();
 
   bool DExecute();
 
-  bool left_end_ = false;
-
-  bool right_end_ = false;
-
  private:
-
-  size_t Advance(LogicalTile *tile, size_t start_row, bool is_left);
-
-  std::vector<std::unique_ptr<LogicalTile>> right_tiles_;
-
   HashExecutor *hash_executor_ = nullptr;
-
-  bool hashed_ = false;
 };
 
 }  // namespace executor

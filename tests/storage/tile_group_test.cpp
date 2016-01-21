@@ -81,8 +81,7 @@ TEST(TileGroupTests, BasicTest) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
-      column_map, 4);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map, 4);
 
   // TUPLES
 
@@ -139,17 +138,18 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   cid_t commit_id = txn->GetCommitId();
-  auto pool =  tile_group->GetTilePool(1);
+  auto pool = tile_group->GetTilePool(1);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
   tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
-                          pool);
+  tuple->SetValue(
+      3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
+      pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(txn_id, tuple);
-    tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id );
+    tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
   }
 
   txn_manager.CommitTransaction();
@@ -206,8 +206,8 @@ TEST(TileGroupTests, StressTest) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
-      column_map, 10000);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map,
+      10000);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -267,11 +267,10 @@ TEST(TileGroupTests, MVCCInsert) {
   column_map[3] = std::make_pair(1, 1);
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
-      column_map, 3);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map, 3);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
-  auto pool =  tile_group->GetTilePool(1);
+  auto pool = tile_group->GetTilePool(1);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
@@ -368,15 +367,14 @@ TEST(TileGroupTests, TileCopyTest) {
   }
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas,
-      column_map, tuple_count);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map,
+      tuple_count);
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM,
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, tile_group_header,
-      *schema, nullptr, tuple_count);
+      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      tile_group_header, *schema, nullptr, tuple_count);
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -392,7 +390,8 @@ TEST(TileGroupTests, TileCopyTest) {
   tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
   tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
   tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
-  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
+  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"),
+                   pool);
 
   tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
   tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);

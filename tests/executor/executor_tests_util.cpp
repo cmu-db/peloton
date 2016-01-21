@@ -139,8 +139,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
       INVALID_OID, INVALID_OID,
-      TestingHarness::GetInstance().GetNextTileGroupId(),
-      nullptr, schemas,
+      TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
       column_map, tuple_count);
 
   return tile_group;
@@ -175,22 +174,26 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) {
       // First column has only two distinct values
-      tuple.SetValue(0,ValueFactory::GetIntegerValue(PopulatedValue(
-          int(populate_value/(num_rows/2)), 0)), testing_pool);
+      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(
+                            int(populate_value / (num_rows / 2)), 0)),
+                     testing_pool);
 
     } else {
       // First column is unique in this case
       tuple.SetValue(
-          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)), testing_pool);
+          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)),
+          testing_pool);
     }
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
         1, ValueFactory::GetIntegerValue(PopulatedValue(
-               random ? std::rand() % (num_rows / 3) : populate_value, 1)), testing_pool);
+               random ? std::rand() % (num_rows / 3) : populate_value, 1)),
+        testing_pool);
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-                          random ? std::rand() : populate_value, 2)), testing_pool);
+                          random ? std::rand() : populate_value, 2)),
+                   testing_pool);
 
     // In case of random, make sure this column has duplicated values
     Value string_value =
@@ -212,8 +215,8 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
  * @param tile_group Tile-group to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
-                                      int num_rows) {
+void ExecutorTestsUtil::PopulateTiles(
+    std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
@@ -232,11 +235,12 @@ void ExecutorTestsUtil::PopulateTiles(std::shared_ptr<storage::TileGroup> tile_g
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)), testing_pool);
-    tuple.SetValue(1,
-                   ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)), testing_pool);
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)), testing_pool);
+    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
+                   testing_pool);
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
+                   testing_pool);
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+                   testing_pool);
     Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
@@ -295,8 +299,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
   bool adapt_table = false;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count,
-      own_schema, adapt_table);
+      tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
     // PRIMARY INDEX
@@ -353,20 +356,21 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 }
 
 storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table,
-                                            oid_t tuple_id,
-                                            VarlenPool *pool) {
+                                            oid_t tuple_id, VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValue(0,
-                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)), pool);
-  tuple->SetValue(1,
-                  ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)), pool);
-  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)), pool);
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)),
+                  pool);
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)),
+                  pool);
+  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)),
+                  pool);
   tuple->SetValue(3, ValueFactory::GetStringValue("12345"), pool);
 
   return tuple;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table, VarlenPool *pool) {
+storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table,
+                                                VarlenPool *pool) {
   storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0, ValueFactory::GetNullValue(), pool);
   tuple->SetValue(1, ValueFactory::GetNullValue(), pool);

@@ -6,24 +6,18 @@ namespace peloton {
 namespace bridge {
 
 class raw_constraint_info {
-
-public:
-
+ public:
   raw_constraint_info(ConstraintType constraint_type,
-                      std::string constraint_name,
-                      Node *expr = nullptr)
-                      : constraint_type(constraint_type),
-                        constraint_name(constraint_name),
-                        expr(expr) {}
+                      std::string constraint_name, Node *expr = nullptr)
+      : constraint_type(constraint_type),
+        constraint_name(constraint_name),
+        expr(expr) {}
 
   catalog::Constraint CreateConstraint(void) const;
 
-  void SetDefaultExpr(Node* _expr){
-    expr = _expr;
-  }
+  void SetDefaultExpr(Node *_expr) { expr = _expr; }
 
-private:
-
+ private:
   ConstraintType constraint_type;
 
   std::string constraint_name;

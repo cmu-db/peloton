@@ -27,7 +27,7 @@ namespace bridge {
 const planner::AbstractPlan *PlanTransformer::TransformHash(
     const HashPlanState *hash_state) {
   auto hashkeys = ExprTransformer::TransformExprList(
-          reinterpret_cast<ExprState *>(hash_state->hashkeys));
+      reinterpret_cast<ExprState *>(hash_state->hashkeys));
 
   // Resolve child plan, should be some kind of scan
   AbstractPlanState *subplan_state = outerAbstractPlanState(hash_state);

@@ -34,15 +34,11 @@ class HashPlan : public AbstractPlan {
   typedef std::unique_ptr<HashKeyType> HashKeyPtrType;
 
   HashPlan(std::vector<HashKeyPtrType> &hashkeys)
-    : hash_keys_(std::move(hashkeys)) {}
+      : hash_keys_(std::move(hashkeys)) {}
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_HASH;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_HASH; }
 
-  inline std::string GetInfo() const {
-    return "Hash";
-  }
+  inline std::string GetInfo() const { return "Hash"; }
 
   inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
     return this->hash_keys_;
@@ -50,7 +46,6 @@ class HashPlan : public AbstractPlan {
 
  private:
   std::vector<HashKeyPtrType> hash_keys_;
-
 };
 }
 }

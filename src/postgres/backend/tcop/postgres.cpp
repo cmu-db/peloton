@@ -816,7 +816,7 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
   // TODO: Peloton Changes
   /* figure out if catalog query or user query */
   plan->pelotonQuery = IsPelotonQuery(plan->relationOids);
-  elog(INFO, "Peloton query : %d \n", plan->pelotonQuery);
+  elog(DEBUG1, "Peloton query : %d \n", plan->pelotonQuery);
 
   if (log_planner_stats)
     ShowUsage("PLANNER STATISTICS");

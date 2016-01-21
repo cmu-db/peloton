@@ -20,11 +20,11 @@ It's likely that your bug gets resolved faster if you provide as much informatio
 Development
 -----------
 
-* Documentation hosted at [Doxygen](FIXME).
 * Source hosted at [GitHub](https://github.com/cmu-db/peloton).
+* Testing framework hosted at [Jenkins](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/).
 
 Pull requests are very welcome! Please try to follow these simple rules if applicable:
 
 * Please create a topic branch for every separate change you make.
-* Make sure your patches are well tested. All specs must pass when run on [Travis CI](https://travis-ci.org/guard/guard).
+* Make sure your patches are well tested. All tests must pass when run on [Jenkins](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/).
 * Update the [README](https://github.com/cmu-db/peloton/blob/master/README.md).

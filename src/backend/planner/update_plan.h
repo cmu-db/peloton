@@ -18,7 +18,7 @@
 
 namespace peloton {
 
-namespace expression{
+namespace expression {
 class Expression;
 }
 

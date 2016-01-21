@@ -36,36 +36,35 @@ namespace test {
  * Testing Harness
  */
 class TestingHarness {
+ public:
+  TestingHarness(const TestingHarness &) = delete;
+  TestingHarness &operator=(const TestingHarness &) = delete;
+  TestingHarness(TestingHarness &&) = delete;
+  TestingHarness &operator=(TestingHarness &&) = delete;
 
-  public:
-    TestingHarness(const TestingHarness &) = delete;
-    TestingHarness &operator=(const TestingHarness &) = delete;
-    TestingHarness(TestingHarness &&) = delete;
-    TestingHarness &operator=(TestingHarness &&) = delete;
+  // global singleton
+  static TestingHarness &GetInstance(void);
 
-    // global singleton
-    static TestingHarness& GetInstance(void);
+  uint64_t GetThreadId();
 
-    uint64_t GetThreadId();
+  VarlenPool *GetTestingPool();
 
-    VarlenPool *GetTestingPool();
+  oid_t GetNextTileGroupId();
 
-    oid_t GetNextTileGroupId();
+ private:
+  TestingHarness();
 
-  private:
-    TestingHarness();
+  // Txn id counter
+  std::atomic<txn_id_t> txn_id_counter;
 
-    // Txn id counter
-    std::atomic<txn_id_t> txn_id_counter;
+  // Commit id counter
+  std::atomic<cid_t> cid_counter;
 
-    // Commit id counter
-    std::atomic<cid_t> cid_counter;
+  // Tile group id counter
+  std::atomic<oid_t> tile_group_id_counter;
 
-    // Tile group id counter
-    std::atomic<oid_t> tile_group_id_counter;
-
-    // Testing pool
-    std::unique_ptr<VarlenPool> pool_;
+  // Testing pool
+  std::unique_ptr<VarlenPool> pool_;
 };
 
 template <typename... Args>

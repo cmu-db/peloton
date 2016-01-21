@@ -58,7 +58,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 
     oid_t table_offset = 0;
     for (auto table : tables) {
-      if (table->GetOid() == table_oid){
+      if (table->GetOid() == table_oid) {
         delete table;
         break;
       }
@@ -83,28 +83,34 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateStats() const{
+void Database::UpdateStats() const {
   LOG_INFO("Update All Stats in Database(%lu)", database_oid);
-  for(oid_t table_offset=0; table_offset<GetTableCount(); table_offset++){
+  for (oid_t table_offset = 0; table_offset < GetTableCount(); table_offset++) {
     auto table = GetTable(table_offset);
-    bridge::Bridge::SetNumberOfTuples(table->GetOid(), table->GetNumberOfTuples());
+    bridge::Bridge::SetNumberOfTuples(table->GetOid(),
+                                      table->GetNumberOfTuples());
 
-    for(oid_t index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+    for (oid_t index_offset = 0; index_offset < table->GetIndexCount();
+         index_offset++) {
       auto index = table->GetIndex(index_offset);
-      bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
+      bridge::Bridge::SetNumberOfTuples(index->GetOid(),
+                                        index->GetNumberOfTuples());
     }
   }
 }
 
-void Database::UpdateStatsWithOid(const oid_t table_oid) const{
-  LOG_INFO("Update table(%lu)'s stats in Database(%lu)", table_oid, database_oid);
+void Database::UpdateStatsWithOid(const oid_t table_oid) const {
+  LOG_INFO("Update table(%lu)'s stats in Database(%lu)", table_oid,
+           database_oid);
 
   auto table = GetTableWithOid(table_oid);
   bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
 
-  for(oid_t index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+  for (oid_t index_offset = 0; index_offset < table->GetIndexCount();
+       index_offset++) {
     auto index = table->GetIndex(index_offset);
-    bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
+    bridge::Bridge::SetNumberOfTuples(index->GetOid(),
+                                      index->GetNumberOfTuples());
   }
 }
 
@@ -162,7 +168,7 @@ std::ostream &operator<<(std::ostream &os, const Database &database) {
 
           auto sink_table_schema = sink_table->GetSchema();
           os << "table name : " << sink_table->GetName() << " "
-                    << *sink_table_schema << std::endl;
+             << *sink_table_schema << std::endl;
         }
       }
     }
