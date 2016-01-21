@@ -94,9 +94,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    logical_tile->AddColumn(base_tile_ref,
-                            column_itr,
-                            column_itr);
+    logical_tile->AddColumn(base_tile_ref, column_itr, column_itr);
   }
 
   std::cout << (*logical_tile) << "\n";
@@ -122,15 +120,12 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   oid_t column_count1 = schema1->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
-    logical_tile->AddColumn(base_tile_ref1,
-                            column_itr,
-                            column_itr);
+    logical_tile->AddColumn(base_tile_ref1, column_itr, column_itr);
   }
 
   oid_t column_count2 = schema2->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
-    logical_tile->AddColumn(base_tile_ref2,
-                            column_itr,
+    logical_tile->AddColumn(base_tile_ref2, column_itr,
                             column_count1 + column_itr);
   }
 

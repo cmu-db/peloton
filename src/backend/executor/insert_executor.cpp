@@ -33,7 +33,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -78,24 +78,28 @@ bool InsertExecutor::DExecute() {
     auto target_table_schema = target_table_->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
 
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(target_table_schema, true));
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(target_table_schema, true));
 
     // Go over the logical tile
     for (oid_t tuple_id : *logical_tile) {
-      expression::ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
+      expression::ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(),
+                                                        tuple_id);
 
       // Materialize the logical tile tuple
-      for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr), executor_pool);
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
+        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
+                        executor_pool);
 
-      peloton::ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
+      peloton::ItemPointer location =
+          target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
       transaction_->RecordInsert(location);
 
-      executor_context_->num_processed += 1; // insert one
+      executor_context_->num_processed += 1;  // insert one
     }
 
     return true;
@@ -121,11 +125,12 @@ bool InsertExecutor::DExecute() {
     }
 
     // Bulk Insert Mode
-    for(oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
-    
+    for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // Carry out insertion
-      ItemPointer location = target_table_->InsertTuple(transaction_, tuple.get());
-      LOG_INFO("Inserted into location: %lu, %lu", location.block, location.offset);
+      ItemPointer location =
+          target_table_->InsertTuple(transaction_, tuple.get());
+      LOG_INFO("Inserted into location: %lu, %lu", location.block,
+               location.offset);
 
       if (location.block == INVALID_OID) {
         LOG_INFO("Failed to Insert. Set txn failure.");
@@ -136,24 +141,21 @@ bool InsertExecutor::DExecute() {
 
       // Logging
       {
-        auto& log_manager = logging::LogManager::GetInstance();
+        auto &log_manager = logging::LogManager::GetInstance();
 
-        if(log_manager.IsInLoggingMode()){
+        if (log_manager.IsInLoggingMode()) {
           auto logger = log_manager.GetBackendLogger();
-          auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
-                                               transaction_->GetTransactionId(),
-                                               target_table_->GetOid(),
-                                               location,
-                                               INVALID_ITEMPOINTER,
-                                               tuple.get());
+          auto record = logger->GetTupleRecord(
+              LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
+              target_table_->GetOid(), location, INVALID_ITEMPOINTER,
+              tuple.get());
 
           logger->Log(record);
         }
       }
-
     }
 
-    executor_context_->num_processed += 1; // insert one
+    executor_context_->num_processed += 1;  // insert one
     done_ = true;
     return true;
   }

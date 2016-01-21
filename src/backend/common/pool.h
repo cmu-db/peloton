@@ -76,8 +76,7 @@ class VarlenPool {
     Init();
   }
 
-  VarlenPool(BackendType backend_type,
-             uint64_t allocation_size,
+  VarlenPool(BackendType backend_type, uint64_t allocation_size,
              uint64_t max_chunk_count)
       : backend_type(backend_type),
         allocation_size(allocation_size),
@@ -102,7 +101,6 @@ class VarlenPool {
   int64_t GetAllocatedMemory();
 
  private:
-
   // backend type
   BackendType backend_type;
 

@@ -144,6 +144,5 @@ inline void Transaction::SetResult(Result result) { result_ = result; }
 
 inline Result Transaction::GetResult() const { return result_; }
 
-
 }  // End concurrency namespace
 }  // End peloton namespace

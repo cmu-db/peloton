@@ -119,7 +119,9 @@ class Schema {
   // Return the number of columns in the schema for the tuple.
   inline oid_t GetColumnCount() const { return column_count; }
 
-  inline oid_t GetUninlinedColumnCount() const { return uninlined_column_count; }
+  inline oid_t GetUninlinedColumnCount() const {
+    return uninlined_column_count;
+  }
 
   // Return the number of bytes used by one tuple.
   inline oid_t GetLength() const { return length; }
@@ -131,7 +133,9 @@ class Schema {
     indexed_columns_ = indexed_columns;
   }
 
-  inline std::vector<oid_t> GetIndexedColumns() const { return indexed_columns_; }
+  inline std::vector<oid_t> GetIndexedColumns() const {
+    return indexed_columns_;
+  }
 
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
@@ -142,13 +146,14 @@ class Schema {
   }
 
   // Add constraint for column by id
-  inline void AddConstraint(oid_t column_id, const catalog::Constraint &constraint) {
+  inline void AddConstraint(oid_t column_id,
+                            const catalog::Constraint &constraint) {
     columns[column_id].AddConstraint(constraint);
   }
 
   // Add constraint for column by name
   inline void AddConstraint(std::string column_name,
-                     const catalog::Constraint &constraint) {
+                            const catalog::Constraint &constraint) {
     for (size_t column_itr = 0; column_itr < columns.size(); column_itr++) {
       if (columns[column_itr].column_name == column_name) {
         columns[column_itr].AddConstraint(constraint);

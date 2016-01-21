@@ -61,9 +61,8 @@ TEST(TileTests, BasicTest) {
       new storage::TileGroupHeader(BACKEND_TYPE_MM, tuple_count);
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM,
-      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header,
-      *schema, nullptr, tuple_count);
+      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      header, *schema, nullptr, tuple_count);
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
@@ -74,7 +73,8 @@ TEST(TileTests, BasicTest) {
   tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
   tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
   tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
-  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"), pool);
+  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"),
+                   pool);
 
   tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
   tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);

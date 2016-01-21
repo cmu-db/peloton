@@ -415,27 +415,14 @@ typedef enum LoggingType
 {
   LOGGING_TYPE_INVALID, /* No logging */
 
-  LOGGING_TYPE_ARIES,   /* Aries */
-  LOGGING_TYPE_PELOTON  /* Peloton */
+  LOGGING_TYPE_DRAM_NVM,   /* Aries */
+  LOGGING_TYPE_NVM_NVM  /* Peloton */
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
   {"invalid", LOGGING_TYPE_INVALID, false},
-  {"aries", LOGGING_TYPE_ARIES, false},
-  {"peloton", LOGGING_TYPE_PELOTON, false},
-  {NULL, 0, false}
-};
-
-/* Possible values for peloton_caching_mode GUC */
-typedef enum CachingType
-{
-  CACHING_OFF,   /* Off */
-  CACHING_ON   /* On */
-} CachingType;
-
-static const struct config_enum_entry peloton_caching_mode_options[] = {
-  {"off", CACHING_OFF, false},
-  {"on", CACHING_ON, false},
+  {"aries", LOGGING_TYPE_DRAM_NVM, false},
+  {"peloton", LOGGING_TYPE_NVM_NVM, false},
   {NULL, 0, false}
 };
 
@@ -509,14 +496,6 @@ int     peloton_layout_mode;
 
 // Logging mode
 LoggingType     peloton_logging_mode;
-
-// Caching mode
-int     peloton_caching_mode;
-
-#define DEFAULT_PELOTON_TILE_CACHE_SIZE  1024 * 1024
-
-// Cache size for tile cache
-int     peloton_tile_cache_size;
 
 // Directory for peloton logs
 char    *peloton_log_directory;
@@ -2740,19 +2719,6 @@ struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
-
-	// TODO: Peloton Changes
-  {
-    {"peloton_tile_cache_size", PGC_USERSET, UNGROUPED,
-      gettext_noop("Size of the tile cache in peloton."),
-      NULL,
-      GUC_UNIT_KB
-    },
-    &peloton_tile_cache_size,
-    DEFAULT_PELOTON_TILE_CACHE_SIZE, 1, INT_MAX,
-    NULL, NULL, NULL
-  },
-
 	/* End-of-list marker */
 	{
 		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
@@ -3762,16 +3728,6 @@ struct config_enum ConfigureNamesEnum[] =
     },
     reinterpret_cast<int *>(&peloton_logging_mode),
     LOGGING_TYPE_INVALID, peloton_logging_mode_options,
-    NULL, NULL, NULL
-  },
-
-  {
-    {"peloton_caching_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
-      gettext_noop("Change peloton caching mode"),
-      gettext_noop("This determines the caching mode.")
-    },
-    &peloton_caching_mode,
-    CACHING_OFF, peloton_caching_mode_options,
     NULL, NULL, NULL
   },
 

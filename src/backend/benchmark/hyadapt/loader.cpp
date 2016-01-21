@@ -35,7 +35,7 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt{
+namespace hyadapt {
 
 storage::DataTable *hyadapt_table;
 
@@ -47,7 +47,7 @@ void CreateTable() {
   // Create schema first
   std::vector<catalog::Column> columns;
 
-  for(oid_t col_itr = 0 ; col_itr < col_count; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "" + std::to_string(col_itr), is_inlined);
@@ -69,8 +69,7 @@ void CreateTable() {
   bool adapt_table = true;
   hyadapt_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      state.tuples_per_tilegroup,
-      own_schema, adapt_table);
+      state.tuples_per_tilegroup, own_schema, adapt_table);
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -94,11 +93,9 @@ void CreateTable() {
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
     hyadapt_table->AddIndex(pkey_index);
   }
-
 }
 
 void LoadTable() {
-
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
@@ -120,7 +117,7 @@ void LoadTable() {
 
     storage::Tuple tuple(table_schema, allocate);
 
-    for(oid_t col_itr = 0 ; col_itr < col_count; col_itr++) {
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       auto value = ValueFactory::GetIntegerValue(populate_value);
       tuple.SetValue(col_itr, value, pool.get());
     }
@@ -132,11 +129,9 @@ void LoadTable() {
   }
 
   txn_manager.CommitTransaction(txn);
-
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {
-
   // Initialize settings
   peloton_layout_mode = layout_type;
 

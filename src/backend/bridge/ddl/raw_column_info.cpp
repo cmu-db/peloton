@@ -3,12 +3,10 @@
 namespace peloton {
 namespace bridge {
 
-catalog::Column raw_column_info::CreateColumn() const{
-
+catalog::Column raw_column_info::CreateColumn() const {
   std::vector<catalog::Constraint> constraints;
 
-  catalog::Column column(column_type, column_length,
-                         column_name, is_inlined);
+  catalog::Column column(column_type, column_length, column_name, is_inlined);
 
   for (auto raw_constraint : raw_constraints) {
     auto constraint = raw_constraint.CreateConstraint();

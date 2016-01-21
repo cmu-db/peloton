@@ -49,7 +49,7 @@ class ProjectInfo {
    * @brief Generic specification of a projection target:
    *        < DEST_column_id , expression >
    */
-  typedef std::pair<oid_t, const expression::AbstractExpression* > Target;
+  typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
 
   typedef std::vector<Target> TargetList;
 
@@ -62,7 +62,7 @@ class ProjectInfo {
   typedef std::vector<DirectMap> DirectMapList;
 
   /* Force explicit move to emphasize the transfer of ownership */
-  ProjectInfo(TargetList &tl, DirectMapList &dml) = delete ;
+  ProjectInfo(TargetList &tl, DirectMapList &dml) = delete;
 
   ProjectInfo(TargetList &&tl, DirectMapList &&dml)
       : target_list_(tl), direct_map_list_(dml) {}
@@ -82,7 +82,6 @@ class ProjectInfo {
   ~ProjectInfo();
 
  private:
-
   TargetList target_list_;
 
   DirectMapList direct_map_list_;

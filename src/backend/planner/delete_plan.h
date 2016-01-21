@@ -17,7 +17,7 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 
@@ -36,9 +36,7 @@ class DeletePlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
-  storage::DataTable *GetTable() const {
-    return target_table_;
-  }
+  storage::DataTable *GetTable() const { return target_table_; }
 
   std::string GetInfo() const { return "DeletePlan"; }
 

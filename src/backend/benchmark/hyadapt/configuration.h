@@ -22,10 +22,10 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt{
+namespace hyadapt {
 
-enum OperatorType{
-  OPERATOR_TYPE_INVALID = 0,         /* invalid */
+enum OperatorType {
+  OPERATOR_TYPE_INVALID = 0, /* invalid */
 
   OPERATOR_TYPE_DIRECT = 1,
   OPERATOR_TYPE_AGGREGATE = 2,
@@ -35,7 +35,7 @@ enum OperatorType{
 
 };
 
-enum ExperimentType{
+enum ExperimentType {
   EXPERIMENT_TYPE_INVALID = 0,
 
   EXPERIMENT_TYPE_PROJECTIVITY = 1,
@@ -50,7 +50,7 @@ enum ExperimentType{
 
 };
 
-enum SubsetType{
+enum SubsetType {
   SUBSET_TYPE_INVALID = 0,
 
   SUBSET_TYPE_SINGLE_GROUP = 1,
@@ -58,7 +58,7 @@ enum SubsetType{
 
 };
 
-enum AdaptType{
+enum AdaptType {
   ADAPT_TYPE_INVALID = 0,
 
   ADAPT_TYPE_STATIC = 1,
@@ -69,7 +69,6 @@ extern int orig_scale_factor;
 
 class configuration {
  public:
-
   OperatorType operator_type;
 
   // experiment
@@ -115,11 +114,11 @@ class configuration {
   bool reorg;
 
   bool distribution;
- };
+};
 
 void Usage(FILE *out);
 
-void ParseArguments(int argc, char* argv[], configuration& state);
+void ParseArguments(int argc, char *argv[], configuration &state);
 
 void GenerateSequence(oid_t column_count);
 

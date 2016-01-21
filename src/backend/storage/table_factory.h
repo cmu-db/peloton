@@ -31,12 +31,11 @@ class TableFactory {
   /**
    * For a given Schema, instantiate a DataTable object and return it
    */
-  static DataTable *GetDataTable(
-      oid_t database_id, oid_t relation_id, catalog::Schema *schema,
-      std::string table_name,
-      size_t tuples_per_tile_group_count,
-      bool own_schema,
-      bool adapt_table);
+  static DataTable *GetDataTable(oid_t database_id, oid_t relation_id,
+                                 catalog::Schema *schema,
+                                 std::string table_name,
+                                 size_t tuples_per_tile_group_count,
+                                 bool own_schema, bool adapt_table);
 
   /**
    * For a given table name, drop the table from database

@@ -39,7 +39,7 @@ class OrderByPlan : public AbstractPlan {
               const std::vector<oid_t> &output_column_ids)
       : sort_keys_(sort_keys),
         descend_flags_(descend_flags),
-        output_column_ids_(output_column_ids){}
+        output_column_ids_(output_column_ids) {}
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -67,7 +67,6 @@ class OrderByPlan : public AbstractPlan {
    * Now we just output the same schema as input tiles.
    */
   const std::vector<oid_t> output_column_ids_;
-
 };
 }
 }

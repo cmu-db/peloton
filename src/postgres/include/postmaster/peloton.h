@@ -29,10 +29,6 @@
 
 extern LoggingType peloton_logging_mode;
 
-extern CachingType peloton_caching_mode;
-
-extern int peloton_tile_cache_size;
-
 //===--------------------------------------------------------------------===//
 // Peloton_Status     Sent by the peloton to share the status with backend.
 //===--------------------------------------------------------------------===//

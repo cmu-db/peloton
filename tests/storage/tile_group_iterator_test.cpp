@@ -34,9 +34,7 @@ TEST(TileGroupIteratorTests, BasicTest) {
   // Create a table and wrap it in logical tiles
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count,
-                                   false,
-                                   false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
                                    true);
 
   storage::TileGroupIterator tile_group_itr(data_table.get());
@@ -46,7 +44,7 @@ TEST(TileGroupIteratorTests, BasicTest) {
     if (tile_group_ptr.get() != nullptr) {
       actual_tile_group_count += 1;
     }
-  } // WHILE
+  }  // WHILE
 
   EXPECT_EQ(expected_tilegroup_count, actual_tile_group_count);
 }

@@ -26,7 +26,6 @@ typedef struct {
   int nargs;
 } PltFuncMetaInfo;
 
-
 extern std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap;
 
 extern std::unordered_map<Oid, const PltFuncMetaInfo> kPgTransitFuncMap;

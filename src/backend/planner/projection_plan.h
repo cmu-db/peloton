@@ -49,13 +49,11 @@ class ProjectionPlan : public AbstractPlan {
 
   inline std::string GetInfo() const { return "Projection"; }
 
-  void SetColumnIds(const std::vector<oid_t>& column_ids) {
+  void SetColumnIds(const std::vector<oid_t> &column_ids) {
     column_ids_ = column_ids;
   }
 
-  const std::vector<oid_t>& GetColumnIds() const {
-    return column_ids_;
-  }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
  private:
   /** @brief Projection Info.            */

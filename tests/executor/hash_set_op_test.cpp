@@ -17,7 +17,6 @@
 
 #include "backend/planner/set_op_plan.h"
 
-
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"

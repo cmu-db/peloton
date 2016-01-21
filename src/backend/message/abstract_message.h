@@ -17,7 +17,6 @@ namespace mfabric {
 
 class AbstractMessage {
  public:
-
   /** @brief CreateSocket function to be overridden by derived class. */
   virtual int CreateSocket();
 
@@ -41,7 +40,6 @@ class AbstractMessage {
 
   /** @brief CloseSocket function to be overridden by derived class. */
   virtual int ShutdownSocket();
-
 };
 
 }  // namespace mfabric

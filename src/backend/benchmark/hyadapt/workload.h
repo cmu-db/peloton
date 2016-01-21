@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt{
+namespace hyadapt {
 
 extern configuration state;
 

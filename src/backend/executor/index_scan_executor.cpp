@@ -88,8 +88,8 @@ bool IndexScanExecutor::DInit() {
   table_ = node.GetTable();
 
   if (table_ != nullptr) {
-      full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
-      std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
+    full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
+    std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
   }
 
   return true;
@@ -128,31 +128,26 @@ bool IndexScanExecutor::DExecute() {
 }
 
 void IndexScanExecutor::ExecPredication() {
-  if (nullptr == predicate_)
-    return;
+  if (nullptr == predicate_) return;
   unsigned int removed_count = 0;
   for (auto tile : result) {
     for (auto tuple_id : *tile) {
-        expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
-                .IsFalse()) {
-          removed_count++;
-          tile->RemoveVisibility(tuple_id);
-        }
+      expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
+      if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
+        removed_count++;
+        tile->RemoveVisibility(tuple_id);
+      }
     }
   }
   LOG_INFO("predicate removed %d row", removed_count);
 }
 
 void IndexScanExecutor::ExecProjection() {
-
-  if (column_ids_.size() == 0)
-    return;
+  if (column_ids_.size() == 0) return;
 
   for (auto tile : result) {
     tile->ProjectColumns(full_column_ids_, column_ids_);
   }
-
 }
 
 bool IndexScanExecutor::ExecIndexLookup() {
