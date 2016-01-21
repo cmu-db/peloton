@@ -198,11 +198,7 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
-  //std::vector<peloton::oid_t> target_list;
-  //std::vector<peloton::oid_t> qual;
-
   // Analyze the plan
-  //if(rand() % 100 < 5)
   //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
   // Execute the plantree
@@ -210,10 +206,6 @@ peloton_dml(PlanState *planstate,
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
                                                         param_list,
                                                         tuple_desc);
-
-    // Clean up the plantree
-    // Not clean up now ! This is cached !
-    // peloton::bridge::PlanTransformer::CleanPlan(pmapped_plan);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -224,10 +216,6 @@ peloton_dml(PlanState *planstate,
 
   // Send output to dest
   peloton_send_output(status, sendTuples, dest);
-
-  int n = mapped_plan_ptr.use_count();
-  std::cout << n;
-
 }
 
 /* ----------
