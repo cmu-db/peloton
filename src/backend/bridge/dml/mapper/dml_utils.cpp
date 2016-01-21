@@ -425,25 +425,6 @@ void DMLUtils::PrepareAbstractJoinPlanState(AbstractJoinPlanState *j_plan_state,
   auto tup_desc = j_state.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
   j_plan_state->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
 
-  // Construct projection info
-<<<<<<< HEAD
-  j_plan_state->ps_ProjInfo = BuildProjectInfo(j_state.ps.ps_ProjInfo,
-                                               tup_desc->natts);
-
-  // Debug by Michael
-  if (j_state.ps.ps_ExprContext != nullptr) {
-	  ParamExecData *param_exec_vals = j_state.ps.ps_ExprContext->ecxt_param_exec_vals;
-
-	  if (param_exec_vals != nullptr) {
-			void *subPlan = param_exec_vals->execPlan;
-			Datum value = param_exec_vals->value;
-			bool isnull = param_exec_vals->isnull;
-
-			std::cout << subPlan << value << isnull;
-	  }
-  }
-  // end debug
-
 }
 
 NestLoopPlanState *
@@ -508,15 +489,6 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
 
   NestLoopPlanState *info = (NestLoopPlanState*) palloc(
       sizeof(NestLoopPlanState));
-=======
-  j_plan_state->ps_ProjInfo =
-      BuildProjectInfo(j_state.ps.ps_ProjInfo, tup_desc->natts);
-}
-
-NestLoopPlanState *DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
-  NestLoopPlanState *info =
-      (NestLoopPlanState *)palloc(sizeof(NestLoopPlanState));
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
 
   info->type = nl_state->js.ps.type;
 
@@ -546,27 +518,9 @@ HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info =
       (HashJoinPlanState *)palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
-<<<<<<< HEAD
   info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join added by Michael
 
-  // Debug by Michael
-  /*
-  expression::AbstractExpression* lc = nullptr;
-
-  ListCell* arg;
-  foreach (arg, info->outer_hashkeys)
-  {
-    ExprState* argstate = (ExprState*) lfirst(arg);
-
-    lc = ExprTransformer::TransformExpr(argstate);
-    std::cout << lc;
-  }
-  */
-  // end debug
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
-=======
-  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
                                hj_state->js);
 
   return info;
@@ -975,8 +929,8 @@ ExprState *CopyExprState(ExprState *expr_state) {
 
     default: {
       LOG_TRACE("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
-<<<<<<< HEAD
-               nodeTag(expr_state->expr));
+
+    nodeTag(expr_state->expr));
 
   	// Debug by Michael
   	size_t type = nodeTag(expr_state);
@@ -1008,10 +962,7 @@ ExprState *CopyExprState(ExprState *expr_state) {
   	// end debug
 
       expr_state_copy = (ExprState *) makeNode(ExprState);
-=======
-                nodeTag(expr_state->expr));
-      expr_state_copy = (ExprState *)makeNode(ExprState);
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
+
       *expr_state_copy = *expr_state;
     } break;
   }

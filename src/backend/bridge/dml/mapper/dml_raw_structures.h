@@ -85,13 +85,10 @@ struct IndexScanPlanState : public AbstractScanPlanState {
   int iss_NumScanKeys;
 
   IndexRuntimeKeyInfo *iss_RuntimeKeys;
-<<<<<<< HEAD
-  int     iss_NumRuntimeKeys;
 
-  ExprContext *iss_RuntimeContext;  // for subquery Debug by Michael
-=======
+  ExprContext *iss_RuntimeContext;
+
   int iss_NumRuntimeKeys;
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {};
@@ -155,19 +152,11 @@ struct NestLoopPlanState : public AbstractJoinPlanState {};
 struct MergeJoinPlanState : public AbstractJoinPlanState {
   int mj_NumClauses;
   MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
-<<<<<<< HEAD
-
 };
 
 struct HashJoinPlanState : public AbstractJoinPlanState {
-
-	// List	   *hj_HashOperators;		/* list of operator___ OIDs */
-	List* outer_hashkeys;               /* list of var ExpState with column id*/
-=======
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
+	List *outer_hashkeys;
 };
-
-struct HashJoinPlanState : public AbstractJoinPlanState {};
 
 struct AggPlanState : public AbstractPlanState {
   const Agg *agg_plan;

@@ -24,7 +24,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
-<<<<<<< HEAD
+
 /*
 std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list) {
 =======

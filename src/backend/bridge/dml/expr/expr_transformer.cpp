@@ -435,13 +435,8 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
                                                1);  // 1 indexed
     } break;
     case PARAM_EXEC: {
-<<<<<<< HEAD
         LOG_TRACE("Handle EXEC PARAM");
         return expression::ParameterValueFactory(param_expr->paramid);  // 1 indexed
-=======
-      LOG_TRACE("Handle EXEC PARAM");
-      return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
     } break;
     //PARAM_SUBLINK,
     //PARAM_MULTIEXPR

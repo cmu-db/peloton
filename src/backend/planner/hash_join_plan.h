@@ -31,18 +31,11 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan(HashJoinPlan &&) = delete;
   HashJoinPlan &operator=(HashJoinPlan &&) = delete;
 
-<<<<<<< HEAD
   HashJoinPlan(const expression::AbstractExpression *predicate,
                 const ProjectInfo *proj_info, const std::vector<oid_t> &outer_hashkeys)
   : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {
 	  outer_column_ids_ = outer_hashkeys; // added by Michael
   }
-=======
-  HashJoinPlan(PelotonJoinType join_type,
-               const expression::AbstractExpression *predicate,
-               const ProjectInfo *proj_info)
-      : AbstractJoinPlan(join_type, predicate, proj_info) {}
->>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_HASHJOIN;
