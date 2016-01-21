@@ -178,6 +178,7 @@ peloton_dml(PlanState *planstate,
   // Get the parameter list
   assert(planstate != NULL);
   assert(planstate->state != NULL);
+
   auto param_list = planstate->state->es_param_list_info;
 
   // Create the raw planstate info
@@ -209,9 +210,11 @@ peloton_dml(PlanState *planstate,
 
   // Execute the plantree
   try {
-    status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
-                                                        param_list,
-                                                        tuple_desc);
+
+	status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
+	                                                        param_list,
+	                                                        tuple_desc);
+
 
     // Clean up the plantree
     // Not clean up now ! This is cached !

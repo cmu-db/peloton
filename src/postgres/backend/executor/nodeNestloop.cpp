@@ -144,6 +144,8 @@ ExecNestLoop(NestLoopState *node)
 			{
 				NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
 				int			paramno = nlp->paramno;
+				Var		   *paramval = nlp->paramval;
+
 				ParamExecData *prm;
 
 				prm = &(econtext->ecxt_param_exec_vals[paramno]);
