@@ -25,7 +25,6 @@ namespace bridge {
  * @return true or false, depending on whether we could bootstrap.
  */
 bool Bootstrap::BootstrapPeloton(void) {
-
   raw_database_info raw_database(MyDatabaseId);
 
   raw_database.CollectRawTableAndIndex();
@@ -45,13 +44,13 @@ bool Bootstrap::BootstrapPeloton(void) {
   raw_database.CreateIndexes();
   raw_database.CreateForeignkeys();
 
-  //auto &manager = catalog::Manager::GetInstance();
+  // auto &manager = catalog::Manager::GetInstance();
   // TODO: Update stats
-  //auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  //db->UpdateStats(peloton_status, false);
+  // auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  // db->UpdateStats(peloton_status, false);
 
   // Verbose mode
-  //std::cout << "Print db :: \n"<<*db << std::endl;
+  // std::cout << "Print db :: \n"<<*db << std::endl;
 
   elog(DEBUG5, "Finished initializing Peloton");
   return true;

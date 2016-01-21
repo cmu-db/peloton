@@ -29,26 +29,25 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h" //added by michael
-#include "backend/expression/comparison_expression.h" //added by michael
+#include "postgres/include/executor/executor.h"
+#include "backend/expression/comparison_expression.h"
 
 namespace peloton {
 namespace bridge {
-
 
 /**
  * @brief Transform a ExprState tree (Postgres) to a AbstractExpression tree
  * (Peloton) recursively.
  * @return  The transformed expression tree. NULL if input is empty.
  */
-expression::AbstractExpression* ExprTransformer::TransformExpr(
-    const ExprState* expr_state) {
+expression::AbstractExpression *ExprTransformer::TransformExpr(
+    const ExprState *expr_state) {
   if (nullptr == expr_state) {
     LOG_TRACE("Null expression");
     return nullptr;
   }
 
-  expression::AbstractExpression* peloton_expr = nullptr;
+  expression::AbstractExpression *peloton_expr = nullptr;
 
   /* Special case:
    * Input is a list of expressions.
@@ -98,21 +97,20 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
-                nodeTag(expr_state->expr))
-                ;
+                nodeTag(expr_state->expr));
   }
 
   return peloton_expr;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformExpr(
-    const Expr* expr) {
+expression::AbstractExpression *ExprTransformer::TransformExpr(
+    const Expr *expr) {
   if (nullptr == expr) {
     LOG_TRACE("Null expression");
     return nullptr;
   }
 
-  expression::AbstractExpression* peloton_expr = nullptr;
+  expression::AbstractExpression *peloton_expr = nullptr;
 
   switch (nodeTag(expr)) {
     case T_Const:
@@ -133,18 +131,17 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
 std::vector<std::unique_ptr<const expression::AbstractExpression>>
 ExprTransformer::TransformExprList(const ExprState *expr_state) {
-
-  // a list of AND'ed expressions
-  std::vector<std::unique_ptr<const expression::AbstractExpression> > exprs;
-
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+  exprs;  // a list of AND'ed expressions
   if (nodeTag(expr_state->expr) == T_List) {
-    const List* list = reinterpret_cast<const List*>(expr_state);
-    ListCell* l;
+    const List *list = reinterpret_cast<const List *>(expr_state);
+    ListCell *l;
     assert(list_length(list) > 0);
     LOG_TRACE("Expression List of length %d", length);
 
     foreach (l, list) {
-      const ExprState* expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
+      const ExprState *expr_state =
+          reinterpret_cast<const ExprState *>(lfirst(l));
       exprs.emplace_back(ExprTransformer::TransformExpr(expr_state));
     }
   } else {
@@ -154,16 +151,16 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
   return exprs;
 }
 
-bool ExprTransformer::CleanExprTree(expression::AbstractExpression* root) {
+bool ExprTransformer::CleanExprTree(expression::AbstractExpression *root) {
   // AbstractExpression's destructor already handles deleting children
   delete root;
 
   return true;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformConst(
-    const ExprState* es) {
-  auto const_expr = reinterpret_cast<const Const*>(es->expr);
+expression::AbstractExpression *ExprTransformer::TransformConst(
+    const ExprState *es) {
+  auto const_expr = reinterpret_cast<const Const *>(es->expr);
 
   Value value;
 
@@ -181,7 +178,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
         "%lu \n",
         const_expr->constlen, const_expr->constbyval,
-        (long unsigned )const_expr->constvalue);
+        (long unsigned)const_expr->constvalue);
   }
 
   // A Const Expr has no children.
@@ -189,9 +186,9 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   return rv;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformConst(
-    const Expr* es) {
-  auto const_expr = reinterpret_cast<const Const*>(es);
+expression::AbstractExpression *ExprTransformer::TransformConst(
+    const Expr *es) {
+  auto const_expr = reinterpret_cast<const Const *>(es);
 
   Value value;
 
@@ -209,90 +206,90 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
         "%lu \n",
         const_expr->constlen, const_expr->constbyval,
-        (long unsigned )const_expr->constvalue);
+        (long unsigned)const_expr->constvalue);
   }
 
   // A Const Expr has no children.
   // modified by michael for IN operator
-  //if (false) {
+  // if (false) {
   if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT2_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT4_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_FLOADT4_ARRAY ||
-      const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY ) {
-    std::vector<expression::AbstractExpression *>* vecExpr = new std::vector<expression::AbstractExpression *>;
+      const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY) {
+    std::vector<expression::AbstractExpression *> *vecExpr =
+        new std::vector<expression::AbstractExpression *>;
     Value tmpVal;
     int nElements = value.ArrayLength();
     for (int i = 0; i < nElements; i++) {
       tmpVal = value.ItemAtIndex(i);
       std::string str = tmpVal.Debug();
-      expression::AbstractExpression* ce = expression::ConstantValueFactory(tmpVal);
+      expression::AbstractExpression *ce =
+          expression::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);
     }
     auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
     return rv;
-    //Free val and vector here ?michael vector_expression delete vecExpr
+    // Free val and vector here ?michael vector_expression delete vecExpr
   } else {
     auto rv = expression::ConstantValueFactory(value);
     return rv;
   }
-
 }
 
-expression::AbstractExpression* ExprTransformer::TransformOp(
-    const ExprState* es) {
+expression::AbstractExpression *ExprTransformer::TransformOp(
+    const ExprState *es) {
   LOG_TRACE("Transform Op \n");
 
-  auto op_expr = reinterpret_cast<const OpExpr*>(es->expr);
-  auto func_state = reinterpret_cast<const FuncExprState*>(es);
+  auto op_expr = reinterpret_cast<const OpExpr *>(es->expr);
+  auto func_state = reinterpret_cast<const FuncExprState *>(es);
 
-  assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
+  assert(op_expr->opfuncid !=
+      0);  // Hopefully it has been filled in by PG planner
 
   auto pg_func_id = op_expr->opfuncid;
 
   return ReMapPgFunc(pg_func_id, func_state->args);
 }
 
-//added by michael for IN operator
-expression::AbstractExpression* ExprTransformer::TransformScalarArrayOp(
-    const ExprState* expression_state) {
+expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
+    const ExprState *es) {
   LOG_TRACE("Transform ScalarArrayOp \n");
 
-  auto op_expr = reinterpret_cast<const ScalarArrayOpExpr*>(expression_state->expr);
-  //auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
-  assert(op_expr->opfuncid != 0);  // Hopefully it has been filled in by PG planner
-  const List* list = op_expr->args;
-  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
+  auto op_expr = reinterpret_cast<const ScalarArrayOpExpr *>(es->expr);
+  // Ensure that it has been filled in by PG planner
+  assert(op_expr->opfuncid != 0);
+
+  const List *list = op_expr->args;
+  // Ensure that it has at most two parameters
+  assert(list_length(list) <= 2);
 
   // Extract function arguments (at most two)
-  expression::AbstractExpression* lc = nullptr;
-  expression::AbstractExpression* rc = nullptr;
+  expression::AbstractExpression *lc = nullptr;
+  expression::AbstractExpression *rc = nullptr;
   int ic = 0;
-  ListCell* arg;
-  foreach (arg, list)
-  {
-    Expr* expression = (Expr*) lfirst(arg);
+  ListCell *arg;
+  foreach (arg, list) {
+    Expr *ex = (Expr *)lfirst(arg);
 
-    if (ic >= list_length(list))
-      break;
+    if (ic >= list_length(list)) break;
     if (ic == 0)
-      lc = TransformExpr(expression);
+      lc = TransformExpr(ex);
     else if (ic == 1)
-      rc = TransformExpr(expression);
-    else break;
+      rc = TransformExpr(ex);
+    else
+      break;
 
     ic++;
   }
 
   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
-  //return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc, rc);
 }
 
-
-expression::AbstractExpression* ExprTransformer::TransformFunc(
-    const ExprState* es) {
-  auto fn_es = reinterpret_cast<const FuncExprState*>(es);
-  auto fn_expr = reinterpret_cast<const FuncExpr*>(es->expr);
+expression::AbstractExpression *ExprTransformer::TransformFunc(
+    const ExprState *es) {
+  auto fn_es = reinterpret_cast<const FuncExprState *>(es);
+  auto fn_expr = reinterpret_cast<const FuncExpr *>(es->expr);
 
   assert(fn_expr->xpr.type == T_FuncExpr);
 
@@ -304,19 +301,19 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
 
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
-
   // FIXME It will generate incorrect results.
-  if(!retval){
+  if (!retval) {
     LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
     assert(list_length(fn_es->args) > 0);
 
-    ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
+    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
     return TransformExpr(first_child);
   }
 
   if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
-    expression::CastExpression *cast_expr = reinterpret_cast<expression::CastExpression*>(retval);
-    ExprState* first_child = (ExprState*) lfirst(list_head(fn_es->args));
+    expression::CastExpression *cast_expr =
+        reinterpret_cast<expression::CastExpression *>(retval);
+    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
     cast_expr->SetChild(TransformExpr(first_child));
     PostgresValueType type = static_cast<PostgresValueType>(rettype);
     cast_expr->SetResultType(type);
@@ -326,25 +323,28 @@ expression::AbstractExpression* ExprTransformer::TransformFunc(
   return retval;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformVar(
-    const ExprState* es) {
+expression::AbstractExpression *ExprTransformer::TransformVar(
+    const ExprState *es) {
   // Var expr only needs default ES
-  auto var_expr = reinterpret_cast<const Var*>(es->expr);
+  auto var_expr = reinterpret_cast<const Var *>(es->expr);
 
-  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+  oid_t tuple_idx =
+      (var_expr->varno == INNER_VAR
+          ? 1
+              : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
   /*
    * Special case: an varattno of zero in PG
    * means return the whole row.
    * We don't want that, just return null.
    */
-  if (!AttributeNumberIsValid(
-      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
+  if (!AttributeNumberIsValid(var_expr->varattno) ||
+      !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
     return nullptr;
   }
 
-  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
-      var_expr->varattno));
+  oid_t value_idx =
+      static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
   LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
@@ -352,25 +352,27 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   return expression::TupleValueFactory(tuple_idx, value_idx);
 }
 
-expression::AbstractExpression* ExprTransformer::TransformVar(
-    const Expr* es) {
+expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   // Var expr only needs default ES
-  auto var_expr = reinterpret_cast<const Var*>(es);
+  auto var_expr = reinterpret_cast<const Var *>(es);
 
-  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+  oid_t tuple_idx =
+      (var_expr->varno == INNER_VAR
+          ? 1
+              : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
   /*
    * Special case: an varattno of zero in PG
    * means return the whole row.
    * We don't want that, just return null.
    */
-  if (!AttributeNumberIsValid(
-      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
+  if (!AttributeNumberIsValid(var_expr->varattno) ||
+      !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
     return nullptr;
   }
 
-  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
-      var_expr->varattno));
+  oid_t value_idx =
+      static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
   LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
@@ -378,10 +380,10 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   return expression::TupleValueFactory(tuple_idx, value_idx);
 }
 
-expression::AbstractExpression* ExprTransformer::TransformBool(
-    const ExprState* es) {
-  auto bool_expr = reinterpret_cast<const BoolExpr*>(es->expr);
-  auto bool_state = reinterpret_cast<const BoolExprState*>(es);
+expression::AbstractExpression *ExprTransformer::TransformBool(
+    const ExprState *es) {
+  auto bool_expr = reinterpret_cast<const BoolExpr *>(es->expr);
+  auto bool_state = reinterpret_cast<const BoolExprState *>(es);
 
   auto bool_op = bool_expr->boolop;
 
@@ -398,75 +400,74 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
   switch (bool_op) {
     case AND_EXPR:
       LOG_TRACE("Bool AND list \n");
-      return TransformList(reinterpret_cast<const ExprState*>(args),
+      return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
       LOG_TRACE("Bool OR list \n");
-      return TransformList(reinterpret_cast<const ExprState*>(args),
+      return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR: {
       LOG_TRACE("Bool NOT \n");
       auto child_es =
-          reinterpret_cast<const ExprState*>(lfirst(list_head(args)));
+          reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
       return expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_NOT, child,
                                          nullptr);
     }
 
     default:
-      LOG_ERROR("Unrecognized BoolExpr : %u", bool_op)
-      ;
+      LOG_ERROR("Unrecognized BoolExpr : %u", bool_op);
   }
 
   return nullptr;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformParam(
-    const ExprState* es) {
-  auto param_expr = reinterpret_cast<const Param*>(es->expr);
+expression::AbstractExpression *ExprTransformer::TransformParam(
+    const ExprState *es) {
+  auto param_expr = reinterpret_cast<const Param *>(es->expr);
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN: {
       LOG_TRACE("Handle EXTREN PARAM");
-      return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
+      return expression::ParameterValueFactory(param_expr->paramid -
+                                               1);  // 1 indexed
     } break;
     case PARAM_EXEC: {
-        LOG_TRACE("Handle EXEC PARAM");
-        return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
+      LOG_TRACE("Handle EXEC PARAM");
+      return expression::ParameterValueFactory(param_expr->paramid - 1);  // 1 indexed
     } break;
     //PARAM_SUBLINK,
     //PARAM_MULTIEXPR
     default:
-      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind)
-      ;
+      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
       break;
   }
 
   return nullptr;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformRelabelType(
-    const ExprState* es) {
-  auto state = reinterpret_cast<const GenericExprState*>(es);
-  auto expr = reinterpret_cast<const RelabelType*>(es->expr);
+expression::AbstractExpression *ExprTransformer::TransformRelabelType(
+    const ExprState *es) {
+  auto state = reinterpret_cast<const GenericExprState *>(es);
+  auto expr = reinterpret_cast<const RelabelType *>(es->expr);
   auto child_state = state->arg;
 
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
-  expression::AbstractExpression* child = ExprTransformer::TransformExpr(
-      child_state);
+  expression::AbstractExpression *child =
+      ExprTransformer::TransformExpr(child_state);
 
   PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
 
   return expression::CastFactory(type, child);
 }
 
-expression::AbstractExpression* ExprTransformer::TransformAggRef(
-    const ExprState* es) {
-  auto aggref_state = reinterpret_cast<const AggrefExprState*>(es);
+expression::AbstractExpression *ExprTransformer::TransformAggRef(
+    const ExprState *es) {
+  auto aggref_state = reinterpret_cast<const AggrefExprState *>(es);
 
   assert(aggref_state->aggno >= 0);
 
@@ -475,26 +476,24 @@ expression::AbstractExpression* ExprTransformer::TransformAggRef(
 
   // Raw aggregate values would be passed as the RIGHT tuple
   return expression::TupleValueFactory(tuple_idx, value_idx);
-
 }
 
-expression::AbstractExpression* ExprTransformer::TransformList(
-    const ExprState* es, ExpressionType et) {
-  assert(
-      et == EXPRESSION_TYPE_CONJUNCTION_AND
-      || et == EXPRESSION_TYPE_CONJUNCTION_OR);
+expression::AbstractExpression *ExprTransformer::TransformList(
+    const ExprState *es, ExpressionType et) {
+  assert(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
+         et == EXPRESSION_TYPE_CONJUNCTION_OR);
 
-  const List* list = reinterpret_cast<const List*>(es);
-  ListCell* l;
+  const List *list = reinterpret_cast<const List *>(es);
+  ListCell *l;
   int length = list_length(list);
-  if(length == 0)
-    return nullptr;
+  if (length == 0) return nullptr;
   LOG_TRACE("Expression List of length %d", length);
-  std::list<expression::AbstractExpression*> exprs;  // a list of AND'ed expressions
+  std::list<expression::AbstractExpression *>
+  exprs;  // a list of AND'ed expressions
 
-  foreach (l, list)
-  {
-    const ExprState* expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
+  foreach (l, list) {
+    const ExprState *expr_state =
+        reinterpret_cast<const ExprState *>(lfirst(l));
     exprs.push_back(ExprTransformer::TransformExpr(expr_state));
   }
 
@@ -511,11 +510,9 @@ expression::AbstractExpression* ExprTransformer::TransformList(
  * @param args  The argument list in PG ExprState
  * @return            Corresponding expression tree in peloton.
  */
-expression::AbstractExpression*
-ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
-
+expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
+                                                             List *args) {
   assert(pg_func_id > 0);
-
 
   // Perform lookup
   auto itr = kPgFuncMap.find(pg_func_id);
@@ -536,21 +533,20 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
   assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
 
   // Extract function arguments (at most two)
-  expression::AbstractExpression* lc = nullptr;
-  expression::AbstractExpression* rc = nullptr;
+  expression::AbstractExpression *lc = nullptr;
+  expression::AbstractExpression *rc = nullptr;
   int i = 0;
-  ListCell* arg;
-  foreach (arg, args)
-  {
-    ExprState* argstate = (ExprState*) lfirst(arg);
+  ListCell *arg;
+  foreach (arg, args) {
+    ExprState *argstate = (ExprState *)lfirst(arg);
 
-    if (i >= func_meta.nargs)
-      break;
+    if (i >= func_meta.nargs) break;
     if (i == 0)
       lc = TransformExpr(argstate);
     else if (i == 1)
       rc = TransformExpr(argstate);
-    else break;
+    else
+      break;
 
     i++;
   }
@@ -577,8 +573,7 @@ ExprTransformer::ReMapPgFunc(Oid pg_func_id, List* args) {
       LOG_ERROR(
           "This Peloton ExpressionType is in our map but not transformed here "
           ": %u",
-          plt_exprtype)
-          ;
+          plt_exprtype);
   }
 
   return nullptr;

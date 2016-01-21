@@ -38,8 +38,8 @@ class DDLUtils {
   static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
 
-  static void ParsingCreateStmt(
-      CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos);
+  static void ParsingCreateStmt(CreateStmt *Cstmt,
+                                std::vector<catalog::Column> &column_infos);
 };
 
 }  // namespace bridge

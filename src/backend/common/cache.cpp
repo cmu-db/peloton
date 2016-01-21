@@ -19,10 +19,9 @@ namespace peloton {
 
 /** @brief the constructor, nothing fancy here
  */
-template<class Key, class Value>
+template <class Key, class Value>
 Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
-    : capacity_(capacitry), value_deleter_(deleter) {
-}
+    : capacity_(capacitry), value_deleter_(deleter) {}
 
 /* @brief find a value cached with key
  *
@@ -31,8 +30,8 @@ Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
  *
  * @return a iterator of this cache, end() if no such entry
  * */
-template<class Key, class Value>
-typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
+template <class Key, class Value>
+typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key &key) {
   auto map_itr = map_.find(key);
   auto cache_itr = end();
   if (map_itr != map_.end()) {
@@ -46,7 +45,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
 }
 
 /** @brief insert a key value pair
- *         if the key already exists, this updates its value, the reference count
+ *         if the key already exists, this updates its value, the reference
+ *count
  *         of the previous value would decrement by 1
  *
  *         if not, this effectively insert a new entry
@@ -55,12 +55,13 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key& key) {
  *         capacity, the cache automatically evict the least recent
  *         accessed entry
  *
- *  @param entry a key value pair to be inserted of type std::pair<Key, ValuePtr>
+ *  @param entry a key value pair to be inserted of type std::pair<Key,
+ *ValuePtr>
  *  @return a iterator of the inserted entry
  **/
-template<class Key, class Value>
+template <class Key, class Value>
 typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
-    const Entry& entry) {
+    const Entry &entry) {
   assert(list_.size() == map_.size());
   assert(list_.size() <= this->capacity_);
   auto map_itr = map_.find(entry.first);
@@ -69,8 +70,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
   if (map_itr == map_.end()) {
     /* new key */
     list_.push_front(entry.first);
-    auto ret = map_.emplace(entry.first,
-                            std::make_pair(entry.second, list_.begin()));
+    auto ret =
+        map_.emplace(entry.first, std::make_pair(entry.second, list_.begin()));
     assert(ret.second); /* should not fail */
     cache_itr = iterator(ret.first);
     while (map_.size() > this->capacity_) {
@@ -92,7 +93,7 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
  *
  *  @return the size of the cache
  */
-template<class Key, class Value>
+template <class Key, class Value>
 typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
   assert(map_.size() == list_.size());
   return map_.size();
@@ -102,7 +103,7 @@ typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
  *
  *  @return Void
  */
-template<class Key, class Value>
+template <class Key, class Value>
 void Cache<Key, Value>::clear(void) {
   list_.clear();
   map_.clear();
@@ -112,13 +113,13 @@ void Cache<Key, Value>::clear(void) {
  *
  *  @return true if empty, false if not
  */
-template<class Key, class Value>
+template <class Key, class Value>
 bool Cache<Key, Value>::empty(void) const {
   return map_.empty();
 }
 
 /* Explicit instantiations */
 template class Cache<uint32_t, const planner::AbstractPlan>; /* For testing */
-template class Cache<std::string, const planner::AbstractPlan>; /* Actual in use */
-
+template class Cache<std::string,
+                     const planner::AbstractPlan>; /* Actual in use */
 }

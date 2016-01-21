@@ -620,7 +620,7 @@ TEST(ValueTest, TestCastToDouble) {
     caught = true;
   }
 
-  EXPECT_FALSE(caught); // we can do this cast now
+  EXPECT_FALSE(caught);  // we can do this cast now
 
   caught = false;
   try {
@@ -674,7 +674,6 @@ TEST(ValueTest, TestCastToString) {
     caught = true;
   }
   EXPECT_FALSE(caught);
-
 }
 
 TEST(ValueTest, TestCastToDecimal) {
@@ -703,7 +702,7 @@ TEST(ValueTest, TestCastToDecimal) {
     caught = true;
   }
 
-  EXPECT_FALSE(caught); // we can do this cast now
+  EXPECT_FALSE(caught);  // we can do this cast now
 
   caught = false;
   try {

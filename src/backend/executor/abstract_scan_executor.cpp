@@ -46,11 +46,10 @@ bool AbstractScanExecutor::DInit() {
   assert(executor_context_);
 
   // Grab data from plan node.
-  const planner::AbstractScan &node =
-      GetPlanNode<planner::AbstractScan>();
+  const planner::AbstractScan &node = GetPlanNode<planner::AbstractScan>();
 
   predicate_ = node.GetPredicate();
-  //auto column_ids = node.GetColumnIds();
+  // auto column_ids = node.GetColumnIds();
 
   column_ids_ = std::move(node.GetColumnIds());
 

@@ -28,10 +28,11 @@ namespace test {
 
 #define CACHE_SIZE 5
 
-
-static void fill(std::vector<std::shared_ptr<const planner::AbstractPlan> >& vec, int n) {
+static void fill(
+    std::vector<std::shared_ptr<const planner::AbstractPlan> > &vec, int n) {
   for (int i = 0; i < n; i++) {
-    std::shared_ptr<const planner::AbstractPlan> plan(new MockPlan(), bridge::PlanTransformer::CleanPlan);
+    std::shared_ptr<const planner::AbstractPlan> plan(
+        new MockPlan(), bridge::PlanTransformer::CleanPlan);
     vec.push_back(std::move(plan));
   }
 }
@@ -41,7 +42,6 @@ static void fill(std::vector<std::shared_ptr<const planner::AbstractPlan> >& vec
  *
  */
 TEST(CacheTest, Basic) {
-
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -160,8 +160,7 @@ TEST(CacheTest, EvictionWithAccessing) {
    *
    * The cache should keep 3,4,5,6,7
    * */
-  for (; i < CACHE_SIZE * 1.5; i++)
-    cache.insert(std::make_pair(i, plans[i]));
+  for (; i < CACHE_SIZE * 1.5; i++) cache.insert(std::make_pair(i, plans[i]));
   for (auto plan : cache) {
     set.insert(plan.get());
   }
@@ -180,8 +179,7 @@ TEST(CacheTest, EvictionWithAccessing) {
   }
 
   /* Insert 8, 9 */
-  for (; i < CACHE_SIZE * 2; i++)
-    cache.insert(std::make_pair(i, plans[i]));
+  for (; i < CACHE_SIZE * 2; i++) cache.insert(std::make_pair(i, plans[i]));
 
   set.clear();
   for (auto plan : cache) {
@@ -247,8 +245,7 @@ TEST(CacheTest, Updating) {
    * The cache should keep 3,4,5,6,7
    * */
   int i = 0;
-  for (; i < CACHE_SIZE * 1.5; i++)
-    cache.insert(std::make_pair(i, plans[i]));
+  for (; i < CACHE_SIZE * 1.5; i++) cache.insert(std::make_pair(i, plans[i]));
 
   for (auto plan : cache) {
     set.insert(plan.get());
@@ -264,12 +261,11 @@ TEST(CacheTest, Updating) {
   /* update 4, 3
    * */
   for (int idx = CACHE_SIZE - 1, j = 0; idx > CACHE_SIZE - diff - 1;
-      idx--, j++) {
+       idx--, j++) {
     cache.insert(std::make_pair(idx, plans2[j]));
   }
 
-  for (; i < CACHE_SIZE * 2; i++)
-    cache.insert(std::make_pair(i, plans[i]));
+  for (; i < CACHE_SIZE * 2; i++) cache.insert(std::make_pair(i, plans[i]));
 
   set.clear();
   for (auto plan : cache) {

@@ -21,9 +21,7 @@
 #define DEFAULT_CACHE_SIZE 100
 
 namespace peloton {
-template<class Key, class Value>
-
-
+template <class Key, class Value>
 
 /** @brief An implementation of LRU cache
  *
@@ -35,13 +33,13 @@ template<class Key, class Value>
  * */
 class Cache {
   /* Raw pointer of Value type */
-  typedef Value* RawValuePtr;
+  typedef Value *RawValuePtr;
 
   /* Shared pointer of Value type */
   typedef std::shared_ptr<Value> ValuePtr;
 
   /* A function to delete dynamically allocated Value */
-  typedef void (*ValueDeleter)(Value*);
+  typedef void (*ValueDeleter)(Value *);
 
   /* A key value pair */
   typedef std::pair<Key, ValuePtr> Entry;
@@ -66,14 +64,14 @@ class Cache {
   Cache(Cache &&) = delete;
   Cache &operator=(Cache &&) = delete;
 
-  explicit Cache(size_type capacity = DEFAULT_CACHE_SIZE, ValueDeleter deleter =
-                     std::default_delete<Value>());
+  explicit Cache(size_type capacity = DEFAULT_CACHE_SIZE,
+                 ValueDeleter deleter = std::default_delete<Value>());
 
   class iterator : public std::iterator<std::input_iterator_tag, ValuePtr> {
     friend class Cache;
 
    public:
-    inline iterator& operator++();
+    inline iterator &operator++();
     inline iterator operator++(int);
     inline bool operator==(const iterator &rhs);
     inline bool operator!=(const iterator &rhs);
@@ -86,9 +84,9 @@ class Cache {
     typename Map::iterator map_itr_;
   };
 
-  iterator find(const Key& key);
+  iterator find(const Key &key);
 
-  iterator insert(const Entry& kv);
+  iterator insert(const Entry &kv);
 
   size_type size(void) const;
 
@@ -111,17 +109,17 @@ class Cache {
  *
  * It mostly delegates to the underlying map iterator
  */
-template<class Key, class Value>
+template <class Key, class Value>
 inline Cache<Key, Value>::iterator::iterator(
     typename Cache<Key, Value>::Map::iterator map_itr)
-    : map_itr_(map_itr) {
-}
+    : map_itr_(map_itr) {}
 
 /** @brief increment operator
  *  @return iterator after increment
  */
-template<class Key, class Value>
-inline typename Cache<Key, Value>::iterator& Cache<Key, Value>::iterator::operator++() {
+template <class Key, class Value>
+inline typename Cache<Key, Value>::iterator &Cache<Key, Value>::iterator::
+operator++() {
   this->map_itr_++;
   return *this;
 }
@@ -129,9 +127,9 @@ inline typename Cache<Key, Value>::iterator& Cache<Key, Value>::iterator::operat
 /** @brief increment operator
  *  @return iterator before increment
  */
-template<class Key, class Value>
-inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::operator++(
-    int) {
+template <class Key, class Value>
+inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::
+operator++(int) {
   Cache<Key, Value>::iterator tmp(*this);
   operator++();
   return tmp;
@@ -142,7 +140,7 @@ inline typename Cache<Key, Value>::iterator Cache<Key, Value>::iterator::operato
  *
  * @return True if equal, false otherwise.
  */
-template<class Key, class Value>
+template <class Key, class Value>
 inline bool Cache<Key, Value>::iterator::operator==(
     const typename Cache<Key, Value>::iterator &rhs) {
   return this->map_itr_ == rhs.map_itr_;
@@ -154,7 +152,7 @@ inline bool Cache<Key, Value>::iterator::operator==(
  *
  * @return False if equal, true otherwise.
  */
-template<class Key, class Value>
+template <class Key, class Value>
 inline bool Cache<Key, Value>::iterator::operator!=(
     const typename Cache<Key, Value>::iterator &rhs) {
   return this->map_itr_ != rhs.map_itr_;
@@ -165,8 +163,9 @@ inline bool Cache<Key, Value>::iterator::operator!=(
  *
  * @return A shared pointer of the ValueType
  */
-template<class Key, class Value>
-inline typename Cache<Key, Value>::ValuePtr Cache<Key, Value>::iterator::operator*() {
+template <class Key, class Value>
+inline typename Cache<Key, Value>::ValuePtr Cache<Key, Value>::iterator::
+operator*() {
   return map_itr_->second.first;
 }
 
@@ -176,7 +175,7 @@ inline typename Cache<Key, Value>::ValuePtr Cache<Key, Value>::iterator::operato
  *
  *  @return the first kv pair of the cache
  */
-template<class Key, class Value>
+template <class Key, class Value>
 inline typename Cache<Key, Value>::iterator Cache<Key, Value>::begin() {
   return iterator(this->map_.begin());
 }
@@ -185,9 +184,8 @@ inline typename Cache<Key, Value>::iterator Cache<Key, Value>::begin() {
  *
  * @return a iterator that indicating we are out of range
  * */
-template<class Key, class Value>
+template <class Key, class Value>
 inline typename Cache<Key, Value>::iterator Cache<Key, Value>::end() {
   return iterator(this->map_.end());
 }
-
 }

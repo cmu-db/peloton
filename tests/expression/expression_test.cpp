@@ -365,8 +365,7 @@ TEST(ExpressionTest, SimpleInFilter) {
   vec_const_exprs.push_back(const_val_exp2);
 
   expression::VectorExpression *vec_exp =
-      new expression::VectorExpression(
-    		  VALUE_TYPE_ARRAY, vec_const_exprs);
+      new expression::VectorExpression(VALUE_TYPE_ARRAY, vec_const_exprs);
 
   expression::ComparisonExpression<expression::CmpIn> *equal =
       new expression::ComparisonExpression<expression::CmpIn>(

@@ -22,11 +22,11 @@ namespace peloton {
 class AbstractTuple;
 class VarlenPool;
 
-namespace catalog{
+namespace catalog {
 class Schema;
 }
 
-namespace storage{
+namespace storage {
 class Tuple;
 }
 
@@ -142,9 +142,7 @@ class Index {
   // scan all keys in the index, working like a sort
   virtual std::vector<ItemPointer> Scan() = 0;
 
-  virtual std::vector<ItemPointer> Scan(const storage::Tuple* key) = 0;
-
-
+  virtual std::vector<ItemPointer> Scan(const storage::Tuple *key) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -194,9 +192,9 @@ class Index {
 
   // Generic key comparator between index key and given arbitrary key
   static bool Compare(const AbstractTuple &index_key,
-               const std::vector<oid_t> &column_ids,
-               const std::vector<ExpressionType> &expr_types,
-               const std::vector<Value> &values);
+                      const std::vector<oid_t> &column_ids,
+                      const std::vector<ExpressionType> &expr_types,
+                      const std::vector<Value> &values);
 
   VarlenPool *GetPool() const { return pool; }
 

@@ -9,8 +9,7 @@
 namespace peloton {
 namespace bridge {
 
-void raw_foreign_key_info::CreateForeignkey(void) const{
-
+void raw_foreign_key_info::CreateForeignkey(void) const {
   // Get source table, sink table, and database oid
   oid_t source_table_oid = source_table_id;
   assert(source_table_oid);
@@ -33,24 +32,20 @@ void raw_foreign_key_info::CreateForeignkey(void) const{
   auto sink_table_schema = sink_table->GetSchema();
 
   // Populate primary key column names
-  for (auto sink_offset : sink_column_offsets){
+  for (auto sink_offset : sink_column_offsets) {
     catalog::Column column = sink_table_schema->GetColumn(sink_offset - 1);
     sink_column_names.push_back(column.GetName());
   }
 
   // Populate source key column names
-  for (auto source_offset : source_column_offsets){
+  for (auto source_offset : source_column_offsets) {
     catalog::Column column = source_table_schema->GetColumn(source_offset - 1);
     source_column_names.push_back(column.GetName());
   }
 
-  catalog::ForeignKey *foreign_key 
-    = new catalog::ForeignKey(sink_table_oid,
-        sink_column_names, 
-        source_column_names, 
-        update_action,
-        delete_action,
-        fk_name);
+  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
+      sink_table_oid, sink_column_names, source_column_names, update_action,
+      delete_action, fk_name);
 
   source_table->AddForeignKey(foreign_key);
 }
