@@ -20,7 +20,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief Convert a Postgres nique into a Peloton Node.
+ * @brief Convert a Postgres Unique into a Peloton Node.
  *
  *    currently, we just return the
  *    underlying node
@@ -31,7 +31,7 @@ namespace bridge {
 const planner::AbstractPlan *PlanTransformer::TransformUnique(
     const UniquePlanState *unique_plan_state) {
 
-  LOG_INFO("Handle LockRows");
+  LOG_INFO("Handle Unique");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state = outerAbstractPlanState(unique_plan_state);

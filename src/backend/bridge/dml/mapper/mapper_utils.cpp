@@ -24,7 +24,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
-
+/*
 std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list) {
   std::vector<Value> params;
   if (param_list != nullptr) {
@@ -41,6 +41,38 @@ std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list) 
   LOG_INFO("Built %lu params \n", params.size());
   return std::move(params);
 }
+*/
+std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list) {
+
+	std::cout << param_list;
+
+  std::vector<Value> params;
+  params.push_back(TupleTransformer::GetValue(0, 23));
+
+  assert(params.size() > 0);
+
+  LOG_INFO("Built %lu params \n", params.size());
+  return std::move(params);
+}
+
+/*
+std::vector<Value> PlanTransformer::BuildParams(const ParamExecData *param_exec_list) {
+  std::vector<Value> params;
+  if (param_exec_list != nullptr) {
+    params.resize(param_list->numParams);
+    ParamExternData *postgres_param = param_list->params;
+    for (size_t i = 0; i < params.size(); ++i, ++postgres_param) {
+      params[i] = TupleTransformer::GetValue(postgres_param->value,
+                                             23);
+    }
+
+    assert(params.size() > 0);
+  }
+
+  LOG_INFO("Built %lu params \n", params.size());
+  return std::move(params);
+}
+*/
 
 /**
  * @brief Extract the common things shared by all Scan types:
@@ -433,6 +465,30 @@ void PlanTransformer::BuildColumnListFromExpr(
   BuildColumnListFromExpr(col_ids, expression->GetRight());
 }
 
+/**
+ * @brief Transform a ExpState List to a one-dimensional column list.
+ */
+const std::vector<oid_t> PlanTransformer::BuildColumnListFromExpStateList(
+    List* expr_state_list) {
+  std::vector<oid_t> column_ids;
+
+  ListCell* expr;
+  foreach (expr, expr_state_list)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(expr);
+
+    auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
+
+    if (peloton_expr == nullptr) {
+      LOG_TRACE("Seems something wrong?.");
+      continue;
+    }
+
+    BuildColumnListFromExpr(column_ids, peloton_expr);
+  }
+
+  return column_ids;
+}
 /**
  * @brief Transform a TargetList to a one-dimensional column list.
  */

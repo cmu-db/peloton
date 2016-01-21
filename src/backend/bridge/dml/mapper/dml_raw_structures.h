@@ -98,6 +98,8 @@ struct IndexScanPlanState : public AbstractScanPlanState {
 
   IndexRuntimeKeyInfo *iss_RuntimeKeys;
   int     iss_NumRuntimeKeys;
+
+  ExprContext *iss_RuntimeContext;  // for subquery Debug by Michael
 };
 
 struct BitmapHeapScanPlanState : public AbstractScanPlanState {
@@ -150,6 +152,10 @@ struct ResultPlanState : public AbstractPlanState {
  */
 struct UniquePlanState : public AbstractPlanState {
 
+	  PelotonProjectionInfo *ps_ProjInfo;
+	  TupleDesc tts_tupleDescriptor;
+
+	  List *targetlist;
 };
 
 struct AbstractJoinPlanState : public AbstractPlanState {
@@ -177,6 +183,8 @@ struct MergeJoinPlanState : public AbstractJoinPlanState {
 
 struct HashJoinPlanState : public AbstractJoinPlanState {
 
+	// List	   *hj_HashOperators;		/* list of operator___ OIDs */
+	List* outer_hashkeys;               /* list of var ExpState with column id*/
 };
 
 

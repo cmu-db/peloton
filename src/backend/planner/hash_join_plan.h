@@ -33,8 +33,10 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan &operator=(HashJoinPlan &&) = delete;
 
   HashJoinPlan(const expression::AbstractExpression *predicate,
-                const ProjectInfo *proj_info)
-  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {}
+                const ProjectInfo *proj_info, const std::vector<oid_t> &outer_hashkeys)
+  : AbstractJoinPlan(JOIN_TYPE_INVALID, predicate, proj_info) {
+	  outer_column_ids_ = outer_hashkeys; // added by Michael
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_HASHJOIN;
@@ -43,7 +45,13 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   inline std::string GetInfo() const { return "HashJoin"; }
 
+  const std::vector<oid_t> &GetOuterHashIds() const {
+    return outer_column_ids_;
+  }
+
  private:
+
+  std::vector<oid_t> outer_column_ids_;
 };
 
 }  // namespace planner
