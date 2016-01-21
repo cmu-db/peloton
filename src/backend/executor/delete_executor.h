@@ -18,7 +18,7 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 

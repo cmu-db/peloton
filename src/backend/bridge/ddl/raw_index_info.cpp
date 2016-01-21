@@ -4,11 +4,8 @@ namespace peloton {
 namespace bridge {
 
 bool raw_index_info::CreateIndex(void) const {
-
-  IndexInfo index_info(index_name, index_oid,
-                       table_name, method_type,
-                       constraint_type, unique_keys,
-                       key_column_names);
+  IndexInfo index_info(index_name, index_oid, table_name, method_type,
+                       constraint_type, unique_keys, key_column_names);
 
   bool status = DDLIndex::CreateIndex(index_info);
 

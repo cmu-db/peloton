@@ -23,13 +23,12 @@ namespace peloton {
 namespace executor {
 
 /**
- * @brief Constructor for nested loop join executor.
- * @param node Nested loop join node corresponding to this executor.
+ * @brief Constructor for hash join executor.
+ * @param node Hash join node corresponding to this executor.
  */
 HashJoinExecutor::HashJoinExecutor(const planner::AbstractPlan *node,
-                                     ExecutorContext *executor_context)
-    : AbstractJoinExecutor(node, executor_context) {
-}
+                                   ExecutorContext *executor_context)
+    : AbstractJoinExecutor(node, executor_context) {}
 
 bool HashJoinExecutor::DInit() {
   assert(children_.size() == 2);
@@ -51,47 +50,28 @@ bool HashJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool HashJoinExecutor::DExecute() {
-  LOG_INFO("********** Hash Join executor :: 2 children \n");
+  // Loop until we have non-empty result join logical tile or exit
 
+  // Build outer join output when done
 
-  /* Hash right tiles and get right tiles */
-  if (!hashed_) {
-    while (children_[1]->Execute()) {
-      right_tiles_.emplace_back(children_[1]->GetOutput());
-    }
-    hashed_ = true;
-  }
+  //===--------------------------------------------------------------------===//
+  // Pick right and left tiles
+  //===--------------------------------------------------------------------===//
 
-  if (right_tiles_.size() == 0) {
-    LOG_INFO("Did not get right tiles");
-    return false;
-  }
+  // Get all the logical tiles from RIGHT child
 
-  // Try to get next tile from LEFT child
-  if (children_[0]->Execute() == false) {
-    LOG_INFO("Did not get left tile \n");
-    return false;
-  }
+  // Get next logical tile from LEFT child
 
-  std::unique_ptr<LogicalTile> left(children_[0]->GetOutput());
-  LOG_INFO("Got left tile \n");
+  //===--------------------------------------------------------------------===//
+  // Build Join Tile
+  //===--------------------------------------------------------------------===//
 
-  LogicalTile *left_tile = left.get();
-  LogicalTile *right_tile = right_tiles_.back().get();
-
-  // Build output logical tile
-  auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+  // Build output join logical tile
 
   // Build position lists
-  auto position_lists = BuildPostitionLists(left_tile, right_tile);
-
-  // Get position list from two logical tiles
-  auto &left_tile_position_lists = left_tile->GetPositionLists();
-  auto &right_tile_position_lists = right_tile->GetPositionLists();
-  size_t left_tile_column_count = left_tile_position_lists.size();
-  size_t right_tile_column_count = right_tile_position_lists.size();
 
   // Get the hash table from the hash executor
+<<<<<<< HEAD
   auto &htable = hash_executor_->GetHashTable();
 
   //Debug
@@ -154,6 +134,15 @@ bool HashJoinExecutor::DExecute() {
     SetOutput(output_tile.release());
     return true;
   }
+=======
+
+  // Go over the left logical tile
+  // For each tuple, find matching tuples in the hash table built on top of the
+  // right table
+  // Go over the matching right tuples
+
+  // Check if we have any join tuples
+>>>>>>> 4b41fad2f47feb0fafec97c73babac170463a47d
 
   return false;
 }

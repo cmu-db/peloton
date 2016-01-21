@@ -20,7 +20,7 @@
 
 namespace peloton {
 
-namespace catalog{
+namespace catalog {
 class Schema;
 }
 
@@ -63,13 +63,14 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(const std::shared_ptr<storage::Tile>& base_tile,
+  void AddColumn(const std::shared_ptr<storage::Tile> &base_tile,
                  oid_t origin_column_id, oid_t position_list_idx);
 
-  void AddColumns(const std::shared_ptr<storage::TileGroup>& tile_group,
+  void AddColumns(const std::shared_ptr<storage::TileGroup> &tile_group,
                   const std::vector<oid_t> &column_ids);
 
-  void ProjectColumns(const std::vector<oid_t> &original_column_ids, const std::vector<oid_t> &column_ids);
+  void ProjectColumns(const std::vector<oid_t> &original_column_ids,
+                      const std::vector<oid_t> &column_ids);
 
   int AddPositionList(PositionList &&position_list);
 
@@ -160,6 +161,91 @@ class LogicalTile {
     /** @brief Original column id of this logical tile column in its associated
      * base tile. */
     oid_t origin_column_id;
+  };
+
+  //===--------------------------------------------------------------------===//
+  // Position Lists Builder
+  //===--------------------------------------------------------------------===//
+  class PositionListsBuilder {
+   public:
+    PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile);
+
+    inline void SetLeftSource(const PositionLists *left_source) {
+      left_source_ = left_source;
+    }
+
+    inline void SetRightSource(const PositionLists *right_source) {
+      right_source_ = right_source;
+    }
+
+    inline void AddRow(size_t left_itr, size_t right_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(
+            (*left_source_)[output_tile_column_itr][left_itr]);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
+      }
+    }
+
+    inline void AddLeftNullRow(size_t right_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(NULL_OID);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            (*right_source_)[output_tile_column_itr][right_itr]);
+      }
+    }
+
+    inline void AddRightNullRow(size_t left_itr) {
+      assert(!invalid_);
+      // First, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < left_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[output_tile_column_itr].push_back(
+            (*left_source_)[output_tile_column_itr][left_itr]);
+      }
+
+      // Then, copy the elements in right logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+           output_tile_column_itr < right_source_->size();
+           output_tile_column_itr++) {
+        output_lists_[left_source_->size() + output_tile_column_itr].push_back(
+            NULL_OID);
+      }
+    }
+
+    inline PositionLists &&Release() {
+      invalid_ = true;
+      return std::move(output_lists_);
+    }
+
+    inline size_t Size() const { return output_lists_[0].size(); }
+
+   private:
+    const PositionLists *left_source_;
+    const PositionLists *right_source_;
+    PositionLists output_lists_;
+    bool invalid_ = false;
   };
 
  private:

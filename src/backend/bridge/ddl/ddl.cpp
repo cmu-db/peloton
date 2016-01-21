@@ -100,7 +100,6 @@ void DDL::ProcessUtility(Node *parsetree) {
       LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
     } break;
   }
-
 }
 
 }  // namespace bridge

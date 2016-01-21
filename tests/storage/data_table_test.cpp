@@ -61,7 +61,6 @@ TEST(DataTableTests, TransformTileGroupTest) {
 
   // Transform the tile group
   data_table->TransformTileGroup(0, theta);
-
 }
 
 }  // End test namespace

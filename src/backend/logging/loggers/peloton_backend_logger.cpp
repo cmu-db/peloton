@@ -20,16 +20,16 @@
 namespace peloton {
 namespace logging {
 
-PelotonBackendLogger* PelotonBackendLogger::GetInstance(){
+PelotonBackendLogger *PelotonBackendLogger::GetInstance() {
   thread_local static PelotonBackendLogger instance;
   return &instance;
 }
 
 /**
  * @brief log LogRecord
- * @param log record 
+ * @param log record
  */
-void PelotonBackendLogger::Log(LogRecord* record){
+void PelotonBackendLogger::Log(LogRecord *record) {
   // Enqueue the serialized log record into the queue
   record->Serialize(output_buffer);
 
@@ -37,34 +37,32 @@ void PelotonBackendLogger::Log(LogRecord* record){
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     local_queue.push_back(record);
   }
-
 }
 
-LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type, 
+LogRecord *PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
                                                 txn_id_t txn_id,
                                                 oid_t table_oid,
                                                 ItemPointer insert_location,
                                                 ItemPointer delete_location,
-                                                void* data,
-                                                oid_t db_oid){
+                                                void *data, oid_t db_oid) {
   // Figure the log record type
-  switch(log_record_type){
-    case LOGRECORD_TYPE_TUPLE_INSERT:  {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_INSERT; 
+  switch (log_record_type) {
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
+      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_INSERT;
       break;
     }
 
-    case LOGRECORD_TYPE_TUPLE_DELETE:  {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_DELETE; 
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
+      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_DELETE;
       break;
     }
 
-    case LOGRECORD_TYPE_TUPLE_UPDATE:  {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE; 
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE;
       break;
     }
 
-    default:  {
+    default: {
       assert(false);
       break;
     }
@@ -74,13 +72,9 @@ LogRecord* PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
   data = nullptr;
 
   // Build the tuple log record
-  LogRecord* tuple_record = new TupleRecord(log_record_type, 
-                                            txn_id,
-                                            table_oid,
-                                            insert_location,
-                                            delete_location,
-                                            data,
-                                            db_oid);
+  LogRecord *tuple_record =
+      new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
+                      delete_location, data, db_oid);
 
   return tuple_record;
 }

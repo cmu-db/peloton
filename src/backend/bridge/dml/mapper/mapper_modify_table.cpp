@@ -31,9 +31,7 @@ namespace bridge {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 const planner::AbstractPlan *PlanTransformer::TransformModifyTable(
-    const ModifyTablePlanState *mt_plan_state,
-    const TransformOptions options) {
-
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   auto operation = mt_plan_state->operation;
 
   switch (operation) {
@@ -65,9 +63,9 @@ const planner::AbstractPlan *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlan.
  */
 const planner::AbstractPlan *PlanTransformer::TransformInsert(
-    const ModifyTablePlanState *mt_plan_state, __attribute__((unused)) const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state,
+    __attribute__((unused)) const TransformOptions options) {
   planner::AbstractPlan *plan_node = nullptr;
-
 
   Oid database_oid = mt_plan_state->database_oid;
   Oid table_oid = mt_plan_state->table_oid;
@@ -86,20 +84,17 @@ const planner::AbstractPlan *PlanTransformer::TransformInsert(
            table_oid, target_table->GetName().c_str());
 
   AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
-  ResultPlanState *result_planstate = (ResultPlanState *) sub_planstate;
+  ResultPlanState *result_planstate = (ResultPlanState *)sub_planstate;
 
-  auto project_info =
-      BuildProjectInfo(result_planstate->proj);
+  auto project_info = BuildProjectInfo(result_planstate->proj);
 
   plan_node = new planner::InsertPlan(target_table, project_info);
-
 
   return plan_node;
 }
 
 const planner::AbstractPlan *PlanTransformer::TransformUpdate(
-    const ModifyTablePlanState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -126,10 +121,10 @@ const planner::AbstractPlan *PlanTransformer::TransformUpdate(
   }
 
   LOG_INFO("Update table : database oid %u table oid %u: %s", database_oid,
-            table_oid, target_table->GetName().c_str());
+           table_oid, target_table->GetName().c_str());
 
   // Child must be a scan node
-  auto sub_planstate = (AbstractScanPlanState*) mt_plan_state->mt_plans[0];
+  auto sub_planstate = (AbstractScanPlanState *)mt_plan_state->mt_plans[0];
 
   auto project_info = BuildProjectInfo(sub_planstate->proj);
 
@@ -155,8 +150,7 @@ const planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 const planner::AbstractPlan *PlanTransformer::TransformDelete(
-    const ModifyTablePlanState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   // Grab Database ID and Table ID
 
   Oid database_oid = mt_plan_state->database_oid;

@@ -92,12 +92,12 @@ class ExecutorTestsUtil {
 
   static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
                                   VarlenPool *pool);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table, VarlenPool *pool);
+  static storage::Tuple *GetNullTuple(storage::DataTable *table,
+                                      VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
-
 };
 
 }  // namespace test

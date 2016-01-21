@@ -63,11 +63,11 @@ Transaction *TransactionManager::BeginTransaction() {
 
   // Log the BEGIN TXN record
   {
-    auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
+    auto &log_manager = logging::LogManager::GetInstance();
+    if (log_manager.IsInLoggingMode()) {
       auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN,
-                                                   next_txn->txn_id);
+      auto record = new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
       logger->Log(record);
     }
   }
@@ -82,7 +82,7 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
   return (txn_id < next_txn_id);
 }
 
-void TransactionManager::ResetStates(void){
+void TransactionManager::ResetStates(void) {
   next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
   next_cid = ATOMIC_VAR_INIT(START_CID);
 
@@ -93,7 +93,7 @@ void TransactionManager::ResetStates(void){
   last_txn->cid = START_CID;
   last_cid = START_CID;
 
-  for(auto txn : txn_table){
+  for (auto txn : txn_table) {
     auto curr_txn = txn.second;
     delete curr_txn;
   }
@@ -102,24 +102,22 @@ void TransactionManager::ResetStates(void){
 
 void TransactionManager::EndTransaction(Transaction *txn,
                                         bool sync __attribute__((unused))) {
-
   // Log the END TXN record
   {
-    auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
+    auto &log_manager = logging::LogManager::GetInstance();
+    if (log_manager.IsInLoggingMode()) {
       auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_END,
-                                                   txn->txn_id);
+      auto record = new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
       logger->Log(record);
 
       // Check for sync commit
       // If true, wait for the fronted logger to flush the data
-      if( log_manager.GetSyncCommit())  {
+      if (log_manager.GetSyncCommit()) {
         logger->WaitForFlushing();
       }
     }
   }
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -157,8 +155,7 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
 
 void TransactionManager::CommitModifications(Transaction *txn, bool sync
                                              __attribute__((unused))) {
-
-  auto& manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
 
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
@@ -180,11 +177,11 @@ void TransactionManager::CommitModifications(Transaction *txn, bool sync
 
   // Log the COMMIT TXN record
   {
-    auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
+    auto &log_manager = logging::LogManager::GetInstance();
+    if (log_manager.IsInLoggingMode()) {
       auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
-                                                   txn->txn_id);
+      auto record = new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
       logger->Log(record);
     }
   }
@@ -254,7 +251,6 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
 }
 
 void TransactionManager::CommitTransaction(bool sync) {
-
   LOG_INFO("Committing peloton txn : %lu \n", current_txn->GetTransactionId());
   // begin commit phase : get cid and add to transaction list
   BeginCommitPhase(current_txn);
@@ -266,14 +262,12 @@ void TransactionManager::CommitTransaction(bool sync) {
   std::vector<Transaction *> committed_txns = EndCommitPhase(current_txn, sync);
 
   // process all committed txns
-  for (auto committed_txn : committed_txns)
-    committed_txn->DecrementRefCount();
+  for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
   // we already record commit entry in CommitModifications, isn't it?
 
   current_txn = nullptr;
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -284,17 +278,16 @@ void TransactionManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu \n", current_txn->GetTransactionId());
   // Log the ABORT TXN record
   {
-    auto& log_manager = logging::LogManager::GetInstance();
-    if(log_manager.IsInLoggingMode()){
+    auto &log_manager = logging::LogManager::GetInstance();
+    if (log_manager.IsInLoggingMode()) {
       auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
-                                                   current_txn->txn_id);
+      auto record = new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_ABORT, current_txn->txn_id);
       logger->Log(record);
-
     }
   }
 
-  auto& manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
 
   // (A) rollback inserts
   const txn_id_t txn_id = current_txn->GetTransactionId();
@@ -321,7 +314,6 @@ void TransactionManager::AbortTransaction() {
   current_txn->DecrementRefCount();
 
   current_txn = nullptr;
-
 }
 
 }  // End concurrency namespace

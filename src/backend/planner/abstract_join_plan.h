@@ -39,10 +39,10 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan(PelotonJoinType joinType,
                    const expression::AbstractExpression *predicate,
                    const ProjectInfo *proj_info)
-  : AbstractPlan(),
-    joinType_(joinType),
-    predicate_(predicate),
-    proj_info_(proj_info) {
+      : AbstractPlan(),
+        join_type_(joinType),
+        predicate_(predicate),
+        proj_info_(proj_info) {
     // Fuck off!
   }
 
@@ -50,11 +50,7 @@ class AbstractJoinPlan : public AbstractPlan {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  PelotonJoinType GetJoinType() const { return joinType_; }
-
-  void SetJoinType(const PelotonJoinType jointype) {
-    this->joinType_ = jointype;
-  }
+  PelotonJoinType GetJoinType() const { return join_type_; }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
@@ -64,7 +60,7 @@ class AbstractJoinPlan : public AbstractPlan {
 
  private:
   /** @brief The type of join that we're going to perform */
-  PelotonJoinType joinType_;
+  PelotonJoinType join_type_;
 
   /** @brief Join predicate. */
   const std::unique_ptr<const expression::AbstractExpression> predicate_;

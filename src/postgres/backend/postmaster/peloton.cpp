@@ -95,8 +95,6 @@ peloton_bootstrap() {
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
       elog(DEBUG2, "Logging Mode : %d", peloton_logging_mode);
-      elog(DEBUG2, "Caching Mode : %d", peloton_caching_mode);
-      elog(DEBUG2, "Tile Cache Size : %d", peloton_tile_cache_size);
 
       // Finished checking logging module
       logging_module_check = true;
@@ -201,24 +199,17 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
-  //std::vector<peloton::oid_t> target_list;
-  //std::vector<peloton::oid_t> qual;
-
   // Analyze the plan
-  //if(rand() % 100 < 5)
   //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
   // Execute the plantree
   try {
-
-	status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
-	                                                        param_list,
-	                                                        tuple_desc);
-
-
     // Clean up the plantree
     // Not clean up now ! This is cached !
     // peloton::bridge::PlanTransformer::CleanPlan(pmapped_plan);
+    status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
+                                                        param_list,
+                                                        tuple_desc);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -229,10 +220,6 @@ peloton_dml(PlanState *planstate,
 
   // Send output to dest
   peloton_send_output(status, sendTuples, dest);
-
-  int n = mapped_plan_ptr.use_count();
-  std::cout << n;
-
 }
 
 /* ----------

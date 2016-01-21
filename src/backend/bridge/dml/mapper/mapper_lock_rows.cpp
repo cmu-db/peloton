@@ -30,14 +30,12 @@ namespace bridge {
  */
 const planner::AbstractPlan *PlanTransformer::TransformLockRows(
     const LockRowsPlanState *lr_plan_state) {
-
   LOG_INFO("Handle LockRows");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state = outerAbstractPlanState(lr_plan_state);
 
   return PlanTransformer::TransformPlan(outer_plan_state);
-
 }
 
 }  // namespace bridge

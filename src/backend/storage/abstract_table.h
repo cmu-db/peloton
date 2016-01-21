@@ -42,29 +42,17 @@ class AbstractTable {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  std::string GetName() const {
-    return table_name;
-  }
+  std::string GetName() const { return table_name; }
 
-  oid_t GetOid() const {
-    return table_oid;
-  }
+  oid_t GetOid() const { return table_oid; }
 
-  oid_t GetDatabaseOid() const {
-    return database_oid;
-  }
+  oid_t GetDatabaseOid() const { return database_oid; }
 
-  void SetSchema(catalog::Schema *given_schema) {
-    schema = given_schema;
-  }
+  void SetSchema(catalog::Schema *given_schema) { schema = given_schema; }
 
-  const catalog::Schema *GetSchema() const {
-    return schema;
-  }
+  const catalog::Schema *GetSchema() const { return schema; }
 
-  catalog::Schema *GetSchema() {
-    return schema;
-  }
+  catalog::Schema *GetSchema() { return schema; }
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const AbstractTable &table);

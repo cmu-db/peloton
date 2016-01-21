@@ -111,7 +111,7 @@ TEST(IndexTests, BtreeIndexTest) {
   locations = index->Scan(key0);
   EXPECT_EQ(locations.size(), 1);
 
-  //EXPECT_EQ(location.block, item0.block);
+  // EXPECT_EQ(location.block, item0.block);
 
   LOG_TRACE("Delete \n");
 
@@ -130,7 +130,7 @@ TEST(IndexTests, BtreeIndexTest) {
   locations = index->Scan(key2);
   EXPECT_EQ(locations.size(), 1);
 
-  //EXPECT_EQ(location.block, INVALID_OID);
+  // EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;
   delete key1;
@@ -143,7 +143,6 @@ TEST(IndexTests, BtreeIndexTest) {
 
   delete index;
 }
-
 
 }  // End test namespace
 }  // End peloton namespace

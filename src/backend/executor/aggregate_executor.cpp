@@ -31,8 +31,7 @@ namespace executor {
  */
 AggregateExecutor::AggregateExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 AggregateExecutor::~AggregateExecutor() {
   // clean up temporary aggregation table
@@ -53,7 +52,7 @@ bool AggregateExecutor::DInit() {
 
   // Construct the output table
   auto output_table_schema =
-      const_cast<catalog::Schema*>(node.GetOutputSchema());
+      const_cast<catalog::Schema *>(node.GetOutputSchema());
 
   assert(output_table_schema->GetColumnCount() >= 1);
 
@@ -71,8 +70,7 @@ bool AggregateExecutor::DInit() {
   bool adapt_table = false;
   output_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
-      DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema, adapt_table);
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 
   return true;
 }
@@ -102,35 +100,28 @@ bool AggregateExecutor::DExecute() {
 
   // Get input tiles and aggregate them
   while (children_[0]->Execute() == true) {
-
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
     if (nullptr == aggregator.get()) {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_INFO("Use HashAggregator\n")
-          ;
-          aggregator.reset(
-              new HashAggregator(&node, output_table, executor_context_,
-                                 tile->GetColumnCount()));
+          LOG_INFO("Use HashAggregator\n");
+          aggregator.reset(new HashAggregator(
+              &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORTED:
-          LOG_INFO("Use SortedAggregator\n")
-          ;
-          aggregator.reset(
-              new SortedAggregator(&node, output_table, executor_context_,
-                                   tile->GetColumnCount()));
+          LOG_INFO("Use SortedAggregator\n");
+          aggregator.reset(new SortedAggregator(
+              &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
-          LOG_INFO("Use PlainAggregator\n")
-          ;
+          LOG_INFO("Use PlainAggregator\n");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));
           break;
         default:
-          LOG_ERROR("Invalid aggregate type. Return.\n")
-          ;
+          LOG_ERROR("Invalid aggregate type. Return.\n");
           return false;
       }
     }
@@ -138,31 +129,31 @@ bool AggregateExecutor::DExecute() {
     LOG_INFO("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
-
       std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
           new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id));
 
       if (aggregator->Advance(cur_tuple.get()) == false) {
         return false;
       }
-
     }
     LOG_TRACE("Finished processing logical tile");
   }
 
   LOG_INFO("Finalizing..");
   if (!aggregator.get() || !aggregator->Finalize()) {
-
     // If there's no tuples in the table and only if no group-by in the query,
     // we should return a NULL tuple
     // this is required by SQL
-    if(!aggregator.get() && node.GetGroupbyColIds().empty()){
-      LOG_INFO("No tuples received and no group-by. Should insert a NULL tuple here.");
-      std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(output_table->GetSchema(), true));
+    if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
+      LOG_INFO(
+          "No tuples received and no group-by. Should insert a NULL tuple "
+          "here.");
+      std::unique_ptr<storage::Tuple> tuple(
+          new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(executor_context_->GetTransaction(), tuple.get());
-    }
-    else{
+      output_table->InsertTuple(executor_context_->GetTransaction(),
+                                tuple.get());
+    } else {
       done = true;
       return false;
     }
@@ -171,11 +162,10 @@ bool AggregateExecutor::DExecute() {
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();
 
-  if (tile_group_count == 0)
-    return false;
+  if (tile_group_count == 0) return false;
 
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
