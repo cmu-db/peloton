@@ -425,6 +425,9 @@ void DMLUtils::PrepareAbstractJoinPlanState(AbstractJoinPlanState *j_plan_state,
   auto tup_desc = j_state.ps.ps_ResultTupleSlot->tts_tupleDescriptor;
   j_plan_state->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
 
+  // Construct projection info
+  j_plan_state->ps_ProjInfo = BuildProjectInfo(j_state.ps.ps_ProjInfo,
+		  	  	  	  	  	  	  	  	  	  	  tup_desc->natts);
 }
 
 NestLoopPlanState *

@@ -61,6 +61,10 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
+	 // Debug by Michael
+	 std::string str_type = this->GetJoinTypeString();
+	 // end debug
+
     // Build outer join output when done
     if (left_child_done_ && right_child_done_) {
       return BuildOuterJoinOutput();
