@@ -297,6 +297,10 @@ LogicalTile::~LogicalTile() {
   // Automatically drops reference on base tiles for each column
 }
 
+LogicalTile::PositionListsBuilder::PositionListsBuilder() {
+  // Nothing to do here !
+}
+
 LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
                                                         LogicalTile *right_tile)
 : left_source_(&left_tile->GetPositionLists()),
@@ -394,36 +398,6 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   os << "\t-----------------------------------------------------------\n";
 
   os << "\tLOGICAL TILE\n";
-
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t SCHEMA : \n";
-  for (oid_t column_itr = 0; column_itr < lt.schema_.size(); column_itr++) {
-    const LogicalTile::ColumnInfo &cp = lt.schema_[column_itr];
-    os << "\t Position list idx: " << cp.position_list_idx << ", "
-        << "base tile: " << cp.base_tile << ", "
-        << "origin column id: " << cp.origin_column_id << std::endl;
-  }
-
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t VISIBLE ROWS : ";
-
-  for (oid_t tuple_itr = 0; tuple_itr < lt.total_tuples_; tuple_itr++) {
-    os << lt.visible_rows_[tuple_itr] << " ";
-  }
-
-  os << std::endl;
-
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t POSITION LISTS : \n";
-
-  int pos_list_id = 0;
-  for (auto position_list : lt.position_lists_) {
-    os << "\t " << pos_list_id++ << " : ";
-    for (auto pos : position_list) {
-      os << pos << " ";
-    }
-    os << "\n";
-  }
 
   os << "\t-----------------------------------------------------------\n";
   os << "\t VALUES : \n";
