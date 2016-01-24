@@ -39,6 +39,10 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
   std::deque<LogicalTile *> buffered_output_tiles;
 
+  // logical tile iterators
+  size_t left_logical_tile_itr_ = 0;
+  size_t right_logical_tile_itr_ = 0;
+
 };
 
 }  // namespace executor
