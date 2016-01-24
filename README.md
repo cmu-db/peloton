@@ -1,7 +1,5 @@
 [![Peloton Logo](http://db.cs.cmu.edu/wordpress/wp-content/uploads/2015/11/peloton.jpg)](http://pelotondb.org/)
 
-**Peloton is a distributed in-memory DBMS designed for real-time analytics.**
-
 [![Build Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon?style=flat)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
 
 ## What Is Peloton?
