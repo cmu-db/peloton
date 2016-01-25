@@ -494,6 +494,7 @@ DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
       sizeof(NestLoopPlanState));
 
   info->type = nl_state->js.ps.type;
+  info->nl = (NestLoop *) nl_state->js.ps.plan;
 
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
                                nl_state->js);
@@ -601,7 +602,7 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
   // Copy runtime scan keys
   info->iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
   info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
-                                          iss_plan_state->iss_NumRuntimeKeys);
+                                          iss_plan_state->iss_NumRuntimeKeys); // not copy scankey is it OK?? by Michael
 
   info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
 
@@ -617,6 +618,27 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
 			std::cout << subPlan << value << isnull;
 	  }
   }
+
+  int			iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
+  bool		iss_RuntimeKeysReady = iss_plan_state->iss_RuntimeKeysReady;
+  ExprContext *iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
+  if (iss_RuntimeContext != nullptr) {
+	  ParamExecData *param_exec_vals = iss_RuntimeContext->ecxt_param_exec_vals;
+
+	  if (param_exec_vals != nullptr) {
+			void *subPlan = param_exec_vals->execPlan;
+			Datum value = param_exec_vals->value;
+			bool isnull = param_exec_vals->isnull;
+
+			if (subPlan != nullptr) {
+				int i = 1;
+				std::cout << i;
+			}
+
+			std::cout << subPlan << value << isnull;
+	  }
+  }
+  std::cout << iss_NumRuntimeKeys << iss_RuntimeKeysReady;
   // end debug
   return info;
 }
@@ -1010,7 +1032,14 @@ IndexRuntimeKeyInfo *CopyRuntimeKeys(IndexRuntimeKeyInfo *from,
     retval[key_itr] = from[key_itr];  // shallow copy
     retval[key_itr].key_expr =
         CopyExprState(from[key_itr].key_expr);  // Deep copy the expression
-    // NB: No need to copy scan_key?
+    // NB: No need to copy scan_key? add by Michael 01/22/2016
+    retval[key_itr].scan_key->sk_argument = from[key_itr].scan_key->sk_argument;
+    retval[key_itr].scan_key->sk_attno = from[key_itr].scan_key->sk_attno;
+    retval[key_itr].scan_key->sk_collation = from[key_itr].scan_key->sk_collation;
+    retval[key_itr].scan_key->sk_flags = from[key_itr].scan_key->sk_flags;
+    retval[key_itr].scan_key->sk_func = from[key_itr].scan_key->sk_func;
+    retval[key_itr].scan_key->sk_strategy = from[key_itr].scan_key->sk_strategy;
+    retval[key_itr].scan_key->sk_subtype = from[key_itr].scan_key->sk_subtype;
   }
 
   return retval;

@@ -69,6 +69,12 @@ bool IndexScanExecutor::DInit() {
   runtime_keys_ = node.GetRunTimeKeys();
   predicate_ = node.GetPredicate();
 
+  // Debug by Michael
+  int i_size = key_column_ids_.size();
+  int i_size2 = values_.size();
+  std::cout << i_size << i_size2;
+  // end debug
+
   if (runtime_keys_.size() != 0) {
     assert(runtime_keys_.size() == values_.size());
 
@@ -152,6 +158,15 @@ void IndexScanExecutor::ExecProjection() {
 
 bool IndexScanExecutor::ExecIndexLookup() {
   assert(!done_);
+
+  if (executor_context_->GetParamsExec() == 1) {
+	  values_.clear();
+	  std::vector<Value> vecValue = executor_context_->GetParams();
+
+	  for (auto val : vecValue) {
+	        values_.push_back(val);
+	  }
+  }
 
   std::vector<ItemPointer> tuple_locations;
 
