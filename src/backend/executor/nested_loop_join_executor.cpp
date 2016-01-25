@@ -16,8 +16,11 @@
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 #include "backend/executor/nested_loop_join_executor.h"
+#include "backend/executor/executor_context.h"
+#include "backend/planner/nested_loop_join_plan.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
+#include "nodes/pg_list.h"
 
 namespace peloton {
 namespace executor {
@@ -55,10 +58,156 @@ bool NestedLoopJoinExecutor::DInit() {
  * join predicate.
  * @return true on success, false otherwise.
  */
+//bool NestedLoopJoinExecutor::DExecute() {
+//  LOG_INFO("********** Nested Loop %s Join executor :: 2 children \n",
+//           GetJoinTypeString());
+//
+//  // Loop until we have non-empty result tile or exit
+//  for (;;) {
+//	 // Debug by Michael
+//	 std::string str_type = this->GetJoinTypeString();
+//	 // end debug
+//
+//    // Build outer join output when done
+//    if (left_child_done_ && right_child_done_) {
+//      return BuildOuterJoinOutput();
+//    }
+//
+//    //===--------------------------------------------------------------------===//
+//    // Pick right and left tiles
+//    //===--------------------------------------------------------------------===//
+//
+//    LogicalTile *left_tile = nullptr;
+//    LogicalTile *right_tile = nullptr;
+//
+//    bool advance_left_child = false;
+//
+//    // If we have already retrieved all right child's results in buffer
+//    if (right_child_done_ == true) {
+//      LOG_TRACE("Advance the right buffer iterator.");
+//
+//      assert(!left_result_tiles_.empty());
+//      assert(!right_result_tiles_.empty());
+//      right_result_itr_++;
+//
+//      if (right_result_itr_ >= right_result_tiles_.size()) {
+//        advance_left_child = true;
+//        right_result_itr_ = 0;
+//      }
+//
+//    }
+//    // Otherwise, we must attempt to execute the right child
+//    else {
+//      // Right child is finished, no more tiles
+//      if (children_[1]->Execute() == false) {
+//        LOG_TRACE("Right child is exhausted.");
+//
+//        if (right_result_tiles_.empty()) {
+//          assert(left_result_tiles_.empty());
+//          LOG_TRACE("Right child returned nothing. Exit.");
+//          return false;
+//        }
+//
+//        right_child_done_ = true;
+//        right_result_itr_ = 0;
+//        advance_left_child = true;
+//      }
+//      // Buffer the right child's result
+//      else {
+//        LOG_TRACE("Retrieve a new tile from right child");
+//        BufferRightTile(children_[1]->GetOutput());
+//        right_result_itr_ = right_result_tiles_.size() - 1;
+//      }
+//    }
+//
+//    if (advance_left_child == true || left_result_tiles_.empty()) {
+//      assert(right_result_itr_ == 0);
+//
+//      // Left child is finished, no more tiles
+//      if (children_[0]->Execute() == false) {
+//        LOG_TRACE("Left child is exhausted. Returning false.");
+//
+//        // Left child exhausted.
+//        // Release cur left tile. Clear right child's result buffer and return.
+//        assert(right_result_tiles_.size() > 0);
+//        left_child_done_ = true;
+//
+//        return BuildOuterJoinOutput();
+//      }
+//      // Buffer the left child's result
+//      else {
+//        LOG_TRACE("Advance the left child.");
+//        BufferLeftTile(children_[0]->GetOutput());
+//      }
+//    }
+//
+//    left_tile = left_result_tiles_.back().get();
+//    right_tile = right_result_tiles_[right_result_itr_].get();
+//
+//    //===--------------------------------------------------------------------===//
+//    // Build Join Tile
+//    //===--------------------------------------------------------------------===//
+//
+//    // Build output logical tile
+//    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+//
+//    // Build position lists
+//    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
+//
+//    // Go over every pair of tuples in left and right logical tiles
+//    for (auto left_tile_row_itr : *left_tile) {
+//      bool has_right_match = false;
+//
+//      for (auto right_tile_row_itr : *right_tile) {
+//        // Join predicate exists
+//        if (predicate_ != nullptr) {
+//          expression::ContainerTuple<executor::LogicalTile> left_tuple(
+//              left_tile, left_tile_row_itr);
+//          expression::ContainerTuple<executor::LogicalTile> right_tuple(
+//              right_tile, right_tile_row_itr);
+//
+//          // Join predicate is false. Skip pair and continue.
+//          if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
+//                  .IsFalse()) {
+//            continue;
+//          }
+//        }
+//
+//        RecordMatchedRightRow(right_result_itr_, right_tile_row_itr);
+//
+//        // For Left and Full Outer Join
+//        has_right_match = true;
+//
+//        // Insert a tuple into the output logical tile
+//        // First, copy the elements in left logical tile's tuple
+//        pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
+//      }  // Inner loop of NLJ
+//
+//      // For Left and Full Outer Join
+//      if (has_right_match) {
+//        RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_row_itr);
+//      }
+//
+//    }  // Outer loop of NLJ
+//
+//    // Check if we have any join tuples.
+//    if (pos_lists_builder.Size() > 0) {
+//      output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+//      SetOutput(output_tile.release());
+//      return true;
+//    }
+//
+//    LOG_TRACE("This pair produces empty join result. Continue the loop.");
+//  }
+//}
+
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children \n",
            GetJoinTypeString());
 
+  const planner::NestedLoopJoinPlan &nl_plan_node = GetPlanNode<planner::NestedLoopJoinPlan>();
+  const NestLoop *nl = nl_plan_node.GetNestLoop();
+  ListCell *lc;
   // Loop until we have non-empty result tile or exit
   for (;;) {
 	 // Debug by Michael
@@ -77,69 +226,95 @@ bool NestedLoopJoinExecutor::DExecute() {
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
 
-    bool advance_left_child = false;
+    bool advance_right_child = false;
 
     // If we have already retrieved all right child's results in buffer
-    if (right_child_done_ == true) {
-      LOG_TRACE("Advance the right buffer iterator.");
+    if (left_child_done_ == true) {
+      LOG_TRACE("Advance the left buffer iterator.");
 
       assert(!left_result_tiles_.empty());
       assert(!right_result_tiles_.empty());
-      right_result_itr_++;
+      left_result_itr_++;
 
-      if (right_result_itr_ >= right_result_tiles_.size()) {
-        advance_left_child = true;
-        right_result_itr_ = 0;
+      if (left_result_itr_ >= left_result_tiles_.size()) {
+        advance_right_child = true;
+        left_result_itr_ = 0;
       }
 
     }
-    // Otherwise, we must attempt to execute the right child
+    // Otherwise, we must attempt to execute the left child
     else {
-      // Right child is finished, no more tiles
-      if (children_[1]->Execute() == false) {
-        LOG_TRACE("Right child is exhausted.");
+      // Left child is finished, no more tiles
+      if (children_[0]->Execute() == false) {
+        LOG_TRACE("Left child is exhausted.");
 
-        if (right_result_tiles_.empty()) {
-          assert(left_result_tiles_.empty());
-          LOG_TRACE("Right child returned nothing. Exit.");
+        if (left_result_tiles_.empty()) {
+          assert(right_result_tiles_.empty());
+          LOG_TRACE("Left child returned nothing. Exit.");
           return false;
         }
 
-        right_child_done_ = true;
-        right_result_itr_ = 0;
-        advance_left_child = true;
-      }
-      // Buffer the right child's result
-      else {
-        LOG_TRACE("Retrieve a new tile from right child");
-        BufferRightTile(children_[1]->GetOutput());
-        right_result_itr_ = right_result_tiles_.size() - 1;
-      }
-    }
-
-    if (advance_left_child == true || left_result_tiles_.empty()) {
-      assert(right_result_itr_ == 0);
-
-      // Left child is finished, no more tiles
-      if (children_[0]->Execute() == false) {
-        LOG_TRACE("Left child is exhausted. Returning false.");
-
-        // Left child exhausted.
-        // Release cur left tile. Clear right child's result buffer and return.
-        assert(right_result_tiles_.size() > 0);
         left_child_done_ = true;
-
-        return BuildOuterJoinOutput();
+        left_result_itr_ = 0;
+        advance_right_child = true;
       }
       // Buffer the left child's result
       else {
-        LOG_TRACE("Advance the left child.");
+        LOG_TRACE("Retrieve a new tile from left child");
         BufferLeftTile(children_[0]->GetOutput());
+        left_result_itr_ = left_result_tiles_.size() - 1;
       }
     }
 
+    // Go over every pair of tuples in left and right logical tiles
     left_tile = left_result_tiles_.back().get();
-    right_tile = right_result_tiles_[right_result_itr_].get();
+    for (auto left_tile_row_itr : *left_tile) {
+
+      expression::ContainerTuple<executor::LogicalTile> left_tuple(
+           left_tile, left_tile_row_itr);
+
+	  foreach(lc, nl->nestParams)
+	  {
+			NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
+			//int			paramno = nlp->paramno;
+			//Var		   *paramval = nlp->paramval;
+
+			Value value = left_tuple.GetValue(nlp->paramval->varattno -1);
+			executor_context_->ClearParams();
+			executor_context_->SetParams(value);
+			executor_context_->SetParamsExec(1);
+			children_[1]->ClearContext();
+			children_[1]->SetContext(value, 1);
+
+			/* Flag parameter value as changed */
+			// innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
+	  }
+
+    }  // end for
+
+    if (advance_right_child == true || right_result_tiles_.empty()) {
+      assert(left_result_itr_ == 0);
+
+      // Right child is finished, no more tiles
+      if (children_[1]->Execute() == false) {
+        LOG_TRACE("Right child is exhausted. Returning false.");
+
+        // Right child exhausted.
+        // Release cur Right tile. Clear right child's result buffer and return.
+        assert(left_result_tiles_.size() > 0);
+        right_child_done_ = true;
+
+        return BuildOuterJoinOutput();
+      }
+      // Buffer the Right child's result
+      else {
+        LOG_TRACE("Advance the Right child.");
+        BufferRightTile(children_[1]->GetOutput());
+      }
+    }
+
+    right_tile = right_result_tiles_.back().get();
+    left_tile = left_result_tiles_[left_result_itr_].get();
 
     //===--------------------------------------------------------------------===//
     // Build Join Tile

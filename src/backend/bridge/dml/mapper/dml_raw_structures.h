@@ -147,7 +147,9 @@ struct AbstractJoinPlanState : public AbstractPlanState {
   List *targetlist;
 };
 
-struct NestLoopPlanState : public AbstractJoinPlanState {};
+struct NestLoopPlanState : public AbstractJoinPlanState {
+	NestLoop *nl; // added by Michael
+};
 
 struct MergeJoinPlanState : public AbstractJoinPlanState {
   int mj_NumClauses;
