@@ -35,8 +35,9 @@ class BtreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  // typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
+
   typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  // typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
   BtreeIndex(IndexMetadata *metadata)
@@ -48,88 +49,78 @@ class BtreeIndex : public Index {
   ~BtreeIndex() {}
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
+    KeyType index_key;
+    index_key.SetFromKey(key);
+
     {
       index_lock.WriteLock();
-      KeyType index_key;
-      index_key.SetFromKey(key);
 
       // Insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
       index_lock.Unlock();
-      return true;
     }
+
+    return true;
   }
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer location) {
+    KeyType index_key;
+    index_key.SetFromKey(key);
+
     {
       index_lock.WriteLock();
-      KeyType index_key;
-      index_key.SetFromKey(key);
 
-      // Delete the < key, location > pair
+      // Delete the <key, location> pair
       bool stop = false;
-      while (!stop) {
+      while (stop == false) {
         auto entries = container.equal_range(index_key);
         stop = true;
-        for (auto iterator = entries.first; iterator != entries.second;
-            iterator++) {
+
+        for (auto iterator = entries.first; iterator != entries.second; iterator++) {
           ItemPointer value = iterator->second;
 
-          if ((value.block == location.block) &&
-              (value.offset == location.offset)) {
-            // remove matching (key, value) entry
+          // remove matching < key, location > entry
+          if ((value.block == location.block) && (value.offset == location.offset)) {
             container.erase(iterator);
-
             stop = false;
             break;
           }
+
         }
       }
-
-      /*
-      auto entries = container.equal_range(index_key);
-      for (auto iterator = entries.first; iterator != entries.second;) {
-        ItemPointer value = iterator->second;
-
-        if ((value.block == location.block)
-            && (value.offset == location.offset)) {
-          // remove matching (key, value) entry
-          iterator = container.erase(iterator);
-        } else {
-          iterator++;
-        }
-      }
-       */
 
       index_lock.Unlock();
-      return true;
     }
+
+    return true;
   }
 
   bool UpdateEntry(const storage::Tuple *key, const ItemPointer location) {
+    KeyType index_key;
+    index_key.SetFromKey(key);
+
     {
       index_lock.WriteLock();
-      KeyType index_key;
-      index_key.SetFromKey(key);
 
       // insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
       index_lock.Unlock();
-      return true;
     }
+
+    return true;
   }
 
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types) {
     std::vector<ItemPointer> result;
+    KeyType index_key;
 
     {
       index_lock.ReadLock();
 
-      KeyType index_key;
       // check if we have leading column equality
       oid_t leading_column_id = 0;
       auto key_column_ids_itr = std::find(
@@ -156,8 +147,6 @@ class BtreeIndex : public Index {
 
         // all equal case
         if (all_equal) {
-          // itr_begin = container.find(index_key1);
-          /* 'find' may return any one of the elements with the key */
           auto ret = container.equal_range(index_key);
           itr_begin = ret.first;
           itr_end = ret.second;
@@ -211,23 +200,26 @@ class BtreeIndex : public Index {
    * @brief Return all locations related to this key.
    */
   std::vector<ItemPointer> ScanKey(const storage::Tuple *key) {
-    index_lock.ReadLock();
+    std::vector<ItemPointer> retval;
     KeyType index_key;
-
     index_key.SetFromKey(key);
 
-    std::vector<ItemPointer> retval;
-    // find the <key, location> pair
-    auto entries = container.equal_range(index_key);
-    for (auto entry = entries.first; entry != entries.second; ++entry) {
-      retval.push_back(entry->second);
+    {
+      index_lock.ReadLock();
+
+      // find the <key, location> pair
+      auto entries = container.equal_range(index_key);
+      for (auto entry = entries.first; entry != entries.second; ++entry) {
+        retval.push_back(entry->second);
+      }
+
+      index_lock.Unlock();
     }
 
-    index_lock.Unlock();
     return std::move(retval);
   }
 
-  std::string GetTypeName() const { return "BtreeMulti"; }
+  std::string GetTypeName() const { return "Btree"; }
 
  protected:
   MapType container;
