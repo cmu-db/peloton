@@ -129,20 +129,17 @@ class Index {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // return where the entry is already stored in the index
-  virtual ItemPointer Exists(const storage::Tuple *key,
-                             const ItemPointer location) = 0;
-
-  // scan all keys in the index comparing with an arbitrary key
+  // scan all keys in the index matching an arbitrary key
+  // used by index scan executor
   virtual std::vector<ItemPointer> Scan(
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs) = 0;
 
-  // scan all keys in the index, working like a sort
-  virtual std::vector<ItemPointer> Scan() = 0;
+  // scan the entire index, working like a sort
+  virtual std::vector<ItemPointer> ScanAllKeys() = 0;
 
-  virtual std::vector<ItemPointer> Scan(const storage::Tuple *key) = 0;
+  virtual std::vector<ItemPointer> ScanKey(const storage::Tuple *key) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS

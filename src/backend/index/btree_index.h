@@ -40,10 +40,10 @@ class BtreeIndex : public Index {
 
  public:
   BtreeIndex(IndexMetadata *metadata)
-      : Index(metadata),
-        container(KeyComparator(metadata)),
-        equals(metadata),
-        comparator(metadata) {}
+ : Index(metadata),
+   container(KeyComparator(metadata)),
+   equals(metadata),
+   comparator(metadata) {}
 
   ~BtreeIndex() {}
 
@@ -73,7 +73,7 @@ class BtreeIndex : public Index {
         auto entries = container.equal_range(index_key);
         stop = true;
         for (auto iterator = entries.first; iterator != entries.second;
-             iterator++) {
+            iterator++) {
           ItemPointer value = iterator->second;
 
           if ((value.block == location.block) &&
@@ -100,7 +100,7 @@ class BtreeIndex : public Index {
           iterator++;
         }
       }
-      */
+       */
 
       index_lock.Unlock();
       return true;
@@ -118,28 +118,6 @@ class BtreeIndex : public Index {
 
       index_lock.Unlock();
       return true;
-    }
-  }
-
-  ItemPointer Exists(const storage::Tuple *key, const ItemPointer location) {
-    {
-      index_lock.ReadLock();
-      KeyType index_key;
-      index_key.SetFromKey(key);
-
-      // find the <key, location> pair
-      auto entries = container.equal_range(index_key);
-      for (auto entry = entries.first; entry != entries.second; ++entry) {
-        ItemPointer value = entry->second;
-        if ((value.block == location.block) &&
-            (value.offset == location.offset)) {
-          index_lock.Unlock();
-          return value;
-        }
-      }
-
-      index_lock.Unlock();
-      return INVALID_ITEMPOINTER;
     }
   }
 
@@ -208,7 +186,7 @@ class BtreeIndex : public Index {
     return result;
   }
 
-  std::vector<ItemPointer> Scan() {
+  std::vector<ItemPointer> ScanAllKeys() {
     std::vector<ItemPointer> result;
 
     {
@@ -232,7 +210,7 @@ class BtreeIndex : public Index {
   /**
    * @brief Return all locations related to this key.
    */
-  std::vector<ItemPointer> Scan(const storage::Tuple *key) {
+  std::vector<ItemPointer> ScanKey(const storage::Tuple *key) {
     index_lock.ReadLock();
     KeyType index_key;
 
@@ -254,7 +232,7 @@ class BtreeIndex : public Index {
  protected:
   MapType container;
 
-  // comparison stuff
+  // equality checker and comparator
   KeyEqualityChecker equals;
   KeyComparator comparator;
 
