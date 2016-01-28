@@ -237,7 +237,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        auto locations = index->Scan(key.get());
+        auto locations = index->ScanKey(key.get());
         auto exist_visible = ContainsVisibleEntry(locations, transaction);
         if (exist_visible) {
           LOG_WARN("A visible index entry exists.");
