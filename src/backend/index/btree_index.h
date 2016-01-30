@@ -71,23 +71,25 @@ class BtreeIndex : public Index {
     {
       index_lock.WriteLock();
 
-      // Delete the <key, location> pair
-      bool stop = false;
-      while (stop == false) {
-        auto entries = container.equal_range(index_key);
-        stop = true;
+      // Delete the < key, location > pair
+      bool try_again = true;
+      while(try_again == true) {
+        // Unset try again
+        try_again = false;
 
+        // Lookup matching entries
+        auto entries = container.equal_range(index_key);
         for (auto iterator = entries.first; iterator != entries.second; iterator++) {
           ItemPointer value = iterator->second;
 
-          // remove matching < key, location > entry
           if ((value.block == location.block) && (value.offset == location.offset)) {
             container.erase(iterator);
-            stop = false;
+            // Set try again
+            try_again = true;
             break;
           }
-
         }
+
       }
 
       index_lock.Unlock();
