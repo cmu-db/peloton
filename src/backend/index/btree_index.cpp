@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/index/btree_index.h"
 #include "backend/index/index_key.h"
 #include "backend/common/logger.h"
@@ -198,7 +197,7 @@ template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
 BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::ScanKey(
     const storage::Tuple *key) {
-  std::vector<ItemPointer> retval;
+  std::vector<ItemPointer> result;
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -208,13 +207,13 @@ BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::ScanKey(
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      retval.push_back(entry->second);
+      result.push_back(entry->second);
     }
 
     index_lock.Unlock();
   }
 
-  return std::move(retval);
+  return result;
 }
 
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
@@ -224,21 +223,33 @@ BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::GetTypeName() const {
 }
 
 // Explicit template instantiation
-template class BtreeIndex<GenericKey<4>, GenericComparator<4>, GenericEqualityChecker<4>>;
-template class BtreeIndex<GenericKey<8>, GenericComparator<8>, GenericEqualityChecker<8>>;
-template class BtreeIndex<GenericKey<12>, GenericComparator<12>, GenericEqualityChecker<12>>;
-template class BtreeIndex<GenericKey<16>, GenericComparator<16>, GenericEqualityChecker<16>>;
-template class BtreeIndex<GenericKey<24>, GenericComparator<24>, GenericEqualityChecker<24>>;
-template class BtreeIndex<GenericKey<32>, GenericComparator<32>, GenericEqualityChecker<32>>;
-template class BtreeIndex<GenericKey<48>, GenericComparator<48>, GenericEqualityChecker<48>>;
-template class BtreeIndex<GenericKey<64>, GenericComparator<64>, GenericEqualityChecker<64>>;
-template class BtreeIndex<GenericKey<96>, GenericComparator<96>, GenericEqualityChecker<96>>;
-template class BtreeIndex<GenericKey<128>, GenericComparator<128>, GenericEqualityChecker<128>>;
-template class BtreeIndex<GenericKey<256>, GenericComparator<256>, GenericEqualityChecker<256>>;
-template class BtreeIndex<GenericKey<512>, GenericComparator<512>, GenericEqualityChecker<512>>;
+template class BtreeIndex<GenericKey<4>, GenericComparator<4>,
+                          GenericEqualityChecker<4>>;
+template class BtreeIndex<GenericKey<8>, GenericComparator<8>,
+                          GenericEqualityChecker<8>>;
+template class BtreeIndex<GenericKey<12>, GenericComparator<12>,
+                          GenericEqualityChecker<12>>;
+template class BtreeIndex<GenericKey<16>, GenericComparator<16>,
+                          GenericEqualityChecker<16>>;
+template class BtreeIndex<GenericKey<24>, GenericComparator<24>,
+                          GenericEqualityChecker<24>>;
+template class BtreeIndex<GenericKey<32>, GenericComparator<32>,
+                          GenericEqualityChecker<32>>;
+template class BtreeIndex<GenericKey<48>, GenericComparator<48>,
+                          GenericEqualityChecker<48>>;
+template class BtreeIndex<GenericKey<64>, GenericComparator<64>,
+                          GenericEqualityChecker<64>>;
+template class BtreeIndex<GenericKey<96>, GenericComparator<96>,
+                          GenericEqualityChecker<96>>;
+template class BtreeIndex<GenericKey<128>, GenericComparator<128>,
+                          GenericEqualityChecker<128>>;
+template class BtreeIndex<GenericKey<256>, GenericComparator<256>,
+                          GenericEqualityChecker<256>>;
+template class BtreeIndex<GenericKey<512>, GenericComparator<512>,
+                          GenericEqualityChecker<512>>;
 
-template class BtreeIndex<TupleKey, TupleKeyComparator, TupleKeyEqualityChecker>;
-
+template class BtreeIndex<TupleKey, TupleKeyComparator,
+                          TupleKeyEqualityChecker>;
 
 }  // End index namespace
 }  // End peloton namespace
