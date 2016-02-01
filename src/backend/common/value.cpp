@@ -1093,7 +1093,7 @@ Value Value::GetMinValue(ValueType type) {
       return GetDoubleValue(-DBL_MAX);
       break;
     case (VALUE_TYPE_VARCHAR):
-      return GetTempStringValue("", 2);
+      return GetTempStringValue("\0", 1);
       break;
     case (VALUE_TYPE_TIMESTAMP):
       return GetTimestampValue(PELOTON_INT64_MIN);
