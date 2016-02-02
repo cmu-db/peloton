@@ -111,8 +111,7 @@ bool HashJoinExecutor::DExecute() {
 	  size_t left_tile_column_count = left_tile_position_lists.size();
 	  size_t right_tile_column_count = right_tile_position_lists.size();
 
-	  // Get the hash table from the hash executor
-
+  // Get the hash table from the hash executor
   auto &htable = hash_executor_->GetHashTable();
 
   // auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
@@ -130,8 +129,12 @@ bool HashJoinExecutor::DExecute() {
          left_tile, left_tile_itr, &hashed_col_ids);
 
      // Find matching tuples in the hash table built on top of the right table
-     auto &set = htable.at(left_tuple);
+     //auto &set = htable.at(left_tuple);
+     //HashMapType::const_iterator got = htable.find(left_tuple);
+     auto got = htable.find(left_tuple);
+     if ( got == htable.end() ) continue;
 
+     auto set = got->second;
      // Go over the matching right tuples
      for (auto &location : set) {
        auto &right_tile_position_lists = right_tiles_[location.first]->GetPositionLists();
