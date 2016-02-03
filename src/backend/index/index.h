@@ -121,10 +121,6 @@ class Index {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer location) = 0;
 
-  // update a index entry
-  virtual bool UpdateEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
-
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//

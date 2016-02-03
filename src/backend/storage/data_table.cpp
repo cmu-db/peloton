@@ -308,56 +308,6 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
 }
 
 //===--------------------------------------------------------------------===//
-// UPDATE
-//===--------------------------------------------------------------------===//
-/**
- * @return Location of the newly inserted (updated) tuple
- */
-ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple) {
-  // Do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
-  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
-
-  bool status = false;
-  // 1) Try as if it's a same-key update
-  status = UpdateInIndexes(tuple, location);
-
-  // 2) If 1) fails, try again as an Insert
-  if (false == status) {
-    status = InsertInIndexes(transaction, tuple, location);
-  }
-
-  // 3) If still fails, then it is a real failure
-  if (false == status) {
-    location = INVALID_ITEMPOINTER;
-  }
-
-  return location;
-}
-
-bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
-                                const ItemPointer location) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-    if (index->UpdateEntry(key, location) == false) {
-      LOG_TRACE("Same-key update index failed \n");
-      delete key;
-      return false;
-    }
-
-    delete key;
-  }
-
-  return true;
-}
-
-//===--------------------------------------------------------------------===//
 // STATS
 //===--------------------------------------------------------------------===//
 
