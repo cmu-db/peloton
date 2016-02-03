@@ -85,24 +85,6 @@ bool BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
 }
 
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-bool BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::UpdateEntry(
-    const storage::Tuple *key, const ItemPointer location) {
-  KeyType index_key;
-  index_key.SetFromKey(key);
-
-  {
-    index_lock.WriteLock();
-
-    // insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(index_key, location));
-
-    index_lock.Unlock();
-  }
-
-  return true;
-}
-
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
 BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,

@@ -98,10 +98,6 @@ class DataTable : public AbstractTable {
   ItemPointer InsertTuple(const concurrency::Transaction *transaction,
                           const Tuple *tuple);
 
-  // insert the updated tuple in table
-  ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple);
-
   // delete the tuple at given location
   bool DeleteTuple(const concurrency::Transaction *transaction,
                    ItemPointer location);
