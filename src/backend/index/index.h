@@ -192,6 +192,12 @@ class Index {
 
   VarlenPool *GetPool() const { return pool; }
 
+  // Garbage collect
+  virtual bool Cleanup() = 0;
+
+  // Get the memory footprint
+  virtual size_t GetMemoryFootprint() = 0;
+
  protected:
   Index(IndexMetadata *schema);
 

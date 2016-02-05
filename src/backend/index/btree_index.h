@@ -16,6 +16,7 @@
 #include <string>
 
 #include "backend/catalog/manager.h"
+#include "backend/common/allocator.h"
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
@@ -34,8 +35,10 @@ template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 class BTreeIndex : public Index {
   friend class IndexFactory;
 
+  // Define the value type
   typedef ItemPointer ValueType;
 
+  // Define the container type
   typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
@@ -57,6 +60,14 @@ class BTreeIndex : public Index {
   std::vector<ItemPointer> ScanKey(const storage::Tuple *key);
 
   std::string GetTypeName() const;
+
+  bool Cleanup() {
+    return true;
+  }
+
+  size_t GetMemoryFootprint() {
+    return container.GetMemoryFootprint();
+  }
 
  protected:
   MapType container;

@@ -77,6 +77,8 @@
 #define BTREE_FRIENDS           friend class btree_friend;
 #endif
 
+#define BTREE_NODE_SIZE  256
+
 /// STX - Some Template Extensions namespace
 namespace stx {
 
@@ -97,17 +99,17 @@ struct btree_default_set_traits
 
     /// Number of slots in each leaf of the tree. Estimated so that each node
     /// has a size of about 256 bytes.
-    static const int    leafslots = BTREE_MAX( 8, 256 / (sizeof(_Key)) );
+    static const int    leafslots = BTREE_MAX( 8, BTREE_NODE_SIZE / (sizeof(_Key)) );
 
     /// Number of slots in each inner node of the tree. Estimated so that each node
     /// has a size of about 256 bytes.
-    static const int    innerslots = BTREE_MAX( 8, 256 / (sizeof(_Key) + sizeof(void*)) );
+    static const int    innerslots = BTREE_MAX( 8, BTREE_NODE_SIZE / (sizeof(_Key) + sizeof(void*)) );
 
     /// As of stx-btree-0.9, the code does linear search in find_lower() and
     /// find_upper() instead of binary_search, unless the node size is larger
     /// than this threshold. See notes at
     /// http://panthema.net/2013/0504-STX-B+Tree-Binary-vs-Linear-Search
-    static const size_t binsearch_threshold = 256;
+    static const size_t binsearch_threshold = BTREE_NODE_SIZE;
 };
 
 /** Generates default traits for a B+ tree used as a map. It estimates leaf and
@@ -127,17 +129,17 @@ struct btree_default_map_traits
 
     /// Number of slots in each leaf of the tree. Estimated so that each node
     /// has a size of about 256 bytes.
-    static const int    leafslots = BTREE_MAX( 8, 256 / (sizeof(_Key) + sizeof(_Data)) );
+    static const int    leafslots = BTREE_MAX( 8, BTREE_NODE_SIZE / (sizeof(_Key) + sizeof(_Data)) );
 
     /// Number of slots in each inner node of the tree. Estimated so that each node
     /// has a size of about 256 bytes.
-    static const int    innerslots = BTREE_MAX( 8, 256 / (sizeof(_Key) + sizeof(void*)) );
+    static const int    innerslots = BTREE_MAX( 8, BTREE_NODE_SIZE / (sizeof(_Key) + sizeof(void*)) );
 
     /// As of stx-btree-0.9, the code does linear search in find_lower() and
     /// find_upper() instead of binary_search, unless the node size is larger
     /// than this threshold. See notes at
     /// http://panthema.net/2013/0504-STX-B+Tree-Binary-vs-Linear-Search
-    static const size_t binsearch_threshold = 256;
+    static const size_t binsearch_threshold = BTREE_NODE_SIZE;
 };
 
 /** @brief Basic class implementing a base B+ tree data structure in memory.
@@ -3976,6 +3978,20 @@ private:
             return newinner;
         }
     }
+
+public:
+
+    // TODO: Peloton Changes
+    size_t GetMemoryFootprint() const {
+      //return m_allocator.GetMemoryFootprint();
+      return m_stats.nodes() * BTREE_NODE_SIZE;
+    }
+
+private:
+
+    // Memory footprint
+    size_t memory_footprint = 0;
+
 };
 
 } // namespace stx
