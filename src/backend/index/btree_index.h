@@ -31,12 +31,9 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 class BTreeIndex : public Index {
   friend class IndexFactory;
-
-  // Define the value type
-  typedef ItemPointer ValueType;
 
   // Define the container type
   typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;

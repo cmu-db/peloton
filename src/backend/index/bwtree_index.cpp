@@ -18,8 +18,8 @@
 namespace peloton {
 namespace index {
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::BWTreeIndex(
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BWTreeIndex(
     IndexMetadata *metadata)
     : Index(metadata),
       equals(metadata),
@@ -27,28 +27,28 @@ BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::BWTreeIndex(
   // Add your implementation here
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::~BWTreeIndex() {
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::~BWTreeIndex() {
   // Add your implementation here
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-bool BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::InsertEntry(
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
+bool BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::InsertEntry(
     __attribute__((unused)) const storage::Tuple *key, __attribute__((unused)) const ItemPointer location) {
   // Add your implementation here
   return false;
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-bool BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
+bool BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
     __attribute__((unused)) const storage::Tuple *key, __attribute__((unused)) const ItemPointer location) {
   // Add your implementation here
   return false;
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::Scan(
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     __attribute__((unused)) const std::vector<Value> &values,
     __attribute__((unused)) const std::vector<oid_t> &key_column_ids,
     __attribute__((unused)) const std::vector<ExpressionType> &expr_types,
@@ -58,9 +58,9 @@ BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::Scan(
   return result;
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::ScanAllKeys() {
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys() {
   std::vector<ItemPointer> result;
   // Add your implementation here
   return result;
@@ -69,48 +69,48 @@ BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::ScanAllKeys() {
 /**
  * @brief Return all locations related to this key.
  */
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::ScanKey(
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     __attribute__((unused)) const storage::Tuple *key) {
   std::vector<ItemPointer> result;
   // Add your implementation here
   return result;
 }
 
-template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 std::string
-BWTreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::GetTypeName() const {
+BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::GetTypeName() const {
   return "BWTree";
 }
 
 // Explicit template instantiation
-template class BWTreeIndex<GenericKey<4>, GenericComparator<4>,
+template class BWTreeIndex<GenericKey<4>, ItemPointer, GenericComparator<4>,
 GenericEqualityChecker<4>>;
-template class BWTreeIndex<GenericKey<8>, GenericComparator<8>,
+template class BWTreeIndex<GenericKey<8>, ItemPointer, GenericComparator<8>,
 GenericEqualityChecker<8>>;
-template class BWTreeIndex<GenericKey<12>, GenericComparator<12>,
+template class BWTreeIndex<GenericKey<12>, ItemPointer, GenericComparator<12>,
 GenericEqualityChecker<12>>;
-template class BWTreeIndex<GenericKey<16>, GenericComparator<16>,
+template class BWTreeIndex<GenericKey<16>, ItemPointer, GenericComparator<16>,
 GenericEqualityChecker<16>>;
-template class BWTreeIndex<GenericKey<24>, GenericComparator<24>,
+template class BWTreeIndex<GenericKey<24>, ItemPointer, GenericComparator<24>,
 GenericEqualityChecker<24>>;
-template class BWTreeIndex<GenericKey<32>, GenericComparator<32>,
+template class BWTreeIndex<GenericKey<32>, ItemPointer, GenericComparator<32>,
 GenericEqualityChecker<32>>;
-template class BWTreeIndex<GenericKey<48>, GenericComparator<48>,
+template class BWTreeIndex<GenericKey<48>, ItemPointer, GenericComparator<48>,
 GenericEqualityChecker<48>>;
-template class BWTreeIndex<GenericKey<64>, GenericComparator<64>,
+template class BWTreeIndex<GenericKey<64>, ItemPointer, GenericComparator<64>,
 GenericEqualityChecker<64>>;
-template class BWTreeIndex<GenericKey<96>, GenericComparator<96>,
+template class BWTreeIndex<GenericKey<96>, ItemPointer, GenericComparator<96>,
 GenericEqualityChecker<96>>;
-template class BWTreeIndex<GenericKey<128>, GenericComparator<128>,
+template class BWTreeIndex<GenericKey<128>, ItemPointer, GenericComparator<128>,
 GenericEqualityChecker<128>>;
-template class BWTreeIndex<GenericKey<256>, GenericComparator<256>,
+template class BWTreeIndex<GenericKey<256>, ItemPointer, GenericComparator<256>,
 GenericEqualityChecker<256>>;
-template class BWTreeIndex<GenericKey<512>, GenericComparator<512>,
+template class BWTreeIndex<GenericKey<512>, ItemPointer, GenericComparator<512>,
 GenericEqualityChecker<512>>;
 
-template class BWTreeIndex<TupleKey, TupleKeyComparator,
+template class BWTreeIndex<TupleKey, ItemPointer, TupleKeyComparator,
 TupleKeyEqualityChecker>;
 
 }  // End index namespace
