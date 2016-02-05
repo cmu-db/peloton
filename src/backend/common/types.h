@@ -420,6 +420,18 @@ enum StatementType {
 };
 
 //===--------------------------------------------------------------------===//
+// Scan Direction Types
+//===--------------------------------------------------------------------===//
+
+enum ScanDirectionType
+{
+  SCAN_DIRECTION_TYPE_INVALID = 0,  // invalid scan direction
+
+  SCAN_DIRECTION_TYPE_FORWARD = 1,  // forward
+  SCAN_DIRECTION_TYPE_BACKWARD = 2  // backward
+};
+
+//===--------------------------------------------------------------------===//
 // Join Types
 //===--------------------------------------------------------------------===//
 
