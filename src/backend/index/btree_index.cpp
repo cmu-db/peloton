@@ -65,7 +65,7 @@ bool BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
       // Lookup matching entries
       auto entries = container.equal_range(index_key);
       for (auto iterator = entries.first; iterator != entries.second;
-           iterator++) {
+          iterator++) {
         ItemPointer value = iterator->second;
 
         if ((value.block == location.block) &&
@@ -87,8 +87,10 @@ bool BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
 BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::Scan(
-    const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
-    const std::vector<ExpressionType> &expr_types) {
+    const std::vector<Value> &values,
+    const std::vector<oid_t> &key_column_ids,
+    const std::vector<ExpressionType> &expr_types,
+    const ScanDirectionType& scan_direction) {
   std::vector<ItemPointer> result;
   KeyType index_key;
 
@@ -132,23 +134,36 @@ BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::Scan(
       scan_begin_itr = container.equal_range(index_key).first;
     }
 
-    // Scan the index entries and compare them
-    for (auto scan_itr = scan_begin_itr; scan_itr != container.end(); scan_itr++) {
-      auto scan_current_key = scan_itr->first;
-      auto tuple = scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+    switch(scan_direction){
+      case SCAN_DIRECTION_TYPE_FORWARD:
+      case SCAN_DIRECTION_TYPE_BACKWARD: {
 
-      // Compare the current key in the scan with "values" based on "expression types"
-      // For instance, "5" EXPR_GREATER_THAN "2" is true
-      if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-        ItemPointer location = scan_itr->second;
-        result.push_back(location);
-      }
-      else {
-        // We can stop scanning if we know that all constraints are equal
-        if(all_constraints_are_equal == true) {
-          break;
+        // Scan the index entries in forward direction
+        for (auto scan_itr = scan_begin_itr; scan_itr != container.end(); scan_itr++) {
+          auto scan_current_key = scan_itr->first;
+          auto tuple = scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+          // Compare the current key in the scan with "values" based on "expression types"
+          // For instance, "5" EXPR_GREATER_THAN "2" is true
+          if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+            ItemPointer location = scan_itr->second;
+            result.push_back(location);
+          }
+          else {
+            // We can stop scanning if we know that all constraints are equal
+            if(all_constraints_are_equal == true) {
+              break;
+            }
+          }
         }
+
       }
+      break;
+
+      case SCAN_DIRECTION_TYPE_INVALID:
+      default:
+        throw Exception("Invalid scan direction \n");
+        break;
     }
 
     index_lock.Unlock();
@@ -214,32 +229,32 @@ BtreeIndex<KeyType, KeyComparator, KeyEqualityChecker>::GetTypeName() const {
 
 // Explicit template instantiation
 template class BtreeIndex<GenericKey<4>, GenericComparator<4>,
-                          GenericEqualityChecker<4>>;
+GenericEqualityChecker<4>>;
 template class BtreeIndex<GenericKey<8>, GenericComparator<8>,
-                          GenericEqualityChecker<8>>;
+GenericEqualityChecker<8>>;
 template class BtreeIndex<GenericKey<12>, GenericComparator<12>,
-                          GenericEqualityChecker<12>>;
+GenericEqualityChecker<12>>;
 template class BtreeIndex<GenericKey<16>, GenericComparator<16>,
-                          GenericEqualityChecker<16>>;
+GenericEqualityChecker<16>>;
 template class BtreeIndex<GenericKey<24>, GenericComparator<24>,
-                          GenericEqualityChecker<24>>;
+GenericEqualityChecker<24>>;
 template class BtreeIndex<GenericKey<32>, GenericComparator<32>,
-                          GenericEqualityChecker<32>>;
+GenericEqualityChecker<32>>;
 template class BtreeIndex<GenericKey<48>, GenericComparator<48>,
-                          GenericEqualityChecker<48>>;
+GenericEqualityChecker<48>>;
 template class BtreeIndex<GenericKey<64>, GenericComparator<64>,
-                          GenericEqualityChecker<64>>;
+GenericEqualityChecker<64>>;
 template class BtreeIndex<GenericKey<96>, GenericComparator<96>,
-                          GenericEqualityChecker<96>>;
+GenericEqualityChecker<96>>;
 template class BtreeIndex<GenericKey<128>, GenericComparator<128>,
-                          GenericEqualityChecker<128>>;
+GenericEqualityChecker<128>>;
 template class BtreeIndex<GenericKey<256>, GenericComparator<256>,
-                          GenericEqualityChecker<256>>;
+GenericEqualityChecker<256>>;
 template class BtreeIndex<GenericKey<512>, GenericComparator<512>,
-                          GenericEqualityChecker<512>>;
+GenericEqualityChecker<512>>;
 
 template class BtreeIndex<TupleKey, TupleKeyComparator,
-                          TupleKeyEqualityChecker>;
+TupleKeyEqualityChecker>;
 
 }  // End index namespace
 }  // End peloton namespace
