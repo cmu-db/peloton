@@ -559,6 +559,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_BTREE: {
       return "BTREE";
     }
+    case INDEX_TYPE_BWTREE: {
+      return "BWTREE";
+    }
   }
   return "INVALID";
 }
@@ -568,6 +571,8 @@ IndexType StringToIndexType(std::string str) {
     return INDEX_TYPE_INVALID;
   } else if (str == "BTREE") {
     return INDEX_TYPE_BTREE;
+  }  else if (str == "BWTREE") {
+    return INDEX_TYPE_BWTREE;
   }
   return INDEX_TYPE_INVALID;
 }
