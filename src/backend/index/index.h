@@ -130,7 +130,8 @@ class Index {
   virtual std::vector<ItemPointer> Scan(
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
-      const std::vector<ExpressionType> &exprs) = 0;
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType& scan_direction) = 0;
 
   // scan the entire index, working like a sort
   virtual std::vector<ItemPointer> ScanAllKeys() = 0;
