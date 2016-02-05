@@ -321,7 +321,8 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1  // btree
+  INDEX_TYPE_BTREE = 1,  // btree
+  INDEX_TYPE_BWTREE = 2  // bwtree
 };
 
 enum IndexConstraintType {

@@ -14,34 +14,35 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "backend/catalog/manager.h"
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 
-#include "stx/btree_multimap.h"
+#include "backend/index/bwtree.h"
 
 namespace peloton {
 namespace index {
 
 /**
- * STX B+tree-based index implementation.
+ * BW tree-based index implementation.
  *
  * @see Index
  */
 template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
-class BTreeIndex : public Index {
+class BWTreeIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
 
-  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  typedef BWTree<KeyType, ValueType, KeyComparator> MapType;
 
  public:
-  BTreeIndex(IndexMetadata *metadata);
+  BWTreeIndex(IndexMetadata *metadata);
 
-  ~BTreeIndex();
+  ~BWTreeIndex();
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer location);
 
@@ -59,6 +60,7 @@ class BTreeIndex : public Index {
   std::string GetTypeName() const;
 
  protected:
+  // container
   MapType container;
 
   // equality checker and comparator
