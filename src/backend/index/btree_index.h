@@ -16,11 +16,12 @@
 #include <string>
 #include <map>
 
-#include "stx/btree_multimap.h"
 #include "backend/catalog/manager.h"
+#include "backend/common/platform.h"
 #include "backend/common/types.h"
-#include "backend/common/synch.h"
 #include "backend/index/index.h"
+
+#include "stx/btree_multimap.h"
 
 namespace peloton {
 namespace index {

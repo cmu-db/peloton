@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// synch.h
+// platform.h
 //
-// Identification: src/backend/common/synch.h
+// Identification: src/backend/common/platform.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -128,5 +128,18 @@ class Spinlock {
    * instruction*/
   std::atomic<LockState> spin_lock_state;
 };
+
+/**
+ * Returns the current resident set size (physical memory use) measured
+ * in bytes, or zero if the value cannot be determined on this OS.
+ */
+size_t GetCurrentRSS();
+
+/**
+ * Returns the peak (maximum so far) resident set size (physical
+ * memory use) measured in bytes, or zero if the value cannot be
+ * determined on this OS.
+ */
+size_t GetPeakRSS();
 
 }  // End peloton namespace

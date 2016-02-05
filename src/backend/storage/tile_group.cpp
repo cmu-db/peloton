@@ -14,9 +14,9 @@
 
 #include <numeric>
 
+#include "backend/common/platform.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
-#include "backend/common/synch.h"
 #include "backend/common/types.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/tile.h"
