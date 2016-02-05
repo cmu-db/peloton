@@ -603,6 +603,11 @@ public:
     {
         return tree.restore(is);
     }
+
+    // TODO: Peloton Changes
+    size_t GetMemoryFootprint() const {
+      return tree.GetMemoryFootprint();
+    }
 };
 
 } // namespace stx
