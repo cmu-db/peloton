@@ -114,7 +114,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
   status = DDLTable::DropTable(pktable_oid);
   assert(status);
 
-  LOG_INFO(":::::: %s DONE\n", __func__);
+  LOG_INFO(":::::: %s DONE", __func__);
 }
 
 }  // End bridge namespace

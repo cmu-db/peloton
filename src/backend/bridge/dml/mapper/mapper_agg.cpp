@@ -19,7 +19,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   auto tupleDesc = plan_state->result_tupleDescriptor;
   auto aggstrategy = plan_state->agg_plan->aggstrategy;
 
-  LOG_INFO("Number of Agg phases: %d \n", numphases);
+  LOG_INFO("Number of Agg phases: %d ", numphases);
 
   // When we'll have >1 phases?
   if (numphases != 1) return nullptr;
@@ -27,7 +27,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_INFO("proj_info : \n%s", proj_info->Debug().c_str());
+  LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
@@ -36,13 +36,13 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   /* Get Aggregate terms */
   std::vector<planner::AggregatePlan::AggTerm> unique_agg_terms;
 
-  LOG_INFO("Number of (unique) Agg nodes: %d \n", numaggs);
+  LOG_INFO("Number of (unique) Agg nodes: %d ", numaggs);
   for (int aggno = 0; aggno < numaggs; aggno++) {
     auto transfn_oid = peragg[aggno].transfn_oid;
 
     auto itr = peloton::bridge::kPgTransitFuncMap.find(transfn_oid);
     if (kPgFuncMap.end() == itr) {
-      LOG_ERROR("Unmapped Transit function Id : %u\n", transfn_oid);
+      LOG_ERROR("Unmapped Transit function Id : %u", transfn_oid);
       return nullptr;
     }
 
@@ -86,7 +86,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
         peragg[aggno].numDistinctCols);
 
     for (int i = 0; i < peragg[aggno].numDistinctCols; i++) {
-      LOG_INFO("sortColIdx[%d] : %d \n", i, peragg[aggno].sortColIdx[i]);
+      LOG_INFO("sortColIdx[%d] : %d ", i, peragg[aggno].sortColIdx[i]);
     }
 
   }  // end loop aggno
@@ -95,7 +95,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   std::vector<oid_t> groupby_col_ids;
   LOG_INFO("agg.numCols = %d", agg->numCols);
   for (int i = 0; i < agg->numCols; i++) {
-    LOG_INFO("agg.grpColIdx[%d] = %d \n", i, agg->grpColIdx[i]);
+    LOG_INFO("agg.grpColIdx[%d] = %d ", i, agg->grpColIdx[i]);
 
     auto attrno = agg->grpColIdx[i];
     if (AttributeNumberIsValid(attrno) &&
@@ -109,7 +109,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   /* Map agg stragegy */
-  LOG_INFO("aggstrategy : %s\n", (AGG_HASHED == aggstrategy)
+  LOG_INFO("aggstrategy : %s", (AGG_HASHED == aggstrategy)
                                      ? "HASH"
                                      : (AGG_SORTED ? "SORT" : "PLAIN"));
 

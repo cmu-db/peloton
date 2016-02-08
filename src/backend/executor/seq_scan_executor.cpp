@@ -74,7 +74,7 @@ bool SeqScanExecutor::DExecute() {
   // Scanning over a logical tile.
   if (children_.size() == 1) {
     // FIXME Check all requirements for children_.size() == 0 case.
-    LOG_TRACE("Seq Scan executor :: 1 child \n");
+    LOG_TRACE("Seq Scan executor :: 1 child ");
 
     assert(target_table_ == nullptr);
     assert(column_ids_.size() == 0);
@@ -106,7 +106,7 @@ bool SeqScanExecutor::DExecute() {
   }
   // Scanning a table
   else if (children_.size() == 0) {
-    LOG_TRACE("Seq Scan executor :: 0 child \n");
+    LOG_TRACE("Seq Scan executor :: 0 child ");
 
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);

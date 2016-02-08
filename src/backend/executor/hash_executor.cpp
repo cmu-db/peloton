@@ -56,7 +56,7 @@ bool HashExecutor::DExecute() {
     }
 
     if (child_tiles_.size() == 0) {
-      LOG_TRACE("Hash Executor : false -- no child tiles \n");
+      LOG_TRACE("Hash Executor : false -- no child tiles ");
       return false;
     }
 
@@ -102,12 +102,12 @@ bool HashExecutor::DExecute() {
       continue;
     } else {
       SetOutput(child_tiles_[result_itr++].release());
-      LOG_TRACE("Hash Executor : true -- return tile one at a time \n");
+      LOG_TRACE("Hash Executor : true -- return tile one at a time ");
       return true;
     }
   }
 
-  LOG_TRACE("Hash Executor : false -- done \n");
+  LOG_TRACE("Hash Executor : false -- done ");
   return false;
 }
 
