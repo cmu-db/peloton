@@ -162,7 +162,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile.get();
 
-  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
+  LOG_TRACE("Tuple : %lu Column : %lu", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
     return ValueFactory::GetNullValueByType(
         base_tile->GetSchema()->GetType(column_id));
