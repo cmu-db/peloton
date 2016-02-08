@@ -26,7 +26,7 @@
 #include "utils/numeric.h"
 #include "postgres_ext.h"
 
-#include "postgres/include/utils/array.h"  //added by michael. use peloton not postgres?
+#include "postgres/include/utils/array.h"
 
 namespace peloton {
 namespace bridge {
@@ -127,7 +127,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
         std::string str(pText);
         std::cout << pText << arr_type << str;
         VarlenPool *data_pool = nullptr;
-        LOG_TRACE("len = %d , text = \"%s\"", str.length(), str.c_str());
+        LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
         Value val = ValueFactory::GetStringValue(str, data_pool);
         vecValue.push_back(val);
       }
