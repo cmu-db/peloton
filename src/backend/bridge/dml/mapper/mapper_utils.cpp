@@ -39,7 +39,7 @@ std::vector<Value> PlanTransformer::BuildParams(
     assert(params.size() > 0);
   }
 
-  LOG_INFO("Built %lu params \n", params.size());
+  LOG_INFO("Built %lu params ", params.size());
   return std::move(params);
 }
 
@@ -86,7 +86,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
   }
 
   LOG_INFO("project_info : %s",
-           project_info.get() ? project_info->Debug().c_str() : "<NULL>\n");
+           project_info.get() ? project_info->Debug().c_str() : "<NULL>");
 
   /*
    * Based on project_info, see whether we should create a functional projection
@@ -102,7 +102,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
              0) {  // Have non-trivial projection, add a plan node
     LOG_INFO(
         "Non-trivial projections are found. Projection node will be "
-        "created. \n");
+        "created. ");
 
     auto project_schema =
         SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor);
@@ -120,7 +120,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_INFO("Pure direct map projection.\n");
+    LOG_INFO("Pure direct map projection.");
 
     auto column_ids =
         BuildColumnListFromDirectMap(project_info->GetDirectMapList());
@@ -190,7 +190,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     out_col_ids.push_back(out_col_id);
   }
   col_count = out_col_ids.size();
-  LOG_TRACE("Direct Map :: COL COUNT :: %lu \n", out_col_ids.size());
+  LOG_TRACE("Direct Map :: COL COUNT :: %lu ", out_col_ids.size());
 
   foreach (item, pg_pi->tuple_idxs) {
     oid_t tuple_idx = lfirst_int(item);
@@ -235,7 +235,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
     if (!(resind < column_count && AttributeNumberIsValid(tle->resno) &&
           AttrNumberIsForUserDefinedAttr(tle->resno) && !tle->resjunk)) {
       LOG_TRACE(
-          "Invalid / Junk attribute. Skipped.  resno : %u , resjunk : %u \n",
+          "Invalid / Junk attribute. Skipped.  resno : %u , resjunk : %u ",
           tle->resno, tle->resjunk);
       continue;  // skip junk attributes
     }
@@ -267,7 +267,7 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
   expression::AbstractExpression *predicate =
       ExprTransformer::TransformExpr(reinterpret_cast<ExprState *>(qual));
-  LOG_INFO("Predicate:\n%s \n",
+  LOG_INFO("Predicate:\n%s ",
            (nullptr == predicate) ? "NULL" : predicate->DebugInfo(" ").c_str());
 
   return predicate;
@@ -321,7 +321,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfoFromTLSkipJunk(
 
     if (tle->resjunk || !AttributeNumberIsValid(tle->resno) ||
         !AttrNumberIsForUserDefinedAttr(tle->resno)) {
-      LOG_TRACE("Skip junk / invalid attribute. \n");
+      LOG_TRACE("Skip junk / invalid attribute. ");
 
       continue;  // SKIP junk / invalid attributes.
     }

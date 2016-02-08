@@ -48,7 +48,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   if (plan == nullptr) return p_status;
 
-  LOG_TRACE("PlanExecutor Start \n");
+  LOG_TRACE("PlanExecutor Start ");
 
   bool status;
   bool init_failure = false;
