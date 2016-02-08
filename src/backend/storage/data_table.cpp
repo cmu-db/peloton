@@ -158,7 +158,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
       std::lock_guard<std::mutex> lock(table_mutex);
       assert(GetTileGroupCount() > 0);
       tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
+      LOG_TRACE("Tile group offset :: %d ", tile_group_offset);
     }
 
     // Then, try to grab a slot in the tile group header
@@ -199,7 +199,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
-    LOG_WARN("Index constraint violated\n");
+    LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -299,7 +299,7 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
     return false;
   }
 
-  LOG_TRACE("Deleted location :: block = %lu offset = %lu \n", location.block,
+  LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
             location.offset);
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
@@ -437,7 +437,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   assert(tile_group.get());
   tile_group_id = tile_group.get()->GetTileGroupId();
 
-  LOG_TRACE("Trying to add a tile group \n");
+  LOG_TRACE("Trying to add a tile group ");
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -445,11 +445,11 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     // (A) no tile groups in table
     if (tile_groups.empty()) {
-      LOG_TRACE("Added first tile group \n");
+      LOG_TRACE("Added first tile group ");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
       catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-      LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+      LOG_TRACE("Recording tile group : %d ", tile_group_id);
       return tile_group_id;
     }
 
@@ -460,17 +460,17 @@ oid_t DataTable::AddDefaultTileGroup() {
     oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if (active_tuple_count < allocated_tuple_count) {
-      LOG_TRACE("Slot exists in last tile group :: %d %d \n",
+      LOG_TRACE("Slot exists in last tile group :: %d %d ",
                 active_tuple_count, allocated_tuple_count);
       return INVALID_OID;
     }
 
-    LOG_TRACE("Added a tile group \n");
+    LOG_TRACE("Added a tile group ");
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %d ", tile_group_id);
   }
 
   return tile_group_id;
@@ -493,16 +493,16 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup));
 
-  LOG_TRACE("Trying to add a tile group \n");
+  LOG_TRACE("Trying to add a tile group ");
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
-    LOG_TRACE("Added a tile group \n");
+    LOG_TRACE("Added a tile group ");
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %d ", tile_group_id);
   }
 
   return tile_group_id;
@@ -517,7 +517,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
     // add tile group in catalog
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %d ", tile_group_id);
   }
 }
 
@@ -731,7 +731,7 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_offset,
                                                   double theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu \n",
+    LOG_ERROR("Tile group offset not found in table : %lu ",
               tile_group_offset);
     return nullptr;
   }

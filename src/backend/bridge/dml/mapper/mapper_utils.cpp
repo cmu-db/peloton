@@ -173,8 +173,8 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
       continue;
     }
 
-    LOG_TRACE("Target : column id %u, Expression : \n%s", expr_col_id,
-              peloton_expr->DebugInfo().c_str());
+    LOG_TRACE("Target : column id %u", expr_col_id);
+    LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(expr_col_id, peloton_expr);
     list_itr++;
@@ -249,8 +249,8 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
       continue;
     }
 
-    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id,
-              peloton_expr->Debug().c_str());
+    LOG_TRACE("Target : column id %u", col_id);
+    LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -267,7 +267,8 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
   expression::AbstractExpression *predicate =
       ExprTransformer::TransformExpr(reinterpret_cast<ExprState *>(qual));
-  LOG_INFO("Predicate:\n%s ",
+  LOG_INFO("Predicate:");
+  LOG_INFO("%s",
            (nullptr == predicate) ? "NULL" : predicate->DebugInfo(" ").c_str());
 
   return predicate;

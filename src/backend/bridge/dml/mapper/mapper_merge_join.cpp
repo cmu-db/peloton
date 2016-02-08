@@ -109,8 +109,8 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
     planner::MergeJoinPlan::JoinClause clause(left, right,
                                               join_clause->ssup.ssup_reverse);
 
-    LOG_INFO("left: %s\nright: %s", clause.left_->Debug(" ").c_str(),
-             clause.right_->Debug(" ").c_str());
+    LOG_INFO("left: %s", clause.left_->Debug(" ").c_str());
+    LOG_INFO("right: %s", clause.right_->Debug(" ").c_str());
 
     clauses.push_back(std::move(clause));
   }
