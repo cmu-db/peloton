@@ -29,8 +29,8 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h"        //added by michael
-#include "backend/expression/comparison_expression.h"  //added by michael
+#include "postgres/include/executor/executor.h"
+#include "backend/expression/comparison_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -96,7 +96,7 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       break;
 
     default:
-      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr_state->expr));
   }
 
@@ -122,7 +122,7 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       break;
 
     default:
-      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr));
   }
 
@@ -170,13 +170,13 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_TRACE("Probably handing a string constant ");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
     LOG_ERROR(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
-        "%lu \n",
+        "%lu ",
         const_expr->constlen, const_expr->constbyval,
         (long unsigned)const_expr->constvalue);
   }
@@ -198,13 +198,13 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_TRACE("Probably handing a string constant ");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
     LOG_ERROR(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
-        "%lu \n",
+        "%lu ",
         const_expr->constlen, const_expr->constbyval,
         (long unsigned)const_expr->constvalue);
   }
@@ -239,7 +239,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
 
 expression::AbstractExpression *ExprTransformer::TransformOp(
     const ExprState *es) {
-  LOG_TRACE("Transform Op \n");
+  LOG_TRACE("Transform Op ");
 
   auto op_expr = reinterpret_cast<const OpExpr *>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState *>(es);
@@ -255,7 +255,7 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
 // added by michael for IN operator
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     const ExprState *es) {
-  LOG_TRACE("Transform ScalarArrayOp \n");
+  LOG_TRACE("Transform ScalarArrayOp ");
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr *>(es->expr);
   // auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
@@ -298,8 +298,8 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto pg_func_id = fn_expr->funcid;
   auto rettype = fn_expr->funcresulttype;
 
-  LOG_TRACE("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
-  LOG_TRACE("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
+  LOG_TRACE("PG Func oid : %u , return type : %u ", pg_func_id, rettype);
+  LOG_TRACE("PG funcid in planstate : %u", fn_es->func.fn_oid);
 
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
@@ -348,7 +348,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -376,7 +376,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -401,17 +401,17 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
 
   switch (bool_op) {
     case AND_EXPR:
-      LOG_TRACE("Bool AND list \n");
+      LOG_TRACE("Bool AND list ");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
-      LOG_TRACE("Bool OR list \n");
+      LOG_TRACE("Bool OR list ");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR: {
-      LOG_TRACE("Bool NOT \n");
+      LOG_TRACE("Bool NOT ");
       auto child_es =
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
@@ -514,7 +514,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   auto itr = kPgFuncMap.find(pg_func_id);
 
   if (itr == kPgFuncMap.end()) {
-    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)\n",
+    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)",
               pg_func_id);
     return nullptr;
   }

@@ -405,7 +405,7 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
 
   // Check for torn log write
   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
-    LOG_ERROR("Could not read tuple record header \n");
+    LOG_ERROR("Could not read tuple record header.");
     return;
   }
 

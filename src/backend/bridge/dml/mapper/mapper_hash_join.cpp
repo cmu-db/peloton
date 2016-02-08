@@ -66,7 +66,7 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(hj_plan_state->targetlist));
 
-  LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+  LOG_INFO("%s", project_info.get()->Debug().c_str());
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
@@ -96,29 +96,6 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
   LOG_INFO("Finishing mapping Hash join, JoinType: %d", join_type);
   return result;
 }
-/*
-static std::vector<planner::HashJoinPlan::JoinClause> BuildHashJoinClauses(
-    const HashJoinClause join_clauses, const int num_clauses) {
-  HashJoinClause join_clause = join_clauses;
-  expression::AbstractExpression *left = nullptr;
-  expression::AbstractExpression *right = nullptr;
-  std::vector<planner::HashJoinPlan::JoinClause> clauses;
-  LOG_INFO("Mapping merge join clauses of size %d", num_clauses);
-  for (int i = 0; i < num_clauses; ++i, ++join_clause) {
-    left = ExprTransformer::TransformExpr(join_clause->lexpr);
-    right = ExprTransformer::TransformExpr(join_clause->rexpr);
-    planner::HashJoinPlan::JoinClause clause(left, right,
-                                              join_clause->ssup.ssup_reverse);
 
-    LOG_INFO("left: %s\nright: %s", clause.left_->Debug(" ").c_str(),
-             clause.right_->Debug(" ").c_str());
-
-    clauses.push_back(std::move(clause));
-
-  }
-  LOG_INFO("Build join clauses of size %lu", clauses.size());
-  return clauses;
-}
-*/
 }  // namespace bridge
 }  // namespace peloton

@@ -256,7 +256,7 @@ void DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
       child_tag == T_IndexOnlyScan ||
       child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
 
-    LOG_TRACE("Child of Update is %u \n", child_tag);
+    LOG_TRACE("Child of Update is %u ", child_tag);
 
     // Extract the projection info from the underlying scan
     // and put it in our update node
@@ -273,7 +273,7 @@ void DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
     info->mt_plans[0] = child_planstate;
 
   } else {
-    LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
+    LOG_ERROR("Unsupported sub plan type of Update : %u ", child_tag);
   }
 }
 
@@ -722,7 +722,7 @@ PelotonProjectionInfo *DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi,
         info->tuple_idxs = lappend_int(info->tuple_idxs, tuple_idx);
         info->in_col_ids = lappend_int(info->in_col_ids, in_col_id);
 
-        LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
+        LOG_TRACE("Input column : %u , Output column : %u ", in_col_id,
                   out_col_id);
       }
     }

@@ -41,25 +41,25 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
   switch (atttypid) {
     case POSTGRES_VALUE_TYPE_SMALLINT: {
       int16_t smallint = DatumGetInt16(datum);
-      LOG_TRACE("%d\n", smallint);
+      LOG_TRACE("%d", smallint);
       value = ValueFactory::GetSmallIntValue(smallint);
     } break;
 
     case POSTGRES_VALUE_TYPE_INTEGER: {
       int32_t integer = DatumGetInt32(datum);
-      LOG_TRACE("%d\n", integer);
+      LOG_TRACE("%d", integer);
       value = ValueFactory::GetIntegerValue(integer);
     } break;
 
     case POSTGRES_VALUE_TYPE_BIGINT: {
       int64_t bigint = DatumGetInt64(datum);
-      LOG_TRACE("%ld\n", bigint);
+      LOG_TRACE("%ld", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
     } break;
 
     case POSTGRES_VALUE_TYPE_DOUBLE: {
       double fpnum = DatumGetFloat8(datum);
-      LOG_TRACE("%f\n", fpnum);
+      LOG_TRACE("%f", fpnum);
       value = ValueFactory::GetDoubleValue(fpnum);
     } break;
 
@@ -152,7 +152,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
       for (i = 0; i < nelems; ++i) {
         int16_t smallint = pdata[i];
-        LOG_TRACE("%d\n", smallint);
+        LOG_TRACE("%d", smallint);
         Value val = ValueFactory::GetSmallIntValue(smallint);
         vecValue.push_back(val);
       }
@@ -179,7 +179,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       for (i = 0; i < nelems; ++i) {
         // int32_t integer = DatumGetInt32(elems[i]);
         int32_t integer = pdata[i];
-        LOG_TRACE("%d\n", integer);
+        LOG_TRACE("%d", integer);
         Value val = ValueFactory::GetIntegerValue(integer);
         vecValue.push_back(val);
       }
@@ -208,7 +208,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
       for (i = 0; i < nelems; ++i) {
         double fpnum = pdata[i];
-        LOG_TRACE("%f\n", fpnum);
+        LOG_TRACE("%f", fpnum);
         Value val = ValueFactory::GetDoubleValue(fpnum);
         vecValue.push_back(val);
       }
@@ -233,7 +233,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       // 1. Get string representation of the PG numeric (this is tricky)
       char *cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
 
-      LOG_INFO("PG decimal = %s \n", cstr);
+      LOG_INFO("PG decimal = %s ", cstr);
 
       // 2. Construct Peloton Decimal from the string
       value = ValueFactory::GetDecimalValueFromString(std::string(cstr));
@@ -261,25 +261,25 @@ Datum TupleTransformer::GetDatum(Value value) {
   switch (value_type) {
     case VALUE_TYPE_SMALLINT: {
       int16_t smallint = ValuePeeker::PeekSmallInt(value);
-      LOG_TRACE("%d\n", smallint);
+      LOG_TRACE("%d", smallint);
       datum = Int16GetDatum(smallint);
     } break;
 
     case VALUE_TYPE_INTEGER: {
       int32_t integer = ValuePeeker::PeekInteger(value);
-      LOG_TRACE("%d\n", integer);
+      LOG_TRACE("%d", integer);
       datum = Int32GetDatum(integer);
     } break;
 
     case VALUE_TYPE_BIGINT: {
       int64_t bigint = ValuePeeker::PeekBigInt(value);
-      LOG_TRACE("%ld\n", bigint);
+      LOG_TRACE("%ld", bigint);
       datum = Int64GetDatum(bigint);
     } break;
 
     case VALUE_TYPE_DOUBLE: {
       double double_precision = ValuePeeker::PeekDouble(value);
-      LOG_TRACE("%f\n", double_precision);
+      LOG_TRACE("%f", double_precision);
       datum = Float8GetDatum(double_precision);
     } break;
 
@@ -299,7 +299,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_TIMESTAMP: {
       long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
-      LOG_TRACE("%s\n", DatumGetCString(timestamp));
+      LOG_TRACE("%s", DatumGetCString(timestamp));
     } break;
 
     case VALUE_TYPE_DECIMAL: {
@@ -321,7 +321,7 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     default:
       datum = PointerGetDatum(nullptr);
-      LOG_ERROR("Unrecognized value type : %u\n", value_type);
+      LOG_ERROR("Unrecognized value type : %u", value_type);
       break;
   }
 

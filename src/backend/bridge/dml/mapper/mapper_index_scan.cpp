@@ -68,7 +68,7 @@ const planner::AbstractPlan *PlanTransformer::TransformIndexScan(
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
   if (nullptr == index_scan_desc.index) {
-    LOG_ERROR("Fail to get index with oid : %u \n", iss_plan->indexid);
+    LOG_ERROR("Fail to get index with oid : %u ", iss_plan->indexid);
   };
   LOG_INFO("Index scan on %s using oid %u, index name: %s",
            table->GetName().c_str(), iss_plan->indexid,
@@ -180,7 +180,7 @@ static void BuildScanKey(
         } break;
 
         default:
-          LOG_ERROR("Unsupported Postgres Expr Type: %u (see 'nodes.h')\n",
+          LOG_ERROR("Unsupported Postgres Expr Type: %u (see 'nodes.h')",
                     scan_key->sk_subtype);
       }  // end switch
 
@@ -357,7 +357,7 @@ const planner::AbstractPlan *PlanTransformer::TransformBitmapHeapScan(
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
 
   if (nullptr == index_scan_desc.index) {
-    LOG_ERROR("Can't find Index oid %u \n", biss_plan->indexid);
+    LOG_ERROR("Can't find Index oid %u ", biss_plan->indexid);
   }
   LOG_INFO("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
            table->GetName().c_str(), biss_plan->indexid,
