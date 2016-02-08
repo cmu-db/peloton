@@ -137,7 +137,7 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
     const List *list = reinterpret_cast<const List *>(expr_state);
     ListCell *l;
     assert(list_length(list) > 0);
-    LOG_TRACE("Expression List of length %d", length);
+    LOG_TRACE("Expression List of length %d", list_length(list));
 
     foreach (l, list) {
       const ExprState *expr_state =
@@ -348,7 +348,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -376,7 +376,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);

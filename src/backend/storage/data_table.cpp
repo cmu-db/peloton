@@ -119,7 +119,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
-          "%d th attribute in the tuple was NULL. It is non-nullable "
+          "%lu th attribute in the tuple was NULL. It is non-nullable "
           "attribute.",
           column_itr);
       return false;
@@ -158,7 +158,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
       std::lock_guard<std::mutex> lock(table_mutex);
       assert(GetTileGroupCount() > 0);
       tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %d ", tile_group_offset);
+      LOG_TRACE("Tile group offset :: %lu ", tile_group_offset);
     }
 
     // Then, try to grab a slot in the tile group header
@@ -449,7 +449,7 @@ oid_t DataTable::AddDefaultTileGroup() {
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
       catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-      LOG_TRACE("Recording tile group : %d ", tile_group_id);
+      LOG_TRACE("Recording tile group : %lu ", tile_group_id);
       return tile_group_id;
     }
 
@@ -460,7 +460,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if (active_tuple_count < allocated_tuple_count) {
-      LOG_TRACE("Slot exists in last tile group :: %d %d ",
+      LOG_TRACE("Slot exists in last tile group :: %lu %lu ",
                 active_tuple_count, allocated_tuple_count);
       return INVALID_OID;
     }
@@ -470,7 +470,7 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d ", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 
   return tile_group_id;
@@ -502,7 +502,7 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id) {
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d ", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 
   return tile_group_id;
@@ -517,7 +517,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
     // add tile group in catalog
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d ", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 }
 

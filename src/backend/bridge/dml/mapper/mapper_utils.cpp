@@ -173,7 +173,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
       continue;
     }
 
-    LOG_TRACE("Target : column id %u", expr_col_id);
+    LOG_TRACE("Target : column id %lu", expr_col_id);
     LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(expr_col_id, peloton_expr);
@@ -249,7 +249,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
       continue;
     }
 
-    LOG_TRACE("Target : column id %u", col_id);
+    LOG_TRACE("Target : column id %lu", col_id);
     LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
