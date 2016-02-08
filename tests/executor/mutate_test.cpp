@@ -242,12 +242,12 @@ TEST(MutateTests, StressTests) {
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
   // std::cout << (*table);
 
-  LOG_INFO("---------------------------------------------\n");
+  LOG_INFO("---------------------------------------------");
 
   // LaunchParallelTest(1, UpdateTuple, table);
   // std::cout << (*table);
 
-  LOG_INFO("---------------------------------------------\n");
+  LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
   // std::cout << (*table);
