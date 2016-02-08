@@ -65,7 +65,7 @@ bool UpdateExecutor::DExecute() {
   assert(executor_context_);
 
   // We are scanning over a logical tile.
-  LOG_INFO("Update executor :: 1 child \n");
+  LOG_INFO("Update executor :: 1 child ");
 
   if (!children_[0]->Execute()) {
     return false;
@@ -82,7 +82,7 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n",
+    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
     // (A) Try to delete the tuple first

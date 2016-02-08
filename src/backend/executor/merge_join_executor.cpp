@@ -52,9 +52,9 @@ bool MergeJoinExecutor::DInit() {
  */
 bool MergeJoinExecutor::DExecute() {
   LOG_INFO(
-      "********** Merge Join executor :: 2 children \n"
-      "left:: start: %lu, end: %lu, done: %d\n"
-      "right:: start: %lu, end: %lu, done: %d\n",
+      "********** Merge Join executor :: 2 children "
+      "left:: start: %lu, end: %lu, done: %d "
+      "right:: start: %lu, end: %lu, done: %d",
       left_start_row, left_end_row, left_child_done_, right_start_row,
       right_end_row, right_child_done_);
 
@@ -71,13 +71,13 @@ bool MergeJoinExecutor::DExecute() {
   if (((right_child_done_ == false) && (right_start_row == right_end_row)) ||
       (left_child_done_ == true)) {
     if (children_[1]->Execute() == false) {
-      LOG_TRACE("Did not get right tile \n");
+      LOG_TRACE("Did not get right tile ");
       right_child_done_ = true;
       // Try again
       return DExecute();
     }
 
-    LOG_TRACE("Got right tile \n");
+    LOG_TRACE("Got right tile ");
 
     auto right_tile = children_[1]->GetOutput();
     BufferRightTile(right_tile);
@@ -91,13 +91,13 @@ bool MergeJoinExecutor::DExecute() {
   if (((left_child_done_ == false) && (left_start_row == left_end_row)) ||
       (right_child_done_ == true)) {
     if (children_[0]->Execute() == false) {
-      LOG_TRACE("Did not get left tile \n");
+      LOG_TRACE("Did not get left tile ");
       left_child_done_ = true;
       // Try again
       return DExecute();
     }
 
-    LOG_TRACE("Got left tile \n");
+    LOG_TRACE("Got left tile ");
 
     auto left_tile = children_[0]->GetOutput();
     BufferLeftTile(left_tile);
@@ -144,7 +144,7 @@ bool MergeJoinExecutor::DExecute() {
 
       // Left key < Right key, advance left
       if (comparison < 0) {
-        LOG_TRACE("left < right, advance left \n");
+        LOG_TRACE("left < right, advance left ");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
         not_matching_tuple_pair = true;
@@ -152,7 +152,7 @@ bool MergeJoinExecutor::DExecute() {
       }
       // Left key > Right key, advance right
       else if (comparison > 0) {
-        LOG_TRACE("left > right, advance right \n");
+        LOG_TRACE("left > right, advance right ");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
         not_matching_tuple_pair = true;
@@ -169,7 +169,7 @@ bool MergeJoinExecutor::DExecute() {
     }
 
     // Join clauses matched, try to match predicate
-    LOG_TRACE("one pair of tuples matches join clause \n");
+    LOG_TRACE("one pair of tuples matches join clause ");
 
     // Join predicate exists
     if (predicate_ != nullptr) {
@@ -269,7 +269,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
     end_row++;
   }
 
-  LOG_TRACE("Advanced %s with subset size %lu \n", is_left ? "left" : "right",
+  LOG_TRACE("Advanced %s with subset size %lu ", is_left ? "left" : "right",
             end_row - start_row);
   return end_row;
 }
