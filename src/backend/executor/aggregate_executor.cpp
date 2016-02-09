@@ -94,6 +94,8 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
+  auto transaction = executor_context_->GetTransaction();
+  auto transaction_id = transaction->GetTransactionId();
 
   // Get an aggregator
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
@@ -151,8 +153,7 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(executor_context_->GetTransaction(),
-                                tuple.get());
+      output_table->InsertTuple(transaction, tuple.get());
     } else {
       done = true;
       return false;
@@ -169,7 +170,7 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group);
+    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
 
     result.push_back(logical_tile);
   }

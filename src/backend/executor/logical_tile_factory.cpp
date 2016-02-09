@@ -66,7 +66,7 @@ LogicalTile *LogicalTileFactory::WrapTiles(
   // First, we build a position list to be shared by all the tiles.
   const oid_t position_list_idx = 0;
   new_tile->AddPositionList(CreateIdentityPositionList(
-      base_tile_refs[0].get()->GetAllocatedTupleCount()));
+      base_tile_refs[0].get()->GetActiveTupleCount()));
 
   for (unsigned int i = 0; i < base_tile_refs.size(); i++) {
     // Next, we construct the schema.
@@ -88,12 +88,13 @@ LogicalTile *LogicalTileFactory::WrapTiles(
  * @return Logical tile wrapping tile group.
  */
 LogicalTile *LogicalTileFactory::WrapTileGroup(
-    const std::shared_ptr<storage::TileGroup> &tile_group) {
+    const std::shared_ptr<storage::TileGroup> &tile_group,
+    txn_id_t txn_id) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
   new_tile->AddPositionList(
-      CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
+      CreateIdentityPositionList(tile_group->GetActiveTupleCount(txn_id)));
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();

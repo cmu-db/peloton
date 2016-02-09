@@ -230,7 +230,7 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid,
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = table->GetTileGroup(tile_group_itr);
-    active_tuple_count += tile_group->GetActiveTupleCount();
+    active_tuple_count += tile_group->GetActiveTupleCount(INVALID_TXN_ID);
   }
 
   // check # of active tuples
