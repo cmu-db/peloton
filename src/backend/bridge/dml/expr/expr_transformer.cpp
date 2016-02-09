@@ -29,8 +29,9 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h"
-#include "backend/expression/comparison_expression.h"
+#include "postgres/include/executor/executor.h"        //added by michael
+#include "backend/expression/comparison_expression.h"  //added by michael
+#include "backend/expression/string_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -526,23 +527,30 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     return expression::CastFactory();
   }
 
-  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
+  if (func_meta.exprtype == EXPRESSION_TYPE_SUBSTR){
 
-  // Extract function arguments (at most two)
-  expression::AbstractExpression *lc = nullptr;
-  expression::AbstractExpression *rc = nullptr;
+  }
+
+  // mperron some string functions have 3 children
+  assert(list_length(args) <= 3);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= 3);
+
+  // Extract function arguments (at most three)
+  expression::AbstractExpression *children[3];
+  for (int i = 0; i < 3; i++){
+      children[i] = nullptr;
+  }
+//  expression::AbstractExpression *lc = nullptr;
+//  expression::AbstractExpression *rc = nullptr;
+//  expression::AbstractExpression *tc = nullptr; //third child
   int i = 0;
   ListCell *arg;
   foreach (arg, args) {
     ExprState *argstate = (ExprState *)lfirst(arg);
 
     if (i >= func_meta.nargs) break;
-    if (i == 0)
-      lc = TransformExpr(argstate);
-    else if (i == 1)
-      rc = TransformExpr(argstate);
-    else
-      break;
+
+    children[i] = TransformExpr(argstate);
 
     i++;
   }
@@ -557,13 +565,16 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-      return expression::ComparisonFactory(plt_exprtype, lc, rc);
+      return expression::ComparisonFactory(plt_exprtype, children[0], children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      return expression::OperatorFactory(plt_exprtype, lc, rc);
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1]);
+
+    case EXPRESSION_TYPE_SUBSTR:
+      return new expression::SubstringExpression(children[0], children[1], children[2]);
 
     default:
       LOG_ERROR(
