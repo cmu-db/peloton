@@ -86,6 +86,7 @@ TEST(AppendTests, AppendTwoTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 5, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> ltile0(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),

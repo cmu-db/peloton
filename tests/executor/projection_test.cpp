@@ -66,6 +66,7 @@ TEST(ProjectionTests, BasicTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -125,6 +126,7 @@ TEST(ProjectionTests, TwoColumnTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -192,6 +194,7 @@ TEST(ProjectionTests, BasicTargetTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),

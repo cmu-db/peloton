@@ -34,6 +34,7 @@ TEST(DataTableTests, TransformTileGroupTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tuple_count, false, false,
                                    true);
+  txn_manager.CommitTransaction();
 
   // Create the new column map
   storage::column_map_type column_map;

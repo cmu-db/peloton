@@ -39,6 +39,7 @@ TEST(TileGroupIteratorTests, BasicTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tuple_count, false, false,
                                    true);
+  txn_manager.CommitTransaction();
 
   storage::TileGroupIterator tile_group_itr(data_table.get());
   std::shared_ptr<storage::TileGroup> tile_group_ptr;
