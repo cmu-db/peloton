@@ -91,6 +91,12 @@
 #include <pthread.h>
 #endif
 
+// Test nanomsg by Michael
+#include <nanomsg/nn.h>
+#include <nanomsg/reqrep.h>
+#include <nanomsg/pair.h>
+// end test
+
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "bootstrap/bootstrap.h"
@@ -3548,6 +3554,13 @@ static void LaunchBackendTask(Backend *bn, Port *port) {
   save_backend_variables(param, port);
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(), GetBackendThreadId());
+
+  // nanomsg test by Michael
+  //int sock = nn_socket (AF_SP, NN_REP);
+  //int br = nn_bind (sock, "tpc://*:5666");
+
+  // end test
+
   std::thread backend(BackendTask, bn, port, param);
   backend.detach();
   return;
