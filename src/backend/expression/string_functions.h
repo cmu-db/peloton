@@ -22,6 +22,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
 #include <boost/scoped_array.hpp>
+#include "backend/expression/function_expression.h"
 
 namespace peloton {
 
