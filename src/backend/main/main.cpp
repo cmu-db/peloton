@@ -11,6 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
+// for nanomsg test by michael
+#include <nanomsg/nn.h>
+#include <nanomsg/reqrep.h>
+#include <nanomsg/pair.h>
+#include <nanomsg/bus.h>
+#include <iostream>
+#include <assert.h>
+#define NODE0 "node0"
+#define NODE1 "node1"
+#define NODE2 "node2"
+// end test
 
 #include "postgres/include/postgres.h"
 
@@ -37,6 +48,55 @@ static void check_root(const char *progname);
  * Any Postgres server process begins execution here.
  */
 int main(int argc, char *argv[]) {
+  // test nanomsg by Michael
+  int sock = nn_socket (AF_SP, NN_BUS);
+  assert( nn_bind (sock, "tcp://*:5666") >=0 );
+
+  sleep(1); // wait for connections
+
+  assert(nn_connect(sock, "tcp://128.2.209.31:5666")>=0);
+
+  sleep(1); // wait for connections
+  int to = 100;
+  assert (nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to)) >= 0);
+  std::cout << to;
+  // SEND
+  int sz_n = strlen(NODE0) + 1; // '\0' too
+  printf ("%s: SENDING '%s' ONTO BUS\n", NODE0, NODE0);
+  int send = nn_send (sock, NODE0, sz_n, 0);
+  assert (send == sz_n);
+  std::cout << send;
+  while (1)
+  {
+      // RECV
+      char *buf = NULL;
+      int recv = nn_recv (sock, &buf, NN_MSG, 0);
+      if (recv >= 0)
+        {
+          printf ("%s: RECEIVED '%s' FROM BUS\n", "HEHEHE", buf);
+          nn_freemsg (buf);
+        }
+    }
+  nn_shutdown (sock, 0);
+
+//  if (sock >=0 and rbind >=0) {
+//      void *buf = NULL;
+//      printf("prepare\n");
+//      nn_recv (sock, &buf, NN_MSG, 0);
+//      printf ("NODE0: RECEIVED DATE REQUEST from %s\n",(char *)buf);
+//      assert (bytes >= 0);
+//
+//          int sz_d = strlen(NODE0) + 1; // '\0' too
+//          printf ("NODE0: SENDING DATE %s\n", NODE0);
+//          int bytes = nn_send (sock, NODE0, sz_d, 0);
+//          assert (bytes == sz_d);
+//          std::cout << bytes;
+//
+//     nn_freemsg (buf);
+//     nn_shutdown (sock, 0);
+//
+//  }
+
   bool do_check_root = true;
 
   progname = "peloton";
