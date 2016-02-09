@@ -78,8 +78,8 @@ oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetNextTupleSlot();
 }
 
-oid_t TileGroup::GetActiveTupleCount() const {
-  return tile_group_header->GetActiveTupleCount();
+oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
+  return tile_group_header->GetActiveTupleCount(txn_id);
 }
 
 //===--------------------------------------------------------------------===//
@@ -340,10 +340,6 @@ std::ostream &operator<<(std::ostream &os, const TileGroup &tile_group) {
      << " Tile Group:  " << tile_group.tile_group_id << "\n";
 
   os << " TILE GROUP HEADER :: " << tile_group.tile_group_header;
-
-  os << "\tActive Tuples:  "
-     << tile_group.tile_group_header->GetActiveTupleCount() << " out of "
-     << tile_group.num_tuple_slots << " slots\n";
 
   for (oid_t tile_itr = 0; tile_itr < tile_group.tile_count; tile_itr++) {
     Tile *tile = tile_group.GetTile(tile_itr);

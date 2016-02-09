@@ -56,10 +56,12 @@ TEST(AggregateTests, SortedDistinctTest) {
                                    false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -150,10 +152,12 @@ TEST(AggregateTests, SortedSumGroupByTest) {
                                    false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -247,10 +251,12 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
                                    false, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -350,10 +356,12 @@ TEST(AggregateTests, HashDistinctTest) {
                                    true);  // let it be random
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -436,10 +444,12 @@ TEST(AggregateTests, HashSumGroupByTest) {
                                    true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -523,10 +533,12 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
                                    true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 
@@ -626,10 +638,12 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
                                    true, true);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   // (1-5) Setup plan node
 

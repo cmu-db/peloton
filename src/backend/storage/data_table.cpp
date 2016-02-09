@@ -152,6 +152,8 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   oid_t tile_group_id = INVALID_OID;
   auto transaction_id = transaction->GetTransactionId();
 
+  LOG_TRACE("DataTable :: transaction_id %lu \n", transaction_id);
+
   while (tuple_slot == INVALID_OID) {
     // First, figure out last tile group
     {

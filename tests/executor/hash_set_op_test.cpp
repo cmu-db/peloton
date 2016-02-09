@@ -99,11 +99,11 @@ TEST(HashSetOptTests, ExceptTest) {
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0)));
+          data_table1->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0)));
+          data_table2->GetTileGroup(0), INVALID_TXN_ID));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -174,19 +174,19 @@ TEST(HashSetOptTests, ExceptAllTest) {
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0)));
+          data_table1->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0)));
+          data_table2->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table3->GetTileGroup(0)));
+          data_table3->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table4->GetTileGroup(0)));
+          data_table4->GetTileGroup(0), INVALID_TXN_ID));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -250,11 +250,11 @@ TEST(HashSetOptTests, IntersectTest) {
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0)));
+          data_table1->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0)));
+          data_table2->GetTileGroup(0), INVALID_TXN_ID));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -325,19 +325,19 @@ TEST(HashSetOptTests, IntersectAllTest) {
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0)));
+          data_table1->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0)));
+          data_table2->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table3->GetTileGroup(0)));
+          data_table3->GetTileGroup(0), INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
       executor::LogicalTileFactory::WrapTileGroup(
-          data_table4->GetTileGroup(0)));
+          data_table4->GetTileGroup(0), INVALID_TXN_ID));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);

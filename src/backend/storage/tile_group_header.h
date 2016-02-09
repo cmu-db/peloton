@@ -106,7 +106,7 @@ class TileGroupHeader {
 
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }
 
-  oid_t GetActiveTupleCount();
+  oid_t GetActiveTupleCount(txn_id_t txn_id);
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
