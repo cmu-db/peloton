@@ -47,6 +47,8 @@ class TestingHarness {
 
   uint64_t GetThreadId();
 
+  txn_id_t GetNextTransactionId();
+
   VarlenPool *GetTestingPool();
 
   oid_t GetNextTileGroupId();
