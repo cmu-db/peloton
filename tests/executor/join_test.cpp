@@ -118,18 +118,28 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, oid
   size_t left_table_tile_group_count = 3;
   size_t right_table_tile_group_count = 2;
 
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn1 = txn_manager.BeginTransaction();
+  auto txn_id1 = txn1->GetTransactionId();
+
   // Left table has 3 tile groups
   std::unique_ptr<storage::DataTable> left_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(
-      left_table.get(), tile_group_size * left_table_tile_group_count, false,
+      txn1, left_table.get(),
+      tile_group_size * left_table_tile_group_count, false,
       false, false);
+
+  auto txn2 = txn_manager.BeginTransaction();
+  auto txn_id2 = txn2->GetTransactionId();
 
   // Right table has 2 tile groups
   std::unique_ptr<storage::DataTable> right_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(
-      right_table.get(), tile_group_size * right_table_tile_group_count, false,
+      txn2, right_table.get(),
+      tile_group_size * right_table_tile_group_count, false,
       false, false);
 
   //std::cout << (*left_table);
@@ -139,22 +149,23 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, oid
   // Wrap the input tables with logical tiles
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id1));
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id1));
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile3(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(2),
-                                                  INVALID_TXN_ID));
+                                                  txn_id1));
 
   std::unique_ptr<executor::LogicalTile> right_table_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
           right_table->GetTileGroup(0),
-          INVALID_TXN_ID));
+          txn_id2));
+
   std::unique_ptr<executor::LogicalTile> right_table_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
           right_table->GetTileGroup(1),
-          INVALID_TXN_ID));
+          txn_id2));
 
   // Left scan executor returns logical tiles from the left table
 

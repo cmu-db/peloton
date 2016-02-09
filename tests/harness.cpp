@@ -13,6 +13,8 @@
 #include "harness.h"
 
 #include "backend/common/pool.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace test {
@@ -38,6 +40,15 @@ uint64_t TestingHarness::GetThreadId() {
   id = id % MAX_THREADS;
 
   return id;
+}
+
+txn_id_t TestingHarness::GetNextTransactionId() {
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  txn_id_t txn_id = txn->GetTransactionId();
+  txn_manager.CommitTransaction(txn);
+
+  return txn_id;
 }
 
 VarlenPool* TestingHarness::GetTestingPool() {

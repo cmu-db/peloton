@@ -27,9 +27,12 @@ TEST(DataTableTests, TransformTileGroupTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tuple_count, false, false,
                                    true);
 
   // Create the new column map
