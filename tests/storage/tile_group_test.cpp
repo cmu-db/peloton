@@ -211,7 +211,9 @@ TEST(TileGroupTests, StressTest) {
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
-  EXPECT_EQ(6000, tile_group->GetActiveTupleCount(INVALID_TXN_ID));
+  auto next_txn_id = TestingHarness::GetInstance().GetNextTransactionId();
+
+  EXPECT_EQ(6000, tile_group->GetActiveTupleCount(next_txn_id));
 
   delete tile_group;
   delete schema1;

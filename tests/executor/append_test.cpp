@@ -78,22 +78,26 @@ TEST(AppendTests, AppendTwoTest) {
       .WillOnce(Return(false));
 
   size_t tile_size = 10;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size * 5, false,
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> ltile0(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> ltile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> ltile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(2),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor1, GetOutput()).WillOnce(Return(ltile0.release()));
 
