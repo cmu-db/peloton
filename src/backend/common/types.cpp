@@ -432,7 +432,9 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_SELECT_SUBQUERY: {
       return "SELECT_SUBQUERY";
     }
-
+    case EXPRESSION_TYPE_SUBSTR :{
+      return "SUBSTRING";
+    }
     // TODO: Added by us
     case EXPRESSION_TYPE_PLACEHOLDER: {
       return "PLACEHOLDER";
