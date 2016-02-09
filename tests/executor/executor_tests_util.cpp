@@ -163,7 +163,6 @@ void ExecutorTestsUtil::PopulateTable(concurrency::Transaction *transaction,
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
@@ -208,8 +207,6 @@ void ExecutorTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     transaction->RecordInsert(tuple_slot_id);
   }
 
-  // Commit the transaction
-  txn_manager.CommitTransaction();
 }
 
 /**
@@ -353,10 +350,10 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-
   ExecutorTestsUtil::PopulateTable(txn, table,
                                    tuple_count * DEFAULT_TILEGROUP_COUNT,
                                    false, false, false);
+  txn_manager.CommitTransaction();
 
   return table;
 }

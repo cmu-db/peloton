@@ -59,6 +59,7 @@ TEST(AggregateTests, SortedDistinctTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    2 * tuple_count, false,
                                    false, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -159,6 +160,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    2 * tuple_count, false,
                                    false, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -261,6 +263,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
 
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count, false,
                                    false, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -369,6 +372,7 @@ TEST(AggregateTests, HashDistinctTest) {
                                    2 * tuple_count, false,
                                    true,
                                    true);  // let it be random
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -460,6 +464,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    2 * tuple_count, false,
                                    true, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -552,6 +557,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count, false,
                                    true, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -661,6 +667,7 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    2 * tuple_count, false,
                                    true, true);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),

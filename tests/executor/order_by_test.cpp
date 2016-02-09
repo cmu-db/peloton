@@ -107,6 +107,7 @@ TEST(OrderByTests, IntAscTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 2, false,
                                    random, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -156,6 +157,7 @@ TEST(OrderByTests, IntDescTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 2, false,
                                    random, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -205,6 +207,7 @@ TEST(OrderByTests, StringDescTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 2, false,
                                    random, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -253,6 +256,7 @@ TEST(OrderByTests, IntAscStringDescTest) {
   bool random = true;
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -305,6 +309,7 @@ TEST(OrderByTests, StringDescIntAscTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 2, false,
                                    random, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
