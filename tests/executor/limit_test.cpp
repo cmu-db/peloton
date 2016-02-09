@@ -88,6 +88,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -131,6 +132,7 @@ TEST(LimitTests, NonLeafSkipAllTest) {
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -175,6 +177,7 @@ TEST(LimitTests, NonLeafReturnAllTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
@@ -220,6 +223,7 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
                                    tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
