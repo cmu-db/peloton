@@ -84,13 +84,16 @@ TEST(AppendTests, AppendTwoTest) {
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> ltile0(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> ltile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> ltile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(2)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(2),
+                                                  INVALID_TXN_ID));
 
   EXPECT_CALL(child_executor1, GetOutput()).WillOnce(Return(ltile0.release()));
 

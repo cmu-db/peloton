@@ -106,7 +106,7 @@ TEST(TileGroupTests, BasicTest) {
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetCommitId();
 
-  EXPECT_EQ(0, tile_group->GetActiveTupleCount());
+  EXPECT_EQ(0, tile_group->GetActiveTupleCount(txn_id));
 
   auto tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
   tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
@@ -117,7 +117,7 @@ TEST(TileGroupTests, BasicTest) {
   tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
   tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
-  EXPECT_EQ(3, tile_group->GetActiveTupleCount());
+  EXPECT_EQ(3, tile_group->GetActiveTupleCount(txn_id));
 
   txn_manager.CommitTransaction();
 
@@ -211,7 +211,7 @@ TEST(TileGroupTests, StressTest) {
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
-  EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
+  EXPECT_EQ(6000, tile_group->GetActiveTupleCount(INVALID_TXN_ID));
 
   delete tile_group;
   delete schema1;

@@ -138,18 +138,23 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, oid
 
   // Wrap the input tables with logical tiles
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
   std::unique_ptr<executor::LogicalTile> left_table_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(2)));
+      executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(2),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> right_table_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(
-          right_table->GetTileGroup(0)));
+          right_table->GetTileGroup(0),
+          INVALID_TXN_ID));
   std::unique_ptr<executor::LogicalTile> right_table_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(
-          right_table->GetTileGroup(1)));
+          right_table->GetTileGroup(1),
+          INVALID_TXN_ID));
 
   // Left scan executor returns logical tiles from the left table
 

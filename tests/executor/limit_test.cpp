@@ -86,10 +86,12 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -124,10 +126,12 @@ TEST(LimitTests, NonLeafSkipAllTest) {
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -162,10 +166,12 @@ TEST(LimitTests, NonLeafReturnAllTest) {
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -200,10 +206,12 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
                                    false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
+                                                  INVALID_TXN_ID));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
+                                                  INVALID_TXN_ID));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
