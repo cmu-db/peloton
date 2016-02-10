@@ -65,5 +65,28 @@ private:
   }
 };
 
+
+class AsciiExpression : public AbstractExpression {
+
+private:
+
+ public:
+	AsciiExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_ASCII) {
+		m_left = lc;
+	};
+
+
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    assert(m_left);
+    return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_ASCII>();
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "OperatorNotExpression");
+  }
+};
+
 }  // End expression namespace
 }  // End peloton namespace
