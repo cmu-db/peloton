@@ -1,0 +1,19 @@
+vmmalloc_malloc_usable_size/TEST0: START: vmmalloc_malloc_usable_size
+ ./vmmalloc_malloc_usable_size$(nW)
+size 10
+size 100
+size 200
+size 500
+size 1000
+size 2000
+size 3000
+size 1048576
+size 2097152
+size 3145728
+size 4194304
+size 5242880
+size 6291456
+size 7340032
+size 8388608
+size 9437184
+vmmalloc_malloc_usable_size/TEST0: Done

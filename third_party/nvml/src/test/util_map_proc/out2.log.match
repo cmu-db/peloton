@@ -1,0 +1,13 @@
+util_map_proc/TEST2: START: util_map_proc
+ ./util_map_proc$(nW) maps_align 0x0001000000 0x0001100000 0x0001110000 0x0001110800 0x0001111000
+redirecting /proc/self/maps to maps_align
+len 16777216: 0x10080000000 0x$(X)
+redirecting /proc/self/maps to maps_align
+len 17825792: 0x10080000000 0x$(X)
+redirecting /proc/self/maps to maps_align
+len 17891328: 0x10080000000 0x$(X)
+redirecting /proc/self/maps to maps_align
+len 17893376: (nil) 0x$(X)
+redirecting /proc/self/maps to maps_align
+len 17895424: (nil) 0x$(X)
+util_map_proc/TEST2: Done

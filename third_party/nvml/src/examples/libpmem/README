@@ -1,0 +1,23 @@
+Linux NVM Library
+
+This is examples/libpmem/README.
+
+This directory contains examples for libpmem, the library containing
+low-level persistent memory support.  A detailed explanation of these
+examples can be found here: http://pmem.io/nvml/libpmem
+
+manpage.c is the example used in the libpmem man page.
+
+simple_copy.c is a simple pmem_memcpy() example.
+
+full_copy.c shows how to use pmem_memcpy_nodrain().
+
+To build these examples:
+	make
+
+These examples can be built against an installed system using:
+	make LIBDIR=/usr/lib INCDIR=/usr/include
+
+If you're looking for documentation to get you started using NVML,
+start here: http://pmem.io/nvml and follow the links to examples and
+man pages.  Developers new to NVML are probably looking for libpmemobj.

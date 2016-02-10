@@ -1,0 +1,7 @@
+Linux NVM Library
+
+This is src/test/ex_libpmemblk/README.
+
+This directory contains unit tests for libpmemblk examples.
+
+The unit tests utilizes examples from src/examples/libpmemblk directory.

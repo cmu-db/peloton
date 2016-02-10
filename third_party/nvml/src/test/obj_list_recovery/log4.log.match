@@ -1,0 +1,46 @@
+obj_list_recovery/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile i:1:0 i:1:0 F:after_finish m:0:1:0
+pmalloc(id = 0)
+pmalloc(id = 1)
+obj_list_recovery/TEST4: Done
+obj_list_recovery/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:2 R:2 P:4 R:4 V P:2 R:2 P:4 R:4
+list:
+id = 1
+id = 0
+list reverse:
+id = 0
+id = 1
+list sec:
+list sec reverse:
+list:
+id = 0
+list reverse:
+id = 0
+list sec:
+id = 1
+list sec reverse:
+id = 1
+obj_list_recovery/TEST4: Done
+obj_list_recovery/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:before_finish m:0:1:0
+obj_list_recovery/TEST4: Done
+obj_list_recovery/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:2 R:2 P:4 R:4 V P:2 R:2 P:4 R:4
+list:
+id = 0
+list reverse:
+id = 0
+list sec:
+id = 1
+list sec reverse:
+id = 1
+list:
+id = 0
+list reverse:
+id = 0
+list sec:
+id = 1
+list sec reverse:
+id = 1
+obj_list_recovery/TEST4: Done

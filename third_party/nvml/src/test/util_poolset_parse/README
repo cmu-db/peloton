@@ -1,0 +1,58 @@
+Linux NVM Library
+
+This is src/test/util_poolset_parse/README.
+
+This directory contains unit tests for parsing a set file.
+
+The program in util_poolset_parse.c takes a list of set file names.
+For example:
+
+	./util_poolset_parse ./myobjpool0.set ./myobjpool1.set
+
+There are following test set files available:
+
+	- TEST 0 - correct set file: one replica and comments
+	- TEST 1 - incorrect set file: invalid signature of the set file
+	- TEST 2 - incorrect set file: invalid the first line ("PMEMPOOLSET+")
+	- TEST 3 - incorrect set file: invalid the first line ("PMEMPOOLSET X")
+	- TEST 4 - incorrect set file: no pool set parts listed
+	- TEST 5 - incorrect set file: invalid a pool set's part's line:
+                   no path, only size given
+	- TEST 6 - correct set file: one part, no replica
+	- TEST 7 - incorrect set file: the "REPLICA" signature present,
+                   but no replica parts listed
+	- TEST 8 - incorrect set file: invalid "REPLICA" line ("REPLICA+")
+	- TEST 9 - incorrect set file: invalid "REPLICA" line ("REPLICA X")
+	- TEST 10 - incorrect set file: invalid replica's part's line:
+                    no path, only size given
+	- TEST 11 - correct set file: one part and one replica
+	- TEST 12 - incorrect set file: sizes of pool set and replica mismatch
+	- TEST 13 - incorrect set file: two replicas, no replica parts
+                    of the first replica
+	- TEST 14 - incorrect set file: two replicas, no replica parts
+                    of the second replica
+	- TEST 15 - incorrect set file: sizes of two replicas mismatch
+	- TEST 16 - incorrect set file: sizes of pool set and the second
+                    replica mismatch
+	- TEST 17 - correct set file: one part and two replicas
+	- TEST 18 - incorrect set file: invalid pool set's part's line:
+                    invalid size (10X0G)
+	- TEST 19 - incorrect set file: invalid pool set's part's line:
+                    invalid size (100X)
+	- TEST 20 - incorrect set file: invalid replica's part's line:
+                    invalid size (10X0G)
+	- TEST 21 - incorrect set file: invalid replica's part's line:
+                    invalid size (100X)
+	- TEST 22 - incorrect set file: invalid pool set's part's line:
+                    invalid path (not an absolute path)
+	- TEST 23 - incorrect set file: invalid replica's part's line:
+                    invalid path (not an absolute path)
+	- TEST 24 - correct set file with lower case size suffixes
+	- TEST 25 - correct set file with no size suffixes
+	- TEST 26 - correct set file with mixed size units
+	- TEST 27 - incorrect set file: invalid size
+                    double 'b'
+	- TEST 28 - incorrect set file: invalid size
+                    double unit
+	- TEST 29 - incorrect set file with mixed size units
+                    'B' followed by unit

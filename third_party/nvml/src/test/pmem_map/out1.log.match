@@ -1,0 +1,4 @@
+pmem_map/TEST1: START: pmem_map
+ ./pmem_map$(nW) $(nW)/testfile1
+pmem_map: Invalid argument
+pmem_map/TEST1: Done

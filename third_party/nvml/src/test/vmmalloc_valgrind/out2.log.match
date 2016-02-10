@@ -1,0 +1,4 @@
+vmmalloc_valgrind/TEST2: START: vmmalloc_valgrind
+ ./vmmalloc_valgrind$(nW) 2
+heap block overrun
+vmmalloc_valgrind/TEST2: Done

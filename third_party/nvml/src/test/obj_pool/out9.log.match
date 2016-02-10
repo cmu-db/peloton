@@ -1,0 +1,4 @@
+obj_pool/TEST9: START: obj_pool
+ ./obj_pool$(nW) c $(nW)/testfile test 1 0640
+$(nW)/testfile: pmemobj_create: Invalid argument
+obj_pool/TEST9: Done

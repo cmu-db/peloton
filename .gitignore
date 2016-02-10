@@ -21,7 +21,7 @@
 #OS X specific files.
 .DS_store
 # Core files
-core
+#core
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).

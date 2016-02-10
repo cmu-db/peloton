@@ -1,0 +1,8 @@
+out_err/TEST0: START: out_err
+ ./out_err$(nW)
+ERR #1
+ERR #2: Success
+ERR #3: Invalid argument
+ERR1: Bad file descriptor:1234
+ERR2: Bad file descriptor:1234
+out_err/TEST0: Done
