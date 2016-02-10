@@ -76,9 +76,15 @@ def exec_cmd(cmd):
 
 def install_dependencies():
     
-    print(NVML_DIR)
+    print("Path at terminal when executing this file")
+    print(os.getcwd() + "\n")
+
+    print("This file path, relative to os.getcwd()")
+    print(__file__ + "\n")
+    
     print(FILE_DIR)
     print(ROOT_DIR)
+    print(NVML_DIR)
 
     ## ==============================================
     ## NVM Library
