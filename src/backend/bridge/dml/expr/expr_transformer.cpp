@@ -577,6 +577,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
       return new expression::SubstringExpression(children[0], children[1], children[2]);
     case EXPRESSION_TYPE_ASCII:
       return new expression::AsciiExpression(children[0]);
+    case EXPRESSION_TYPE_OCTET_LEN:
+      return new expression::OctetLenExpression(children[0]);
 
 
     default:
