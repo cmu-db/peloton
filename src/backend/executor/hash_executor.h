@@ -14,24 +14,16 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <functional>
 
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/expression/container_tuple.h"
 
+#include <boost/functional/hash.hpp>
+
 namespace peloton {
 namespace executor {
-
-struct PairHash {
-public:
-  template <typename T, typename U>
-  std::size_t operator()(const std::pair<T, U> &x) const
-  {
-    return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
-  }
-};
 
 /**
  * @brief Hash executor.
@@ -50,7 +42,8 @@ class HashExecutor : public AbstractExecutor {
   /** @brief Type definitions for hash table */
   typedef std::unordered_map<
       expression::ContainerTuple<LogicalTile>,
-      std::unordered_set<std::pair<size_t, oid_t>, PairHash>,
+      std::unordered_set<std::pair<size_t, oid_t>,
+                         boost::hash<std::pair<size_t, oid_t>>>,
       expression::ContainerTupleHasher<LogicalTile>,
       expression::ContainerTupleComparator<LogicalTile>> HashMapType;
 
