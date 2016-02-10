@@ -1,0 +1,3 @@
+vmem_realloc_inplace/TEST1: START: vmem_realloc_inplace
+ ./vmem_realloc_inplace$(nW) $(nW)
+vmem_realloc_inplace/TEST1: Done

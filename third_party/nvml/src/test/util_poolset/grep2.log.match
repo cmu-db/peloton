@@ -1,0 +1,22 @@
+pid $(N): program: $(nW)/util_poolset$(nW)
+ut version 1.0
+src version SRCVERSION:utversion
+$(OPT)compiled with support for Valgrind pmemcheck
+$(OPT)compiled with support for Valgrind helgrind
+$(OPT)compiled with support for Valgrind memcheck
+invalid checksum of pool header
+wrong pool type: "ERRORXX"
+pool version 99 (library expects 1)
+invalid reserved values
+invalid e_machine value
+invalid ei_data value
+invalid ei_class value
+invalid alignment_desc value
+wrong architecture flags
+incompatible feature flags
+incompatible feature flags
+incompatible feature flags
+wrong pool set UUID
+wrong part UUID
+wrong part UUID
+wrong replica UUID

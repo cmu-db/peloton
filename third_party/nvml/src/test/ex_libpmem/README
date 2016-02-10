@@ -1,0 +1,7 @@
+Linux NVM Library
+
+This is src/test/ex_libpmem/README.
+
+This directory contains unit tests for libpmem examples.
+
+The unit tests utilizes examples from src/examples/libpmem directory.

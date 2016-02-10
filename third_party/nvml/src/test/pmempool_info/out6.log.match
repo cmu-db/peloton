@@ -1,0 +1,27 @@
+POOL Header:
+Signature                : PMEMLOG
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM LOG header:
+Start offset             : $(*)
+Write offset             : $(*) [OK]
+End offset               : $(*)
+
+PMEMLOG data:
+00002000  54 45 53 54                                       |TEST            |
+------------------------------------------------------------------------------

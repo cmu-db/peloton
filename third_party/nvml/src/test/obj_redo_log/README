@@ -1,0 +1,64 @@
+Linux NVM Library
+
+This is src/test/obj_redo_log/README.
+
+This directory contains a unit test for redo log.
+
+The obj_redo_log application takes file name, size of a redo log and
+number of operations in command line arguments:
+
+$ obj_redo_log <fname> <redo_log_size> [sfrePRC][<index>:<offset>:<value>]
+
+The file must be created and filled by zeros.
+
+The obj_redo_log handles the following operations on redo log:
+
+- s:<index>:<offset>:<value> - add redo log entry at <index> to store <value>
+			       at <offset>
+- f:<index>:<offset>:<value> - add redo log entry at <index> with finish flag
+			       set to store <value> at <offset>
+- F:<index>          - set <index> entry as the last one
+- r:<offset>         - read value at <offset>
+- e:<index>          - read <index> entry of redo log
+- P                  - process redo log
+- R                  - perform recovery process on redo log
+- C                  - perform consistency check of redo log
+
+<offset>, <value>    - values must be provided in hex format
+<index>              - values must be provided in dec format
+
+The output format for each operation is as follows:
+
+- s - "s:<offset>:<value>"
+- f - "f:<offset>:<value>"
+- F - "F:<index>"
+- r - "r:<offset>:<value>"
+- e - "e:<index>:<offset>:<finish_flag>:<value>"
+- P - "P"
+- R - "R"
+- C - "C:<consistent>"
+
+The layout of the pool file looks like the following:
+		+--------------+ 0
+		| PMEMOBJ      |
+		| pool header  |
+		+--------------+ 8192
+		| redolog[ 0 ] |
+		+--------------+ 8192 + 16
+		| redolog[ 1 ] |
+		+--------------+ 8192 + 32
+		:              :
+		:              :
+		+--------------+
+		| redolog[n-1] |
+		+--------------+ 8192 + n*16
+		|              |
+		|              |
+		|  data area   |
+		:              :
+		:              :
+		|              |
+		+--------------+ <file_size>
+
+All <offset> values are relative to the beginning of the data area.
+The minimum size of the file is 8192 bytes.

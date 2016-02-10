@@ -1,0 +1,21 @@
+This directory contains an example libraries implemented using libpmemobj.
+
+The *hashmap_tx* and *hashmap_atomic* libraries are two implementations
+of hashmap which utilizes transactional and atomic API of libpmemobj
+respectively.
+
+Both libraries may be used through *mapcli* application located in
+examples/libpmemobj/map directory.
+
+Atomic version, while simpler on the surface, have 2 significant drawbacks:
+- libpmemobj's list API implements only double-linked lists, which wastes
+  memory here (we don't need to traverse backward)
+and what is more important:
+- it needs to handle recovery process after crash/interruption
+
+Transactional version implements its own single-linked lists (it's still not
+memory efficient, because every allocation has significant overhead, so to
+mitigate it application would have to keep more values in one node) and
+can get away without any recovery process - every memory transaction is
+either done in 0% or 100%.
+

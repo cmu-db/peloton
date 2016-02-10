@@ -1,0 +1,16 @@
+Linux NVM Library
+
+This is src/test/pmem_movnt_align/README.
+
+This directory contains a unit test for the following functions:
+- pmem_memcpy_persist()
+- pmem_memmove_persist()
+- pmem_memset_persist()
+
+Usage:
+$ pmem_movnt_align [C|F|B|S]
+
+* C - pmem_memcpy_persist()
+* B - pmem_memmove_persist() in backward direction
+* F - pmem_memmove_persist() in forward direction
+* S - pmem_memset_persist()
