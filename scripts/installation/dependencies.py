@@ -75,6 +75,10 @@ def exec_cmd(cmd):
         FNULL.close()
 
 def install_dependencies():
+    
+    print(NVML_DIR)
+    print(FILE_DIR)
+    print(ROOT_DIR)
 
     ## ==============================================
     ## NVM Library
