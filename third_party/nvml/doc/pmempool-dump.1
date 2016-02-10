@@ -1,0 +1,163 @@
+.\"
+.\" Copyright (c) 2014-2015, Intel Corporation
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\"     * Neither the name of Intel Corporation nor the names of its
+.\"       contributors may be used to endorse or promote products derived
+.\"       from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" pmempool-dump.1 -- man page for pmempool dump command
+.\"
+.\" Format this man page with:
+.\"	man -l pmempool-dump.1
+.\" or
+.\"	groff -man -Tascii pmempool-dump.1
+.\"
+.TH pmempool-dump 1 "pmem Tools version 0.1" "NVM Library"
+.SH NAME
+pmempool-dump \- Dump user data from specified pool
+.SH SYNOPSIS
+.B pmempool dump
+[<options>] <file>
+.SH DESCRIPTION
+The
+.B pmempool
+invoked with
+.B dump
+command dumps user data from specified pool file. The output format may be
+either binary or hexadecimal.
+
+By default the output format is hexadecimal.
+
+By default data is dumped to standard output. It is possible to dump data to
+other file by specifying
+.B -o
+option. In this case data will be appended to this file.
+
+Using
+.B -r
+option you can specify number of blocks/bytes/data chunks using special text
+format. See
+.B RANGE
+section for details.
+
+.SS "Available options:"
+.PP
+.B -b, --binary
+.RS 8
+Dump data in binary format.
+.RE
+.PP
+.B -r, --range
+<range>
+.RS 8
+Range of pool file to dump. This may be number of blocks for
+.B blk
+pool type or either number of bytes or number of data chunks for
+.B log
+pool type.
+.RE
+.PP
+.B -c, --chunk
+<size>
+.RS 8
+Size of chunk for
+.B log
+pool type.
+See
+.BR pmemlog_walk ()
+in
+.B libpmemlog(3)
+for details.
+.RE
+.PP
+.B -o, --output
+<file>
+.RS 8
+Name of output file.
+.RE
+.PP
+.B -h, --help
+.RS 8
+Display help message and exit.
+.RE
+.SH RANGE
+Using
+.B -r, --range
+option it is possible to dump only a range of user data. This section describes
+valid format of
+.I <range>
+string.
+
+You can specify multiple ranges separated by commas.
+.PP
+.B <first>-<last>
+.RS 8
+All blocks/bytes/data chunks from
+.B <first>
+to
+.B <last>
+will be dumped.
+.RE
+.PP
+.B -<last>
+.RS 8
+All blocks/bytes/data chunks up to
+.B <last>
+will be dumped.
+.RE
+.PP
+.B <first>-
+.RS 8
+All blocks/bytes/data chunks starting from
+.B <first>
+will be dumped.
+.RE
+.PP
+.B <number>
+.RS 8
+Only
+.B <number>
+block/byte/data chunk will be dumped.
+.RE
+.SH EXAMPLES
+.TP
+pmempool dump pool.bin
+# Dump user data from pool.bin file to standard output
+.TP
+pmempool dump -o output.bin -r1,10-100 pool_blk.bin
+# Dump block number 1 and blocks from 10 to 100 from pool_blk.bin containing pmem blk pool to
+output.bin file
+.TP
+pmempool dump -r 1K-2K pool.bin
+# Dump data form 1K to 2K from pool.bin file.
+.SH "SEE ALSO"
+.B libpmemblk(3) libpmemlog(3) pmempool(1)
+.SH "PMEMPOOL"
+Part of the
+.B pmempool(1)
+suite.
