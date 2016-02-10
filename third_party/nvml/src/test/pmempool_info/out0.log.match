@@ -1,0 +1,24 @@
+POOL Header:
+Signature                : PMEMBLK
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM BLK Header:
+Block size               : $(*)
+Is zeroed                : $(*)
+
+<No BTT layout>

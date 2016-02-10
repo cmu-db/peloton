@@ -1,0 +1,97 @@
+#!/bin/bash -e
+#
+# Copyright (c) 2014-2015, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of Intel Corporation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# src/test/blk_nblock/TEST1 -- unit test for pmemblk_nblock
+#
+export UNITTEST_NAME=blk_nblock/TEST1
+export UNITTEST_NUM=1
+
+# standard unit test setup
+. ../unittest/unittest.sh
+
+require_fs_type local
+
+setup
+
+#
+# Create many files with different block sizes - most of
+# them corner cases.
+#
+# These are holey files, so they actually don't take up
+# any significant space.
+#
+truncate -s 1G $DIR/testfile1.2096896
+truncate -s 1G $DIR/testfile1.2096897
+truncate -s 2G $DIR/testfile2.0
+truncate -s 2G $DIR/testfile2.1
+truncate -s 2G $DIR/testfile2.17
+truncate -s 2G $DIR/testfile2.511
+truncate -s 2G $DIR/testfile2.1048576
+truncate -s 2G $DIR/testfile2.2097152
+truncate -s 2G $DIR/testfile2.4194304
+truncate -s 2G $DIR/testfile2.8388608
+truncate -s 2G $DIR/testfile2.16777216
+truncate -s 2G $DIR/testfile2.33554432
+truncate -s 2G $DIR/testfile2.67108864
+truncate -s 2G $DIR/testfile2.134217728
+truncate -s 2G $DIR/testfile2.268435456
+truncate -s 2G $DIR/testfile2.536870912
+truncate -s 2G $DIR/testfile2.1073741824
+truncate -s 2G $DIR/testfile2.2147483648
+truncate -s 2G $DIR/testfile2.-1
+
+expect_normal_exit ./blk_nblock$EXESUFFIX\
+	2096896:$DIR/testfile1.2096896\
+	2096897:$DIR/testfile1.2096897\
+	0:$DIR/testfile2.0\
+	1:$DIR/testfile2.1\
+	17:$DIR/testfile2.17\
+	511:$DIR/testfile2.511\
+	1048576:$DIR/testfile2.1048576\
+	2097152:$DIR/testfile2.2097152\
+	4194304:$DIR/testfile2.4194304\
+	8388608:$DIR/testfile2.8388608\
+	16777216:$DIR/testfile2.16777216\
+	33554432:$DIR/testfile2.33554432\
+	67108864:$DIR/testfile2.67108864\
+	134217728:$DIR/testfile2.134217728\
+	268435456:$DIR/testfile2.268435456\
+	536870912:$DIR/testfile2.536870912\
+	1073741824:$DIR/testfile2.1073741824\
+	2147483648:$DIR/testfile2.2147483648\
+	-1:$DIR/testfile2.-1
+
+check
+
+pass

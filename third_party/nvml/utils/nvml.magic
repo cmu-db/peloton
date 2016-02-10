@@ -1,0 +1,15 @@
+
+#------------------------------------------------------------------------------
+# $File: nvml,v 1.0 2014/10/27 14:30:00
+# nvml: file(1) magic for Intel NVML library pool files
+#
+# The NVML library specific format of pool files.
+#
+# PMEM signature
+0	string			PMEM
+>4	string			POOLSET		Persistent Memory Poolset file
+>>11	search			REPLICA		with replica
+# Pool type signature
+>4	regex			LOG|BLK|OBJ	Persistent Memory Pool file, type: %s,
+# Major version number
+>>8	lelong			>0		version 0x%x

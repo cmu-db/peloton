@@ -1,0 +1,4 @@
+log_pool/TEST20: START: log_pool
+ ./log_pool$(nW) o $(nW)/testfile
+$(nW)/testfile: pmemlog_open: No such file or directory
+log_pool/TEST20: Done

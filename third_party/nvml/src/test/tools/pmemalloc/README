@@ -1,0 +1,20 @@
+Linux NVM Library
+
+This is src/test/tools/pmemalloc/README.
+
+This directory contains a simple application for allocating objects
+from pmemobj pool.
+
+Usage:
+	$ usage: pmemalloc [args] <file>
+
+	Valid arguments:
+	-r <size>     - allocate root object of specified size
+	-o <size>     - allocate object(s) of specified size
+	-t <type_num> - type number for allocated object(s)
+	-s            - add allocated object to undo log
+	-f            - free allocated object
+	-e a|s|f      - exit after specified operation
+	                - a - after pmemobj_tx_alloc
+			- s - after pmemobj_tx_add_range
+			- f - after pmemobj_tx_free

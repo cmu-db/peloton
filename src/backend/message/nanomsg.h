@@ -4,21 +4,23 @@
 //
 // nanomsg.h
 //
-// Identification: src/backend/mfabric/nanomsg.h
+// Identification: src/backend/message/nanomsg.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include "abstract_message.h"
+
+#include "backend/message/abstract_message.h"
+
 #include <nanomsg/nn.h>
 #include <nanomsg/pipeline.h>
 #include <nanomsg/pair.h>
 #include <nanomsg/pubsub.h>
 
 namespace peloton {
-namespace mfabric {
+namespace message {
 
 class NanoMsg : public AbstractMessage {
  public:
@@ -48,5 +50,5 @@ class NanoMsg : public AbstractMessage {
   int ShutdownSocket(int socket, int how);
 };
 
-}  // end of mfabric namespace
+}  // end of message namespace
 }  // end of peloton namespace

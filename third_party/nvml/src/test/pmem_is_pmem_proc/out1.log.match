@@ -1,0 +1,9 @@
+pmem_is_pmem_proc/TEST1: START: pmem_is_pmem_proc
+ ./pmem_is_pmem_proc$(nW) smaps_mm_first 7fff77424000 2147479552 7fff77423000 8192 7fff77423000 4096
+redirecting /proc/self/smaps to smaps_mm_first
+addr 0x7fff77424000, len 2147479552: 0
+redirecting /proc/self/smaps to smaps_mm_first
+addr 0x7fff77423000, len 8192: 0
+redirecting /proc/self/smaps to smaps_mm_first
+addr 0x7fff77423000, len 4096: 1
+pmem_is_pmem_proc/TEST1: Done

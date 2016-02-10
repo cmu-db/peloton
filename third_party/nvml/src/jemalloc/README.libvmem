@@ -1,0 +1,10 @@
+Linux NVM Library
+
+This is src/jemalloc/README.libvmem.
+
+This is directory contains jemalloc version 3.6.0, released 2014-03-31,
+downloaded from:
+
+	http://www.canonware.com/download/jemalloc/jemalloc-3.6.0.tar.bz2
+
+with changes applied to support libvmem's need to use memory-mapped files.

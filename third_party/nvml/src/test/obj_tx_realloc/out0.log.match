@@ -1,0 +1,3 @@
+obj_tx_realloc/TEST0: START: obj_tx_realloc
+ ./obj_tx_realloc$(nW) $(nW)testfile1
+obj_tx_realloc/TEST0: Done

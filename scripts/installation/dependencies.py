@@ -40,6 +40,12 @@ LOG.setLevel(logging.INFO)
 ## ==============================================
 
 my_env = os.environ.copy()
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
+ROOT_DIR = os.path.join(os.path.dirname(FILE_DIR), os.pardir)
+THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "third_party")
+
+NVML_DIR = os.path.join(THIRD_PARTY_DIR, "nvml")
+NANOMSG_DIR = os.path.join(THIRD_PARTY_DIR, "nanomsg")
 
 ## ==============================================
 ## Utilities
@@ -68,36 +74,26 @@ def exec_cmd(cmd):
     finally:
         FNULL.close()
 
-def install_dependencies(TEMPDIR):
+def install_dependencies():
 
     ## ==============================================
     ## NVM Library
     ## ==============================================
-    LOG.info("Cloning NVM library")
-    cmd = 'git clone https://github.com/pmem/nvml'
-    exec_cmd(cmd)
-
-    LOG.info("Installing NVM library")
-    os.chdir('nvml')
+    LOG.info("Installing nvml library")
+    os.chdir(NVML_DIR)
     cmd = 'make -j4'
     exec_cmd(cmd)
     cmd = 'sudo make install -j4'
     exec_cmd(cmd)
     os.chdir('..')
 
-    LOG.info("Finished installing NVM library")
+    LOG.info("Finished installing nvml library")
 
     ## ==============================================
     ## Nanomsg Library
     ## ==============================================
-    LOG.info("Downloading nanomsg library")
-    cmd = 'wget https://github.com/nanomsg/nanomsg/releases/download/0.8-beta/nanomsg-0.8-beta.tar.gz'
-    exec_cmd(cmd)
-    cmd = 'tar -xzf nanomsg-0.8-beta.tar.gz'
-    exec_cmd(cmd)
-
-    LOG.info("Installing NVM library")
-    os.chdir('nanomsg-0.8-beta')
+    LOG.info("Installing nanomsg library")
+    os.chdir(NANOMSG_DIR)
     cmd = './configure'
     exec_cmd(cmd)
     cmd = 'make -j4'
@@ -118,20 +114,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
-        # Set up tmp dir
-        TEMPDIR = tempfile.mkdtemp()
-        LOG.info("Building and installing dependencies...")
-        LOG.info("Temporary directory : " + str(TEMPDIR))
-
         prev_dir = os.getcwd()
-        os.chdir(TEMPDIR)
-
-        install_dependencies(TEMPDIR)
+        
+        install_dependencies()
 
     finally:
-        # Clean up
-        shutil.rmtree(TEMPDIR)
-
         # Go back to prev dir
         os.chdir(prev_dir)
 

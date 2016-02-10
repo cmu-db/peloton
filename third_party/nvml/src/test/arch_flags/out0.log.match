@@ -1,0 +1,18 @@
+arch_flags/TEST0: START: arch_flags
+ ./arch_flags$(nW) elf.bin:0:0x0:0x0 elf.bin elf.bin:1:0x0:0x0 elf.bin elf_err_small.bin:0:0x0:0x0 elf.bin elf_err_mag.bin:0:0x0:0x0 elf.bin elf_err_ei_class.bin:0:0x0:0x0 elf.bin elf_err_ei_data.bin:0:0x0:0x0 elf.bin elf_err_e_machine.bin:0:0x0:0x0 elf.bin elf.bin:0:0x1:0x0 elf.bin elf.bin:0:0x0:0x1 elf.bin
+get  : 0
+check: 0
+get  : -1
+get  : -1
+get  : -1
+get  : 0
+check: -1
+get  : 0
+check: -1
+get  : 0
+check: -1
+get  : 0
+check: -1
+get  : 0
+check: -1
+arch_flags/TEST0: Done

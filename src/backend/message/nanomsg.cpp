@@ -4,17 +4,18 @@
 //
 // nanomsg.cpp
 //
-// Identification: src/backend/mfabric/nanomsg.cpp
+// Identification: src/backend/message/nanomsg.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "nanomsg.h"
 #include <iostream>
 
+#include "backend/message/nanomsg.h"
+
 namespace peloton {
-namespace mfabric {
+namespace message {
 
 /**
  *

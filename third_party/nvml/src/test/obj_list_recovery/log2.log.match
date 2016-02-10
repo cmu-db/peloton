@@ -1,0 +1,107 @@
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0 n:1:0 n:1:0 P:1 R:2 P:2 R:2 F:after_finish f:1:0:2
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+oob list:
+id = 0
+id = 1
+id = 2
+list reverse:
+id = 0
+id = 1
+id = 2
+list:
+id = 2
+id = 1
+id = 0
+list reverse:
+id = 0
+id = 1
+id = 2
+obj_list_recovery/TEST2: Done
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 V P:1 R:1 P:2 R:2
+oob list:
+id = 0
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+id = 0
+list:
+id = 2
+id = 1
+id = 0
+list reverse:
+id = 0
+id = 1
+id = 2
+pfree(id = 0)
+oob list:
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+list:
+id = 2
+id = 1
+list reverse:
+id = 1
+id = 2
+obj_list_recovery/TEST2: Done
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:before_finish f:1:0:2
+obj_list_recovery/TEST2: Done
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 V P:1 R:1 P:2 R:2
+oob list:
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+list:
+id = 2
+id = 1
+list reverse:
+id = 1
+id = 2
+oob list:
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+list:
+id = 2
+id = 1
+list reverse:
+id = 1
+id = 2
+obj_list_recovery/TEST2: Done
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:after_process f:1:0:2
+obj_list_recovery/TEST2: Done
+obj_list_recovery/TEST2: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 V P:1 R:1 P:2 R:2
+oob list:
+id = 2
+oob list reverse:
+id = 2
+list:
+id = 2
+list reverse:
+id = 2
+pfree(id = 1)
+oob list:
+id = 2
+oob list reverse:
+id = 2
+list:
+id = 2
+list reverse:
+id = 2
+obj_list_recovery/TEST2: Done
