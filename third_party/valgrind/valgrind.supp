@@ -1,136 +1,170 @@
 {
-   Handle pthread leaks
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:calloc
-   fun:allocate_dtv
-   fun:_dl_allocate_tls
-   fun:allocate_stack
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_sock_add_ep
-   fun:nn_bind
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_sock_add_ep
-   fun:nn_connect
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:calloc
-   fun:allocate_dtv
-   fun:_dl_allocate_tls
-   fun:allocate_stack
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_bipc_create
-   fun:nn_ep_init
-   fun:nn_sock_add_ep
-   fun:nn_bind
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_bipc_start_accepting
-   fun:nn_bipc_start_listening
-   fun:nn_fsm_start
-   fun:nn_bipc_create
-   fun:nn_ep_init
-   fun:nn_sock_add_ep
-   fun:nn_bind
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_bipc_start_accepting
-   fun:nn_ctx_leave
-   fun:nn_worker_routine
-   fun:nn_thread_main_routine
-   fun:start_thread
-   fun:clone
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_cipc_create
-   fun:nn_ep_init
-   fun:nn_sock_add_ep
-   fun:nn_connect
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:nn_usock_recv_raw
-   fun:nn_usock_recv
-   fun:nn_streamhdr_handler
-   fun:nn_ctx_leave
-   fun:nn_worker_routine
-   fun:nn_thread_main_routine
-   fun:start_thread
-   fun:clone
+    Handle pthread leaks
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:calloc
+        fun:allocate_dtv
+        fun:_dl_allocate_tls
+        fun:allocate_stack
 }
 {
     <insert_a_suppression_name_here>
-    Memcheck:Leak
-    match-leak-kinds: possible
-    fun:malloc
-    fun:nn_xpull_add
-    fun:nn_sock_add
-    fun:nn_pipebase_start
-    fun:nn_sipc_handler
-    fun:nn_ctx_leave
-    fun:nn_worker_routine
-    fun:nn_thread_main_routine
-    fun:start_thread
-    fun:clone
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_sock_add_ep
+        fun:nn_bind
 }
 {
     <insert_a_suppression_name_here>
-    Memcheck:Leak
-    match-leak-kinds: possible
-    fun:malloc
-    fun:nn_usock_recv_raw
-    fun:nn_usock_recv
-    fun:nn_streamhdr_handler
-    fun:nn_ctx_leave
-    fun:nn_sock_add_ep
-    fun:nn_connect
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_sock_add_ep
+        fun:nn_connect
 }
 {
     <insert_a_suppression_name_here>
-    Memcheck:Leak
-    match-leak-kinds: possible
-    fun:malloc
-    fun:nn_xsub_add
-    fun:nn_sock_add
-    fun:nn_pipebase_start
-    fun:nn_sipc_handler
-    fun:nn_ctx_leave
-    fun:nn_worker_routine
-    fun:nn_thread_main_routine
-    fun:start_thread
-    fun:clone
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:calloc
+        fun:allocate_dtv
+        fun:_dl_allocate_tls
+        fun:allocate_stack
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_bipc_create
+        fun:nn_ep_init
+        fun:nn_sock_add_ep
+        fun:nn_bind
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_bipc_start_accepting
+        fun:nn_bipc_start_listening
+        fun:nn_fsm_start
+        fun:nn_bipc_create
+        fun:nn_ep_init
+        fun:nn_sock_add_ep
+        fun:nn_bind
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_bipc_start_accepting
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_cipc_create
+        fun:nn_ep_init
+        fun:nn_sock_add_ep
+        fun:nn_connect
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_usock_recv_raw
+        fun:nn_usock_recv
+        fun:nn_streamhdr_handler
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_xpull_add
+        fun:nn_sock_add
+        fun:nn_pipebase_start
+        fun:nn_sipc_handler
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_usock_recv_raw
+        fun:nn_usock_recv
+        fun:nn_streamhdr_handler
+        fun:nn_ctx_leave
+        fun:nn_sock_add_ep
+        fun:nn_connect
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_xsub_add
+        fun:nn_sock_add
+        fun:nn_pipebase_start
+        fun:nn_sipc_handler
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_usock_recv_raw
+        fun:nn_usock_recv
+        fun:nn_streamhdr_handler
+        fun:nn_ctx_leave
+        fun:nn_sock_add_ep
+        fun:nn_connect
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_xsub_add
+        fun:nn_sock_add
+        fun:nn_pipebase_start
+        fun:nn_sipc_handler
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:calloc
+        fun:_dl_allocate_tls
 }
 
