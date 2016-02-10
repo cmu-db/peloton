@@ -8,14 +8,10 @@ apt-get -y install git g++ autoconf pkg-config libtool libjson-spirit-dev librea
 # Pip
 pip install --upgrade unittest-xml-reporting
 
-# Get dependencies script
-wget https://raw.githubusercontent.com/cmu-db/peloton/master/scripts/installation/dependencies.py
-
 # Install dependencies
-python dependencies.py
-
-# Cleanup
-rm dependencies.py
+cd "$(dirname "$0")"
+python ./dependencies.py
+cd -
 
 # Setup log dir
 mkdir -p /mnt/pmfs
