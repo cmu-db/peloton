@@ -15,8 +15,7 @@ addons:
 
 before_script:
     # setup environment
-    - wget https://raw.githubusercontent.com/cmu-db/peloton/master/scripts/vagrant/packages.sh
-    - sudo sh ./packages.sh
+    - sudo sh ./scripts/vagrant/packages.sh
 
 script:
     # bootstrap
