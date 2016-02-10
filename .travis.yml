@@ -23,6 +23,6 @@ script:
     - cd build
     - ../configure
     # make
-    - make -j3
+    - make -j8
     # run tests
-    - make check
+    - make check -j8
