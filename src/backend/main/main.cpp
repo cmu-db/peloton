@@ -13,6 +13,7 @@
 #include <unistd.h>
 // for nanomsg test by michael
 #include <nanomsg/nn.h>
+#include <nanomsg/pipeline.h>
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pair.h>
 #include <nanomsg/bus.h>
@@ -49,35 +50,22 @@ static void check_root(const char *progname);
  */
 int main(int argc, char *argv[]) {
   // test nanomsg by Michael
-  int sock = nn_socket (AF_SP, NN_BUS);
-  assert( nn_bind (sock, "tcp://*:5666") >=0 );
+  //int sock = nn_socket (AF_SP, NN_PULL);
+  //assert( nn_bind (sock, "tcp://*:5666") >=0 );
 
-  sleep(1); // wait for connections
+  int sock = nn_socket (AF_SP, NN_PULL);
+  assert (sock >= 0);
+  nn_bind (sock, "tcp://*:5666");
 
-  assert(nn_connect(sock, "tcp://128.2.209.31:5666")>=0);
-
-  sleep(1); // wait for connections
-  int to = 100;
-  assert (nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to)) >= 0);
-  std::cout << to;
-  // SEND
-  int sz_n = strlen(NODE0) + 1; // '\0' too
-  printf ("%s: SENDING '%s' ONTO BUS\n", NODE0, NODE0);
-  int send = nn_send (sock, NODE0, sz_n, 0);
-  assert (send == sz_n);
-  std::cout << send;
   while (1)
-  {
-      // RECV
+    {
       char *buf = NULL;
-      int recv = nn_recv (sock, &buf, NN_MSG, 0);
-      if (recv >= 0)
-        {
-          printf ("%s: RECEIVED '%s' FROM BUS\n", "HEHEHE", buf);
-          nn_freemsg (buf);
-        }
+      int bytes = nn_recv (sock, &buf, NN_MSG, 0);
+      assert (bytes >= 0);
+      printf ("NODE0: RECEIVED \"%s\"\n", buf);
+      nn_freemsg (buf);
+      std::cout << bytes;
     }
-  nn_shutdown (sock, 0);
 
 //  if (sock >=0 and rbind >=0) {
 //      void *buf = NULL;
