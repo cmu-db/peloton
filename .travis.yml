@@ -25,4 +25,4 @@ script:
     # make
     - make -j4
     # run tests
-    - make check
+    - sudo make check
