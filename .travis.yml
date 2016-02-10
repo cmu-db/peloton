@@ -15,7 +15,7 @@ addons:
 
 before_script:
     # setup environment
-    - sudo -H sh ./scripts/vagrant/packages.sh
+    - sudo -H sh ./scripts/installation/packages.sh
 
 script:
     # bootstrap
