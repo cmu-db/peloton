@@ -6,7 +6,7 @@ apt-get -y install git g++ autoconf pkg-config libtool libjson-spirit-dev librea
     python-pip python-xmlrunner default-jdk default-jre ant kcachegrind libboost-all-dev
 
 # Pip
-pip install --upgrade unittest-xml-reporting
+pip install unittest-xml-reporting
 
 # Install dependencies
 cd "$(dirname "$0")"

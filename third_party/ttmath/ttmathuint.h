@@ -49,8 +49,6 @@
 #include "ttmathtypes.h"
 #include "ttmathmisc.h"
 
-#include "boost/functional/hash.hpp"
-
 /*!
  \brief a namespace for the TTMath library
  */
@@ -74,9 +72,15 @@ public:
      */
     uint table[value_size];
 
+    template <class T>
+    inline void hash_combine(std::size_t& seed, const T& v) const{
+        std::hash<T> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+
     void hash(std::size_t &seed) const {
         for (unsigned int ii = 0; ii < value_size; ii++) {
-            boost::hash_combine(seed, table[ii]);
+            hash_combine<uint>(seed, table[ii]);
         }
     }
 
