@@ -21,8 +21,8 @@ script:
     # bootstrap
     - ./bootstrap
     - cd build
-    - ../configure
+    - ../configure --enable-debug
     # make
-    - make -j8
+    - make -j4
     # run tests
-    - make check -j8
+    - make check
