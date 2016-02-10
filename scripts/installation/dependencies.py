@@ -79,11 +79,11 @@ def install_dependencies():
     LOG.info(os.getcwd())
     LOG.info(FILE_DIR)
     LOG.info(ROOT_DIR)
-    LOG.info(NVML_DIR)
 
     ## ==============================================
     ## NVM Library
     ## ==============================================
+    LOG.info(NVML_DIR)
     LOG.info("Installing nvml library")
     os.chdir(NVML_DIR)
     cmd = 'make -j4'
@@ -97,6 +97,7 @@ def install_dependencies():
     ## ==============================================
     ## Nanomsg Library
     ## ==============================================
+    LOG.info(NANOMSG_DIR)
     LOG.info("Installing nanomsg library")
     os.chdir(NANOMSG_DIR)
     cmd = './configure'
