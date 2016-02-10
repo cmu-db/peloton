@@ -432,9 +432,9 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_SELECT_SUBQUERY: {
       return "SELECT_SUBQUERY";
     }
-    case EXPRESSION_TYPE_SUBSTR :{
-      return "SUBSTRING";
-    }
+
+
+
     // TODO: Added by us
     case EXPRESSION_TYPE_PLACEHOLDER: {
       return "PLACEHOLDER";
@@ -451,6 +451,48 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_STAR: {
       return "STAR";
     }
+    case EXPRESSION_TYPE_SUBSTR :{
+	  return "SUBSTRING";
+	}
+    case EXPRESSION_TYPE_ASCII :{
+	  return "ASCII";
+	}
+    case EXPRESSION_TYPE_OCTET_LEN:{
+		return "OCTET_LENGTH";
+	}
+	case EXPRESSION_TYPE_CHAR:{
+		return "CHAR";
+	}
+	case EXPRESSION_TYPE_CHAR_LEN:{
+		return "CHAR_LEN";
+	}
+	case EXPRESSION_TYPE_SPACE:{
+		return "SPACE";
+	}
+	case EXPRESSION_TYPE_REPEAT:{
+		return "REPEAT";
+	}
+	case EXPRESSION_TYPE_POSITION:{
+		return "POSITION";
+	}
+	case EXPRESSION_TYPE_LEFT:{
+		return "LEFT";
+	}
+	case EXPRESSION_TYPE_RIGHT:{
+		return "RIGHT";
+	}
+	case EXPRESSION_TYPE_CONCAT:{
+		return "CONCAT";
+	}
+	case EXPRESSION_TYPE_TRIM:{
+		return "TRIM";
+	}
+	case EXPRESSION_TYPE_REPLACE:{
+		return "REPLACE";
+	}
+	case EXPRESSION_TYPE_OVERLAY:{
+		return "OVERLAY";
+	}
   }
   return "INVALID";
 }
