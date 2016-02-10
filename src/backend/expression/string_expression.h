@@ -88,5 +88,27 @@ private:
   }
 };
 
+class OctetLenExpression : public AbstractExpression {
+
+private:
+
+ public:
+	OctetLenExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN) {
+		m_left = lc;
+	};
+
+
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    assert(m_left);
+    return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_OCTET_LENGTH>();
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "OperatorNotExpression");
+  }
+};
+
 }  // End expression namespace
 }  // End peloton namespace
