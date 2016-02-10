@@ -575,6 +575,9 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
 
     case EXPRESSION_TYPE_SUBSTR:
       return new expression::SubstringExpression(children[0], children[1], children[2]);
+    case EXPRESSION_TYPE_ASCII:
+      return new expression::AsciiExpression(children[0]);
+
 
     default:
       LOG_ERROR(

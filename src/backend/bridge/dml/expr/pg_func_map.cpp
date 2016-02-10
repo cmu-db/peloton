@@ -79,6 +79,8 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {937, {EXPRESSION_TYPE_SUBSTR, 2}},
     {883, {EXPRESSION_TYPE_SUBSTR, 2}},
 
+	{1620, {EXPRESSION_TYPE_ASCII, 1}},
+
     //====--------------------------------
     // Basic arithmetics
     //====--------------------------------

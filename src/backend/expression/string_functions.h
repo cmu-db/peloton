@@ -185,6 +185,26 @@ inline Value Value::Call<FUNC_POSITION_CHAR>(
   return GetIntegerValue(static_cast<int32_t>(position));
 }
 
+template<>
+inline Value Value::CallUnary<FUNC_ASCII>() const{
+	if (IsNull()){
+		return GetNullValue();
+	}
+	if (GetValueType() != VALUE_TYPE_VARCHAR) {
+	  ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
+    }
+	const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
+	if (valueUTF8Length == 0){
+		return GetNullValue(VALUE_TYPE_INTEGER);
+	}
+
+	char *valueChars =
+	      reinterpret_cast<char *>(GetObjectValueWithoutNull());
+	return GetIntegerValue(valueChars[0]);
+
+
+}
+
 /** implement the 2-argument SQL LEFT function */
 template <>
 inline Value Value::Call<FUNC_LEFT>(const std::vector<Value> &arguments) {
