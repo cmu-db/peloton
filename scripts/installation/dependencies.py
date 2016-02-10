@@ -76,6 +76,11 @@ def exec_cmd(cmd):
 
 def install_dependencies():
 
+    LOG.info(os.getcwd())
+    LOG.info(FILE_DIR)
+    LOG.info(ROOT_DIR)
+    LOG.info(NVML_DIR)
+
     ## ==============================================
     ## NVM Library
     ## ==============================================
