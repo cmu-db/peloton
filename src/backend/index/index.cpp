@@ -52,11 +52,10 @@ bool Index::Compare(const AbstractTuple &index_key,
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
 
-    const Value &lhs = index_key.GetValue(column_itr);
     const Value &rhs = values[key_column_itr];
+    const Value &lhs = index_key.GetValue(column_itr);
     const ExpressionType expr_type = expr_types[key_column_itr];
 
-    // modified by michael for IN operator
     if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
       bool bret = lhs.InList(rhs);
       if (bret == true) {
@@ -68,12 +67,14 @@ bool Index::Compare(const AbstractTuple &index_key,
       diff = lhs.Compare(rhs);
     }
 
+    LOG_TRACE("Difference : %d ", diff);
+
     if (diff == VALUE_COMPARE_EQUAL) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
         case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:  // added by michael for IN operator
+        case EXPRESSION_TYPE_COMPARE_IN:
           continue;
 
         case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -119,24 +120,24 @@ bool Index::Compare(const AbstractTuple &index_key,
           throw IndexException("Unsupported expression type : " +
                                std::to_string(expr_type));
       }
-    } else if (diff == VALUE_COMPARE_NO_EQUAL) {  // problems here?michael when
-                                                  // there are multiple
-                                                  // conditions with OR in the
-                                                  // query
+    } else if (diff == VALUE_COMPARE_NO_EQUAL) {
+      // problems here when there are multiple
+      // conditions with OR in the query
       return false;
-    }  // end VALUE_COMPARE_NO_EQUAL
+    }
+
   }
 
   return true;
 }
 
-bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
+bool Index::ConstructLowerBoundTuple(storage::Tuple *index_key,
                                const std::vector<peloton::Value> &values,
                                const std::vector<oid_t> &key_column_ids,
                                const std::vector<ExpressionType> &expr_types) {
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
-  bool all_equal = true;
+  bool all_constraints_equal = true;
 
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
@@ -146,33 +147,39 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
     bool placeholder = false;
     Value value;
 
+    // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
+      // Equality constraint
       if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
         placeholder = true;
         value = values[offset];
-      } else {
-        // not all expressions are equal
-        all_equal = false;
+      }
+      // Not all expressions / constraints are equal
+      else {
+        all_constraints_equal = false;
       }
     }
 
-    // fill in the placeholders
+    LOG_TRACE("Column itr : %lu  Placeholder : %d ", column_itr, placeholder);
+
+    // Fill in the placeholder
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
     }
-    // get the min value
+    // Fill in the min value
     else {
       auto value_type = schema->GetType(column_itr);
       index_key->SetValue(column_itr, Value::GetMinValue(value_type),
                           GetPool());
     }
+
   }
 
   LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
-  if (col_count > values.size()) all_equal = false;
+  if (col_count > values.size()) all_constraints_equal = false;
 
-  return all_equal;
+  return all_constraints_equal;
 }
 
 Index::Index(IndexMetadata *metadata) : metadata(metadata) {

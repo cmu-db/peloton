@@ -1,0 +1,3 @@
+vmem_malloc/TEST1: START: vmem_malloc
+ ./vmem_malloc$(nW) $(nW)
+vmem_malloc/TEST1: Done

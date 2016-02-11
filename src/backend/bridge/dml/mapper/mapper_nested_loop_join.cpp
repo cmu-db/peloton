@@ -58,7 +58,7 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
 
   project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo));
 
-  LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+  LOG_INFO("%s", project_info.get()->Debug().c_str());
 
   planner::AbstractPlan *result = nullptr;
   planner::NestedLoopJoinPlan *plan_node = nullptr;

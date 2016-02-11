@@ -45,11 +45,12 @@
 
 #include <iostream>
 #include <iomanip>
+#include <list>
 
 #include "ttmathtypes.h"
 #include "ttmathmisc.h"
 
-#include "boost/functional/hash.hpp"
+#include <boost/functional/hash.hpp>
 
 /*!
  \brief a namespace for the TTMath library

@@ -1,0 +1,4 @@
+blk_pool/TEST20: START: blk_pool
+ ./blk_pool$(nW) o $(nW)/testfile 0
+$(nW)/testfile: pmemblk_open: No such file or directory
+blk_pool/TEST20: Done

@@ -1,0 +1,25 @@
+obj_list_realloc/TEST5: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0 P:1 R:1 P:2 R:2 s:0:1:2:3:2:0 P:1 R:1 P:2 R:2
+pmalloc(id = 0)
+oob list:
+id = 0
+oob list reverse:
+id = 0
+list:
+id = 0
+list reverse:
+id = 0
+prealloc(id = 0, size = 3) = false
+pmalloc(id = 1)
+realloc_constructor(id = 0)
+pfree(id = 0)
+realloc(id = 2)
+oob list:
+id = 2
+oob list reverse:
+id = 2
+list:
+id = 2
+list reverse:
+id = 2
+obj_list_realloc/TEST5: Done

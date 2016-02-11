@@ -21,6 +21,8 @@
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
+#include <boost/functional/hash.hpp>
+
 namespace peloton {
 namespace index {
 

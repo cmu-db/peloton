@@ -96,7 +96,6 @@ Value GetRandomValue(ValueType type) {
         characters[ii] = (char)(32 + (rand() % 94));  // printable characters
       }
       characters[length] = '\0';
-      // printf("Characters are \"%s\"\n", characters);
       return ValueFactory::GetStringValue(std::string(characters));
     }
     case VALUE_TYPE_VARBINARY: {
@@ -106,7 +105,6 @@ Value GetRandomValue(ValueType type) {
         bytes[ii] = (unsigned char)rand() % 256;  // printable characters
       }
       bytes[length] = '\0';
-      // printf("Characters are \"%s\"\n", characters);
       return ValueFactory::GetBinaryValue(bytes, length);
     } break;
     case VALUE_TYPE_ARRAY:
@@ -559,6 +557,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_BTREE: {
       return "BTREE";
     }
+    case INDEX_TYPE_BWTREE: {
+      return "BWTREE";
+    }
   }
   return "INVALID";
 }
@@ -568,6 +569,8 @@ IndexType StringToIndexType(std::string str) {
     return INDEX_TYPE_INVALID;
   } else if (str == "BTREE") {
     return INDEX_TYPE_BTREE;
+  }  else if (str == "BWTREE") {
+    return INDEX_TYPE_BWTREE;
   }
   return INDEX_TYPE_INVALID;
 }
@@ -989,7 +992,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      LOG_WARN("INVALID VALUE TYPE : %d \n", PostgresValType);
+      LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
       valueType = VALUE_TYPE_INVALID;
       break;
   }
@@ -1034,7 +1037,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
+      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
       break;
   }
   return constraintType;

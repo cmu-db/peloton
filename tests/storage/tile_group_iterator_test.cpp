@@ -32,10 +32,14 @@ TEST(TileGroupIteratorTests, BasicTest) {
   const int tuple_count = tuples_per_tilegroup * expected_tilegroup_count;
 
   // Create a table and wrap it in logical tiles
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tuple_count, false, false,
                                    true);
+  txn_manager.CommitTransaction();
 
   storage::TileGroupIterator tile_group_itr(data_table.get());
   std::shared_ptr<storage::TileGroup> tile_group_ptr;

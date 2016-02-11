@@ -1,0 +1,9 @@
+# testconfig.sh should not be checked into git  .it describes the configuration
+# of the local machine where the local copy of the source tree is being tested.
+testconfig.sh
+# ignore files generated during test runs (left around for analysis)
+*.log
+testfile*
+# ignore static binaries generated for testing
+*.static-debug
+*.static-nondebug

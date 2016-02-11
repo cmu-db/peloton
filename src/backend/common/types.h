@@ -321,7 +321,8 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1  // btree
+  INDEX_TYPE_BTREE = 1,  // btree
+  INDEX_TYPE_BWTREE = 2  // bwtree
 };
 
 enum IndexConstraintType {
@@ -417,6 +418,18 @@ enum StatementType {
   STATEMENT_TYPE_RENAME = 11,       // rename statement type
   STATEMENT_TYPE_ALTER = 12,        // alter statement type
   STATEMENT_TYPE_TRANSACTION = 13,  // transaction statement type
+};
+
+//===--------------------------------------------------------------------===//
+// Scan Direction Types
+//===--------------------------------------------------------------------===//
+
+enum ScanDirectionType
+{
+  SCAN_DIRECTION_TYPE_INVALID = 0,  // invalid scan direction
+
+  SCAN_DIRECTION_TYPE_FORWARD = 1,  // forward
+  SCAN_DIRECTION_TYPE_BACKWARD = 2  // backward
 };
 
 //===--------------------------------------------------------------------===//

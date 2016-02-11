@@ -1,0 +1,616 @@
+.\"
+.\" Copyright (c) 2014-2015, Intel Corporation
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\"     * Neither the name of Intel Corporation nor the names of its
+.\"       contributors may be used to endorse or promote products derived
+.\"       from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" pmempool-info.1 -- man page for pmempool info command
+.\"
+.\" Format this man page with:
+.\"	man -l pmempool-info.1
+.\" or
+.\"	groff -man -Tascii pmempool-info.1
+.\"
+.TH pmempool-info 1 "pmem Tools version 0.1" "NVM Library"
+.SH NAME
+pmempool-info \- Print basic information about Persistent Memory Pool file
+.SH SYNOPSIS
+.B pmempool info
+[<options>] <file>
+.SH DESCRIPTION
+The
+.B pmempool
+invoked with
+.B info
+command analyzes an existing pool created by
+.B NVML
+libraries. The main task of this command is to print all usable information from
+pool headers and user data in human readable format.
+It automatically recognizes pool type by parsing and analyzing pool header.
+The recognition is done by checking the signature in pool header. The main job
+of
+.B info
+command is to present internal data structures as they are stored in file but
+.I not
+for checking consistency. For this purpose there is the
+.B pmempool-check(1)
+command available.
+
+The
+.B pmempool
+with
+.B info
+command analyzes pool file as long as it is possible regarding
+.I correctness
+of internal meta-data (correct offsets, sizes etc.). If it is
+.I not
+possible to
+analyze the rest of the file,
+.B pmempool
+exits with error code and prints appropriate error message.
+
+Currently there is lack of interprocess synchronization for pool files, so the
+.B info
+command should be invoked off-line. Using
+.B pmempool
+on pool file which may be modified by another process may lead to unexpected
+errors in pool file.
+
+.B pmempool info
+opens pool file in
+.I read-only
+mode so the file will remain untouched after processing.
+
+The
+.B info
+command may collect and print basic statistics about data usage.
+The statistics are specific to the type of pool. See
+.B STATISTICS
+section for details.
+
+Although the pool consistency is
+.I not
+checked by the
+.B info
+command, it prints information about checksum errors and/or offsets errors.
+
+.SS "Common options:"
+.LP
+By default the
+.B info
+command of
+.B pmempool
+prints information about the most important internal data structures from pool.
+The particular set of headers and meta-data depend on pool type. The pool type
+is recognized automatically and appropriate information is displayed in
+human-readable format.
+
+To force processing specified file(s) as desired pool type use
+.B -f
+option with appropriate name of pool type. The valid names off pool types are
+.I blk ,
+.I log
+or
+.I obj.
+This option may be useful when the pool header is corrupted and automatic
+recognition of pool type fails.
+
+.PP
+.B -f, --force
+blk|log|obj
+.RS 8
+Force parsing pool as specified pool type.
+.RE
+.LP
+By default only pool headers and internal meta-data are displayed.
+To display user data use
+.B -d
+option. Using
+.B -r
+option you can specify number of blocks/bytes/data chunks or objects using
+special text format. See
+.B RANGE
+section for details.
+The range refers to
+.I block numbers
+in case of pmem blk pool type, to
+.I chunk numbers
+in case of pmem log pool type and to
+.I object numbers
+in case of pmem obj pool type. See
+.B EXAMPLES
+section for an example of usage of these options.
+.PP
+.B -d, --data
+.RS 8
+Dump user data in hexadecimal format. In case of pmem
+.I blk
+pool type data is
+dumped in
+.I blocks.
+In case of pmem
+.I log
+pool type data is dumped as a whole or in
+.I chunks
+if
+.B -w
+option is used (See
+.B Options for PMEMLOG
+section for details).
+.RE
+.PP
+.B -r, --range
+<range>
+.RS 8
+Range of blocks/data chunks/objects/zone headers/chunk headers/lanes. See
+.B RANGE
+section for details about range format.
+.RE
+.PP
+.B -n, --human
+.RS 8
+Print sizes in human-readable format with appropriate units (e.g. 4k, 8M, 16G).
+.RE
+.PP
+.B -x, --headers-hex
+.RS 8
+Print pool's internal data in mixed format which consists of hexadecimal dump of
+header's data and parsed format displayed in human-readable format. This allows
+to see how data is stored in file.
+.RE
+.PP
+.B -s, --stats
+.RS 8
+Print pool's statistics. See
+.B STATISTICS
+section for details.
+.RE
+.PP
+.B -h, --help
+.RS 8
+Display help message and exit.
+.RE
+
+.SS "Options for PMEMLOG:"
+.PP
+.B -w, --walk
+<size>
+.RS 8
+Use this option to walk through used data with fixed data chunk size.
+See
+.BR pmemlog_walk ()
+in
+.B libpmemlog(3)
+for details.
+.RE
+
+.SS "Options for PMEMBLK:"
+.LP
+By default the
+.B info
+command displays the pmem blk header and BTT (Block Translation Table) Info
+header in case of pmem blk pool type.
+
+To display BTT Map and/or BTT FLOG (Free List and Log) use
+.B -m
+and
+.B -g
+options respectively or increase verbosity level.
+
+In order to display BTT Info header backup use
+.B -B
+option.
+.PP
+.B -m, --map
+.RS 8
+Print BTT Map entries.
+.RE
+.PP
+.B -g, --flog
+.RS 8
+Print BTT FLOG entries.
+.RE
+.PP
+.B -B, --backup
+.RS 8
+Print BTT Info header backup.
+.RE
+.LP
+By default the
+.B info
+command displays all data blocks when
+.B -d
+options is used. However it is possible to skip blocks marked with
+.I zero
+and/or
+.I error
+flags. It is also possible to skip blocks which are
+.I not
+marked with any flag. Skipping blocks has impact on blocks ranges
+(e.g. display 10 blocks marked with error flag in the range from 0 to 10000)
+and statistics.
+.PP
+.B -z, --skip-zeros
+.RS 8
+Skip blocks marked with
+.I zero
+flag.
+.RE
+.PP
+.B -e, --skip-error
+.RS 8
+Skip blocks marked with
+.I error
+flag.
+.RE
+.PP
+.B -u, --skip-no-flag
+.RS 8
+Skip blocks
+.I not
+marked with any flag.
+.RE
+
+.SS "Options for PMEMOBJ:"
+.LP
+By default the
+.B info
+command displays pool header and
+.B pmem obj
+pool descriptor. In order to print information about other data structures
+one of the following options may be used.
+.PP
+.B -l, --lanes [<range>]
+.RS 8
+Print information about lanes. If range is not specified all lanes are
+displayed. The range can be specified using
+.B -r
+option right after the
+.B -l
+option. See
+.B RANGE
+section for details about range format.
+.RE
+.PP
+.B -R, --recovery
+.RS 8
+Print information about only those lanes which require recovery process.
+This option requires
+.B -l, --lanes
+option.
+.RE
+.PP
+.B -S, --section tx,allocator,list
+.RS 8
+Print information only about specified sections from lane. The section
+types may be separated by comma. This option requires
+.B -l, --lanes
+option.
+.RE
+.PP
+.B -O, --object-store
+.RS 8
+Print information about all allocated objects.
+.RE
+.PP
+.B -t, --types <range>
+.RS 8
+Print information about allocated objects only from specified range of type
+numbers. If
+.B -s, --stats
+option is specified the objects statistics refer to objects from specified
+range of type numbers. This option requires
+.B -O, --object-store
+or
+.B -s, --stats
+options. See
+.B RANGE
+section for details about range format.
+.RE
+.PP
+.B -E, --no-empty
+.RS 8
+Ignore empty lists of objects. This option requires
+.B -O, --object-store
+option.
+.RE
+.PP
+.B -o, --root
+.RS 8
+Print information about a root object.
+.RE
+.PP
+.B -A, --alloc-header
+.RS 8
+Print object's allocation header. This option requires
+.B -O, --object-store
+or
+.B -l, --lanes
+or
+.B -o, --root
+options.
+.B
+.RE
+.PP
+.B -a, --oob-header
+.RS 8
+Print object's out of band header. This option requires
+.B -O, --object-store
+or
+.B -l, --lanes
+or
+.B -o, --root
+options.
+.B
+.RE
+.PP
+.B -H, --heap
+.RS 8
+Print information about
+.B pmemobj
+heap. By default only a heap header is displayed.
+.RE
+.PP
+.B -Z, --zones
+.RS 8
+If the
+.B -H, --heap
+option is used, print information about zones from specified range.
+If the
+.B -O, --object-store
+option is used, print information about objects only from specified range
+of zones. This option requires
+.B -O, --object-store
+,
+.B -H, --heap
+or
+.B -s, --stats
+options. The range can be specified using
+.B -r
+option right after the
+.B -Z
+option. See
+.B RANGE
+section for details about range format.
+.RE
+.PP
+.B -C, --chunks [<range>]
+.RS 8
+If the
+.B -H, --heap
+option is used, print information about chunks from specified range. By default
+information about chunks of types
+.B used ,
+.B free
+and
+.B run
+are displayed. If the
+.B -O, --object-store
+option is used, print information about objects from specified range of chunks
+within a zone. This option requires
+.B -O, --object-store
+,
+.B -H, --heap
+or
+.B -s, --stats
+options. The range can be specified using
+.B -r
+option right after the
+.B -C
+option. See
+.B RANGE
+section for details about range format.
+.RE
+.PP
+.B -T, --chunk-type used,free,run,footer
+.RS 8
+Print only specified type(s) of chunks. The multiple types may be specified
+separated by comma. This option requires
+.B -H, --heap
+and
+.B -C, --chunks
+options.
+.RE
+.PP
+.B -b, --bitmap
+.RS 8
+Print bitmap of used blocks in chunks of type run. This option requires
+.B -H, --heap
+and
+.B -C, --chunks
+options.
+.RE
+.PP
+.B -p, --replica <num>
+.RS 8
+Print information from
+.B <num>
+replica. The 0 value means the master pool file.
+.RE
+
+.SH RANGE
+Using
+.B -r, --range
+option it is possible to dump only a range of user data. This section describes
+valid format of
+.I <range>
+string.
+
+You can specify multiple ranges separated by commas.
+.PP
+.B <first>-<last>
+.RS 8
+All blocks/bytes/data chunks from
+.B <first>
+to
+.B <last>
+will be dumped.
+.RE
+.PP
+.B -<last>
+.RS 8
+All blocks/bytes/data chunks up to
+.B <last>
+will be dumped.
+.RE
+.PP
+.B <first>-
+.RS 8
+All blocks/bytes/data chunks starting from
+.B <first>
+will be dumped.
+.RE
+.PP
+.B <number>
+.RS 8
+Only
+.B <number>
+block/byte/data chunk will be dumped.
+.RE
+.SH STATISTICS
+Below is the description of statistical measures for specific pool types.
+.SS PMEMLOG
+.TP
+.B Total
+Total space in pool.
+.TP
+.B Available
+Size and percentage of available space.
+.TP
+.B Used
+Size and percentage of used space.
+.SS PMEMBLK
+.TP
+.B Total blocks
+Total number of blocks in pool.
+.TP
+.B Zeroed blocks
+Number and percentage of blocks marked with
+.I zero
+flag.
+.TP
+.B Error blocks
+Number and percentage of blocks marked with
+.I error
+flag.
+.TP
+.B Blocks without any flag
+Number and percentage of blocks
+.I not
+marked with any flag.
+.TP
+.B NOTE:
+In case of pmemblk, statistics are evaluated for blocks which meet requirements
+regarding:
+.LP
+.I range
+of blocks (
+.B -r
+option),
+.LP
+.I skipped
+types of blocks (
+.B -z, -e, -u
+options).
+.SS PMEMOBJ
+.TP
+.B Object store
+.RS
+.TP
+.B Number of objects
+Total number of objects and number of objects per type number.
+.TP
+.B Number of bytes
+Total number of bytes and number of bytes per type number.
+.RE
+.TP
+.B Heap
+.RS
+.TP
+.B Number of zones
+Total number of zones in the pool.
+.TP
+.B Number of used zones
+Number of used zones in the pool.
+.RE
+.TP
+.B Zone
+The zone's statistics are presented for each zone separately and the aggregated
+results from all zones.
+.RS
+.TP
+.B Number of chunks
+Total number of chunks in the zone and number of chunks of specified type.
+.TP
+.B Chunks size
+Total size of all chunks in the zone and sum of sizes of chunks of specified
+type.
+.RE
+.TP
+.B Allocation classes
+.RS
+.TP
+.B Units
+Total number of units of specified class.
+.TP
+.B Used units
+Number of used units of specified class.
+.TP
+.B Bytes
+Total number of bytes of specified class.
+.TP
+.B Used bytes
+Number of used bytes of specified class.
+.TP
+.B Total bytes
+Total number of bytes of all classes.
+.TP
+.B Total used bytes
+Total number of used bytes of all classes.
+.RE
+.SH EXAMPLES
+.TP
+pmempool info ./pmemblk
+# Parse and print information about pmem blk file.
+.TP
+pmempool info -f blk ./pmemblk
+# Force parsing pmemblk file as PMEM BLK pool type.
+.TP
+pmempool info -d ./pmemlog
+# Print information and data in hexadecimal dump format for file pmem log.
+.TP
+pmempool info -d -r10-100 -eu ./pmemblk
+# Print information from pmemblk file. Dump data blocks from 10 to 100,
+skip blocks marked with error flag and not marked with any flag.
+.SH "SEE ALSO"
+.B libpmemblk(3) libpmemlog(3) pmempool(1)
+.SH "PMEMPOOL"
+Part of the
+.B pmempool(1)
+suite.

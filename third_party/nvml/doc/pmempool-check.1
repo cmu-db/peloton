@@ -1,0 +1,130 @@
+.\"
+.\" Copyright (c) 2014-2015, Intel Corporation
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\"     * Neither the name of Intel Corporation nor the names of its
+.\"       contributors may be used to endorse or promote products derived
+.\"       from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" pmempool-check.1 -- man page for pmempool check command
+.\"
+.\" Format this man page with:
+.\"	man -l pmempool-check.1
+.\" or
+.\"	groff -man -Tascii pmempool-check.1
+.\"
+.TH pmempool-check 1 "pmem Tools version 0.1" "NVM Library"
+.SH NAME
+pmempool-check \- Check and repair Persistent Memory Pool
+.SH SYNOPSIS
+.B pmempool check
+[<options>] <file>
+.SH DESCRIPTION
+The
+.B pmempool
+invoked with
+.B check
+command checks consistency of a given pool file. If the pool file is consistent
+.B pmempool
+exits with 0 value. If the pool file is not consistent non-zero error code is
+returned.
+
+In case of any errors, the proper message is printed. The verbosity level may
+be increased using
+.B -v
+option. The output messages may be also suppressed using
+.B -q
+option.
+
+It is possible to try to fix encountered problems using
+.B -r
+option. In order to be sure this will not corrupt your data you can either
+create backup of the pool file using
+.B -b
+option or just print what would be fixed without modifying original pool
+using
+.B -N
+option.
+
+.SS "Available options:"
+.PP
+.B -r, --repair
+.RS 8
+Try to repair a pool file if possible.
+.RE
+.PP
+.B -y, --yes
+.RS 8
+Answer yes on all questions.
+.RE
+.PP
+.B -N, --no-exec
+.RS 8
+Don't execute, just show what would be done.
+.RE
+.PP
+.B -b, --backup <file>
+.RS 8
+Create backup of a pool file before executing. Terminate if it is
+.I not
+possible to create a backup file. This option requires
+.B -r
+option.
+.RE
+.PP
+.B -q, --quiet
+.RS 8
+Be quiet and don't print any messages.
+.RE
+.PP
+.B -v, --verbose
+.RS 8
+Be more verbose.
+.RE
+.PP
+.B -h, --help
+.RS 8
+Display help message and exit.
+.RE
+.SH EXAMPLES
+.TP
+pmempool check pool.bin
+# Check consistency of pool.bin pool file
+.TP
+pmempool check --repair --backup pool.bin.backup pool.bin
+# Check consistency of pool.bin pool file, create backup and repair if
+necessary.
+.TP
+pmempool check -rvN pool.bin
+# Check consistency of pool.bin pool file, print what would be repaired with
+increased verbosity level.
+.SH "SEE ALSO"
+.B libpmemblk(3) libpmemlog(3) pmempool(1)
+.SH "PMEMPOOL"
+Part of the
+.B pmempool(1)
+suite.

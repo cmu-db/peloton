@@ -119,7 +119,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
-          "%d th attribute in the tuple was NULL. It is non-nullable "
+          "%lu th attribute in the tuple was NULL. It is non-nullable "
           "attribute.",
           column_itr);
       return false;
@@ -152,13 +152,15 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   oid_t tile_group_id = INVALID_OID;
   auto transaction_id = transaction->GetTransactionId();
 
+  LOG_TRACE("DataTable :: transaction_id %lu \n", transaction_id);
+
   while (tuple_slot == INVALID_OID) {
     // First, figure out last tile group
     {
       std::lock_guard<std::mutex> lock(table_mutex);
       assert(GetTileGroupCount() > 0);
       tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
+      LOG_TRACE("Tile group offset :: %lu ", tile_group_offset);
     }
 
     // Then, try to grab a slot in the tile group header
@@ -199,7 +201,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
-    LOG_WARN("Index constraint violated\n");
+    LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -237,7 +239,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        auto locations = index->Scan(key.get());
+        auto locations = index->ScanKey(key.get());
         auto exist_visible = ContainsVisibleEntry(locations, transaction);
         if (exist_visible) {
           LOG_WARN("A visible index entry exists.");
@@ -299,60 +301,10 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
     return false;
   }
 
-  LOG_TRACE("Deleted location :: block = %lu offset = %lu \n", location.block,
+  LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
             location.offset);
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
-
-  return true;
-}
-
-//===--------------------------------------------------------------------===//
-// UPDATE
-//===--------------------------------------------------------------------===//
-/**
- * @return Location of the newly inserted (updated) tuple
- */
-ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple) {
-  // Do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
-  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
-
-  bool status = false;
-  // 1) Try as if it's a same-key update
-  status = UpdateInIndexes(tuple, location);
-
-  // 2) If 1) fails, try again as an Insert
-  if (false == status) {
-    status = InsertInIndexes(transaction, tuple, location);
-  }
-
-  // 3) If still fails, then it is a real failure
-  if (false == status) {
-    location = INVALID_ITEMPOINTER;
-  }
-
-  return location;
-}
-
-bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
-                                const ItemPointer location) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-    if (index->UpdateEntry(key, location) == false) {
-      LOG_TRACE("Same-key update index failed \n");
-      delete key;
-      return false;
-    }
-
-    delete key;
-  }
 
   return true;
 }
@@ -487,7 +439,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   assert(tile_group.get());
   tile_group_id = tile_group.get()->GetTileGroupId();
 
-  LOG_TRACE("Trying to add a tile group \n");
+  LOG_TRACE("Trying to add a tile group ");
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -495,11 +447,11 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     // (A) no tile groups in table
     if (tile_groups.empty()) {
-      LOG_TRACE("Added first tile group \n");
+      LOG_TRACE("Added first tile group ");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
       catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-      LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+      LOG_TRACE("Recording tile group : %lu ", tile_group_id);
       return tile_group_id;
     }
 
@@ -510,17 +462,17 @@ oid_t DataTable::AddDefaultTileGroup() {
     oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if (active_tuple_count < allocated_tuple_count) {
-      LOG_TRACE("Slot exists in last tile group :: %d %d \n",
+      LOG_TRACE("Slot exists in last tile group :: %lu %lu ",
                 active_tuple_count, allocated_tuple_count);
       return INVALID_OID;
     }
 
-    LOG_TRACE("Added a tile group \n");
+    LOG_TRACE("Added a tile group ");
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 
   return tile_group_id;
@@ -543,16 +495,16 @@ oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup));
 
-  LOG_TRACE("Trying to add a tile group \n");
+  LOG_TRACE("Trying to add a tile group ");
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
-    LOG_TRACE("Added a tile group \n");
+    LOG_TRACE("Added a tile group ");
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 
   return tile_group_id;
@@ -567,7 +519,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
     // add tile group in catalog
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 }
 
@@ -781,7 +733,7 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_offset,
                                                   double theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu \n",
+    LOG_ERROR("Tile group offset not found in table : %lu ",
               tile_group_offset);
     return nullptr;
   }

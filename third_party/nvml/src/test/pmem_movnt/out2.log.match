@@ -1,0 +1,3 @@
+pmem_movnt/TEST2: START: pmem_movnt
+ ./pmem_movnt$(nW)
+pmem_movnt/TEST2: Done

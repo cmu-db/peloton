@@ -1,0 +1,36 @@
+obj_list_move_oob/TEST1: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n n n P:1 R:1 P:3 R:3 o:1 P:1 R:1 P:3 R:3 o:-1 P:1 R:1 P:3 R:3
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+oob list:
+id = 0
+id = 1
+id = 2
+oob list reverse:
+id = 2
+id = 1
+id = 0
+oob list sec:
+oob list sec reverse:
+oob list:
+id = 0
+id = 2
+oob list reverse:
+id = 2
+id = 0
+oob list sec:
+id = 1
+oob list sec reverse:
+id = 1
+oob list:
+id = 0
+oob list reverse:
+id = 0
+oob list sec:
+id = 1
+id = 2
+oob list sec reverse:
+id = 2
+id = 1
+obj_list_move_oob/TEST1: Done

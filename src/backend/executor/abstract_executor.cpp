@@ -60,7 +60,7 @@ bool AbstractExecutor::Init() {
   for (auto child : children_) {
     status = child->Init();
     if (status == false) {
-      LOG_ERROR("Initialization failed in child executor with plan id : %s\n",
+      LOG_ERROR("Initialization failed in child executor with plan id : %s",
                 child->node_->GetInfo().c_str());
       return false;
     }
@@ -68,7 +68,7 @@ bool AbstractExecutor::Init() {
 
   status = DInit();
   if (status == false) {
-    LOG_ERROR("Initialization failed in executor with plan id : %s\n",
+    LOG_ERROR("Initialization failed in executor with plan id : %s",
               node_->GetInfo().c_str());
     return false;
   }

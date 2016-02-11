@@ -1,0 +1,4 @@
+obj_check/TEST2: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+error: invalid checksum of pool descriptor
+obj_check/TEST2: Done
