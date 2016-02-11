@@ -229,7 +229,7 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
     }
   }
 
-  LOG_INFO("Altered the table (%u)\n", relation_oid);
+  LOG_INFO("Altered the table (%u)", relation_oid);
   return true;
 }
 
@@ -254,7 +254,7 @@ bool DDLTable::DropTable(Oid table_oid) {
 
   db->DropTableWithOid(table_oid);
 
-  LOG_INFO("Dropped table with oid : %u\n", table_oid);
+  LOG_INFO("Dropped table with oid : %u", table_oid);
 
   return true;
 }
@@ -314,7 +314,7 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
 
     } break;
     default:
-      LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
+      LOG_WARN("Unrecognized constraint type %d", (int)contype);
       break;
   }
 

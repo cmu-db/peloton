@@ -66,8 +66,6 @@ const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
-  // LOG_INFO("\n%s", project_info.get()->Debug().c_str());
-
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
@@ -111,8 +109,8 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
     planner::MergeJoinPlan::JoinClause clause(left, right,
                                               join_clause->ssup.ssup_reverse);
 
-    LOG_INFO("left: %s\nright: %s", clause.left_->Debug(" ").c_str(),
-             clause.right_->Debug(" ").c_str());
+    LOG_INFO("left: %s", clause.left_->Debug(" ").c_str());
+    LOG_INFO("right: %s", clause.right_->Debug(" ").c_str());
 
     clauses.push_back(std::move(clause));
   }

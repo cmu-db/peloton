@@ -1,0 +1,19 @@
+Linux NVM Library
+
+This is src/test/pmem_map/README.
+
+This directory contains a unit test for pmem_map().
+
+The program in pmem_map.c takes a file name as an argument.
+
+Initially, the first 4k of the file is populated with some pattern
+using write(). The file content is verified after successful mapping
+with pmem_map(). Then, the program overwrites the first 4k of the
+mapped memory region with another pattern, unmaps the file, and
+verifies its content once again.  Since this test unmaps the file
+with pmem_unmap(), it also tests that function by trying to access
+the address after it was unmapped and verifying it can't.
+
+Finally, the program re-opens the file with read-only access then
+tries to map the file and prints an error message if pmem_map()
+fails (which it should).

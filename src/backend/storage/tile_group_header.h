@@ -13,7 +13,7 @@
 #pragma once
 
 #include "backend/common/logger.h"
-#include "backend/common/synch.h"
+#include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
 
 #include <atomic>
@@ -106,7 +106,7 @@ class TileGroupHeader {
 
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }
 
-  oid_t GetActiveTupleCount();
+  oid_t GetActiveTupleCount(txn_id_t txn_id);
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities

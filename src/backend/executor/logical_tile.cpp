@@ -162,7 +162,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile.get();
 
-  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
+  LOG_TRACE("Tuple : %lu Column : %lu", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
     return ValueFactory::GetNullValueByType(
         base_tile->GetSchema()->GetType(column_id));
@@ -297,10 +297,14 @@ LogicalTile::~LogicalTile() {
   // Automatically drops reference on base tiles for each column
 }
 
+LogicalTile::PositionListsBuilder::PositionListsBuilder() {
+  // Nothing to do here !
+}
+
 LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
                                                         LogicalTile *right_tile)
-    : left_source_(&left_tile->GetPositionLists()),
-      right_source_(&right_tile->GetPositionLists()) {
+: left_source_(&left_tile->GetPositionLists()),
+  right_source_(&right_tile->GetPositionLists()) {
   // Compute the output logical tile column count
   size_t left_tile_column_count = left_source_->size();
   size_t right_tile_column_count = right_source_->size();
@@ -312,7 +316,7 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
 
   // Construct position lists for output tile
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
-       column_itr++) {
+      column_itr++) {
     output_lists_.push_back(std::vector<oid_t>());
   }
 }
@@ -396,32 +400,28 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   os << "\tLOGICAL TILE\n";
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\t SCHEMA : \n";
-  for (unsigned int i = 0; i < lt.schema_.size(); i++) {
-    const LogicalTile::ColumnInfo &cp = lt.schema_[i];
-    os << "\t Position list idx: " << cp.position_list_idx << ", "
-       << "base tile: " << cp.base_tile << ", "
-       << "origin column id: " << cp.origin_column_id << std::endl;
-  }
+  os << "\t VALUES : \n";
 
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t VISIBLE ROWS : ";
+  for (oid_t tuple_itr = 0; tuple_itr < lt.total_tuples_; tuple_itr++) {
 
-  for (unsigned int i = 0; i < lt.total_tuples_; i++) {
-    os << lt.visible_rows_[i] << " ";
-  }
+    if(lt.visible_rows_[tuple_itr] == false)
+      continue;
 
-  os << std::endl;
+    os << "\t";
 
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t POSITION LISTS : \n";
+    for (oid_t column_itr = 0; column_itr < lt.schema_.size(); column_itr++) {
+      const LogicalTile::ColumnInfo &cp = lt.schema_[column_itr];
 
-  int pos_list_id = 0;
-  for (auto position_list : lt.position_lists_) {
-    os << "\t " << pos_list_id++ << " : ";
-    for (auto pos : position_list) {
-      os << pos << " ";
+      oid_t base_tuple_id = lt.position_lists_[cp.position_list_idx][tuple_itr];
+
+      if (base_tuple_id == NULL_OID) {
+        os << ValueFactory::GetNullValueByType(
+            cp.base_tile->GetSchema()->GetType(cp.origin_column_id)) << " ";
+      } else {
+        os << cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id) << " ";
+      }
     }
+
     os << "\n";
   }
 

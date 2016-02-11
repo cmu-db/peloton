@@ -1,0 +1,52 @@
+Linux NVM Library
+
+This is examples/libpmemobj/pmemobjfs/README.
+
+This directory contains an example application implemented using libpmemobj.
+The pmemobjfs is a simple implementation of FUSE file system using the
+transactional API of libpmemobj.
+
+To create a file system layout run the following command:
+	$ mkfs.pmemobjfs [-s <size>] [-b <block_size>] <file>
+
+To mount the filesystem run the following command:
+	$ pmemobjfs -s -odefault_permissions,hard_remove,allow_other <file> <dir>
+
+The -o default_permissions option enables permission checking by the FUSE
+implementation.
+The -s option runs FUSE in single threaded mode. The current implementation
+does not use any synchronization mechanisms.
+The -o hard_remove forces FUSE to not use the .fuse_hiddenXXX files when
+deleting a file.
+The -o allow_other option allows other users to access the file system.
+
+To begin a transaction run the following command:
+	$ pmemobjfs.tx_begin <dir>
+
+To commit a transaction run the following command:
+	$ pmemobjfs.tx_commit <dir>
+
+To abort a transaction run the following command:
+	$ pmemobjfs.tx_abort <dir>
+
+The transactions works across multiple operations performed on pmemobjfs
+file system including modification of files.
+
+Example usage of transactions:
+
+$ mkfs.pmemobjfs /mnt/pmem/pmemobjfs.obj
+$ pmemobjfs -s -odefault_permissions,hard_remove,allow_other\
+	/mnt/pmem/pmemobjfs.obj /mnt/pmemobjfs
+$ ls /mnt/pmemobjfs
+$ pmemobjfs.tx_begin /mnt/pmemobjfs
+$ mkdir /mnt/pmemobjfs/dir1
+$ echo "The pmemobjfs filesystem" > /mnt/pmemobjfs/dir1/file1
+$ pmemobjfs.tx_commit
+$ ls /mnt/pmemobjfs/dir1
+file1
+$ pmemobjfs.tx_begin /mnt/pmemobjfs
+$ rm /mnt/pmemobjfs/dir1/file1
+$ ls /mnt/pmemobjfs/dir1
+$ pmemobjfs.tx_abort
+$ ls /mnt/pmemobjfs/dir1
+file1

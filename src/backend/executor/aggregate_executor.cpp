@@ -45,7 +45,7 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
-  LOG_TRACE("Aggregate executor :: 1 child \n");
+  LOG_TRACE("Aggregate executor :: 1 child ");
 
   // Grab info from plan node and check it
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
@@ -94,6 +94,8 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
+  auto transaction = executor_context_->GetTransaction();
+  auto transaction_id = transaction->GetTransactionId();
 
   // Get an aggregator
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
@@ -106,22 +108,22 @@ bool AggregateExecutor::DExecute() {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_INFO("Use HashAggregator\n");
+          LOG_INFO("Use HashAggregator");
           aggregator.reset(new HashAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORTED:
-          LOG_INFO("Use SortedAggregator\n");
+          LOG_INFO("Use SortedAggregator");
           aggregator.reset(new SortedAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
-          LOG_INFO("Use PlainAggregator\n");
+          LOG_INFO("Use PlainAggregator");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));
           break;
         default:
-          LOG_ERROR("Invalid aggregate type. Return.\n");
+          LOG_ERROR("Invalid aggregate type. Return.");
           return false;
       }
     }
@@ -151,8 +153,7 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(executor_context_->GetTransaction(),
-                                tuple.get());
+      output_table->InsertTuple(transaction, tuple.get());
     } else {
       done = true;
       return false;
@@ -169,13 +170,13 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group);
+    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
 
     result.push_back(logical_tile);
   }
 
   done = true;
-  LOG_INFO("Result tiles : %lu \n", result.size());
+  LOG_INFO("Result tiles : %lu ", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;

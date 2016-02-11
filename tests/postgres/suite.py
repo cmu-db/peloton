@@ -54,7 +54,14 @@ else:
 
 LIB_DIR = reduce(os.path.join, [SRC_DIR, ".libs"])
 my_env = os.environ.copy()
-my_env['LD_LIBRARY_PATH'] = LIB_DIR
+
+# Set the library path
+if 'LD_LIBRARY_PATH' in my_env:
+    my_env['LD_LIBRARY_PATH'] += os.pathsep + LIB_DIR
+else:
+    my_env['LD_LIBRARY_PATH'] = LIB_DIR
+
+print(my_env['LD_LIBRARY_PATH'])
 
 initdb = os.path.join(TOOLS_DIR, "initdb")
 pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")

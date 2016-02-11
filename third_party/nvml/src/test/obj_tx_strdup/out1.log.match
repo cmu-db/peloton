@@ -1,0 +1,3 @@
+obj_tx_strdup/TEST1: START: obj_tx_strdup
+ ./obj_tx_strdup$(nW) $(nW)testfile1
+obj_tx_strdup/TEST1: Done

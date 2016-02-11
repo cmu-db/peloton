@@ -1,0 +1,83 @@
+#!/bin/bash -e
+#
+# Copyright (c) 2014-2015, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of Intel Corporation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#
+# pmempool_check/TEST7 -- test for checking pools
+#
+export UNITTEST_NAME=pmempool_check/TEST7
+export UNITTEST_NUM=7
+
+. ../unittest/unittest.sh
+
+require_fs_type pmem non-pmem
+
+setup
+
+POOL=$DIR/file.pool
+LOG=out${UNITTEST_NUM}.log
+rm -rf $LOG && touch $LOG
+
+rm -f $POOL
+expect_normal_exit $PMEMPOOL$EXESUFFIX create blk 512 $POOL
+check_file $POOL
+$PMEMSPOIL -v $POOL pool_hdr.uuid=ERROR >> $LOG
+expect_abnormal_exit $PMEMPOOL$EXESUFFIX check $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -vyr $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -v $POOL >> $LOG
+
+rm -f $POOL
+expect_normal_exit $PMEMPOOL$EXESUFFIX create blk 512 $POOL
+check_file $POOL
+$PMEMSPOIL -v $POOL\
+	pool_hdr.prev_part_uuid=ERROR_PREV\
+	pool_hdr.next_part_uuid=ERROR_NEXT\
+	>> $LOG
+expect_abnormal_exit $PMEMPOOL$EXESUFFIX check $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -vyr $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -v $POOL >> $LOG
+
+rm -f $POOL
+expect_normal_exit $PMEMPOOL$EXESUFFIX create blk 512 $POOL
+check_file $POOL
+$PMEMSPOIL -v $POOL\
+	pool_hdr.prev_part_uuid=ERROR_PREV\
+	pool_hdr.next_part_uuid=ERROR_NEXT\
+	pool_hdr.prev_repl_uuid=ERROR_RPREV\
+	pool_hdr.next_repl_uuid=ERROR_RNEXT\
+	>> $LOG
+expect_abnormal_exit $PMEMPOOL$EXESUFFIX check $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -vyr $POOL >> $LOG
+expect_normal_exit $PMEMPOOL$EXESUFFIX check -v $POOL >> $LOG
+
+check
+
+pass

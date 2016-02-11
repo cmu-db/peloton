@@ -111,7 +111,7 @@ bool DDLDatabase::DropDatabase(oid_t database_oid) {
   auto &manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 
-  LOG_INFO("Dropped database with oid : %lu\n", database_oid);
+  LOG_INFO("Dropped database with oid : %lu", database_oid);
   return true;
 }
 

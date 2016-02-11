@@ -1,0 +1,11 @@
+blk_rw/TEST1: START: blk_rw
+ ./blk_rw$(nW) 512 $(nW)/testfile1 c r:0 r:1 r:4161480 r:2134997325 r:2134997326 z:0 z:4161480
+512 block size 512 usable blocks 2134997326
+read      lba 0: {0}
+read      lba 1: {0}
+read      lba 4161480: {0}
+read      lba 2134997325: {0}
+read      lba 2134997326: Invalid argument
+set_zero  lba 0
+set_zero  lba 4161480
+blk_rw/TEST1: Done
