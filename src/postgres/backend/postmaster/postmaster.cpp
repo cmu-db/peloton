@@ -3545,6 +3545,32 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
   BackendRun(port);
 }
 
+//TODO: Peloton adds
+//static void PeerServer() {
+//  int sock = nn_socket(AF_SP, NN_BUS);
+//  assert(sock >= 0);
+//  nn_bind(sock, "tcp://*:5666");
+//
+//  nn_connect (sock, "tcp://128.2.209.31:5666");
+//  int to = 100;
+//  nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+//  // SEND
+//  char* str_send = "Hello Peloton!";
+//  int sz_n = strlen(str_send) + 1; // '\0' too
+//  printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+//  int send = nn_send(sock, str_send, sz_n, 0);
+//  assert(send == sz_n);
+//
+//  while (1) {
+//	char *buf = NULL;
+//	int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+//	assert(bytes >= 0);
+//	printf("RECEIVED \"%s\"\n", buf);
+//	nn_freemsg(buf);
+//	std::cout << bytes;
+//  }
+//}
+
 //TODO: Peloton Changes
 static void LaunchBackendTask(Backend *bn, Port *port) {
   static unsigned long tmpBackendFileNum = 0;
@@ -3555,11 +3581,8 @@ static void LaunchBackendTask(Backend *bn, Port *port) {
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(), GetBackendThreadId());
 
-  // nanomsg test by Michael
-  //int sock = nn_socket (AF_SP, NN_REP);
-  //int br = nn_bind (sock, "tpc://*:5666");
-
-  // end test
+//  std::thread PeerServer();
+//  PeerServer.detach();
 
   std::thread backend(BackendTask, bn, port, param);
   backend.detach();

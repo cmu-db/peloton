@@ -50,22 +50,20 @@ static void check_root(const char *progname);
  */
 int main(int argc, char *argv[]) {
   // test nanomsg by Michael
-  //int sock = nn_socket (AF_SP, NN_PULL);
-  //assert( nn_bind (sock, "tcp://*:5666") >=0 );
 
-  int sock = nn_socket (AF_SP, NN_PULL);
-  assert (sock >= 0);
-  nn_bind (sock, "tcp://*:5666");
-
-  while (1)
-    {
-      char *buf = NULL;
-      int bytes = nn_recv (sock, &buf, NN_MSG, 0);
-      assert (bytes >= 0);
-      printf ("NODE0: RECEIVED \"%s\"\n", buf);
-      nn_freemsg (buf);
-      std::cout << bytes;
-    }
+//  int sock = nn_socket (AF_SP, NN_PULL);
+//  assert (sock >= 0);
+//  nn_bind (sock, "tcp://*:5666");
+//
+//  while (1)
+//  {
+//    char *buf = NULL;
+//    int bytes = nn_recv (sock, &buf, NN_MSG, 0);
+//    assert (bytes >= 0);
+//    printf ("NODE0: RECEIVED \"%s\"\n", buf);
+//    nn_freemsg (buf);
+//    std::cout << bytes;
+//  }
 
 //  if (sock >=0 and rbind >=0) {
 //      void *buf = NULL;
