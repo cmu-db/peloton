@@ -167,4 +167,16 @@
         fun:calloc
         fun:_dl_allocate_tls
 }
-
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:malloc
+        fun:nn_bipc_start_accepting
+        fun:nn_bipc_start_listening
+        fun:nn_ctx_leave
+        fun:nn_worker_routine
+        fun:nn_thread_main_routine
+        fun:start_thread
+        fun:clone
+}
