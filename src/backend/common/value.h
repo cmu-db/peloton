@@ -35,7 +35,6 @@
 #include "backend/common/logger.h"
 
 #include "boost/scoped_ptr.hpp"
-#include "boost/functional/hash.hpp"
 #include "ttmath/ttmathint.h"
 #include "utf8.h"
 #include "murmur3/MurmurHash3.h"
@@ -3210,21 +3209,27 @@ inline Value Value::GetNullValue(ValueType type) {
   return retval;
 }
 
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v){
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
 inline void Value::HashCombine(std::size_t &seed) const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TINYINT:
-      boost::hash_combine(seed, GetTinyInt());
+      hash_combine<int8_t>(seed, GetTinyInt());
       break;
     case VALUE_TYPE_SMALLINT:
-      boost::hash_combine(seed, GetSmallInt());
+      hash_combine<int16_t>(seed, GetSmallInt());
       break;
     case VALUE_TYPE_INTEGER:
-      boost::hash_combine(seed, GetInteger());
+      hash_combine<int32_t>(seed, GetInteger());
       break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
-      boost::hash_combine(seed, GetBigInt());
+      hash_combine<int64_t>(seed, GetBigInt());
       break;
     case VALUE_TYPE_DOUBLE:
 // This method was observed to fail on Centos 5 / GCC 4.1.2, returning different
@@ -3240,21 +3245,21 @@ inline void Value::HashCombine(std::size_t &seed) const {
     ((__GNUC__ > 4) ||                                                      \
      ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2) && !defined(__GCCXML__))) && \
     !defined(BOOST_CLANG)
-      boost::hash_combine(seed, GetDouble());
+      hash_combine<double>(seed, GetDouble());
       break;
 #else
     {
       const int64_t proxyForDouble = *reinterpret_cast<const int64_t *>(m_data);
-      boost::hash_combine(seed, proxyForDouble);
+      hash_combine<double>(seed, proxyForDouble);
       break;
     }
 #endif
     case VALUE_TYPE_VARCHAR: {
       if (IsNull()) {
-        boost::hash_combine(seed, std::string(""));
+        hash_combine<std::string>(seed, std::string(""));
       } else {
         const int32_t length = GetObjectLengthWithoutNull();
-        boost::hash_combine(seed, std::string(reinterpret_cast<const char *>(
+        hash_combine<std::string>(seed, std::string(reinterpret_cast<const char *>(
                                                   GetObjectValueWithoutNull()),
                                               length));
       }
@@ -3262,11 +3267,11 @@ inline void Value::HashCombine(std::size_t &seed) const {
     }
     case VALUE_TYPE_VARBINARY: {
       if (IsNull()) {
-        boost::hash_combine(seed, std::string(""));
+        hash_combine<std::string>(seed, std::string(""));
       } else {
         const int32_t length = GetObjectLengthWithoutNull();
         char *data = reinterpret_cast<char *>(GetObjectValueWithoutNull());
-        for (int32_t i = 0; i < length; i++) boost::hash_combine(seed, data[i]);
+        for (int32_t i = 0; i < length; i++) hash_combine<char>(seed, data[i]);
       }
       break;
     }

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <vector>
+#include <deque>
 
 #include "backend/executor/abstract_join_executor.h"
 #include "backend/planner/hash_join_plan.h"
@@ -36,6 +36,13 @@ class HashJoinExecutor : public AbstractJoinExecutor {
 
  private:
   HashExecutor *hash_executor_ = nullptr;
+
+  std::deque<LogicalTile *> buffered_output_tiles;
+
+  // logical tile iterators
+  size_t left_logical_tile_itr_ = 0;
+  size_t right_logical_tile_itr_ = 0;
+
 };
 
 }  // namespace executor

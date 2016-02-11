@@ -14,7 +14,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/append_executor.h"
 
-#include "../planner/append_plan.h"
+#include "backend/planner/append_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -39,7 +39,7 @@ bool AppendExecutor::DInit() {
 }
 
 bool AppendExecutor::DExecute() {
-  LOG_TRACE("Append executor \n");
+  LOG_TRACE("Append executor ");
 
   while (cur_child_id_ < children_.size()) {
     if (children_[cur_child_id_]->Execute()) {

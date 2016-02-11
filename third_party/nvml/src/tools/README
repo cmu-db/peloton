@@ -1,0 +1,264 @@
+Linux NVM Library
+
+This is src/tools/README.
+
+This file contains the high-level description of pmempool utility.
+
+	1. Introduction
+	2. Subcommands
+	   2.1. info
+	   2.2. check
+	   2.3. create
+	   2.4. dump
+	   2.5. rm
+	3. Source code
+	4. Packaging
+	5. Versioning
+
+1. Introduction
+---------------
+
+The main purpose of pmempool is to provide a user with set of utilities for
+off-line analysis and manipulation of pools created by pmem libraries. The
+pmempool is a generic command which consists of subcommands for specific
+purposes. Some of commands are required to work without any impact on processed
+pool, but some of them may create new or modify existing one.
+
+The pmempool may be useful for troubleshooting and may be used by system
+administrators and by software developers work on applications based on
+NVML library. The latter may find these tools useful for testing and debugging
+purposes also.
+
+Currently there is a following set of commands available:
+
+	* info		- Prints information and statistics in human-readable
+			  format about specified pool.
+
+	* check		- Checks pool's consistency and repairs pool if it is
+			  not consistent.
+
+	* create	- Creates a pool of specified type with additional
+			  properties specific for this type of pool.
+
+	* dump		- Dumps usable data from pool in hexadecimal or binary
+			  format.
+
+	* rm		- Removes pool file or all pool files listed in poolset
+			  configuration file.
+
+This file contains high-level description of available commands and their
+features. For details about usage and available command line arguments please
+refer to specific manual pages. There is one common manual page with description
+of all commands - pmempool(1) and manual pages which describe all commands
+in detail:
+	pmempool-info(1)
+	pmempool-check(1)
+	pmempool-create(1)
+	pmempool-dump(1)
+	pmempool-rm(1)
+
+Subsequent sections contain detailed description of each command, information
+about the source code, packaging and versioning scheme.
+
+2. Subcommands
+--------------
+
+The pmempool application contains number of commands which perform specific
+operations on pool. The following subsections contain detailed description of
+existing commands.
+
+2.1. info
+---------
+
+The pmempool invoked with *info* command analyzes the existing pool created
+by NVML libraries. The main task of this command is to print all usable
+information from pool headers and user data in human readable format. It
+automatically recognizes pool type by parsing and analyzing pool header. The
+recognition is done by checking the signature in pool header. The main
+intention of *info* command is to present internal data structures as they are
+stored in file - not for checking consistency. For this purpose there is *check*
+command available.
+
+The pmempool with *info* command analyzes a pool file as long as it is possible
+regarding correctness of internal meta-data (correct offsets, sizes etc.). If it
+is not possible to analyze rest of file, pmempool exits with an error code and
+prints an appropriate error message.
+
+Currently there is lack of interprocess synchronization for pool files, so the
+pmempool with *info* command should be invoked off-line. Using pmempool on
+pool file which may be modified by another process may lead to stopping
+processing the file.
+
+There is a set of common features for all pool types and a set of features
+specific for particular pool type.
+All features are described below.
+
+
+** Common features
+
+ * The basic function of *info* command is to print information about the
+   most important internal data structures from specific pool. By default this
+   is done by invoking pmempool with *info* command and one or more files.
+
+ * It is possible to print basic statistics about the pool by passing
+   appropriate command line argument.
+
+ * The type of pool is recognized automatically. The exact list of headers and
+   internal meta-data depends on pool's type. All information is displayed in
+   human-readable format.
+
+ * The pool header may be corrupted and automatic recognition of pool's type
+   will fail. In order to analyze a pool file as a pool of specific type it is
+   possible to force that by specifying the desired pool type using appropriate
+   command line argument.
+
+ * Headers and internal meta-data are displayed in human-readable format by
+   default. However it is possible to display them in mixed format which
+   consists of hexadecimal dump of headers and parsed data in human-readable
+   format.
+
+ * By default only non-volatile fields from internal structures are displayed.
+   In order to display volatile fields you should increase the verbosity level.
+
+ * By default all sizes are displayed in bytes unit. It is possible to print
+   them in more human-readable formats with appropriate units
+   (e.g. 4k, 8M, 16G).
+
+** Features for *log* pool type
+
+ * By default pmempool with *info* command displays the pool header, log pool
+   type specific header and statistics. It is possible to print data in
+   hexadecimal format by passing appropriate command line option.
+
+ * It is possible to walk through the usable data using fixed data chunk size.
+   This feature uses similar approach as pmemlog_walk() function. For details
+   please refer to libpmemlog(3).
+
+** Features for *blk* pool type
+
+ * By default pmempool with *info* command displays the pool header, blk pool
+   type specific header, BTT Info header and statistics.
+
+ * It is possible to print more headers and internal data by passing specific
+   command line options. It is possible to print the following sections:
+   BTT Map entries, BTT FLOG, BTT Info backup and data blocks.
+
+ * It is possible to print specific range of blocks in both absolute or relative
+   manner (e.g. display blocks from 10 to 1000, display 10 blocks starting from
+   block number 1000)
+
+ * By default when displaying data blocks all blocks are displayed. However it
+   is possible to skip blocks marked with zero or error flags, or to skip blocks
+   which are not marked by any flag. Skipping blocks has impact on blocks ranges
+   (e.g. display 10 blocks marked with error flag in the range from 0 to 10000)
+
+2.2. check
+----------
+
+The pmempool invoked with *check* command checks existing pool's consistency.
+If the pool is consistent pmempool exits with exit code 0. Otherwise nonzero
+error code is returned and appropriate message is displayed.
+
+In addition it may also try to fix some common known errors upon explicit demand
+of user. In this case a pool file will be opened in read-write mode so the user
+should be aware of modifications made by pmempool application.
+
+Below is the description of available features:
+
+ * By default pmempool with *check* command prints brief description about
+   encountered error(s) and proper error value is returned. If there is no error
+   nothing is printed and exit code is 0.
+
+ * If an error is encountered while checking a consistency of a pool it is
+   possible to try to fix all errors. In this case the pool file will be opened
+   in read-write mode.
+
+ * User may request to _not_ modify pool's file when trying to repair it but
+   just to report what would be done if the repair was performed.
+
+ * When repairing a pool user may request to create backup before any
+   modification is made. If it is not possible to create full backup of existing
+   pool, the process will terminate.
+
+2.3. create
+-----------
+
+The pmempool invoked with *create* command creates a pool file of specific
+type and size. Depending on pool's type it is possible to provide more desired
+properties of a pool.
+
+Below is the description of available features:
+
+ * The main feature is to create pool of specified type and size. Therefore
+   it is required to pass at least two command line arguments.
+
+ * User may want to create a pool file with size of the whole partition. This is
+   possible by passing proper command line argument.
+
+ * It is possible to create a pool with the same parameters as another pool
+   passed in command line arguments - it may be considered as cloning the pool.
+
+2.4. dump
+---------
+
+The pmempool invoked with *dump* command dumps usable data from specified
+pool. This may be dumped either in hexadecimal or binary format.
+
+Below is the description of available features:
+
+ * The main feature is to dump all data from a pool file. In case of dumping
+   data to terminal by default data is dumped in hexadecimal format. In case
+   of redirecting standard output to a file data will be dumped in binary format.
+
+ * It is possible to specify the format of dumped data to either hexadecimal or
+   binary.
+
+ * By default data is dumped to standard output. However it is possible to
+   specify a file name to dump data into.
+
+ * In case of pmem blk pool type it is possible to set range of blocks in either
+   absolute or relative manner.
+
+ * In case of pmem log pool type it is possible to set size of chunk and range
+   of chunks to dump in either absolute or relative manner.
+
+2.5. rm
+-------
+
+The pmempool *rm* command is a simple helper utility which removes pool files
+created using either NVML libraries or pmempool *create* command.
+
+ * The main feature is to parse the poolset configuration file and remove all
+   listed pool files.
+
+ * It is possible to run the pmempool *rm* command in interactive mode, where
+   before removing each file the user must confirm the removal operation.
+
+ * The command line interface is similar to interface provided by standard,
+   system *rm* command.
+
+3. Source code
+--------------
+
+The source code of pmempool is located in pmempool directory.
+
+By default pmempool is installed in $(DESTDIR)/usr/bin directory.
+You can change it by passing $(TOOLSDIR) variable to "make install".
+For example, the following command will install pmempool in ~/bin directory:
+	$ make install DESTDIR=~ TOOLSDIR=/bin
+
+See the top-level README file for detailed information about building and
+installation.
+
+4. Packaging
+------------
+
+The pmempool application is provided in separate packages. Both rpm and dpkg
+packages are built automatically with other packages.
+
+See the top-level README file for detailed information about building packages.
+
+5. Versioning
+-------------
+
+The versioning of pmempool application is the same as all NVML libraries.

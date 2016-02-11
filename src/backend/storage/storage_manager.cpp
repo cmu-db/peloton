@@ -115,7 +115,7 @@ StorageManager::StorageManager()
     data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
   }
 
-  LOG_INFO("DATA DIR :: %s \n", data_file_name.c_str());
+  LOG_INFO("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
   if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {

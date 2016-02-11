@@ -135,7 +135,7 @@ BackendLogger *LogManager::GetBackendLogger() {
   }
 
   if (frontend_logger == nullptr) {
-    LOG_ERROR("Frontend logger doesn't exist!!\n");
+    LOG_ERROR("Frontend logger doesn't exist!!");
   }
 
   return backend_logger;

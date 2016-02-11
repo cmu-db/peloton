@@ -225,12 +225,13 @@ void LoggingTestsUtil::CheckTupleCount(oid_t db_oid, oid_t table_oid,
   auto table = db->GetTableWithOid(table_oid);
 
   oid_t tile_group_count = table->GetTileGroupCount();
+  auto next_txn_id = TestingHarness::GetInstance().GetNextTransactionId();
 
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = table->GetTileGroup(tile_group_itr);
-    active_tuple_count += tile_group->GetActiveTupleCount();
+    active_tuple_count += tile_group->GetActiveTupleCount(next_txn_id);
   }
 
   // check # of active tuples

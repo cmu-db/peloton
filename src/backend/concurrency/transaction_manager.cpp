@@ -17,12 +17,12 @@
 
 #include "backend/concurrency/transaction_manager.h"
 
+#include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
-#include "backend/common/synch.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
 
@@ -200,7 +200,7 @@ void TransactionManager::CommitPendingTransactions(
     if (atomic_cas(&last_cid, next_txn->cid - 1, next_txn->cid)) {
       // if that worked, add transaction to list
       pending_txns.push_back(next_txn);
-      LOG_TRACE("Pending Txn  : %lu \n", next_txn->txn_id);
+      LOG_TRACE("Pending Txn  : %lu ", next_txn->txn_id);
 
       next_txn = next_txn->next;
       continue;
@@ -219,7 +219,7 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
-    LOG_TRACE("update lcid worked : %lu \n", txn->txn_id);
+    LOG_TRACE("update lcid worked : %lu ", txn->txn_id);
 
     // everything went fine and the txn was committed
     // if that worked, commit all pending transactions
@@ -229,7 +229,7 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
   // it did not work, so add to waiting list
   // some other transaction with lower commit id will commit us later
   else {
-    LOG_TRACE("add to wait list : %lu \n", txn->txn_id);
+    LOG_TRACE("add to wait list : %lu ", txn->txn_id);
 
     txn->waiting_to_commit = true;
 
@@ -251,7 +251,7 @@ std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
 }
 
 void TransactionManager::CommitTransaction(bool sync) {
-  LOG_INFO("Committing peloton txn : %lu \n", current_txn->GetTransactionId());
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
   // begin commit phase : get cid and add to transaction list
   BeginCommitPhase(current_txn);
 
@@ -275,7 +275,7 @@ void TransactionManager::CommitTransaction(bool sync) {
 //===--------------------------------------------------------------------===//
 
 void TransactionManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu \n", current_txn->GetTransactionId());
+  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   // Log the ABORT TXN record
   {
     auto &log_manager = logging::LogManager::GetInstance();

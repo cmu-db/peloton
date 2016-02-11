@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * hash_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/hash_join_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// hash_join_executor.cpp
+//
+// Identification: src/backend/executor/hash_join_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <vector>
 

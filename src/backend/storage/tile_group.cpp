@@ -14,9 +14,9 @@
 
 #include <numeric>
 
+#include "backend/common/platform.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
-#include "backend/common/synch.h"
 #include "backend/common/types.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/tile.h"
@@ -78,8 +78,8 @@ oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetNextTupleSlot();
 }
 
-oid_t TileGroup::GetActiveTupleCount() const {
-  return tile_group_header->GetActiveTupleCount();
+oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
+  return tile_group_header->GetActiveTupleCount(txn_id);
 }
 
 //===--------------------------------------------------------------------===//
@@ -94,7 +94,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
 oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots \n",
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
@@ -154,7 +154,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
   // No more slots
   if (status == false) return INVALID_OID;
 
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots \n",
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
@@ -340,10 +340,6 @@ std::ostream &operator<<(std::ostream &os, const TileGroup &tile_group) {
      << " Tile Group:  " << tile_group.tile_group_id << "\n";
 
   os << " TILE GROUP HEADER :: " << tile_group.tile_group_header;
-
-  os << "\tActive Tuples:  "
-     << tile_group.tile_group_header->GetActiveTupleCount() << " out of "
-     << tile_group.num_tuple_slots << " slots\n";
 
   for (oid_t tile_itr = 0; tile_itr < tile_group.tile_count; tile_itr++) {
     Tile *tile = tile_group.GetTile(tile_itr);

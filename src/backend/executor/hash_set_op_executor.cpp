@@ -43,7 +43,7 @@ bool HashSetOpExecutor::DInit() {
 }
 
 bool HashSetOpExecutor::DExecute() {
-  LOG_TRACE("Set Op executor \n");
+  LOG_TRACE("Set Op executor ");
 
   if (!hash_done_) ExecuteHelper();
 

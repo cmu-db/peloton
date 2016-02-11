@@ -1,0 +1,18 @@
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 42
+model name	: Intel(R) Core(TM) i7-2635QM CPU @ 2.00GHz
+stepping	: 7
+cpu MHz		: 2000.000
+cache size	: 6144 KB
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+bogomips	: 4000.00
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 36 bits physical, 48 bits virtual
+power management:
+

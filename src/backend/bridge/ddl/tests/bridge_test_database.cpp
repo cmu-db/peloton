@@ -38,7 +38,7 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_INVALID_OID() {
   // CHECK :: status must be false
   if (status != false) throw CatalogException("Could create database");
 
-  LOG_INFO(":::::: %s DONE\n", __func__);
+  LOG_INFO(":::::: %s DONE", __func__);
 }
 
 /**
@@ -54,7 +54,7 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   status = DDLDatabase::DropDatabase(12345);
   assert(status);
 
-  LOG_INFO(":::::: %s DONE\n", __func__);
+  LOG_INFO(":::::: %s DONE", __func__);
 }
 
 }  // End bridge namespace

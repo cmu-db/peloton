@@ -426,10 +426,9 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                       __attribute__((unused)) int vs,
                                       AbstractExpression *lc,
                                       AbstractExpression *rc) {
-  LOG_TRACE("expressionFactory request: "
-            << ExpressionTypeToString(et) << " " << et
-            << ExpressionTypeToString(vt) << " " << vt << " " << vs << " "
-            << "left : " << lc << "right : " << rc);
+  LOG_TRACE("expressionFactory request: ");
+  LOG_TRACE("%s %d", ExpressionTypeToString(et).c_str(), et);
+  LOG_TRACE("%d %d", vt, vs);
 
   AbstractExpression *ret = nullptr;
 
@@ -489,8 +488,7 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   }
 
   // written thusly to ease testing/inspecting return content.
-  LOG_TRACE("Created " << ExpressionTypeToString(et)
-                       << " expression  : " << ret);
+  LOG_TRACE("Created %s", ExpressionTypeToString(et).c_str());
   return ret;
 }
 

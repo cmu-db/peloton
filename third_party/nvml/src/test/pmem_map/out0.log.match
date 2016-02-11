@@ -1,0 +1,5 @@
+pmem_map/TEST0: START: pmem_map
+ ./pmem_map$(nW) $(nW)/testfile1
+signal: Segmentation fault
+unmap successful
+pmem_map/TEST0: Done

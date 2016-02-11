@@ -1,0 +1,6 @@
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_FOREACH in obj_debug.c:$(N))
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_FOREACH_SAFE in obj_debug.c:$(N))
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_FOREACH_TYPE in obj_debug.c:$(N))
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_FOREACH_SAFE_TYPE in obj_debug.c:$(N))
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_LIST_FOREACH in obj_debug.c:$(N))
+<libpmemobj>: <4> [obj.c:$(N) _pobj_debug_notice] Notice: non-transactional API used inside a transaction (POBJ_LIST_FOREACH_REVERSE in obj_debug.c:$(N))

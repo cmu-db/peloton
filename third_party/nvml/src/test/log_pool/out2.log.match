@@ -1,0 +1,4 @@
+log_pool/TEST2: START: log_pool
+ ./log_pool$(nW) c $(nW)/testfile 0 0640
+$(nW)/testfile: pmemlog_create: No such file or directory
+log_pool/TEST2: Done

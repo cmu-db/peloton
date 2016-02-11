@@ -168,6 +168,8 @@ class LogicalTile {
   //===--------------------------------------------------------------------===//
   class PositionListsBuilder {
    public:
+    PositionListsBuilder();
+
     PositionListsBuilder(LogicalTile *left_tile, LogicalTile *right_tile);
 
     inline void SetLeftSource(const PositionLists *left_source) {
@@ -239,11 +241,15 @@ class LogicalTile {
       return std::move(output_lists_);
     }
 
-    inline size_t Size() const { return output_lists_[0].size(); }
+    inline size_t Size() const {
+      if(output_lists_.size() >= 1)
+        return output_lists_[0].size();
+      return 0;
+    }
 
    private:
-    const PositionLists *left_source_;
-    const PositionLists *right_source_;
+    const PositionLists *left_source_ = nullptr;
+    const PositionLists *right_source_ = nullptr;
     PositionLists output_lists_;
     bool invalid_ = false;
   };

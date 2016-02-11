@@ -121,28 +121,22 @@ class Index {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer location) = 0;
 
-  // update a index entry
-  virtual bool UpdateEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
-
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // return where the entry is already stored in the index
-  virtual ItemPointer Exists(const storage::Tuple *key,
-                             const ItemPointer location) = 0;
-
-  // scan all keys in the index comparing with an arbitrary key
+  // scan all keys in the index matching an arbitrary key
+  // used by index scan executor
   virtual std::vector<ItemPointer> Scan(
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
-      const std::vector<ExpressionType> &exprs) = 0;
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType& scan_direction) = 0;
 
-  // scan all keys in the index, working like a sort
-  virtual std::vector<ItemPointer> Scan() = 0;
+  // scan the entire index, working like a sort
+  virtual std::vector<ItemPointer> ScanAllKeys() = 0;
 
-  virtual std::vector<ItemPointer> Scan(const storage::Tuple *key) = 0;
+  virtual std::vector<ItemPointer> ScanKey(const storage::Tuple *key) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -198,11 +192,17 @@ class Index {
 
   VarlenPool *GetPool() const { return pool; }
 
+  // Garbage collect
+  virtual bool Cleanup() = 0;
+
+  // Get the memory footprint
+  virtual size_t GetMemoryFootprint() = 0;
+
  protected:
   Index(IndexMetadata *schema);
 
   // Set the lower bound tuple for index iteration
-  bool SetLowerBoundTuple(storage::Tuple *index_key,
+  bool ConstructLowerBoundTuple(storage::Tuple *index_key,
                           const std::vector<Value> &values,
                           const std::vector<oid_t> &key_column_ids,
                           const std::vector<ExpressionType> &expr_types);

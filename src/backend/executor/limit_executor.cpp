@@ -12,7 +12,7 @@
 
 #include "backend/executor/limit_executor.h"
 
-#include "../planner/limit_plan.h"
+#include "backend/planner/limit_plan.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
@@ -52,7 +52,7 @@ bool LimitExecutor::DExecute() {
   const size_t limit = node.GetLimit();
   const size_t offset = node.GetOffset();
 
-  LOG_TRACE("Limit executor \n");
+  LOG_TRACE("Limit executor ");
 
   while (num_returned_ < limit && children_[0]->Execute()) {
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
