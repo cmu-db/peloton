@@ -28,6 +28,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/logger.h"
 #include "backend/concurrency/transaction.h"
 
 #include "backend/executor/executor_context.h"
@@ -40,10 +41,15 @@
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/executor/update_executor.h"
+#include "backend/executor/nested_loop_join_executor.h"
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/constant_value_expression.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+
 #include "backend/index/index_factory.h"
 
 #include "backend/planner/abstract_plan.h"
@@ -53,6 +59,7 @@
 #include "backend/planner/insert_plan.h"
 #include "backend/planner/update_plan.h"
 #include "backend/planner/projection_plan.h"
+#include "backend/planner/nested_loop_join_plan.h"
 
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
@@ -101,13 +108,13 @@ static void WriteOutput(double duration) {
 
   std::cout << "----------------------------------------------------------\n";
   std::cout << state.layout_mode << " " << state.operator_type << " "
-            << state.projectivity << " " << state.selectivity << " "
-            << state.write_ratio << " " << state.scale_factor << " "
-            << state.column_count << " " << state.subset_experiment_type << " "
-            << state.access_num_groups << " " << state.subset_ratio << " "
-            << state.theta << " " << state.split_point << " "
-            << state.sample_weight << " " << state.tuples_per_tilegroup
-            << " :: ";
+      << state.projectivity << " " << state.selectivity << " "
+      << state.write_ratio << " " << state.scale_factor << " "
+      << state.column_count << " " << state.subset_experiment_type << " "
+      << state.access_num_groups << " " << state.subset_ratio << " "
+      << state.theta << " " << state.split_point << " "
+      << state.sample_weight << " " << state.tuples_per_tilegroup
+      << " :: ";
   std::cout << duration << " ms\n";
 
   out << state.layout_mode << " ";
@@ -618,6 +625,124 @@ void RunArithmeticTest() {
   txn_manager.CommitTransaction(txn);
 }
 
+void RunJoinTest() {
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  LOG_TRACE("Join \n");
+
+  exit(0);
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.projectivity * state.column_count;
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto left_table_predicate = CreatePredicate(lower_bound);
+  auto right_table_predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan left_table_seq_scan_node(hyadapt_table,
+                                                left_table_predicate,
+                                                column_ids);
+  planner::SeqScanPlan right_table_seq_scan_node(hyadapt_table,
+                                                 right_table_predicate,
+                                                 column_ids);
+
+  executor::SeqScanExecutor left_table_scan_executor(&left_table_seq_scan_node,
+                                                     context.get());
+  executor::SeqScanExecutor right_table_scan_executor(&right_table_seq_scan_node,
+                                                      context.get());
+
+  /////////////////////////////////////////////////////////
+  // JOIN EXECUTOR
+  /////////////////////////////////////////////////////////
+
+  auto join_type = JOIN_TYPE_INNER;
+
+  // Create join predicate
+  expression::AbstractExpression *join_predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+  expression::TupleValueExpression *left_table_attr_1 =
+      new expression::TupleValueExpression(0, 1);
+  expression::TupleValueExpression *right_table_attr_1 =
+      new expression::TupleValueExpression(1, 1);
+
+  join_predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL,
+      left_table_attr_1,
+      right_table_attr_1);
+
+  planner::NestedLoopJoinPlan nested_loop_join_node(join_type,
+                                                    join_predicate, nullptr);
+
+  // Run the nested loop join executor
+  executor::NestedLoopJoinExecutor nested_loop_join_executor(
+      &nested_loop_join_node, nullptr);
+
+  // Construct the executor tree
+  nested_loop_join_executor.AddChild(&left_table_scan_executor);
+  nested_loop_join_executor.AddChild(&right_table_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for (auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&nested_loop_join_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&mat_executor);
+
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
+
+  txn_manager.CommitTransaction(txn);
+}
+
 void RunSubsetTest(SubsetType subset_test_type, double fraction,
                    int peloton_num_group) {
   const int lower_bound = GetLowerBound();
@@ -652,7 +777,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
       oid_t tile_column_proj = column_proj / peloton_num_group;
 
       for (int tile_group_itr = 0; tile_group_itr < peloton_num_group;
-           tile_group_itr++) {
+          tile_group_itr++) {
         oid_t column_offset = tile_group_itr * tile_column_count;
 
         for (oid_t col_itr = 0; col_itr < tile_column_proj; col_itr++) {
@@ -665,7 +790,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
     case SUBSET_TYPE_INVALID:
     default:
       std::cout << "Unsupported subset experiment type : " << subset_test_type
-                << "\n";
+      << "\n";
       break;
   }
 
@@ -957,7 +1082,7 @@ int op_column_count = 100;
 std::vector<double> op_projectivity = {0.01, 0.1, 1.0};
 
 std::vector<double> op_selectivity = {0.1, 0.2, 0.3, 0.4, 0.5,
-                                      0.6, 0.7, 0.8, 0.9, 1.0};
+    0.6, 0.7, 0.8, 0.9, 1.0};
 
 void RunOperatorExperiment() {
   state.column_count = op_column_count;
@@ -999,7 +1124,7 @@ void RunOperatorExperiment() {
 }
 
 std::vector<oid_t> vertical_tuples_per_tilegroup = {10, 100, 1000, 10000,
-                                                    100000};
+    100000};
 
 void RunVerticalExperiment() {
   // Cache the original value
@@ -1154,7 +1279,7 @@ static void CollectColumnMapStats() {
   std::cout << "TG Count :: " << tile_group_count << "\n";
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
     auto col_map = tile_group->GetColumnMap();
 
@@ -1302,7 +1427,7 @@ static void RunAdaptTest() {
 }
 
 std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
-                                         LAYOUT_HYBRID};
+    LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {200};
 
@@ -1469,7 +1594,7 @@ static void Reorg() {
   hyadapt_table->UpdateDefaultPartition();
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     hyadapt_table->TransformTileGroup(tile_group_itr, theta);
   }
 }
@@ -1609,6 +1734,42 @@ void RunDistributionExperiment() {
   state.adapt = false;
   state.distribution = false;
   query_itr = 0;
+
+  out.close();
+}
+
+void RunJoinExperiment() {
+  state.selectivity = 1.0;
+  state.write_ratio = 0;
+
+  // Go over all column counts
+  for (auto column_count : column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    for (auto layout : layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      for (auto proj : projectivity) {
+        // Set proj
+        state.projectivity = proj;
+        peloton_projectivity = state.projectivity;
+
+        // Load in the table with layout
+        CreateAndLoadTable(layout);
+
+        // Go over all ops
+        state.operator_type = OPERATOR_TYPE_DIRECT;
+        RunJoinTest();
+      }
+
+    }
+  }
 
   out.close();
 }
