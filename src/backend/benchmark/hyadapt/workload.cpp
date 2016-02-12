@@ -625,6 +625,23 @@ void RunArithmeticTest() {
   txn_manager.CommitTransaction(txn);
 }
 
+// Create join predicate
+expression::AbstractExpression *CreateJoinPredicate() {
+  expression::AbstractExpression *predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+
+  expression::TupleValueExpression *left_table_attr_1 =
+      new expression::TupleValueExpression(0, 1);
+  expression::TupleValueExpression *right_table_attr_1 =
+      new expression::TupleValueExpression(1, 1);
+
+  predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+
+  return predicate;
+}
+
 void RunJoinTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
@@ -641,7 +658,7 @@ void RunJoinTest() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  oid_t column_count = state.column_count;
+  oid_t column_count = state.projectivity * state.column_count;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
@@ -671,19 +688,9 @@ void RunJoinTest() {
   // Create join predicate
   expression::AbstractExpression *join_predicate = nullptr;
 
-  // LEFT.1 == RIGHT.1
-  expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1);
-  expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1);
-
-  join_predicate = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL,
-      left_table_attr_1,
-      right_table_attr_1);
-
   planner::NestedLoopJoinPlan nested_loop_join_node(join_type,
-                                                    join_predicate, nullptr);
+                                                    join_predicate,
+                                                    nullptr);
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -1734,6 +1741,8 @@ void RunDistributionExperiment() {
   out.close();
 }
 
+std::vector<double> join_projectivity = {0.04, 0.1};
+
 void RunJoinExperiment() {
   state.selectivity = 1.0;
   state.write_ratio = 0;
@@ -1751,7 +1760,7 @@ void RunJoinExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      for (auto proj : projectivity) {
+      for (auto proj : join_projectivity) {
         // Set proj
         state.projectivity = proj;
         peloton_projectivity = state.projectivity;
