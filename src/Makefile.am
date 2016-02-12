@@ -20,6 +20,7 @@ include $(srcdir)/backend/executor/Makefile.am
 include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
 include $(srcdir)/backend/main/Makefile.am
+include $(srcdir)/backend/message/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
@@ -36,8 +37,6 @@ include $(top_srcdir)/third_party/Makefile.am
 bin_peloton_PROGRAMS = peloton hyadapt
 
 bin_pelotondir = /usr/local/peloton/bin
-
-# The order matters here
 
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
@@ -58,10 +57,10 @@ libpeloton_la_SOURCES = \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
 			$(index_FILES) \
+			$(message_FILES) \
 			$(planner_FILES) \
-			$(scheduler_FILES) \
 			$(storage_FILES) \
-			$(logging_FILES)			
+			$(logging_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
@@ -74,11 +73,12 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
+						 -I /opt/local/include \
 						 $(third_party_INCLUDES)
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lnanomsg -lm -ldw $(TBB_LIBS)
+libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg
 
 ######################################################################
 # LIBPELOTONPG
@@ -105,14 +105,12 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
 
-libpelotonpg_la_LDFLAGS = -lnanomsg
-			  
 ######################################################################
 # PELOTON
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
-peloton_LDFLAGS = -lnanomsg
+peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la
