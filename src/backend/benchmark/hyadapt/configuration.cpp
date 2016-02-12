@@ -61,7 +61,7 @@ void GenerateSequence(oid_t column_count) {
 }
 
 static void ValidateOperator(const configuration &state) {
-  if (state.operator_type < 1 || state.operator_type > 3) {
+  if (state.operator_type < 1 || state.operator_type > 4) {
     std::cout << "Invalid operator type :: " << state.operator_type << "\n";
     exit(EXIT_FAILURE);
   } else {
@@ -80,6 +80,11 @@ static void ValidateOperator(const configuration &state) {
         std::cout << std::setw(20) << std::left << "operator_type "
                   << " : "
                   << "ARITHMETIC" << std::endl;
+        break;
+      case OPERATOR_TYPE_JOIN:
+        std::cout << std::setw(20) << std::left << "operator_type "
+                  << " : "
+                  << "JOIN" << std::endl;
         break;
       default:
         break;

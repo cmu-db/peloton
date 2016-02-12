@@ -630,10 +630,6 @@ void RunJoinTest() {
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
-  LOG_TRACE("Join \n");
-
-  exit(0);
-
   auto txn = txn_manager.BeginTransaction();
 
   /////////////////////////////////////////////////////////
@@ -645,7 +641,7 @@ void RunJoinTest() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  oid_t column_count = state.projectivity * state.column_count;
+  oid_t column_count = state.column_count;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
