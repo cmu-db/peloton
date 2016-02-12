@@ -571,15 +571,14 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      return expression::OperatorFactory(plt_exprtype, children[0], children[1]);
-
     case EXPRESSION_TYPE_SUBSTR:
-      return new expression::SubstringExpression(children[0], children[1], children[2]);
-    case EXPRESSION_TYPE_ASCII:
-      return new expression::AsciiExpression(children[0]);
-    case EXPRESSION_TYPE_OCTET_LEN:
-      return new expression::OctetLenExpression(children[0]);
-
+	case EXPRESSION_TYPE_ASCII:
+	case EXPRESSION_TYPE_OCTET_LEN:
+	case EXPRESSION_TYPE_CHAR:
+	case EXPRESSION_TYPE_CHAR_LEN:
+	case EXPRESSION_TYPE_SPACE:
+	case EXPRESSION_TYPE_CONCAT:
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1], children[2]);
 
     default:
       LOG_ERROR(

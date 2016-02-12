@@ -43,6 +43,9 @@ AbstractExpression *ComparisonFactory(ExpressionType et, AbstractExpression *,
 AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *,
                                     AbstractExpression *);
 
+AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *,
+                                    AbstractExpression *, AbstractExpression *);
+
 AbstractExpression *ConstantValueFactory(const peloton::Value &val);
 
 AbstractExpression *ParameterValueFactory(int idx);
