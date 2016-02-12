@@ -1723,11 +1723,15 @@ void RunDistributionExperiment() {
   out.close();
 }
 
-std::vector<double> join_projectivity = {0.04, 0.1};
-
 void RunJoinExperiment() {
   state.selectivity = 1.0;
   state.write_ratio = 0;
+
+  // Save old values and scale down
+  oid_t old_scale_factor = state.scale_factor;
+  oid_t old_tuples_per_tilegroup = state.tuples_per_tilegroup;
+  state.scale_factor = 10;
+  state.tuples_per_tilegroup = 100;
 
   // Go over all column counts
   for (auto column_count : column_counts) {
@@ -1742,7 +1746,7 @@ void RunJoinExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      for (auto proj : join_projectivity) {
+      for (auto proj : projectivity) {
         // Set proj
         state.projectivity = proj;
         peloton_projectivity = state.projectivity;
@@ -1757,6 +1761,10 @@ void RunJoinExperiment() {
 
     }
   }
+
+  // Reset old values
+  state.scale_factor = old_scale_factor;
+  state.tuples_per_tilegroup = old_tuples_per_tilegroup;
 
   out.close();
 }
