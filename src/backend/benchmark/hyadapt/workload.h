@@ -50,6 +50,8 @@ void RunReorgExperiment();
 
 void RunDistributionExperiment();
 
+void RunJoinExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
