@@ -625,23 +625,6 @@ void RunArithmeticTest() {
   txn_manager.CommitTransaction(txn);
 }
 
-// Create join predicate
-expression::AbstractExpression *CreateJoinPredicate() {
-  expression::AbstractExpression *predicate = nullptr;
-
-  // LEFT.1 == RIGHT.1
-
-  expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1);
-  expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1);
-
-  predicate = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
-
-  return predicate;
-}
-
 void RunJoinTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
@@ -707,15 +690,14 @@ void RunJoinTest() {
   // Create and set up materialization executor
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  oid_t col_itr = 0;
-  for (auto column_id : column_ids) {
+  oid_t join_column_count = column_count * 2;
+  for (oid_t col_itr = 0; col_itr < join_column_count ; col_itr++) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(column_id), is_inlined);
+                        "" + std::to_string(col_itr), is_inlined);
     output_columns.push_back(column);
 
     old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
   }
 
   std::unique_ptr<catalog::Schema> output_schema(
