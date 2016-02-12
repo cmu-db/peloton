@@ -1754,8 +1754,7 @@ void RunJoinExperiment() {
         // Load in the table with layout
         CreateAndLoadTable(layout);
 
-        // Go over all ops
-        state.operator_type = OPERATOR_TYPE_DIRECT;
+        state.operator_type = OPERATOR_TYPE_JOIN;
         RunJoinTest();
       }
 
