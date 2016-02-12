@@ -30,6 +30,8 @@ void RunAggregateTest();
 
 void RunArithmeticTest();
 
+void RunJoinTest();
+
 void RunSubsetTest(SubsetType subset_test_type, double fraction);
 
 void RunProjectivityExperiment();

@@ -49,6 +49,10 @@ void RunBenchmark() {
         RunArithmeticTest();
         break;
 
+      case OPERATOR_TYPE_JOIN:
+        RunJoinTest();
+        break;
+
       default:
         std::cout << "Unsupported test type : " << state.operator_type << "\n";
         break;
