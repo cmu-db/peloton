@@ -102,6 +102,10 @@ void RunBenchmark() {
         RunJoinExperiment();
         break;
 
+      case EXPERIMENT_TYPE_INSERT:
+        RunInsertExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type
                   << "\n";

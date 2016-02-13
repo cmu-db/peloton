@@ -1768,6 +1768,36 @@ void RunJoinExperiment() {
   out.close();
 }
 
+void RunInsertExperiment() {
+
+  // Set write ratio
+  state.write_ratio = 1.0;
+
+  // Go over all column counts
+  for (auto column_count : column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    for (auto layout : layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      // Load in the table with layout
+      CreateAndLoadTable(layout);
+
+      state.operator_type = OPERATOR_TYPE_INSERT;
+      RunInsertTest();
+
+    }
+  }
+
+  out.close();
+}
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
