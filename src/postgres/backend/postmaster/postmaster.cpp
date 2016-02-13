@@ -533,33 +533,68 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 HANDLE PostmasterHandle;
 #endif
 
+void test_server() {
+
+	  std::cout << "Hello Peerserver" << std::endl;
+	  int sock = nn_socket(AF_SP, NN_REP);
+	  nn_bind(sock, "tcp://*:5666");
+	//  int sock = nn_socket(AF_SP, NN_BUS);
+	//  nn_bind(sock, "tcp://*:5666");
+
+	  //nn_connect (sock, "tcp://128.2.209.31:5666");
+	  //int to = 100;
+	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+	  // SEND
+	  //char* str_send = "Hello Peloton!";
+	  //int sz_n = strlen(str_send) + 1; // '\0' too
+	  //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+	  //int send = nn_send(sock, str_send, sz_n, 0);
+
+	  while (1) {
+		char *buf = NULL;
+		int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+		printf("RECEIVED \"%s\"\n", buf);
+		char* str_send = "Hello Peloton FROM SERVER";
+		int sz_n = strlen(str_send) + 1; // '\0' too
+		//printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+		nn_send(sock, str_send, sz_n, 0);
+		//nn_freemsg(buf);
+		//std::cout << bytes;
+	  }
+}
+
+void test_client() {
+
+	  std::cout << "Hello Peerserver" << std::endl;
+	  int sock = nn_socket(AF_SP, NN_REQ);
+	  nn_bind(sock, "tcp://*:5666");
+
+	  nn_connect (sock, "tcp://128.2.209.31:5666");
+	  //int to = 100;
+	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+	  // SEND
+	  char* str_send = "Hello Peloton!";
+	  int sz_n = strlen(str_send) + 1; // '\0' too
+	  printf("%s: SENDING '%s' ONTO SERVER\n", "node2", str_send);
+	  int send = nn_send(sock, str_send, sz_n, 0);
+
+	  while (1) {
+	    char *buf = NULL;
+	    int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+	    printf("RECEIVED \"%s\"\n", buf);
+	    char* str_send = "Hello Peloton FROM NODE2!!!!";
+	    int sz_n = strlen(str_send) + 1; // '\0' too
+	    //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+	    nn_send(sock, str_send, sz_n, 0);
+	    //nn_freemsg(buf);
+	    //std::cout << bytes;
+	  }
+
+}
 //TODO: Peloton adds
 static void PeerServer() {
-
-  std::cout << "Hello Peerserver" << std::endl;
-  int sock = nn_socket(AF_SP, NN_BUS);
-  nn_bind(sock, "tcp://*:5666");
-
-  nn_connect (sock, "tcp://128.2.209.31:5666");
-  int to = 100;
-  nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
-  // SEND
-  char* str_send = "Hello Peloton!";
-  int sz_n = strlen(str_send) + 1; // '\0' too
-  printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
-  int send = nn_send(sock, str_send, sz_n, 0);
-
-  while (1) {
-	char *buf = NULL;
-	int bytes = nn_recv(sock, &buf, NN_MSG, 0);
-	printf("RECEIVED \"%s\"\n", buf);
-	char* str_send = "Hello Peloton Again!!!!";
-	int sz_n = strlen(str_send) + 1; // '\0' too
-	printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
-	int send = nn_send(sock, str_send, sz_n, 0);
-	//nn_freemsg(buf);
-	std::cout << bytes;
-  }
+	test_server();
+//  test_client();
 }
 
 /*

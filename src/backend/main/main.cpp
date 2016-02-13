@@ -49,39 +49,6 @@ static void check_root(const char *progname);
  * Any Postgres server process begins execution here.
  */
 int main(int argc, char *argv[]) {
-  // test nanomsg by Michael
-
-//  int sock = nn_socket (AF_SP, NN_PULL);
-//  assert (sock >= 0);
-//  nn_bind (sock, "tcp://*:5666");
-//
-//  while (1)
-//  {
-//    char *buf = NULL;
-//    int bytes = nn_recv (sock, &buf, NN_MSG, 0);
-//    assert (bytes >= 0);
-//    printf ("NODE0: RECEIVED \"%s\"\n", buf);
-//    nn_freemsg (buf);
-//    std::cout << bytes;
-//  }
-
-//  if (sock >=0 and rbind >=0) {
-//      void *buf = NULL;
-//      printf("prepare\n");
-//      nn_recv (sock, &buf, NN_MSG, 0);
-//      printf ("NODE0: RECEIVED DATE REQUEST from %s\n",(char *)buf);
-//      assert (bytes >= 0);
-//
-//          int sz_d = strlen(NODE0) + 1; // '\0' too
-//          printf ("NODE0: SENDING DATE %s\n", NODE0);
-//          int bytes = nn_send (sock, NODE0, sz_d, 0);
-//          assert (bytes == sz_d);
-//          std::cout << bytes;
-//
-//     nn_freemsg (buf);
-//     nn_shutdown (sock, 0);
-//
-//  }
 
   bool do_check_root = true;
 
