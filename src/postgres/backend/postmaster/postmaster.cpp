@@ -97,6 +97,7 @@
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pair.h>
 #include <nanomsg/bus.h>
+#include "backend/message/message.query.pb.h"
 // end test
 
 #include "access/transam.h"
