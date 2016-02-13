@@ -1731,7 +1731,7 @@ void RunJoinExperiment() {
   // Save old values and scale down
   oid_t old_scale_factor = state.scale_factor;
   oid_t old_tuples_per_tilegroup = state.tuples_per_tilegroup;
-  state.scale_factor = 10;
+  state.scale_factor = 20;
   state.tuples_per_tilegroup = 100;
 
   // Go over all column counts
