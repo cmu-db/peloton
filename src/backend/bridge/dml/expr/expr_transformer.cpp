@@ -531,13 +531,13 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
 
   }
 
-  // mperron some string functions have 3 children
-  assert(list_length(args) <= 3);  // Hopefully it has at most three parameters
-  assert(func_meta.nargs <= 3);
+  // mperron some string functions have 4 children
+  assert(list_length(args) <= 4);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= 4);
 
-  // Extract function arguments (at most three)
-  expression::AbstractExpression *children[3];
-  for (int i = 0; i < 3; i++){
+  // Extract function arguments (at most four)
+  expression::AbstractExpression *children[4];
+  for (int i = 0; i < 4; i++){
       children[i] = nullptr;
   }
 //  expression::AbstractExpression *lc = nullptr;
@@ -578,7 +578,16 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
 	case EXPRESSION_TYPE_CHAR_LEN:
 	case EXPRESSION_TYPE_SPACE:
 	case EXPRESSION_TYPE_CONCAT:
-      return expression::OperatorFactory(plt_exprtype, children[0], children[1], children[2]);
+	case EXPRESSION_TYPE_OVERLAY:
+	case EXPRESSION_TYPE_LEFT:
+	case EXPRESSION_TYPE_RIGHT:
+	case EXPRESSION_TYPE_RTRIM:
+	case EXPRESSION_TYPE_LTRIM:
+	case EXPRESSION_TYPE_BTRIM:
+	case EXPRESSION_TYPE_REPLACE:
+	case EXPRESSION_TYPE_REPEAT:
+	case EXPRESSION_TYPE_POSITION:
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1], children[2], children[3]);
 
     default:
       LOG_ERROR(

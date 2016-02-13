@@ -484,9 +484,15 @@ std::string ExpressionTypeToString(ExpressionType type) {
 	case EXPRESSION_TYPE_CONCAT:{
 		return "CONCAT";
 	}
-	case EXPRESSION_TYPE_TRIM:{
-		return "TRIM";
+	case EXPRESSION_TYPE_LTRIM:{
+		return "L_TRIM";
 	}
+	case EXPRESSION_TYPE_RTRIM:{
+			return "R_TRIM";
+		}
+	case EXPRESSION_TYPE_BTRIM:{
+			return "B_TRIM";
+		}
 	case EXPRESSION_TYPE_REPLACE:{
 		return "REPLACE";
 	}
