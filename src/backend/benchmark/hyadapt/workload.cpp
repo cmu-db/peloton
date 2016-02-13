@@ -63,6 +63,7 @@
 
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
 
@@ -1797,6 +1798,50 @@ void RunInsertExperiment() {
 
   out.close();
 }
+
+std::vector<oid_t> version_chain_lengths = {10, 100, 1000, 10000, 10000};
+
+void RunVersionExperiment() {
+
+  oid_t tuple_count = version_chain_lengths.back();
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::duration<double> elapsed_seconds;
+  double version_chain_travesal_time = 0;
+
+  std::unique_ptr<storage::TileGroupHeader> header(
+      new storage::TileGroupHeader(BACKEND_TYPE_MM, tuple_count));
+
+  // Create a version chain
+  oid_t block_id = 0;
+  header->SetPrevItemPointer(0, INVALID_ITEMPOINTER);
+  for(oid_t tuple_itr = 1; tuple_itr < tuple_count; tuple_itr++) {
+    header->SetPrevItemPointer(tuple_itr, ItemPointer(block_id, tuple_itr -1));
+  }
+
+  start = std::chrono::system_clock::now();
+
+  // Traverse the version chain
+  for(auto version_chain_length : version_chain_lengths){
+    oid_t starting_tuple_offset = version_chain_length - 1;
+    oid_t prev_tuple_offset = starting_tuple_offset;
+    std::cout << "Offset : " << starting_tuple_offset << "\n";
+
+    auto prev_item_pointer = header->GetPrevItemPointer(starting_tuple_offset);
+    while(prev_item_pointer.block != INVALID_OID) {
+      prev_tuple_offset = prev_item_pointer.offset;
+      prev_item_pointer = header->GetPrevItemPointer(prev_tuple_offset);
+    }
+
+    end = std::chrono::system_clock::now();
+    elapsed_seconds = end - start;
+    version_chain_travesal_time = ((double)elapsed_seconds.count());
+
+    WriteOutput(version_chain_travesal_time);
+  }
+
+  out.close();
+}
+
 
 }  // namespace hyadapt
 }  // namespace benchmark
