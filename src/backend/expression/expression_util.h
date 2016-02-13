@@ -44,7 +44,8 @@ AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *,
                                     AbstractExpression *);
 
 AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *,
-                                    AbstractExpression *, AbstractExpression *);
+                                    AbstractExpression *, AbstractExpression *,
+									AbstractExpression *);
 
 AbstractExpression *ConstantValueFactory(const peloton::Value &val);
 

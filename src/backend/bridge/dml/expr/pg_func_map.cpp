@@ -78,7 +78,29 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {936, {EXPRESSION_TYPE_SUBSTR, 3}},
     {937, {EXPRESSION_TYPE_SUBSTR, 2}},
     {883, {EXPRESSION_TYPE_SUBSTR, 2}},
+	{2073, {EXPRESSION_TYPE_SUBSTR, 2}},
 	{1258, {EXPRESSION_TYPE_CONCAT, 2}},
+	{1404, {EXPRESSION_TYPE_OVERLAY, 4}},
+	{1405, {EXPRESSION_TYPE_OVERLAY, 3}},
+	{849, {EXPRESSION_TYPE_POSITION, 2}},
+	{1622, {EXPRESSION_TYPE_REPEAT, 2}},
+	{3060, {EXPRESSION_TYPE_LEFT, 2}},
+	{3061, {EXPRESSION_TYPE_RIGHT, 2}},
+	{2087, {EXPRESSION_TYPE_REPLACE, 3}},
+
+	// without chars leading
+	{881, {EXPRESSION_TYPE_LTRIM, 2}},
+	// with chars leading
+	{875, {EXPRESSION_TYPE_LTRIM, 2}},
+    // without chars trailing
+	{882, {EXPRESSION_TYPE_RTRIM, 2}},
+	// with chars trailing
+	{876, {EXPRESSION_TYPE_RTRIM, 2}},
+	// without chars both
+	{885, {EXPRESSION_TYPE_BTRIM, 2}},
+	// with chars both
+	{884, {EXPRESSION_TYPE_BTRIM, 2}},
+
 
 	{1620, {EXPRESSION_TYPE_ASCII, 1}},
 	{1621, {EXPRESSION_TYPE_CHAR, 1}},
