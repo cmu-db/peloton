@@ -78,6 +78,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <limits.h>
+#include <iostream>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -95,6 +96,7 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pair.h>
+#include <nanomsg/bus.h>
 // end test
 
 #include "access/transam.h"
@@ -530,6 +532,35 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 /* Process handle of postmaster used for the same purpose on Windows */
 HANDLE PostmasterHandle;
 #endif
+
+//TODO: Peloton adds
+static void PeerServer() {
+
+  std::cout << "Hello Peerserver" << std::endl;
+  int sock = nn_socket(AF_SP, NN_BUS);
+  nn_bind(sock, "tcp://*:5666");
+
+  nn_connect (sock, "tcp://128.2.209.31:5666");
+  int to = 100;
+  nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+  // SEND
+  char* str_send = "Hello Peloton!";
+  int sz_n = strlen(str_send) + 1; // '\0' too
+  printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+  int send = nn_send(sock, str_send, sz_n, 0);
+
+  while (1) {
+	char *buf = NULL;
+	int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+	printf("RECEIVED \"%s\"\n", buf);
+	char* str_send = "Hello Peloton Again!!!!";
+	int sz_n = strlen(str_send) + 1; // '\0' too
+	printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+	int send = nn_send(sock, str_send, sz_n, 0);
+	//nn_freemsg(buf);
+	std::cout << bytes;
+  }
+}
 
 /*
  * Postmaster main entry point
@@ -1213,6 +1244,11 @@ void PostmasterMain(int argc, char *argv[]) {
 
   /* Some workers may be scheduled to start now */
   maybe_start_bgworker();
+
+  // Launch a thread. Deal with the inner communication among peloton peers
+  // std::thread
+  std::thread peerserver(PeerServer);
+  peerserver.detach();
 
   status = ServerLoop();
 
@@ -3544,32 +3580,6 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
   /* And run the backend */
   BackendRun(port);
 }
-
-//TODO: Peloton adds
-//static void PeerServer() {
-//  int sock = nn_socket(AF_SP, NN_BUS);
-//  assert(sock >= 0);
-//  nn_bind(sock, "tcp://*:5666");
-//
-//  nn_connect (sock, "tcp://128.2.209.31:5666");
-//  int to = 100;
-//  nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
-//  // SEND
-//  char* str_send = "Hello Peloton!";
-//  int sz_n = strlen(str_send) + 1; // '\0' too
-//  printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
-//  int send = nn_send(sock, str_send, sz_n, 0);
-//  assert(send == sz_n);
-//
-//  while (1) {
-//	char *buf = NULL;
-//	int bytes = nn_recv(sock, &buf, NN_MSG, 0);
-//	assert(bytes >= 0);
-//	printf("RECEIVED \"%s\"\n", buf);
-//	nn_freemsg(buf);
-//	std::cout << bytes;
-//  }
-//}
 
 //TODO: Peloton Changes
 static void LaunchBackendTask(Backend *bn, Port *port) {
