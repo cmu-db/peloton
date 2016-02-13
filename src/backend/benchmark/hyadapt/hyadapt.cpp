@@ -106,6 +106,10 @@ void RunBenchmark() {
         RunInsertExperiment();
         break;
 
+      case EXPERIMENT_TYPE_VERSION:
+        RunVersionExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type
                   << "\n";
