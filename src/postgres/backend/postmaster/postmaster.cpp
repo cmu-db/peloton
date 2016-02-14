@@ -97,7 +97,11 @@
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pair.h>
 #include <nanomsg/bus.h>
-#include "backend/message/message.query.pb.h"
+//#include "/home/michael/peloton/src/backend/message/message.pelotonmsg.pb.h"
+//#include "backend/message/message.query.pb.h"
+//#include "backend/message/nanomsg.h"
+//#include "backend/message/pelotomsg.pb.h"
+//#include "backend/message/sender.h"
 // end test
 
 #include "access/transam.h"

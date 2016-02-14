@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "backend/message/nanomsg.h"
+#include "backend/message/message.query.pb.h"
 
 namespace peloton {
 namespace message {
