@@ -46,6 +46,7 @@ THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "third_party")
 
 NVML_DIR = os.path.join(THIRD_PARTY_DIR, "nvml")
 NANOMSG_DIR = os.path.join(THIRD_PARTY_DIR, "nanomsg")
+LOGCABIN_DIR = os.path.join(THIRD_PARTY_DIR, "logcabin-1.1.0")
 
 ## ==============================================
 ## Utilities
@@ -110,6 +111,20 @@ def install_dependencies():
 
     LOG.info("Finished installing nanomsg library")
 
+    ## ==============================================
+    ## LogCabin Library
+    ## ==============================================
+    LOG.info(LOGCABIN_DIR)
+    LOG.info("Installing LogCabin library")
+    os.chdir(LOGCABIN_DIR)
+    cmd = 'scons'
+    exec_cmd(cmd)
+    os.chdir('..')
+
+    LOG.info("Finished installing logcabin library")
+
+## ==============================================
+## MAIN
 ## ==============================================
 ## MAIN
 ## ==============================================
