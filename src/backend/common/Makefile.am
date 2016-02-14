@@ -11,7 +11,7 @@ common_FILES = \
 			   backend/common/serializer.cpp \
 			   backend/common/value.cpp \
 			   backend/common/varlen.cpp \
-			   backend/common/types.cpp
+			   backend/common/types.cpp \
 			   backend/common/thread_manager.cpp
 
 common_INCLUDES = \
