@@ -537,64 +537,199 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 HANDLE PostmasterHandle;
 #endif
 
+using namespace std;
+
+void ListMsg(const peloton::message::pelotonmsg & msg) {
+	string type = msg.type();
+
+	cout << type << endl;
+
+	if (type == "SQL") {
+		peloton::message::query query;
+		string str_query = msg.data();
+		bool result = query.ParseFromString(str_query);
+		if (result == true) {
+			string query_type = query.type();
+			string query_statement = query.statement();
+
+			cout << "query_type: " << query_type << endl;
+			cout << "query_statement: " << query_statement << endl;
+		} else {
+			cout << "Failed to parse query";
+		}
+	} else {
+		cout << "Not query" << endl;
+	}
+
+	cout << msg.type() << endl;
+
+	cout << msg.data() << endl;
+}
+
 void test_server() {
 
-	  std::cout << "Hello Peerserver" << std::endl;
-	  int sock = nn_socket(AF_SP, NN_REP);
-	  nn_bind(sock, "tcp://*:5666");
+	peloton::message::pelotonmsg msg;
+	peloton::message::query query;
+//  peloton::message::tuple tuple;
+	std::string type = "select";
+	std::string sql = "results.....from server";
+	query.set_type(type);
+	query.set_statement(sql);
+
+	std::string str_query;
+	query.SerializeToString(&str_query);
+
+	msg.set_type("SQL");
+	msg.set_data(str_query);
+
+	std::string pelotonmsg;
+	msg.SerializeToString(&pelotonmsg);
+
+	std::cout << "Hello Peerserver" << std::endl;
+	int sock = nn_socket(AF_SP, NN_REP);
+	nn_bind(sock, "tcp://*:5666");
 	//  int sock = nn_socket(AF_SP, NN_BUS);
 	//  nn_bind(sock, "tcp://*:5666");
 
-	  //nn_connect (sock, "tcp://128.2.209.31:5666");
-	  //int to = 100;
-	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
-	  // SEND
-	  //char* str_send = "Hello Peloton!";
-	  //int sz_n = strlen(str_send) + 1; // '\0' too
-	  //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
-	  //int send = nn_send(sock, str_send, sz_n, 0);
+	//nn_connect (sock, "tcp://128.2.209.31:5666");
+	//int to = 100;
+	//nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+	// SEND
+	//char* str_send = "Hello Peloton!";
+	//int sz_n = strlen(str_send) + 1; // '\0' too
+	//printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+	//int send = nn_send(sock, str_send, sz_n, 0);
 
-	  while (1) {
+	//while (1) {
+	char *buf = NULL;
+	int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+	printf("RECEIVED \"%s\"\n", buf);
+	string recv = buf;
+
+	peloton::message::pelotonmsg msg1;
+
+	{
+		if (!msg1.ParseFromString(recv)) {
+			cerr << "Failed to parse address book." << endl;
+		}
+	}
+	ListMsg(msg1);
+
+	char* str_send = "Hello from server!";
+	int sz_n = strlen(str_send) + 1; // '\0' too
+	nn_send(sock, str_send, sz_n, 0);
+	nn_freemsg(buf);
+	//std::cout << bytes;
+	//}
+
+	nn_shutdown(sock, 0);
+}
+
+void test_client() {
+
+	peloton::message::pelotonmsg msg;
+	peloton::message::query query;
+//  peloton::message::tuple tuple;
+	std::string type = "select";
+	std::string sql = "select * from company";
+	query.set_type(type);
+	query.set_statement(sql);
+
+	std::string str_query;
+	query.SerializeToString(&str_query);
+
+	msg.set_type("SQL");
+	msg.set_data(str_query);
+
+	std::string pelotonmsg;
+	msg.SerializeToString(&pelotonmsg);
+
+	std::cout << "Hello Peerserver" << std::endl;
+	int sock = nn_socket(AF_SP, NN_REQ);
+	nn_bind(sock, "tcp://*:5666");
+
+	nn_connect(sock, "tcp://128.2.209.31:5666");
+	//int to = 100;
+	//nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+	// SEND
+	const char* str_send = pelotonmsg.c_str();
+	int sz_n = strlen(str_send) + 1; // '\0' too
+	printf("%s: SENDING '%s' ONTO SERVER\n", "node2", str_send);
+	int send = nn_send(sock, str_send, sz_n, 0);
+
+	while (1) {
 		char *buf = NULL;
 		int bytes = nn_recv(sock, &buf, NN_MSG, 0);
 		printf("RECEIVED \"%s\"\n", buf);
-		char* str_send = "Hello Peloton FROM SERVER";
+		char* str_send = "Hello Peloton FROM NODE2!!!!";
 		int sz_n = strlen(str_send) + 1; // '\0' too
 		//printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
 		nn_send(sock, str_send, sz_n, 0);
 		//nn_freemsg(buf);
 		//std::cout << bytes;
-	  }
-}
-
-void test_client() {
-
-	  std::cout << "Hello Peerserver" << std::endl;
-	  int sock = nn_socket(AF_SP, NN_REQ);
-	  nn_bind(sock, "tcp://*:5666");
-
-	  nn_connect (sock, "tcp://128.2.209.31:5666");
-	  //int to = 100;
-	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
-	  // SEND
-	  char* str_send = "Hello Peloton!";
-	  int sz_n = strlen(str_send) + 1; // '\0' too
-	  printf("%s: SENDING '%s' ONTO SERVER\n", "node2", str_send);
-	  int send = nn_send(sock, str_send, sz_n, 0);
-
-	  while (1) {
-	    char *buf = NULL;
-	    int bytes = nn_recv(sock, &buf, NN_MSG, 0);
-	    printf("RECEIVED \"%s\"\n", buf);
-	    char* str_send = "Hello Peloton FROM NODE2!!!!";
-	    int sz_n = strlen(str_send) + 1; // '\0' too
-	    //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
-	    nn_send(sock, str_send, sz_n, 0);
-	    //nn_freemsg(buf);
-	    //std::cout << bytes;
-	  }
+	}
 
 }
+
+//
+//void test_server() {
+//
+//	  std::cout << "Hello Peerserver" << std::endl;
+//	  int sock = nn_socket(AF_SP, NN_REP);
+//	  nn_bind(sock, "tcp://*:5666");
+//	//  int sock = nn_socket(AF_SP, NN_BUS);
+//	//  nn_bind(sock, "tcp://*:5666");
+//
+//	  //nn_connect (sock, "tcp://128.2.209.31:5666");
+//	  //int to = 100;
+//	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+//	  // SEND
+//	  //char* str_send = "Hello Peloton!";
+//	  //int sz_n = strlen(str_send) + 1; // '\0' too
+//	  //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+//	  //int send = nn_send(sock, str_send, sz_n, 0);
+//
+//	  while (1) {
+//		char *buf = NULL;
+//		int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+//		printf("RECEIVED \"%s\"\n", buf);
+//		char* str_send = "Hello Peloton FROM SERVER";
+//		int sz_n = strlen(str_send) + 1; // '\0' too
+//		//printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+//		nn_send(sock, str_send, sz_n, 0);
+//		//nn_freemsg(buf);
+//		//std::cout << bytes;
+//	  }
+//}
+//
+//void test_client() {
+//
+//	  std::cout << "Hello Peerserver" << std::endl;
+//	  int sock = nn_socket(AF_SP, NN_REQ);
+//	  nn_bind(sock, "tcp://*:5666");
+//
+//	  nn_connect (sock, "tcp://128.2.209.31:5666");
+//	  //int to = 100;
+//	  //nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to));
+//	  // SEND
+//	  char* str_send = "Hello Peloton!";
+//	  int sz_n = strlen(str_send) + 1; // '\0' too
+//	  printf("%s: SENDING '%s' ONTO SERVER\n", "node2", str_send);
+//	  int send = nn_send(sock, str_send, sz_n, 0);
+//
+//	  while (1) {
+//	    char *buf = NULL;
+//	    int bytes = nn_recv(sock, &buf, NN_MSG, 0);
+//	    printf("RECEIVED \"%s\"\n", buf);
+//	    char* str_send = "Hello Peloton FROM NODE2!!!!";
+//	    int sz_n = strlen(str_send) + 1; // '\0' too
+//	    //printf("%s: SENDING '%s' ONTO BUS\n", "node***", str_send);
+//	    nn_send(sock, str_send, sz_n, 0);
+//	    //nn_freemsg(buf);
+//	    //std::cout << bytes;
+//	  }
+//
+//}
 //TODO: Peloton adds
 static void PeerServer() {
 	test_server();
