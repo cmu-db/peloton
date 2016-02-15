@@ -288,17 +288,19 @@ class LTrimExpression : public AbstractExpression{
 public:
 	LTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
 		AbstractExpression(EXPRESSION_TYPE_RTRIM){
-		m_left = chars;
-		m_right = string;
+		m_left = string;
+		m_right = chars;
 	}
 
 	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
 	                 executor::ExecutorContext *context) const {
-	    assert(m_left);
-	    assert(m_right);
-	    std::vector<Value> position_args;
-	    position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
-	    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
+		std::vector<Value> position_args;
+		if(m_left){
+		  position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+		}
+		position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
 	    return Value::Call<FUNC_TRIM_LEADING_CHAR>(position_args);
 	  }
 
@@ -311,16 +313,17 @@ class RTrimExpression : public AbstractExpression{
 public:
 	RTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
 		AbstractExpression(EXPRESSION_TYPE_RTRIM){
-		m_left = chars;
-		m_right = string;
+		m_left = string;
+		m_right = chars;
 	}
 
 	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
 	                 executor::ExecutorContext *context) const {
-	    assert(m_left);
-	    assert(m_right);
+
 	    std::vector<Value> position_args;
-	    position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+	    if(m_left){
+	      position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+	    }
 	    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
 	    return Value::Call<FUNC_TRIM_TRAILING_CHAR>(position_args);
 	  }
@@ -334,17 +337,19 @@ class BTrimExpression : public AbstractExpression{
 public:
 	BTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
 		AbstractExpression(EXPRESSION_TYPE_BTRIM){
-		m_left = chars;
-		m_right = string;
+		m_left = string;
+		m_right = chars;
 	}
 
 	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
 	                 executor::ExecutorContext *context) const {
-	    assert(m_left);
-	    assert(m_right);
-	    std::vector<Value> position_args;
-	    position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
-	    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
+		std::vector<Value> position_args;
+		if(m_left){
+		  position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+		}
+		position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
 	    return Value::Call<FUNC_TRIM_BOTH_CHAR>(position_args);
 	  }
 
@@ -370,8 +375,9 @@ private:
     assert(m_left);
     assert(m_right);
     std::vector<Value> position_args;
-    position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+    position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+
     return Value::Call<FUNC_POSITION_CHAR>(position_args);
   }
 
