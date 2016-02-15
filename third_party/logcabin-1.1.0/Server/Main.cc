@@ -200,7 +200,7 @@ class PidFile {
             return;
         FILE* file = fopen(filename.c_str(), "w");
         if (file == NULL) {
-            PANIC("Could not open %s for writing process ID: %s",
+            ERROR("Could not open %s for writing process ID: %s",
                   filename.c_str(),
                   strerror(errno));
         }
