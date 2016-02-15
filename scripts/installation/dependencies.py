@@ -198,7 +198,7 @@ def install_dependencies():
 
     # Change Main.cc main function
     #cmd = 'sed -i s/main\(/logcabin_main\(/ build/Server/Main.cc'
-    cmd = 'cp ./Server/Main.cc ./build/Server/Main.cc'
+    cmd = 'cp ./Server/Main.logcabin ./build/Server/Main.cc'
     exec_cmd(cmd)
     LOG.info("Replaced main with logcabin_main")
 
