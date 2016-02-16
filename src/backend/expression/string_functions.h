@@ -185,24 +185,23 @@ inline Value Value::Call<FUNC_POSITION_CHAR>(
   return GetIntegerValue(static_cast<int32_t>(position));
 }
 
-template<>
-inline Value Value::CallUnary<FUNC_ASCII>() const{
-	if (IsNull()){
-		return GetNullValue();
-	}
-	if (GetValueType() != VALUE_TYPE_VARCHAR) {
-	  ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
-    }
-	const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
-	if (valueUTF8Length == 0){
-		return GetNullValue(VALUE_TYPE_INTEGER);
-	}
+// added to implement the ASCII function
+// currently does not support unicode strings
+template <>
+inline Value Value::CallUnary<FUNC_ASCII>() const {
+  if (IsNull()) {
+    return GetNullValue();
+  }
+  if (GetValueType() != VALUE_TYPE_VARCHAR) {
+    ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
+  }
+  const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
+  if (valueUTF8Length == 0) {
+    return GetNullValue(VALUE_TYPE_INTEGER);
+  }
 
-	char *valueChars =
-	      reinterpret_cast<char *>(GetObjectValueWithoutNull());
-	return GetIntegerValue(valueChars[0]);
-
-
+  char *valueChars = reinterpret_cast<char *>(GetObjectValueWithoutNull());
+  return GetIntegerValue(valueChars[0]);
 }
 
 /** implement the 2-argument SQL LEFT function */
@@ -372,7 +371,7 @@ static inline std::string trim_function(std::string source,
 /** implement the 2-argument SQL TRIM functions */
 inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
                                     bool leading, bool trailing) {
-//  assert(arguments.size() == 2);
+  //  assert(arguments.size() == 2);
   for (size_t i = 0; i < arguments.size(); i++) {
     const Value &arg = arguments[i];
     if (arg.IsNull()) {
@@ -383,26 +382,27 @@ inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
   char *ptr;
   std::string trimArg;
   int32_t length;
-  if (arguments.size() == 2){
-	  const Value &trimChar = arguments[0];
-	  if (trimChar.GetValueType() != VALUE_TYPE_VARCHAR) {
-		ThrowCastSQLException(trimChar.GetValueType(), VALUE_TYPE_VARCHAR);
-	  }
+  // added to handle the 1 argument case where space is def
+  if (arguments.size() == 2) {
+    const Value &trimChar = arguments[0];
+    if (trimChar.GetValueType() != VALUE_TYPE_VARCHAR) {
+      ThrowCastSQLException(trimChar.GetValueType(), VALUE_TYPE_VARCHAR);
+    }
 
-	  ptr = reinterpret_cast<char *>(trimChar.GetObjectValueWithoutNull());
-	  length = trimChar.GetObjectLengthWithoutNull();
+    ptr = reinterpret_cast<char *>(trimChar.GetObjectValueWithoutNull());
+    length = trimChar.GetObjectLengthWithoutNull();
 
-	  trimArg = std::string(ptr, length);
-  }else{
-	  trimArg = " ";
-	  length = 1;
+    trimArg = std::string(ptr, length);
+  } else {
+    trimArg = " ";
+    length = 1;
   }
   std::string inputStr;
 
-  const Value &strVal = arguments.size() ==2 ? arguments[1]: arguments[0];
+  const Value &strVal = arguments.size() == 2 ? arguments[1] : arguments[0];
 
   if (strVal.GetValueType() != VALUE_TYPE_VARCHAR) {
-	ThrowCastSQLException(strVal.GetValueType(), VALUE_TYPE_VARCHAR);
+    ThrowCastSQLException(strVal.GetValueType(), VALUE_TYPE_VARCHAR);
   }
 
   ptr = reinterpret_cast<char *>(strVal.GetObjectValueWithoutNull());

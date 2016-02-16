@@ -178,15 +178,19 @@ AbstractExpression *ComparisonFactory(ExpressionType c, AbstractExpression *lc,
 
 // convert the enumerated value type into a concrete c type for the
 //  operator expression templated ctors
-AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *first,
+AbstractExpression *OperatorFactory(ExpressionType et,
+                                    AbstractExpression *first,
                                     AbstractExpression *second) {
-	return OperatorFactory(et, first, second, nullptr, nullptr);
+  return OperatorFactory(et, first, second, nullptr, nullptr);
 }
 
 // convert the enumerated value type into a concrete c type for the
 //  operator expression templated ctors
-AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *first,
-                                    AbstractExpression *second, AbstractExpression *third, AbstractExpression * fourth) {
+AbstractExpression *OperatorFactory(ExpressionType et,
+                                    AbstractExpression *first,
+                                    AbstractExpression *second,
+                                    AbstractExpression *third,
+                                    AbstractExpression *fourth) {
   AbstractExpression *ret = nullptr;
 
   switch (et) {
@@ -210,56 +214,56 @@ AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *first
       ret = new OperatorNotExpression(first);
       break;
     case (EXPRESSION_TYPE_SUBSTR):
-	  ret = new SubstringExpression(first, second, third);
-	  break;
+      ret = new SubstringExpression(first, second, third);
+      break;
 
-	case (EXPRESSION_TYPE_CONCAT):
-	  ret = new ConcatExpression(first, second);
-	  break;
+    case (EXPRESSION_TYPE_CONCAT):
+      ret = new ConcatExpression(first, second);
+      break;
 
-	case (EXPRESSION_TYPE_ASCII):
-	  ret = new AsciiExpression(first);
-	  break;
+    case (EXPRESSION_TYPE_ASCII):
+      ret = new AsciiExpression(first);
+      break;
 
-	case (EXPRESSION_TYPE_CHAR):
-	  ret = new CharExpression(first);
-	  break;
+    case (EXPRESSION_TYPE_CHAR):
+      ret = new CharExpression(first);
+      break;
 
-	case (EXPRESSION_TYPE_CHAR_LEN):
-	  ret = new CharLengthExpression(first);
-	  break;
+    case (EXPRESSION_TYPE_CHAR_LEN):
+      ret = new CharLengthExpression(first);
+      break;
 
-	case (EXPRESSION_TYPE_OCTET_LEN):
-	  ret = new OctetLengthExpression(first);
-	  break;
-	case (EXPRESSION_TYPE_POSITION):
-	  ret = new PositionExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_REPEAT):
-	  ret = new RepeatExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_LEFT):
-	  ret = new LeftExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_RIGHT):
-	  ret = new RightExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_REPLACE):
-	  ret = new ReplaceExpression(first, second, third);
-	  break;
-	case (EXPRESSION_TYPE_OVERLAY):
-	  ret = new OverlayExpression(first, second, third, fourth);
-	  break;
+    case (EXPRESSION_TYPE_OCTET_LEN):
+      ret = new OctetLengthExpression(first);
+      break;
+    case (EXPRESSION_TYPE_POSITION):
+      ret = new PositionExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPEAT):
+      ret = new RepeatExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_LEFT):
+      ret = new LeftExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RIGHT):
+      ret = new RightExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPLACE):
+      ret = new ReplaceExpression(first, second, third);
+      break;
+    case (EXPRESSION_TYPE_OVERLAY):
+      ret = new OverlayExpression(first, second, third, fourth);
+      break;
 
-	case (EXPRESSION_TYPE_LTRIM):
-	  ret = new LTrimExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_RTRIM):
-	  ret = new RTrimExpression(first, second);
-	  break;
-	case (EXPRESSION_TYPE_BTRIM):
-	  ret = new BTrimExpression(first, second);
-	  break;
+    case (EXPRESSION_TYPE_LTRIM):
+      ret = new LTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RTRIM):
+      ret = new RTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_BTRIM):
+      ret = new BTrimExpression(first, second);
+      break;
     case (EXPRESSION_TYPE_OPERATOR_MOD):
       throw ExpressionException("Mod operator is not yet supported.");
 
