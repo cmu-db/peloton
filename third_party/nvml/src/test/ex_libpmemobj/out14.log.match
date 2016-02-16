@@ -1,0 +1,19 @@
+nbytes: 0
+offset: 0
+append: Hello
+append: World!
+nbytes: 0
+offset: 11
+walk
+log contains:
+Hello
+log contains:
+World!
+rewind
+nbytes: 0
+offset: 0
+appendv: Hello:World!:bar:foo
+nbytes: 0
+offset: 0
+walk
+rewind

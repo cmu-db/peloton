@@ -4,10 +4,9 @@
 # MESSAGE
 ######################################################################
 
-message_FILES =
-
-#backend/message/abstract_message.cpp \
-#			   backend/message/nanomsg.cpp
-
+message_FILES = \
+				backend/message/nanomsg.cpp \
+				backend/message/boost_serializer.cpp
+								
 message_INCLUDES = \
                   -I$(srcdir)/message

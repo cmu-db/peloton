@@ -1,0 +1,68 @@
+Linux NVM Library
+
+This is src/test/obj_pool/README.
+
+This directory contains a unit test for pmemobj_create() and pmemobj_open().
+
+The program in obj_pool.c takes: operation, path, layout, poolsize, mode
+Operation can be:
+    c - create
+    o - open
+
+"poolsize and "mode" arguments are ignored if operation is "open".
+
+For example:
+
+	./obj_pool c /my/file "test_layout" 20 0640
+
+This calls pmemobj_create() with the given arguments.  Note that poolsize
+is given in megabytes.
+
+Test cases:
+
+- pmemobj_create:
+
+TEST0 (pass)	non-existing file, poolsize >= min required size, layout != NULL
+TEST1 (pass)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+TEST2 (fail)	non-existing file, poolsize == 0
+TEST3 (fail)	existing file, file length >= min required size, poolsize != 0, layout != NULL
+TEST4 (fail)	existing file, file length < min required size, poolsize == 0, layout != NULL
+TEST5 (fail)	non-existing file, poolsize >= min required size, layout != NULL
+		path is invalid, directory does not exist
+TEST6 (fail)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+		layout string is too long
+TEST7 (fail)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+		file contains garbage
+TEST8 (pass)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+		file contains garbage, except for header
+TEST9 (fail)	non-existing file, poolsize < min required size, layout != NULL
+TEST10 (fail)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+		no read permissions
+TEST11 (fail)	existing file, file length >= min required size, poolsize == 0, layout != NULL
+		no write permissions
+TEST12 (pass)	non-existing file, poolsize >= min required size, layout == NULL
+TEST13 (pass)	non-existing file, poolsize >= min required size, layout == ""
+TEST14 (fail)	non-existing file, poolsize >= min required size, layout != NULL
+		layout string is too long
+
+- pmemobj_open:
+
+TEST20 (fail)	non-existing file, layout == NULL
+TEST21 (fail)	existing file, file length < min required size, layout == NULL
+TEST22 (fail)	existing file, file length < min required size, layout == NULL
+		valid pool header
+TEST23 (fail)	existing file, file length >= min required size, layout == NULL
+		empty pool header
+TEST24 (fail)	existing file, file length >= min required size, layout == ""
+		layout doesn't match the value from pool header
+TEST25 (fail)	existing file, file length >= min required size, layout == NULL
+		no read permissions
+TEST26 (fail)	existing file, file length >= min required size, layout == NULL
+		no write permissions
+TEST27 (pass)	existing file, file length >= min required size, layout == NULL
+TEST28 (pass)	existing file, file length >= min required size, layout != NULL
+		layout matches the value from pool header
+
+- each case outputs:
+	- error, if error happened
+	- resulting file size, nblocks, mode, consistency check results

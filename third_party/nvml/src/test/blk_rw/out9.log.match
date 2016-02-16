@@ -1,0 +1,8 @@
+blk_rw/TEST9: START: blk_rw
+ ./blk_rw$(nW) 512 $(nW)/testset1 c w:-1 r:-1 z:-1 e:-1
+512 block size 512 usable blocks 4161446
+write     lba -1: Invalid argument
+read      lba -1: Invalid argument
+set_zero  lba -1: Invalid argument
+set_error lba -1: Invalid argument
+blk_rw/TEST9: Done

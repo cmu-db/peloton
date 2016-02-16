@@ -1,0 +1,69 @@
+obj_lane/TEST0: START: obj_lane
+ ./obj_lane$(nW)
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_construct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_destruct
+lane_noop_construct
+lane_noop_recovery 0x2000
+lane_noop_recovery 0x2c00
+lane_noop_recovery 0x3800
+lane_noop_recovery 0x4400
+lane_noop_recovery 0x5000
+lane_noop_init
+lane_noop_recovery 0x2400
+lane_noop_recovery 0x3000
+lane_noop_recovery 0x3c00
+lane_noop_recovery 0x4800
+lane_noop_recovery 0x5400
+lane_noop_init
+lane_noop_recovery 0x2800
+lane_noop_recovery 0x3400
+lane_noop_recovery 0x4000
+lane_noop_recovery 0x4c00
+lane_noop_recovery 0x5800
+lane_noop_init
+lane_noop_check 0x2000
+lane_noop_check 0x2c00
+lane_noop_check 0x3800
+lane_noop_check 0x4400
+lane_noop_check 0x5000
+lane_noop_check 0x2400
+lane_noop_check 0x3000
+lane_noop_check 0x3c00
+lane_noop_check 0x4800
+lane_noop_check 0x5400
+lane_noop_check 0x2800
+lane_noop_check 0x3400
+lane_noop_check 0x4000
+lane_noop_check 0x4c00
+lane_noop_check 0x5800
+lane_noop_recovery 0x2000
+lane_noop_check 0x2000
+obj_lane/TEST0: Done

@@ -1,0 +1,13 @@
+$(*): spoil: pool_hdr.checksum=$(*)
+checking pool header
+incorrect pool header checksum
+$(OPT)pool_hdr.crtime is not valid
+$(OPT)setting pool_hdr.crtime to file's modtime: $(*)
+setting pool_hdr.checksum to: $(*)
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+arena 0: BTT Info header checksum correct
+checking BTT map and flog
+arena 0: checking map and flog
+$(*): repaired

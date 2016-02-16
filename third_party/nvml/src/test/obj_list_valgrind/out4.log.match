@@ -1,0 +1,37 @@
+obj_list_valgrind/TEST4: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0:10 n:0:0:11 n:1:-1:12 n:0:-1:13 n:1:2:14 n:0:1:15 P:1 R:1 P:2 R:2
+constructor(id = 10)
+constructor(id = 11)
+constructor(id = 12)
+constructor(id = 13)
+constructor(id = 14)
+constructor(id = 15)
+oob list:
+id = 10
+id = 11
+id = 12
+id = 13
+id = 14
+id = 15
+oob list reverse:
+id = 15
+id = 14
+id = 13
+id = 12
+id = 11
+id = 10
+list:
+id = 10
+id = 12
+id = 15
+id = 14
+id = 11
+id = 13
+list reverse:
+id = 13
+id = 11
+id = 14
+id = 15
+id = 12
+id = 10
+obj_list_valgrind/TEST4: Done

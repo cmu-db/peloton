@@ -1,0 +1,45 @@
+Linux NVM Library
+
+This is examples/libpmemblk/assetdb/README.
+
+This example illustrates how a very simple database can be built using the
+atomic arrays provided by libpmemblk.  An array of records is created to
+track a list of assets (like books or computers, for example).  Each asset is
+represented by a fixed-length record in the asset database.  Since updates to
+a single record are atomic, the file remains consistent even if interrupted
+during an update.  To run this example, follow these steps:
+
+0. Build the example with "make".  The libraries must be built first (i.e.
+   by running "make" in ../../..).
+
+1. Create the assetdb file.  This can be anywhere but the point is it
+   will be a much faster database file if it is created on a pmem-aware
+   file system.  For example, if /pmem is the mount point for a
+   pmem-aware file system:
+
+	$ fallocate -l 1G /pmem/assetdb
+
+2. Load up the assets from a list of assets, which is just a simple text
+   file containing asset description strings, one per line:
+
+	$ asset_load /pmem/assetdb assetlist
+
+3. Print the assets using:
+
+	$ asset_list /pmem/assetdb
+
+4. To mark an asset as checked out to someone:
+
+	$ asset_checkout /pmem/assetdb asset-ID name
+
+	The asset-ID is the ID printed by asset_list.  The name may require
+	quotes if it contains any whitespace or special characters.
+
+5. To mark an asset as no longer checked out:
+
+	$ asset_checkin /pmem/assetdb asset-ID
+
+As this is just an example to illustrate how pmemblk works, it may take
+some trial-and-error to find the best size for the assetdb -- the file
+must be large enough to hold about 512 bytes for each asset record, plus
+about 1% overhead used by libpmemblk to provide the atomicity.

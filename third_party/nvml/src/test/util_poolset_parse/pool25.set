@@ -1,0 +1,16 @@
+PMEMPOOLSET
+# comment #1
+100000000000 /mountpoint0/myfile.part0
+200000000000 /mountpoint1/myfile.part1
+400000000000 /mountpoint2/myfile.part2
+# comment #2
+REPLICA
+# comment #3
+500000000000 /mountpoint3/mymirror0.part0
+200000000000 /mountpoint4/mymirror0.part1
+# comment #4
+REPLICA
+300000000000 /mountpoint5/mymirror1.part0
+# comment #5
+400000000000 /mountpoint6/mymirror1.part1
+# comment #6
