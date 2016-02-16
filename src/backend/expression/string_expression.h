@@ -25,23 +25,27 @@ namespace peloton {
 namespace expression {
 
 /*
- * Unary operators. (NOT and IS_NULL)
+ * Substring expressoin
  */
 
 class SubstringExpression : public AbstractExpression {
-
-private:
-  AbstractExpression *len;
+ private:
+  AbstractExpression *len;  // length of substring to take (optional)
  public:
-  SubstringExpression(AbstractExpression *string, AbstractExpression *from, AbstractExpression *len)
+  /*
+   * constructor
+   * string : string to take substring
+   * from : first position
+   * len : last position
+   */
+  SubstringExpression(AbstractExpression *string, AbstractExpression *from,
+                      AbstractExpression *len)
       : AbstractExpression(EXPRESSION_TYPE_SUBSTR), len(len) {
-	  m_left = string;
-	  m_right = from;
+    m_left = string;
+    m_right = from;
   };
 
-  ~SubstringExpression(){
-    delete len;
-  }
+  ~SubstringExpression() { delete len; }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -49,11 +53,12 @@ private:
     std::vector<Value> substr_args;
     substr_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     substr_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
-    if (len == nullptr){
-	return Value::Call<FUNC_VOLT_SUBSTRING_CHAR_FROM>(substr_args);
-    }else{
-	substr_args.emplace_back(len->Evaluate(tuple1, tuple2, context));
-	return Value::Call<FUNC_SUBSTRING_CHAR>(substr_args);
+    // if length not defined call 2 arg substring
+    if (len == nullptr) {
+      return Value::Call<FUNC_VOLT_SUBSTRING_CHAR_FROM>(substr_args);
+    } else {
+      substr_args.emplace_back(len->Evaluate(tuple1, tuple2, context));
+      return Value::Call<FUNC_SUBSTRING_CHAR>(substr_args);
     }
   }
 
@@ -62,17 +67,17 @@ private:
   }
 };
 
+/*
+ * Implements the 2 variable concat expression
+ */
 class ConcatExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	ConcatExpression(AbstractExpression *lc, AbstractExpression*rc)
-      : AbstractExpression(EXPRESSION_TYPE_CONCAT){
-		m_left=lc;
-		m_right=rc;
-	};
-
+  ConcatExpression(AbstractExpression *lc, AbstractExpression *rc)
+      : AbstractExpression(EXPRESSION_TYPE_CONCAT) {
+    m_left = lc;
+    m_right = rc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -81,7 +86,6 @@ private:
     concat_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     concat_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
     return Value::Call<FUNC_CONCAT>(concat_args);
-
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -89,22 +93,22 @@ private:
   }
 };
 
+/*
+ * Implements the ascii expression
+ * Currently does not handle unicode well
+ */
 class AsciiExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	AsciiExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_ASCII){
-		m_left=lc;
-	};
-
+  AsciiExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_ASCII) {
+    m_left = lc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_ASCII>();
-
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -112,22 +116,22 @@ private:
   }
 };
 
+/*
+ * Implements the octet length expression
+ */
 class OctetLengthExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	OctetLengthExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN){
-		m_left=lc;
-	};
-
+  OctetLengthExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN) {
+    m_left = lc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     assert(m_left);
-    return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_OCTET_LENGTH>();
-
+    return m_left->Evaluate(tuple1, tuple2, context)
+        .CallUnary<FUNC_OCTET_LENGTH>();
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -135,22 +139,21 @@ private:
   }
 };
 
+/*
+ * Implements the CHR expression
+ */
 class CharExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	CharExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_CHAR){
-		m_left=lc;
-	};
-
+  CharExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_CHAR) {
+    m_left = lc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_CHAR>();
-
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -158,22 +161,22 @@ private:
   }
 };
 
+/*
+ * Implements the CHAR LENGTH Expression
+ */
 class CharLengthExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	CharLengthExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_CHAR_LEN){
-		m_left=lc;
-	};
-
+  CharLengthExpression(AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_CHAR_LEN) {
+    m_left = lc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     assert(m_left);
-    return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_CHAR_LENGTH>();
-
+    return m_left->Evaluate(tuple1, tuple2, context)
+        .CallUnary<FUNC_CHAR_LENGTH>();
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -181,39 +184,17 @@ private:
   }
 };
 
-class SpaceExpression : public AbstractExpression {
-
-private:
-
- public:
-	SpaceExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_SPACE){
-		m_left=lc;
-	};
-
-
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
-    assert(m_left);
-    return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_SPACE>();
-  }
-
-  std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "OperatorSpaceExpression");
-  }
-};
-
+/*
+ * implements the repeat function
+ */
 class RepeatExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	RepeatExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_REPEAT){
-		m_left=lc;
-		m_right=rc;
-	};
-
+  RepeatExpression(AbstractExpression *string, AbstractExpression *num)
+      : AbstractExpression(EXPRESSION_TYPE_REPEAT) {
+    m_left = string;
+    m_right = num;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -230,17 +211,17 @@ private:
   }
 };
 
+/*
+ * implements left
+ */
 class LeftExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	LeftExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_LEFT){
-		m_left=lc;
-		m_right=rc;
-	};
-
+  LeftExpression(AbstractExpression *string, AbstractExpression *num)
+      : AbstractExpression(EXPRESSION_TYPE_LEFT) {
+    m_left = string;
+    m_right = num;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -257,17 +238,17 @@ private:
   }
 };
 
+/*
+ * implements right
+ */
 class RightExpression : public AbstractExpression {
-
-private:
-
+ private:
  public:
-	RightExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_RIGHT){
-		m_left=lc;
-		m_right=rc;
-	};
-
+  RightExpression(AbstractExpression *lc, AbstractExpression *rc)
+      : AbstractExpression(EXPRESSION_TYPE_RIGHT) {
+    m_left = lc;
+    m_right = rc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -284,91 +265,97 @@ private:
   }
 };
 
-class LTrimExpression : public AbstractExpression{
-public:
-	LTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
-		AbstractExpression(EXPRESSION_TYPE_RTRIM){
-		m_left = string;
-		m_right = chars;
-	}
-
-	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-	                 executor::ExecutorContext *context) const {
-
-		std::vector<Value> position_args;
-		if(m_left){
-		  position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
-		}
-		position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
-
-	    return Value::Call<FUNC_TRIM_LEADING_CHAR>(position_args);
-	  }
-
-	  std::string DebugInfo(const std::string &spacer) const {
-	      return (spacer + "OperatorLTrimExpression");
-	    }
-};
-
-class RTrimExpression : public AbstractExpression{
-public:
-	RTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
-		AbstractExpression(EXPRESSION_TYPE_RTRIM){
-		m_left = string;
-		m_right = chars;
-	}
-
-	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-	                 executor::ExecutorContext *context) const {
-
-	    std::vector<Value> position_args;
-	    if(m_left){
-	      position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
-	    }
-	    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
-	    return Value::Call<FUNC_TRIM_TRAILING_CHAR>(position_args);
-	  }
-
-	  std::string DebugInfo(const std::string &spacer) const {
-	      return (spacer + "OperatorRTrimExpression");
-	    }
-};
-
-class BTrimExpression : public AbstractExpression{
-public:
-	BTrimExpression(AbstractExpression * chars, AbstractExpression *string) :
-		AbstractExpression(EXPRESSION_TYPE_BTRIM){
-		m_left = string;
-		m_right = chars;
-	}
-
-	  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-	                 executor::ExecutorContext *context) const {
-
-		std::vector<Value> position_args;
-		if(m_left){
-		  position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
-		}
-		position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
-
-	    return Value::Call<FUNC_TRIM_BOTH_CHAR>(position_args);
-	  }
-
-	  std::string DebugInfo(const std::string &spacer) const {
-	      return (spacer + "OperatorBTrimExpression");
-	    }
-};
-
-class PositionExpression : public AbstractExpression {
-
-private:
-
+/*
+ * implements ltrim (leading trim)
+ */
+class LTrimExpression : public AbstractExpression {
  public:
-	PositionExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_POSITION){
-		m_left=lc;
-		m_right=rc;
-	};
+  LTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+      : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
+    m_left = string;
+    m_right = chars;
+  }
 
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    std::vector<Value> position_args;
+    // if null do not add to the arguments
+    if (m_left) {
+      position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+    }
+    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
+    return Value::Call<FUNC_TRIM_LEADING_CHAR>(position_args);
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "OperatorLTrimExpression");
+  }
+};
+
+/*
+ * implements rtrim (trailing trim)
+ */
+class RTrimExpression : public AbstractExpression {
+ public:
+  RTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+      : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
+    m_left = string;
+    m_right = chars;
+  }
+
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    std::vector<Value> position_args;
+    // if null do not add to the arguments
+    if (m_left) {
+      position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+    }
+    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+    return Value::Call<FUNC_TRIM_TRAILING_CHAR>(position_args);
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "OperatorRTrimExpression");
+  }
+};
+
+class BTrimExpression : public AbstractExpression {
+ public:
+  BTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+      : AbstractExpression(EXPRESSION_TYPE_BTRIM) {
+    m_left = string;
+    m_right = chars;
+  }
+
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    std::vector<Value> position_args;
+    // if null do not add to the arguments
+    if (m_left) {
+      position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
+    }
+    position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
+
+    return Value::Call<FUNC_TRIM_BOTH_CHAR>(position_args);
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "OperatorBTrimExpression");
+  }
+};
+
+/*
+ * implement position
+ */
+class PositionExpression : public AbstractExpression {
+ private:
+ public:
+  PositionExpression(AbstractExpression *lc, AbstractExpression *rc)
+      : AbstractExpression(EXPRESSION_TYPE_POSITION) {
+    m_left = lc;
+    m_right = rc;
+  };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -386,20 +373,24 @@ private:
   }
 };
 
+/*
+ * implements overlay (4 args)
+ */
 class OverlayExpression : public AbstractExpression {
-
-private:
+ private:
   AbstractExpression *from;
   AbstractExpression *len;
+
  public:
-  OverlayExpression(AbstractExpression *string1, AbstractExpression *string2, AbstractExpression *from, AbstractExpression *len)
+  OverlayExpression(AbstractExpression *string1, AbstractExpression *string2,
+                    AbstractExpression *from, AbstractExpression *len)
       : AbstractExpression(EXPRESSION_TYPE_OVERLAY), from(from), len(len) {
-	  m_left = string1;
-	  m_right = string2;
+    m_left = string1;
+    m_right = string2;
   };
 
-  ~OverlayExpression(){
-	delete from;
+  ~OverlayExpression() {
+    delete from;
     delete len;
   }
 
@@ -410,31 +401,33 @@ private:
     overlay_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     overlay_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
     overlay_args.emplace_back(from->Evaluate(tuple1, tuple2, context));
-    if (len != nullptr){
-    	overlay_args.emplace_back(len->Evaluate(tuple1, tuple2, context));
+    if (len) {
+      overlay_args.emplace_back(len->Evaluate(tuple1, tuple2, context));
     }
-	return Value::Call<FUNC_OVERLAY_CHAR>(overlay_args);
+    return Value::Call<FUNC_OVERLAY_CHAR>(overlay_args);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-      return (spacer + "OperatorOverlayExpression");
-    }
+    return (spacer + "OperatorOverlayExpression");
+  }
 };
 
+/*
+ * implements replace
+ */
 class ReplaceExpression : public AbstractExpression {
-
-private:
+ private:
   AbstractExpression *to;
+
  public:
-  ReplaceExpression(AbstractExpression *string, AbstractExpression *from, AbstractExpression *to)
-      : AbstractExpression(EXPRESSION_TYPE_REPLACE), to(to){
-	  m_left = string;
-	  m_right = from;
+  ReplaceExpression(AbstractExpression *string, AbstractExpression *from,
+                    AbstractExpression *to)
+      : AbstractExpression(EXPRESSION_TYPE_REPLACE), to(to) {
+    m_left = string;
+    m_right = from;
   };
 
-  ~ReplaceExpression(){
-	delete to;
-  }
+  ~ReplaceExpression() { delete to; }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
@@ -443,15 +436,13 @@ private:
     replace_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     replace_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
     replace_args.emplace_back(to->Evaluate(tuple1, tuple2, context));
-	return Value::Call<FUNC_REPLACE>(replace_args);
+    return Value::Call<FUNC_REPLACE>(replace_args);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-      return (spacer + "OperatorReplaceExpression");
-    }
+    return (spacer + "OperatorReplaceExpression");
+  }
 };
-
-
 
 }  // End expression namespace
 }  // End peloton namespace
