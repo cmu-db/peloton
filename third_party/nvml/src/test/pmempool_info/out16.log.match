@@ -1,0 +1,88 @@
+POOL Header:
+Signature                : PMEMBLK
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM BLK Header:
+Block size               : 512
+Is zeroed                : true
+
+<No BTT layout>
+POOL Header:
+Signature                : PMEMLOG
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM LOG header:
+Start offset             : $(*)
+Write offset             : $(*) [OK]
+End offset               : $(*)
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+DIFF
+$(nW)
+< UUID                     : $(*)
+< Previous part UUID       : $(*)
+< Next part UUID           : $(*)
+< Previous replica UUID    : $(*)
+< Next replica UUID        : $(*)
+---
+> UUID                     : $(*)
+> Previous part UUID       : $(*)
+> Next part UUID           : $(*)
+> Previous replica UUID    : $(*)
+> Next replica UUID        : $(*)

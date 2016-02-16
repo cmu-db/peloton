@@ -1,0 +1,3 @@
+vmem_mix_allocations/TEST1: START: vmem_mix_allocations
+ ./vmem_mix_allocations$(nW) $(nW)
+vmem_mix_allocations/TEST1: Done

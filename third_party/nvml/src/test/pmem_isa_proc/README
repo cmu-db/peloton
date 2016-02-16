@@ -1,0 +1,11 @@
+Linux NVM Library
+
+This is src/test/pmem_isa_proc/README.
+
+This directory contains a unit test for the pmem isa checks.
+
+The program in pmem_isa_proc.c takes a fake /proc/cpuinfo file via
+the environment variable "PFILE".  It arranges for libpmem to open the
+fake /proc file.
+
+	usage: PFILE=cpuinfo-file pmem_isa_proc

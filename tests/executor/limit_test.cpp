@@ -80,18 +80,23 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
       .WillOnce(Return(true));  // even no need to call the child for 3rd time
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -120,18 +125,22 @@ TEST(LimitTests, NonLeafSkipAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -160,18 +169,23 @@ TEST(LimitTests, NonLeafReturnAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))
@@ -200,18 +214,24 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
+
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size * 3, false,
                                    false, false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()))

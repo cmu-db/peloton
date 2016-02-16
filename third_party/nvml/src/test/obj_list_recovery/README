@@ -1,0 +1,7 @@
+Linux NVM Library
+
+This is src/test/obj_list_recovery/README.
+
+This directory contains unit tests for list recovery routine.
+
+The unit tests utilizes an application from src/test/obj_list directory.

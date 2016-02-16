@@ -1,0 +1,230 @@
+Linux NVM Library
+
+This is src/test/README.
+
+This directory contains the unit tests for the NVM Library.
+
+Unit tests require a config file, testconfig.sh, to exist in this directory.
+That file describes the local machine configuration (where to find persistent
+memory, for example) and must be created by hand in each repo as it makes no
+sense to check in that configuration description to the main repo.
+
+testconfig.sh.example provides more detail.  The script RUNTESTS, when run with
+no arguments, will run all unit tests through all the combinations of fs-types
+and build-types, running the "check" level test.
+
+
+DETAILS ON HOW TO RUN UNIT TESTS
+
+See the top-level README for instructions on building, installing, running
+tests for the entire tree.  Here are some additional details on running tests.
+
+Once the libraries are built, tests may be built from this directory using:
+	$ make test
+
+A testconfig.sh must exist to run these tests!
+	$ cp testconfig.sh.example testconfig.sh
+	$ ...edit testconfig.sh and modify as appropriate...
+
+Tests may be run using the RUNTESTS script:
+	$ RUNTESTS		(runs them all)
+	$ RUNTESTS testname	(runs just the named test)
+
+Each test script (named something like "TEST0") is potentially run multiple
+times with a different set of environment variables so run the test with
+different target file systems or different versions of the libraries.  To see
+how RUNTESTS will run a test, use the -n option.  For example:
+
+	$ RUNTESTS -n blk_nblock
+	RUNTESTS: test-type: check
+	(in ./blk_nblock) TEST=check FS=local BUILD=debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=local BUILD=nondebug ./TEST0
+	(in ./blk_nblock) TEST=check FS=local BUILD=static-debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=local BUILD=static-nondebug ./TEST0
+	(in ./blk_nblock) TEST=check FS=pmem BUILD=debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=pmem BUILD=nondebug ./TEST0
+	(in ./blk_nblock) TEST=check FS=pmem BUILD=static-debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=pmem BUILD=static-nondebug ./TEST0
+	(in ./blk_nblock) TEST=check FS=non-pmem BUILD=debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=non-pmem BUILD=nondebug ./TEST0
+	(in ./blk_nblock) TEST=check FS=non-pmem BUILD=static-debug ./TEST0
+	(in ./blk_nblock) TEST=check FS=non-pmem BUILD=static-nondebug ./TEST0
+
+Notice how the TEST0 script is run repeatedly with different settings for
+the three environment variables TEST, FS, and BUILD, providing the test type,
+file system type, and build type to test.
+
+RUNTESTS takes options to limit what it runs.  The usage is:
+
+ RUNTESTS [ -nv ] [ -b build-type ] [ -t test-type ] [ -f fs-type ]
+	  [ -o timeout ] [test...]
+
+ Build types are: debug, nondebug, static-debug, static-nondebug, all (default)
+ Test types are: check (default), short, long
+ File system types are: local, pmem, non-pmem, all (default)
+ Timeout is: a floating point number with an optional suffix: 's' for seconds
+		 (the default), 'm' for minutes, 'h' for hours or 'd' for days.
+		 Default value is 3 minutes.
+
+For example:
+
+	$ RUNTESTS -b debug blk_nblock
+	RUNTESTS: test-type: check
+	blk_nblock/TEST0: SETUP (check/local/debug)
+	blk_nblock/TEST0: START: blk_nblock
+	blk_nblock/TEST0: PASS
+	blk_nblock/TEST0: SKIP fs-type pmem (not configured)
+	blk_nblock/TEST0: SKIP fs-type non-pmem (local required)
+	RUNTESTS: No failures.
+
+Since the "-b debug" option was given, the RUNTESTS run above only executes
+the test for the debug version of the library and skips the other variants.
+
+Running the TEST* scripts directly is also common, especially when debugging
+an issue.  Just running the script, like this:
+
+	$ cd blk_nblock
+	$ ./TEST0
+
+will use default values for the environment, namely:
+
+	TEST=check FS=local BUILD=debug
+
+these defaults can be overridden on the command line:
+
+	$ cd blk_nblock
+	$ TEST=check FS=local BUILD=nondebug ./TEST0
+
+The above example runs TEST0 with the nondebug library, just as using
+RUNTESTS with "-b nondebug" would from the parent directory.
+
+In addition to overriding TEST, FS, and BUILD environment variables, the
+unit test framework also looks for several other variables:
+
+	For tests that run a local program, insert the word "echo" in front
+	of the program execution so the full command being run is displayed.
+	This is useful to modify the command for debugging.
+
+		$ ECHO=echo ./TEST0
+
+	Insert the word "strace" in front of the local command execution:
+
+		$ TRACE=strace ./TEST0
+
+	Override the LD_LIBRARY_PATH provided by the unit test framework.  This
+	is useful for running a test against another source tree or against the
+	libraries installed on the system:
+
+		$ TEST_LD_LIBRARY_PATH=/usr/lib ./TEST0
+
+	Run test under Valgrind/memcheck:
+
+		$ MEMCHECK=force-enable ./TEST0
+
+
+DETAILS ON HOW TO WRITE UNIT TESTS
+
+A minimal unit test consists of a sub-directory here with an executable called
+TEST0 in it that exits normally when the test passes.  Most tests, however,
+source the file unittest/unittest.sh to use the utility functions for setting
+up and checking tests.  Additionally, most unit tests build a local test
+program and call it from the TEST* scripts.
+
+In additional to TEST0, there can be as many TEST<num> scripts as desired, and
+RUNTESTS will execute them in numeric order for each of the test runs it
+executes.
+
+If a test only makes sense using the local directory, meaning it does not need
+an external file system or persistent memory, the script uses this line:
+
+	require_fs_type local
+
+Similarly, if the test only makes sense for pmem or non-pmem:
+
+	require_fs_type pmem
+		or
+	require_fs_type non-pmem
+
+The above two are often combined to indicate the test should run once for pmem
+and once for non-pmem, but never with the local directory:
+
+	require_fs_type pmem non-pmem
+
+Similar to the above, tests can require a specific build types:
+
+	require_build_type debug
+
+Most tests are short "make check" tests, designed to run quickly when
+smoke-checking a build.  Two other test types are available: short and long.  A
+test script can indicate it should only run during a long test run, for
+example, using:
+
+	require_test_type long
+
+Using the unittest library, the C programs run during unit testing get their
+output and tracing information logged to various files.  These are named with
+the test number embedded in them, so a script called TEST0 would commonly
+produce:
+
+	err0.log	log of stderr
+	out0.log	log of stdout
+	trace0.log	trace points from unittest library
+	pmem0.log	trace from libpmem (PMEM_LOG_FILE points here)
+	vmem0.log	trace from libvmem (VMEM_LOG_FILE points here)
+
+Although the above log files are the common case, the TEST* scripts are free to
+create any files.  It is recommended, however, that the script creates files
+that are listed in .gitignore so they don't accidentally get committed to the
+repo.
+
+The TEST* scripts typically use the shell function "check" to check their
+results.  That function calls the perl script "match" for any .match files
+found.  For example, to check out0.log contains the expected output, the test
+author creates a file called out0.log.match and commits that into the repo.
+The match script provides several pattern-matching macros that allow for normal
+variation in the test output:
+
+	$(N)	an integer (i.e. one or more decimal digits)
+	$(FP)	a floating point number
+	$(S)	ascii string
+	$(X)	hex number
+	$(W)	whitespace
+	$(nW)	non-whitespace
+	$(*)	any string
+	$(DD)	output of a "dd" run
+	$(OPT)	the entire line is optional
+
+The small C programs used for unit testing are designed to not worry about the
+return values for things not under test.  This is done with the all-caps
+versions of many common libc calls, for example:
+
+	fd = OPEN(fname, O_RDRW);
+
+The above call is just like calling open(2), expect the framework checks for
+unexpected errors and halts the unit test if those happen.  The result is
+usually a very short, compact unit test where most of the code is the
+interesting code under test.  A full list of unit test macros is in
+unittest/inittest.h.
+
+The best way to create a new unit test is to start with an existing one.  The
+test:
+
+	blk_rw
+
+makes an excellent starting point for new tests.  It illustrates the common
+idioms used in the TEST* scripts, how the small C program is usually
+command-line driven to create multiple cases, and the use of unit test macros
+like START, OUT, FATAL, and DONE.  Every case is different, but a common
+pattern for creating new unit tests is to follow steps like these:
+
+	$ cp blk_rw new_test_name
+	$ ...edit Makefile to add new_test_name to TEST list...
+	$ cd new_test_name
+	$ mv blk_rw.c to new_test_name.c
+	$ ...edit .gitignore, README, Makefile, new_test_name.c...
+	$ ...edit TEST0 to create first test case & get it working...
+	$ ...add more TEST* scripts as appropriate...
+
+When a "check" type test is run (the default), each test should try to limit
+the real execution time to a couple minutes or less.  "short" and "long"
+versions of the tests are encourages, especially for stress testing.

@@ -1,0 +1,36 @@
+set file format correct (./pool0.set)
+./pool1.set [the first line must be exactly 'PMEMPOOLSET':1]
+./pool2.set [the first line must be exactly 'PMEMPOOLSET':1]
+./pool3.set [the first line must be exactly 'PMEMPOOLSET':1]
+./pool4.set [no pool set parts:2]
+./pool5.set [size and path expected:2]
+set file format correct (./pool6.set)
+./pool7.set [no replica parts:4]
+./pool8.set [exactly 'REPLICA' expected:3]
+./pool9.set [exactly 'REPLICA' expected:3]
+./pool10.set [size and path expected:4]
+set file format correct (./pool11.set)
+set file format correct (./pool12.set)
+./pool13.set [no replica parts:4]
+./pool14.set [no replica parts:6]
+set file format correct (./pool15.set)
+set file format correct (./pool16.set)
+set file format correct (./pool17.set)
+./pool18.set [incorrect format of size:2]
+./pool19.set [incorrect format of size:2]
+./pool20.set [incorrect format of size:4]
+./pool21.set [incorrect format of size:4]
+./pool22.set [incorrect path (must be an absolute path):2]
+./pool23.set [incorrect path (must be an absolute path):4]
+set file format correct (./pool24.set)
+set file format correct (./pool25.set)
+set file format correct (./pool26.set)
+./pool27.set [incorrect format of size:3]
+./pool28.set [incorrect format of size:3]
+./pool29.set [incorrect format of size:3]
+./pool30.set [the first line must be exactly 'PMEMPOOLSET':1]
+./pool31.set [the first line must be exactly 'PMEMPOOLSET':1]
+./pool32.set [size and path expected:3]
+./pool33.set [size and path expected:2]
+set file format correct (./pool34.set)
+set file format correct (./pool35.set)

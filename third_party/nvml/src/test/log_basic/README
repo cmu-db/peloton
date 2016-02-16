@@ -1,0 +1,34 @@
+Linux NVM Library
+
+This is src/test/log_basic/README.
+
+This directory contains a unit test for:
+- pmemlog_open
+- pmemlog_close
+- pmemlog_nbyte
+- pmemlog_append
+- pmemlog_appendv
+- pmemlog_tell
+- pmemlog_rewind
+- pmemlog_walk
+- pmemlog_check
+
+
+The program in pmemlog.c takes a file name and a list of
+operations encoded as characters as arguments. For example:
+
+	./log_basic file1 a v r w t n
+
+this will call a series of log iterations with some hardcoded arguments
+as described in the table below:
+
+	a - pmemlog_append
+	v - pmemlog_appendv
+	t - pmemlog_tell
+	r - pmemlog_rewind
+	w - pmemlog_walk
+	n - pmemlog_nbyte
+
+
+
+

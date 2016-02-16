@@ -1,0 +1,10 @@
+Linux NVM Library
+
+This is src/test/arch_flags/README.
+
+This directory contains a unit test for:
+ - util_get_arch_flags()
+ - util_check_arch_flags()
+
+Usage:
+$ arch_flags <file>:<err>:<alignment_desc>:<reserved> <file>

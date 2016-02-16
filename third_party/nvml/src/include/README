@@ -1,0 +1,25 @@
+Linux NVM Library
+
+This is src/include/README.
+
+This directory contains include files that are meant to be
+installed on a system when the NVM Library package is installed.
+These include files provide the public information exported
+by the libraries that is necessary for applications to call into
+the libraries.  Private include files, used only internally in
+the libraries, don't live here -- they typically live next to
+the source for their module.
+
+Here you'll find:
+
+libpmem.h -- definitions of libpmem entry points (see libpmem(3))
+
+libpmemblk.h -- definitions of libpmemblk entry points (see libpmemblk(3))
+
+libpmemlog.h -- definitions of libpmemlog entry points (see libpmemlog(3))
+
+libpmemobj.h -- definitions of libpmemobj entry points (see libpmemobj(3))
+
+libvmem.h -- definitions of libvmem entry points (see libvmem(3))
+
+libvmmalloc.h -- definitions of libvmmalloc entry points (see libvmmalloc(3))
