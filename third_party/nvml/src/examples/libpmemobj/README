@@ -1,0 +1,19 @@
+Linux NVM Library
+
+This is examples/libpmemobj/README.
+
+This directory contains examples for libpmemobj, the library providing
+a transactional object store for pmem.  Some of these examples are explained
+in more detail here: http://pmem.io/nvml/libpmemobj
+
+manpage.c is the example used in the libpmemblk man page.
+
+To build these examples:
+	make
+
+These examples can be built against an installed system using:
+	make LIBDIR=/usr/lib INCDIR=/usr/include
+
+If you're looking for documentation to get you started using NVML,
+start here: http://pmem.io/nvml and follow the links to examples and
+man pages.

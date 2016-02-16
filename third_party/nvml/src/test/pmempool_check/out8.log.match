@@ -1,0 +1,30 @@
+$(*)pool.p1: spoil: pool_hdr.next_part_uuid=ERROR_NEXT
+$(*)pool.p1: spoil: pool_hdr.prev_part_uuid=ERROR_PREV
+$(*)pool.p1: spoil: pool_hdr.next_repl_uuid=ERROR_NEXT_REP
+$(*)pool.p1: spoil: pool_hdr.prev_repl_uuid=ERROR_PREV_REP
+$(*)pool.p1: spoil: pool_hdr.poolset_uuid=ERROR
+replica 0 part 0: incorrect pool header checksum
+$(*)pool.set: not consistent
+replica 0 part 0: checking pool header
+replica 0 part 0: incorrect pool header checksum
+replica 0 part 0: invalid pool_hdr.poolset_uuid
+replica 0 part 0: setting pool_hdr.poolset_uuid to $(nW)
+replica 0 part 0: invalid pool_hdr.next_part_uuid
+replica 0 part 0: setting pool_hdr.next_part_uuid to $(nW)
+replica 0 part 0: invalid pool_hdr.prev_part_uuid
+replica 0 part 0: setting pool_hdr.prev_part_uuid to $(nW)
+replica 0 part 0: invalid pool_hdr.next_repl_uuid
+replica 0 part 0: setting pool_hdr.next_repl_uuid to $(nW)
+replica 0 part 0: invalid pool_hdr.prev_repl_uuid
+replica 0 part 0: setting pool_hdr.prev_repl_uuid to $(nW)
+replica 0 part 1: checking pool header
+replica 0 part 1: pool header checksum correct
+replica 0 part 2: checking pool header
+replica 0 part 2: pool header checksum correct
+replica 0 part 3: checking pool header
+replica 0 part 3: pool header checksum correct
+checking pmemblk header
+pmemblk header correct
+checking BTT Info headers
+BTT Layout not written
+$(*)pool.set: repaired

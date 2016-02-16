@@ -1,0 +1,21 @@
+Linux NVM Library
+
+This is examples/libpmemlog/README.
+
+This directory contains examples for libpmemlog, the library providing
+pmem-resident log files.  Some of these examples are explained in more
+detail here: http://pmem.io/nvml/libpmemlog
+
+manpage.c is the example used in the libpmemlog man page.
+
+logfile implements a simple log using libpmemlog.
+
+To build these examples:
+	make
+
+These examples can be built against an installed system using:
+	make LIBDIR=/usr/lib INCDIR=/usr/include
+
+If you're looking for documentation to get you started using NVML,
+start here: http://pmem.io/nvml and follow the links to examples and
+man pages.  Developers new to NVML are probably looking for libpmemobj.

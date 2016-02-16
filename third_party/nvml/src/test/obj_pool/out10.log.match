@@ -1,0 +1,4 @@
+obj_pool/TEST10: START: obj_pool
+ ./obj_pool$(nW) c $(nW)/testfile test 20 0640
+$(nW)/testfile: pmemobj_create: File exists
+obj_pool/TEST10: Done

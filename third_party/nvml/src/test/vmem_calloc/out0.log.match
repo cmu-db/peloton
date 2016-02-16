@@ -1,0 +1,3 @@
+vmem_calloc/TEST0: START: vmem_calloc
+ ./vmem_calloc$(nW)
+vmem_calloc/TEST0: Done

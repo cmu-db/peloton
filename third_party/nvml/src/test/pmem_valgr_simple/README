@@ -1,0 +1,19 @@
+Linux NVM Library
+
+This is src/test/pmem_valgr_simple/README.
+
+This directory contains a unit test of simple pmem functions using valgrind.
+
+SYNOPSIS:
+pmem_valgr_simple file
+
+DESCRIPTION:
+	pmem_valgr_simple is a sample unit test showing the functionality of
+	the valgrind tool, which can be used for testing applications using
+	persistent memory.
+
+OPTIONS:
+	file is $DIR/testfile1 in all cases.
+
+The test uses pmem and language primitives to show how to use the pmemcheck
+tool in more complicated test cases.

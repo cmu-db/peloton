@@ -1,0 +1,11 @@
+PMEMPOOLSET
+# comment #1
+100G /mountpoint0/myfile.part0
+200G /mountpoint1/myfile.part1
+# comment #2
+400G /mountpoint2/myfile.part2
+# comment #3
+REPLICA
+500G /mountpoint3/mymirror.part0
+200G /mountpoint4/mymirror.part1
+# comment #4

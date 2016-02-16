@@ -1,0 +1,92 @@
+___ Begin jemalloc statistics ___
+Version:$(*)
+Assertions enabled
+Run-time option settings:
+  opt.abort: $(*)
+  opt.lg_chunk: $(*)
+  opt.dss: $(*)
+  opt.narenas: $(*)
+  opt.lg_dirty_mult: $(*)
+  opt.stats_print: $(*)
+  opt.junk: $(*)
+  opt.quarantine: $(*)
+  opt.redzone: $(*)
+  opt.zero: $(*)
+  opt.tcache: $(*)
+  opt.lg_tcache_max: $(*)
+CPUs: $(*)
+Arenas: $(*)
+Pointer size: $(*)
+Quantum size: $(*)
+Page size: $(*)
+Min active:dirty page ratio per arena: $(*)
+Chunk size: $(*)
+Allocated: 0, active: 0, mapped: $(*)
+Current active ceiling: $(*)
+chunks: nchunks   highchunks    curchunks
+              $(*)            $(*)            $(*)
+
+arenas[0]:
+assigned threads: $(*)
+dss allocation precedence: secondary
+dirty pages: $(*):$(*) active:dirty, $(*) sweeps, $(*) madvises, $(*) purged
+            allocated      nmalloc      ndalloc    nrequests
+small:              0            0            0            0
+large:              0            0            0            0
+huge:               0            0            0            0
+total:              0            0            0            0
+active:             0
+mapped:             0
+bins:     bin  size regs pgs    allocated      nmalloc      ndalloc    nrequests       nfills     nflushes      newruns       reruns      curruns
+[0..$(*)]
+$(*)
+$(*)
+--- End jemalloc statistics ---
+___ Begin jemalloc statistics ___
+Version:$(*)
+Assertions enabled
+Run-time option settings:
+  opt.abort: $(*)
+  opt.lg_chunk: $(*)
+  opt.dss: $(*)
+  opt.narenas: $(*)
+  opt.lg_dirty_mult: $(*)
+  opt.stats_print: $(*)
+  opt.junk: $(*)
+  opt.quarantine: $(*)
+  opt.redzone: $(*)
+  opt.zero: $(*)
+  opt.tcache: $(*)
+  opt.lg_tcache_max: $(*)
+CPUs: $(*)
+Arenas: $(*)
+Pointer size: $(*)
+Quantum size: $(*)
+Page size: $(*)
+Min active:dirty page ratio per arena: $(*)
+Chunk size: $(*)
+Allocated: 60992, active: 61440, mapped: $(*)
+Current active ceiling: $(*)
+chunks: nchunks   highchunks    curchunks
+              $(*)            $(*)            $(*)
+
+arenas[0]:
+assigned threads: $(*)
+dss allocation precedence: secondary
+dirty pages: $(*):$(*) active:dirty, $(*) sweeps, $(*) madvises, $(*) purged
+            allocated      nmalloc      ndalloc    nrequests
+small:          28224           63            0            0
+large:          32768            1            0            1
+huge:               0            0            0            0
+total:          60992           64            0            1
+active:         61440
+mapped:       $(*)
+$(*)
+$(*)
+$(*)
+[$(*)..$(*)]
+large:   size pages      nmalloc      ndalloc    nrequests      curruns
+[$(*)]
+        $(*)     $(*)            $(*)            $(*)            $(*)            $(*)
+[$(*)]
+--- End jemalloc statistics ---

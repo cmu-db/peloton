@@ -1,0 +1,15 @@
+Linux NVM Library
+
+This is src/test/util_file_open/README.
+
+This directory contains a unit test for util_file_open().
+
+The program in util_file_open.c takes a minimal pool size along with the
+list of file paths.
+For example:
+
+        ./util_file_open minlen path1 path2
+
+This will call util_file_open() on path1 and path2.
+
+minlen is interpreted as a decimal value unless it starts with 0x.

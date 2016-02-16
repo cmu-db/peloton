@@ -1,0 +1,719 @@
+.\"
+.\" Copyright (c) 2014-2015, Intel Corporation
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\"     * Neither the name of Intel Corporation nor the names of its
+.\"       contributors may be used to endorse or promote products derived
+.\"       from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" libpmemblk.3 -- man page for libpmemblk
+.\"
+.\" Format this man page with:
+.\"	man -l libpmemblk.3
+.\" or
+.\"	groff -man -Tascii libpmemblk.3
+.\"
+.TH libpmemblk 3 "pmemblk API version 0.8.4" "NVM Library"
+.SH NAME
+libpmemblk \- persistent memory resident array of blocks
+.SH SYNOPSIS
+.nf
+.B #include <libpmemblk.h>
+.sp
+.B cc ... -lpmemblk -lpmem
+.sp
+.B Most commonly used functions:
+.sp
+.BI "PMEMblkpool *pmemblk_open(const char *" path ", size_t " bsize );
+.BI "PMEMblkpool *pmemblk_create(const char *" path ", size_t " bsize ,
+.BI "    size_t " poolsize ", mode_t " mode );
+.BI "void pmemblk_close(PMEMblkpool *" pbp );
+.BI "size_t pmemblk_bsize(PMEMblkpool *" pbp );
+.BI "size_t pmemblk_nblock(PMEMblkpool *" pbp );
+.BI "int pmemblk_read(PMEMblkpool *" pbp ", void *" buf ", off_t " blockno );
+.BI "int pmemblk_write(PMEMblkpool *" pbp ", const void *" buf ", off_t " blockno );
+.BI "int pmemblk_set_zero(PMEMblkpool *" pbp ", off_t " blockno );
+.BI "int pmemblk_set_error(PMEMblkpool *" pbp ", off_t " blockno );
+.sp
+.B Library API versioning:
+.sp
+.BI "const char *pmemblk_check_version("
+.BI "    unsigned " major_required ,
+.BI "    unsigned " minor_required );
+.sp
+.B Managing library behavior:
+.sp
+.BI "void pmemblk_set_funcs("
+.BI "    void *(*" malloc_func ")(size_t " size ),
+.BI "    void (*" free_func ")(void *" ptr ),
+.BI "    void *(*" realloc_func ")(void *" ptr ", size_t " size ),
+.BI "    char *(*" strdup_func ")(const char *" s ));
+.BI "int pmemblk_check(const char *" path ", size_t " bsize );
+.sp
+.B Error handling:
+.sp
+.BI "const char *pmemblk_errormsg(void);
+.fi
+.sp
+.SH DESCRIPTION
+.PP
+.B libpmemblk
+provides an array of blocks in
+.I persistent memory
+(pmem)
+such that updates to a single block are atomic.
+This library is intended for applications
+using direct access storage (DAX),
+which is storage that supports load/store access without
+paging blocks from a block storage device.
+Some types of
+.I non-volatile memory DIMMs
+(NVDIMMs)
+provide this type of byte addressable access to storage.
+A
+.I persistent memory aware file system
+is typically used to expose the direct access to applications.
+Memory mapping a file from this type of file system
+results in the load/store, non-paged access to pmem.
+.B libpmemblk
+builds on this type of memory mapped file.
+.PP
+This library is for applications that need a potentially large
+array of blocks, all the same size, where any given block is
+updated atomically (the update cannot be
+.I torn
+by program interruption such as power failures).
+This library builds on the low-level pmem support provided by
+.BR libpmem (3),
+handling the transactional update of the blocks, flushing to
+persistence, and recovery for the application.
+.PP
+.B libpmemblk
+is one of a collection of persistent memory libraries available,
+the others are:
+.IP
+.BR libpmemobj (3),
+a general use persistent memory API,
+providing memory allocation and transactional
+operations on variable-sized objects.
+.IP
+.BR libpmemlog (3),
+providing a pmem-resident log file.
+.IP
+.BR libpmem (3),
+low-level persistent memory support.
+.PP
+Under normal usage,
+.B libpmemblk
+will never print messages or intentionally cause the process to exit.
+The only exception to this is the debugging information, when enabled, as
+described under
+.B "DEBUGGING AND ERROR HANDLING"
+below.
+.SH MOST COMMONLY USED FUNCTIONS
+.PP
+To use the atomic block arrays supplied by
+.BR libpmemblk ,
+a
+.I memory pool
+is first created.  This is done with the
+.BR pmemblk_create ()
+function described in this section.
+The other functions
+described in this section then operate on the resulting block
+memory pool.
+.PP
+Once created, the memory pool is represented by an opaque handle,
+of type
+.IR "PMEMblkpool *" ,
+which is passed to most of the other functions in this section.
+Internally,
+.B libpmemblk
+will use either
+.BR pmem_persist ()
+or
+.BR msync (2)
+when it needs to flush changes, depending on whether
+the memory pool appears to be persistent memory or a regular file
+(see the
+.BR pmem_is_pmem ()
+function in
+.BR libpmem (3)
+for more information).
+There is no need for applications to flush changes directly
+when using the block memory API provided by
+.BR libpmemblk .
+.PP
+.BI "PMEMblkpool *pmemblk_open(const char *" path ", size_t " bsize );
+.IP
+The
+.BR pmemblk_open ()
+function opens an existing block memory pool,
+returning a memory pool handle used with most of the functions in this section.
+.I path
+must be an existing file containing a block memory pool as
+created by
+.BR pmemblk_create ().
+The application must have permission to open the file and memory map
+it with read/write permissions.
+If the
+.I bsize
+provided is non-zero,
+.BR pmemblk_open ()
+will verify the given block size matches the block size used when
+the pool was created.
+Otherwise,
+.BR pmemblk_open ()
+will open the pool without verification of the block size. The
+.I bsize
+can be determined using the
+.BR pmemblk_bsize ()
+function.
+If an error prevents the pool from being opened,
+.BR pmemblk_open ()
+returns NULL and sets errno appropriately.  A block size mismatch with the
+.I bsize
+argument passed in results in errno being set to EINVAL.
+.PP
+.BI "PMEMblkpool *pmemblk_create(const char *" path ", size_t " bsize ,
+.br
+.BI "    size_t " poolsize ", mode_t " mode );
+.IP
+The
+.BR pmemblk_create ()
+function creates a block memory pool with the given total
+.I poolsize
+divided up into as many elements of size
+.I bsize
+as will fit in the pool.  Since the transactional nature of
+a block memory pool requires some space overhead in the memory
+pool, the resulting number of available blocks is less than
+.IR "poolsize / bsize" ,
+and is made available to the caller via the
+.BR pmemblk_nblock ()
+function described below.  Given the specifics of the implementation,
+the number of available blocks for the user cannot be less than 256.  This
+translates to at least 512 internal blocks.
+.I path
+specifies the name of the memory pool file to be created.
+.I mode
+specifies the permissions to use when creating the file
+as described by
+.BR creat (2).
+The memory pool file is fully allocated to the size
+.I poolsize
+using
+.BR posix_fallocate (3).
+The caller may choose to take responsibility for creating the memory
+pool file by creating it before calling
+.BR pmemblk_create ()
+and then specifying
+.I poolsize
+as zero.  In this case
+.BR pmemblk_create ()
+will take the pool size from the size of the existing file and will
+verify that the file appears to be empty by searching for any non-zero
+data in the pool header at the beginning of the file.
+The minimum
+file size allowed by the library for a block pool is defined in
+.B <libpmemblk.h>
+as
+.BR PMEMBLK_MIN_POOL .
+.I bsize
+can be any non-zero value,
+however
+.B libpmemblk
+will silently round up the given size to
+.BR PMEMBLK_MIN_BLK ,
+as defined in
+.BR <libpmemblk.h> .
+.PP
+Depending on the configuration of the system, the available space of
+non-volatile memory space may be divided into multiple memory devices.
+In such case, the maximum size of the pmemblk memory pool could be
+limited by the capacity of a single memory device.
+The
+.B libpmemblk
+allows building persistent memory resident array spanning multiple memory
+devices
+by creation of persistent memory pools consisting of multiple files, where
+each part of such a
+.I pool set
+may be stored on different pmem-aware filesystem.
+.PP
+Creation of all the parts of the pool set can be done with the
+.BR pmemblk_create ()
+function.  However, the recommended method for creating pool sets
+is to do it by using the
+.BR pmempool (1)
+utility.
+.PP
+When creating the pool set consisting of multiple files, the
+.I path
+argument passed to
+.BR pmemblk_create ()
+must point to the special
+.I set
+file that defines the pool layout and the location of all the parts of
+the pool set.
+The
+.I poolsize
+argument must be 0.
+The meaning of
+.I layout
+and
+.I mode
+arguments doesn't change, except that the same
+.I mode
+is used for creation of all the parts of the pool set.
+If the error prevents any of the pool set files from being created,
+.BR pmemblk_create ()
+returns NULL and sets errno appropriately.
+.PP
+When opening the pool set consisting of multiple files, the
+.I path
+argument passed to
+.BR pmemblk_open ()
+must not point to the pmemblk memory pool file, but to the same
+.I set
+file that was used for the pool set creation.
+If an error prevents any of the pool set files from being opened,
+or if the actual size of any file does not match the corresponding
+part size defined in
+.I set
+file
+.BR pmemblk_open ()
+returns NULL and sets errno appropriately.
+.PP
+The set file is a plain
+text file, which must start with the line containing a
+.I "PMEMPOOLSET"
+string,
+followed by the specification of all the pool parts in the next lines.
+For each part, the file size and the absolute path must be provided.
+The minimum file size of each part of the pool set is the same as the
+minimum size allowed for a block pool consisting
+of one file.  It is defined in
+.B <libpmemblk.h>
+as
+.BR PMEMBLK_MIN_POOL .
+Lines starting with "#" character are ignored.
+.PP
+Here is the example "myblkpool.set" file:
+.IP
+.nf
+PMEMPOOLSET
+100G /mountpoint0/myfile.part0
+200G /mountpoint1/myfile.part1
+400G /mountpoint2/myfile.part2
+.fi
+.PP
+The files in the set may be created by running the following command:
+.IP
+.nf
+pmempool create blk <bsize> --from-set=myblkpool.set
+.fi
+.PP
+.BI "void pmemblk_close(PMEMblkpool *" pbp );
+.IP
+The
+.BR pmemblk_close ()
+function closes the memory pool indicated by
+.I pbp
+and deletes the memory pool handle.  The block memory pool
+itself lives on in the file that contains it and may be re-opened
+at a later time using
+.BR pmemblk_open ()
+as described above.
+.PP
+.BI "size_t pmemblk_bsize(PMEMblkpool *" pbp );
+.IP
+The
+.BR pmemblk_bsize ()
+function returns the block size of the specified block memory pool.
+It's the value which was passed as
+.I bsize
+to
+.BR pmemblk_create ().
+.I pbp
+must be a block memory pool handle as returned by
+.BR pmemblk_open ()
+or
+.BR pmemblk_create ().
+.PP
+.BI "size_t pmemblk_nblock(PMEMblkpool *" pbp );
+.IP
+The
+.BR pmemblk_nblock ()
+function returns the usable space in the block memory pool,
+expressed as the number of blocks available.
+.I pbp
+must be a block memory pool handle as returned by
+.BR pmemblk_open ()
+or
+.BR pmemblk_create ().
+.PP
+.BI "int pmemblk_read(PMEMblkpool *" pbp ", void *" buf ", off_t " blockno );
+.IP
+The
+.BR pmemblk_read ()
+function reads a block from memory pool
+.IR pbp ,
+block number
+.IR blockno ,
+into the buffer
+.IR buf .
+On success, zero is returned.  On error, -1 is returned and errno is set.
+Reading a block that has never been written by
+.BR pmemblk_write ()
+will return a block of zeroes.
+.PP
+.BI "int pmemblk_write(PMEMblkpool *" pbp ", const void *" buf ", off_t " blockno );
+.IP
+The
+.BR pmemblk_write ()
+function writes a block from
+.I buf
+to block number
+.I blockno
+in the memory pool
+.IR pbp .
+The write is atomic with respect to other reads and writes.  In addition,
+the write cannot be torn by program failure or system crash; on recovery
+the block is guaranteed to contain either the old data or the new data,
+never a mixture of both.
+On success, zero is returned.  On error, -1 is returned and errno is set.
+.PP
+.BI "int pmemblk_set_zero(PMEMblkpool *" pbp ", off_t " blockno );
+.IP
+The
+.BR pmemblk_set_zero ()
+function writes zeros to block number
+.I blockno
+in memory pool
+.IR pbp .
+Using this function is faster than actually writing a block of zeros
+since
+.B libpmemblk
+uses metadata to indicate the block should read back as zero.
+On success, zero is returned.  On error, -1 is returned and errno is set.
+.PP
+.BI "int pmemblk_set_error(PMEMblkpool *" pbp ", off_t " blockno );
+.IP
+The
+.BR pmemblk_set_error ()
+function sets the error state for block number
+.I blockno
+in memory pool
+.IR pbp .
+A block in the error state returns errno EIO when read.  Writing the
+block clears the error state and returns the block to normal use.
+On success, zero is returned.  On error, -1 is returned and errno is set.
+.SH LIBRARY API VERSIONING
+.PP
+This section describes how the library API is versioned,
+allowing applications to work with an evolving API.
+.PP
+.BI "const char *pmemblk_check_version("
+.br
+.BI "    unsigned " major_required ,
+.br
+.BI "    unsigned " minor_required );
+.IP
+The
+.BR pmemblk_check_version ()
+function is used to see if the installed
+.B libpmemblk
+supports the version of the library API required by an application.
+The easiest way to do this is for the application to supply the
+compile-time version information, supplied by defines in
+.BR <libpmemblk.h> ,
+like this:
+.IP
+.nf
+reason = pmemblk_check_version(PMEMBLK_MAJOR_VERSION,
+                            PMEMBLK_MINOR_VERSION);
+if (reason != NULL) {
+    /*  version check failed, reason string tells you why */
+}
+.fi
+.IP
+Any mismatch in the major version number is considered a failure,
+but a library with a newer minor version number will pass this
+check since increasing minor versions imply backwards compatibility.
+.IP
+An application can also check specifically for the existence of
+an interface by checking for the version where that interface was
+introduced.  These versions are documented in this man page as follows:
+unless otherwise specified, all interfaces described here are available
+in version 1.0 of the library.  Interfaces added after version 1.0
+will contain the text
+.I introduced in version x.y
+in the section of this manual describing the feature.
+.IP
+When the version check performed by
+.BR pmemblk_check_version ()
+is successful, the return value is NULL.  Otherwise the return value
+is a static string describing the reason for failing the version check.
+The string returned by
+.BR pmemblk_check_version ()
+must not be modified or freed.
+.SH MANAGING LIBRARY BEHAVIOR
+.PP
+The library entry points described in this section are less
+commonly used than the previous sections.
+.PP
+.BI "void pmemblk_set_funcs("
+.br
+.BI "    void *(*" malloc_func ")(size_t " size ),
+.br
+.BI "    void (*" free_func ")(void *" ptr ),
+.br
+.BI "    void *(*" realloc_func ")(void *" ptr ", size_t " size ),
+.br
+.BI "    char *(*" strdup_func ")(const char *" s ));
+.IP
+The
+.BR pmemblk_set_funcs ()
+function allows an application to override memory allocation
+calls used internally by
+.BR libpmemblk .
+Passing in NULL for any of the handlers will cause the
+.B libpmemblk
+default function to be used.
+The library does not make heavy use of the system malloc functions, but
+it does allocate approximately 4-8 kilobytes for each memory pool in use.
+.PP
+.BI "int pmemblk_check(const char *" path ", size_t " bsize );
+.IP
+The
+.BR pmemblk_check ()
+function performs a consistency check of the file
+indicated by
+.I path
+and returns 1 if the memory pool is found to be consistent.  Any
+inconsistencies found will cause
+.BR pmemblk_check ()
+to return 0, in which case
+the use of the file with
+.B libpmemblk
+will result in undefined behavior.  The debug version of
+.B libpmemblk
+will provide additional details on inconsistencies when
+.B PMEMBLK_LOG_LEVEL
+is at least 1, as described in the
+.B "DEBUGGING AND ERROR HANDLING"
+section below. When
+.I bsize
+is non-zero
+.BR pmemblk_check ()
+will compare it to the block size of the pool and return 0 when they don't match.
+.BR pmemblk_check ()
+will return -1 and set errno if it cannot perform the
+consistency check due to other errors.
+.BR pmemblk_check ()
+opens the given
+.I path
+read-only so it never makes any changes to the file.
+.SH DEBUGGING AND ERROR HANDLING
+.PP
+Two versions of
+.B libpmemblk
+are typically available on a development system.
+The normal version, accessed when a program is
+linked using the
+.B -lpmemblk
+option, is optimized for performance.  That version skips checks
+that impact performance and never logs any trace information or performs
+any run-time assertions.  If an error is detected during the call to
+.B libpmemblk
+function, an application may retrieve an error message describing the
+reason of failure using the following function:
+.PP
+.BI "const char *pmemblk_errormsg(void);
+.IP
+The
+.BR pmemblk_errormsg ()
+function returns a pointer to a static buffer containing the last error
+message logged for current thread.  The error message may include
+description of the corresponding error code (if errno was set), as returned by
+.BR strerror (3).
+The error message buffer is thread-local; errors encountered in one thread
+do not affect its value in other threads.
+The buffer is never cleared by any library function; its content is
+significant only when the return value of the immediately preceding call to
+.B libpmemblk
+function indicated an error, or if errno was set.
+The application must not modify or free the error message string,
+but it may be modified by subsequent calls to other library functions.
+.PP
+A second version of
+.BR libpmemblk ,
+accessed when a program uses the libraries under
+.BR /usr/lib/nvml_debug ,
+contains run-time assertions and trace points.
+The typical way to access the debug version is to set the environment variable
+.B LD_LIBRARY_PATH
+to
+.B /usr/lib/nvml_debug
+or
+.B /usr/lib64/nvml_debug
+depending on where the debug libraries are installed on the system.
+The trace points in the debug version of the library
+are enabled using the environment variable
+.BR PMEMBLK_LOG_LEVEL ,
+which can be set to the following values:
+.IP 0
+This is the default level when
+.B PMEMBLK_LOG_LEVEL
+is not set.  No log messages are emitted at this level.
+.IP 1
+Additional details on any errors detected are logged (in addition
+to returning the errno-based errors as usual).  The same information
+may be retrieved using
+.BR pmemblk_errormsg ().
+.IP 2
+A trace of basic operations is logged.
+.IP 3
+This level enables a very verbose amount of function call tracing
+in the library.
+.IP 4
+This level enables voluminous and fairly obscure tracing information
+that is likely only useful to the
+.B libpmemblk
+developers.
+.PP
+The environment variable
+.B PMEMBLK_LOG_FILE
+specifies a file name where all logging information should be written.
+If the last character in the name is "-", the PID of the current process
+will be appended to the file name when the log file is created.  If
+.B PMEMBLK_LOG_FILE
+is not set, the logging output goes to stderr.
+.PP
+Setting the environment variable
+.B PMEMBLK_LOG_LEVEL
+has no effect on the non-debug version of
+.BR libpmemblk .
+.SH EXAMPLES
+.PP
+The following example illustrates how the
+.B libpmemblk
+API is used.
+.IP
+.\" run source through expand -4 before inserting...
+.nf
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <libpmemblk.h>
+
+/* size of the pmemblk pool -- 1 GB */
+#define POOL_SIZE ((off_t)(1 << 30))
+
+/* size of each element in the pmem pool */
+#define ELEMENT_SIZE 1024
+
+int
+main(int argc, char *argv[])
+{
+    const char path[] = "/pmem-fs/myfile";
+    PMEMblkpool *pbp;
+    size_t nelements;
+    char buf[ELEMENT_SIZE];
+
+    /* create the pmemblk pool or open it if it already exists */
+    pbp = pmemblk_create(path, ELEMENT_SIZE, POOL_SIZE, 0666);
+
+    if (pbp == NULL)
+        pbp = pmemblk_open(path, ELEMENT_SIZE);
+
+    if (pbp == NULL) {
+        perror(path);
+        exit(1);
+    }
+
+    /* how many elements fit into the file? */
+    nelements = pmemblk_nblock(pbp);
+    printf("file holds %zu elements\n", nelements);
+
+    /* store a block at index 5 */
+    strcpy(buf, "hello, world");
+    if (pmemblk_write(pbp, buf, 5) < 0) {
+        perror("pmemblk_write");
+        exit(1);
+    }
+
+    /* read the block at index 10 (reads as zeros initially) */
+    if (pmemblk_read(pbp, buf, 10) < 0) {
+        perror("pmemblk_read");
+        exit(1);
+    }
+
+    /* zero out the block at index 5 */
+    if (pmemblk_set_zero(pbp, 5) < 0) {
+        perror("pmemblk_set_zero");
+        exit(1);
+    }
+
+    /* ... */
+
+    pmemblk_close(pbp);
+}
+.fi
+.PP
+See http://pmem.io/nvml/libpmemblk for more examples
+using the
+.B libpmemblk
+API.
+.SH BUGS
+Unlike
+.BR libpmemobj ,
+data replication is not supported in
+.BR libpmemblk .
+Thus, it is not allowed to specify replica sections in pool set files.
+.SH ACKNOWLEDGEMENTS
+.PP
+.B libpmemblk
+builds on the persistent memory programming model
+recommended by the SNIA NVM Programming Technical Work Group:
+.IP
+http://snia.org/nvmp
+.SH "SEE ALSO"
+.BR mmap (2),
+.BR munmap (2),
+.BR msync (2),
+.BR strerror (3),
+.BR libpmemobj (3),
+.BR libpmemlog (3),
+.BR libpmem (3),
+.BR libvmem (3)
+and
+.BR http://pmem.io .

@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 
 #include "backend/expression/abstract_expression.h"
 

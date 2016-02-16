@@ -1,0 +1,4 @@
+vmmalloc_init/TEST17: START: vmmalloc_init
+ ./vmmalloc_init$(nW) l
+lazy binding
+vmmalloc_init/TEST17: Done

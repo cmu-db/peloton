@@ -1,0 +1,13 @@
+util_map_proc/TEST3: START: util_map_proc
+ ./util_map_proc$(nW) maps_end 0x0000100000 0x0001000000 0x003F000000 0x003FFFF000 0x0040000000
+redirecting /proc/self/maps to maps_end
+len 1048576: 0xffffffffc0000000 0x$(X)
+redirecting /proc/self/maps to maps_end
+len 16777216: 0xffffffffc0000000 0x$(X)
+redirecting /proc/self/maps to maps_end
+len 1056964608: 0xffffffffc0000000 0x$(X)
+redirecting /proc/self/maps to maps_end
+len 1073737728: 0xffffffffc0000000 0x$(X)
+redirecting /proc/self/maps to maps_end
+len 1073741824: (nil) 0x$(X)
+util_map_proc/TEST3: Done

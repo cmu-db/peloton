@@ -1,0 +1,4 @@
+vmmalloc_valgrind/TEST0: START: vmmalloc_valgrind
+ ./vmmalloc_valgrind$(nW) 0
+remove all allocations
+vmmalloc_valgrind/TEST0: Done
