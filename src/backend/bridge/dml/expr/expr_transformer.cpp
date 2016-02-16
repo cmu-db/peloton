@@ -527,22 +527,16 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     return expression::CastFactory();
   }
 
-  if (func_meta.exprtype == EXPRESSION_TYPE_SUBSTR){
-
-  }
-
   // mperron some string functions have 4 children
-  assert(list_length(args) <= 4);  // Hopefully it has at most three parameters
-  assert(func_meta.nargs <= 4);
+  assert(list_length(args) <=
+         EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
   // Extract function arguments (at most four)
-  expression::AbstractExpression *children[4];
-  for (int i = 0; i < 4; i++){
-      children[i] = nullptr;
+  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM];
+  for (int i = 0; i < EXPRESSION_MAX_ARG_NUM; i++) {
+    children[i] = nullptr;
   }
-//  expression::AbstractExpression *lc = nullptr;
-//  expression::AbstractExpression *rc = nullptr;
-//  expression::AbstractExpression *tc = nullptr; //third child
   int i = 0;
   ListCell *arg;
   foreach (arg, args) {
@@ -565,29 +559,31 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-      return expression::ComparisonFactory(plt_exprtype, children[0], children[1]);
+      return expression::ComparisonFactory(plt_exprtype, children[0],
+                                           children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
     case EXPRESSION_TYPE_SUBSTR:
-	case EXPRESSION_TYPE_ASCII:
-	case EXPRESSION_TYPE_OCTET_LEN:
-	case EXPRESSION_TYPE_CHAR:
-	case EXPRESSION_TYPE_CHAR_LEN:
-	case EXPRESSION_TYPE_SPACE:
-	case EXPRESSION_TYPE_CONCAT:
-	case EXPRESSION_TYPE_OVERLAY:
-	case EXPRESSION_TYPE_LEFT:
-	case EXPRESSION_TYPE_RIGHT:
-	case EXPRESSION_TYPE_RTRIM:
-	case EXPRESSION_TYPE_LTRIM:
-	case EXPRESSION_TYPE_BTRIM:
-	case EXPRESSION_TYPE_REPLACE:
-	case EXPRESSION_TYPE_REPEAT:
-	case EXPRESSION_TYPE_POSITION:
-      return expression::OperatorFactory(plt_exprtype, children[0], children[1], children[2], children[3]);
+    case EXPRESSION_TYPE_ASCII:
+    case EXPRESSION_TYPE_OCTET_LEN:
+    case EXPRESSION_TYPE_CHAR:
+    case EXPRESSION_TYPE_CHAR_LEN:
+    case EXPRESSION_TYPE_SPACE:
+    case EXPRESSION_TYPE_CONCAT:
+    case EXPRESSION_TYPE_OVERLAY:
+    case EXPRESSION_TYPE_LEFT:
+    case EXPRESSION_TYPE_RIGHT:
+    case EXPRESSION_TYPE_RTRIM:
+    case EXPRESSION_TYPE_LTRIM:
+    case EXPRESSION_TYPE_BTRIM:
+    case EXPRESSION_TYPE_REPLACE:
+    case EXPRESSION_TYPE_REPEAT:
+    case EXPRESSION_TYPE_POSITION:
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1],
+                                         children[2], children[3]);
 
     default:
       LOG_ERROR(
