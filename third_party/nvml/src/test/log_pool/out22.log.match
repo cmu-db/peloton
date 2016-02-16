@@ -1,0 +1,4 @@
+log_pool/TEST22: START: log_pool
+ ./log_pool$(nW) o $(nW)/testfile
+$(nW)/testfile: pmemlog_open: Invalid argument
+log_pool/TEST22: Done

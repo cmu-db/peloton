@@ -1,0 +1,4 @@
+vmmalloc_init/TEST6: START: vmmalloc_init
+ ./vmmalloc_init$(nW) d
+deep binding
+vmmalloc_init/TEST6: Done

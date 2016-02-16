@@ -1,0 +1,718 @@
+.\"
+.\" Copyright (c) 2014-2015, Intel Corporation
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"     * Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"
+.\"     * Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in
+.\"       the documentation and/or other materials provided with the
+.\"       distribution.
+.\"
+.\"     * Neither the name of Intel Corporation nor the names of its
+.\"       contributors may be used to endorse or promote products derived
+.\"       from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" libpmemlog.3 -- man page for libpmemlog
+.\"
+.\" Format this man page with:
+.\"	man -l libpmemlog.3
+.\" or
+.\"	groff -man -Tascii libpmemlog.3
+.\"
+.TH libpmemlog 3 "pmemlog API version 0.8.4" "NVM Library"
+.SH NAME
+libpmemlog \- persistent memory resident log file
+.SH SYNOPSIS
+.nf
+.B #include <libpmemlog.h>
+.sp
+.B cc ... -lpmemlog -lpmem
+.sp
+.B Most commonly used functions:
+.sp
+.BI "PMEMlogpool *pmemlog_open(const char *" path );
+.BI "PMEMlogpool *pmemlog_create(const char *" path ,
+.BI "    size_t " poolsize ", mode_t " mode );
+.BI "void pmemlog_close(PMEMlogpool *" plp );
+.BI "size_t pmemlog_nbyte(PMEMlogpool *" plp );
+.BI "int pmemlog_append(PMEMlogpool *" plp ", const void *" buf ", size_t " count );
+.BI "int pmemlog_appendv(PMEMlogpool *" plp ,
+.BI "    const struct iovec *" iov ", int " iovcnt );
+.BI "off_t pmemlog_tell(PMEMlogpool *" plp );
+.BI "void pmemlog_rewind(PMEMlogpool *" plp );
+.BI "void pmemlog_walk(PMEMlogpool *" plp ", size_t " chunksize ,
+.BI "    int (*" process_chunk ")(const void *" buf ", size_t " len ", void *" arg ),
+.BI "    void *" arg );
+.sp
+.B Library API versioning:
+.sp
+.BI "const char *pmemlog_check_version("
+.BI "    unsigned " major_required ,
+.BI "    unsigned " minor_required );
+.sp
+.B Managing library behavior:
+.sp
+.BI "void pmemlog_set_funcs("
+.BI "    void *(*" malloc_func ")(size_t " size ),
+.BI "    void (*" free_func ")(void *" ptr ),
+.BI "    void *(*" realloc_func ")(void *" ptr ", size_t " size ),
+.BI "    char *(*" strdup_func ")(const char *" s ));
+.BI "int pmemlog_check(const char *" path );
+.sp
+.B Error handling:
+.sp
+.BI "const char *pmemlog_errormsg(void);
+.fi
+.sp
+.SH DESCRIPTION
+.PP
+.B libpmemlog
+provides a log file in
+.I persistent memory
+(pmem)
+such that additions to the log are appended atomically.
+This library is intended for applications
+using direct access storage (DAX),
+which is storage that supports load/store access without
+paging blocks from a block storage device.
+Some types of
+.I non-volatile memory DIMMs
+(NVDIMMs)
+provide this type of byte addressable access to storage.
+A
+.I persistent memory aware file system
+is typically used to expose the direct access to applications.
+Memory mapping a file from this type of file system
+results in the load/store, non-paged access to pmem.
+.B libpmemlog
+builds on this type of memory mapped file.
+.PP
+This library is for applications that need a persistent log file,
+updated atomically (the updates cannot be
+.I torn
+by program interruption such as power failures).
+This library builds on the low-level pmem support provided by
+.BR libpmem (3) ,
+handling the transactional update of the log, flushing to
+persistence, and recovery for the application.
+.PP
+.B libpmemlog
+is one of a collection of persistent memory libraries available,
+the others are:
+.IP
+.BR libpmemobj (3),
+a general use persistent memory API,
+providing memory allocation and transactional
+operations on variable-sized objects.
+.IP
+.BR libpmemblk (3),
+providing pmem-resident arrays of fixed-sized blocks with atomic updates.
+.IP
+.BR libpmem (3),
+low-level persistent memory support.
+.PP
+Under normal usage,
+.B libpmemlog
+will never print messages or intentionally cause the process to exit.
+The only exception to this is the debugging information, when enabled, as
+described under
+.B "DEBUGGING AND ERROR HANDLING"
+below.
+.SH MOST COMMONLY USED FUNCTIONS
+.PP
+To use the pmem-resident log file provided by
+.BR libpmemlog ,
+a
+.I memory pool
+is first created.  This is done with the
+.BR pmemlog_create ()
+function described in this section.
+The other functions
+described in this section then operate on the resulting log
+memory pool.
+.PP
+Once created, the memory pool is represented by an opaque handle,
+of type
+.IR "PMEMlogpool *" ,
+which is passed to most of the other functions in this section.
+Internally,
+.B libpmemlog
+will use either
+.BR pmem_persist ()
+or
+.BR msync (2)
+when it needs to flush changes, depending on whether
+the memory pool appears to be persistent memory or a regular file
+(see the
+.BR pmem_is_pmem ()
+function in
+.BR libpmem (3)
+for more information).
+There is no need for applications to flush changes directly
+when using the log memory API provided by
+.BR libpmemlog .
+.PP
+.BI "PMEMlogpool *pmemlog_open(const char *" path );
+.IP
+The
+.BR pmemlog_open ()
+function opens an existing log memory pool,
+returning a memory pool handle used with most of the functions in this section.
+.I path
+must be an existing file containing a log memory pool as
+created by
+.BR pmemlog_create ().
+The application must have permission to open the file and memory map
+it with read/write permissions.
+If an error prevents the pool from being opened,
+.BR pmemlog_open ()
+returns NULL and sets errno appropriately.
+.PP
+.BI "PMEMlogpool *pmemlog_create(const char *" path ,
+.br
+.BI "    size_t " poolsize ", mode_t " mode );
+.IP
+The
+.BR pmemlog_create ()
+function creates a log memory pool with the given total
+.IR poolsize .
+Since the transactional nature of
+a log memory pool requires some space overhead in the memory
+pool, the resulting available log size is less than
+.IR poolsize ,
+and is made available to the caller via the
+.BR pmemlog_nbyte ()
+function described below.
+.I path
+specifies the name of the memory pool file to be created.
+.I mode
+specifies the permissions to use when creating the file
+as described by
+.BR creat (2).
+The memory pool file is fully allocated to the size
+.I poolsize
+using
+.BR posix_fallocate (3).
+The caller may choose to take responsibility for creating the memory
+pool file by creating it before calling
+.BR pmemlog_create ()
+and then specifying
+.I poolsize
+as zero.  In this case
+.BR pmemlog_create ()
+will take the pool size from the size of the existing file and will
+verify that the file appears to be empty by searching for any non-zero
+data in the pool header at the beginning of the file.
+The minimum
+file size allowed by the library for a log pool is defined in
+.B <libpmemlog.h>
+as
+.BR PMEMLOG_MIN_POOL .
+.PP
+Depending on the configuration of the system, the available space of
+non-volatile memory space may be divided into multiple memory devices.
+In such case, the maximum size of the pmemlog memory pool could be
+limited by the capacity of a single memory device.
+The
+.B libpmemlog
+allows building persistent memory resident log spanning multiple memory devices
+by creation of persistent memory pools consisting of multiple files, where
+each part of such a
+.I pool set
+may be stored on different pmem-aware filesystem.
+.PP
+Creation of all the parts of the pool set can be done with the
+.BR pmemlog_create ()
+function.  However, the recommended method for creating pool sets
+is to do it by using the
+.BR pmempool (1)
+utility.
+.PP
+When creating the pool set consisting of multiple files, the
+.I path
+argument passed to
+.BR pmemlog_create ()
+must point to the special
+.I set
+file that defines the pool layout and the location of all the parts of
+the pool set.
+The
+.I poolsize
+argument must be 0.
+The meaning of
+.I layout
+and
+.I mode
+arguments doesn't change, except that the same
+.I mode
+is used for creation of all the parts of the pool set.
+If the error prevents any of the pool set files from being created,
+.BR pmemlog_create ()
+returns NULL and sets errno appropriately.
+.PP
+When opening the pool set consisting of multiple files, the
+.I path
+argument passed to
+.BR pmemlog_open ()
+must not point to the pmemlog memory pool file, but to the same
+.I set
+file that was used for the pool set creation.
+If an error prevents any of the pool set files from being opened,
+or if the actual size of any file does not match the corresponding
+part size defined in
+.I set
+file
+.BR pmemlog_open ()
+returns NULL and sets errno appropriately.
+.PP
+The set file is a plain
+text file, which must start with the line containing a
+.I "PMEMPOOLSET"
+string,
+followed by the specification of all the pool parts in the next lines.
+For each part, the file size and the absolute path must be provided.
+The minimum file size of each part of the pool set is the same as the
+minimum size allowed for a log pool consisting
+of one file.  It is defined in
+.B <libpmemlog.h>
+as
+.BR PMEMLOG_MIN_POOL .
+Lines starting with "#" character are ignored.
+.PP
+Here is the example "mylogpool.set" file:
+.IP
+.nf
+PMEMPOOLSET
+100G /mountpoint0/myfile.part0
+200G /mountpoint1/myfile.part1
+400G /mountpoint2/myfile.part2
+.fi
+.PP
+The files in the set may be created by running the following command:
+.IP
+.nf
+pmempool create log --from-set=mylogpool.set
+.fi
+.PP
+.BI "void pmemlog_close(PMEMlogpool *" plp );
+.IP
+The
+.BR pmemlog_close ()
+function closes the memory pool indicated by
+.I plp
+and deletes the memory pool handle.  The log memory pool
+itself lives on in the file that contains it and may be re-opened
+at a later time using
+.BR pmemlog_open ()
+as described above.
+.PP
+.BI "size_t pmemlog_nbyte(PMEMlogpool *" plp );
+.IP
+The
+.BR pmemlog_nbyte ()
+function returns the
+amount of usable space in the log
+.IR plp .
+This function may be used on a log to determine how much
+usable space is available after
+.B libpmemlog
+has added its metadata to the memory pool.
+.PP
+.BI "int pmemlog_append(PMEMlogpool *" plp ", const void *" buf ", size_t " count );
+.IP
+The
+.BR pmemlog_append ()
+function appends
+.I count
+bytes from
+.I buf
+to the current write offset in the log memory pool
+.IR plp .
+Calling this function is analogous to appending to a file.  The append
+is atomic and cannot be torn by a program failure or system crash.
+On success, zero is returned.  On error, -1 is returned and errno is set.
+.PP
+.BI "int pmemlog_appendv(PMEMlogpool *" plp ,
+.br
+.BI "    const struct iovec *" iov ", int " iovcnt );
+.IP
+The
+.BR pmemlog_appendv ()
+function appends to the log
+.I plp
+just like
+.BR pmemlog_append ()
+above, but this function takes a scatter/gather list in a manner
+similar to
+.BR writev (2).
+In this case, the entire list of buffers is appended atomically, as if
+the buffers in
+.I iov
+were concatenated in order.
+On success, zero is returned.  On error, -1 is returned and errno is set.
+.PP
+.IP
+NOTE: Since
+.B libpmemlog
+is designed as a low-latency code path, many of the
+checks routinely done by the operating system for
+.BR writev (2)
+are not practical in the library's implementation of
+.BR pmemlog_appendv ().
+No attempt is made to detect NULL or incorrect pointers,
+or illegal count values, for example.
+.PP
+.BI "off_t pmemlog_tell(PMEMlogpool *" plp );
+.IP
+The
+.BR pmemlog_tell ()
+function returns the current write point for the log, expressed as a byte
+offset into the usable log space in the memory pool.  This offset starts
+off as zero on a newly-created log, and is incremented by each successful
+append operation.  This function can be used to determine how much data
+is currently in the log.
+.PP
+.BI "void pmemlog_rewind(PMEMlogpool *" plp );
+.IP
+The
+.BR pmemlog_rewind ()
+function resets the current write point for the log to zero.  After this
+call, the next append adds to the beginning of the log.
+.PP
+.BI "void pmemlog_walk(PMEMlogpool *" plp ", size_t chunksize ,
+.br
+.BI "    int (*" process_chunk ")(const void *" buf ", size_t " len ", void *" arg ),
+.br
+.BI "    void *" arg );
+.IP
+The
+.BR pmemlog_walk ()
+function walks through the log
+.IR plp ,
+from beginning to end, calling the callback function
+.I process_chunk
+for each
+.I chunksize
+block of data found.
+The argument
+.I arg
+is also passed to the callback to help avoid the need for global state.
+The
+.I chunksize
+argument is useful for logs with fixed-length records and may be specified
+as 0 to cause a single call to the callback with the entire log contents
+passed as the
+.I buf
+argument.  The
+.I len
+argument tells the
+.I process_chunk
+function how much data buf is holding.
+The callback function should return 1 if
+.BR pmemlog_walk ()
+should continue walking through the log, or 0 to
+terminate the walk.
+The callback function is called while holding
+.B libpmemlog
+internal locks that make calls atomic, so the callback function
+must not try to append to the log itself or deadlock will occur.
+.SH LIBRARY API VERSIONING
+.PP
+This section describes how the library API is versioned,
+allowing applications to work with an evolving API.
+.PP
+.BI "const char *pmemlog_check_version("
+.br
+.BI "    unsigned " major_required ,
+.br
+.BI "    unsigned " minor_required );
+.IP
+The
+.BR pmemlog_check_version ()
+function is used to see if the installed
+.B libpmemlog
+supports the version of the library API required by an application.
+The easiest way to do this is for the application to supply the
+compile-time version information, supplied by defines in
+.BR <libpmemlog.h> ,
+like this:
+.IP
+.nf
+reason = pmemblk_check_version(PMEMLOG_MAJOR_VERSION,
+                            PMEMLOG_MINOR_VERSION);
+if (reason != NULL) {
+    /*  version check failed, reason string tells you why */
+}
+.fi
+.IP
+Any mismatch in the major version number is considered a failure,
+but a library with a newer minor version number will pass this
+check since increasing minor versions imply backwards compatibility.
+.IP
+An application can also check specifically for the existence of
+an interface by checking for the version where that interface was
+introduced.  These versions are documented in this man page as follows:
+unless otherwise specified, all interfaces described here are available
+in version 1.0 of the library.  Interfaces added after version 1.0
+will contain the text
+.I introduced in version x.y
+in the section of this manual describing the feature.
+.IP
+When the version check performed by
+.BR pmemlog_check_version ()
+is successful, the return value is NULL.  Otherwise the return value
+is a static string describing the reason for failing the version check.
+The string returned by
+.BR pmemlog_check_version ()
+must not be modified or freed.
+.SH MANAGING LIBRARY BEHAVIOR
+.PP
+The library entry points described in this section are less
+commonly used than the previous sections.
+.PP
+.BI "void pmemlog_set_funcs("
+.br
+.BI "    void *(*" malloc_func ")(size_t " size ),
+.br
+.BI "    void (*" free_func ")(void *" ptr ),
+.br
+.BI "    void *(*" realloc_func ")(void *" ptr ", size_t " size ),
+.br
+.BI "    char *(*" strdup_func ")(const char *" s ));
+.IP
+The
+.BR pmemlog_set_funcs ()
+function allows an application to override memory allocation
+calls used internally by
+.BR libpmemlog .
+Passing in NULL for any of the handlers will cause the
+.B libpmemlog
+default function to be used.
+The library does not make heavy use of the system malloc functions, but
+it does allocate approximately 4-8 kilobytes for each memory pool in use.
+.PP
+.BI "int pmemlog_check(const char *" path );
+.IP
+The
+.BR pmemlog_check ()
+function performs a consistency check of the file
+indicated by
+.I path
+and returns 1 if the memory pool is found to be consistent.  Any
+inconsistencies found will cause
+.BR pmemlog_check ()
+to return 0, in which case
+the use of the file with
+.B libpmemlog
+will result in undefined behavior.  The debug version of
+.B libpmemlog
+will provide additional details on inconsistencies when
+.B PMEMLOG_LOG_LEVEL
+is at least 1, as described in the
+.B "DEBUGGING AND ERROR HANDLING"
+section below.
+.BR pmemlog_check ()
+will return -1 and set errno if it cannot perform the
+consistency check due to other errors.
+.BR pmemlog_check ()
+opens the given
+.I path
+read-only so it never makes any changes to the file.
+.SH DEBUGGING AND ERROR HANDLING
+.PP
+Two versions of
+.B libpmemlog
+are typically available on a development system.
+The normal version, accessed when a program is
+linked using the
+.B -lpmemlog
+option, is optimized for performance.  That version skips checks
+that impact performance and never logs any trace information or performs
+any run-time assertions.  If an error is detected during the call to
+.B libpmemlog
+function, an application may retrieve an error message describing the
+reason of failure using the following function:
+.PP
+.BI "const char *pmemlog_errormsg(void);
+.IP
+The
+.BR pmemlog_errormsg ()
+function returns a pointer to a static buffer containing the last error
+message logged for current thread.  The error message may include
+description of the corresponding error code (if errno was set), as returned by
+.BR strerror (3).
+The error message buffer is thread-local; errors encountered in one thread
+do not affect its value in other threads.
+The buffer is never cleared by any library function; its content is
+significant only when the return value of the immediately preceding call to
+.B libpmemlog
+function indicated an error, or if errno was set.
+The application must not modify or free the error message string,
+but it may be modified by subsequent calls to other library functions.
+.PP
+A second version of
+.BR libpmemlog ,
+accessed when a program uses the libraries under
+.BR /usr/lib/nvml_debug ,
+contains run-time assertions and trace points.
+The typical way to access the debug version is to set the environment variable
+.B LD_LIBRARY_PATH
+to
+.B /usr/lib/nvml_debug
+or
+.B /usr/lib64/nvml_debug
+depending on where the debug libraries are installed on the system.
+The trace points in the debug version of the library
+are enabled using the environment variable
+.BR PMEMLOG_LOG_LEVEL ,
+which can be set to the following values:
+.IP 0
+This is the default level when
+.B PMEMLOG_LOG_LEVEL
+is not set.  No log messages are emitted at this level.
+.IP 1
+Additional details on any errors detected are logged (in addition
+to returning the errno-based errors as usual).  The same information
+may be retrieved using
+.BR pmemlog_errormsg ().
+.IP 2
+A trace of basic operations is logged.
+.IP 3
+This level enables a very verbose amount of function call tracing
+in the library.
+.IP 4
+This level enables voluminous and fairly obscure tracing information
+that is likely only useful to the
+.B libpmemlog
+developers.
+.PP
+The environment variable
+.B PMEMLOG_LOG_FILE
+specifies a file name where all logging information should be written.
+If the last character in the name is "-", the PID of the current process
+will be appended to the file name when the log file is created.  If
+.B PMEMLOG_LOG_FILE
+is not set, the logging output goes to stderr.
+.PP
+Setting the environment variable
+.B PMEMLOG_LOG_LEVEL
+has no effect on the non-debug version of
+.BR libpmemlog .
+.SH EXAMPLES
+.PP
+The following example illustrates how the
+.B libpmemlog
+API is used.
+.IP
+.\" run source through expand -4 before inserting...
+.nf
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <libpmemlog.h>
+
+/* size of the pmemlog pool -- 1 GB */
+#define POOL_SIZE ((off_t)(1 << 30))
+
+/*
+ * printit -- log processing callback for use with pmemlog_walk()
+ */
+int
+printit(const void *buf, size_t len, void *arg)
+{
+    fwrite(buf, len, 1, stdout);
+    return 0;
+}
+
+int
+main(int argc, char *argv[])
+{
+    const char path[] = "/pmem-fs/myfile";
+    PMEMlogpool *plp;
+    size_t nbyte;
+    char *str;
+
+    /* create the pmemlog pool or open it if it already exists */
+    plp = pmemlog_create(path, POOL_SIZE, 0666);
+
+    if (plp == NULL)
+        plp = pmemlog_open(path);
+
+    if (plp == NULL) {
+        perror(path);
+        exit(1);
+    }
+
+    /* how many bytes does the log hold? */
+    nbyte = pmemlog_nbyte(plp);
+    printf("log holds %zu bytes\n", nbyte);
+
+    /* append to the log... */
+    str = "This is the first string appended\n";
+    if (pmemlog_append(plp, str, strlen(str)) < 0) {
+        perror("pmemlog_append");
+        exit(1);
+    }
+    str = "This is the second string appended\n";
+    if (pmemlog_append(plp, str, strlen(str)) < 0) {
+        perror("pmemlog_append");
+        exit(1);
+    }
+
+    /* print the log contents */
+    printf("log contains:\n");
+    pmemlog_walk(plp, 0, printit, NULL);
+
+    pmemlog_close(plp);
+}
+.fi
+.PP
+See http://pmem.io/nvml/libpmemlog for more examples
+using the
+.B libpmemlog
+API.
+.SH BUGS
+Unlike
+.BR libpmemobj ,
+data replication is not supported in
+.BR libpmemlog .
+Thus, it is not allowed to specify replica sections in pool set files.
+.SH ACKNOWLEDGEMENTS
+.PP
+.B libpmemlog
+builds on the persistent memory programming model
+recommended by the SNIA NVM Programming Technical Work Group:
+.IP
+http://snia.org/nvmp
+.SH "SEE ALSO"
+.BR mmap (2),
+.BR munmap (2),
+.BR msync (2),
+.BR strerror (3),
+.BR libpmemobj (3),
+.BR libpmemblk (3),
+.BR libpmem (3),
+.BR libvmem (3)
+and
+.BR http://pmem.io .

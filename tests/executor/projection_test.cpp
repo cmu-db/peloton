@@ -58,14 +58,19 @@ TEST(ProjectionTests, BasicTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -113,14 +118,19 @@ TEST(ProjectionTests, TwoColumnTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -176,14 +186,19 @@ TEST(ProjectionTests, BasicTargetTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
+                                   tile_size, false, false,
                                    false);
+  txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  INVALID_TXN_ID));
+                                                  txn_id));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));

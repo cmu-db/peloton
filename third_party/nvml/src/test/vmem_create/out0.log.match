@@ -1,0 +1,4 @@
+vmem_create/TEST0: START: vmem_create
+ ./vmem_create$(nW) $(nW)
+signal: Segmentation fault
+vmem_create/TEST0: Done

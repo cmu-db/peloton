@@ -1,0 +1,99 @@
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+Object store:
+Type number    1         : 1 element
+
+ Object                   : 0
+ Offset                   : $(*)
+  
+Allocation Header:
+  Zone id                  : 0
+  Chunk id                 : 0
+  Size                     : $(*)
+  
+OOB Header:
+  Next                     : off: $(*) pool_uuid_lo: $(*) [OK]
+  Prev                     : off: $(*) pool_uuid_lo: $(*) [OK]
+  Internal Type            : allocated
+  User Type                : 1
+
+Type number    2         : 1 element
+
+PMEMOBJ Heap Header:
+Signature                : MEMORY_HEAP_HDR
+Major                    : $(*)
+Minor                    : $(*)
+Size                     : $(*)
+Chunk size               : $(*)
+Chunks per zone          : $(*)
+Checksum                 : $(*) [OK]
+
+Zone:
+Magic                    : $(*) [OK]
+Size idx                 : $(*)
+ 
+ Chunk                    : 0
+ Type                     : used
+ Flags                    : 0x0 
+ Size idx                 : $(*)
+
+Statistics:
+
+Objects:
+Number of objects        : 1
+Number of bytes          : $(*)
+
+Objects by type:
+
+ Type number              : 1
+ Number of objects        : 1 [100 %]
+ Number of bytes          : $(*) [100 %]
+
+Heap:
+Number of zones          : 1
+Number of used zones     : 1 [100 %]
+ 
+Zone:
+ Number of chunks         : 1
+  used                     : 1 [100 %]
+
+ Total chunks size        : $(*)
+  used                     : $(*) [100 %]
+ 
+Zone's allocation classes:
+
+  Unit size                : $(*)
+  Units                    : $(*)
+  Used units               : $(*)
+  Bytes                    : $(*)
+  Used bytes               : $(*)
+
+ Total bytes              : $(*)
+ Total used bytes         : $(*)

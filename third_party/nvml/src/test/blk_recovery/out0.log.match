@@ -1,0 +1,8 @@
+blk_recovery/TEST0: START: blk_recovery
+ ./blk_recovery$(nW) 4096 $(nW)/testfile1 5 10
+4096 block size 4096 usable blocks 523511
+write     lba 5: {1}
+write-protecting map, length 2097152
+signal: Segmentation fault
+$(nW)/testfile1: consistent
+blk_recovery/TEST0: Done

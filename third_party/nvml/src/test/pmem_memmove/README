@@ -1,0 +1,41 @@
+Linux NVM Library
+
+This is src/test/pmem_memmove/README.
+
+This directory contains a unit test for pmem_memmove().
+
+SYNOPSIS:
+pmem_memmove file b:length [d:{offset}] [s:offset] [o:{1|2} S:{overlap}]
+
+DESCRIPTION:
+pmem_memmove is the unit test for verifying the functionality of
+memmove for persistent memory storage using non-temporal instructions.
+
+OPTIONS:
+	file is '$DIR/testfile1' for all tests
+
+	b: Use this option to specify the length in bytes of the data.
+	d: Use this option to specify destination address offset in number of bytes.
+	s: Use this option to specify source address offset in number of bytes.
+	o: Use this option to specify that overlap in addresses is required. The
+		value can be 1 or 2.
+		1 =  source overlaps with dest, i.e. starting source address >
+			starting destination address.
+		2 =  destination overlaps with source, i.e. starting.
+			destination address > starting source address.
+	S: Number of bytes of overlap
+
+Option o example:
+	pmem_memmove b:4096 o:1 S:2
+
+In this case the source will overlap with the destination. The number of bytes
+overlap is two. For example,
+	dest addr = 10000
+	src addr = 10002
+
+The src address is calculated based on the address for the mmapped file used as
+the destination.
+
+In all cases it sets a pattern of Z's and T's in 1/2 the length specified to
+be used as the source buffer. It then tests for success by doing a memcmp and
+reading the file directly.

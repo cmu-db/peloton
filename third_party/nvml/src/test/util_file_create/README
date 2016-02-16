@@ -1,0 +1,18 @@
+Linux NVM Library
+
+This is src/test/util_file_create/README.
+
+This directory contains a unit test for util_file_create().
+
+The program in util_file_create.c takes a minimal pool size along with the
+list of len:path pairs.
+For example:
+
+	./util_file_create minlen len1:path1
+
+This will call util_file_create() on path1 using len1 as pool size.
+
+minlen and len are interpreted as a decimal values unless they start with 0x.
+
+If len is zero, the file pointed by path must exist.  Otherwise, the file is
+created.

@@ -1,0 +1,14 @@
+<arch_flags>: <1> [$(nW) out_init] pid $(nW): program: $(nW)
+<arch_flags>: <1> [$(nW) out_init] arch_flags version 0.0
+<arch_flags>: <1> [$(nW) out_init] src version SRCVERSION:utversion
+$(OPT)<arch_flags>: <1> [$(nW) out_init] compiled with support for Valgrind pmemcheck
+$(OPT)<arch_flags>: <1> [$(nW) out_init] compiled with support for Valgrind helgrind
+$(OPT)<arch_flags>: <1> [$(nW) out_init] compiled with support for Valgrind memcheck
+<arch_flags>: <1> [$(nW) util_get_arch_flags] open /proc/self/exe: $(*)
+<arch_flags>: <1> [$(nW) util_get_arch_flags] read /proc/self/exe: $(*)
+<arch_flags>: <1> [$(nW) util_get_arch_flags] invalid ELF magic
+<arch_flags>: <1> [$(nW) util_check_arch_flags] invalid ei_class value
+<arch_flags>: <1> [$(nW) util_check_arch_flags] invalid ei_data value
+<arch_flags>: <1> [$(nW) util_check_arch_flags] invalid e_machine value
+<arch_flags>: <1> [$(nW) util_check_arch_flags] invalid alignment_desc value
+<arch_flags>: <1> [$(nW) util_check_arch_flags] invalid reserved values

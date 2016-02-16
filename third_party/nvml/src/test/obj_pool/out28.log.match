@@ -1,0 +1,4 @@
+obj_pool/TEST28: START: obj_pool
+ ./obj_pool$(nW) o $(nW)/testfile test
+$(nW)/testfile: pmemobj_open: Success
+obj_pool/TEST28: Done

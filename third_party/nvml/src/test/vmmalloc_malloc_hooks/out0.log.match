@@ -1,0 +1,4 @@
+vmmalloc_malloc_hooks/TEST0: START: vmmalloc_malloc_hooks
+ ./vmmalloc_malloc_hooks$(nW)
+malloc 0 realloc 0 memalign 0 free 0
+vmmalloc_malloc_hooks/TEST0: Done

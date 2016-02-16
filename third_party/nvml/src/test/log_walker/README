@@ -1,0 +1,14 @@
+Linux NVM Library
+
+This is src/test/log_walker/README.
+
+This directory contains a unit test to verify pool's write-protection
+in debug mode. It works only in debug mode.
+
+The program in log_walker.c takes only a file name as an argument. For example:
+
+	./log_walker file1
+
+this calls pmemlog_open() on file1 and pmemlog_append() to append six strings
+to the log. Next pmemlog_walk() is called and the walk handler tries to store
+to the buffer and SIGSEGV is caught and reported.

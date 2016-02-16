@@ -1,0 +1,22 @@
+Linux NVM Library
+
+This is src/test/obj_sync/README.
+
+This directory contains a unit test for persistent synchronization mechanisms.
+The types of synchronization primitives tested are: mutexes, rwlocks and
+condition variables.
+
+The obj_sync application takes as command line arguments the primitive type to
+ be tested, the number of threads to be run and the number of times the test
+ will be restarted:
+
+$ obj_sync [mrc] <num_threads> <runs>
+
+Where:
+	m - test mutexes
+	r - test rwlocks
+	c - test condition variables
+
+The tests are performed using valgrind and its following tools:
+	- drd
+	- helgrind
