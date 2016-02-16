@@ -1,0 +1,18 @@
+util_map_proc/TEST4: START: util_map_proc
+ ./util_map_proc$(nW) maps_all 0x0000100000 0x0001000000 0x0040000000 0x0400000000 0x4000000000
+redirecting /proc/self/maps to maps_all
+redirecting /proc/self/maps to maps_all
+len 1048576: 0x100c0000000 0x2e000000000
+redirecting /proc/self/maps to maps_all
+redirecting /proc/self/maps to maps_all
+len 16777216: 0x10100000000 0x2e000000000
+redirecting /proc/self/maps to maps_all
+redirecting /proc/self/maps to maps_all
+len 1073741824: 0x10240000000 0x2e000000000
+redirecting /proc/self/maps to maps_all
+redirecting /proc/self/maps to maps_all
+len 17179869184: 0x102c0000000 0x2e000000000
+redirecting /proc/self/maps to maps_all
+redirecting /proc/self/maps to maps_all
+len 274877906944: 0x10800000000 0x800000000000
+util_map_proc/TEST4: Done

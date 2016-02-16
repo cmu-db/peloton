@@ -1,0 +1,4 @@
+blk_pool/TEST2: START: blk_pool
+ ./blk_pool$(nW) c $(nW)/testfile 4096 0 0640
+$(nW)/testfile: pmemblk_create: No such file or directory
+blk_pool/TEST2: Done

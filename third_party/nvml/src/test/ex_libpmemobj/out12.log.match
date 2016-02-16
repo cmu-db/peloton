@@ -1,0 +1,19 @@
+nbytes: 94371824
+offset: 0
+append: Hello
+append: World!
+nbytes: 94371824
+offset: 11
+walk
+log contains:
+HelloWorld!
+rewind
+nbytes: 94371824
+offset: 0
+appendv: Hello:World!:bar:foo
+nbytes: 94371824
+offset: 17
+walk
+log contains:
+HelloWorld!barfoo
+rewind

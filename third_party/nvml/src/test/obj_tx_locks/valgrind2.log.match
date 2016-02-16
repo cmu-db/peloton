@@ -1,0 +1,11 @@
+==$(N)== Helgrind, a thread error detector
+==$(N)== Copyright $(*)
+==$(N)== Using $(*)
+==$(N)== Command:$(*)
+$(OPT)==$(N)== Parent PID: $(N)
+==$(N)== 
+==$(N)== 
+$(OPT)==$(N)== For counts of detected and suppressed errors, rerun with: -v
+$(OPT)==$(N)== Use --history-level=approx or =none to gain increased speed, at
+$(OPT)==$(N)== the cost of reduced accuracy of conflicting-access information
+$(OPT)==$(N)== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: $(N) from $(N))

@@ -1,0 +1,26 @@
+Linux NVM Library
+
+This is src/test/pmem_memcpy/README.
+
+This directory contains a unit test for pmem_memcpy().
+
+SYNOPSIS:
+pmem_memcpy file destoff srcoff length
+
+DESCRIPTION:
+pmem_memcpy is the unit test for verifying the functionality of
+memcpy for persistent memory using non-temporal instructions.
+
+OPTIONS:
+	file is '$DIR/testfile1' for all tests.
+	destoff: Is number of bytes for destination address offset based on
+		a 64 byte boundary
+	srcoff: Is number of bytes offset for source address based on
+		64 byte boundary
+	length: Is the length in bytes. Cannot be less than 4.
+
+A zero for the dest offset and src offset are valid.
+
+In all cases it sets a pattern of Z's and F's in 1/2 of the length specified to
+be used as the source buffer. It then tests for successful memcpy using a
+memcmp and a read of the file.

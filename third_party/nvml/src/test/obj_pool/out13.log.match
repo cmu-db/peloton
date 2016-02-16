@@ -1,0 +1,4 @@
+obj_pool/TEST13: START: obj_pool
+ ./obj_pool$(nW) c $(nW)/testfile EMPTY 20 0640
+$(nW)/testfile: file size 20971520 mode 0640
+obj_pool/TEST13: Done

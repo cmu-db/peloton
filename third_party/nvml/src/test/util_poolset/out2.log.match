@@ -1,0 +1,18 @@
+util_poolset/TEST2: START: util_poolset
+ ./util_poolset$(nW) o 32768 8192 $(nW)/testset1 $(nW)/testset2 $(nW)/testset3 $(nW)/testset4 $(nW)/testset5 $(nW)/testset6 $(nW)/testset7 $(nW)/testset8 $(nW)/testset9 $(nW)/testset10 $(nW)/testset11 $(nW)/testset12
+$(nW)/testset1: opened: hdrsize 8192 nreps 1 poolsize 57344 rdonly 0
+  replica[0]: nparts 2 repsize 57344 is_pmem 0
+    part[0] path $(nW)/testfile11 filesize 32768 size 57344
+    part[1] path $(nW)/testfile12 filesize 32768 size 24576
+$(nW)/testset2: util_pool_open: Invalid argument
+$(nW)/testset3: util_pool_open: Invalid argument
+$(nW)/testset4: util_pool_open: Invalid argument
+$(nW)/testset5: util_pool_open: Invalid argument
+$(nW)/testset6: util_pool_open: Invalid argument
+$(nW)/testset7: util_pool_open: Invalid argument
+$(nW)/testset8: util_pool_open: Invalid argument
+$(nW)/testset9: util_pool_open: Invalid argument
+$(nW)/testset10: util_pool_open: Invalid argument
+$(nW)/testset11: util_pool_open: Invalid argument
+$(nW)/testset12: util_pool_open: Invalid argument
+util_poolset/TEST2: Done

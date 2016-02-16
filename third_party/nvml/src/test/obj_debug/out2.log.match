@@ -1,0 +1,3 @@
+obj_debug/TEST2: START: obj_debug
+ ./obj_debug$(nW) $(nW)/testfile1 a
+obj_debug/TEST2: Done

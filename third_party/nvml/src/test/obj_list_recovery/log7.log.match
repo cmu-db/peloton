@@ -1,0 +1,322 @@
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile n:1:0 n:1:0 n:1:0 n:1:0 F:after_finish e:0:2:10:1
+pmalloc(id = 0)
+pmalloc(id = 1)
+pmalloc(id = 2)
+pmalloc(id = 3)
+prealloc(id = 0, size = 2) = true
+realloc_constructor(id = 0)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+id = 0
+id = 1
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+id = 1
+id = 0
+list:
+id = 3
+id = 2
+id = 1
+id = 0
+list reverse:
+id = 0
+id = 1
+id = 2
+id = 3
+oob list sec:
+oob list sec reverse:
+oob list:
+id = 1
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+id = 1
+list:
+id = 3
+id = 2
+id = 1
+id = 10
+list reverse:
+id = 10
+id = 1
+id = 2
+id = 3
+oob list sec:
+id = 10
+oob list sec reverse:
+id = 10
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:before_finish e:0:2:11:1
+prealloc(id = 1, size = 2) = true
+realloc_constructor(id = 1)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+id = 1
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+id = 1
+list:
+id = 3
+id = 2
+id = 1
+id = 10
+list reverse:
+id = 10
+id = 1
+id = 2
+id = 3
+oob list sec:
+id = 10
+oob list sec reverse:
+id = 10
+oob list:
+id = 1
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+id = 1
+list:
+id = 3
+id = 2
+id = 1
+id = 10
+list reverse:
+id = 10
+id = 1
+id = 2
+id = 3
+oob list sec:
+id = 10
+oob list sec reverse:
+id = 10
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:after_process e:0:2:12:1
+prealloc(id = 1, size = 2) = true
+realloc_constructor(id = 1)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+list:
+id = 3
+id = 2
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 2
+id = 3
+oob list sec:
+id = 10
+id = 12
+oob list sec reverse:
+id = 12
+id = 10
+oob list:
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+list:
+id = 3
+id = 2
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 2
+id = 3
+oob list sec:
+id = 10
+id = 12
+oob list sec reverse:
+id = 12
+id = 10
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:before_finish e:0:3:13:1
+prealloc(id = 2, size = 3) = false
+pmalloc(id = 4)
+realloc_constructor(id = 2)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+list:
+id = 3
+id = 2
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 2
+id = 3
+oob list sec:
+id = 10
+id = 12
+oob list sec reverse:
+id = 12
+id = 10
+pfree(id = 13)
+oob list:
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+list:
+id = 3
+id = 2
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 2
+id = 3
+oob list sec:
+id = 10
+id = 12
+oob list sec reverse:
+id = 12
+id = 10
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:after_finish e:0:3:14:1
+prealloc(id = 2, size = 3) = false
+pmalloc(id = 5)
+realloc_constructor(id = 2)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+id = 2
+id = 3
+oob list reverse:
+id = 3
+id = 2
+list:
+id = 3
+id = 2
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 2
+id = 3
+oob list sec:
+id = 10
+id = 12
+oob list sec reverse:
+id = 12
+id = 10
+pfree(id = 2)
+oob list:
+id = 3
+oob list reverse:
+id = 3
+list:
+id = 3
+id = 14
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 14
+id = 3
+oob list sec:
+id = 10
+id = 12
+id = 14
+oob list sec reverse:
+id = 14
+id = 12
+id = 10
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile F:after_process e:0:3:15:1
+prealloc(id = 3, size = 3) = false
+pmalloc(id = 6)
+realloc_constructor(id = 3)
+obj_list_recovery/TEST7: Done
+obj_list_recovery/TEST7: START: obj_list
+ ../obj_list/obj_list$(nW) $(nW)testfile P:1 R:1 P:2 R:2 P:3 R:3 V P:1 R:1 P:2 R:2 P:3 R:3
+oob list:
+oob list reverse:
+list:
+id = 15
+id = 14
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 14
+id = 15
+oob list sec:
+id = 10
+id = 12
+id = 14
+id = 15
+oob list sec reverse:
+id = 15
+id = 14
+id = 12
+id = 10
+pfree(id = 3)
+oob list:
+oob list reverse:
+list:
+id = 15
+id = 14
+id = 12
+id = 10
+list reverse:
+id = 10
+id = 12
+id = 14
+id = 15
+oob list sec:
+id = 10
+id = 12
+id = 14
+id = 15
+oob list sec reverse:
+id = 15
+id = 14
+id = 12
+id = 10
+obj_list_recovery/TEST7: Done

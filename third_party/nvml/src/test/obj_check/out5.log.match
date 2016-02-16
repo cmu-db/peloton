@@ -1,0 +1,28 @@
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx lane: invalid transaction state
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx lane: invalid internal type
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx lane: invalid user type
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx lane: invalid internal type
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx lane: invalid user type
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx_lane: invalid offset in tx range object
+obj_check/TEST5: Done
+obj_check/TEST5: START: obj_check
+ ./obj_check$(nW) $(nW)testfile
+not consistent: tx_lane: invalid offset in tx range object
+obj_check/TEST5: Done
