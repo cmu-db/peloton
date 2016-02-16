@@ -1,0 +1,12 @@
+Linux NVM Library
+
+This is benchmarks/README.
+
+This directory contains benchmarks for NVM Library.
+
+Benchmarks may be built and run from this directory using:
+	$ make
+	$ make run
+
+The subdirectories here contain benchmarks, which each subdirectory
+containing one benchmark and corresponding scripts.

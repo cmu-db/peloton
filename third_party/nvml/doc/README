@@ -1,0 +1,67 @@
+Linux NVM Library
+
+This is doc/README.
+
+This directory contains source for the man pages for the NVM Library.
+If you're looking for documentation to get you started using NVML,
+start here: http://pmem.io/nvml and follow the links to examples and
+man pages.  Developers new to NVML are probably looking for libpmemobj.
+
+libpmem(3) -- low-level persistent memory support
+    Man page source is in: libpmem.3
+    HTML formatted version: http://pmem.io/nvml/libpmem/libpmem.3.html
+
+libpmemblk(3) -- pmem-resident arrays of blocks
+    Man page source is in: libpmemblk.3
+    HTML formatted version: http://pmem.io/nvml/libpmemblk/libpmemblk.3.html
+
+libpmemlog(3) -- pmem-resident log files
+    Man page source is in: libpmemlog.3
+    HTML formatted version: http://pmem.io/nvml/libpmemlog/libpmemlog.3.html
+
+libpmemobj(3) -- transactional object store
+    Man page source is in: libpmemobj.3
+    HTML formatted version: http://pmem.io/nvml/libpmemobj/libpmemobj.3.html
+
+libvmem(3) -- volatile memory allocation library
+    Man page source is in libvmem.3
+    HTML formatted version: http://pmem.io/nvml/libvmem/libvmem.3.html
+
+libvmmalloc(3) -- general purpose volatile memory allocation library
+    Man page source is in libvmmalloc.3
+    HTML formatted version: http://pmem.io/nvml/libvmmalloc/libvmmalloc.3.html
+
+pmempool(1) -- Persistent Memory Pool Management Tool
+    Man page source is in pmempool.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool.1.html
+
+pmempool-info(1) -- Print basic information about Persistent Memory Pool file
+    Man page source is in pmempool-info.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool-info.1.html
+
+pmempool-check(1) -- Check and repair Persistent Memory Pool
+    Man page source is in pmempool-check.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool-check.1.html
+
+pmempool-create(1) -- Create Persistent Memory Pool of specified type
+    Man page source is in pmempool-create.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool-create.1.html
+
+pmempool-dump(1) -- Dump user data from specified pool
+    Man page source is in pmempool-dump.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool-dump.1.html
+
+pmempool-rm(1) -- Remove pool file or pool files from poolset
+    Man page source is in pmempool-rm.1
+    HTML formatted version: http://pmem.io/nvml/pmempool/pmempool-rm.1.html
+
+These man pages provide the API specification for the corresponding libraries
+in this source tree, so any updates to one should be tested, reviewed, and
+committed with changes to the other.
+
+To create more readable text files from the source, use:
+	$ make
+An even more convenient way to read these is to use the "man" command to
+format them (includes bold, underline, etc. when run in a terminal window):
+	$ man -l libpmem.3
+	$ man -l libvmem.3
