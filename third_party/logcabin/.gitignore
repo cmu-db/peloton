@@ -1,0 +1,12 @@
+*.pyc
+/.sconsign.dblite
+/Local.sc
+/Local.sc.bck
+/build
+/debug
+/docs/doxygen/
+/logcabin*.conf
+/scripts/localconfig.py
+/smoketest*.conf
+/smoketeststorage
+/storage

@@ -1,3 +1,0 @@
-CXX='g++-4.9'
-CXXFLAGS=['-Werror']
-BUILDTYPE='DEBUG'

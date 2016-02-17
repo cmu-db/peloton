@@ -1,3 +1,0 @@
-#!/bin/sh
-set -e
-scripts/smoketest.py --client='scripts/TreeOpsTest.sh build/Examples/TreeOps'

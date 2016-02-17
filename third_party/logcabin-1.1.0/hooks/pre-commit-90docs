@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-TMPFILE=$( mktemp )
-trap "rm $TMPFILE" EXIT
-doxygen docs/Doxyfile 2>&1 | tee $TMPFILE
-exit $( egrep -ci \(Warning\|Error\) $TMPFILE )
