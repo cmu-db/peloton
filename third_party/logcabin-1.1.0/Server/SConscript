@@ -1,0 +1,16 @@
+Import('env', 'object_files')
+
+src = [
+    "ClientService.cc",
+    "ControlService.cc",
+    "Globals.cc",
+    "RaftConsensus.cc",
+    "RaftConsensusInvariants.cc",
+    "RaftService.cc",
+    "ServerStats.cc",
+    "StateMachine.cc",
+]
+object_files['Server'] = (env.StaticObject(src) +
+                          env.Protobuf("SnapshotMetadata.proto") +
+                          env.Protobuf("SnapshotStateMachine.proto") +
+                          env.Protobuf("SnapshotStats.proto"))
