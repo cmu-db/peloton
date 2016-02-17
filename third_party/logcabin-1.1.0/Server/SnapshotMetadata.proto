@@ -1,0 +1,54 @@
+// Copyright (c) 2013 Stanford University
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR(S) DISCLAIM ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHORS BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+package LogCabin.Server.SnapshotMetadata;
+
+import "build/Protocol/Raft.proto";
+
+/**
+ * Header for a snapshot file.
+ */
+message Header {
+    /**
+     * The snapshot covers log entries in the range [1, lastIncludedIndex].
+     */
+    required uint64 last_included_index = 1;
+
+    /**
+     * The term of the lastIncludedIndex entry.
+     */
+    required uint64 last_included_term = 4;
+
+    /**
+     * The cluster time of the lastIncludedIndex entry.
+     */
+    optional uint64 last_cluster_time = 5;
+
+    /**
+     * This contains the latest configuration in the prefix of the log ending
+     * with lastIncludedIndex. It'll be present in practice (logs start with
+     * configurations in practice) but is marked optional so as to not to bake
+     * that assumption in here.
+     */
+    optional Protocol.Raft.Configuration configuration = 2;
+
+    /**
+     * The log index where 'configuration' came from. This is required iff
+     * 'configuration' is set.
+     * (It shouldn't be strictly necessary to persist this, as the
+     * configuration could be re-assigned lastIncludedIndex instead; however,
+     * this way makes things more obvious.)
+     */
+    optional uint64 configuration_index = 3;
+}

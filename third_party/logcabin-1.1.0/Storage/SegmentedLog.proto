@@ -1,0 +1,54 @@
+// Copyright (c) 2012-2014 Stanford University
+// Copyright (c) 2015 Diego Ongaro
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR(S) DISCLAIM ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHORS BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+/**
+ * \file
+ * Contains the format for SegmentedLog's metadata files.
+ */
+
+package LogCabin.Storage.SegmentedLogMetadata;
+
+import "build/Protocol/RaftLogMetadata.proto";
+
+/**
+ * The format for SegmentedLog's metadata files.
+ */
+message Metadata {
+
+    /**
+     * The version of the storage module that created this file. If an older
+     * storage module finds a newer format version here, it will PANIC.
+     */
+    required uint64 format_version = 4;
+
+
+
+    /**
+     * Each time metadata is written, this number is incremented. Odd versions
+     * are stored in the file named metadata1, and even versions are stored in
+     * the file named metadata2.
+     */
+    required uint64 version = 1;
+
+    /**
+     * Metadata from Raft, including the current term and vote.
+     */
+    optional Protocol.RaftLogMetadata.Metadata raft_metadata = 2;
+
+    /**
+     * The log start index.
+     */
+    required uint64 entries_start = 3;
+}

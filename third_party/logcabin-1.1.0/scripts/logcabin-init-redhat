@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# logcabin        Startup script for logcabin
+#
+# chkconfig: - 85 15
+# processname: logcabind
+# config: /etc/logcabin/logcabin.conf
+# config: /etc/sysconfig/logcabin
+# pidfile: /var/run/logcabin.pid
+# description: logcabin is clustered consensus deamon
+#
+### BEGIN INIT INFO
+# Provides: logcabin
+# Required-Start: $local_fs $remote_fs $network
+# Required-Stop: $local_fs $remote_fs $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop logcabin
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog=logcabin
+logcabin=${LOGCABIN-/usr/bin/logcabind}
+conffile=${CONFFILE-/etc/logcabin.conf}
+lockfile=${LOCKFILE-/var/lock/subsys/logcabin}
+logfile=${LOGFILE-/var/log/logcabin/logcabin.log}
+pidfile=${PIDFILE-/var/run/logcabin.pid}
+DAEMON_COREFILE_LIMIT='unlimited'
+RETVAL=0
+
+start() {
+    echo -n $"Starting $prog: "
+    touch ${pidfile}
+    chown logcabin ${pidfile}
+    daemon --user logcabin ${logcabin} --daemon --config ${conffile} --log ${logfile} --pidfile ${pidfile}
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && touch ${lockfile}
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc -p ${pidfile} ${prog}
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+}
+
+configtest() {
+    ${logcabin} -t -c ${conffile} $FLAG
+    RETVAL=$?
+    return $RETVAL
+}
+
+rh_status() {
+    status -p ${pidfile} ${logcabin}
+}
+
+# See how we were called.
+case "$1" in
+    bootstrap)
+        runuser -s /bin/bash logcabin -c "$logcabin --bootstrap --config ${conffile} --log ${logfile}"
+        ;;
+    start)
+        rh_status >/dev/null 2>&1 && exit 0
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        rh_status
+        RETVAL=$?
+        ;;
+    restart)
+        configtest || exit $RETVAL
+        stop
+        start
+        ;;
+    condrestart|try-restart)
+        if rh_status >/dev/null 2>&1; then
+            stop
+            start
+        fi
+        ;;
+    configtest)
+        configtest
+        ;;
+    *)
+        echo $"Usage: $prog {bootstrap|start|stop|restart|condrestart|try-restart|status|help|configtest}"
+        RETVAL=2
+esac
+
+exit $RETVAL

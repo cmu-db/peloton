@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+scripts/smoketest.py
+echo "Smoke test done. Running Storage/Tool now to make sure it doesn't PANIC"
+./build/Storage/Tool -c smoketest-1.conf
