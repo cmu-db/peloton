@@ -1,0 +1,2 @@
+#!/bin/sh
+exit $(git status --porcelain | egrep -c "^(\?\?|.M)")
