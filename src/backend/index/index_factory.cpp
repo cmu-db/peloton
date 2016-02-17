@@ -159,7 +159,7 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
       return new BWTreeIndex<GenericKey<512>, ItemPointer, GenericComparator<512>,
                             GenericEqualityChecker<512>>(metadata);
     } else {
-      return new BTreeIndex<TupleKey, ItemPointer, TupleKeyComparator,
+      return new BWTreeIndex<TupleKey, ItemPointer, TupleKeyComparator,
                             TupleKeyEqualityChecker>(metadata);
     }
   }
