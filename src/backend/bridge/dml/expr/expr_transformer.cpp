@@ -29,8 +29,9 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h"
-#include "backend/expression/comparison_expression.h"
+#include "postgres/include/executor/executor.h"        //added by michael
+#include "backend/expression/comparison_expression.h"  //added by michael
+#include "backend/expression/string_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -526,23 +527,24 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     return expression::CastFactory();
   }
 
-  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
+  // mperron some string functions have 4 children
+  assert(list_length(args) <=
+         EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
-  // Extract function arguments (at most two)
-  expression::AbstractExpression *lc = nullptr;
-  expression::AbstractExpression *rc = nullptr;
+  // Extract function arguments (at most four)
+  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM];
+  for (int i = 0; i < EXPRESSION_MAX_ARG_NUM; i++) {
+    children[i] = nullptr;
+  }
   int i = 0;
   ListCell *arg;
   foreach (arg, args) {
     ExprState *argstate = (ExprState *)lfirst(arg);
 
     if (i >= func_meta.nargs) break;
-    if (i == 0)
-      lc = TransformExpr(argstate);
-    else if (i == 1)
-      rc = TransformExpr(argstate);
-    else
-      break;
+
+    children[i] = TransformExpr(argstate);
 
     i++;
   }
@@ -557,13 +559,31 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-      return expression::ComparisonFactory(plt_exprtype, lc, rc);
+      return expression::ComparisonFactory(plt_exprtype, children[0],
+                                           children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      return expression::OperatorFactory(plt_exprtype, lc, rc);
+    case EXPRESSION_TYPE_SUBSTR:
+    case EXPRESSION_TYPE_ASCII:
+    case EXPRESSION_TYPE_OCTET_LEN:
+    case EXPRESSION_TYPE_CHAR:
+    case EXPRESSION_TYPE_CHAR_LEN:
+    case EXPRESSION_TYPE_SPACE:
+    case EXPRESSION_TYPE_CONCAT:
+    case EXPRESSION_TYPE_OVERLAY:
+    case EXPRESSION_TYPE_LEFT:
+    case EXPRESSION_TYPE_RIGHT:
+    case EXPRESSION_TYPE_RTRIM:
+    case EXPRESSION_TYPE_LTRIM:
+    case EXPRESSION_TYPE_BTRIM:
+    case EXPRESSION_TYPE_REPLACE:
+    case EXPRESSION_TYPE_REPEAT:
+    case EXPRESSION_TYPE_POSITION:
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1],
+                                         children[2], children[3]);
 
     default:
       LOG_ERROR(
