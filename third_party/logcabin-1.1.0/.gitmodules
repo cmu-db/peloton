@@ -1,4 +1,0 @@
-[submodule "gtest"]
-	path = gtest
-	# relative URL, usually goes to https://github.com/logcabin/gtest.git
-	url = ../gtest.git
