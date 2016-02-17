@@ -1,0 +1,13 @@
+#!/bin/bash
+# Usage: regexec id wd args
+#
+# Runs the command given by args, but it also changes the working directory
+# to wd, and it saves the pid in a place where killpid can find it later to
+# terminate the process
+cd $2
+pidfile=/dev/shm/.$USER.$1.pid
+export LD_LIBRARY_PATH=~/bin:/usr/local/lib:$LD_LIBRARY_PATH
+echo $$ > $pidfile
+shift
+shift
+exec $*

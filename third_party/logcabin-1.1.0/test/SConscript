@@ -1,0 +1,53 @@
+Import('env', 'object_files')
+
+env.StaticObject("gtest-all.o",
+                 "#gtest/src/gtest-all.cc",
+                 CPPPATH = [ "#gtest", "#gtest/include" ],
+                 CPPFLAGS = [ "-g", "-DDEBUG" ],
+                 CXXFLAGS = env["GTESTCXXFLAGS"])
+
+def SrcToVariant(srcs, variant_dir):
+    """Find the corresponding paths to source files in a variant directory."""
+
+    root = str(Dir('#'))
+    variant_dir = str(Dir(variant_dir))
+    return [str(src).replace(root, variant_dir) for src in srcs]
+
+def GetTestFiles(src_dirs, variant_dir):
+    """Find the test files to build in the given source directories.
+
+    Given a list of source directories, return a list of strings naming the
+    source copies to be placed in variant_dir of files ending in Test.cc that
+    are directly contained in those directories.
+    """
+    return Flatten([SrcToVariant(Glob("%s/*Test.cc" % src_dir) +
+                                 Glob("%s/*Mock.cc" % src_dir),
+                                 variant_dir=variant_dir)
+                    for src_dir in src_dirs])
+
+testrunner = env.Program("test",
+            (["TestRunner.cc", "gtest-all.o"] +
+             object_files['Server'] +
+             object_files['Storage'] +
+             object_files['Client'] +
+             object_files['Tree'] +
+             object_files['Protocol'] +
+             object_files['RPC'] +
+             object_files['Event'] +
+             object_files['Core'] +
+             GetTestFiles([
+                 "#Core",
+                 "#Event",
+                 "#RPC",
+                 "#Protocol",
+                 "#Tree",
+                 "#Client",
+                 "#Storage",
+                 "#Server",
+             ], variant_dir='#build')),
+            LIBS = [ "pthread", "protobuf", "rt", "cryptopp" ],
+            CPPPATH = env["CPPPATH"] + ["#gtest/include"],
+            # -fno-access-control allows tests to access private members
+            CXXFLAGS = env["CXXFLAGS"] + ["-fno-access-control"])
+
+env.Default(testrunner)

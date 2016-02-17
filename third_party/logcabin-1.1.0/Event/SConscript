@@ -1,0 +1,9 @@
+Import('env', 'object_files')
+
+src = [
+    "File.cc",
+    "Loop.cc",
+    "Signal.cc",
+    "Timer.cc",
+]
+object_files['Event'] = env.StaticObject(src)
