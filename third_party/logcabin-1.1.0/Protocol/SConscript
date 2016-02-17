@@ -1,0 +1,12 @@
+Import('env', 'object_files')
+
+src = [
+]
+object_files['Protocol'] = (env.StaticObject(src) +
+                            env.Protobuf("Client.proto") +
+                            env.Protobuf("Raft.proto") +
+                            env.Protobuf("RaftLogMetadata.proto") +
+                            env.Protobuf("ServerControl.proto") +
+                            env.Protobuf("ServerStats.proto"))
+env.Depends("Client.proto", "ServerStats.proto")
+env.Depends("ServerControl.proto", "ServerStats.proto")
