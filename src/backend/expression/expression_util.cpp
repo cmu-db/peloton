@@ -24,6 +24,7 @@
 #include "backend/expression/abstract_expression.h"
 
 #include "backend/expression/operator_expression.h"
+#include "backend/expression/string_expression.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/conjunction_expression.h"
 #include "backend/expression/constant_value_expression.h"
@@ -177,31 +178,92 @@ AbstractExpression *ComparisonFactory(ExpressionType c, AbstractExpression *lc,
 
 // convert the enumerated value type into a concrete c type for the
 //  operator expression templated ctors
-AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *lc,
-                                    AbstractExpression *rc) {
+AbstractExpression *OperatorFactory(ExpressionType et,
+                                    AbstractExpression *first,
+                                    AbstractExpression *second) {
+  return OperatorFactory(et, first, second, nullptr, nullptr);
+}
+
+// convert the enumerated value type into a concrete c type for the
+//  operator expression templated ctors
+AbstractExpression *OperatorFactory(ExpressionType et,
+                                    AbstractExpression *first,
+                                    AbstractExpression *second,
+                                    AbstractExpression *third,
+                                    AbstractExpression *fourth) {
   AbstractExpression *ret = nullptr;
 
   switch (et) {
     case (EXPRESSION_TYPE_OPERATOR_PLUS):
-      ret = new OperatorExpression<OpPlus>(et, lc, rc);
+      ret = new OperatorExpression<OpPlus>(et, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MINUS):
-      ret = new OperatorExpression<OpMinus>(et, lc, rc);
+      ret = new OperatorExpression<OpMinus>(et, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
-      ret = new OperatorExpression<OpMultiply>(et, lc, rc);
+      ret = new OperatorExpression<OpMultiply>(et, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
-      ret = new OperatorExpression<OpDivide>(et, lc, rc);
+      ret = new OperatorExpression<OpDivide>(et, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
-      ret = new OperatorNotExpression(lc);
+      ret = new OperatorNotExpression(first);
+      break;
+    case (EXPRESSION_TYPE_SUBSTR):
+      ret = new SubstringExpression(first, second, third);
       break;
 
+    case (EXPRESSION_TYPE_CONCAT):
+      ret = new ConcatExpression(first, second);
+      break;
+
+    case (EXPRESSION_TYPE_ASCII):
+      ret = new AsciiExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_CHAR):
+      ret = new CharExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_CHAR_LEN):
+      ret = new CharLengthExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_OCTET_LEN):
+      ret = new OctetLengthExpression(first);
+      break;
+    case (EXPRESSION_TYPE_POSITION):
+      ret = new PositionExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPEAT):
+      ret = new RepeatExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_LEFT):
+      ret = new LeftExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RIGHT):
+      ret = new RightExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPLACE):
+      ret = new ReplaceExpression(first, second, third);
+      break;
+    case (EXPRESSION_TYPE_OVERLAY):
+      ret = new OverlayExpression(first, second, third, fourth);
+      break;
+
+    case (EXPRESSION_TYPE_LTRIM):
+      ret = new LTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RTRIM):
+      ret = new RTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_BTRIM):
+      ret = new BTrimExpression(first, second);
+      break;
     case (EXPRESSION_TYPE_OPERATOR_MOD):
       throw ExpressionException("Mod operator is not yet supported.");
 
