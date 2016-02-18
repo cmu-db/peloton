@@ -6,8 +6,8 @@
 
 common_FILES = \
 			   backend/common/cache.cpp \
-			   backend/common/platform.cpp \
 			   backend/common/pool.cpp \
+			   backend/common/printable.cpp \
 			   backend/common/serializer.cpp \
 			   backend/common/value.cpp \
 			   backend/common/varlen.cpp \
