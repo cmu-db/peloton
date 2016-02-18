@@ -1354,7 +1354,6 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double direct_high_proj = 0.7;
   double insert_write_ratio = 0.05;
 
   state.projectivity = direct_low_proj;
@@ -1375,7 +1374,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_high_proj;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1384,7 +1383,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_high_proj;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1410,14 +1409,15 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
+
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
-    LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {200};
 
 void RunAdaptExperiment() {
+
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1429,14 +1429,14 @@ void RunAdaptExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for (auto column_count : adapt_column_counts) {
+  for(auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for (auto layout : adapt_layouts) {
+    for(auto layout : adapt_layouts) {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
@@ -1445,13 +1445,13 @@ void RunAdaptExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType)peloton_layout_mode);
+      CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1460,12 +1460,14 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
+
     }
+
   }
 
   // Reset
