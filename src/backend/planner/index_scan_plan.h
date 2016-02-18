@@ -107,7 +107,7 @@ class IndexScanPlan : public AbstractScan {
     return PLAN_NODE_TYPE_INDEXSCAN;
   }
 
-  inline std::string GetInfo() const { return "IndexScan"; }
+  const std::string GetInfo() const { return "IndexScan"; }
 
  private:
   /** @brief index associated with index scan. */

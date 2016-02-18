@@ -25,7 +25,7 @@ class Printable {
   virtual ~Printable(){};
 
   /** @brief Get the info about the object. */
-  virtual const char *GetInfo() const = 0;
+  virtual const std::string GetInfo() const = 0;
 
   // Get a string representation for debugging
   friend std::ostream &operator<<(std::ostream &os, const Printable &printable);

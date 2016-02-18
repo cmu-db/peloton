@@ -181,7 +181,7 @@ class Index : public Printable {
   IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
   // Generic key comparator between index key and given arbitrary key
   static bool Compare(const AbstractTuple &index_key,

@@ -142,7 +142,7 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   return partitioning;
 }
 
-const char *Clusterer::GetInfo() const {
+const std::string Clusterer::GetInfo() const {
   std::ostringstream os;
 
   oid_t cluster_itr;
@@ -153,7 +153,7 @@ const char *Clusterer::GetInfo() const {
     os << cluster_itr << " : " << GetFraction(cluster_itr)
        << " :: " << GetCluster(cluster_itr);
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End brain namespace

@@ -47,7 +47,7 @@ class ProjectionPlan : public AbstractPlan {
     return PLAN_NODE_TYPE_PROJECTION;
   }
 
-  inline std::string GetInfo() const { return "Projection"; }
+  const std::string GetInfo() const { return "Projection"; }
 
   void SetColumnIds(const std::vector<oid_t> &column_ids) {
     column_ids_ = column_ids;

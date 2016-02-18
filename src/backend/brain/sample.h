@@ -54,7 +54,7 @@ class Sample : public Printable {
   std::vector<oid_t> GetEnabledColumns() const;
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS

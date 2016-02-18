@@ -18,7 +18,7 @@
 namespace peloton {
 namespace catalog {
 
-const char *Constraint::GetInfo() const {
+const std::string Constraint::GetInfo() const {
   std::ostringstream os;
 
   os << "\tCONSTRAINT ";
@@ -32,7 +32,7 @@ const char *Constraint::GetInfo() const {
 
   os << "\n\n";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End catalog namespace

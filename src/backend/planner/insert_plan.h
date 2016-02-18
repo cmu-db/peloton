@@ -48,7 +48,7 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
-  std::string GetInfo() const { return "InsertPlan"; }
+  const std::string GetInfo() const { return "InsertPlan"; }
 
  private:
   /** @brief Target table. */

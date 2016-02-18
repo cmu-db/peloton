@@ -50,7 +50,7 @@ class AbstractScan : public AbstractPlan {
     return PLAN_NODE_TYPE_ABSTRACT_SCAN;
   }
 
-  inline std::string GetInfo() const { return "AbstractScan"; }
+  const std::string GetInfo() const { return "AbstractScan"; }
 
   storage::DataTable *GetTable() const { return target_table_; }
 

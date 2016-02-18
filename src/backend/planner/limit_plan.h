@@ -43,7 +43,7 @@ class LimitPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_LIMIT; }
 
-  inline std::string GetInfo() const { return "Limit"; }
+  const std::string GetInfo() const { return "Limit"; }
 
  private:
   const size_t limit_;   // as LIMIT in SQL standard

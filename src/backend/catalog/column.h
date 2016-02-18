@@ -86,7 +86,7 @@ class Column : public Printable {
   bool operator!=(const Column &other) const { return !(*this == other); }
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS

@@ -81,7 +81,7 @@ std::vector<oid_t> Sample::GetEnabledColumns() const {
   return enabled_columns;
 }
 
-const char *Sample::GetInfo() const {
+const std::string Sample::GetInfo() const {
   std::ostringstream os;
 
   os << "Sample :: ";

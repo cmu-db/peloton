@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 #include "nodes/nodes.h"
@@ -34,7 +35,7 @@ namespace planner {
 // Abstract Plan
 //===--------------------------------------------------------------------===//
 
-class AbstractPlan {
+class AbstractPlan : public Printable {
  public:
   AbstractPlan(const AbstractPlan &) = delete;
   AbstractPlan &operator=(const AbstractPlan &) = delete;
@@ -67,12 +68,8 @@ class AbstractPlan {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  // Debugging convenience methods
-  friend std::ostream &operator<<(std::ostream &os, const AbstractPlan &node);
-  std::string GetInfo(std::string spacer) const;
-
-  // Override in derived plan nodes
-  virtual std::string GetInfo() const;
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   // A plan node can have multiple children

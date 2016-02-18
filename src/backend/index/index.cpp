@@ -191,7 +191,7 @@ Index::Index(IndexMetadata *metadata) : metadata(metadata) {
   pool = new VarlenPool(BACKEND_TYPE_MM);
 }
 
-const char *Index::GetInfo() const {
+const std::string Index::GetInfo() const {
   std::stringstream os;
 
   os << "\t-----------------------------------------------------------\n";
@@ -205,7 +205,7 @@ const char *Index::GetInfo() const {
 
   os << "\t-----------------------------------------------------------\n";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 /**
