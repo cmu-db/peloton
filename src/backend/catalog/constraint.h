@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 #include "nodes/nodes.h"
@@ -26,7 +27,7 @@ namespace catalog {
 // Constraint Class
 //===--------------------------------------------------------------------===//
 
-class Constraint {
+class Constraint : public Printable {
  public:
   Constraint(ConstraintType type, std::string constraint_name,
              Node *raw_expr = nullptr)
@@ -54,9 +55,8 @@ class Constraint {
 
   std::string GetName() const { return constraint_name; }
 
-  // Get a string representation of this constraint
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const Constraint &constraint);
+  // Get a string representation for debugging
+  const char *GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//

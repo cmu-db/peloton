@@ -16,6 +16,7 @@
 #include <vector>
 #include <memory>
 
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -44,7 +45,7 @@ namespace executor {
  *
  * LogicalTiles are only instantiated via LogicalTileFactory.
  */
-class LogicalTile {
+class LogicalTile : Printable {
   friend class LogicalTileFactory;
 
  public:
@@ -100,8 +101,8 @@ class LogicalTile {
 
   void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const LogicalTile &logical_tile);
+  // Get a string representation for debugging
+  const char *GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator

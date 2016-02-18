@@ -224,7 +224,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     int nElements = value.ArrayLength();
     for (int i = 0; i < nElements; i++) {
       tmpVal = value.ItemAtIndex(i);
-      std::string str = tmpVal.Debug();
+      std::string str = tmpVal.GetInfo();
       expression::AbstractExpression *ce =
           expression::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/logical_tile.h"
 
 #include <cassert>
 #include <iostream>
@@ -20,6 +19,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile.h"
 #include "backend/common/value_factory.h"
+#include "backend/executor/logical_tile.h"
 
 namespace peloton {
 namespace executor {
@@ -393,8 +393,8 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   schema_ = std::move(new_schema);
 }
 
-/** @brief Returns a string representation of this tile. */
-std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
+const char *LogicalTile::GetInfo() const {
+  std::ostringstream os;
   os << "\t-----------------------------------------------------------\n";
 
   os << "\tLOGICAL TILE\n";
@@ -402,17 +402,17 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   os << "\t-----------------------------------------------------------\n";
   os << "\t VALUES : \n";
 
-  for (oid_t tuple_itr = 0; tuple_itr < lt.total_tuples_; tuple_itr++) {
+  for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
 
-    if(lt.visible_rows_[tuple_itr] == false)
+    if(visible_rows_[tuple_itr] == false)
       continue;
 
     os << "\t";
 
-    for (oid_t column_itr = 0; column_itr < lt.schema_.size(); column_itr++) {
-      const LogicalTile::ColumnInfo &cp = lt.schema_[column_itr];
+    for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
+      const LogicalTile::ColumnInfo &cp = schema_[column_itr];
 
-      oid_t base_tuple_id = lt.position_lists_[cp.position_list_idx][tuple_itr];
+      oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
 
       if (base_tuple_id == NULL_OID) {
         os << ValueFactory::GetNullValueByType(
@@ -427,7 +427,7 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  return os;
+  return os.str().c_str();
 }
 
 }  // End executor namespace
