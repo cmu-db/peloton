@@ -265,6 +265,14 @@
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
 
+#------------------------------------------------------------------------------
+# CLUSTERING
+#------------------------------------------------------------------------------
+
+# - Settings -
+
+#cluster_mode = on
+
 
 #------------------------------------------------------------------------------
 # QUERY TUNING
