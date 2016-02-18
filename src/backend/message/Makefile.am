@@ -10,7 +10,10 @@ message_FILES = \
 				backend/message/message.pelotonmsg.pb.cc \
                 backend/message/message.query.pb.cc \
                 backend/message/message.tuple.pb.cc \
-                backend/message/sender.cpp
+                backend/message/sender.cpp \
+                backend/message/RpcChannel.cc \
+                backend/message/RpcServer.cc \
+                backend/message/echo.pb.cc
 								
 message_INCLUDES = \
                   -I$(srcdir)/message
