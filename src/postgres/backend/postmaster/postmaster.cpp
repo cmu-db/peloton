@@ -235,6 +235,7 @@ bool Db_user_namespace = false;
 bool enable_bonjour = false;
 char *bonjour_name;
 bool restart_after_crash = true;
+bool EnableClusterMode = false;
 
 /* PIDs of special child processes; 0 when not running */
 thread_local static pid_t StartupPID = 0, BgWriterPID = 0, CheckpointerPID = 0,
@@ -1090,6 +1091,10 @@ void PostmasterMain(int argc, char *argv[]) {
   /* Write out nondefault GUC settings for child processes to use */
   write_nondefault_variables(PGC_POSTMASTER);
 //#endif
+
+  if (EnableClusterMode) {
+    write_stderr("\n\n\t\t\tCLUSTER MODE ENABLED\n\n");
+  }
 
   /*
    * Write the external PID file if requested

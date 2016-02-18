@@ -157,6 +157,7 @@ static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
+static bool check_cluster_mode(bool *newval, void **extra, GucSource source);
 static bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_canonical_path(char **newval, void **extra, GucSource source);
@@ -1118,6 +1119,16 @@ struct config_bool ConfigureNamesBool[] =
 		&restart_after_crash,
 		true,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"cluster_mode", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Enables Cluster Mode."),
+			NULL
+		},
+		&EnableClusterMode,
+		false,
+		check_cluster_mode, NULL, NULL
 	},
 
 	{
@@ -9822,6 +9833,17 @@ check_ssl(bool *newval, void **extra, GucSource source)
 		return false;
 	}
 #endif
+	return true;
+}
+
+static bool
+check_cluster_mode(bool *newval, void **extra, GucSource source)
+{
+	if (*newval && EnableClusterMode)
+	{
+		GUC_check_errmsg("Changing Cluster Mode is not supported by this build");
+		return false;
+	}
 	return true;
 }
 
