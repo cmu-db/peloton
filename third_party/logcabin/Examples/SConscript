@@ -1,0 +1,33 @@
+Import('env')
+
+libs = [ "pthread", "protobuf", "rt", "cryptopp" ]
+
+env.Default([
+    env.Program("Benchmark",
+                ["Benchmark.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("FailoverTest",
+                ["FailoverTest.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("HelloWorld",
+                ["HelloWorld.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("Reconfigure",
+                ["Reconfigure.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("ReconfigureTest",
+                ["ReconfigureTest.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("SmokeTest",
+                ["SmokeTest.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+
+    env.Program("TreeOps",
+                ["TreeOps.cc", "#build/liblogcabin.a"],
+                LIBS = libs),
+])

@@ -1,0 +1,3 @@
+pmem_movnt_align/TEST3: START: pmem_movnt_align
+ ./pmem_movnt_align$(nW) S
+pmem_movnt_align/TEST3: Done

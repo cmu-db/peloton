@@ -1,0 +1,3 @@
+vmem_create_in_region/TEST0: START: vmem_create_in_region
+ ./vmem_create_in_region$(nW)
+vmem_create_in_region/TEST0: Done

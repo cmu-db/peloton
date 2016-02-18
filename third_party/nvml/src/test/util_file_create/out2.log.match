@@ -1,0 +1,4 @@
+util_file_create/TEST2: START: util_file_create
+ ./util_file_create$(nW) 0x4000 0x7FFFFFFFFFFFFFFF:$(nW)/testfile
+$(nW)/testfile: util_file_create: $(*)
+util_file_create/TEST2: Done

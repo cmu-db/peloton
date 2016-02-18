@@ -39,24 +39,11 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     // Nothing to see here...
   }
 
-  NestedLoopJoinPlan(PelotonJoinType join_type,
-                     const expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info, NestLoop *nl)
-      : AbstractJoinPlan(join_type, predicate, proj_info) {
-	  nl_ = nl;
-  }
-
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_NESTLOOP;
   }
 
-  inline std::string GetInfo() const { return "NestedLoopJoin"; }
-
-  inline NestLoop* GetNestLoop() const { return nl_; }
-
- private:
-  NestLoop *nl_;
-}; // end class NestLoopJoinPlan
+  const std::string GetInfo() const { return "NestedLoopJoin"; }
 
 }  // namespace planner
 }  // namespace peloton

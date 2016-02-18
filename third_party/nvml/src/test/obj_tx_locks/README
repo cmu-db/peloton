@@ -1,0 +1,20 @@
+Linux NVM Library
+
+This is src/test/obj_tx_locks/README.
+
+This directory contains a unit test for transaction locks. At the beginning of
+each transaction, the user may provide an arbitrary number of mutexes
+and/or rwlocks, which will be taken before the transaction starts and released
+at transaction end.
+
+The obj_tx_locks application takes as command line arguments the file where the pool
+will be created and the type of test to be performed (single or multi-threaded):
+
+$ obj_tx_locks <file> [m]
+
+Where:
+	m - multi-threaded test
+
+Some of the tests are performed using valgrind and its following tools:
+	- drd
+	- helgrind

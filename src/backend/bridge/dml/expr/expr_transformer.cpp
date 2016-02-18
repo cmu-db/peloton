@@ -31,6 +31,9 @@
 #include "backend/expression/constant_value_expression.h"
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
+#include "postgres/include/executor/executor.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/string_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -68,7 +71,7 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       break;
 
     case T_ScalarArrayOpExpr:
-      peloton_expr = TransformScalarArrayOp(expr_state); // (inlined)ComparisonExpression is returned
+      peloton_expr = TransformScalarArrayOp(expr_state);
       break;
 
     case T_Var:
@@ -96,7 +99,7 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       break;
 
     default:
-      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr_state->expr));
   }
 
@@ -122,7 +125,7 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       break;
 
     default:
-      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
+      LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr));
   }
 
@@ -132,12 +135,12 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
 std::vector<std::unique_ptr<const expression::AbstractExpression>>
 ExprTransformer::TransformExprList(const ExprState *expr_state) {
   std::vector<std::unique_ptr<const expression::AbstractExpression>>
-  exprs;  // a list of AND'ed expressions
+      exprs;  // a list of AND'ed expressions
   if (nodeTag(expr_state->expr) == T_List) {
     const List *list = reinterpret_cast<const List *>(expr_state);
     ListCell *l;
     assert(list_length(list) > 0);
-    LOG_TRACE("Expression List of length %d", length);
+    LOG_TRACE("Expression List of length %d", list_length(list));
 
     foreach (l, list) {
       const ExprState *expr_state =
@@ -170,13 +173,13 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_TRACE("Probably handing a string constant ");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
     LOG_ERROR(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
-        "%lu \n",
+        "%lu ",
         const_expr->constlen, const_expr->constbyval,
         (long unsigned)const_expr->constvalue);
   }
@@ -198,13 +201,13 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else if (const_expr->constlen == -1) {
-    LOG_TRACE("Probably handing a string constant \n");
+    LOG_TRACE("Probably handing a string constant ");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   } else {
     LOG_ERROR(
         "Unknown Const profile: constlen = %d , constbyval = %d, constvalue = "
-        "%lu \n",
+        "%lu ",
         const_expr->constlen, const_expr->constbyval,
         (long unsigned)const_expr->constvalue);
   }
@@ -223,7 +226,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     int nElements = value.ArrayLength();
     for (int i = 0; i < nElements; i++) {
       tmpVal = value.ItemAtIndex(i);
-      std::string str = tmpVal.Debug();
+      std::string str = tmpVal.GetInfo();
       expression::AbstractExpression *ce =
           expression::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);
@@ -239,13 +242,13 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
 
 expression::AbstractExpression *ExprTransformer::TransformOp(
     const ExprState *es) {
-  LOG_TRACE("Transform Op \n");
+  LOG_TRACE("Transform Op ");
 
   auto op_expr = reinterpret_cast<const OpExpr *>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState *>(es);
 
   assert(op_expr->opfuncid !=
-      0);  // Hopefully it has been filled in by PG planner
+         0);  // Hopefully it has been filled in by PG planner
 
   auto pg_func_id = op_expr->opfuncid;
 
@@ -254,15 +257,14 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
 
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     const ExprState *es) {
-  LOG_TRACE("Transform ScalarArrayOp \n");
+  LOG_TRACE("Transform ScalarArrayOp ");
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr *>(es->expr);
-  // Ensure that it has been filled in by PG planner
-  assert(op_expr->opfuncid != 0);
-
+  // auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
+  assert(op_expr->opfuncid !=
+         0);  // Hopefully it has been filled in by PG planner
   const List *list = op_expr->args;
-  // Ensure that it has at most two parameters
-  assert(list_length(list) <= 2);
+  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
 
   // Extract function arguments (at most two)
   expression::AbstractExpression *lc = nullptr;
@@ -284,6 +286,8 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
   }
 
   return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
+  // return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc,
+  // rc);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformFunc(
@@ -296,8 +300,8 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto pg_func_id = fn_expr->funcid;
   auto rettype = fn_expr->funcresulttype;
 
-  LOG_TRACE("PG Func oid : %u , return type : %u \n", pg_func_id, rettype);
-  LOG_TRACE("PG funcid in planstate : %u\n", fn_es->func.fn_oid);
+  LOG_TRACE("PG Func oid : %u , return type : %u ", pg_func_id, rettype);
+  LOG_TRACE("PG funcid in planstate : %u", fn_es->func.fn_oid);
 
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
@@ -330,8 +334,8 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
 
   oid_t tuple_idx =
       (var_expr->varno == INNER_VAR
-          ? 1
-              : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+           ? 1
+           : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
   /*
    * Special case: an varattno of zero in PG
@@ -346,7 +350,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -358,8 +362,8 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
 
   oid_t tuple_idx =
       (var_expr->varno == INNER_VAR
-          ? 1
-              : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+           ? 1
+           : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
 
   /*
    * Special case: an varattno of zero in PG
@@ -374,7 +378,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -399,17 +403,17 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
 
   switch (bool_op) {
     case AND_EXPR:
-      LOG_TRACE("Bool AND list \n");
+      LOG_TRACE("Bool AND list ");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
-      LOG_TRACE("Bool OR list \n");
+      LOG_TRACE("Bool OR list ");
       return TransformList(reinterpret_cast<const ExprState *>(args),
                            EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR: {
-      LOG_TRACE("Bool NOT \n");
+      LOG_TRACE("Bool NOT ");
       auto child_es =
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
@@ -489,7 +493,7 @@ expression::AbstractExpression *ExprTransformer::TransformList(
   if (length == 0) return nullptr;
   LOG_TRACE("Expression List of length %d", length);
   std::list<expression::AbstractExpression *>
-  exprs;  // a list of AND'ed expressions
+      exprs;  // a list of AND'ed expressions
 
   foreach (l, list) {
     const ExprState *expr_state =
@@ -518,7 +522,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   auto itr = kPgFuncMap.find(pg_func_id);
 
   if (itr == kPgFuncMap.end()) {
-    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)\n",
+    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)",
               pg_func_id);
     return nullptr;
   }
@@ -530,23 +534,24 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     return expression::CastFactory();
   }
 
-  assert(list_length(args) <= 2);  // Hopefully it has at most two parameters
+  // mperron some string functions have 4 children
+  assert(list_length(args) <=
+         EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
-  // Extract function arguments (at most two)
-  expression::AbstractExpression *lc = nullptr;
-  expression::AbstractExpression *rc = nullptr;
+  // Extract function arguments (at most four)
+  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM];
+  for (int i = 0; i < EXPRESSION_MAX_ARG_NUM; i++) {
+    children[i] = nullptr;
+  }
   int i = 0;
   ListCell *arg;
   foreach (arg, args) {
     ExprState *argstate = (ExprState *)lfirst(arg);
 
     if (i >= func_meta.nargs) break;
-    if (i == 0)
-      lc = TransformExpr(argstate);
-    else if (i == 1)
-      rc = TransformExpr(argstate);
-    else
-      break;
+
+    children[i] = TransformExpr(argstate);
 
     i++;
   }
@@ -561,13 +566,31 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-      return expression::ComparisonFactory(plt_exprtype, lc, rc);
+      return expression::ComparisonFactory(plt_exprtype, children[0],
+                                           children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      return expression::OperatorFactory(plt_exprtype, lc, rc);
+    case EXPRESSION_TYPE_SUBSTR:
+    case EXPRESSION_TYPE_ASCII:
+    case EXPRESSION_TYPE_OCTET_LEN:
+    case EXPRESSION_TYPE_CHAR:
+    case EXPRESSION_TYPE_CHAR_LEN:
+    case EXPRESSION_TYPE_SPACE:
+    case EXPRESSION_TYPE_CONCAT:
+    case EXPRESSION_TYPE_OVERLAY:
+    case EXPRESSION_TYPE_LEFT:
+    case EXPRESSION_TYPE_RIGHT:
+    case EXPRESSION_TYPE_RTRIM:
+    case EXPRESSION_TYPE_LTRIM:
+    case EXPRESSION_TYPE_BTRIM:
+    case EXPRESSION_TYPE_REPLACE:
+    case EXPRESSION_TYPE_REPEAT:
+    case EXPRESSION_TYPE_POSITION:
+      return expression::OperatorFactory(plt_exprtype, children[0], children[1],
+                                         children[2], children[3]);
 
     default:
       LOG_ERROR(

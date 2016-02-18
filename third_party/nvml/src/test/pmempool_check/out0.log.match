@@ -1,0 +1,13 @@
+PMEMLOG: pool_hdr
+$(*): spoil: pool_hdr.signature=$(*)
+incorrect pool header checksum
+$(*): not consistent
+PMEMLOG: pmemlog
+$(*): spoil: pmemlog.start_offset=$(*)
+$(*): spoil: pmemlog.end_offset=$(*)
+invalid pmemlog.start_offset: 0x0
+$(*): not consistent
+PMEMBLK: pool_hdr
+$(*): spoil: pool_hdr.signature=$(*)
+incorrect pool header checksum
+$(*): not consistent

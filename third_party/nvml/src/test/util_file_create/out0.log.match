@@ -1,0 +1,12 @@
+util_file_create/TEST0: START: util_file_create
+ ./util_file_create$(nW) 0x4000 0x4000:$(nW)/testdir1 0x4000:/dev/zero 0x4000:$(nW)/testlink1 0x4000:$(nW)/testlink2 0x4000:$(nW)/testlink3 0x4000:$(nW)/testlink4 0x4000:$(nW)/testfile1 0x1000:$(nW)/testfile2 0x4000:$(nW)/testfile3
+$(nW)/testdir1: util_file_create: File exists
+/dev/zero: util_file_create: File exists
+$(nW)/testlink1: util_file_create: File exists
+$(nW)/testlink2: util_file_create: File exists
+$(nW)/testlink3: util_file_create: File exists
+$(nW)/testlink4: util_file_create: File exists
+$(nW)/testfile1: util_file_create: File exists
+$(nW)/testfile2: util_file_create: Invalid argument
+$(nW)/testfile3: created
+util_file_create/TEST0: Done
