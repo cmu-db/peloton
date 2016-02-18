@@ -1847,14 +1847,14 @@ std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_HYBRID};
 std::vector<oid_t> hyrise_column_counts = {200};
 
 static void RunHyriseTest() {
+  double direct_high_proj = 0.6;
   double direct_low_proj = 0.06;
-  double direct_high_proj = 0.7;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
 
   state.projectivity = direct_high_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+  
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1865,7 +1865,7 @@ void RunHyriseExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 200;
+  state.transactions = 20;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1881,8 +1881,8 @@ void RunHyriseExperiment() {
 
     // Go over all layouts
     oid_t layout_itr = 0;
-    // layout itr == 0 => HYRISE
-    // layout itr == 1 => HYBRID
+    // layout itr == 0 => HYBRID
+    // layout itr == 1 => HYRISE
     for (auto layout : hyrise_layouts) {
       // Set layout
       state.layout_mode = layout;
@@ -1890,15 +1890,15 @@ void RunHyriseExperiment() {
 
       std::cout << "----------------------------------------- \n\n";
 
-      state.projectivity = 0.06;
-      peloton_projectivity = 0.06;
+      state.projectivity = 0.6;
+      peloton_projectivity = 0.6;
       CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr != 0) {
+      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 1) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1907,7 +1907,7 @@ void RunHyriseExperiment() {
       RunHyriseTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr != 0) {
+      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 1) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
