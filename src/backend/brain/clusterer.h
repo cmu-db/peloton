@@ -62,7 +62,7 @@ class Clusterer : public Printable {
   column_map_type GetPartitioning(oid_t tile_count) const;
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//

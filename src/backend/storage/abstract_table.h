@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/common/printable.h"
 
 #include <string>
 
@@ -28,7 +29,7 @@ namespace storage {
 /**
  * Base class for all tables
  */
-class AbstractTable {
+class AbstractTable : public Printable {
  public:
   virtual ~AbstractTable();
 
@@ -54,8 +55,8 @@ class AbstractTable {
 
   catalog::Schema *GetSchema() { return schema; }
 
-  // Get a string representation of this table
-  friend std::ostream &operator<<(std::ostream &os, const AbstractTable &table);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  protected:
   //===--------------------------------------------------------------------===//

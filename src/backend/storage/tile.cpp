@@ -207,27 +207,28 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 // Utilities
 //===--------------------------------------------------------------------===//
 
-// Get a string representation of this tile
-std::ostream &operator<<(std::ostream &os, const Tile &tile) {
+const std::string Tile::GetInfo() const {
+  std::ostringstream os;
+
   os << "\t-----------------------------------------------------------\n";
 
   os << "\tTILE\n";
   os << "\tCatalog ::"
-     << " DB: " << tile.database_id << " Table: " << tile.table_id
-     << " Tile Group:  " << tile.tile_group_id << " Tile:  " << tile.tile_id
+     << " DB: " << database_id << " Table: " << table_id
+     << " Tile Group:  " << tile_group_id << " Tile:  " << tile_id
      << "\n";
 
   // Columns
   // os << "\t-----------------------------------------------------------\n";
   // os << "\tSCHEMA\n";
-  // os << (*tile.schema);
+  // os << (*schema);
 
   // Tuples
   os << "\t-----------------------------------------------------------\n";
   os << "\tDATA\n";
 
-  TupleIterator tile_itr(&tile);
-  Tuple tuple(&tile.schema);
+  TupleIterator tile_itr(this);
+  Tuple tuple(&schema);
 
   std::string last_tuple = "";
 
@@ -239,7 +240,7 @@ std::ostream &operator<<(std::ostream &os, const Tile &tile) {
 
   tuple.SetNull();
 
-  return os;
+  return os.str();
 }
 
 //===--------------------------------------------------------------------===//

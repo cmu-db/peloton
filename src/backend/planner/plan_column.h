@@ -50,7 +50,7 @@ class PlanColumn : public Printable {
   expression::AbstractExpression *GetExpression();
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
  private:
   const json_spirit::Object &m_col_object;

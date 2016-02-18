@@ -189,12 +189,12 @@ AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
   }
 }
 
-const char *AbstractExpression::GetInfo() const {
+const std::string AbstractExpression::GetInfo() const {
   std::ostringstream os;
 
   os << Debug();
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End expression namespace

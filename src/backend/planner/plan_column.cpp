@@ -85,7 +85,7 @@ expression::AbstractExpression *PlanColumn::GetExpression() {
   return expression;
 }
 
-const char *PlanColumn::GetInfo() const {
+const std::string PlanColumn::GetInfo() const {
   std::ostringstream os;
 
   os << "PlanColumn(";
@@ -94,7 +94,7 @@ const char *PlanColumn::GetInfo() const {
   os << "type=" << ValueTypeToString(m_type) << ", ";
   os << "size=" << m_size << ")";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // namespace planner

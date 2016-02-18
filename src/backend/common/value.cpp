@@ -495,6 +495,7 @@ const std::string Value::GetInfo() const {
   }
   std::ostringstream buffer;
   std::string out_val;
+
   const char *ptr;
   int64_t addr;
   buffer << ValueTypeToString(type) << "::";
@@ -540,7 +541,7 @@ const std::string Value::GetInfo() const {
       break;
   }
 
-  return buffer.str().c_str();
+  return buffer.str();
 }
 
 /**

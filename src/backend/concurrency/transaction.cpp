@@ -43,7 +43,7 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-const char *Transaction::GetInfo() const{
+const std::string Transaction::GetInfo() const{
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id
@@ -58,7 +58,7 @@ const char *Transaction::GetInfo() const{
   }
 
   os << " Ref count : " << std::setw(4) << ref_count << "\n";
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End concurrency namespace

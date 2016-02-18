@@ -45,7 +45,7 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return spacer + "OptimizedConstantValueExpression:" + value.GetInfo() + "\n";
+    return spacer + "OptimizedConstantValueExpression:" + value.GetInfo().c_str() + "\n";
   }
 
  protected:
