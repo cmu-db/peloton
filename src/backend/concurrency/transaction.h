@@ -86,7 +86,7 @@ class Transaction : public Printable {
   inline void DecrementRefCount();
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
   // Set result and status
   inline void SetResult(Result result);

@@ -46,23 +46,21 @@ std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {
   return os;
 }
 
-std::string AbstractPlan::GetInfo(std::string spacer) const {
-  std::ostringstream buffer;
-  buffer << spacer << "* " << this->GetInfo() << "\n";
-  std::string info_spacer = spacer + "  |";
-  buffer << this->GetInfo(info_spacer);
+const std::string AbstractPlan::GetInfo() const {
+  std::ostringstream os;
+
+  os << GetInfo();
 
   // Traverse the tree
-  std::string child_spacer = spacer + "  ";
+  std::string child_spacer = "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
        ctr++) {
-    buffer << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
-    buffer << children_[ctr]->GetInfo(child_spacer);
+    os << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
+    os << children_[ctr]->GetInfo();
   }
-  return (buffer.str());
-}
 
-std::string AbstractPlan::GetInfo() const { return ""; }
+  return os.str();
+}
 
 }  // namespace planner
 }  // namespace peloton

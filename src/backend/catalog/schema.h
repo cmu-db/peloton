@@ -161,7 +161,7 @@ class Schema : public Printable {
   }
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
  private:
   // size of fixed length columns

@@ -102,7 +102,7 @@ class AbstractExpression : public Printable {
   virtual std::string DebugInfo(const std::string &spacer) const = 0;
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
  protected:
   AbstractExpression();

@@ -118,15 +118,18 @@ void Database::UpdateStatsWithOid(const oid_t table_oid) const {
 // UTILITIES
 //===--------------------------------------------------------------------===//
 
-std::ostream &operator<<(std::ostream &os, const Database &database) {
-  os << "=====================================================\n";
-  os << "DATABASE(" << database.GetOid() << ") : \n";
+// Get a string representation for debugging
+const std::string Database::GetInfo() const {
+  std::ostringstream os;
 
-  oid_t table_count = database.GetTableCount();
+  os << "=====================================================\n";
+  os << "DATABASE(" << GetOid() << ") : \n";
+
+  oid_t table_count = GetTableCount();
   os << "Table Count : " << table_count << "\n";
 
   oid_t table_itr = 0;
-  for (auto table : database.tables) {
+  for (auto table : tables) {
     if (table != nullptr) {
       std::cout << "(" << ++table_itr << "/" << table_count << ") "
                 << "Table Name(" << table->GetOid()
@@ -164,7 +167,7 @@ std::ostream &operator<<(std::ostream &os, const Database &database) {
           auto foreign_key = table->GetForeignKey(foreign_key_itr);
 
           auto sink_table_oid = foreign_key->GetSinkTableOid();
-          auto sink_table = database.GetTableWithOid(sink_table_oid);
+          auto sink_table = GetTableWithOid(sink_table_oid);
 
           auto sink_table_schema = sink_table->GetSchema();
           os << "table name : " << sink_table->GetName() << " "
@@ -176,7 +179,7 @@ std::ostream &operator<<(std::ostream &os, const Database &database) {
 
   os << "=====================================================\n";
 
-  return os;
+  return os.str().c_str();
 }
 
 }  // End storage namespace

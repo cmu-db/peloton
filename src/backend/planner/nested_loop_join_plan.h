@@ -42,7 +42,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     return PLAN_NODE_TYPE_NESTLOOP;
   }
 
-  inline std::string GetInfo() const { return "NestedLoopJoin"; }
+  const std::string GetInfo() const { return "NestedLoopJoin"; }
 };
 
 }  // namespace planner

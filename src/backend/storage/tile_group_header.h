@@ -14,6 +14,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/platform.h"
+#include "backend/common/printable.h"
 #include "backend/logging/log_manager.h"
 
 #include <atomic>
@@ -46,7 +47,7 @@ namespace storage {
  *
  */
 
-class TileGroupHeader {
+class TileGroupHeader : public Printable {
   TileGroupHeader() = delete;
 
  public:
@@ -293,9 +294,8 @@ class TileGroupHeader {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this tile
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const TileGroupHeader &tile_group_header);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   // header entry size is the size of the layout described above

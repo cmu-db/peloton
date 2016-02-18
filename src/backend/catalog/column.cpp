@@ -40,7 +40,7 @@ void Column::SetInlined() {
   }
 }
 
-const char *Column::GetInfo() const {
+const std::string Column::GetInfo() const {
   std::ostringstream os;
 
   os << " name = " << column_name << ","
@@ -54,7 +54,7 @@ const char *Column::GetInfo() const {
     os << constraint;
   }
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End catalog namespace

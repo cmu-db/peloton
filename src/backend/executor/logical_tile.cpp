@@ -393,7 +393,7 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   schema_ = std::move(new_schema);
 }
 
-const char *LogicalTile::GetInfo() const {
+const std::string LogicalTile::GetInfo() const {
   std::ostringstream os;
   os << "\t-----------------------------------------------------------\n";
 

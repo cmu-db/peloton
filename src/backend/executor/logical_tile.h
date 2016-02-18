@@ -45,7 +45,7 @@ namespace executor {
  *
  * LogicalTiles are only instantiated via LogicalTileFactory.
  */
-class LogicalTile : Printable {
+class LogicalTile : public Printable {
   friend class LogicalTileFactory;
 
  public:
@@ -102,7 +102,7 @@ class LogicalTile : Printable {
   void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator

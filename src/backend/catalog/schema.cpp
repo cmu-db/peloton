@@ -175,7 +175,7 @@ Schema *Schema::AppendSchemaPtrList(
 }
 
 
-const char *Schema::GetInfo() const {
+const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
   os << "\tSchema :: "
@@ -189,7 +189,7 @@ const char *Schema::GetInfo() const {
     os << "\t Column " << column_itr << " :: " << columns[column_itr];
   }
 
-  return os.str().c_str();
+  return os.str();
 }
 
 // Compare two schemas

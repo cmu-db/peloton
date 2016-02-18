@@ -56,7 +56,7 @@ class Constraint : public Printable {
   std::string GetName() const { return constraint_name; }
 
   // Get a string representation for debugging
-  const char *GetInfo() const;
+  const std::string GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//
