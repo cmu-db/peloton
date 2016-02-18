@@ -1848,17 +1848,18 @@ std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_HYBRID};
 
 std::vector<oid_t> hyrise_column_counts = {200};
 
+std::vector<double> hyrise_projectivities = {1.0, 0.05, 1.0, 0.05};
+
 static void RunHyriseTest() {
 
-  for(double projectivity = 0.2; projectivity <= 1.0 ; projectivity += 0.2) {
-    state.projectivity = projectivity;
-    peloton_projectivity = state.projectivity;
-    state.operator_type = OPERATOR_TYPE_DIRECT;
-    RunDirectTest();
-  }
+    for(auto hyrise_projectivity : hyrise_projectivities) {
+        state.projectivity = hyrise_projectivity;
+        peloton_projectivity = state.projectivity;
+        state.operator_type = OPERATOR_TYPE_DIRECT;
+        RunDirectTest();
+    }
 
 }
-
 
 void RunHyriseExperiment() {
   auto orig_transactions = state.transactions;
@@ -1889,7 +1890,7 @@ void RunHyriseExperiment() {
 
       std::cout << "----------------------------------------- \n\n";
 
-      state.projectivity = 0.2;
+      state.projectivity = 1.0;
       peloton_projectivity = state.projectivity;
       CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
