@@ -1849,16 +1849,13 @@ std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_HYBRID};
 std::vector<oid_t> hyrise_column_counts = {200};
 
 static void RunHyriseTest() {
-  double direct_high_proj = 0.6;
-  double direct_low_proj = 0.06;
 
-  state.projectivity = direct_high_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-  
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  for(double projectivity = 0.2; projectivity <= 1.0 ; projectivity += 0.2) {
+    state.projectivity = projectivity;
+    peloton_projectivity = state.projectivity;
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
+  }
 
 }
 
@@ -1892,15 +1889,15 @@ void RunHyriseExperiment() {
 
       std::cout << "----------------------------------------- \n\n";
 
-      state.projectivity = 0.6;
-      peloton_projectivity = 0.6;
+      state.projectivity = 0.2;
+      peloton_projectivity = state.projectivity;
       CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 1) {
+      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 0) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1909,7 +1906,7 @@ void RunHyriseExperiment() {
       RunHyriseTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 1) {
+      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 0) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
