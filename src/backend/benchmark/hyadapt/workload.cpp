@@ -1844,7 +1844,7 @@ void RunVersionExperiment() {
   out.close();
 }
 
-std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_HYBRID};
+std::vector<LayoutType> hyrise_layouts = {LAYOUT_ROW, LAYOUT_HYBRID};
 
 std::vector<oid_t> hyrise_column_counts = {200};
 
@@ -1865,7 +1865,7 @@ void RunHyriseExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 20;
+  state.transactions = 50;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
@@ -1892,13 +1892,13 @@ void RunHyriseExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = state.projectivity;
-      CreateAndLoadTable((LayoutType) peloton_layout_mode);
+      CreateAndLoadTable((LayoutType) LAYOUT_HYBRID);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 0) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1907,7 +1907,7 @@ void RunHyriseExperiment() {
       RunHyriseTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID && layout_itr == 0) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
