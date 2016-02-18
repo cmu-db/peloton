@@ -288,6 +288,26 @@ enum ExpressionType {
   EXPRESSION_TYPE_ROW_SUBQUERY = 400,
   EXPRESSION_TYPE_SELECT_SUBQUERY = 401,
 
+  // -----------------------------
+  // String operators
+  // -----------------------------
+  EXPRESSION_TYPE_SUBSTR = 500,
+  EXPRESSION_TYPE_ASCII = 501,
+  EXPRESSION_TYPE_OCTET_LEN = 502,
+  EXPRESSION_TYPE_CHAR = 503,
+  EXPRESSION_TYPE_CHAR_LEN = 504,
+  EXPRESSION_TYPE_SPACE = 505,
+  EXPRESSION_TYPE_REPEAT = 506,
+  EXPRESSION_TYPE_POSITION = 507,
+  EXPRESSION_TYPE_LEFT = 508,
+  EXPRESSION_TYPE_RIGHT = 509,
+  EXPRESSION_TYPE_CONCAT = 510,
+  EXPRESSION_TYPE_LTRIM = 511,
+  EXPRESSION_TYPE_RTRIM = 512,
+  EXPRESSION_TYPE_BTRIM = 513,
+  EXPRESSION_TYPE_REPLACE = 514,
+  EXPRESSION_TYPE_OVERLAY = 515,
+
   //===--------------------------------------------------------------------===//
   // Parser
   //===--------------------------------------------------------------------===//
