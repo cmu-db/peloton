@@ -21,6 +21,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>
+#include "backend/expression/function_expression.h"
 
 namespace peloton {
 
@@ -183,6 +184,25 @@ inline Value Value::Call<FUNC_POSITION_CHAR>(
         Value::GetCharLength(poolStr.substr(0, position).c_str(), position) + 1;
   }
   return GetIntegerValue(static_cast<int32_t>(position));
+}
+
+// added to implement the ASCII function
+// currently does not support unicode strings
+template <>
+inline Value Value::CallUnary<FUNC_ASCII>() const {
+  if (IsNull()) {
+    return GetNullValue();
+  }
+  if (GetValueType() != VALUE_TYPE_VARCHAR) {
+    ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
+  }
+  const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
+  if (valueUTF8Length == 0) {
+    return GetNullValue(VALUE_TYPE_INTEGER);
+  }
+
+  char *valueChars = reinterpret_cast<char *>(GetObjectValueWithoutNull());
+  return GetIntegerValue(valueChars[0]);
 }
 
 /** implement the 2-argument SQL LEFT function */
@@ -352,8 +372,7 @@ static inline std::string trim_function(std::string source,
 /** implement the 2-argument SQL TRIM functions */
 inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
                                     bool leading, bool trailing) {
-  assert(arguments.size() == 2);
-
+  //  assert(arguments.size() == 2);
   for (size_t i = 0; i < arguments.size(); i++) {
     const Value &arg = arguments[i];
     if (arg.IsNull()) {
@@ -362,24 +381,34 @@ inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
   }
 
   char *ptr;
-  const Value &trimChar = arguments[0];
-  if (trimChar.GetValueType() != VALUE_TYPE_VARCHAR) {
-    ThrowCastSQLException(trimChar.GetValueType(), VALUE_TYPE_VARCHAR);
+  std::string trimArg;
+  int32_t length;
+  // added to handle the 1 argument case where space is def
+  if (arguments.size() == 2) {
+    const Value &trimChar = arguments[0];
+    if (trimChar.GetValueType() != VALUE_TYPE_VARCHAR) {
+      ThrowCastSQLException(trimChar.GetValueType(), VALUE_TYPE_VARCHAR);
+    }
+
+    ptr = reinterpret_cast<char *>(trimChar.GetObjectValueWithoutNull());
+    length = trimChar.GetObjectLengthWithoutNull();
+
+    trimArg = std::string(ptr, length);
+  } else {
+    trimArg = " ";
+    length = 1;
   }
+  std::string inputStr;
 
-  ptr = reinterpret_cast<char *>(trimChar.GetObjectValueWithoutNull());
-  int32_t length = trimChar.GetObjectLengthWithoutNull();
+  const Value &strVal = arguments.size() == 2 ? arguments[1] : arguments[0];
 
-  std::string trimArg = std::string(ptr, length);
-
-  const Value &strVal = arguments[1];
   if (strVal.GetValueType() != VALUE_TYPE_VARCHAR) {
-    ThrowCastSQLException(trimChar.GetValueType(), VALUE_TYPE_VARCHAR);
+    ThrowCastSQLException(strVal.GetValueType(), VALUE_TYPE_VARCHAR);
   }
 
   ptr = reinterpret_cast<char *>(strVal.GetObjectValueWithoutNull());
   int32_t objectLength = strVal.GetObjectLengthWithoutNull();
-  std::string inputStr = std::string(ptr, objectLength);
+  inputStr = std::string(ptr, objectLength);
 
   // SQL03 standard only allows 1 character trim character.
   // In order to be compatible with other popular databases like MySQL,
@@ -390,6 +419,7 @@ inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
   }
 
   std::string result = trim_function(inputStr, trimArg, leading, trailing);
+  LOG_INFO("%s %s %s", result.c_str(), inputStr.c_str(), trimArg.c_str());
   return GetTempStringValue(result.c_str(), result.length());
 }
 
