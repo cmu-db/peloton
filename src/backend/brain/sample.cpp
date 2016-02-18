@@ -81,14 +81,16 @@ std::vector<oid_t> Sample::GetEnabledColumns() const {
   return enabled_columns;
 }
 
-std::ostream &operator<<(std::ostream &os, const Sample &sample) {
+const char *Sample::GetInfo() const {
+  std::ostringstream os;
+
   os << "Sample :: ";
 
-  for (auto column : sample.columns_accessed_) os << std::round(column) << " ";
-  os << "  ::  " << std::round(sample.weight_);
+  for (auto column : columns_accessed_) os << std::round(column) << " ";
+  os << "  ::  " << std::round(weight_);
   os << "\n";
 
-  return os;
+  return os.str().c_str();
 }
 
 }  // End brain namespace

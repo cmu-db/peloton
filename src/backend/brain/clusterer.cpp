@@ -142,16 +142,18 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   return partitioning;
 }
 
-std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer) {
+const char *Clusterer::GetInfo() const {
+  std::ostringstream os;
+
   oid_t cluster_itr;
   oid_t cluster_count;
 
-  cluster_count = clusterer.GetClusterCount();
+  cluster_count = GetClusterCount();
   for (cluster_itr = 0; cluster_itr < cluster_count; cluster_itr++)
-    os << cluster_itr << " : " << clusterer.GetFraction(cluster_itr)
-       << " :: " << clusterer.GetCluster(cluster_itr);
+    os << cluster_itr << " : " << GetFraction(cluster_itr)
+       << " :: " << GetCluster(cluster_itr);
 
-  return os;
+  return os.str().c_str();
 }
 
 }  // End brain namespace

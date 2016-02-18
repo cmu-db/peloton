@@ -174,20 +174,22 @@ Schema *Schema::AppendSchemaPtrList(
   return ret_schema;
 }
 
-// Get a string representation of this schema for debugging
-std::ostream &operator<<(std::ostream &os, const Schema &schema) {
+
+const char *Schema::GetInfo() const {
+  std::ostringstream os;
+
   os << "\tSchema :: "
-     << " column_count = " << schema.column_count
-     << " is_inlined = " << schema.tuple_is_inlined << ","
-     << " length = " << schema.length << ","
-     << " uninlined_column_count = " << schema.uninlined_column_count
+     << " column_count = " << column_count
+     << " is_inlined = " << tuple_is_inlined << ","
+     << " length = " << length << ","
+     << " uninlined_column_count = " << uninlined_column_count
      << std::endl;
 
-  for (oid_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
-    os << "\t Column " << column_itr << " :: " << schema.columns[column_itr];
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    os << "\t Column " << column_itr << " :: " << columns[column_itr];
   }
 
-  return os;
+  return os.str().c_str();
 }
 
 // Compare two schemas

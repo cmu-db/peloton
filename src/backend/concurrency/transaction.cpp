@@ -43,20 +43,22 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-std::ostream &operator<<(std::ostream &os, const Transaction &txn) {
-  os << "\tTxn :: @" << &txn << " ID : " << std::setw(4) << txn.txn_id
-     << " Commit ID : " << std::setw(4) << txn.cid
-     << " Last Commit ID : " << std::setw(4) << txn.last_cid
-     << " Result : " << txn.result_;
+const char *Transaction::GetInfo() const{
+  std::ostringstream os;
 
-  if (txn.next == nullptr) {
-    os << " Next : " << std::setw(4) << txn.next;
+  os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id
+     << " Commit ID : " << std::setw(4) << cid
+     << " Last Commit ID : " << std::setw(4) << last_cid
+     << " Result : " << result_;
+
+  if (next == nullptr) {
+    os << " Next : " << std::setw(4) << next;
   } else {
-    os << " Next : " << std::setw(4) << txn.next->txn_id;
+    os << " Next : " << std::setw(4) << next->txn_id;
   }
 
-  os << " Ref count : " << std::setw(4) << txn.ref_count << "\n";
-  return os;
+  os << " Ref count : " << std::setw(4) << ref_count << "\n";
+  return os.str().c_str();
 }
 
 }  // End concurrency namespace

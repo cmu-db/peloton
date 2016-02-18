@@ -16,6 +16,7 @@
 #include <map>
 
 #include "backend/brain/sample.h"
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -31,7 +32,7 @@ namespace brain {
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 // Sequential k-Means Clustering
-class Clusterer {
+class Clusterer : public Printable {
  public:
   Clusterer(oid_t cluster_count, oid_t sample_column_count,
             double param = NEW_SAMPLE_WEIGHT)
@@ -60,8 +61,8 @@ class Clusterer {
   // get partitioning
   column_map_type GetPartitioning(oid_t tile_count) const;
 
-  // Get a string representation of clusterer
-  friend std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer);
+  // Get a string representation for debugging
+  const char *GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//
