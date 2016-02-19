@@ -51,7 +51,7 @@ class OrderByPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ORDERBY; }
 
-  inline std::string GetInfo() const { return "OrderBy"; }
+  const std::string GetInfo() const { return "OrderBy"; }
 
  private:
   /** @brief Column Ids to sort keys w.r.t input tiles.

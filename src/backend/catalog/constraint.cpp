@@ -18,19 +18,21 @@
 namespace peloton {
 namespace catalog {
 
-std::ostream &operator<<(std::ostream &os, const Constraint &constraint) {
+const std::string Constraint::GetInfo() const {
+  std::ostringstream os;
+
   os << "\tCONSTRAINT ";
 
-  os << constraint.GetName() << " ";
-  os << ConstraintTypeToString(constraint.constraint_type);
+  os << GetName() << " ";
+  os << ConstraintTypeToString(constraint_type);
 
-  if (constraint.GetType() == CONSTRAINT_TYPE_DEFAULT) {
-    os << " Default expression : " << nodeToString(constraint.expr);
+  if (GetType() == CONSTRAINT_TYPE_DEFAULT) {
+    os << " Default expression : " << nodeToString(expr);
   }
 
   os << "\n\n";
 
-  return os;
+  return os.str();
 }
 
 }  // End catalog namespace

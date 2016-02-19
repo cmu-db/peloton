@@ -488,13 +488,14 @@ TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
 /*
  * Produce a debugging string describing an Value.
  */
-std::string Value::Debug() const {
+const std::string Value::GetInfo() const {
   const ValueType type = GetValueType();
   if (IsNull()) {
     return "<NULL>";
   }
   std::ostringstream buffer;
   std::string out_val;
+
   const char *ptr;
   int64_t addr;
   buffer << ValueTypeToString(type) << "::";
@@ -539,8 +540,8 @@ std::string Value::Debug() const {
       buffer << "(no details)";
       break;
   }
-  std::string ret(buffer.str());
-  return (ret);
+
+  return buffer.str();
 }
 
 /**
@@ -1070,7 +1071,7 @@ int WarnIf(int condition, __attribute__((unused)) const char *message) {
 
 // Get a string representation of this value
 std::ostream &operator<<(std::ostream &os, const Value &value) {
-  os << value.Debug();
+  os << value.GetInfo();
   return os;
 }
 

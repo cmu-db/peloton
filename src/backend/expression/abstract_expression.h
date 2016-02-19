@@ -19,6 +19,7 @@
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
+#include "backend/common/printable.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"
@@ -52,7 +53,7 @@ namespace expression {
  * constant and read-only during an execution.
  */
 
-class AbstractExpression {
+class AbstractExpression : public Printable {
  public:
   // destroy this node and all children
   virtual ~AbstractExpression();
@@ -100,9 +101,8 @@ class AbstractExpression {
   // stream positioned at the root expression node
   static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
 
-  /// Get a string representation for debugging
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const AbstractExpression &expr);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  protected:
   AbstractExpression();

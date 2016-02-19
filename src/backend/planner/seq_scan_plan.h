@@ -42,7 +42,7 @@ class SeqScanPlan : public AbstractScan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
-  inline std::string GetInfo() const { return "SeqScan"; }
+  const std::string GetInfo() const { return "SeqScan"; }
 };
 
 }  // namespace planner

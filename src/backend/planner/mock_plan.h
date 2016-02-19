@@ -37,7 +37,7 @@ class MockPlan : public planner::AbstractPlan {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  inline std::string GetInfo() const { return "Mock"; }
+  inline const std::string GetInfo() const { return "Mock"; }
 };
 
 }  // namespace test

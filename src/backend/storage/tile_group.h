@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "backend/common/types.h"
+#include "backend/common/printable.h"
 
 namespace peloton {
 
@@ -53,7 +54,7 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
  *
  * TileGroups are only instantiated via TileGroupFactory.
  */
-class TileGroup {
+class TileGroup : public Printable {
   friend class Tile;
   friend class TileGroupFactory;
 
@@ -106,9 +107,8 @@ class TileGroup {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this tile group
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const TileGroup &tile_group);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   oid_t GetNextTupleSlot() const;
 

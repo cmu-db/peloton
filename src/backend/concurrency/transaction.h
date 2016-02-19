@@ -14,6 +14,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
+#include "backend/common/printable.h"
 #include "backend/concurrency/transaction_manager.h"
 
 #include <atomic>
@@ -28,7 +29,7 @@ namespace concurrency {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-class Transaction {
+class Transaction : public Printable {
   friend class TransactionManager;
 
   Transaction(Transaction const &) = delete;
@@ -85,8 +86,8 @@ class Transaction {
 
   inline void DecrementRefCount();
 
-  // Get a string representation of this txn
-  friend std::ostream &operator<<(std::ostream &os, const Transaction &txn);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   // Set result and status
   inline void SetResult(Result result);

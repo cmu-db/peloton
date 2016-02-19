@@ -16,6 +16,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/serializer.h"
 #include "backend/common/pool.h"
+#include "backend/common/printable.h"
 
 #include <mutex>
 
@@ -38,7 +39,7 @@ class TupleIterator;
  *
  * NOTE: MVCC is implemented on the shared TileGroupHeader.
  */
-class Tile {
+class Tile : public Printable {
   friend class TileFactory;
   friend class TupleIterator;
   friend class TileGroupHeader;
@@ -143,8 +144,8 @@ class Tile {
 
   TupleIterator GetIterator();
 
-  // Get a string representation of this tile
-  friend std::ostream &operator<<(std::ostream &os, const Tile &tile);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization

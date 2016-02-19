@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/common/printable.h"
 #include "backend/catalog/constraint.h"
 
 namespace peloton {
@@ -21,7 +22,7 @@ namespace catalog {
 // Column
 //===--------------------------------------------------------------------===//
 
-class Column {
+class Column : public Printable {
   friend class Constraint;
 
  public:
@@ -85,7 +86,7 @@ class Column {
   bool operator!=(const Column &other) const { return !(*this == other); }
 
   // Get a string representation for debugging
-  friend std::ostream &operator<<(std::ostream &os, const Column &column);
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS

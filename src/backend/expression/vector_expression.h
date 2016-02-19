@@ -57,7 +57,7 @@ class VectorExpression : public AbstractExpression {
       ExpressionType expression_type = argument->GetExpressionType();
       int value_type = argument->GetValueType();
       ConstantValueExpression *pcs = (ConstantValueExpression *)argument;
-      std::cout << *pcs << expression_type << value_type;
+      std::cout << pcs->DebugInfo("") << expression_type << value_type;
     }
 
     std::vector<Value> in_values;

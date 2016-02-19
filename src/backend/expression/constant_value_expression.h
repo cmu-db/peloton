@@ -40,18 +40,12 @@ class ConstantValueExpression : public AbstractExpression {
                  __attribute__((unused))
                  executor::ExecutorContext *context) const {
     LOG_TRACE("returning constant value as Value:%s type:%d",
-              value.Debug().c_str(), (int)this->m_type);
+              value.GetInfo().c_str(), (int)this->m_type);
     return this->value;
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return spacer + "OptimizedConstantValueExpression:" + value.Debug() + "\n";
-  }
-
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const ConstantValueExpression &expr) {
-    os << expr.DebugInfo(" ");
-    return os;
+    return spacer + "OptimizedConstantValueExpression:" + value.GetInfo() + "\n";
   }
 
  protected:

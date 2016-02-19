@@ -60,20 +60,21 @@ TileGroupHeader::~TileGroupHeader() {
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
-std::ostream &operator<<(std::ostream &os,
-                         const TileGroupHeader &tile_group_header) {
+const std::string TileGroupHeader::GetInfo() const {
+  std::ostringstream os;
+
   os << "\t-----------------------------------------------------------\n";
   os << "\tTILE GROUP HEADER \n";
 
-  oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
+  oid_t active_tuple_slots = GetNextTupleSlot();
   peloton::ItemPointer item;
 
   for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
-    txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
-    cid_t beg_commit_id = tile_group_header.GetBeginCommitId(header_itr);
-    cid_t end_commit_id = tile_group_header.GetEndCommitId(header_itr);
-    bool insert_commit = tile_group_header.GetInsertCommit(header_itr);
-    bool delete_commit = tile_group_header.GetDeleteCommit(header_itr);
+    txn_id_t txn_id = GetTransactionId(header_itr);
+    cid_t beg_commit_id = GetBeginCommitId(header_itr);
+    cid_t end_commit_id = GetEndCommitId(header_itr);
+    bool insert_commit = GetInsertCommit(header_itr);
+    bool delete_commit = GetDeleteCommit(header_itr);
 
     int width = 10;
     os << "\t txn id : ";
@@ -107,14 +108,15 @@ std::ostream &operator<<(std::ostream &os,
       os << "X";
 
     peloton::ItemPointer location =
-        tile_group_header.GetPrevItemPointer(header_itr);
+        GetPrevItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
 
-  return os;
+
+  return os.str();
 }
 
 void TileGroupHeader::Sync() {

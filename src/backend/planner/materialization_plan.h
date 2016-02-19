@@ -58,7 +58,7 @@ class MaterializationPlan : public AbstractPlan {
     return PLAN_NODE_TYPE_MATERIALIZE;
   }
 
-  inline std::string GetInfo() const { return "Materialize"; }
+  const std::string GetInfo() const { return "Materialize"; }
 
  private:
   /**

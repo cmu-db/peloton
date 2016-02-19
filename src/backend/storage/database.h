@@ -12,9 +12,10 @@
 
 #pragma once
 
-#include "backend/storage/data_table.h"
-
 #include <iostream>
+
+#include "backend/common/printable.h"
+#include "backend/storage/data_table.h"
 
 struct peloton_status;
 struct dirty_table_info;
@@ -27,7 +28,7 @@ namespace storage {
 // DATABASE
 //===--------------------------------------------------------------------===//
 
-class Database {
+class Database : public Printable {
  public:
   Database(Database const &) = delete;
 
@@ -69,8 +70,8 @@ class Database {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this database
-  friend std::ostream &operator<<(std::ostream &os, const Database &database);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  protected:
   //===--------------------------------------------------------------------===//

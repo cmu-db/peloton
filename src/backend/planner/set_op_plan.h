@@ -38,7 +38,7 @@ class SetOpPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SETOP; }
 
-  inline std::string GetInfo() const { return "SetOp"; }
+  const std::string GetInfo() const { return "SetOp"; }
 
  private:
   /** @brief Set Operation of this node */

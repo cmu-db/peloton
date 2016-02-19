@@ -621,7 +621,7 @@ class Value {
   };
 
   /* Return a string full of arcana and wonder. */
-  std::string Debug() const;
+  const std::string GetInfo() const;
 
   // Constants for Decimal type
   // Precision and scale (inherent in the schema)

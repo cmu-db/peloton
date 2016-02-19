@@ -48,7 +48,7 @@ class UpdatePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  std::string GetInfo() const { return "UpdatePlan"; }
+  const std::string GetInfo() const { return "UpdatePlan"; }
 
  private:
   /** @brief Target table. */

@@ -32,7 +32,7 @@ class AppendPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_APPEND; }
 
-  inline std::string GetInfo() const { return "Append"; }
+  const std::string GetInfo() const { return "Append"; }
 
  private:
   // nothing
