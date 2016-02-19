@@ -235,7 +235,6 @@ bool Db_user_namespace = false;
 bool enable_bonjour = false;
 char *bonjour_name;
 bool restart_after_crash = true;
-bool EnableClusterMode = false;
 
 /* PIDs of special child processes; 0 when not running */
 thread_local static pid_t StartupPID = 0, BgWriterPID = 0, CheckpointerPID = 0,
@@ -351,6 +350,12 @@ static DNSServiceRef bonjour_sdref = NULL;
 
 // TODO: Peloton Changes
 bool PelotonTestMode = false;
+bool EnableClusterMode = false;
+int ClusterId = 0;
+int ClusterPortNumber = 5254;
+char *ClusterAddress = "localhost";
+bool IsClusterLeader = false;
+char *ClusterParticipantAddresses = "none";
 
 /*
  * postmaster.c - function prototypes
@@ -1093,7 +1098,9 @@ void PostmasterMain(int argc, char *argv[]) {
 //#endif
 
   if (EnableClusterMode) {
-    write_stderr("\n\n\t\t\tCLUSTER MODE ENABLED\n\n");
+    write_stderr("\n\n\t\t\tCLUSTER MODE ENABLED\n\n\t\t\tCluster ID: %d\n\t\t\tCluster Port: %d\n",ClusterId,ClusterPortNumber);
+    write_stderr("\t\t\tCluster Address: %s\n\n\t\t\tCluster Leader: %s\n",ClusterAddress,(IsClusterLeader?"true":"false"));
+    write_stderr("\t\t\tCluster Participant Addresses: %s\n",ClusterParticipantAddresses);
   }
 
   /*

@@ -32,8 +32,11 @@ extern bool enable_bonjour;
 extern char *bonjour_name;
 extern bool restart_after_crash;
 extern bool EnableClusterMode;
-
-
+extern int  ClusterId;
+extern int  ClusterPortNumber;
+extern char *ClusterAddress;
+extern bool IsClusterLeader;
+extern char *ClusterParticipantAddresses;
 
 #ifdef WIN32
 extern HANDLE PostmasterHandle;
