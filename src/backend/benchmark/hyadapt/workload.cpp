@@ -1844,11 +1844,11 @@ void RunVersionExperiment() {
   out.close();
 }
 
-std::vector<LayoutType> hyrise_layouts = {LAYOUT_ROW, LAYOUT_HYBRID};
+std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
 
-std::vector<oid_t> hyrise_column_counts = {200};
+std::vector<oid_t> hyrise_column_counts = {50};
 
-std::vector<double> hyrise_projectivities = {1.0, 0.05, 1.0, 0.05};
+std::vector<double> hyrise_projectivities = {0.9, 0.04};
 
 static void RunHyriseTest() {
 
@@ -1890,9 +1890,17 @@ void RunHyriseExperiment() {
 
       std::cout << "----------------------------------------- \n\n";
 
-      state.projectivity = 1.0;
+      state.projectivity = hyrise_projectivities[0];
       peloton_projectivity = state.projectivity;
-      CreateAndLoadTable((LayoutType) LAYOUT_HYBRID);
+      // HYPER
+      if(layout == LAYOUT_COLUMN) {
+        CreateAndLoadTable((LayoutType) LAYOUT_COLUMN);
+      }
+      // HYRISE and HYBRID
+      else {
+        CreateAndLoadTable((LayoutType) LAYOUT_HYBRID);
+      }
+
 
       // Reset query counter
       query_itr = 0;
