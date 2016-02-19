@@ -1098,9 +1098,10 @@ void PostmasterMain(int argc, char *argv[]) {
 //#endif
 
   if (EnableClusterMode) {
-    write_stderr("\n\n\t\t\tCLUSTER MODE ENABLED\n\n\t\t\tCluster ID: %d\n\t\t\tCluster Port: %d\n",ClusterId,ClusterPortNumber);
-    write_stderr("\t\t\tCluster Address: %s\n\n\t\t\tCluster Leader: %s\n",ClusterAddress,(IsClusterLeader?"true":"false"));
-    write_stderr("\t\t\tCluster Participant Addresses: %s\n",ClusterParticipantAddresses);
+    /*
+     * Cluster config options: ClusterId, ClusterPortNumber, ClusterAddress, 
+     * ClusterParticipantAddresses, IsClusterLeader are available for use here
+     */
   }
 
   /*
