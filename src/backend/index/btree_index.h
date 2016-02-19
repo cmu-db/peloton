@@ -14,13 +14,14 @@
 
 #include <vector>
 #include <string>
-#include <map>
+
+#include "backend/catalog/manager.h"
+#include "backend/common/allocator.h"
+#include "backend/common/platform.h"
+#include "backend/common/types.h"
+#include "backend/index/index.h"
 
 #include "stx/btree_multimap.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/types.h"
-#include "backend/common/synch.h"
-#include "backend/index/index.h"
 
 namespace peloton {
 namespace index {

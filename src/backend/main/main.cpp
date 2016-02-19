@@ -11,18 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-// for nanomsg test by michael
-#include <nanomsg/nn.h>
-#include <nanomsg/pipeline.h>
-#include <nanomsg/reqrep.h>
-#include <nanomsg/pair.h>
-#include <nanomsg/bus.h>
-#include <iostream>
-#include <assert.h>
-#define NODE0 "node0"
-#define NODE1 "node1"
-#define NODE2 "node2"
-// end test
 
 #include "postgres/include/postgres.h"
 

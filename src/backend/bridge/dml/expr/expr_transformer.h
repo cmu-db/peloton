@@ -17,6 +17,7 @@
 #include "postgres.h"
 #include "nodes/execnodes.h"
 
+#define EXPRESSION_MAX_ARG_NUM 4
 namespace peloton {
 namespace bridge {
 

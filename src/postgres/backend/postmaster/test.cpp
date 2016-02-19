@@ -1,7 +1,3 @@
-//#include "/home/michael/peloton/src/backend/message/message.pelotonmsg.pb.h"
-#include <iostream>
-#include "backend/message/message.query.pb.h"
-
 /*-------------------------------------------------------------------------
  *
  * postmaster.c
@@ -95,18 +91,6 @@
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
 #include <pthread.h>
 #endif
-
-// Test nanomsg by Michael
-#include <nanomsg/nn.h>
-#include <nanomsg/reqrep.h>
-#include <nanomsg/pair.h>
-#include <nanomsg/bus.h>
-//#include "/home/michael/peloton/src/backend/message/message.pelotonmsg.pb.h"
-//#include "backend/message/message.query.pb.h"
-//#include "backend/message/nanomsg.h"
-//#include "backend/message/pelotomsg.pb.h"
-//#include "backend/message/sender.h"
-// end test
 
 #include "access/transam.h"
 #include "access/xlog.h"

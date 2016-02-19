@@ -13,7 +13,8 @@
 #pragma once
 
 #include "backend/common/logger.h"
-#include "backend/common/synch.h"
+#include "backend/common/platform.h"
+#include "backend/common/printable.h"
 #include "backend/logging/log_manager.h"
 
 #include <atomic>

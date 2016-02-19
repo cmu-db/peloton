@@ -8,6 +8,7 @@
  *-------------------------------------------------------------------------
  */
 
+
 #include <unordered_map>
 
 #include "nodes/pprint.h"
@@ -29,8 +30,6 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h"
-#include "backend/expression/comparison_expression.h"
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
@@ -226,7 +225,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
     int nElements = value.ArrayLength();
     for (int i = 0; i < nElements; i++) {
       tmpVal = value.ItemAtIndex(i);
-      std::string str = tmpVal.GetInfo();
+      std::string str = tmpVal.Debug();
       expression::AbstractExpression *ce =
           expression::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);

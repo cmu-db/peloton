@@ -75,12 +75,12 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
     plan_node =
-        new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr, nl);
+    	new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr, nl);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
-                                                project_info.release(), nl);
+                                                    project_info.release(), nl);
     result = plan_node;
   }
 

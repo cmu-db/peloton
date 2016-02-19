@@ -69,12 +69,6 @@ bool IndexScanExecutor::DInit() {
   runtime_keys_ = node.GetRunTimeKeys();
   predicate_ = node.GetPredicate();
 
-  // Debug by Michael
-  int i_size = key_column_ids_.size();
-  int i_size2 = values_.size();
-  std::cout << i_size << i_size2;
-  // end debug
-
   if (runtime_keys_.size() != 0) {
     assert(runtime_keys_.size() == values_.size());
 

@@ -137,7 +137,7 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_UniqueState: {
-      // This is not a elegant solution, and should be improved soon. by Michael
+      // by Michael
       child_planstate = PrepareUniqueState(reinterpret_cast<UniqueState*>(planstate));
     } break;
 
@@ -433,63 +433,6 @@ void DMLUtils::PrepareAbstractJoinPlanState(AbstractJoinPlanState *j_plan_state,
 NestLoopPlanState *
 DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
 
-	// Debug by Michael
-    NestLoop   *nl;
-    PlanState  *innerPlan;
-    PlanState  *outerPlan;
-    //TupleTableSlot *outerTupleSlot;
-    //TupleTableSlot *innerTupleSlot;
-    List       *joinqual;
-    List       *otherqual;
-    ExprContext *econtext;
-    ListCell   *lc;
-
-    nl = (NestLoop *) nl_state->js.ps.plan;
-    joinqual = nl_state->js.joinqual;
-    otherqual = nl_state->js.ps.qual;
-    outerPlan = outerPlanState(nl_state);
-    innerPlan = innerPlanState(nl_state);
-    econtext = nl_state->js.ps.ps_ExprContext;
-    foreach(lc, nl->nestParams)
-    {
-       NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
-       int            paramno = nlp->paramno;
-       Var          *paramval = nlp->paramval;
-
-		  Index varno = paramval->varno;
-		  AttrNumber varattno = paramval->varattno;
-		  Oid vartype = paramval->vartype;
-		  int32 vartypmod = paramval->vartypmod;
-		  Oid varcollid = paramval->varcollid;
-		  Index varlevelsup = paramval->varlevelsup;
-		  Index varnoold = paramval->varnoold;
-		  AttrNumber varoattno = paramval->varoattno; /* original value of varattno */
-		  int location = paramval->location; /* token location, or -1 if unknown */
-
-		  std::cout << varno << varattno << vartype << vartypmod << varcollid << varlevelsup << varnoold << varoattno << location;
-
-       ParamExecData *prm;
-
-       prm = &(econtext->ecxt_param_exec_vals[paramno]);
-       /* Param value should be an OUTER_VAR var */
-       Assert(IsA(nlp->paramval, Var));
-       Assert(nlp->paramval->varno == OUTER_VAR);
-       Assert(nlp->paramval->varattno > 0);
-
-       void *ppp = prm->execPlan;
-       bool bbb = prm->isnull;
-       Datum ddd = prm->value;
-
-
-       if (prm->execPlan != NULL)
-       {
-    	   std::cout << prm << ppp << bbb << ddd;
-       }
-     }
-
-    std::cout << innerPlan << outerPlan << joinqual << otherqual;
-	// end debug
-
   NestLoopPlanState *info = (NestLoopPlanState*) palloc(
       sizeof(NestLoopPlanState));
 
@@ -606,40 +549,6 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
 
   info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
 
-  // Debug by Michael
-  if (info->iss_RuntimeContext != nullptr) {
-	  ParamExecData *param_exec_vals = info->iss_RuntimeContext->ecxt_param_exec_vals;
-
-	  if (param_exec_vals != nullptr) {
-			void *subPlan = param_exec_vals->execPlan;
-			Datum value = param_exec_vals->value;
-			bool isnull = param_exec_vals->isnull;
-
-			std::cout << subPlan << value << isnull;
-	  }
-  }
-
-  int			iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
-  bool		iss_RuntimeKeysReady = iss_plan_state->iss_RuntimeKeysReady;
-  ExprContext *iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
-  if (iss_RuntimeContext != nullptr) {
-	  ParamExecData *param_exec_vals = iss_RuntimeContext->ecxt_param_exec_vals;
-
-	  if (param_exec_vals != nullptr) {
-			void *subPlan = param_exec_vals->execPlan;
-			Datum value = param_exec_vals->value;
-			bool isnull = param_exec_vals->isnull;
-
-			if (subPlan != nullptr) {
-				int i = 1;
-				std::cout << i;
-			}
-
-			std::cout << subPlan << value << isnull;
-	  }
-  }
-  std::cout << iss_NumRuntimeKeys << iss_RuntimeKeysReady;
-  // end debug
   return info;
 }
 
@@ -777,22 +686,6 @@ PelotonProjectionInfo *DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi,
                                                   int column_count) {
   PelotonProjectionInfo *info =
       (PelotonProjectionInfo *)palloc(sizeof(PelotonProjectionInfo));
-
-  // Debug by Michael
-  /*
-  if (pg_pi->pi_exprContext != nullptr) {
-	  ParamExecData *param_exec_vals = pg_pi->pi_exprContext->ecxt_param_exec_vals;
-
-	  if (param_exec_vals != nullptr) {
-			void *subPlan = param_exec_vals->execPlan;
-			Datum value = param_exec_vals->value;
-			bool isnull = param_exec_vals->isnull;
-
-			std::cout << subPlan << value << isnull;
-	  }
-  }
-  */
-  // end debug
 
   info->expr_states = NIL;
   info->expr_col_ids = NIL;
@@ -955,36 +848,7 @@ ExprState *CopyExprState(ExprState *expr_state) {
     default: {
       LOG_TRACE("ExprState tag : %u , Expr tag : %u ", nodeTag(expr_state),
 
-    nodeTag(expr_state->expr));
-
-  	// Debug by Michael
-  	size_t type = nodeTag(expr_state);
-  	std::cout << type;
-  	size_t type1 = nodeTag(expr_state->expr);
-  	std::cout << type1;
-  	if (nodeTag(expr_state->expr) == T_Var) {
-  	  auto var_expr = reinterpret_cast<const Var*>(expr_state->expr);
-
-  	  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
-  	  /*
-  	   * Special case: an varattno of zero in PG
-  	   * means return the whole row.
-  	   * We don't want that, just return null.
-  	   */
-  	  if (!AttributeNumberIsValid(
-  	      var_expr->varattno) || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)) {
-  	    return nullptr;
-  	  }
-
-  	  oid_t value_idx = static_cast<oid_t>(AttrNumberGetAttrOffset(
-  	      var_expr->varattno));
-
-  	  std::cout << tuple_idx << value_idx;
-  	}
-  	if (nodeTag(expr_state->expr) == T_Param) {
-
-  	}
-  	// end debug
+      nodeTag(expr_state->expr));
 
       expr_state_copy = (ExprState *) makeNode(ExprState);
 

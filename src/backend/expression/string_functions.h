@@ -20,8 +20,8 @@
 #include <iomanip>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/locale.hpp>
 #include <boost/scoped_array.hpp>
+#include "backend/expression/function_expression.h"
 
 namespace peloton {
 
@@ -38,8 +38,10 @@ template <>
 inline Value Value::CallUnary<FUNC_CHAR>() const {
   if (IsNull()) return GetNullValue();
 
-  unsigned int point = static_cast<unsigned int>(CastAsBigIntAndGetValue());
-  std::string utf8 = boost::locale::conv::utf_to_utf<char>(&point, &point + 1);
+  // TODO: Work around boost locale
+  //unsigned int point = static_cast<unsigned int>(CastAsBigIntAndGetValue());
+  //std::string utf8 = boost::locale::conv::utf_to_utf<char>(&point, &point + 1);
+  std::string utf8 = "";
 
   return GetTempStringValue(utf8.c_str(), utf8.length());
 }
@@ -182,6 +184,25 @@ inline Value Value::Call<FUNC_POSITION_CHAR>(
         Value::GetCharLength(poolStr.substr(0, position).c_str(), position) + 1;
   }
   return GetIntegerValue(static_cast<int32_t>(position));
+}
+
+// added to implement the ASCII function
+// currently does not support unicode strings
+template <>
+inline Value Value::CallUnary<FUNC_ASCII>() const {
+  if (IsNull()) {
+    return GetNullValue();
+  }
+  if (GetValueType() != VALUE_TYPE_VARCHAR) {
+    ThrowCastSQLException(GetValueType(), VALUE_TYPE_VARCHAR);
+  }
+  const int32_t valueUTF8Length = GetObjectLengthWithoutNull();
+  if (valueUTF8Length == 0) {
+    return GetNullValue(VALUE_TYPE_INTEGER);
+  }
+
+  char *valueChars = reinterpret_cast<char *>(GetObjectValueWithoutNull());
+  return GetIntegerValue(valueChars[0]);
 }
 
 /** implement the 2-argument SQL LEFT function */

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <deque>
+#include <vector>
 
 #include "backend/executor/abstract_join_executor.h"
 #include "backend/planner/hash_join_plan.h"
@@ -40,6 +41,7 @@ class HashJoinExecutor : public AbstractJoinExecutor {
   bool hashed_ = false;
 
   std::deque<LogicalTile *> buffered_output_tiles;
+  std::vector<std::unique_ptr<LogicalTile>> right_tiles_;
 
   // logical tile iterators
   size_t left_logical_tile_itr_ = 0;

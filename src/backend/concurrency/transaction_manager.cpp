@@ -17,12 +17,12 @@
 
 #include "backend/concurrency/transaction_manager.h"
 
+#include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
-#include "backend/common/synch.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
 
