@@ -47,8 +47,8 @@ class PlanColumn {
   // places where we know it will succeed.
   expression::AbstractExpression *GetExpression();
 
-  // produce a string describing pnf's content
-  friend std::ostream &operator<<(std::ostream &os, const PlanColumn &column);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   const json_spirit::Object &m_col_object;

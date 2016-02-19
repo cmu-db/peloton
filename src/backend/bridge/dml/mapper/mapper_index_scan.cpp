@@ -197,33 +197,33 @@ static void BuildScanKey(
     LOG_TRACE("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_INFO("key < %s", value.Debug().c_str());
+        LOG_INFO("key < %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_INFO("key <= %s", value.Debug().c_str());
+        LOG_INFO("key <= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
       case BTEqualStrategyNumber: {
         if (scan_key->sk_flags & SK_SEARCHARRAY) {
-          LOG_INFO("key >= %s", value.Debug().c_str());
+          LOG_INFO("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
         } else {
-          LOG_INFO("key >= %s", value.Debug().c_str());
+          LOG_INFO("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
         }
       } break;
       case BTGreaterEqualStrategyNumber:
-        LOG_INFO("key >= %s", value.Debug().c_str());
+        LOG_INFO("key >= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
         break;
       case BTGreaterStrategyNumber:
-        LOG_INFO("key > %s", value.Debug().c_str());
+        LOG_INFO("key > %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
         break;

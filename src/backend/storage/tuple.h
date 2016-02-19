@@ -183,7 +183,8 @@ class Tuple : public AbstractTuple {
   // Get a string representation of this tuple
   friend std::ostream &operator<<(std::ostream &os, const Tuple &tuple);
 
-  std::string GetInfo() const;
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   char *GetDataPtr(const oid_t column_id);

@@ -133,7 +133,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " +
-                              tuple->GetInfo());
+                              std::string(tuple->GetInfo()));
     return false;
   }
 
@@ -541,17 +541,19 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
   return manager.GetTileGroup(tile_group_id);
 }
 
-std::ostream &operator<<(std::ostream &os, const DataTable &table) {
+const std::string DataTable::GetInfo() const {
+  std::ostringstream os;
+
   os << "=====================================================\n";
   os << "TABLE :\n";
 
-  oid_t tile_group_count = table.GetTileGroupCount();
+  oid_t tile_group_count = GetTileGroupCount();
   os << "Tile Group Count : " << tile_group_count << "\n";
 
   oid_t tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
-    auto tile_group = table.GetTileGroup(tile_group_itr);
+    auto tile_group = GetTileGroup(tile_group_itr);
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     os << "Tile Group Id  : " << tile_group_itr
@@ -565,7 +567,7 @@ std::ostream &operator<<(std::ostream &os, const DataTable &table) {
 
   os << "=====================================================\n";
 
-  return os;
+  return os.str();
 }
 
 //===--------------------------------------------------------------------===//

@@ -42,20 +42,21 @@ void Column::SetInlined() {
   }
 }
 
-// Get a string representation
-std::ostream &operator<<(std::ostream &os, const Column &column_info) {
-  os << " name = " << column_info.column_name << ","
-     << " type = " << ValueTypeToString(column_info.column_type) << ","
-     << " offset = " << column_info.column_offset << ","
-     << " fixed length = " << column_info.fixed_length << ","
-     << " variable length = " << column_info.variable_length << ","
-     << " inlined = " << column_info.is_inlined << std::endl;
+const std::string Column::GetInfo() const {
+  std::ostringstream os;
 
-  for (auto constraint : column_info.constraints) {
+  os << " name = " << column_name << ","
+     << " type = " << ValueTypeToString(column_type) << ","
+     << " offset = " << column_offset << ","
+     << " fixed length = " << fixed_length << ","
+     << " variable length = " << variable_length << ","
+     << " inlined = " << is_inlined << std::endl;
+
+  for (auto constraint : constraints) {
     os << constraint;
   }
 
-  return os;
+  return os.str();
 }
 
 }  // End catalog namespace

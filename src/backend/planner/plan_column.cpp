@@ -85,14 +85,16 @@ expression::AbstractExpression *PlanColumn::GetExpression() {
   return expression;
 }
 
-std::ostream &operator<<(std::ostream &os, const PlanColumn &column) {
-  os << "PlanColumn(";
-  os << "guid=" << column.m_guid << ", ";
-  os << "name=" << column.m_name << ", ";
-  os << "type=" << ValueTypeToString(column.m_type) << ", ";
-  os << "size=" << column.m_size << ")";
+const std::string PlanColumn::GetInfo() const {
+  std::ostringstream os;
 
-  return os;
+  os << "PlanColumn(";
+  os << "guid=" << m_guid << ", ";
+  os << "name=" << m_name << ", ";
+  os << "type=" << ValueTypeToString(m_type) << ", ";
+  os << "size=" << m_size << ")";
+
+  return os.str();
 }
 
 }  // namespace planner

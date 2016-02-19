@@ -425,7 +425,7 @@ const char *Tuple::GetDataPtr(const oid_t column_id) const {
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
-std::string Tuple::GetInfo() const {
+const std::string Tuple::GetInfo() const {
   std::stringstream os;
 
   oid_t column_count = GetColumnCount();
@@ -439,7 +439,8 @@ std::string Tuple::GetInfo() const {
     os << ")";
   }
 
-  os << std::endl;
+  os << "\n";
+
   return os.str();
 }
 

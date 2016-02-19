@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "backend/common/types.h"
+#include "backend/common/printable.h"
 
 namespace peloton {
 namespace brain {
@@ -26,7 +27,7 @@ namespace brain {
 // Sample
 //===--------------------------------------------------------------------===//
 
-class Sample {
+class Sample : public Printable {
  public:
   Sample(const size_t column_count)
       : columns_accessed_(
@@ -52,8 +53,8 @@ class Sample {
   // get enabled columns
   std::vector<oid_t> GetEnabledColumns() const;
 
-  // Get a string representation of sample
-  friend std::ostream &operator<<(std::ostream &os, const Sample &sample);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
