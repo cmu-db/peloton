@@ -376,7 +376,6 @@ extern ArrayType *GUCArrayReset(ArrayType *array);
 extern void write_nondefault_variables(GucContext context);
 extern void read_nondefault_variables(void);
 //#endif
-extern int ClusterId;
 
 /* GUC serialization */
 extern Size EstimateGUCStateSpace(void);
