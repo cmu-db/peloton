@@ -1844,11 +1844,11 @@ void RunVersionExperiment() {
   out.close();
 }
 
-std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_ROW, LAYOUT_COLUMN};
+std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_ROW};
 
 std::vector<oid_t> hyrise_column_counts = {50};
 
-std::vector<double> hyrise_projectivities = {0.9, 0.04};
+std::vector<double> hyrise_projectivities = {0.9, 0.04, 0.9, 0.04};
 
 static void RunHyriseTest() {
 
@@ -1865,7 +1865,7 @@ void RunHyriseExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 50;
+  state.transactions = 100;
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
