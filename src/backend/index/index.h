@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -99,7 +100,7 @@ class IndexMetadata {
  *
  * @see IndexFactory
  */
-class Index {
+class Index : public Printable {
   friend class IndexFactory;
 
  public:
@@ -179,10 +180,8 @@ class Index {
 
   IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
 
-  void GetInfo() const;
-
-  // Get a string representation of this index
-  friend std::ostream &operator<<(std::ostream &os, const Index &index);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   // Generic key comparator between index key and given arbitrary key
   static bool Compare(const AbstractTuple &index_key,

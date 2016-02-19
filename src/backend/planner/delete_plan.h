@@ -38,7 +38,7 @@ class DeletePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  std::string GetInfo() const { return "DeletePlan"; }
+  const std::string GetInfo() const { return "DeletePlan"; }
 
   bool GetTruncate() const { return truncate; }
 

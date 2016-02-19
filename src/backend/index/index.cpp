@@ -191,32 +191,21 @@ Index::Index(IndexMetadata *metadata) : metadata(metadata) {
   pool = new VarlenPool(BACKEND_TYPE_MM);
 }
 
-std::ostream &operator<<(std::ostream &os, const Index &index) {
+const std::string Index::GetInfo() const {
+  std::stringstream os;
+
   os << "\t-----------------------------------------------------------\n";
 
   os << "\tINDEX\n";
 
-  os << index.GetTypeName() << "\t(" << index.GetName() << ")";
-  os << (index.HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
+  os << GetTypeName() << "\t(" << GetName() << ")";
+  os << (HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
 
-  os << "\tValue schema : " << *(index.GetKeySchema());
+  os << "\tValue schema : " << *(GetKeySchema());
 
   os << "\t-----------------------------------------------------------\n";
 
-  return os;
-}
-
-void Index::GetInfo() const {
-  std::stringstream os;
-
-  os << this->GetName() << ",";
-  os << GetTypeName() << ",";
-  os << lookup_counter << ",";
-  os << insert_counter << ",";
-  os << delete_counter << ",";
-  os << update_counter << std::endl;
-
-  LOG_INFO("Info :: %s", os.str().c_str());
+  return os.str();
 }
 
 /**

@@ -40,7 +40,7 @@ class HashJoinPlan : public AbstractJoinPlan {
     return PLAN_NODE_TYPE_HASHJOIN;
   }
 
-  inline std::string GetInfo() const { return "HashJoin"; }
+  const std::string GetInfo() const { return "HashJoin"; }
 
  private:
 };

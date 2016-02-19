@@ -189,9 +189,12 @@ AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const AbstractExpression &expr) {
-  os << expr.Debug();
-  return os;
+const std::string AbstractExpression::GetInfo() const {
+  std::ostringstream os;
+
+  os << Debug();
+
+  return os.str();
 }
 
 }  // End expression namespace

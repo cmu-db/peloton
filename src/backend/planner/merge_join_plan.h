@@ -65,7 +65,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
     return &join_clauses_;
   }
 
-  inline std::string GetInfo() const { return "MergeJoin"; }
+  const std::string GetInfo() const { return "MergeJoin"; }
 
  private:
   std::vector<JoinClause> join_clauses_;

@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "backend/common/printable.h"
 #include "backend/catalog/column.h"
 
 namespace peloton {
@@ -23,7 +24,7 @@ namespace catalog {
 // Schema
 //===--------------------------------------------------------------------===//
 
-class Schema {
+class Schema : public Printable {
  public:
   //===--------------------------------------------------------------------===//
   // Static factory methods to construct schema objects
@@ -161,8 +162,8 @@ class Schema {
     }
   }
 
-  // Get a string representation of this schema
-  friend std::ostream &operator<<(std::ostream &os, const Schema &schema);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   // size of fixed length columns

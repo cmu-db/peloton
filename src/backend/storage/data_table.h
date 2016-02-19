@@ -196,10 +196,10 @@ class DataTable : public AbstractTable {
   column_map_type GetStaticColumnMap(std::string table_name,
                                      oid_t column_count);
 
-  // Get a string representation of this table
-  friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
-
   std::map<oid_t, oid_t> GetColumnMapStats();
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  protected:
   //===--------------------------------------------------------------------===//

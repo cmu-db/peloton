@@ -37,5 +37,9 @@ AbstractTable::~AbstractTable() {
   if (own_schema_) delete schema;
 }
 
+const std::string AbstractTable::GetInfo() const{
+  return "AbstractTable";
+}
+
 }  // End storage namespace
 }  // End peloton namespace
