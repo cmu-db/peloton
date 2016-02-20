@@ -60,6 +60,8 @@ void RunVersionExperiment();
 
 void RunHyriseExperiment();
 
+void RunConcurrencyExperiment();
+
 }  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
