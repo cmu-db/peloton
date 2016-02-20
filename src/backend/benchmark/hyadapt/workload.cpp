@@ -1853,12 +1853,12 @@ std::vector<double> hyrise_projectivities = {0.9, 0.04, 0.9, 0.04};
 
 static void RunHyriseTest() {
 
-    for(auto hyrise_projectivity : hyrise_projectivities) {
-        state.projectivity = hyrise_projectivity;
-        peloton_projectivity = state.projectivity;
-        state.operator_type = OPERATOR_TYPE_DIRECT;
-        RunDirectTest();
-    }
+  for(auto hyrise_projectivity : hyrise_projectivities) {
+    state.projectivity = hyrise_projectivity;
+    peloton_projectivity = state.projectivity;
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
+  }
 
 }
 
@@ -1935,74 +1935,70 @@ void RunHyriseExperiment() {
   out.close();
 }
 
+static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors) {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+
+  auto txn_count = state.transactions;
+  bool status = false;
+
+  start = std::chrono::system_clock::now();
+
+  // Run these many transactions
+  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+    // Increment query counter
+    query_itr++;
+
+    // Run all the executors
+    for (auto executor : executors) {
+      status = executor->Init();
+      if (status == false) throw Exception("Init failed");
+
+      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+      while (executor->Execute() == true) {
+        std::unique_ptr<executor::LogicalTile> result_tile(
+            executor->GetOutput());
+        result_tiles.emplace_back(result_tile.release());
+      }
+
+      // Execute stuff
+      executor->Execute();
+    }
+  }
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
+
+  WriteOutput(time_per_transaction);
+}
+
+
 void RunConcurrentTest() {
-  const int lower_bound = GetLowerBound();
-  const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
   /////////////////////////////////////////////////////////
-  // SEQ SCAN + PREDICATE
+  // INSERT
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  oid_t column_count = state.projectivity * state.column_count;
-
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr]);
-  }
-
-  // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
-
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
-
-  /////////////////////////////////////////////////////////
-  // MATERIALIZE
-  /////////////////////////////////////////////////////////
-
-  // Create and set up materialization executor
-  std::vector<catalog::Column> output_columns;
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  oid_t col_itr = 0;
-  for (auto column_id : column_ids) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(column_id), is_inlined);
-    output_columns.push_back(column);
-
-    old_to_new_cols[col_itr] = col_itr;
-    col_itr++;
-  }
-
-  std::unique_ptr<catalog::Schema> output_schema(
-      new catalog::Schema(output_columns));
-  bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
-
-  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&seq_scan_executor);
-
-  /////////////////////////////////////////////////////////
-  // INSERT
-  /////////////////////////////////////////////////////////
-
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
-
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
+  std::vector<oid_t> column_ids;
+
+  target_list.clear();
+  direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
+    column_ids.push_back(col_id);
   }
 
   auto project_info = new planner::ProjectInfo(std::move(target_list),
@@ -2020,17 +2016,12 @@ void RunConcurrentTest() {
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&mat_executor);
   executors.push_back(&insert_executor);
 
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double cost = 10;
-  column_ids.push_back(0);
-  auto columns_accessed = GetColumnsAccessed(column_ids);
-
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteConcurrentTest(executors);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -2040,7 +2031,7 @@ void RunConcurrencyExperiment() {
 
   state.selectivity = 0.01;
   state.projectivity = 1.0;
-  state.transactions = 10;
+  state.transactions = 100000;
   state.write_ratio = 0.0001;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
@@ -2048,6 +2039,8 @@ void RunConcurrencyExperiment() {
 
   std::vector<std::thread> thread_group;
   size_t num_threads = 4;
+
+  auto initial_tg_count = hyadapt_table->GetTileGroupCount();
 
   // Launch a group of threads
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
@@ -2058,6 +2051,11 @@ void RunConcurrencyExperiment() {
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
+
+  auto final_tg_count = hyadapt_table->GetTileGroupCount();
+  auto diff_tg_count = final_tg_count - initial_tg_count;
+
+  std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
 
 }
 
