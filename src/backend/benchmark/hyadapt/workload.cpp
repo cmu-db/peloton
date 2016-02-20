@@ -2026,36 +2026,40 @@ void RunConcurrentTest() {
   txn_manager.CommitTransaction(txn);
 }
 
+std::vector<oid_t> num_threads_list = {1, 2, 4};
+
 void RunConcurrencyExperiment() {
   LayoutType peloton_layout_type = LAYOUT_HYBRID;
 
   state.selectivity = 0.01;
   state.projectivity = 1.0;
-  state.transactions = 100000;
+  state.transactions = 10000;
   state.write_ratio = 0.0001;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
   CreateAndLoadTable(peloton_layout_type);
 
-  std::vector<std::thread> thread_group;
-  size_t num_threads = 4;
+  for(auto num_threads : num_threads_list) {
+    std::vector<std::thread> thread_group;
 
-  auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+    auto initial_tg_count = hyadapt_table->GetTileGroupCount();
 
-  // Launch a group of threads
-  for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::thread(RunConcurrentTest));
+    // Launch a group of threads
+    for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+      thread_group.push_back(std::thread(RunConcurrentTest));
+    }
+
+    // Join the threads with the main thread
+    for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+      thread_group[thread_itr].join();
+    }
+
+    auto final_tg_count = hyadapt_table->GetTileGroupCount();
+    auto diff_tg_count = final_tg_count - initial_tg_count;
+
+    std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+
   }
-
-  // Join the threads with the main thread
-  for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group[thread_itr].join();
-  }
-
-  auto final_tg_count = hyadapt_table->GetTileGroupCount();
-  auto diff_tg_count = final_tg_count - initial_tg_count;
-
-  std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
 
 }
 
