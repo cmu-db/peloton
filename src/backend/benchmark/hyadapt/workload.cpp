@@ -2092,9 +2092,9 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 }
 
 
-std::vector<oid_t> num_threads_list = {1, 2, 4, 8, 16};
+std::vector<oid_t> num_threads_list = {1, 2, 4, 8, 16, 32};
 
-std::vector<double> scan_ratios = {0, 0.1, 0.5, 1.0};
+std::vector<double> scan_ratios = {0, 0.5, 0.9, 1.0};
 
 void RunConcurrencyExperiment() {
 
