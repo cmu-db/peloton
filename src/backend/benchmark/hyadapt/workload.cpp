@@ -2098,49 +2098,56 @@ std::vector<double> scan_ratios = {0, 0.5, 1.0};
 
 void RunConcurrencyExperiment() {
 
-  // Set up layout type
-  LayoutType layout_type = LAYOUT_HYBRID;
-
   state.selectivity = 0.001;
-  state.projectivity = 1.0;
-  state.transactions = 100;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
-  // Go over all scan ratios
-  for(auto scan_ratio : scan_ratios) {
+  // Set proj
+  state.projectivity = 0.1;
+  peloton_projectivity = state.projectivity;
 
-    // Go over all scale factors
-    for(auto num_threads : num_threads_list) {
+  // Go over all layouts
+  for (auto layout : layouts) {
+    // Set layout
+    state.layout_mode = layout;
+    peloton_layout_mode = state.layout_mode;
 
-      // Reset
-      scan_ctr = 0;
-      insert_ctr = 0;
+    // Go over all scan ratios
+    for(auto scan_ratio : scan_ratios) {
 
-      // Load in the table with layout
-      CreateAndLoadTable(layout_type);
+      // Go over all scale factors
+      for(auto num_threads : num_threads_list) {
 
-      // Set up thread group
-      std::vector<std::thread> thread_group;
+        // Reset
+        scan_ctr = 0;
+        insert_ctr = 0;
 
-      auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+        // Load in the table with layout
+        CreateAndLoadTable(state.layout_mode);
 
-      // Launch a group of threads
-      for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-        thread_group.push_back(std::thread(RunConcurrentTest, thread_itr, num_threads, scan_ratio));
+        // Set up thread group
+        std::vector<std::thread> thread_group;
+
+        auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+
+        // Launch a group of threads
+        for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+          thread_group.push_back(std::thread(RunConcurrentTest, thread_itr, num_threads, scan_ratio));
+        }
+
+        // Join the threads with the main thread
+        for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+          thread_group[thread_itr].join();
+        }
+
+        auto final_tg_count = hyadapt_table->GetTileGroupCount();
+        auto diff_tg_count = final_tg_count - initial_tg_count;
+
+        std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+
+        std::cout << "Scan count   : " << scan_ctr << "\n";
+        std::cout << "Insert count : " << insert_ctr << "\n";
       }
 
-      // Join the threads with the main thread
-      for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-        thread_group[thread_itr].join();
-      }
-
-      auto final_tg_count = hyadapt_table->GetTileGroupCount();
-      auto diff_tg_count = final_tg_count - initial_tg_count;
-
-      std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
-
-      std::cout << "Scan count   : " << scan_ctr << "\n";
-      std::cout << "Insert count : " << insert_ctr << "\n";
     }
 
   }
