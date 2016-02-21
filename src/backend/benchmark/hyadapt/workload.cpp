@@ -1936,6 +1936,9 @@ void RunHyriseExperiment() {
   out.close();
 }
 
+oid_t scan_ctr = 0;
+oid_t insert_ctr = 0;
+
 static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors,
                                   oid_t thread_id, oid_t num_threads,
                                   double scan_ratio) {
@@ -1960,10 +1963,12 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
     // SCAN
     if(dis_sample < scan_ratio) {
       executor = executors[0];
+      scan_ctr++;
     }
     // INSERT
     else {
       executor = executors[1];
+      insert_ctr++;
     }
 
     // Run the selected executor
@@ -2078,8 +2083,8 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&insert_executor);
   executors.push_back(&mat_executor);
+  executors.push_back(&insert_executor);
 
   ExecuteConcurrentTest(executors, thread_id, num_threads, scan_ratio);
 
@@ -2107,6 +2112,10 @@ void RunConcurrencyExperiment() {
     // Go over all scale factors
     for(auto num_threads : num_threads_list) {
 
+      // Reset
+      scan_ctr = 0;
+      insert_ctr = 0;
+
       // Load in the table with layout
       CreateAndLoadTable(layout_type);
 
@@ -2129,6 +2138,9 @@ void RunConcurrencyExperiment() {
       auto diff_tg_count = final_tg_count - initial_tg_count;
 
       std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+
+      std::cout << "Scan count   : " << scan_ctr << "\n";
+      std::cout << "Insert count : " << insert_ctr << "\n";
     }
 
   }
