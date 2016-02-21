@@ -1948,22 +1948,33 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
     // Increment query counter
     query_itr++;
 
-    // Run all the executors
-    for (auto executor : executors) {
-      status = executor->Init();
-      if (status == false) throw Exception("Init failed");
+    auto scan_ratio = rand() % 10;
+    executor::AbstractExecutor *executor = nullptr;
 
-      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-      while (executor->Execute() == true) {
-        std::unique_ptr<executor::LogicalTile> result_tile(
-            executor->GetOutput());
-        result_tiles.emplace_back(result_tile.release());
-      }
-
-      // Execute stuff
-      executor->Execute();
+    // SCAN
+    if(scan_ratio == 0) {
+      executor = executors[0];
     }
+    // INSERT
+    else {
+      executor = executors[1];
+    }
+
+    // Run the selected executor
+    status = executor->Init();
+    if (status == false) throw Exception("Init failed");
+
+    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+    while (executor->Execute() == true) {
+      std::unique_ptr<executor::LogicalTile> result_tile(
+          executor->GetOutput());
+      result_tiles.emplace_back(result_tile.release());
+    }
+
+    // Execute stuff
+    executor->Execute();
+
   }
 
   end = std::chrono::system_clock::now();
@@ -1973,39 +1984,80 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
   WriteOutput(time_per_transaction);
 }
 
-
 void RunConcurrentTest() {
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
   /////////////////////////////////////////////////////////
-  // INSERT
+  // SEQ SCAN + PREDICATE
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.projectivity * state.column_count;
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for (auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
-  std::vector<oid_t> column_ids;
-
-  target_list.clear();
-  direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression = expression::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
-    column_ids.push_back(col_id);
   }
 
   auto project_info = new planner::ProjectInfo(std::move(target_list),
                                                std::move(direct_map_list));
 
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+  auto bulk_insert_count = 1;
 
   planner::InsertPlan insert_node(hyadapt_table, project_info,
                                   bulk_insert_count);
@@ -2017,24 +2069,22 @@ void RunConcurrentTest() {
 
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&insert_executor);
+  executors.push_back(&mat_executor);
 
-  /////////////////////////////////////////////////////////
-  // COLLECT STATS
-  /////////////////////////////////////////////////////////
   ExecuteConcurrentTest(executors);
 
   txn_manager.CommitTransaction(txn);
 }
+
 
 std::vector<oid_t> num_threads_list = {1, 2, 4};
 
 void RunConcurrencyExperiment() {
   LayoutType peloton_layout_type = LAYOUT_HYBRID;
 
-  state.selectivity = 0.01;
+  state.selectivity = 0.001;
   state.projectivity = 1.0;
-  state.transactions = 10000;
-  state.write_ratio = 0.0001;
+  state.transactions = 100;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
   CreateAndLoadTable(peloton_layout_type);
@@ -2058,7 +2108,6 @@ void RunConcurrencyExperiment() {
     auto diff_tg_count = final_tg_count - initial_tg_count;
 
     std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
-
   }
 
 }
