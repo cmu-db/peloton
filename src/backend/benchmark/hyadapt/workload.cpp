@@ -2072,7 +2072,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   auto project_info = new planner::ProjectInfo(std::move(target_list),
                                                std::move(direct_map_list));
 
-  auto bulk_insert_count = 1;
+  auto bulk_insert_count = 1000;
 
   planner::InsertPlan insert_node(hyadapt_table, project_info,
                                   bulk_insert_count);
