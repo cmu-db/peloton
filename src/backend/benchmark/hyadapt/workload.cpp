@@ -2105,17 +2105,25 @@ void RunConcurrencyExperiment() {
   state.projectivity = 0.1;
   peloton_projectivity = state.projectivity;
 
-  // Go over all layouts
-  for (auto layout : layouts) {
-    // Set layout
-    state.layout_mode = layout;
-    peloton_layout_mode = state.layout_mode;
+  // Go over all scan ratios
+  for(auto scan_ratio : scan_ratios) {
 
-    // Go over all scan ratios
-    for(auto scan_ratio : scan_ratios) {
+    std::cout << "SCAN RATIO :" << scan_ratio << "\n\n\n";
+
+    // Go over all layouts
+    for (auto layout : layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      std::cout << "LAYOUT :" << layout << "\n";
 
       // Go over all scale factors
       for(auto num_threads : num_threads_list) {
+
+        // Reuse variables
+        state.theta = scan_ratio;
+        state.sample_weight = num_threads;
 
         // Reset
         scan_ctr = 0;
