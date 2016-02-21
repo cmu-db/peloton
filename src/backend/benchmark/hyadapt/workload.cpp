@@ -190,7 +190,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
       std::chrono::duration<double> elapsed_seconds = end - start;
       double time_per_transaction = ((double)elapsed_seconds.count());
 
-      if (state.distribution == false) WriteOutput(time_per_transaction);
+      if (state.distribution == false)
+        WriteOutput(time_per_transaction);
 
       // Record sample
       if (state.fsm == true && cost != 0) {
@@ -1935,8 +1936,13 @@ void RunHyriseExperiment() {
   out.close();
 }
 
-static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors) {
+static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors,
+                                  oid_t thread_id, oid_t num_threads,
+                                  double scan_ratio) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1);
 
   auto txn_count = state.transactions;
   bool status = false;
@@ -1948,11 +1954,11 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
     // Increment query counter
     query_itr++;
 
-    auto scan_ratio = rand() % 10;
+    auto dis_sample = dis(gen);
     executor::AbstractExecutor *executor = nullptr;
 
     // SCAN
-    if(scan_ratio == 0) {
+    if(dis_sample < scan_ratio) {
       executor = executors[0];
     }
     // INSERT
@@ -1981,10 +1987,14 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
   std::chrono::duration<double> elapsed_seconds = end - start;
   double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
 
-  WriteOutput(time_per_transaction);
+  if(thread_id == 0) {
+    double throughput = (double)num_threads/time_per_transaction;
+    WriteOutput(throughput);
+  }
+
 }
 
-void RunConcurrentTest() {
+void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -2057,7 +2067,7 @@ void RunConcurrentTest() {
   auto project_info = new planner::ProjectInfo(std::move(target_list),
                                                std::move(direct_map_list));
 
-  auto bulk_insert_count = 1;
+  auto bulk_insert_count = 1000;
 
   planner::InsertPlan insert_node(hyadapt_table, project_info,
                                   bulk_insert_count);
@@ -2071,7 +2081,7 @@ void RunConcurrentTest() {
   executors.push_back(&insert_executor);
   executors.push_back(&mat_executor);
 
-  ExecuteConcurrentTest(executors);
+  ExecuteConcurrentTest(executors, thread_id, num_threads, scan_ratio);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -2079,35 +2089,48 @@ void RunConcurrentTest() {
 
 std::vector<oid_t> num_threads_list = {1, 2, 4};
 
+std::vector<double> scan_ratios = {0, 0.5, 1.0};
+
 void RunConcurrencyExperiment() {
-  LayoutType peloton_layout_type = LAYOUT_HYBRID;
+
+  // Set up layout type
+  LayoutType layout_type = LAYOUT_HYBRID;
 
   state.selectivity = 0.001;
   state.projectivity = 1.0;
   state.transactions = 100;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
-  CreateAndLoadTable(peloton_layout_type);
+  // Go over all scan ratios
+  for(auto scan_ratio : scan_ratios) {
 
-  for(auto num_threads : num_threads_list) {
-    std::vector<std::thread> thread_group;
+    // Go over all scale factors
+    for(auto num_threads : num_threads_list) {
 
-    auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+      // Load in the table with layout
+      CreateAndLoadTable(layout_type);
 
-    // Launch a group of threads
-    for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-      thread_group.push_back(std::thread(RunConcurrentTest));
+      // Set up thread group
+      std::vector<std::thread> thread_group;
+
+      auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+
+      // Launch a group of threads
+      for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+        thread_group.push_back(std::thread(RunConcurrentTest, thread_itr, num_threads, scan_ratio));
+      }
+
+      // Join the threads with the main thread
+      for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+        thread_group[thread_itr].join();
+      }
+
+      auto final_tg_count = hyadapt_table->GetTileGroupCount();
+      auto diff_tg_count = final_tg_count - initial_tg_count;
+
+      std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
     }
 
-    // Join the threads with the main thread
-    for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-      thread_group[thread_itr].join();
-    }
-
-    auto final_tg_count = hyadapt_table->GetTileGroupCount();
-    auto diff_tg_count = final_tg_count - initial_tg_count;
-
-    std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
   }
 
 }
