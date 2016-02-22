@@ -431,11 +431,17 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
   auto param_expr = reinterpret_cast<const Param *>(es->expr);
 
   switch (param_expr->paramkind) {
-    case PARAM_EXTERN:
+    case PARAM_EXTERN: {
       LOG_TRACE("Handle EXTREN PARAM");
       return expression::ParameterValueFactory(param_expr->paramid -
                                                1);  // 1 indexed
-      break;
+    } break;
+    case PARAM_EXEC: {
+        LOG_TRACE("Handle EXEC PARAM");
+        return expression::ParameterValueFactory(param_expr->paramid);  // 1 indexed
+    } break;
+    //PARAM_SUBLINK,
+    //PARAM_MULTIEXPR
     default:
       LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
       break;
