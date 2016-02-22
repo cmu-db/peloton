@@ -18,7 +18,7 @@ namespace peloton {
 
 // Get a string representation for debugging
 std::ostream &operator<<(std::ostream &os, const Printable &printable) {
-  os << printable.GetInfo();
+  os << printable.GetInfo() << "\n";
   return os;
 };
 

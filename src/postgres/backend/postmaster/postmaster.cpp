@@ -350,6 +350,12 @@ static DNSServiceRef bonjour_sdref = NULL;
 
 // TODO: Peloton Changes
 bool PelotonTestMode = false;
+bool EnableClusterMode = false;
+int ClusterId = 0;
+int ClusterPortNumber = 5254;
+char *ClusterAddress = "localhost";
+bool IsClusterLeader = false;
+char *ClusterParticipantAddresses = "none";
 
 /*
  * postmaster.c - function prototypes
@@ -1090,6 +1096,13 @@ void PostmasterMain(int argc, char *argv[]) {
   /* Write out nondefault GUC settings for child processes to use */
   write_nondefault_variables(PGC_POSTMASTER);
 //#endif
+
+  if (EnableClusterMode) {
+    /*
+     * Cluster config options: ClusterId, ClusterPortNumber, ClusterAddress, 
+     * ClusterParticipantAddresses, IsClusterLeader are available for use here
+     */
+  }
 
   /*
    * Write the external PID file if requested

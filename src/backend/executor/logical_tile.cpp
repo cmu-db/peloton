@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/logical_tile.h"
 
 #include <cassert>
 #include <iostream>
@@ -20,6 +19,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile.h"
 #include "backend/common/value_factory.h"
+#include "backend/executor/logical_tile.h"
 
 namespace peloton {
 namespace executor {

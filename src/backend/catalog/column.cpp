@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
-
 #include "backend/catalog/column.h"
 #include "backend/common/types.h"
 
