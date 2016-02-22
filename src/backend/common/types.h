@@ -462,7 +462,8 @@ enum PelotonJoinType {
   JOIN_TYPE_LEFT = 1,   // left
   JOIN_TYPE_RIGHT = 2,  // right
   JOIN_TYPE_INNER = 3,  // inner
-  JOIN_TYPE_OUTER = 4   // outer
+  JOIN_TYPE_OUTER = 4,  // outer
+  JOIN_TYPE_SEMI = 5    // IN+Subquery is SEMI
 };
 
 //===--------------------------------------------------------------------===//
