@@ -146,6 +146,9 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformLockRows(
       const LockRowsPlanState *planstate);
 
+  static const planner::AbstractPlan *TransformUnique(
+      const UniquePlanState *planstate);
+
   static const planner::AbstractPlan *TransformMaterialization(
       const MaterialPlanState *planstate);
 
@@ -196,6 +199,9 @@ class PlanTransformer {
   static void BuildColumnListFromExpr(
       std::vector<oid_t> &col_ids,
       const expression::AbstractExpression *expression);
+
+  static const std::vector<oid_t> BuildColumnListFromExpStateList(
+		  List* expr_state_list);
 
   static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
       List *targetLis);
