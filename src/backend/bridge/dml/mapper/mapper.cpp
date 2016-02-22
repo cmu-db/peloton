@@ -143,6 +143,11 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
           reinterpret_cast<const HashPlanState *>(planstate));
       break;
 
+    case T_UniqueState:
+      peloton_plan = PlanTransformer::TransformUnique(
+          reinterpret_cast<const UniquePlanState*>(planstate));
+      break;
+
     default: {
       LOG_ERROR("PlanTransformer :: Unsupported Postgres Plan Tag: %u ",
                 nodeTag(planstate));

@@ -20,6 +20,7 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/project_info.h"
+#include "nodes/plannodes.h"
 
 namespace peloton {
 namespace planner {
@@ -35,14 +36,26 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
                      const expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
       : AbstractJoinPlan(join_type, predicate, proj_info) {
-    // Nothing to see here...
+    nl_ = nullptr;
   }
+
+  NestedLoopJoinPlan(PelotonJoinType join_type,
+                     const expression::AbstractExpression *predicate,
+                     const ProjectInfo *proj_info, NestLoop *nl)
+      : AbstractJoinPlan(join_type, predicate, proj_info) {
+      nl_ = nl;
+  } // added to set member nl_
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_NESTLOOP;
   }
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }
+
+  inline NestLoop* GetNestLoop() const { return nl_; } // added to support IN+subquery
+
+ private:
+  NestLoop *nl_; // added to support IN+subquery
 };
 
 }  // namespace planner
