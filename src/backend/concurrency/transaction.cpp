@@ -43,7 +43,6 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-
 const std::string Transaction::GetInfo() const{
   std::ostringstream os;
 
@@ -53,6 +52,8 @@ const std::string Transaction::GetInfo() const{
      << " Result : " << result_;
 
   if (next == nullptr) {
+    os << " Next : " << std::setw(4) << next;
+  } else {
     os << " Next : " << std::setw(4) << next->txn_id;
   }
 

@@ -17,6 +17,7 @@
 
 #include "backend/common/printable.h"
 #include "backend/brain/sample.h"
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 
 namespace peloton {

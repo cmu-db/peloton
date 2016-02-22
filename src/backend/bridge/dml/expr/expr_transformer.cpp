@@ -29,8 +29,8 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
-#include "postgres/include/executor/executor.h"        //added by michael
-#include "backend/expression/comparison_expression.h"  //added by michael
+#include "postgres/include/executor/executor.h"
+#include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
 
 namespace peloton {
@@ -253,7 +253,6 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
   return ReMapPgFunc(pg_func_id, func_state->args);
 }
 
-// added by michael for IN operator
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     const ExprState *es) {
   LOG_TRACE("Transform ScalarArrayOp ");
