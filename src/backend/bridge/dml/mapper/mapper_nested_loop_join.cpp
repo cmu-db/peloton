@@ -31,6 +31,8 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
   PelotonJoinType peloton_join_type =
       PlanTransformer::TransformJoinType(nl_plan_state->jointype);
 
+  NestLoop *nl = nl_plan_state->nl;
+
   if (peloton_join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", nl_plan_state->jointype);
     return nullptr;
@@ -73,12 +75,12 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
     plan_node =
-        new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr);
+    	new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr, nl);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
-                                                project_info.release());
+                                                    project_info.release(), nl);
     result = plan_node;
   }
 
