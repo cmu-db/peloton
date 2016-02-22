@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// hash_join_executor.cpp
+// hash_join.cpp
 //
-// Identification: src/backend/executor/hash_join_executor.cpp
+// Identification: src/backend/executor/hash_join.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -49,120 +49,131 @@ bool HashJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool HashJoinExecutor::DExecute() {
-  // Loop until we have non-empty result join logical tile or exit
+  LOG_INFO("********** Hash Join executor :: 2 children \n");
 
-  // Build outer join output when done
+  // Loop until we have non-empty result tile or exit
+  for (;;) {
+    // Check if we have any buffered output tiles
+    if (buffered_output_tiles.empty() == false) {
+      auto output_tile = buffered_output_tiles.front();
+      SetOutput(output_tile);
+      buffered_output_tiles.pop_front();
+      return true;
+    }
 
-  //===--------------------------------------------------------------------===//
-  // Pick right and left tiles
-  //===--------------------------------------------------------------------===//
+    // Build outer join output when done
+    if (left_child_done_ == true) {
+      return BuildOuterJoinOutput();
+    }
 
-  // Get all the logical tiles from RIGHT child
+    //===--------------------------------------------------------------------===//
+    // Pick right and left tiles
+    //===--------------------------------------------------------------------===//
 
-  // Get next logical tile from LEFT child
+    // Get all the tiles from RIGHT child
+    if (right_child_done_ == false) {
+      while (children_[1]->Execute()) {
+        BufferRightTile(children_[1]->GetOutput());
+      }
+      right_child_done_ = true;
+    }
 
-  //===--------------------------------------------------------------------===//
-  // Build Join Tile
-  //===--------------------------------------------------------------------===//
+    if (right_result_tiles_.size() == 0) {
+      LOG_TRACE("Did not get any right tiles \n");
+      return false;
+    }
 
-  // Build output join logical tile
+    // Get next tile from LEFT child
+    if (children_[0]->Execute() == false) {
+      LOG_TRACE("Did not get left tile \n");
+      left_child_done_ = true;
+      continue;
+    }
 
-  // Build position lists
+    BufferLeftTile(children_[0]->GetOutput());
+    LOG_TRACE("Got left tile \n");
 
-  // Get the hash table from the hash executor
-	LOG_INFO("********** Hash Join executor :: 2 children \n");
+    LogicalTile *left_tile = left_result_tiles_.back().get();
 
+    //===--------------------------------------------------------------------===//
+    // Build Join Tile
+    //===--------------------------------------------------------------------===//
 
-	/* Hash right tiles and get right tiles */
-	if (!hashed_) {
-		while (children_[1]->Execute()) {
-	    right_tiles_.emplace_back(children_[1]->GetOutput());
-	  }
-	    hashed_ = true;
-	}
+    // Get the hash table from the hash executor
+    auto &hash_table = hash_executor_->GetHashTable();
+    auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
 
-	  if (right_tiles_.size() == 0) {
-	    LOG_INFO("Did not get right tiles");
-	    return false;
-	  }
+    oid_t prev_tile = INVALID_OID;
+    std::unique_ptr<LogicalTile> output_tile;
+    LogicalTile::PositionListsBuilder pos_lists_builder;
 
-	  // Try to get next tile from LEFT child
-	  if (children_[0]->Execute() == false) {
-	    LOG_INFO("Did not get left tile \n");
-	    return false;
-	  }
+    // Go over the left tile
+    for (auto left_tile_itr : *left_tile) {
+      const expression::ContainerTuple<executor::LogicalTile> left_tuple(
+          left_tile, left_tile_itr, &hashed_col_ids);
 
-	  std::unique_ptr<LogicalTile> left(children_[0]->GetOutput());
-	  LOG_INFO("Got left tile \n");
+      // Find matching tuples in the hash table built on top of the right table
+      auto right_tuples = hash_table.find(left_tuple);
 
-	  LogicalTile *left_tile = left.get();
-	  LogicalTile *right_tile = right_tiles_.back().get();
+      if (right_tuples != hash_table.end()) {
+        RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_itr);
 
-	  // Build output logical tile
-	  auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+        // Go over the matching right tuples
+        for (auto &location : right_tuples->second) {
+          // Check if we got a new right tile itr
+          if (prev_tile != location.first) {
+            // Check if we have any join tuples
+            if (pos_lists_builder.Size() > 0) {
+              LOG_TRACE("Join tile size : %lu \n", pos_lists_builder.Size());
+              output_tile->SetPositionListsAndVisibility(
+                  pos_lists_builder.Release());
+              buffered_output_tiles.push_back(output_tile.release());
+            }
 
-	  // Build position lists
-	  auto position_lists = BuildPostitionLists(left_tile, right_tile);
+            // Get the logical tile from right child
+            LogicalTile *right_tile = right_result_tiles_[location.first].get();
 
-	  // Get position list from two logical tiles
-	  auto &left_tile_position_lists = left_tile->GetPositionLists();
-	  auto &right_tile_position_lists = right_tile->GetPositionLists();
-	  size_t left_tile_column_count = left_tile_position_lists.size();
-	  size_t right_tile_column_count = right_tile_position_lists.size();
+            // Build output logical tile
+            output_tile = BuildOutputLogicalTile(left_tile, right_tile);
 
-  // Get the hash table from the hash executor
-  auto &htable = hash_executor_->GetHashTable();
+            // Build position lists
+            pos_lists_builder =
+                LogicalTile::PositionListsBuilder(left_tile, right_tile);
 
-  // auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
-  const planner::HashJoinPlan &hj_plan_node = GetPlanNode<planner::HashJoinPlan>();
-  std::vector<oid_t> hashed_col_ids = hj_plan_node.GetOuterHashIds();
+            pos_lists_builder.SetRightSource(
+                &right_result_tiles_[location.first]->GetPositionLists());
+          }
 
-  for (oid_t item : hashed_col_ids) {
-	  oid_t i = item;
-	  std::cout << i;
-  }
+          // Add join tuple
+          pos_lists_builder.AddRow(left_tile_itr, location.second);
 
-  // Go over the left tile
-  for (auto left_tile_itr : *left_tile) {
-     const expression::ContainerTuple<executor::LogicalTile> left_tuple(
-         left_tile, left_tile_itr, &hashed_col_ids);
+          RecordMatchedRightRow(location.first, location.second);
 
-     // Find matching tuples in the hash table built on top of the right table
-     //auto &set = htable.at(left_tuple);
-     //HashMapType::const_iterator got = htable.find(left_tuple);
-     auto got = htable.find(left_tuple);
-     if ( got == htable.end() ) continue;
-
-     auto set = got->second;
-     // Go over the matching right tuples
-     for (auto &location : set) {
-       auto &right_tile_position_lists = right_tiles_[location.first]->GetPositionLists();
-       for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < left_tile_column_count;
-            output_tile_column_itr++) {
-          position_lists[output_tile_column_itr].push_back(
-              left_tile_position_lists[output_tile_column_itr][left_tile_itr]);
+          // Cache prev logical tile itr
+          prev_tile = location.first;
         }
+      }
+    }
 
-        // Then, copy the elements in the left logical tile's tuple
-        for (size_t output_tile_column_itr = 0;
-            output_tile_column_itr < right_tile_column_count;
-            output_tile_column_itr++) {
+    // Check if we have any join tuples
+    if (pos_lists_builder.Size() > 0) {
+      LOG_TRACE("Join tile size : %lu \n", pos_lists_builder.Size());
+      output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+      buffered_output_tiles.push_back(output_tile.release());
+    }
 
-          position_lists[left_tile_column_count + output_tile_column_itr]
-                         .push_back(right_tile_position_lists[output_tile_column_itr][location.second]);
-        }
-     }
+    // Check if we have any buffered output tiles
+    if (buffered_output_tiles.empty() == false) {
+      auto output_tile = buffered_output_tiles.front();
+      SetOutput(output_tile);
+      buffered_output_tiles.pop_front();
+
+      return true;
+    } else {
+      // Try again
+      continue;
+    }
   }
-
-  // Build output logical tile if we have any matching tuples.
-  if (position_lists[0].size() > 0) {
-    output_tile->SetPositionListsAndVisibility(std::move(position_lists));
-    SetOutput(output_tile.release());
-    return true;
-  }
-
-  return false;
 }
 
 }  // namespace executor
