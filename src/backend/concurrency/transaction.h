@@ -12,15 +12,14 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/exception.h"
-#include "backend/common/printable.h"
-#include "backend/concurrency/transaction_manager.h"
-
 #include <atomic>
-#include <cassert>
 #include <vector>
 #include <map>
+
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/exception.h"
+#include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {

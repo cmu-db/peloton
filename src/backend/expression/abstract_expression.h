@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "backend/common/printable.h"
 #include "backend/common/value.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
@@ -65,13 +66,6 @@ class AbstractExpression : public Printable {
   /** return true if self or descendent should be substitute()'d */
   virtual bool HasParameter() const;
 
-  /* Debugging methods - some various ways to create a sring
-       describing the expression tree */
-  std::string Debug() const;
-  std::string Debug(bool traverse) const;
-  std::string Debug(const std::string &spacer) const;
-  virtual std::string DebugInfo(const std::string &spacer) const = 0;
-
   /* serialization methods. expression are serialized in java and
        deserialized in the execution engine during startup. */
 
@@ -101,6 +95,13 @@ class AbstractExpression : public Printable {
   // stream positioned at the root expression node
   static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
 
+  // Debugging methods - some various ways to create a sring
+  //     describing the expression tree
+  std::string Debug() const;
+  std::string Debug(bool traverse) const;
+  std::string Debug(const std::string &spacer) const;
+  virtual std::string DebugInfo(const std::string &spacer) const = 0;
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -110,13 +111,6 @@ class AbstractExpression : public Printable {
   AbstractExpression(ExpressionType type, AbstractExpression *left,
                      AbstractExpression *right);
 
- private:
-  bool InitParamShortCircuits();
-
-  static AbstractExpression *CreateExpressionTreeRecurse(
-      json_spirit::Object &obj);
-
- protected:
   AbstractExpression *m_left = nullptr;
 
   AbstractExpression *m_right = nullptr;
@@ -130,6 +124,12 @@ class AbstractExpression : public Printable {
   int m_valueSize = 0;
 
   bool m_inBytes = false;
+
+ private:
+  bool InitParamShortCircuits();
+
+  static AbstractExpression *CreateExpressionTreeRecurse(
+      json_spirit::Object &obj);
 };
 
 }  // End expression namespace

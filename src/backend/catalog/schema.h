@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include "backend/common/printable.h"
 #include "backend/catalog/column.h"
 

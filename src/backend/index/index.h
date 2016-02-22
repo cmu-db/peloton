@@ -40,7 +40,7 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata {
+class IndexMetadata  {
   IndexMetadata() = delete;
 
  public:

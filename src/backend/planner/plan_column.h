@@ -12,11 +12,13 @@
 
 #pragma once
 
+#include <string>
+
+#include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include <json_spirit.h>
 
-#include <string>
+#include <json_spirit.h>
 
 namespace peloton {
 namespace planner {
@@ -28,7 +30,7 @@ namespace planner {
  * PlanColumns should not be passed around, stored, or expected to be
  * valid outside the scope of the initial JSON deserialization.
  */
-class PlanColumn {
+class PlanColumn : public Printable {
  public:
   PlanColumn(json_spirit::Object &col_object);
 

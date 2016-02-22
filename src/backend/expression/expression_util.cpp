@@ -59,7 +59,7 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
     case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
       return new ComparisonExpression<CmpGte>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_IN):
-      return new ComparisonExpression<CmpIn>(c, l, r);  // added by michael
+      return new ComparisonExpression<CmpIn>(c, l, r);
     default:
       char message[256];
       sprintf(message,
@@ -89,11 +89,10 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
       return new InlinedComparisonExpression<CmpGte, L, R>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_LIKE):
       return new InlinedComparisonExpression<CmpLike, L, R>(
-          c, l, r);  // added by michael
+          c, l, r);
     case (EXPRESSION_TYPE_COMPARE_IN):
       return new InlinedComparisonExpression<CmpIn, L, R>(
-          c, l,
-          r);  // added by michael
+          c, l, r);
     default:
       char message[256];
       sprintf(message,
