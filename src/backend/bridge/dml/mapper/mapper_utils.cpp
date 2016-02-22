@@ -390,6 +390,8 @@ PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
       return JOIN_TYPE_LEFT;
     case JOIN_RIGHT:
       return JOIN_TYPE_RIGHT;
+    case JOIN_SEMI: // IN+Subquery is JOIN_SEMI
+      return JOIN_TYPE_SEMI;
     default:
       return JOIN_TYPE_INVALID;
   }
@@ -421,6 +423,30 @@ void PlanTransformer::BuildColumnListFromExpr(
   BuildColumnListFromExpr(col_ids, expression->GetRight());
 }
 
+/**
+ * @brief Transform a ExpState List to a one-dimensional column list.
+ */
+const std::vector<oid_t> PlanTransformer::BuildColumnListFromExpStateList(
+    List* expr_state_list) {
+  std::vector<oid_t> column_ids;
+
+  ListCell* expr;
+  foreach (expr, expr_state_list)
+  {
+    ExprState *expr_state = (ExprState *) lfirst(expr);
+
+    auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
+
+    if (peloton_expr == nullptr) {
+      LOG_TRACE("Seems something wrong?.");
+      continue;
+    }
+
+    BuildColumnListFromExpr(column_ids, peloton_expr);
+  }
+
+  return column_ids;
+}
 /**
  * @brief Transform a TargetList to a one-dimensional column list.
  */
