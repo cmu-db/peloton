@@ -14,7 +14,7 @@
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/common/abstract_tuple.h"
-
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <boost/scoped_array.hpp>
@@ -50,7 +50,8 @@ class HashRangeExpression : public AbstractExpression {
   };
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
-                         const AbstractTuple *tuple2) const {
+                         const AbstractTuple *tuple2,
+						 executor::ExecutorContext *context) const {
     assert(tuple1);
     if (!tuple1) {
       throw Exception(

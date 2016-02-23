@@ -6,7 +6,7 @@
 
 expression_FILES = \
 				   backend/expression/abstract_expression.cpp \
-				   backend/expression/expression_util.cpp \
+				   backend/expression/expression_util_new.cpp \
 				   backend/expression/parameter_value_expression.cpp \
 				   backend/expression/scalar_value_expression.cpp \
 				   backend/expression/operator_expression.cpp \

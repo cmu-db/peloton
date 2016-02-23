@@ -18,7 +18,7 @@
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/bridge/dml/mapper/dml_raw_structures.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/common/logger.h"
 #include "backend/common/cache.h"
 #include "backend/planner/project_info.h"

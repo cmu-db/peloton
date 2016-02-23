@@ -23,7 +23,6 @@
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
-#include "backend/expression/expression_util.h"
 #include "backend/expression/expression_util_new.h"
 #include "backend/expression/cast_expression.h"
 #include "backend/expression/abstract_expression.h"
@@ -183,7 +182,7 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
   }
 
   // A Const Expr has no children.
-  auto rv = expression::ConstantValueFactory(value);
+  auto rv = expression::ExpressionUtil::ConstantValueFactory(value);
   return rv;
 }
 
@@ -226,14 +225,14 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
       tmpVal = value.ItemAtIndex(i);
       std::string str = tmpVal.GetInfo();
       expression::AbstractExpression *ce =
-          expression::ConstantValueFactory(tmpVal);
+          expression::ExpressionUtil::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);
     }
-    auto rv = expression::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
+    auto rv = expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
     return rv;
     // Free val and vector here ?michael vector_expression delete vecExpr
   } else {
-    auto rv = expression::ConstantValueFactory(value);
+    auto rv = expression::ExpressionUtil::ConstantValueFactory(value);
     return rv;
   }
 }
@@ -283,7 +282,7 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     ic++;
   }
 
-  return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
+  return expression::ExpressionUtil::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
   // return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc,
   // rc);
 }
@@ -351,7 +350,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
-  return expression::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
@@ -379,7 +378,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
-  return expression::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformBool(
@@ -415,7 +414,7 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
       auto child_es =
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
-      return expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_NOT, child,
+      return expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_NOT, child,
                                          nullptr);
     }
 
@@ -433,12 +432,12 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
   switch (param_expr->paramkind) {
     case PARAM_EXTERN: {
       LOG_TRACE("Handle EXTREN PARAM");
-      return expression::ParameterValueFactory(param_expr->paramid -
+      return expression::ExpressionUtil::ParameterValueFactory(param_expr->paramid -
                                                1);  // 1 indexed
     } break;
     case PARAM_EXEC: {
         LOG_TRACE("Handle EXEC PARAM");
-        return expression::ParameterValueFactory(param_expr->paramid);  // 1 indexed
+        return expression::ExpressionUtil::ParameterValueFactory(param_expr->paramid);  // 1 indexed
     } break;
     //PARAM_SUBLINK,
     //PARAM_MULTIEXPR
@@ -464,7 +463,7 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
 
   PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
 
-  return expression::CastFactory(type, child);
+  return expression::ExpressionUtil::CastFactory(type, child);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformAggRef(
@@ -477,7 +476,7 @@ expression::AbstractExpression *ExprTransformer::TransformAggRef(
   int tuple_idx = 1;
 
   // Raw aggregate values would be passed as the RIGHT tuple
-  return expression::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformList(
@@ -499,7 +498,7 @@ expression::AbstractExpression *ExprTransformer::TransformList(
     exprs.push_back(ExprTransformer::TransformExpr(expr_state));
   }
 
-  return expression::ConjunctionFactory(et, exprs);
+  return expression::ExpressionUtil::ConjunctionFactory(et, exprs);
 }
 
 /**
@@ -529,7 +528,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
     // it is a cast, but we need casted type and the child expr.
     // so we just create an empty cast expr and return it.
-    return expression::CastFactory();
+    return expression::ExpressionUtil::CastFactory();
   }
 
   // mperron some string functions have 4 children
@@ -564,7 +563,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-      return expression::ComparisonFactory(plt_exprtype, children[0],
+      return expression::ExpressionUtil::ComparisonFactory(plt_exprtype, children[0],
                                            children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
@@ -587,7 +586,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPLACE:
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
-      return expression::OperatorFactory(plt_exprtype, children[0], children[1],
+      return expression::ExpressionUtil::OperatorFactory(plt_exprtype, children[0], children[1],
                                          children[2], children[3]);
 
     default:
