@@ -1,6 +1,7 @@
 [![Peloton Logo](http://db.cs.cmu.edu/wordpress/wp-content/uploads/2015/11/peloton.jpg)](http://pelotondb.org/)
 
 [![Build Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon?style=flat)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
+[![GitHub license](https://img.shields.io/badge/license-apache-orange.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## What Is Peloton?
 
