@@ -22,6 +22,8 @@
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
+
+#include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -44,7 +46,6 @@
 #include "backend/executor/nested_loop_join_executor.h"
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util_new.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"

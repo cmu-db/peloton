@@ -18,16 +18,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/aggregate_plan.h"
-
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util_new.h"
+#include "backend/expression/expression_util.h"
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/storage/data_table.h"
@@ -288,9 +285,9 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::TupleValueFactory(0, 1));
+                                       expression::ExpressionUtil::TupleValueFactory(0, 1));
   planner::AggregatePlan::AggTerm maxc(EXPRESSION_TYPE_AGGREGATE_MAX,
-                                       expression::TupleValueFactory(0, 2));
+                                       expression::ExpressionUtil::TupleValueFactory(0, 2));
   agg_terms.push_back(sumb);
   agg_terms.push_back(maxc);
 
@@ -489,7 +486,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumC(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::TupleValueFactory(0, 2));
+                                       expression::ExpressionUtil::TupleValueFactory(0, 2));
   agg_terms.push_back(sumC);
 
   // 4) Set up predicate (empty)
@@ -582,10 +579,10 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm countB(EXPRESSION_TYPE_AGGREGATE_COUNT,
-                                         expression::TupleValueFactory(0, 1),
+                                         expression::ExpressionUtil::TupleValueFactory(0, 1),
                                          false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::TupleValueFactory(0, 1),
+      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::ExpressionUtil::TupleValueFactory(0, 1),
       true);  // Flag distinct
   agg_terms.push_back(countB);
   agg_terms.push_back(countDistinctB);
@@ -692,13 +689,13 @@ TEST(AggregateTests, PlainSumCountDistinctTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumA(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::TupleValueFactory(0, 0),
+                                       expression::ExpressionUtil::TupleValueFactory(0, 0),
                                        false);
   planner::AggregatePlan::AggTerm countB(EXPRESSION_TYPE_AGGREGATE_COUNT,
-                                         expression::TupleValueFactory(0, 1),
+                                         expression::ExpressionUtil::TupleValueFactory(0, 1),
                                          false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::TupleValueFactory(0, 1),
+      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::ExpressionUtil::TupleValueFactory(0, 1),
       true);  // Flag distinct
   agg_terms.push_back(sumA);
   agg_terms.push_back(countB);

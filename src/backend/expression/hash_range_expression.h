@@ -50,8 +50,8 @@ class HashRangeExpression : public AbstractExpression {
   };
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
-                         const AbstractTuple *tuple2,
-						 executor::ExecutorContext *context) const {
+                         __attribute__((unused)) const AbstractTuple *tuple2,
+                         __attribute__((unused)) executor::ExecutorContext *context) const {
     assert(tuple1);
     if (!tuple1) {
       throw Exception(
