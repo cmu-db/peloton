@@ -17,7 +17,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/common/types.h"
-#include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/executor/executor_context.h"
 
@@ -179,7 +179,7 @@ AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
     // to read. yes, the per-class data really does follow the
     // child serializations.
 
-    return ExpressionFactory(obj, peek_type, value_type, value_size, left_child,
+    return ExpressionUtil::ExpressionFactory(obj, peek_type, value_type, value_size, left_child,
                              right_child);
   } catch (ExpressionException &ex) {
     // clean up children

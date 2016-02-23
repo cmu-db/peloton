@@ -31,7 +31,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_factory.h"
 
@@ -153,11 +153,11 @@ expression::AbstractExpression *CreatePredicate(
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
-        expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
+        expression::ExpressionUtil::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
                                       tuple_value_expr, constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
-    predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
+    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
                                                predicate, equality_expr);
   }
 

@@ -53,7 +53,7 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
-    predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
                                                join_filter, plan_filter);
   } else if (join_filter) {
     predicate = join_filter;
