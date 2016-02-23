@@ -59,8 +59,7 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 std::vector<PlanNodeType> join_algorithms = {
     PLAN_NODE_TYPE_NESTLOOP,
     PLAN_NODE_TYPE_MERGEJOIN,
-// TODO: Uncomment this
-//    PLAN_NODE_TYPE_HASHJOIN
+    PLAN_NODE_TYPE_HASHJOIN
 };
 
 std::vector<PelotonJoinType> join_types = {
