@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/expression/function_expression.h"
-#include "backend/expression/expression_util_new.h"
+#include "backend/expression/expression_util.h"
 
 namespace peloton {
 

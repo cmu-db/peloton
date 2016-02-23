@@ -149,6 +149,7 @@ struct ValueExtractor {
   }
 
   std::string Debug() const {
+    return m_value.GetInfo();
 	// comment out because no member Debug()
     //return m_value.IsNull() ? "NULL" : m_value.Debug();
   }
