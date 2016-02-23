@@ -17,9 +17,9 @@
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/common/types.h"
-#include "backend/expression/expression_util_new.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/executor/executor_context.h"
+#include "backend/expression/expression_util.h"
 
 namespace peloton {
 namespace expression {

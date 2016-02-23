@@ -18,8 +18,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "backend/planner/seq_scan_plan.h"
-
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
@@ -31,7 +29,8 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util_new.h"
+#include "backend/expression/expression_util.h"
+#include "backend/planner/seq_scan_plan.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_factory.h"
 
@@ -128,7 +127,7 @@ expression::AbstractExpression *CreatePredicate(
   assert(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
-      expression::ConstantValueFactory(Value::GetFalse());
+      expression::ExpressionUtil::ConstantValueFactory(Value::GetFalse());
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {
@@ -138,8 +137,8 @@ expression::AbstractExpression *CreatePredicate(
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::TupleValueFactory(0, 0)
-                            : expression::TupleValueFactory(0, 3);
+    tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
+                            : expression::ExpressionUtil::TupleValueFactory(0, 3);
 
     // Second, create constant value expression.
     Value constant_value =
@@ -149,7 +148,7 @@ expression::AbstractExpression *CreatePredicate(
                    ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
 
     expression::AbstractExpression *constant_value_expr =
-        expression::ConstantValueFactory(constant_value);
+        expression::ExpressionUtil::ConstantValueFactory(constant_value);
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
