@@ -88,13 +88,23 @@ class VectorComparisonExpression : public AbstractExpression {
     assert(right != NULL);
   }
 
+  VectorComparisonExpression(ExpressionType et, AbstractExpression *left,
+                             AbstractExpression *right,
+                             QuantifierType quantifier)
+      : AbstractExpression(et, left, right) {
+    assert(left != NULL);
+    assert(right != NULL);
+    SetQuantifierType(quantifier);
+  }
+
   // TODO: Use this function instead of constructor
   void SetQuantifierType(QuantifierType quantifier_type) {
     m_quantifier = quantifier_type;
   }
 
   Value Evaluate(const AbstractTuple *tuple1,
-                 const AbstractTuple *tuple2) const;
+                 const AbstractTuple *tuple2,
+				 executor::ExecutorContext *context) const;
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "VectorComparisonExpression\n");
@@ -139,7 +149,9 @@ struct ValueExtractor {
   }
 
   std::string Debug() const {
-    return m_value.IsNull() ? "NULL" : m_value.Debug();
+    return m_value.GetInfo();
+	// comment out because no member Debug()
+    //return m_value.IsNull() ? "NULL" : m_value.Debug();
   }
 
   ValueType m_value;
