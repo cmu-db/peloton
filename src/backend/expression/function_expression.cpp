@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/expression/function_expression.h"
-#include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 
 namespace peloton {
 
@@ -194,7 +194,7 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
   const std::vector<AbstractExpression *> &m_args;
 };
 
-expression::AbstractExpression *expression::FunctionFactory(
+expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
     int functionId, const std::vector<AbstractExpression *> *arguments) {
   AbstractExpression *ret = 0;
   assert(arguments);
