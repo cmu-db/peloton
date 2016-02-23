@@ -10,14 +10,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
+
+#include "backend/expression/expression_util_new.h"
+
 #include "backend/common/value_factory.h"
 #include "backend/common/exception.h"
-#include "backend/expression/expression_util.h"
+#include "backend/common/logger.h"
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/hash_range_expression.h"
-#include "backend/expression/expressions.h"
-#include "backend/common/types.h"
+#include "backend/expression/operator_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/cast_expression.h"
+#include "backend/expression/tuple_address_expression.h"
+#include "backend/expression/scalar_value_expression.h"
+#include "backend/expression/vector_expression.h"
+#include "backend/expression/function_expression.h"
+#include "backend/expression/subquery_expression.h"
+#include "backend/expression/string_expression.h"
+#include <json_spirit.h>
 
 #include <cassert>
 #include <sstream>
@@ -28,7 +42,7 @@ namespace peloton {
 namespace expression {
 
 /** Parse JSON parameters to create a hash range expression */
-static AbstractExpression *hashRangeFactory(PlannerDomValue obj) {
+static AbstractExpression *ExpressionUtil::HashRangeFactory(PlannerDomValue obj) {
   PlannerDomValue hashColumnValue = obj.valueForKey("HASH_COLUMN");
 
   PlannerDomValue rangesArray = obj.valueForKey("RANGES");
@@ -46,7 +60,7 @@ static AbstractExpression *hashRangeFactory(PlannerDomValue obj) {
 }
 
 /** Parse JSON parameters to create a subquery expression */
-static AbstractExpression *subqueryFactory(
+static AbstractExpression *ExpressionUtil::SubqueryFactory(
     ExpressionType subqueryType, PlannerDomValue obj,
     const std::vector<AbstractExpression *> *args) {
   int subqueryId = obj.valueForKey("SUBQUERY_ID").asInt();
@@ -80,7 +94,7 @@ static AbstractExpression *subqueryFactory(
 
 /** Function static helper templated functions to vivify an optimal
     comparison class. */
-static AbstractExpression *subqueryComparisonFactory(PlannerDomValue obj,
+static AbstractExpression *SubqueryComparisonFactory(PlannerDomValue obj,
                                                      ExpressionType c,
                                                      AbstractExpression *l,
                                                      AbstractExpression *r) {
@@ -89,119 +103,119 @@ static AbstractExpression *subqueryComparisonFactory(PlannerDomValue obj,
     quantifier =
         static_cast<QuantifierType>(obj.valueForKey("QUANTIFIER").asInt());
   }
-
   SubqueryExpression *l_subquery = dynamic_cast<SubqueryExpression *>(l);
 
   SubqueryExpression *r_subquery = dynamic_cast<SubqueryExpression *>(r);
 
   // OK, here we go
-  if (l_subquery != NULL && r_subquery != NULL) {
-    switch (c) {
-      case (EXPRESSION_TYPE_COMPARE_EQUAL):
-        return new VectorComparisonExpression<CmpEq, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-        return new VectorComparisonExpression<CmpNe, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-        return new VectorComparisonExpression<CmpLt, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-        return new VectorComparisonExpression<CmpGt, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpLte, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpGte, TupleExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      default:
-        char message[256];
-        snprintf(message, 256,
-                 "Invalid ExpressionType '%s' called"
-                 " for VectorComparisonExpression",
-                 ExpressionTypeToString(c).c_str());
-        throw Exception(message);
-    }
-  } else if (l_subquery != NULL) {
-    switch (c) {
-      case (EXPRESSION_TYPE_COMPARE_EQUAL):
-        return new VectorComparisonExpression<CmpEq, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-        return new VectorComparisonExpression<CmpNe, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-        return new VectorComparisonExpression<CmpLt, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-        return new VectorComparisonExpression<CmpGt, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpLte, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpGte, TupleExtractor,
-                                              ValueExtractor>(c, l, r,
-                                                              quantifier);
-      default:
-        char message[256];
-        snprintf(message, 256,
-                 "Invalid ExpressionType '%s' called"
-                 " for VectorComparisonExpression",
-                 ExpressionTypeToString(c).c_str());
-        throw Exception(message);
-    }
-  } else {
-    assert(r_subquery != NULL);
-    switch (c) {
-      case (EXPRESSION_TYPE_COMPARE_EQUAL):
-        return new VectorComparisonExpression<CmpEq, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-        return new VectorComparisonExpression<CmpNe, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-        return new VectorComparisonExpression<CmpLt, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-        return new VectorComparisonExpression<CmpGt, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpLte, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-        return new VectorComparisonExpression<CmpGte, ValueExtractor,
-                                              TupleExtractor>(c, l, r,
-                                                              quantifier);
-      default:
-        char message[256];
-        snprintf(message, 256,
-                 "Invalid ExpressionType '%s' called"
-                 " for VectorComparisonExpression",
-                 ExpressionTypeToString(c).c_str());
-        throw Exception(message);
-    }
-  }
+  //comment out because VectorComparisonExpression has compile error because of TupleExtractor
+//  if (l_subquery != NULL && r_subquery != NULL) {
+//    switch (c) {
+//      case (EXPRESSION_TYPE_COMPARE_EQUAL):
+//        return new VectorComparisonExpression<CmpEq, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+//        return new VectorComparisonExpression<CmpNe, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+//        return new VectorComparisonExpression<CmpLt, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+//        return new VectorComparisonExpression<CmpGt, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpLte, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpGte, TupleExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      default:
+//        char message[256];
+//        snprintf(message, 256,
+//                 "Invalid ExpressionType '%s' called"
+//                 " for VectorComparisonExpression",
+//                 ExpressionTypeToString(c).c_str());
+//        throw Exception(message);
+//    }
+//  } else if (l_subquery != NULL) {
+//    switch (c) {
+//      case (EXPRESSION_TYPE_COMPARE_EQUAL):
+//        return new VectorComparisonExpression<CmpEq, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+//        return new VectorComparisonExpression<CmpNe, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+//        return new VectorComparisonExpression<CmpLt, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+//        return new VectorComparisonExpression<CmpGt, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpLte, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpGte, TupleExtractor,
+//                                              ValueExtractor>(c, l, r,
+//                                                              quantifier);
+//      default:
+//        char message[256];
+//        snprintf(message, 256,
+//                 "Invalid ExpressionType '%s' called"
+//                 " for VectorComparisonExpression",
+//                 ExpressionTypeToString(c).c_str());
+//        throw Exception(message);
+//    }
+//  } else {
+//    assert(r_subquery != NULL);
+//    switch (c) {
+//      case (EXPRESSION_TYPE_COMPARE_EQUAL):
+//        return new VectorComparisonExpression<CmpEq, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+//        return new VectorComparisonExpression<CmpNe, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+//        return new VectorComparisonExpression<CmpLt, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+//        return new VectorComparisonExpression<CmpGt, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpLte, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+//        return new VectorComparisonExpression<CmpGte, ValueExtractor,
+//                                              TupleExtractor>(c, l, r,
+//                                                              quantifier);
+//      default:
+//        char message[256];
+//        snprintf(message, 256,
+//                 "Invalid ExpressionType '%s' called"
+//                 " for VectorComparisonExpression",
+//                 ExpressionTypeToString(c).c_str());
+//        throw Exception(message);
+//    }
+//  }
 }
 
-static AbstractExpression *getGeneral(ExpressionType c, AbstractExpression *l,
+static AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
                                       AbstractExpression *r) {
   assert(l);
   assert(r);
@@ -233,7 +247,7 @@ static AbstractExpression *getGeneral(ExpressionType c, AbstractExpression *l,
 }
 
 template <typename L, typename R>
-static AbstractExpression *getMoreSpecialized(ExpressionType c, L *l, R *r) {
+static AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
   assert(l);
   assert(r);
   switch (c) {
@@ -263,9 +277,82 @@ static AbstractExpression *getMoreSpecialized(ExpressionType c, L *l, R *r) {
   }
 }
 
+// convert the enumerated value type into a concrete c type for the
+// comparison helper templates.
+static AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, AbstractExpression *lc,
+                                      AbstractExpression *rc) {
+  assert(lc);
+
+  TupleValueExpression *l_tuple = dynamic_cast<TupleValueExpression *>(lc);
+
+  TupleValueExpression *r_tuple = dynamic_cast<TupleValueExpression *>(rc);
+
+  // more specialization available?
+  ConstantValueExpression *l_const =
+      dynamic_cast<ConstantValueExpression *>(lc);
+
+  switch (c) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
+      ConstantValueExpression *r_const =
+          dynamic_cast<ConstantValueExpression *>(rc);
+
+      // this will inline getValue(), hooray!
+      if (l_const != nullptr &&
+          r_const != nullptr) {  // CONST-CONST can it happen?
+        return GetMoreSpecialized<ConstantValueExpression,
+                                  ConstantValueExpression>(c, l_const, r_const);
+      } else if (l_const != nullptr && r_tuple != nullptr) {  // CONST-TUPLE
+        return GetMoreSpecialized<ConstantValueExpression,
+                                  TupleValueExpression>(c, l_const, r_tuple);
+      } else if (l_tuple != nullptr && r_const != nullptr) {  // TUPLE-CONST
+        return GetMoreSpecialized<TupleValueExpression,
+                                  ConstantValueExpression>(c, l_tuple, r_const);
+      } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
+        return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
+            c, l_tuple, r_tuple);
+      }
+    } break;
+
+    case EXPRESSION_TYPE_COMPARE_IN: {
+      VectorExpression *r_vector = dynamic_cast<VectorExpression *>(rc);
+
+      // this will inline getValue(), hooray!
+      if (l_const != nullptr &&
+          r_vector != nullptr) {  // CONST-CONST can it happen?
+        return GetMoreSpecialized<ConstantValueExpression, VectorExpression>(
+            c, l_const, r_vector);
+      } else if (l_const != nullptr && r_tuple != nullptr) {  // CONST-TUPLE
+        return GetMoreSpecialized<ConstantValueExpression,
+                                  TupleValueExpression>(c, l_const, r_tuple);
+      } else if (l_tuple != nullptr && r_vector != nullptr) {  // TUPLE-CONST
+        return GetMoreSpecialized<TupleValueExpression, VectorExpression>(
+            c, l_tuple, r_vector);
+      } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
+        return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
+            c, l_tuple, r_tuple);
+      }
+    } break;
+
+    default:
+      LOG_ERROR(
+          "This Peloton ExpressionType is in our map but not transformed here "
+          ": %u",
+          c);
+  }
+
+  // okay, still getTypedValue is beneficial.
+  return GetGeneral(c, lc, rc);
+}
+
+
 /** convert the enumerated value type into a concrete c type for the
  * comparison helper templates. */
-AbstractExpression *ExpressionUtil::ComparisonFactory(PlannerDomValue obj,
+static AbstractExpression *ExpressionUtil::ComparisonFactory(PlannerDomValue obj,
                                                       ExpressionType et,
                                                       AbstractExpression *lc,
                                                       AbstractExpression *rc) {
@@ -284,16 +371,16 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(PlannerDomValue obj,
 
   // this will inline.GetValue(), hooray!
   if (l_const != NULL && r_const != NULL) {  // CONST-CONST can it happen?
-    return getMoreSpecialized<ConstantValueExpression, ConstantValueExpression>(
+    return GetMoreSpecialized<ConstantValueExpression, ConstantValueExpression>(
         et, l_const, r_const);
   } else if (l_const != NULL && r_tuple != NULL) {  // CONST-TUPLE
-    return getMoreSpecialized<ConstantValueExpression, TupleValueExpression>(
+    return GetMoreSpecialized<ConstantValueExpression, TupleValueExpression>(
         et, l_const, r_tuple);
   } else if (l_tuple != NULL && r_const != NULL) {  // TUPLE-CONST
-    return getMoreSpecialized<TupleValueExpression, ConstantValueExpression>(
+    return GetMoreSpecialized<TupleValueExpression, ConstantValueExpression>(
         et, l_tuple, r_const);
   } else if (l_tuple != NULL && r_tuple != NULL) {  // TUPLE-TUPLE
-    return getMoreSpecialized<TupleValueExpression, TupleValueExpression>(
+    return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
         et, l_tuple, r_tuple);
   }
 
@@ -302,16 +389,16 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(PlannerDomValue obj,
   SubqueryExpression *r_subquery = dynamic_cast<SubqueryExpression *>(rc);
 
   if (l_subquery != NULL || r_subquery != NULL) {
-    return subqueryComparisonFactory(obj, et, lc, rc);
+    return SubqueryComparisonFactory(obj, et, lc, rc);
   }
 
   // okay, still.GetTypedValue.Is beneficial.
-  return getGeneral(et, lc, rc);
+  return GetGeneral(et, lc, rc);
 }
 
 /** convert the enumerated value type into a concrete c type for the
  *  operator expression templated ctors */
-static AbstractExpression *operatorFactory(ExpressionType et,
+static AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
                                            AbstractExpression *lc,
                                            AbstractExpression *rc) {
   AbstractExpression *ret = NULL;
@@ -357,11 +444,111 @@ static AbstractExpression *operatorFactory(ExpressionType et,
   return ret;
 }
 
-static AbstractExpression *castFactory(ValueType vt, AbstractExpression *lc) {
+// convert the enumerated value type into a concrete c type for the
+//  operator expression templated ctors
+static AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
+                                    AbstractExpression *first,
+                                    AbstractExpression *second,
+                                    AbstractExpression *third,
+                                    AbstractExpression *fourth) {
+  AbstractExpression *ret = nullptr;
+
+  switch (et) {
+    case (EXPRESSION_TYPE_OPERATOR_PLUS):
+      ret = new OperatorExpression<OpPlus>(et, first, second);
+      break;
+
+    case (EXPRESSION_TYPE_OPERATOR_MINUS):
+      ret = new OperatorExpression<OpMinus>(et, first, second);
+      break;
+
+    case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
+      ret = new OperatorExpression<OpMultiply>(et, first, second);
+      break;
+
+    case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
+      ret = new OperatorExpression<OpDivide>(et, first, second);
+      break;
+
+    case (EXPRESSION_TYPE_OPERATOR_NOT):
+      ret = new OperatorNotExpression(first);
+      break;
+    case (EXPRESSION_TYPE_SUBSTR):
+      ret = new SubstringExpression(first, second, third);
+      break;
+
+    case (EXPRESSION_TYPE_CONCAT):
+      ret = new ConcatExpression(first, second);
+      break;
+
+    case (EXPRESSION_TYPE_ASCII):
+      ret = new AsciiExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_CHAR):
+      ret = new CharExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_CHAR_LEN):
+      ret = new CharLengthExpression(first);
+      break;
+
+    case (EXPRESSION_TYPE_OCTET_LEN):
+      ret = new OctetLengthExpression(first);
+      break;
+    case (EXPRESSION_TYPE_POSITION):
+      ret = new PositionExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPEAT):
+      ret = new RepeatExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_LEFT):
+      ret = new LeftExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RIGHT):
+      ret = new RightExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_REPLACE):
+      ret = new ReplaceExpression(first, second, third);
+      break;
+    case (EXPRESSION_TYPE_OVERLAY):
+      ret = new OverlayExpression(first, second, third, fourth);
+      break;
+
+    case (EXPRESSION_TYPE_LTRIM):
+      ret = new LTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_RTRIM):
+      ret = new RTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_BTRIM):
+      ret = new BTrimExpression(first, second);
+      break;
+    case (EXPRESSION_TYPE_OPERATOR_MOD):
+      throw ExpressionException("Mod operator is not yet supported.");
+
+    case (EXPRESSION_TYPE_OPERATOR_CONCAT):
+      throw ExpressionException("Concat operator not yet supported.");
+
+    case (EXPRESSION_TYPE_OPERATOR_CAST):
+      throw ExpressionException("Cast operator not yet supported.");
+
+    default:
+      throw ExpressionException("operator ctor helper out of sync");
+  }
+  return ret;
+}
+
+static AbstractExpression *ExpressionUtil::CastFactory(ValueType vt, AbstractExpression *lc) {
   return new OperatorCastExpression(vt, lc);
 }
 
-static AbstractExpression *caseWhenFactory(ValueType vt, AbstractExpression *lc,
+static AbstractExpression *ExpressionUtil::CastFactory(PostgresValueType type = POSTGRES_VALUE_TYPE_INVALID,
+	    AbstractExpression *child = nullptr) {
+  return new expression::CastExpression(type, child);
+}
+
+static AbstractExpression *ExpressionUtil::CaseWhenFactory(ValueType vt, AbstractExpression *lc,
                                            AbstractExpression *rc) {
   OperatorAlternativeExpression *alternative =
       dynamic_cast<OperatorAlternativeExpression *>(rc);
@@ -371,20 +558,27 @@ static AbstractExpression *caseWhenFactory(ValueType vt, AbstractExpression *lc,
   return new OperatorCaseWhenExpression(vt, lc, alternative);
 }
 
+
+// provide an interface for creating constant value expressions that
+// is more useful to testcases */
+static AbstractExpression *ExpressionUtil::ConstantValueFactory(const Value &newvalue) {
+  return new ConstantValueExpression(newvalue);
+}
+
 /** convert the enumerated value type into a concrete type for
  * constant value expression templated ctors */
-static AbstractExpression *constantValueFactory(PlannerDomValue obj,
+static AbstractExpression *ExpressionUtil::ConstantValueFactory(PlannerDomValue obj,
                                                 ValueType vt, ExpressionType et,
                                                 AbstractExpression *lc,
                                                 AbstractExpression *rc) {
   // read before ctor - can then instantiate fully init'd obj.
   Value newvalue;
-  bool.IsNull = obj.valueForKey("ISNULL").asBool();
-  if .IsNull)
+  bool IsNull = obj.valueForKey("ISNULL").asBool();
+  if (IsNull)
   {
       newvalue = Value::GetNullValue(vt);
       return new ConstantValueExpression(newvalue);
-    }
+  }
 
   PlannerDomValue valueValue = obj.valueForKey("VALUE");
 
@@ -443,9 +637,97 @@ static AbstractExpression *constantValueFactory(PlannerDomValue obj,
   return new ConstantValueExpression(newvalue);
 }
 
+
+// convert the enumerated value type into a concrete c type for
+// constant value expressions templated ctors
+AbstractExpression *ExpressionUtil::ConstantValueFactory(
+    json_spirit::Object &obj, __attribute__((unused)) ValueType vt,
+    __attribute__((unused)) ExpressionType et,
+    __attribute__((unused)) AbstractExpression *lc,
+    __attribute__((unused)) AbstractExpression *rc) {
+  // read before ctor - can then instantiate fully init'd obj.
+  Value newvalue;
+  json_spirit::Value valueValue = json_spirit::find_value(obj, "VALUE");
+  if (valueValue == json_spirit::Value::null) {
+    throw ExpressionException(
+        "constantValueFactory: Could not find"
+        " VALUE value");
+  }
+
+  if (valueValue.type() == json_spirit::str_type) {
+    std::string nullcheck = valueValue.get_str();
+    if (nullcheck == "nullptr") {
+      newvalue = Value::GetNullValue(vt);
+      return ConstantValueFactory(newvalue);
+    }
+  }
+
+  switch (vt) {
+    case VALUE_TYPE_INVALID:
+      throw ExpressionException(
+          "constantValueFactory: Value type should"
+          " never be VALUE_TYPE_INVALID");
+    case VALUE_TYPE_NULL:
+      throw ExpressionException(
+          "constantValueFactory: And they should be"
+          " never be this either! VALUE_TYPE_nullptr");
+    case VALUE_TYPE_TINYINT:
+      newvalue = ValueFactory::GetTinyIntValue(
+          static_cast<int8_t>(valueValue.get_int64()));
+      break;
+    case VALUE_TYPE_SMALLINT:
+      newvalue = ValueFactory::GetSmallIntValue(
+          static_cast<int16_t>(valueValue.get_int64()));
+      break;
+    case VALUE_TYPE_INTEGER:
+      newvalue = ValueFactory::GetIntegerValue(
+          static_cast<int32_t>(valueValue.get_int64()));
+      break;
+    case VALUE_TYPE_BIGINT:
+      newvalue = ValueFactory::GetBigIntValue(
+          static_cast<int64_t>(valueValue.get_int64()));
+      break;
+    case VALUE_TYPE_DOUBLE:
+      newvalue = ValueFactory::GetDoubleValue(
+          static_cast<double>(valueValue.get_real()));
+      break;
+    case VALUE_TYPE_VARCHAR:
+      newvalue = ValueFactory::GetStringValue(valueValue.get_str());
+      break;
+    case VALUE_TYPE_VARBINARY:
+      // uses hex encoding
+      newvalue = ValueFactory::GetBinaryValue(valueValue.get_str());
+      break;
+    case VALUE_TYPE_TIMESTAMP:
+      newvalue = ValueFactory::GetTimestampValue(
+          static_cast<int64_t>(valueValue.get_int64()));
+      break;
+    case VALUE_TYPE_DECIMAL:
+      newvalue = ValueFactory::GetDecimalValueFromString(valueValue.get_str());
+      break;
+    default:
+      throw ExpressionException(
+          "constantValueFactory: Unrecognized value"
+          " type");
+  }
+
+  return ConstantValueFactory(newvalue);
+}
+
+
+static AbstractExpression *ExpressionUtil::VectorFactory(
+    ValueType elementType, const std::vector<AbstractExpression *> *arguments) {
+  assert(arguments);
+  return new VectorExpression(elementType, *arguments);
+}
+
+
+static AbstractExpression *ExpressionUtil::ParameterValueFactory(int idx) {
+  return new ParameterValueExpression(idx);
+}
 /** convert the enumerated value type into a concrete c type for
  * parameter value expression templated ctors */
-static AbstractExpression *parameterValueFactory(PlannerDomValue obj,
+static AbstractExpression *ExpressionUtil::ParameterValueFactory(PlannerDomValue obj,
                                                  ExpressionType et,
                                                  AbstractExpression *lc,
                                                  AbstractExpression *rc) {
@@ -455,9 +737,34 @@ static AbstractExpression *parameterValueFactory(PlannerDomValue obj,
   return new ParameterValueExpression(param_idx);
 }
 
+
+// convert the enumerated value type into a concrete c type for
+// parameter value expression templated ctors */
+static AbstractExpression *ExpressionUtil::ParameterValueFactory(
+    json_spirit::Object &obj, __attribute__((unused)) ExpressionType et,
+    __attribute__((unused)) AbstractExpression *lc,
+    __attribute__((unused)) AbstractExpression *rc) {
+  // read before ctor - can then instantiate fully init'd obj.
+  json_spirit::Value paramIdxValue = json_spirit::find_value(obj, "PARAM_IDX");
+  if (paramIdxValue == json_spirit::Value::null) {
+    throw ExpressionException(
+        "parameterValueFactory: Could not find"
+        " PARAM_IDX value");
+  }
+
+  int param_idx = paramIdxValue.get_int();
+  assert(param_idx >= 0);
+  return ParameterValueFactory(param_idx);
+}
+
+AbstractExpression *ExpressionUtil::TupleValueFactory(int tuple_idx, int value_idx) {
+  return new TupleValueExpression(tuple_idx, value_idx);
+}
+
+
 /** convert the enumerated value type into a concrete c type for
  * tuple value expression templated ctors */
-static AbstractExpression *tupleValueFactory(PlannerDomValue obj,
+static AbstractExpression *ExpressionUtil::TupleValueFactory(PlannerDomValue obj,
                                              ExpressionType et,
                                              AbstractExpression *lc,
                                              AbstractExpression *rc) {
@@ -471,16 +778,64 @@ static AbstractExpression *tupleValueFactory(PlannerDomValue obj,
   // verify input
   if (columnIndex < 0) {
     std::ostringstream message;
-    message << "tupleValueFactory: invalid column_idx " << columnIndex
-            << " for " << ((tableIdx == 0) ? "" : "inner ")
-            << "table\nStack trace:\n" << StackTrace::stringStackTrace();
-    throw UnexpectedEEException(message.str());
+
+    //comment out because stringStackTrace() not found.
+    //message << "tupleValueFactory: invalid column_idx " << columnIndex
+    //        << " for " << ((tableIdx == 0) ? "" : "inner ")
+    //        << "table\nStack trace:\n" << StackTrace::stringStackTrace();
+    //comment out because the exception type not found.
+    //throw UnexpectedEEException(message.str());
   }
 
   return new TupleValueExpression(tableIdx, columnIndex);
 }
 
-AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
+// convert the enumerated value type into a concrete c type for
+// tuple value expression templated ctors
+static AbstractExpression *ExpressionUtil::TupleValueFactory(json_spirit::Object &obj,
+                                      __attribute__((unused)) ExpressionType et,
+                                      __attribute__((unused))
+                                      AbstractExpression *lc,
+                                      __attribute__((unused))
+                                      AbstractExpression *rc) {
+  // read the tuple value expression specific data
+  json_spirit::Value valueIdxValue = json_spirit::find_value(obj, "COLUMN_IDX");
+
+  json_spirit::Value tableName = json_spirit::find_value(obj, "TABLE_NAME");
+
+  json_spirit::Value columnName = json_spirit::find_value(obj, "COLUMN_NAME");
+
+  // verify input
+  if (valueIdxValue == json_spirit::Value::null) {
+    throw ExpressionException(
+        "tupleValueFactory: Could not find"
+        " COLUMN_IDX value");
+  }
+  if (valueIdxValue.get_int() < 0) {
+    throw ExpressionException("tupleValueFactory: invalid column_idx.");
+  }
+
+  if (tableName == json_spirit::Value::null) {
+    throw ExpressionException("tupleValueFactory: no table name in TVE");
+  }
+
+  if (columnName == json_spirit::Value::null) {
+    throw ExpressionException(
+        "tupleValueFactory: no column name in"
+        " TVE");
+  }
+
+  // FIXME: Shouldn't this vary between 0 and 1 depending on left or right tuple
+  // ?
+  int tuple_idx = 0;
+
+  return new TupleValueExpression(tuple_idx, valueIdxValue.get_int());
+}
+
+
+
+
+static AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
                                                        AbstractExpression *lc,
                                                        AbstractExpression *rc) {
   switch (et) {
@@ -492,6 +847,36 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
       return NULL;
   }
 }
+
+/**
+ * @brief Construct a conjunction expression from a list of AND'ed or OR'ed
+ * expressions
+ * @return A constructed peloton expression
+ */
+static AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
+                                       std::list<AbstractExpression *> exprs) {
+  if (exprs.empty())
+    return expression::ExpressionUtil::ConstantValueFactory(
+        ValueFactory::GetBooleanValue(true));
+
+  AbstractExpression *front = exprs.front();
+  exprs.pop_front();
+
+  if (exprs.empty()) return front;
+  switch (et) {
+    case (EXPRESSION_TYPE_CONJUNCTION_AND):
+      return new expression::ConjunctionExpression<ConjunctionAnd>(
+          et, front, expression::ExpressionUtil::ConjunctionFactory(et, exprs));
+    case (EXPRESSION_TYPE_CONJUNCTION_OR):
+      return new expression::ConjunctionExpression<ConjunctionOr>(
+          et, front, expression::ExpressionUtil::ConjunctionFactory(et, exprs));
+    default:
+      return nullptr;
+  }
+}
+
+
+
 
 static void raiseFunctionFactoryError(
     const std::string &nameString, int functionId,
@@ -517,7 +902,7 @@ static void raiseFunctionFactoryError(
  * templated ctor to invoke. Several helpers, above, aid in this
  * pursuit. Each instantiated expression must consume any
  * class-specific serialization from serialize_io. */
-AbstractExpression *ExpressionUtil::expressionFactory(
+AbstractExpression *ExpressionUtil::ExpressionFactory(
     PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
     AbstractExpression *lc, AbstractExpression *rc,
     const std::vector<AbstractExpression *> *args) {
@@ -526,7 +911,7 @@ AbstractExpression *ExpressionUtil::expressionFactory(
   switch (et) {
     // Casts
     case (EXPRESSION_TYPE_OPERATOR_CAST):
-      ret = castFactory(vt, lc);
+      ret = CastFactory(vt, lc);
       break;
 
     // Operators
@@ -539,7 +924,7 @@ AbstractExpression *ExpressionUtil::expressionFactory(
     case (EXPRESSION_TYPE_OPERATOR_NOT):
     case (EXPRESSION_TYPE_OPERATOR_IS_NULL):
     case (EXPRESSION_TYPE_OPERATOR_EXISTS):
-      ret = operatorFactory(et, lc, rc);
+      ret = ExpressionUtil::OperatorFactory(et, lc, rc);
       break;
 
     // Comparisons
@@ -557,7 +942,7 @@ AbstractExpression *ExpressionUtil::expressionFactory(
     // Conjunctions
     case (EXPRESSION_TYPE_CONJUNCTION_AND):
     case (EXPRESSION_TYPE_CONJUNCTION_OR):
-      ret = ConjunctionFactory(et, lc, rc);
+      ret = ExpressionUtil::ConjunctionFactory(et, lc, rc);
       break;
 
     // Functions and pseudo-functions
@@ -566,7 +951,7 @@ AbstractExpression *ExpressionUtil::expressionFactory(
       int functionId = obj.valueForKey("FUNCTION_ID").asInt();
 
       if (args) {
-        ret = functionFactory(functionId, args);
+        ret = FunctionFactory(functionId, args);
       }
 
       if (!ret) {
@@ -589,20 +974,20 @@ AbstractExpression *ExpressionUtil::expressionFactory(
       // something else,
       // a separate element type attribute will have to be serialized and passed
       // in here.
-      ret = vectorFactory(vt, args);
+      ret = VectorFactory(vt, args);
     } break;
 
     // Constant Values, parameters, tuples
     case (EXPRESSION_TYPE_VALUE_CONSTANT):
-      ret = constantValueFactory(obj, vt, et, lc, rc);
+      ret = ConstantValueFactory(obj, vt, et, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_VALUE_PARAMETER):
-      ret = parameterValueFactory(obj, et, lc, rc);
+      ret = ParameterValueFactory(obj, et, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_VALUE_TUPLE):
-      ret = tupleValueFactory(obj, et, lc, rc);
+      ret = TupleValueFactory(obj, et, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS):
@@ -612,10 +997,10 @@ AbstractExpression *ExpressionUtil::expressionFactory(
       ret = new ScalarValueExpression(lc);
       break;
     case (EXPRESSION_TYPE_HASH_RANGE):
-      ret = hashRangeFactory(obj);
+      ret = HashRangeFactory(obj);
       break;
     case (EXPRESSION_TYPE_OPERATOR_CASE_WHEN):
-      ret = caseWhenFactory(vt, lc, rc);
+      ret = CaseWhenFactory(vt, lc, rc);
       break;
     case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
       ret = new OperatorAlternativeExpression(lc, rc);
@@ -624,7 +1009,7 @@ AbstractExpression *ExpressionUtil::expressionFactory(
     // Subquery
     case (EXPRESSION_TYPE_ROW_SUBQUERY):
     case (EXPRESSION_TYPE_SELECT_SUBQUERY):
-      ret = subqueryFactory(et, obj, args);
+      ret = SubqueryFactory(et, obj, args);
       break;
 
     // must handle all known expression in this factory
@@ -644,7 +1029,84 @@ AbstractExpression *ExpressionUtil::expressionFactory(
   return ret;
 }
 
-boost::shared_array<int> ExpressionUtil::convertIfAllTupleValues(
+
+// Given an expression type and a valuetype, find the best
+// templated ctor to invoke. Several helpers, above, aid in this
+// pursuit. Each instantiated expression must consume any
+// class-specific serialization from serialize_io.
+static AbstractExpression *ExpressionUtil::ExpressionFactory(json_spirit::Object &obj,
+                                      ExpressionType et, ValueType vt,
+                                      __attribute__((unused)) int vs,
+                                      AbstractExpression *lc,
+                                      AbstractExpression *rc) {
+  LOG_TRACE("expressionFactory request: ");
+  LOG_TRACE("%s %d", ExpressionTypeToString(et).c_str(), et);
+  LOG_TRACE("%d %d", vt, vs);
+
+  AbstractExpression *ret = nullptr;
+
+  switch (et) {
+    // Operators
+    case (EXPRESSION_TYPE_OPERATOR_PLUS):
+    case (EXPRESSION_TYPE_OPERATOR_MINUS):
+    case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
+    case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
+    case (EXPRESSION_TYPE_OPERATOR_CONCAT):
+    case (EXPRESSION_TYPE_OPERATOR_MOD):
+    case (EXPRESSION_TYPE_OPERATOR_CAST):
+    case (EXPRESSION_TYPE_OPERATOR_NOT):
+      ret = OperatorFactory(et, lc, rc);
+      break;
+
+    // Comparisons
+    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_LIKE):
+      ret = ComparisonFactory(et, lc, rc);
+      break;
+
+    // Conjunctions
+    case (EXPRESSION_TYPE_CONJUNCTION_AND):
+    case (EXPRESSION_TYPE_CONJUNCTION_OR):
+      ret = ConjunctionFactory(et, lc, rc);
+      break;
+
+    // Constant Values, parameters, tuples
+    case (EXPRESSION_TYPE_VALUE_CONSTANT):
+      ret = ConstantValueFactory(obj, vt, et, lc, rc);
+      break;
+
+    case (EXPRESSION_TYPE_VALUE_PARAMETER):
+      ret = ParameterValueFactory(obj, et, lc, rc);
+      break;
+
+    case (EXPRESSION_TYPE_VALUE_TUPLE):
+      ret = TupleValueFactory(obj, et, lc, rc);
+      break;
+
+    case (EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS):
+      ret = new TupleAddressExpression();
+      break;
+
+    // must handle all known expressions in this factory
+    default:
+      char message[256];
+      sprintf(message, "Invalid ExpressionType '%s' requested from factory",
+              ExpressionTypeToString(et).c_str());
+      throw ExpressionException(message);
+  }
+
+  // written thusly to ease testing/inspecting return content.
+  LOG_TRACE("Created %s", ExpressionTypeToString(et).c_str());
+  return ret;
+}
+
+
+boost::shared_array<int> ExpressionUtil::ConvertIfAllTupleValues(
     const std::vector<AbstractExpression *> &expression) {
   size_t cnt = expression.size();
   boost::shared_array<int> ret(new int[cnt]);
@@ -659,7 +1121,7 @@ boost::shared_array<int> ExpressionUtil::convertIfAllTupleValues(
   return ret;
 }
 
-boost::shared_array<int> ExpressionUtil::convertIfAllParameterValues(
+boost::shared_array<int> ExpressionUtil::ConvertIfAllParameterValues(
     const std::vector<AbstractExpression *> &expression) {
   size_t cnt = expression.size();
   boost::shared_array<int> ret(new int[cnt]);
@@ -674,7 +1136,7 @@ boost::shared_array<int> ExpressionUtil::convertIfAllParameterValues(
   return ret;
 }
 
-void ExpressionUtil::extractTupleValuesColumnIdx(const AbstractExpression *expr,
+void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
                                                  std::vector<int> &columnIds) {
   if (expr == NULL) {
     return;
@@ -687,27 +1149,30 @@ void ExpressionUtil::extractTupleValuesColumnIdx(const AbstractExpression *expr,
     return;
   }
   // Recurse
-  ExpressionUtil::extractTupleValuesColumnIdx(expr->GetLeft(), columnIds);
-  ExpressionUtil::extractTupleValuesColumnIdx(expr->GetRight(), columnIds);
+  ExpressionUtil::ExtractTupleValuesColumnIdx(expr->GetLeft(), columnIds);
+  ExpressionUtil::ExtractTupleValuesColumnIdx(expr->GetRight(), columnIds);
 }
 
-void ExpressionUtil::loadIndexedExprsFromJson(
+void ExpressionUtil::LoadIndexedExprsFromJson(
     std::vector<AbstractExpression *> &indexed_exprs,
     const std::string &jsonarraystring) {
   PlannerDomRoot domRoot(jsonarraystring.c_str());
   PlannerDomValue expressionArray = domRoot.rootObject();
   for (int i = 0; i < expressionArray.arrayLen(); i++) {
     PlannerDomValue exprValue = expressionArray.valueAtIndex(i);
-    AbstractExpression *expr =
-        AbstractExpression::buildExpressionTree(exprValue);
-    indexed_exprs.push_back(expr);
+
+    //comment out because BuildExpressionTree not found.
+    //AbstractExpression *expr =
+    //    AbstractExpression::BuildExpressionTree(exprValue);
+    //indexed_exprs.push_back(expr);
   }
 }
 
-AbstractExpression *ExpressionUtil::loadExpressionFromJson(
+AbstractExpression *ExpressionUtil::LoadExpressionFromJson(
     const std::string &jsonstring) {
   PlannerDomRoot domRoot(jsonstring.c_str());
-  return AbstractExpression::buildExpressionTree(domRoot.rootObject());
+  //comment out because BuildExpressionTree not found.
+  //return AbstractExpression::BuildExpressionTree(domRoot.rootObject());
 }
 
 }  // End expression namespace

@@ -27,7 +27,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/aggregate_executor.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util.h"
+#include "backend/expression/expression_util_new.h"
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/storage/data_table.h"
@@ -185,7 +185,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::TupleValueFactory(0, 1));
+                                       expression::ExpressionUtil::TupleValueFactory(0, 1));
   agg_terms.push_back(sumb);
 
   // 4) Set up predicate (empty)
