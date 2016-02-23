@@ -126,9 +126,6 @@ struct ResultPlanState : public AbstractPlanState {
   PelotonProjectionInfo *proj;
 };
 
-/*
- * UniqueState should be added more? by michael
- */
 struct UniquePlanState : public AbstractPlanState {
 
 	  PelotonProjectionInfo *ps_ProjInfo;
@@ -148,12 +145,12 @@ struct AbstractJoinPlanState : public AbstractPlanState {
 };
 
 struct NestLoopPlanState : public AbstractJoinPlanState {
-	NestLoop *nl; // added by Michael
+	NestLoop *nl;
 };
 
 struct MergeJoinPlanState : public AbstractJoinPlanState {
   int mj_NumClauses;
-  MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
+  MergeJoinClause mj_Clauses; // array of length mj_NumClauses
 };
 
 struct HashJoinPlanState : public AbstractJoinPlanState {

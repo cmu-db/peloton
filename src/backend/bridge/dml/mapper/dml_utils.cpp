@@ -137,7 +137,6 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_UniqueState: {
-      // by Michael
       child_planstate = PrepareUniqueState(reinterpret_cast<UniqueState*>(planstate));
     } break;
 
@@ -463,7 +462,7 @@ HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info =
       (HashJoinPlanState *)palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
-  info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join added by Michael
+  info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join
 
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
                                hj_state->js);
@@ -543,7 +542,7 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
   // Copy runtime scan keys
   info->iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
   info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
-                                          iss_plan_state->iss_NumRuntimeKeys); // not copy scankey is it OK?? by Michael
+                                          iss_plan_state->iss_NumRuntimeKeys); // not copy scankey is it OK??
 
   info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
 
@@ -889,7 +888,7 @@ IndexRuntimeKeyInfo *CopyRuntimeKeys(IndexRuntimeKeyInfo *from,
     retval[key_itr] = from[key_itr];  // shallow copy
     retval[key_itr].key_expr =
         CopyExprState(from[key_itr].key_expr);  // Deep copy the expression
-    // NB: No need to copy scan_key? // copy add by Michael 01/22/2016
+    // NB: No need to copy scan_key?
     retval[key_itr].scan_key->sk_argument = from[key_itr].scan_key->sk_argument;
     retval[key_itr].scan_key->sk_attno = from[key_itr].scan_key->sk_attno;
     retval[key_itr].scan_key->sk_collation = from[key_itr].scan_key->sk_collation;
