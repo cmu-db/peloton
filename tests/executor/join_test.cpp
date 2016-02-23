@@ -49,8 +49,8 @@ namespace test {
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
-  auto left = expression::TupleValueFactory(0, 1);
-  auto right = expression::TupleValueFactory(1, 1);
+  auto left = expression::ExpressionUtil::TupleValueFactory(0, 1);
+  auto right = expression::ExpressionUtil::TupleValueFactory(1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
