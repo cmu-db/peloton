@@ -48,6 +48,16 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 42,
 };
 
+//===--------------------------------------------------------------------===//
+// Filesystem directories
+//===--------------------------------------------------------------------===//
+
+#define NVM_DIR "/mnt/pmfs/"
+#define HDD_DIR "/data/"
+#define SSD_DIR "/data1/"
+
+#define TMP_DIR "/tmp/"
+
 namespace peloton {
 
 // forward declare
