@@ -16,6 +16,8 @@
 namespace peloton {
 namespace logging {
 
+#define LOG_FILE_NAME "wal.log"
+
 /**
  * @brief Return the singleton log manager instance
  */
@@ -79,7 +81,7 @@ void LogManager::WaitForMode(LoggingStatus logging_status_, bool is_equal) {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
 
     while ((!is_equal && logging_status == logging_status_) ||
-           (is_equal && logging_status != logging_status_)) {
+        (is_equal && logging_status != logging_status_)) {
       logging_status_cv.wait(wait_lock);
     }
   }
@@ -213,18 +215,7 @@ void LogManager::SetLogFileName(std::string log_file) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogFileName(void) {
-  // Check if we need to build a log file name
-  if (log_file_name.empty()) {
-    // If peloton_log_directory is specified
-    if (peloton_log_directory != nullptr) {
-      log_file_name = std::string(peloton_log_directory) + "/" + "peloton.log";
-    }
-    // Else save it in tmp directory
-    else {
-      log_file_name = "/tmp/peloton.log";
-    }
-  }
-
+  assert(log_file_name.empty() == false);
   return log_file_name;
 }
 
