@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------
  *
- * ariesfrontendlogger.cpp
+ * wal_frontend_logger.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/ariesfrontendlogger.cpp
+ * /peloton/src/backend/logging/wal_frontend_logger.cpp
  *
  *-------------------------------------------------------------------------
  */
+
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -20,8 +21,8 @@
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
-#include "backend/logging/loggers/aries_frontend_logger.h"
-#include "backend/logging/loggers/aries_backend_logger.h"
+#include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
@@ -58,7 +59,7 @@ storage::DataTable *GetTable(TupleRecord tupleRecord);
 /**
  * @brief Open logfile and file descriptor
  */
-AriesFrontendLogger::AriesFrontendLogger() {
+WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   logging_type = LOGGING_TYPE_DRAM_NVM;
 
   LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
@@ -83,7 +84,7 @@ AriesFrontendLogger::AriesFrontendLogger() {
 /**
  * @brief close logfile
  */
-AriesFrontendLogger::~AriesFrontendLogger() {
+WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   for (auto log_record : global_queue) {
     delete log_record;
   }
@@ -101,7 +102,7 @@ AriesFrontendLogger::~AriesFrontendLogger() {
 /**
  * @brief flush all the log records to the file
  */
-void AriesFrontendLogger::FlushLogRecords(void) {
+void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // First, write all the record in the queue
   for (auto record : global_queue) {
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
@@ -142,7 +143,7 @@ void AriesFrontendLogger::FlushLogRecords(void) {
 /**
  * @brief Recovery system based on log file
  */
-void AriesFrontendLogger::DoRecovery() {
+void WriteAheadFrontendLogger::DoRecovery() {
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
 
@@ -180,15 +181,15 @@ void AriesFrontendLogger::DoRecovery() {
           AbortTuplesFromRecoveryTable();
           break;
 
-        case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
+        case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
           InsertTuple(recovery_txn);
           break;
 
-        case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:
+        case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
           DeleteTuple(recovery_txn);
           break;
 
-        case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE:
+        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
           UpdateTuple(recovery_txn);
           break;
 
@@ -214,7 +215,7 @@ void AriesFrontendLogger::DoRecovery() {
 /**
  * @brief Add new txn to recovery table
  */
-void AriesFrontendLogger::AddTransactionToRecoveryTable() {
+void WriteAheadFrontendLogger::AddTransactionToRecoveryTable() {
   // read transaction information from the log file
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_BEGIN);
 
@@ -236,7 +237,7 @@ void AriesFrontendLogger::AddTransactionToRecoveryTable() {
 /**
  * @brief Remove txn from recovery table
  */
-void AriesFrontendLogger::RemoveTransactionFromRecoveryTable() {
+void WriteAheadFrontendLogger::RemoveTransactionFromRecoveryTable() {
   // read transaction information from the log file
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_END);
 
@@ -266,7 +267,7 @@ void AriesFrontendLogger::RemoveTransactionFromRecoveryTable() {
  * them later
  * @param recovery txn
  */
-void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
+void WriteAheadFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
     concurrency::Transaction *recovery_txn) {
   // read transaction information from the log file
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
@@ -296,7 +297,7 @@ void AriesFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
  * @param destination
  * @param source
  */
-void AriesFrontendLogger::MoveTuples(concurrency::Transaction *destination,
+void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination,
                                      concurrency::Transaction *source) {
   // This is the local transaction
   auto inserted_tuples = source->GetInsertedTuples();
@@ -324,7 +325,7 @@ void AriesFrontendLogger::MoveTuples(concurrency::Transaction *destination,
 /**
  * @brief abort tuple
  */
-void AriesFrontendLogger::AbortTuplesFromRecoveryTable() {
+void WriteAheadFrontendLogger::AbortTuplesFromRecoveryTable() {
   // read transaction information from the log file
   TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_ABORT);
 
@@ -350,7 +351,7 @@ void AriesFrontendLogger::AbortTuplesFromRecoveryTable() {
  * @brief Abort tuples inside txn
  * @param txn
  */
-void AriesFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
+void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
   LOG_INFO("Abort txd id %d object in table", (int)txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -384,7 +385,7 @@ void AriesFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
 /**
  * @brief Abort tuples inside txn table
  */
-void AriesFrontendLogger::AbortActiveTransactions() {
+void WriteAheadFrontendLogger::AbortActiveTransactions() {
   // Clean up the recovery table to ignore active transactions
   for (auto active_txn_entry : recovery_txn_table) {
     // clean up the transaction
@@ -400,8 +401,8 @@ void AriesFrontendLogger::AbortActiveTransactions() {
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void AriesFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
-  TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_INSERT);
+void WriteAheadFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
+  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
 
   // Check for torn log write
   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
@@ -463,8 +464,8 @@ void AriesFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void AriesFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_txn) {
-  TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_DELETE);
+void WriteAheadFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_txn) {
+  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_DELETE);
 
   // Check for torn log write
   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
@@ -497,8 +498,8 @@ void AriesFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_txn) {
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void AriesFrontendLogger::UpdateTuple(concurrency::Transaction *recovery_txn) {
-  TupleRecord tuple_record(LOGRECORD_TYPE_ARIES_TUPLE_UPDATE);
+void WriteAheadFrontendLogger::UpdateTuple(concurrency::Transaction *recovery_txn) {
+  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_UPDATE);
 
   // Check for torn log write
   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
@@ -758,7 +759,7 @@ storage::DataTable *GetTable(TupleRecord tuple_record) {
   return table;
 }
 
-std::string AriesFrontendLogger::GetLogFileName(void) {
+std::string WriteAheadFrontendLogger::GetLogFileName(void) {
   auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
 }
