@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/storage/storage_manager.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -25,6 +22,11 @@
 
 #include <string>
 #include <iostream>
+
+#include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/common/exception.h"
+#include "backend/storage/storage_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -112,13 +114,20 @@ StorageManager::StorageManager()
       break;
   }
 
-  // Fallback to tmp if needed
+  // Fallback to tmp directory if needed
   if (found_file_system == false) {
-    data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+    int status = stat(TMP_DIR, &data_stat);
+    if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+      data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+    }
+    else {
+      throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+    }
   }
 
   LOG_INFO("DATA DIR :: %s ", data_file_name.c_str());
 
+  // TODO:
   std::cout << "Data path :: " << data_file_name << "\n";
 
   // Create a data file
