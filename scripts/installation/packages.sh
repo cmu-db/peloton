@@ -13,7 +13,3 @@ pip install unittest-xml-reporting
 cd "$(dirname "$0")"
 python ./dependencies.py
 cd -
-
-# Setup log dir
-mkdir -p /mnt/pmfs
-chmod 777 /mnt/pmfs
