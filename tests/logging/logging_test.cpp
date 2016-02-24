@@ -1,9 +1,10 @@
 #include "gtest/gtest.h"
 
+#include <fstream>
+
 #include "logging/logging_tests_util.h"
 #include "backend/common/logger.h"
 
-#include <fstream>
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -23,9 +24,9 @@ namespace test {
 // Logging Test
 //===--------------------------------------------------------------------===//
 
-std::string aries_log_file_name = "aries.log";
+std::string wal_log_file_name = "wal.log";
 
-std::string peloton_log_file_name = "peloton.log";
+std::string wbl_log_file_name = "wbl.log";
 
 /**
  * @brief writing a simple log with multiple threads and then do recovery
@@ -40,27 +41,41 @@ TEST(LoggingTests, RecoveryTest) {
   if (state.experiment_type == LOGGING_EXPERIMENT_TYPE_INVALID)
     state.experiment_type = LOGGING_EXPERIMENT_TYPE_ACTIVE;
 
-  if (IsSimilarToARIES(peloton_logging_mode)) {
+  //===--------------------------------------------------------------------===//
+  // WAL
+  //===--------------------------------------------------------------------===//
+  if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
     // Prepare a simple log file
-    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(aries_log_file_name));
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(wal_log_file_name));
 
     // Reset data
     LoggingTestsUtil::ResetSystem();
 
     // Do recovery
-    LoggingTestsUtil::DoRecovery(aries_log_file_name);
+    LoggingTestsUtil::DoRecovery(wal_log_file_name);
 
-  } else if (IsSimilarToPeloton(peloton_logging_mode)) {
+  }
+  //===--------------------------------------------------------------------===//
+  // WBL
+  //===--------------------------------------------------------------------===//
+  else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
     // Test a simple log process
-    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(wbl_log_file_name));
 
     // Do recovery
-    LoggingTestsUtil::DoRecovery(peloton_log_file_name);
+    LoggingTestsUtil::DoRecovery(wbl_log_file_name);
 
-  } else if (state.logging_type == LOGGING_TYPE_INVALID) {
-    // Test a simple log process
-    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(peloton_log_file_name));
   }
+  //===--------------------------------------------------------------------===//
+  // None
+  //===--------------------------------------------------------------------===//
+  else if (state.logging_type == LOGGING_TYPE_INVALID) {
+    // Test a simple log process
+    EXPECT_TRUE(LoggingTestsUtil::PrepareLogFile(wbl_log_file_name));
+
+    // No recovery
+  }
+
 }
 
 }  // End test namespace
