@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * tuplerecord.cpp
+ * tuple_record.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/records/tuplerecord.cpp
+ * /peloton/src/backend/logging/records/tuple_record.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -30,20 +30,20 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
 
   // Serialize other parts depends on type
   switch (GetType()) {
-    case LOGRECORD_TYPE_ARIES_TUPLE_INSERT:
-    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       storage::Tuple *tuple = (storage::Tuple *)data;
       tuple->SerializeTo(output);
       break;
     }
 
-    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
       // Nothing to do here !
       break;
 
-    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT:
-    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE:
-    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE:
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
       // Nothing to do here !
       break;
 
@@ -103,12 +103,12 @@ void TupleRecord::DeserializeHeader(CopySerializeInputBE &input) {
   delete_location.offset = (oid_t)(input.ReadLong());
 }
 
-// Used for peloton logging
+// Used for write behind logging
 size_t TupleRecord::GetTupleRecordSize(void) {
   // log_record_type + header_legnth + db_oid + table_oid + txn_id +
   // insert_location + delete_location
   return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) +
-         sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
+      sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
 }
 
 // just for debugging
