@@ -708,24 +708,28 @@ static void ValidateLogFileDir(
     LoggingTestsUtil::logging_test_configuration& state) {
   // Assign log file dir based on logging type
   switch (state.logging_type) {
+    // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_HDD_NVM:
     case LOGGING_TYPE_SSD_NVM:
-
+    case LOGGING_TYPE_HDD_NVM:
       state.log_file_dir = NVM_DIR;
       break;
 
+    // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_SSD_HDD:
     case LOGGING_TYPE_HDD_HDD:
 
       state.log_file_dir = HDD_DIR;
       break;
 
+    // Log file on SSD
     case LOGGING_TYPE_DRAM_SSD:
     case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_SSD_SSD:
+    case LOGGING_TYPE_HDD_SSD:
 
       state.log_file_dir = SSD_DIR;
       break;
