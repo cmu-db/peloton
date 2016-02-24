@@ -62,6 +62,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "backend/message/peloton_client.h"
+#include "backend/message/peloton_service.h"
 
 #include "postgres.h"
 
@@ -530,6 +532,43 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 /* Process handle of postmaster used for the same purpose on Windows */
 HANDLE PostmasterHandle;
 #endif
+
+//TODO: Peloton adds
+static void TestServer() {
+  peloton::message::StartPelotonService();
+}
+static void TestClient() {
+
+	try {
+		peloton::message::HeartbeatRequest request;
+		peloton::message::HeartbeatResponse response;
+
+		peloton::message::PelotonClient client(
+				peloton::message::PELOTON_ENDPOIT_ADDR);
+
+		request.set_message("123456789012345678901234567890123456");
+		stub.Echo1(&rpc_controller, &request, &response, callback);
+		std::cout << response.response().c_str() << std::endl;
+		request.set_message("654321098765432109876543210987654321");
+		stub.Echo2(&rpc_controller, &request, &response, NULL);
+		std::cout << response.response().c_str() << std::endl;
+
+	} catch (nn::exception& e) {
+		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+	} catch (std::exception& e) {
+		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+	}
+	return 0;
+
+}
+static void Coordinator() {
+    TestServer();
+    // TestClient();
+    std::thread testclient(TestClient);
+    testclient.detach();
+}
 
 /*
  * Postmaster main entry point
@@ -1220,6 +1259,10 @@ void PostmasterMain(int argc, char *argv[]) {
 
   /* Some workers may be scheduled to start now */
   maybe_start_bgworker();
+
+  // Lanch Peloton coordinator
+  std::thread coordinator(Coordinator);
+  coordinator.detach();
 
   status = ServerLoop();
 

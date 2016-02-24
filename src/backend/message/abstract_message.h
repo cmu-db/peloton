@@ -17,31 +17,28 @@ namespace message {
 
 class AbstractMessage {
  public:
-  /** @brief CreateSocket function to be overridden by derived class. */
-  virtual int CreateSocket() = 0;
+	/** @brief BindSocket function nanomsg implementation */
+	int Bind(const char *address);
 
-  /** @brief BindSocket function to be overridden by derived class. */
-  virtual bool BindSocket() = 0;
+	/** @brief SetSocketOpt function nanomsg implementation */
+	int SetSocketOpt(int level, int option, const void *opt_val,
+			size_t opt_val_len);
 
-  /** @brief SendMessage function to be overridden by derived class. */
-  virtual int SendMessage() = 0;
+	/** @brief GetSocketOpt function nanomsg implementation */
+	int GetSocketOpt(int level, int option, const void *opt_val,
+			size_t *opt_val_len);
 
-  /** @brief SetSocket function to be overridden by derived class. */
-  virtual int SetSocket() = 0;
+	/** @brief Connect function nanomsg implementation */
+	int Connect(const char *address);
 
-  /** @brief ConnectSocket function to be overridden by derived class. */
-  virtual bool ConnectSocket() = 0;
+	/** @brief Send function nanomsg implementation */
+	int Send(const void *buffer, size_t length, int flags);
 
-  /** @brief ReceiveSocket function to be overridden by derived class. */
-  virtual int ReceiveMessage() = 0;
+	/** @brief Receive function nanomsg implementation */
+	int Receive(void *buffer, size_t length, int flags);
 
-  /** @brief CloseSocket function to be overridden by derived class. */
-  virtual int CloseSocket() = 0;
-
-  /** @brief CloseSocket function to be overridden by derived class. */
-  virtual int ShutdownSocket() = 0;
-
-  virtual ~AbstractMessage(){};
+	/** @brief Shutdown function nanomsg implementation */
+	void Shutdown(int how);
 };
 
 }  // namespace message
