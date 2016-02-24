@@ -12,14 +12,12 @@
 #include <google/protobuf/stubs/callback.h>
 #include <iostream>
 
-using namespace google::protobuf;
-
 namespace peloton {
 namespace message {
 
 class PelotonClient {
 public:
-	PelotonClient(char* url) {
+	PelotonClient(const char* url) {
 		channel_ = new RpcChannel(url);
 		controller_ = new RpcController();
 		stub_ = new AbstractPelotonService::Stub(channel_);
@@ -100,7 +98,7 @@ public:
 
 	void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
 			::peloton::message::HeartbeatResponse* response) {
-		Closure* callback = internal::NewCallback(&Call);
+		google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&Call);
 		stub_->Heartbeat(controller_, request, response, callback);
 	}
 
@@ -116,7 +114,7 @@ public:
 
 private:
 
-	void Call() {
+	static void Call() {
 		std::cout << "This is backcall:" << std::endl;
 	}
 

@@ -20,6 +20,7 @@
 #include "nanomsg/src/pair.h"
 #include "nanomsg/src/pubsub.h"
 #include <cassert>
+#include <exception>
 
 #if defined __GNUC__
 #define nn_slow(x) __builtin_expect ((x), 0)
@@ -105,7 +106,7 @@ public:
 	}
 
 	/** @brief GetSocketOpt function nanomsg implementation */
-	int GetSocketOpt(int level, int option, const void *opt_val,
+	int GetSocketOpt(int level, int option, void *opt_val,
 			size_t *opt_val_len) {
 		int rc = nn_getsockopt(socket_, level, option, opt_val, opt_val_len);
 		if (nn_slow (rc != 0))

@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <stdlib.h>
+
 namespace peloton {
 namespace message {
 
@@ -25,7 +27,7 @@ class AbstractMessage {
 			size_t opt_val_len);
 
 	/** @brief GetSocketOpt function nanomsg implementation */
-	int GetSocketOpt(int level, int option, const void *opt_val,
+	int GetSocketOpt(int level, int option, void *opt_val,
 			size_t *opt_val_len);
 
 	/** @brief Connect function nanomsg implementation */

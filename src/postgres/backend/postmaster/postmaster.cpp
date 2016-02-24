@@ -64,7 +64,6 @@
  */
 #include "backend/message/peloton_client.h"
 #include "backend/message/peloton_service.h"
-
 #include "postgres.h"
 
 #include <unistd.h>
@@ -547,11 +546,11 @@ static void TestClient() {
 		request.set_last_transaction_id(1234567);
 
 		response.set_sender_site(5678);
-		peloton::message::Status status = ABORT_RESTART;
-		response.set_status(pstatus);
+		peloton::message::Status status = peloton::message::ABORT_RESTART;
+		response.set_status(status);
 
 		peloton::message::PelotonClient client(
-				peloton::message::PELOTON_ENDPOIT_ADDR);
+				"tcp://127.0.0.1:9999");
 
 		client.Heartbeat(&request, &response);
 
@@ -562,7 +561,7 @@ static void TestClient() {
 		}
 
 		if ( response.has_status() == true ) {
-			std::cout << "Status" <<response.status() << std::end;
+			std::cout << "Status" << response.status() << std::endl;
 		} else {
 			std::cout << "No response: sender status" << std::endl;
 		}
