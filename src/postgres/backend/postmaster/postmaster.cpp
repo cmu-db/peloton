@@ -543,25 +543,37 @@ static void TestClient() {
 		peloton::message::HeartbeatRequest request;
 		peloton::message::HeartbeatResponse response;
 
+		request.set_sender_site(1234);
+		request.set_last_transaction_id(1234567);
+
+		response.set_sender_site(5678);
+		peloton::message::Status status = ABORT_RESTART;
+		response.set_status(pstatus);
+
 		peloton::message::PelotonClient client(
 				peloton::message::PELOTON_ENDPOIT_ADDR);
 
-		request.set_message("123456789012345678901234567890123456");
-		stub.Echo1(&rpc_controller, &request, &response, callback);
-		std::cout << response.response().c_str() << std::endl;
-		request.set_message("654321098765432109876543210987654321");
-		stub.Echo2(&rpc_controller, &request, &response, NULL);
-		std::cout << response.response().c_str() << std::endl;
+		client.Heartbeat(&request, &response);
 
-	} catch (nn::exception& e) {
+		if ( response.has_sender_site() == true ) {
+			std::cout << "sender site" << response.sender_site() << std::endl;
+		} else {
+			std::cout << "No response: sender site" << std::endl;
+		}
+
+		if ( response.has_status() == true ) {
+			std::cout << "Status" <<response.status() << std::end;
+		} else {
+			std::cout << "No response: sender status" << std::endl;
+		}
+
+	} catch (peloton::message::exception& e) {
 		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
 	}
-	return 0;
-
 }
 static void Coordinator() {
     TestServer();
