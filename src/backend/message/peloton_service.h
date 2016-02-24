@@ -8,6 +8,8 @@
 #include "rpc_server.h"
 #include "peloton_endpoint.h"
 
+#include <iostream>
+
 namespace peloton {
 namespace message {
 

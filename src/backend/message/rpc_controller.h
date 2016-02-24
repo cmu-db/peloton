@@ -18,9 +18,8 @@
 namespace peloton {
 namespace message {
 
-    using std::string;
     class RpcController : public google::protobuf::RpcController {
-	        string _error_str;
+	        std::string _error_str;
 		bool _is_failed;
 		public:
 		RpcController() { Reset(); }
@@ -31,13 +30,13 @@ namespace message {
 		bool Failed() const {
 			return _is_failed;
 		}
-		string ErrorText() const {
+		std::string ErrorText() const {
 			return _error_str;
 		}
 		void StartCancel() { // NOT IMPL
 			return ;
 		}
-		void SetFailed(const string &reason) {
+		void SetFailed(const std::string &reason) {
 			_is_failed = true;
 			_error_str = reason;
 		}
