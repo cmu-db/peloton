@@ -5,7 +5,6 @@
 ######################################################################
 
 message_FILES = \
-				backend/message/nanomsg.cpp \
 				backend/message/boost_serializer.cpp
 								
 message_INCLUDES = \

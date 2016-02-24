@@ -71,3 +71,20 @@ int main(void)
 	delete(c);
 	delete(s);
 }
+int main(int argc, char *argv[])
+{
+	signal(SIGINT, OnExit);
+	try {
+		nrpc::RpcServer rpc_server(ECHO_ENDPOINT_PORT);
+		::google::protobuf::Service *service = new EchoServiceImpl();
+		rpc_server.RegisterService(service);
+		rpc_server.Start();
+	} catch (nn::exception& e) {
+		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+	} catch (std::exception& e) {
+		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+	}
+	return 0;
+}
