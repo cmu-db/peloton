@@ -35,15 +35,15 @@ bool IsNumeric(ValueType type) {
     case (VALUE_TYPE_BIGINT):
     case (VALUE_TYPE_DECIMAL):
     case (VALUE_TYPE_DOUBLE):
-      return true;
-      break;
+    return true;
+    break;
     case (VALUE_TYPE_VARCHAR):
     case (VALUE_TYPE_VARBINARY):
     case (VALUE_TYPE_TIMESTAMP):
     case (VALUE_TYPE_NULL):
     case (VALUE_TYPE_INVALID):
     case (VALUE_TYPE_ARRAY):
-      return false;
+    return false;
     default:
       throw Exception("IsNumeric");
   }
@@ -57,8 +57,8 @@ bool IsIntegralType(ValueType type) {
     case (VALUE_TYPE_SMALLINT):
     case (VALUE_TYPE_INTEGER):
     case (VALUE_TYPE_BIGINT):
-      return true;
-      break;
+    return true;
+    break;
     case (VALUE_TYPE_DOUBLE):
     case (VALUE_TYPE_VARCHAR):
     case (VALUE_TYPE_VARBINARY):
@@ -66,7 +66,7 @@ bool IsIntegralType(ValueType type) {
     case (VALUE_TYPE_NULL):
     case (VALUE_TYPE_DECIMAL):
     case (VALUE_TYPE_ARRAY):
-      return false;
+    return false;
     default:
       throw Exception("IsIntegralType");
   }
@@ -121,27 +121,27 @@ Value GetRandomValue(ValueType type) {
 std::size_t GetTypeSize(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-      return 1;
+          return 1;
     case (VALUE_TYPE_SMALLINT):
-      return 2;
+          return 2;
     case (VALUE_TYPE_INTEGER):
-      return 4;
+          return 4;
     case (VALUE_TYPE_BIGINT):
-      return 8;
+          return 8;
     case (VALUE_TYPE_DOUBLE):
-      return 8;
+          return 8;
     case (VALUE_TYPE_VARCHAR):
-      return 0;
+          return 0;
     case (VALUE_TYPE_VARBINARY):
-      return 0;
+          return 0;
     case (VALUE_TYPE_TIMESTAMP):
-      return 8;
+          return 8;
     case (VALUE_TYPE_DECIMAL):
-      return 0;
+          return 0;
     case (VALUE_TYPE_INVALID):
-      return 0;
+          return 0;
     case (VALUE_TYPE_NULL):
-      return 0;
+          return 0;
     default: { return 0; }
   }
 }
@@ -155,11 +155,11 @@ std::string BackendTypeToString(BackendType type) {
 
   switch (type) {
     case (BACKEND_TYPE_MM):
-      return "MM";
+          return "MM";
     case (BACKEND_TYPE_FILE):
-      return "FILE";
+          return "FILE";
     case (BACKEND_TYPE_INVALID):
-      return "INVALID";
+          return "INVALID";
     default: {
       char buffer[32];
       ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
@@ -275,23 +275,45 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
   return true;
 }
 
-bool IsSimilarToARIES(LoggingType logging_type) {
+bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   bool status = false;
 
-  if (logging_type == LOGGING_TYPE_DRAM_NVM ||
-      logging_type == LOGGING_TYPE_DRAM_HDD ||
-      logging_type == LOGGING_TYPE_DRAM_SSD) {
-    status = true;
+  switch(logging_type) {
+    case LOGGING_TYPE_DRAM_NVM:
+    case LOGGING_TYPE_DRAM_HDD:
+    case LOGGING_TYPE_DRAM_SSD:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
   }
 
   return status;
 }
 
-bool IsSimilarToPeloton(LoggingType logging_type) {
+bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
   bool status = true;
 
-  if (logging_type == LOGGING_TYPE_INVALID || IsSimilarToARIES(logging_type)) {
-    status = false;
+  switch(logging_type) {
+    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_NVM_SSD:
+    case LOGGING_TYPE_NVM_HDD:
+
+    case LOGGING_TYPE_SSD_NVM:
+    case LOGGING_TYPE_SSD_SSD:
+    case LOGGING_TYPE_SSD_HDD:
+
+    case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_HDD_SSD:
+    case LOGGING_TYPE_HDD_HDD:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
   }
 
   return status;
@@ -452,53 +474,53 @@ std::string ExpressionTypeToString(ExpressionType type) {
       return "STAR";
     }
     case EXPRESSION_TYPE_SUBSTR :{
-	  return "SUBSTRING";
-	}
+      return "SUBSTRING";
+    }
     case EXPRESSION_TYPE_ASCII :{
-	  return "ASCII";
-	}
+      return "ASCII";
+    }
     case EXPRESSION_TYPE_OCTET_LEN:{
-		return "OCTET_LENGTH";
-	}
-	case EXPRESSION_TYPE_CHAR:{
-		return "CHAR";
-	}
-	case EXPRESSION_TYPE_CHAR_LEN:{
-		return "CHAR_LEN";
-	}
-	case EXPRESSION_TYPE_SPACE:{
-		return "SPACE";
-	}
-	case EXPRESSION_TYPE_REPEAT:{
-		return "REPEAT";
-	}
-	case EXPRESSION_TYPE_POSITION:{
-		return "POSITION";
-	}
-	case EXPRESSION_TYPE_LEFT:{
-		return "LEFT";
-	}
-	case EXPRESSION_TYPE_RIGHT:{
-		return "RIGHT";
-	}
-	case EXPRESSION_TYPE_CONCAT:{
-		return "CONCAT";
-	}
-	case EXPRESSION_TYPE_LTRIM:{
-		return "L_TRIM";
-	}
-	case EXPRESSION_TYPE_RTRIM:{
-			return "R_TRIM";
-		}
-	case EXPRESSION_TYPE_BTRIM:{
-			return "B_TRIM";
-		}
-	case EXPRESSION_TYPE_REPLACE:{
-		return "REPLACE";
-	}
-	case EXPRESSION_TYPE_OVERLAY:{
-		return "OVERLAY";
-	}
+      return "OCTET_LENGTH";
+    }
+    case EXPRESSION_TYPE_CHAR:{
+      return "CHAR";
+    }
+    case EXPRESSION_TYPE_CHAR_LEN:{
+      return "CHAR_LEN";
+    }
+    case EXPRESSION_TYPE_SPACE:{
+      return "SPACE";
+    }
+    case EXPRESSION_TYPE_REPEAT:{
+      return "REPEAT";
+    }
+    case EXPRESSION_TYPE_POSITION:{
+      return "POSITION";
+    }
+    case EXPRESSION_TYPE_LEFT:{
+      return "LEFT";
+    }
+    case EXPRESSION_TYPE_RIGHT:{
+      return "RIGHT";
+    }
+    case EXPRESSION_TYPE_CONCAT:{
+      return "CONCAT";
+    }
+    case EXPRESSION_TYPE_LTRIM:{
+      return "L_TRIM";
+    }
+    case EXPRESSION_TYPE_RTRIM:{
+      return "R_TRIM";
+    }
+    case EXPRESSION_TYPE_BTRIM:{
+      return "B_TRIM";
+    }
+    case EXPRESSION_TYPE_REPLACE:{
+      return "REPLACE";
+    }
+    case EXPRESSION_TYPE_OVERLAY:{
+      return "OVERLAY";
+    }
   }
   return "INVALID";
 }
@@ -872,7 +894,7 @@ std::string LoggingTypeToString(LoggingType type) {
     case LOGGING_TYPE_NVM_NVM:
       return "NVM_NVM";
 
-    // HDD-based
+      // HDD-based
     case LOGGING_TYPE_DRAM_HDD:
       return "DRAM_HDD";
 
@@ -885,7 +907,7 @@ std::string LoggingTypeToString(LoggingType type) {
     case LOGGING_TYPE_HDD_HDD:
       return "HDD_HDD";
 
-    // SSD-based
+      // SSD-based
     case LOGGING_TYPE_DRAM_SSD:
       return "DRAM_SSD";
 
@@ -973,23 +995,23 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_TUPLE_UPDATE: {
       return "LOGRECORD_TYPE_TUPLE_UPDATE";
     }
-    case LOGRECORD_TYPE_ARIES_TUPLE_INSERT: {
-      return "LOGRECORD_TYPE_ARIES_TUPLE_INSERT";
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_WAL_TUPLE_INSERT";
     }
-    case LOGRECORD_TYPE_ARIES_TUPLE_DELETE: {
-      return "LOGRECORD_TYPE_ARIES_TUPLE_DELETE";
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_WAL_TUPLE_DELETE";
     }
-    case LOGRECORD_TYPE_ARIES_TUPLE_UPDATE: {
-      return "LOGRECORD_TYPE_ARIES_TUPLE_UPDATE";
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_WAL_TUPLE_UPDATE";
     }
-    case LOGRECORD_TYPE_PELOTON_TUPLE_INSERT: {
-      return "LOGRECORD_TYPE_PELOTON_TUPLE_INSERT";
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
+      return "LOGRECORD_TYPE_WBL_TUPLE_INSERT";
     }
-    case LOGRECORD_TYPE_PELOTON_TUPLE_DELETE: {
-      return "LOGRECORD_TYPE_PELOTON_TUPLE_DELETE";
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
+      return "LOGRECORD_TYPE_WBL_TUPLE_DELETE";
     }
-    case LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE: {
-      return "LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE";
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+      return "LOGRECORD_TYPE_WBL_TUPLE_UPDATE";
     }
   }
   return "INVALID";
@@ -1004,7 +1026,7 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_BOOLEAN;
       break;
 
-    /* INTEGER */
+      /* INTEGER */
     case POSTGRES_VALUE_TYPE_SMALLINT:
       valueType = VALUE_TYPE_SMALLINT;
       break;
@@ -1015,12 +1037,12 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_BIGINT;
       break;
 
-    /* DOUBLE */
+      /* DOUBLE */
     case POSTGRES_VALUE_TYPE_DOUBLE:
       valueType = VALUE_TYPE_DOUBLE;
       break;
 
-    /* CHAR */
+      /* CHAR */
     case POSTGRES_VALUE_TYPE_BPCHAR:
     case POSTGRES_VALUE_TYPE_BPCHAR2:
     case POSTGRES_VALUE_TYPE_VARCHAR:
@@ -1029,18 +1051,18 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_VARCHAR;
       break;
 
-    /* TIMESTAMPS */
+      /* TIMESTAMPS */
     case POSTGRES_VALUE_TYPE_TIMESTAMPS:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
       valueType = VALUE_TYPE_TIMESTAMP;
       break;
 
-    /* DECIMAL */
+      /* DECIMAL */
     case POSTGRES_VALUE_TYPE_DECIMAL:
       valueType = VALUE_TYPE_DECIMAL;
       break;
 
-    /* INVALID VALUE TYPE */
+      /* INVALID VALUE TYPE */
     default:
       LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
       valueType = VALUE_TYPE_INVALID;
