@@ -29,21 +29,23 @@
 enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
-  // NVM-based
-  LOGGING_TYPE_DRAM_NVM = 1,
-  LOGGING_TYPE_NVM_NVM = 2,
+  // Based on write ahead logging
+  LOGGING_TYPE_DRAM_NVM = 10,
+  LOGGING_TYPE_DRAM_SSD = 11,
+  LOGGING_TYPE_DRAM_HDD = 12,
 
-  // HDD-based
-  LOGGING_TYPE_DRAM_HDD = 3,
-  LOGGING_TYPE_HDD_NVM = 4,
-  LOGGING_TYPE_NVM_HDD = 5,
-  LOGGING_TYPE_HDD_HDD = 6,
+  // Based on write behind logging
+  LOGGING_TYPE_NVM_NVM = 20,
+  LOGGING_TYPE_NVM_SSD = 21,
+  LOGGING_TYPE_NVM_HDD = 22,
 
-  // SSD-based
-  LOGGING_TYPE_DRAM_SSD = 7,
-  LOGGING_TYPE_SSD_NVM = 8,
-  LOGGING_TYPE_NVM_SSD = 9,
-  LOGGING_TYPE_SSD_SSD = 10
+  LOGGING_TYPE_SSD_NVM = 30,
+  LOGGING_TYPE_SSD_SSD = 31,
+  LOGGING_TYPE_SSD_HDD = 32,
+
+  LOGGING_TYPE_HDD_NVM = 40,
+  LOGGING_TYPE_HDD_SSD = 41,
+  LOGGING_TYPE_HDD_HDD = 42,
 };
 
 namespace peloton {
@@ -619,23 +621,27 @@ enum LoggerType {
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = 0,
 
+  // Transaction-related records
   LOGRECORD_TYPE_TRANSACTION_BEGIN = 1,
   LOGRECORD_TYPE_TRANSACTION_COMMIT = 2,
   LOGRECORD_TYPE_TRANSACTION_END = 3,
   LOGRECORD_TYPE_TRANSACTION_ABORT = 4,
   LOGRECORD_TYPE_TRANSACTION_DONE = 5,
 
-  LOGRECORD_TYPE_TUPLE_INSERT = 6,
-  LOGRECORD_TYPE_TUPLE_DELETE = 7,
-  LOGRECORD_TYPE_TUPLE_UPDATE = 8,
+  // Generic dml records
+  LOGRECORD_TYPE_TUPLE_INSERT = 11,
+  LOGRECORD_TYPE_TUPLE_DELETE = 12,
+  LOGRECORD_TYPE_TUPLE_UPDATE = 13,
 
-  LOGRECORD_TYPE_ARIES_TUPLE_INSERT = 9,
-  LOGRECORD_TYPE_ARIES_TUPLE_DELETE = 10,
-  LOGRECORD_TYPE_ARIES_TUPLE_UPDATE = 11,
+  // DML records for Write ahead logging
+  LOGRECORD_TYPE_WAL_TUPLE_INSERT = 21,
+  LOGRECORD_TYPE_WAL_TUPLE_DELETE = 22,
+  LOGRECORD_TYPE_WAL_TUPLE_UPDATE = 23,
 
-  LOGRECORD_TYPE_PELOTON_TUPLE_INSERT = 12,
-  LOGRECORD_TYPE_PELOTON_TUPLE_DELETE = 13,
-  LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE = 14
+  // DML records for Write behind logging
+  LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
+  LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
+  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
 
 // ------------------------------------------------------------------
@@ -725,9 +731,9 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsSimilarToARIES(LoggingType logging_type);
+bool IsBasedOnWriteAheadLogging(LoggingType logging_type);
 
-bool IsSimilarToPeloton(LoggingType logging_type);
+bool IsBasedOnWriteBehindLogging(LoggingType logging_type);
 
 //===--------------------------------------------------------------------===//
 // Transformers

@@ -103,6 +103,9 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name) {
     return true;
   }
 
+  // TODO:
+  std::cout << "Log path :: " << file_path << "\n";
+
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
 
@@ -298,8 +301,8 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid) {
     LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
   }
 
-  // We can only drop the table in case of ARIES
-  if (IsSimilarToARIES(peloton_logging_mode) == true) {
+  // We can only drop the table in case of WAL
+  if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true) {
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
@@ -705,24 +708,28 @@ static void ValidateLogFileDir(
     LoggingTestsUtil::logging_test_configuration& state) {
   // Assign log file dir based on logging type
   switch (state.logging_type) {
+    // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_HDD_NVM:
     case LOGGING_TYPE_SSD_NVM:
-
+    case LOGGING_TYPE_HDD_NVM:
       state.log_file_dir = NVM_DIR;
       break;
 
+    // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_SSD_HDD:
     case LOGGING_TYPE_HDD_HDD:
 
       state.log_file_dir = HDD_DIR;
       break;
 
+    // Log file on SSD
     case LOGGING_TYPE_DRAM_SSD:
     case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_SSD_SSD:
+    case LOGGING_TYPE_HDD_SSD:
 
       state.log_file_dir = SSD_DIR;
       break;

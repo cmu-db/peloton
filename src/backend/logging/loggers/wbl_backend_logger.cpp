@@ -1,27 +1,28 @@
 /*-------------------------------------------------------------------------
  *
- * pelotonbackendlogger.cpp
+ * wbl_backend_logger.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/pelotonbackendlogger.cpp
+ * /peloton/src/backend/logging/wbl_backend_logger.cpp
  *
  *-------------------------------------------------------------------------
  */
 
+
 #include <iostream>
 
 #include "backend/logging/records/tuple_record.h"
-#include "backend/logging/loggers/peloton_backend_logger.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/frontend_logger.h"
+#include "backend/logging/loggers/wbl_backend_logger.h"
 
 namespace peloton {
 namespace logging {
 
-PelotonBackendLogger *PelotonBackendLogger::GetInstance() {
-  thread_local static PelotonBackendLogger instance;
+WriteBehindBackendLogger *WriteBehindBackendLogger::GetInstance() {
+  thread_local static WriteBehindBackendLogger instance;
   return &instance;
 }
 
@@ -29,7 +30,7 @@ PelotonBackendLogger *PelotonBackendLogger::GetInstance() {
  * @brief log LogRecord
  * @param log record
  */
-void PelotonBackendLogger::Log(LogRecord *record) {
+void WriteBehindBackendLogger::Log(LogRecord *record) {
   // Enqueue the serialized log record into the queue
   record->Serialize(output_buffer);
 
@@ -39,7 +40,7 @@ void PelotonBackendLogger::Log(LogRecord *record) {
   }
 }
 
-LogRecord *PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
+LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_type,
                                                 txn_id_t txn_id,
                                                 oid_t table_oid,
                                                 ItemPointer insert_location,
@@ -48,17 +49,17 @@ LogRecord *PelotonBackendLogger::GetTupleRecord(LogRecordType log_record_type,
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_INSERT;
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_INSERT;
       break;
     }
 
     case LOGRECORD_TYPE_TUPLE_DELETE: {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_DELETE;
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_DELETE;
       break;
     }
 
     case LOGRECORD_TYPE_TUPLE_UPDATE: {
-      log_record_type = LOGRECORD_TYPE_PELOTON_TUPLE_UPDATE;
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
       break;
     }
 

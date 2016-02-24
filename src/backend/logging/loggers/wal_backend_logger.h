@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * ariesbackendlogger.h
+ * wal_backend_logger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/ariesbackendlogger.h
+ * /peloton/src/backend/logging/wal_backend_logger.h
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,17 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Aries Backend Logger
+// Write Ahead Backend Logger
 //===--------------------------------------------------------------------===//
 
-class AriesBackendLogger : public BackendLogger {
+class WriteAheadBackendLogger : public BackendLogger {
  public:
-  AriesBackendLogger(const AriesBackendLogger &) = delete;
-  AriesBackendLogger &operator=(const AriesBackendLogger &) = delete;
-  AriesBackendLogger(AriesBackendLogger &&) = delete;
-  AriesBackendLogger &operator=(AriesBackendLogger &&) = delete;
+  WriteAheadBackendLogger(const WriteAheadBackendLogger &) = delete;
+  WriteAheadBackendLogger &operator=(const WriteAheadBackendLogger &) = delete;
+  WriteAheadBackendLogger(WriteAheadBackendLogger &&) = delete;
+  WriteAheadBackendLogger &operator=(WriteAheadBackendLogger &&) = delete;
 
-  static AriesBackendLogger *GetInstance(void);
+  static WriteAheadBackendLogger *GetInstance(void);
 
   void Log(LogRecord *record);
 
@@ -40,7 +40,7 @@ class AriesBackendLogger : public BackendLogger {
                             oid_t db_oid = INVALID_OID);
 
  private:
-  AriesBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
+  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   CopySerializeOutput output_buffer;
 };

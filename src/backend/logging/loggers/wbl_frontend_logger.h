@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pelotonfrontendlogger.h
+ * wbl_frontend_logger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/pelotonfrontendlogger.h
+ * /peloton/src/backend/logging/wbl_frontend_logger.h
  *
  *-------------------------------------------------------------------------
  */
@@ -28,14 +28,14 @@ class TileGroupHeader;
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Peloton Frontend Logger
+// Write Behind Frontend Logger
 //===--------------------------------------------------------------------===//
 
-class PelotonFrontendLogger : public FrontendLogger {
+class WriteBehindFrontendLogger : public FrontendLogger {
  public:
-  PelotonFrontendLogger(void);
+  WriteBehindFrontendLogger(void);
 
-  ~PelotonFrontendLogger(void);
+  ~WriteBehindFrontendLogger(void);
 
   void FlushLogRecords(void);
 
