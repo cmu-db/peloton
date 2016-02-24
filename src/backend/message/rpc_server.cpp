@@ -49,9 +49,9 @@ void RpcServer::RegisterService(google::protobuf::Service *service)
 
 	/*
 	 * Put all of the method names (descriptors)， msg types into rpc_method_map_
-	 * For example, peloton service has HeatBeat method, its
-	 * request msg type is HeatbeatRequest
-	 * response msg type is HeatbeatResponse
+	 * For example, peloton service has HeartBeat method, its
+	 * request msg type is HeartbeatRequest
+	 * response msg type is HeartbeatResponse
 	 */
 	for (int i = 0; i < descriptor->method_count(); ++i) {
 		// Get the method descriptor
