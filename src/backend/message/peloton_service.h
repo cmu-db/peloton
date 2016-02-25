@@ -87,19 +87,24 @@ public:
 			::google::protobuf::Closure* done);
 };
 
-void StartPelotonService() {
+inline void StartPelotonService() {
+
+	::google::protobuf::Service* service = NULL;
 
 	try {
 		RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
-		::google::protobuf::Service *service = new PelotonService();
+		service = new PelotonService();
 		rpc_server.RegisterService(service);
 		rpc_server.Start();
 	} catch (peloton::message::exception& e) {
 		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+		delete service;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+		delete service;
 	} catch (...) {
 		std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+		delete service;
 	}
 }
 
