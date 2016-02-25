@@ -149,4 +149,6 @@ scripts/PelotonTest/lib
 #==============================================================================#
 # Third party
 #==============================================================================#
-third_party/nanomsg
+third_party/nanomsg/
+third_party/nvml/
+third_party/logcabin/
