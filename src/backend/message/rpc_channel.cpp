@@ -53,13 +53,13 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 	request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
 
 	// send the message to server
-	sock.Send(buf,msg_len,0);
+	socket_.Send(buf,msg_len,0);
 
 	// call nanomsg function to free the buf
 	freemsg(buf);
 
 	// wait to receive the response
-	sock.Receive(&buf, NN_MSG, 0);
+	socket_.Receive(&buf, NN_MSG, 0);
 
 	// deserialize the receiving msg
 	response->ParseFromString(buf);
@@ -71,7 +71,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     std::cout << "Recv from server" << std::endl;
 
     // run call back function
-    //done->Run();
+    if (done != NULL) {
+    	done->Run();
+    }
+
+    //TODO: Use controller there
+    std::cout << controller << std::endl;
 }
 
 void RpcChannel::Close()

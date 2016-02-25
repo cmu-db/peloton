@@ -1,7 +1,5 @@
-#include "peloton_service.h"
+#include "abstract_service.pb.h"
 
 int main(void) {
-
-  peloton::message::StartPelotonService();
-
+  peloton::message::HeartbeatRequest rr;
 }
