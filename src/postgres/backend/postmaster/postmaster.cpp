@@ -64,6 +64,7 @@
  */
 #include "backend/message/peloton_client.h"
 #include "backend/message/peloton_service.h"
+#include "backend/message/abstract_service.pb.h"
 #include "postgres.h"
 
 #include <unistd.h>
@@ -533,10 +534,10 @@ HANDLE PostmasterHandle;
 #endif
 
 //TODO: Peloton adds
-static void TestServer() {
-  peloton::message::StartPelotonService();
+void TestServer() {
+//  peloton::message::StartPelotonService();
 }
-static void TestClient() {
+void TestClient() {
 
 	try {
 		peloton::message::HeartbeatRequest request;
@@ -574,7 +575,7 @@ static void TestClient() {
 		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
 	}
 }
-static void Coordinator() {
+void Coordinator() {
     TestServer();
     // TestClient();
     std::thread testclient(TestClient);
