@@ -37,6 +37,14 @@ class StorageManager {
 
   void Sync(BackendType type, void *address, size_t length);
 
+  size_t GetMsyncCount() const {
+    return msync_count;
+  }
+
+  size_t GetClflushCount() const {
+    return clflush_count;
+  }
+
  private:
   // pmem file address
   char *data_file_address;
@@ -52,6 +60,11 @@ class StorageManager {
 
   // pmem offset
   size_t data_file_offset;
+
+  // stats
+  size_t msync_count = 0;
+
+  size_t clflush_count = 0;
 };
 
 }  // End storage namespace
