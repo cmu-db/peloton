@@ -281,6 +281,7 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
 
 // convert the enumerated value type into a concrete c type for the
 // comparison helper templates.
+// TODO: This function should be refactored due to many types we should support. By Michael 02/25/2016
 AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, AbstractExpression *lc,
                                                       AbstractExpression *rc) {
   assert(lc);
@@ -289,9 +290,12 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, Abstract
 
   TupleValueExpression *r_tuple = dynamic_cast<TupleValueExpression *>(rc);
 
-  // more specialization available?
+  // more specialization available? Yes, add castexpress by Michael at 02/25/2016
   ConstantValueExpression *l_const =
       dynamic_cast<ConstantValueExpression *>(lc);
+
+  CastExpression *l_cast =
+	  dynamic_cast<CastExpression *>(lc);
 
   switch (c) {
     case EXPRESSION_TYPE_COMPARE_EQUAL:
@@ -337,6 +341,9 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, Abstract
       } else if (l_tuple != nullptr && r_tuple != nullptr) {  // TUPLE-TUPLE
         return GetMoreSpecialized<TupleValueExpression, TupleValueExpression>(
             c, l_tuple, r_tuple);
+      } else if (l_cast != nullptr && r_vector != nullptr) {  // CAST-VECTOR more?
+          return GetMoreSpecialized<CastExpression, VectorExpression>(
+              c, l_cast, r_vector);
       }
     } break;
 

@@ -122,6 +122,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformVar(expr);
       break;
 
+    case T_RelabelType:
+      peloton_expr = TransformRelabelType(expr);
+      break;
+
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr));
@@ -217,7 +221,8 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT2_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT4_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_FLOADT4_ARRAY ||
-      const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY) {
+      const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY ||
+      const_expr->consttype == POSTGRES_VALUE_TYPE_BPCHAR2) {
     std::vector<expression::AbstractExpression *> *vecExpr =
         new std::vector<expression::AbstractExpression *>;
     Value tmpVal;
@@ -455,6 +460,23 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
   auto state = reinterpret_cast<const GenericExprState *>(es);
   auto expr = reinterpret_cast<const RelabelType *>(es->expr);
   auto child_state = state->arg;
+
+  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
+
+  LOG_TRACE("Handle relabel as %d", expr->resulttype);
+  expression::AbstractExpression *child =
+      ExprTransformer::TransformExpr(child_state);
+
+  PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
+
+  return expression::ExpressionUtil::CastFactory(type, child);
+}
+
+expression::AbstractExpression *ExprTransformer::TransformRelabelType(
+		const Expr *es) {
+
+  auto expr = reinterpret_cast<const RelabelType *>(es);
+  auto child_state = expr->arg;
 
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
