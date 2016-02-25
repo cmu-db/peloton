@@ -272,10 +272,13 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
     case BACKEND_TYPE_FILE: {
       // flush writes for persistence
 #ifdef NVML
-      if (is_pmem)
+      if (is_pmem) {
         pmem_persist(address, length);
+        clflush_count++;
+      }
 #else
         peloton_msync(address, length);
+        msync_count++;
 #endif
     } break;
 

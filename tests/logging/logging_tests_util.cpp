@@ -53,6 +53,18 @@ static void WriteOutput(double value) {
             << state.wait_timeout << " :: ";
   std::cout << value << "\n";
 
+  auto &storage_manager = storage::StorageManager::GetInstance();
+  auto& log_manager = logging::LogManager::GetInstance();
+  auto frontend_logger = log_manager.GetFrontendLogger();
+  auto fsync_count = 0;
+  if(frontend_logger != nullptr){
+    fsync_count = frontend_logger->GetFsyncCount();
+  }
+
+  std::cout << "fsync count : " << fsync_count << " ";
+  std::cout << "clflush count : " << storage_manager.GetClflushCount() << " ";
+  std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
+
   out << state.logging_type << " ";
   out << state.column_count << " ";
   out << state.tuple_count << " ";
