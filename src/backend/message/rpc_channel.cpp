@@ -67,9 +67,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 	// free the receiving buf
 	freemsg(buf);
 
-	//
-    std::cout << "Recv from server" << std::endl;
-
     // run call back function
     if (done != NULL) {
     	done->Run();
