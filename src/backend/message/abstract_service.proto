@@ -503,95 +503,95 @@ message TimeSyncResponse {
     required int64 t1_s = 4;
 }
 
-message PelotonMessage {
-  enum Type {  
-    WORK_FRAGMENT 						= 1;  
-    WORK_RESULT    						= 2;
-    QUERY_ESTIMATE  					= 3;
-    TRANSACTION_INIT_REQUEST			= 4;
-    TRANSACTION_INIT_RESPONSE			= 5;
-    TRANSACTION_WORK_REQUEST 			= 6;
-    TRANSACTION_WORK_RESPONSE			= 7;
-    TRANSACTION_PREFETCH_RESULT      	= 8;
-	TRANSACTION_PREFETCH_ACKNOWLEDGEMENT = 9;
-    TRANSACTION_MAP_REQUEST				= 10; 
-    TRANSACTION_MAP_RESPONSE 			= 11;
-    TRANSACTION_REDUCE_REQUEST       	= 12;
-    TRANSACTION_REDUCE_RESPONSE      	= 13;
-    TRANSACTION_PREPARE_REQUEST      	= 14;	
-    TRANSACTION_PREPARE_RESPONSE     	= 15;
-    TRANSACTION_FINISH_REQUEST       	= 16;
-    TRANSACTION_FINISH_RESPONSE      	= 17;
-    TRANSACTION_REDIRECT_REQUEST     	= 18;
-    TRANSACTION_REDIRECT_RESPONSE    	= 19;
-    TRANSACTION_DEBUG_REQUEST			= 20;
-    TRANSACTION_DEBUG_RESPONSE       	= 21;
-    SEND_DATA_REQUEST					= 22;
-    SEND_DATA_RESPONSE       			= 23;
-    INITIALIZE_REQUEST       			= 24;
-    INITIALIZE_RESPONSE      			= 25;
-    SHUTDOWN_PREPARE_REQUEST 			= 26;
-    SHUTDOWN_PREPARE_RESPONSE			= 27;
-    SHUTDOWN_REQUEST 					= 28;
-    SHUTDOWN_RESPONSE        			= 29;
-    HEARTBEAT_REQUEST        			= 30;
-    HEARTBEAT_RESPONSE       			= 31;
-    UNEVICT_DATA_REQUEST     			= 32;
-    UNEVICT_DATA_RESPONSE    			= 33;
-    TIME_SYNC_REQUEST					= 34;
-    TIME_SYNC_RESPONSE                  = 35;                                       
-  }
-
-  // Identifies which field is filled in.
-  required Type type = 1;
-
-  // One of the following will be filled in.
-  optional WorkFragment 						work_fragment 							= 2;
-  optional WorkResult 							work_result 							= 3;
-  optional QueryEstimate 						query_estimate 							= 4;
-  optional TransactionInitRequest 				transaction_init_request 				= 5;
-  optional TransactionInitResponse 				transaction_init_response 				= 6;
-  optional TransactionWorkRequest 				transaction_work_request 				= 7;
-  optional TransactionWorkResponse 				transaction_work_response 				= 8;
-  optional TransactionPrefetchResult 			transaction_prefetch_result 			= 9;
-  optional TransactionPrefetchAcknowledgement 	transaction_prefetch_acknowledgement 	= 10;
-  optional TransactionMapRequest 				transaction_map_request 				= 11;
-  optional TransactionMapResponse 				transaction_map_response 				= 12;
-  optional TransactionReduceRequest 			transaction_reduce_request				= 13;
-  optional TransactionReduceResponse 			transaction_reduce_response 			= 14;
-  optional TransactionPrepareRequest 			transaction_prepare_request 			= 15;
-  optional TransactionPrepareResponse 			transaction_prepare_response 			= 16;
-  optional TransactionFinishRequest 			transaction_finish_request 				= 17;
-  optional TransactionFinishResponse 			transaction_finish_response 			= 18;
-  optional TransactionRedirectRequest 			transaction_redirect_request 			= 19;
-  optional TransactionRedirectResponse 			transaction_redirect_response 			= 20;
-  optional TransactionDebugRequest 				transaction_debug_request 				= 21;
-  optional TransactionDebugResponse 			transaction_debug_response 				= 22;
-  optional SendDataRequest 						send_data_request 						= 23;
-  optional SendDataResponse 					send_data_response 						= 24;
-  optional InitializeRequest 					initialize_request 						= 25;
-  optional InitializeResponse 					initialize_response 					= 26;
-  optional ShutdownPrepareRequest 				shutdown_prepare_request 				= 27;
-  optional ShutdownPrepareResponse 				shutdown_prepare_response 				= 28;
-  optional ShutdownRequest 						shutdown_request 						= 29;
-  optional ShutdownResponse 					shutdown_response 						= 30;
-  optional HeartbeatRequest 					heartbeat_request 						= 31;
-  optional HeartbeatResponse 					heartbeat_response 						= 32;
-  optional UnevictDataRequest 					unevict_data_request 					= 33;
-  optional UnevictDataResponse 					unevict_data_response 					= 34;
-  optional TimeSyncRequest 						time_sync_request 						= 35;
-  optional TimeSyncResponse 					time_sync_response 						= 36;
-  
-  // IP and port address
-  optional string dst_addr = 37;
-  optional string src_addr = 38;
-  
-  optional int32 dst_addr_32 = 39;
-  optional int32 src_addr_32 = 40;
-  
-  // This socket can be used to send or recv msg
-  optional int32  socket   = 41;
-}
+//message PelotonMessage {
+//  enum Type {  
+//    WORK_FRAGMENT 						= 1;  
+//    WORK_RESULT    						= 2;
+//    QUERY_ESTIMATE  					= 3;
+//    TRANSACTION_INIT_REQUEST			= 4;
+//    TRANSACTION_INIT_RESPONSE			= 5;
+//    TRANSACTION_WORK_REQUEST 			= 6;
+//    TRANSACTION_WORK_RESPONSE			= 7;
+//    TRANSACTION_PREFETCH_RESULT      	= 8;
+//	TRANSACTION_PREFETCH_ACKNOWLEDGEMENT = 9;
+//    TRANSACTION_MAP_REQUEST				= 10; 
+//    TRANSACTION_MAP_RESPONSE 			= 11;
+//    TRANSACTION_REDUCE_REQUEST       	= 12;
+//    TRANSACTION_REDUCE_RESPONSE      	= 13;
+//    TRANSACTION_PREPARE_REQUEST      	= 14;	
+//    TRANSACTION_PREPARE_RESPONSE     	= 15;
+//    TRANSACTION_FINISH_REQUEST       	= 16;
+//    TRANSACTION_FINISH_RESPONSE      	= 17;
+//    TRANSACTION_REDIRECT_REQUEST     	= 18;
+//    TRANSACTION_REDIRECT_RESPONSE    	= 19;
+//    TRANSACTION_DEBUG_REQUEST			= 20;
+//    TRANSACTION_DEBUG_RESPONSE       	= 21;
+//    SEND_DATA_REQUEST					= 22;
+//    SEND_DATA_RESPONSE       			= 23;
+//    INITIALIZE_REQUEST       			= 24;
+//    INITIALIZE_RESPONSE      			= 25;
+//    SHUTDOWN_PREPARE_REQUEST 			= 26;
+//    SHUTDOWN_PREPARE_RESPONSE			= 27;
+//    SHUTDOWN_REQUEST 					= 28;
+//    SHUTDOWN_RESPONSE        			= 29;
+//    HEARTBEAT_REQUEST        			= 30;
+//    HEARTBEAT_RESPONSE       			= 31;
+//    UNEVICT_DATA_REQUEST     			= 32;
+//    UNEVICT_DATA_RESPONSE    			= 33;
+//    TIME_SYNC_REQUEST					= 34;
+//    TIME_SYNC_RESPONSE                  = 35;                                       
+//  }
+//
+//  // Identifies which field is filled in.
+//  required Type type = 1;
+//
+//  // One of the following will be filled in.
+//  optional WorkFragment 						work_fragment 							= 2;
+//  optional WorkResult 							work_result 							= 3;
+//  optional QueryEstimate 						query_estimate 							= 4;
+//  optional TransactionInitRequest 				transaction_init_request 				= 5;
+//  optional TransactionInitResponse 				transaction_init_response 				= 6;
+//  optional TransactionWorkRequest 				transaction_work_request 				= 7;
+//  optional TransactionWorkResponse 				transaction_work_response 				= 8;
+//  optional TransactionPrefetchResult 			transaction_prefetch_result 			= 9;
+//  optional TransactionPrefetchAcknowledgement 	transaction_prefetch_acknowledgement 	= 10;
+//  optional TransactionMapRequest 				transaction_map_request 				= 11;
+//  optional TransactionMapResponse 				transaction_map_response 				= 12;
+//  optional TransactionReduceRequest 			transaction_reduce_request				= 13;
+//  optional TransactionReduceResponse 			transaction_reduce_response 			= 14;
+//  optional TransactionPrepareRequest 			transaction_prepare_request 			= 15;
+//  optional TransactionPrepareResponse 			transaction_prepare_response 			= 16;
+//  optional TransactionFinishRequest 			transaction_finish_request 				= 17;
+//  optional TransactionFinishResponse 			transaction_finish_response 			= 18;
+//  optional TransactionRedirectRequest 			transaction_redirect_request 			= 19;
+//  optional TransactionRedirectResponse 			transaction_redirect_response 			= 20;
+//  optional TransactionDebugRequest 				transaction_debug_request 				= 21;
+//  optional TransactionDebugResponse 			transaction_debug_response 				= 22;
+//  optional SendDataRequest 						send_data_request 						= 23;
+//  optional SendDataResponse 					send_data_response 						= 24;
+//  optional InitializeRequest 					initialize_request 						= 25;
+//  optional InitializeResponse 					initialize_response 					= 26;
+//  optional ShutdownPrepareRequest 				shutdown_prepare_request 				= 27;
+//  optional ShutdownPrepareResponse 				shutdown_prepare_response 				= 28;
+//  optional ShutdownRequest 						shutdown_request 						= 29;
+//  optional ShutdownResponse 					shutdown_response 						= 30;
+//  optional HeartbeatRequest 					heartbeat_request 						= 31;
+//  optional HeartbeatResponse 					heartbeat_response 						= 32;
+//  optional UnevictDataRequest 					unevict_data_request 					= 33;
+//  optional UnevictDataResponse 					unevict_data_response 					= 34;
+//  optional TimeSyncRequest 						time_sync_request 						= 35;
+//  optional TimeSyncResponse 					time_sync_response 						= 36;
+//  
+//  // IP and port address
+//  optional string dst_addr = 37;
+//  optional string src_addr = 38;
+//  
+//  optional int32 dst_addr_32 = 39;
+//  optional int32 src_addr_32 = 40;
+//  
+//  // This socket can be used to send or recv msg
+//  optional int32  socket   = 41;
+//}
 
 // -----------------------------------
 // SERVICE
