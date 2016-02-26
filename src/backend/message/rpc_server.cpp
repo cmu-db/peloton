@@ -114,6 +114,7 @@ void RpcServer::Start()
 		size_t msg_len = response->ByteSize();
 		buf = (char*)peloton::message::allocmsg(msg_len, 0);
 		response->SerializeToArray(buf, msg_len);
+
 		// We can use NN_MSG instead of msg_len here, but using msg_len is still ok
 		socket_.Send(buf, msg_len, 0);
 		delete request;

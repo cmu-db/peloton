@@ -64,6 +64,7 @@
  */
 #include "backend/message/peloton_client.h"
 #include "backend/message/peloton_service.h"
+#include "backend/message/rpc_server.h"
 #include "backend/message/abstract_service.pb.h"
 #include "postgres.h"
 
@@ -535,7 +536,24 @@ HANDLE PostmasterHandle;
 
 //TODO: Peloton adds
 void TestServer() {
-//  peloton::message::StartPelotonService();
+
+	google::protobuf::Service* service = NULL;
+
+	try {
+		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
+		service = new peloton::message::PelotonService();
+		rpc_server.RegisterService(service);
+		rpc_server.Start();
+	} catch (peloton::message::exception& e) {
+		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+		delete service;
+	} catch (std::exception& e) {
+		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+		delete service;
+	} catch (...) {
+		std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+		delete service;
+	}
 }
 void TestClient() {
 
@@ -546,23 +564,19 @@ void TestClient() {
 		request.set_sender_site(1234);
 		request.set_last_transaction_id(1234567);
 
-		response.set_sender_site(5678);
-		peloton::message::Status status = peloton::message::ABORT_RESTART;
-		response.set_status(status);
-
 		peloton::message::PelotonClient client(
 				"tcp://127.0.0.1:9999");
 
 		client.Heartbeat(&request, &response);
 
 		if ( response.has_sender_site() == true ) {
-			std::cout << "sender site" << response.sender_site() << std::endl;
+			std::cout << "sender site: " << response.sender_site() << std::endl;
 		} else {
 			std::cout << "No response: sender site" << std::endl;
 		}
 
 		if ( response.has_status() == true ) {
-			std::cout << "Status" << response.status() << std::endl;
+			std::cout << "Status: " << response.status() << std::endl;
 		} else {
 			std::cout << "No response: sender status" << std::endl;
 		}
@@ -576,9 +590,9 @@ void TestClient() {
 	}
 }
 void Coordinator() {
-    TestServer();
-    // TestClient();
+	std::thread testserver(TestServer);
     std::thread testclient(TestClient);
+    testserver.detach();
     testclient.detach();
 }
 
