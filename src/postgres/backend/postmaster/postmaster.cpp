@@ -1356,8 +1356,9 @@ void PostmasterMain(int argc, char *argv[]) {
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
-  std::thread testsend(TestSend);
-  testsend.detach();
+  // comment this to shutdown rpc test
+//  std::thread testsend(TestSend);
+//  testsend.detach();
 
   status = ServerLoop();
 
