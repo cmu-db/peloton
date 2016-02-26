@@ -19,6 +19,12 @@
 namespace peloton {
 namespace logging {
 
+BackendLogger::~BackendLogger() {
+  for (auto log_record : local_queue) {
+    delete log_record;
+  }
+}
+
 /**
  * @brief Return the backend logger based on logging type
  * @param logging type can be stdout(debug), aries, peloton
@@ -27,7 +33,7 @@ BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
   BackendLogger *backendLogger = nullptr;
 
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
-    backendLogger = WriteBehindBackendLogger::GetInstance();
+    backendLogger = WriteAheadBackendLogger::GetInstance();
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
     backendLogger = WriteBehindBackendLogger::GetInstance();
   } else {
