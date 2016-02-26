@@ -65,6 +65,7 @@ private:
 	int 			socket_id_;
 	RpcMethodMap 	rpc_method_map_;
 
+	std::thread		worker_thread_;
 	MessageQueue<RecvItem> 	recv_queue_;
 };
 

@@ -22,12 +22,14 @@ namespace message {
 
 RpcServer::RpcServer(const char* url) :
 	socket_(AF_SP, NN_REP),
-	socket_id_(socket_.Bind(url))
+	socket_id_(socket_.Bind(url)),
+	worker_thread_()
 {
 }
 
 RpcServer::~RpcServer()
 {
+	if(worker_thread_.joinable()) worker_thread_.join();
 	RemoveService();
 	Close();
 }
@@ -126,10 +128,7 @@ void RpcServer::StartSimple()
 
 void RpcServer::Start()
 {
-//	std::thread worker1 = WorkerThread("this is thread1");
-//	std::thread worker2 = WorkerThread("this is thread2");
-//	worker1.detach();
-//	worker2.detach();
+//	worker_thread_ = std::thread(&RpcServer::Worker, this, "this is worker_thread");
 
 	uint64_t opcode = 0;
 
@@ -168,7 +167,7 @@ void RpcServer::Start()
 		// Must free the buf since we use NN_MSG flag
 		freemsg(buf);
 
-		Worker("Function call");
+		//Worker("Function call");
 	}
 }
 

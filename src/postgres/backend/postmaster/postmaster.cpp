@@ -546,7 +546,7 @@ void Coordinator() {
 		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
 		service = new peloton::message::PelotonService();
 		rpc_server.RegisterService(service);
-		rpc_server.Start();
+		rpc_server.StartSimple();
 	} catch (peloton::message::exception& e) {
 		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
 		delete service;
