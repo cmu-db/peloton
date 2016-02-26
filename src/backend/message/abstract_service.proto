@@ -23,10 +23,10 @@ enum Status {
     // The transaction aborted because of a misprediction (and will be restarted)
     ABORT_MISPREDICT = 5;
     // The transaction could not be initialized because on partition rejected it.
-    // The transaction will be retried at the initiaizing HStoreSite
+    // The transaction will be retried at the initiaizing PelotonSite
     ABORT_RESTART = 6;
     // The transaction could not be initialized because on partition rejected it.
-    // The transaction will be retried at the initiaizing HStoreSite
+    // The transaction will be retried at the initiaizing PelotonSite
     ABORT_REJECT = 7;
     // The transaction was aborted because it tried to access a tuple that was
     // evicted. This is only used with the anti-caching feature.
@@ -148,7 +148,7 @@ message TransactionInitRequest {
 
     // PRE-FETCH QUERIES
     
-    // The work that the HStoreSite needs to execute for this transaction
+    // The work that the PelotonSite needs to execute for this transaction
     // The work for a partition can appear only once in this list.
     repeated WorkFragment prefetch_fragments = 7;
     
@@ -179,7 +179,7 @@ message TransactionWorkRequest {
     // Where this request came from!
     required int32 source_partition = 3;
     
-    // The work that the HStoreSite needs to execute for this transaction
+    // The work that the PelotonSite needs to execute for this transaction
     // The work for a partition can appear only once in this list.
     repeated WorkFragment fragments = 4;
     
@@ -316,7 +316,7 @@ message TransactionReduceResponse {
 // -----------------------------------
 
 // Two-Phase Commit Prepare
-// The initiating HStoreSite is telling the remote sites to prepare to commit
+// The initiating PelotonSite is telling the remote sites to prepare to commit
 // a distributed transaction for a select number of partitions.
 message TransactionPrepareRequest {
     required int64 transaction_id = 1;
@@ -334,7 +334,7 @@ message TransactionPrepareResponse {
 // -----------------------------------
 
 // Two-Phase Commit Final Step
-// The initiating HStoreSite is telling the remote sites that they
+// The initiating PelotonSite is telling the remote sites that they
 // they need to commit/abort their transaction. The PREPARE request
 // must be sent before this one only if the status is COMMIT
 message TransactionFinishRequest {
@@ -360,7 +360,7 @@ message TransactionRedirectRequest {
 }
 
 message TransactionRedirectResponse {
-    // The id of the HStoreSite is responding to this shutdown request
+    // The id of the PelotonSite is responding to this shutdown request
     required int32 sender_site = 1;
     required bytes output = 2;
 }
@@ -388,7 +388,7 @@ message SendDataRequest {
     // Globally unique transaction id
     required int64 transaction_id = 1;
 
-    // The SiteId of the HStoreSite that sent this data
+    // The SiteId of the PelotonSite that sent this data
     required int32 sender_site = 2;
     
     // Set of partitions to send data to. A partition can appear only once in this list.
@@ -402,7 +402,7 @@ message SendDataRequest {
 message SendDataResponse {
     required int64 transaction_id = 1;
     repeated int32 partitions = 2 [packed=true];
-    // The SiteId of the HStoreSite that sent this data
+    // The SiteId of the PelotonSite that sent this data
     required int32 sender_site = 3;
     required Status status = 4;
 }
@@ -426,13 +426,13 @@ message InitializeResponse {
 // -----------------------------------
 
 message ShutdownPrepareRequest {
-    // The id of the HStoreSite that is wants us to shutdown
+    // The id of the PelotonSite that is wants us to shutdown
     required int32 sender_site = 1;
     optional bytes error = 2;
 }
 
 message ShutdownPrepareResponse {
-    // The id of the HStoreSite is responding to this shutdown request
+    // The id of the PelotonSite is responding to this shutdown request
     required int32 sender_site = 1;
 }
 
@@ -486,23 +486,102 @@ message UnevictDataResponse {
 // -----------------------------------
 
 message TimeSyncRequest {
-    // The id of the HStoreSite sending this timesync request
+    // The id of the PelotonSite sending this timesync request
     required int32 sender_site = 1;
-    // The time when the local HStoreSite sent this request
+    // The time when the local PelotonSite sent this request
     required int64 t0_s = 2;
 }
 
 message TimeSyncResponse {
-    // The id of the HStoreSite responding to this timesync request
+    // The id of the PelotonSite responding to this timesync request
     required int32 sender_site = 1;
-    // The time when the local HStoreSite sent this request
+    // The time when the local PelotonSite sent this request
     required int64 t0_s = 2;
-    // The time when the remote HStoreSite received this request
+    // The time when the remote PelotonSite received this request
     required int64 t0_r = 3;
-    // The time when the remote HStoreSite sent out the response
+    // The time when the remote PelotonSite sent out the response
     required int64 t1_s = 4;
 }
 
+message PelotonMessage {
+  enum Type {  
+    WORK_FRAGMENT 						= 1;  
+    WORK_RESULT    						= 2;
+    QUERY_ESTIMATE  					= 3;
+    TRANSACTION_INIT_REQUEST			= 4;
+    TRANSACTION_INIT_RESPONSE			= 5;
+    TRANSACTION_WORK_REQUEST 			= 6;
+    TRANSACTION_WORK_RESPONSE			= 7;
+    TRANSACTION_PREFETCH_RESULT      	= 8;
+	TRANSACTION_PREFETCH_ACKNOWLEDGEMENT = 9;
+    TRANSACTION_MAP_REQUEST				= 10; 
+    TRANSACTION_MAP_RESPONSE 			= 11;
+    TRANSACTION_REDUCE_REQUEST       	= 12;
+    TRANSACTION_REDUCE_RESPONSE      	= 13;
+    TRANSACTION_PREPARE_REQUEST      	= 14;	
+    TRANSACTION_PREPARE_RESPONSE     	= 15;
+    TRANSACTION_FINISH_REQUEST       	= 16;
+    TRANSACTION_FINISH_RESPONSE      	= 17;
+    TRANSACTION_REDIRECT_REQUEST     	= 18;
+    TRANSACTION_REDIRECT_RESPONSE    	= 19;
+    TRANSACTION_DEBUG_REQUEST			= 20;
+    TRANSACTION_DEBUG_RESPONSE       	= 21;
+    SEND_DATA_REQUEST					= 22;
+    SEND_DATA_RESPONSE       			= 23;
+    INITIALIZE_REQUEST       			= 24;
+    INITIALIZE_RESPONSE      			= 25;
+    SHUTDOWN_PREPARE_REQUEST 			= 26;
+    SHUTDOWN_PREPARE_RESPONSE			= 27;
+    SHUTDOWN_REQUEST 					= 28;
+    SHUTDOWN_RESPONSE        			= 29;
+    HEARTBEAT_REQUEST        			= 30;
+    HEARTBEAT_RESPONSE       			= 31;
+    UNEVICT_DATA_REQUEST     			= 32;
+    UNEVICT_DATA_RESPONSE    			= 33;
+    TIME_SYNC_REQUEST					= 34;
+    TIME_SYNC_RESPONSE                  = 35;                                       
+  }
+
+  // Identifies which field is filled in.
+  required Type type = 1;
+
+  // One of the following will be filled in.
+  optional WorkFragment 						work_fragment 							= 2;
+  optional WorkResult 							work_result 							= 3;
+  optional QueryEstimate 						query_estimate 							= 4;
+  optional TransactionInitRequest 				transaction_init_request 				= 5;
+  optional TransactionInitResponse 				transaction_init_response 				= 6;
+  optional TransactionWorkRequest 				transaction_work_request 				= 7;
+  optional TransactionWorkResponse 				transaction_work_response 				= 8;
+  optional TransactionPrefetchResult 			transaction_prefetch_result 			= 9;
+  optional TransactionPrefetchAcknowledgement 	transaction_prefetch_acknowledgement 	= 10;
+  optional TransactionMapRequest 				transaction_map_request 				= 11;
+  optional TransactionMapResponse 				transaction_map_response 				= 12;
+  optional TransactionReduceRequest 			transaction_reduce_request				= 13;
+  optional TransactionReduceResponse 			transaction_reduce_response 			= 14;
+  optional TransactionPrepareRequest 			transaction_prepare_request 			= 15;
+  optional TransactionPrepareResponse 			transaction_prepare_response 			= 16;
+  optional TransactionFinishRequest 			transaction_finish_request 				= 17;
+  optional TransactionFinishResponse 			transaction_finish_response 			= 18;
+  optional TransactionRedirectRequest 			transaction_redirect_request 			= 19;
+  optional TransactionRedirectResponse 			transaction_redirect_response 			= 20;
+  optional TransactionDebugRequest 				transaction_debug_request 				= 21;
+  optional TransactionDebugResponse 			transaction_debug_response 				= 22;
+  optional SendDataRequest 						send_data_request 						= 23;
+  optional SendDataResponse 					send_data_response 						= 24;
+  optional InitializeRequest 					initialize_request 						= 25;
+  optional InitializeResponse 					initialize_response 					= 26;
+  optional ShutdownPrepareRequest 				shutdown_prepare_request 				= 27;
+  optional ShutdownPrepareResponse 				shutdown_prepare_response 				= 28;
+  optional ShutdownRequest 						shutdown_request 						= 29;
+  optional ShutdownResponse 					shutdown_response 						= 30;
+  optional HeartbeatRequest 					heartbeat_request 						= 31;
+  optional HeartbeatResponse 					heartbeat_response 						= 32;
+  optional UnevictDataRequest 					unevict_data_request 					= 33;
+  optional UnevictDataResponse 					unevict_data_response 					= 34;
+  optional TimeSyncRequest 						time_sync_request 						= 35;
+  optional TimeSyncResponse 					time_sync_response 						= 36;
+}
 
 // -----------------------------------
 // SERVICE
