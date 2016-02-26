@@ -43,6 +43,7 @@ class HeartbeatRequest;
 class HeartbeatResponse;
 class InitializeRequest;
 class InitializeResponse;
+class PelotonMessage;
 class QueryEstimate;
 class SendDataRequest;
 class SendDataResponse;
@@ -76,6 +77,58 @@ class UnevictDataResponse;
 class WorkFragment;
 class WorkResult;
 
+enum PelotonMessage_Type {
+  PelotonMessage_Type_WORK_FRAGMENT = 1,
+  PelotonMessage_Type_WORK_RESULT = 2,
+  PelotonMessage_Type_QUERY_ESTIMATE = 3,
+  PelotonMessage_Type_TRANSACTION_INIT_REQUEST = 4,
+  PelotonMessage_Type_TRANSACTION_INIT_RESPONSE = 5,
+  PelotonMessage_Type_TRANSACTION_WORK_REQUEST = 6,
+  PelotonMessage_Type_TRANSACTION_WORK_RESPONSE = 7,
+  PelotonMessage_Type_TRANSACTION_PREFETCH_RESULT = 8,
+  PelotonMessage_Type_TRANSACTION_PREFETCH_ACKNOWLEDGEMENT = 9,
+  PelotonMessage_Type_TRANSACTION_MAP_REQUEST = 10,
+  PelotonMessage_Type_TRANSACTION_MAP_RESPONSE = 11,
+  PelotonMessage_Type_TRANSACTION_REDUCE_REQUEST = 12,
+  PelotonMessage_Type_TRANSACTION_REDUCE_RESPONSE = 13,
+  PelotonMessage_Type_TRANSACTION_PREPARE_REQUEST = 14,
+  PelotonMessage_Type_TRANSACTION_PREPARE_RESPONSE = 15,
+  PelotonMessage_Type_TRANSACTION_FINISH_REQUEST = 16,
+  PelotonMessage_Type_TRANSACTION_FINISH_RESPONSE = 17,
+  PelotonMessage_Type_TRANSACTION_REDIRECT_REQUEST = 18,
+  PelotonMessage_Type_TRANSACTION_REDIRECT_RESPONSE = 19,
+  PelotonMessage_Type_TRANSACTION_DEBUG_REQUEST = 20,
+  PelotonMessage_Type_TRANSACTION_DEBUG_RESPONSE = 21,
+  PelotonMessage_Type_SEND_DATA_REQUEST = 22,
+  PelotonMessage_Type_SEND_DATA_RESPONSE = 23,
+  PelotonMessage_Type_INITIALIZE_REQUEST = 24,
+  PelotonMessage_Type_INITIALIZE_RESPONSE = 25,
+  PelotonMessage_Type_SHUTDOWN_PREPARE_REQUEST = 26,
+  PelotonMessage_Type_SHUTDOWN_PREPARE_RESPONSE = 27,
+  PelotonMessage_Type_SHUTDOWN_REQUEST = 28,
+  PelotonMessage_Type_SHUTDOWN_RESPONSE = 29,
+  PelotonMessage_Type_HEARTBEAT_REQUEST = 30,
+  PelotonMessage_Type_HEARTBEAT_RESPONSE = 31,
+  PelotonMessage_Type_UNEVICT_DATA_REQUEST = 32,
+  PelotonMessage_Type_UNEVICT_DATA_RESPONSE = 33,
+  PelotonMessage_Type_TIME_SYNC_REQUEST = 34,
+  PelotonMessage_Type_TIME_SYNC_RESPONSE = 35
+};
+bool PelotonMessage_Type_IsValid(int value);
+const PelotonMessage_Type PelotonMessage_Type_Type_MIN = PelotonMessage_Type_WORK_FRAGMENT;
+const PelotonMessage_Type PelotonMessage_Type_Type_MAX = PelotonMessage_Type_TIME_SYNC_RESPONSE;
+const int PelotonMessage_Type_Type_ARRAYSIZE = PelotonMessage_Type_Type_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* PelotonMessage_Type_descriptor();
+inline const ::std::string& PelotonMessage_Type_Name(PelotonMessage_Type value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    PelotonMessage_Type_descriptor(), value);
+}
+inline bool PelotonMessage_Type_Parse(
+    const ::std::string& name, PelotonMessage_Type* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<PelotonMessage_Type>(
+    PelotonMessage_Type_descriptor(), name, value);
+}
 enum Status {
   OK = 0,
   ABORT_USER = 1,
@@ -4564,6 +4617,632 @@ class TimeSyncResponse : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static TimeSyncResponse* default_instance_;
 };
+// -------------------------------------------------------------------
+
+class PelotonMessage : public ::google::protobuf::Message {
+ public:
+  PelotonMessage();
+  virtual ~PelotonMessage();
+
+  PelotonMessage(const PelotonMessage& from);
+
+  inline PelotonMessage& operator=(const PelotonMessage& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields();
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PelotonMessage& default_instance();
+
+  void Swap(PelotonMessage* other);
+
+  // implements Message ----------------------------------------------
+
+  inline PelotonMessage* New() const { return New(NULL); }
+
+  PelotonMessage* New(::google::protobuf::Arena* arena) const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const PelotonMessage& from);
+  void MergeFrom(const PelotonMessage& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(PelotonMessage* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return _internal_metadata_.arena();
+  }
+  inline void* MaybeArenaPtr() const {
+    return _internal_metadata_.raw_arena_ptr();
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  typedef PelotonMessage_Type Type;
+  static const Type WORK_FRAGMENT = PelotonMessage_Type_WORK_FRAGMENT;
+  static const Type WORK_RESULT = PelotonMessage_Type_WORK_RESULT;
+  static const Type QUERY_ESTIMATE = PelotonMessage_Type_QUERY_ESTIMATE;
+  static const Type TRANSACTION_INIT_REQUEST = PelotonMessage_Type_TRANSACTION_INIT_REQUEST;
+  static const Type TRANSACTION_INIT_RESPONSE = PelotonMessage_Type_TRANSACTION_INIT_RESPONSE;
+  static const Type TRANSACTION_WORK_REQUEST = PelotonMessage_Type_TRANSACTION_WORK_REQUEST;
+  static const Type TRANSACTION_WORK_RESPONSE = PelotonMessage_Type_TRANSACTION_WORK_RESPONSE;
+  static const Type TRANSACTION_PREFETCH_RESULT = PelotonMessage_Type_TRANSACTION_PREFETCH_RESULT;
+  static const Type TRANSACTION_PREFETCH_ACKNOWLEDGEMENT = PelotonMessage_Type_TRANSACTION_PREFETCH_ACKNOWLEDGEMENT;
+  static const Type TRANSACTION_MAP_REQUEST = PelotonMessage_Type_TRANSACTION_MAP_REQUEST;
+  static const Type TRANSACTION_MAP_RESPONSE = PelotonMessage_Type_TRANSACTION_MAP_RESPONSE;
+  static const Type TRANSACTION_REDUCE_REQUEST = PelotonMessage_Type_TRANSACTION_REDUCE_REQUEST;
+  static const Type TRANSACTION_REDUCE_RESPONSE = PelotonMessage_Type_TRANSACTION_REDUCE_RESPONSE;
+  static const Type TRANSACTION_PREPARE_REQUEST = PelotonMessage_Type_TRANSACTION_PREPARE_REQUEST;
+  static const Type TRANSACTION_PREPARE_RESPONSE = PelotonMessage_Type_TRANSACTION_PREPARE_RESPONSE;
+  static const Type TRANSACTION_FINISH_REQUEST = PelotonMessage_Type_TRANSACTION_FINISH_REQUEST;
+  static const Type TRANSACTION_FINISH_RESPONSE = PelotonMessage_Type_TRANSACTION_FINISH_RESPONSE;
+  static const Type TRANSACTION_REDIRECT_REQUEST = PelotonMessage_Type_TRANSACTION_REDIRECT_REQUEST;
+  static const Type TRANSACTION_REDIRECT_RESPONSE = PelotonMessage_Type_TRANSACTION_REDIRECT_RESPONSE;
+  static const Type TRANSACTION_DEBUG_REQUEST = PelotonMessage_Type_TRANSACTION_DEBUG_REQUEST;
+  static const Type TRANSACTION_DEBUG_RESPONSE = PelotonMessage_Type_TRANSACTION_DEBUG_RESPONSE;
+  static const Type SEND_DATA_REQUEST = PelotonMessage_Type_SEND_DATA_REQUEST;
+  static const Type SEND_DATA_RESPONSE = PelotonMessage_Type_SEND_DATA_RESPONSE;
+  static const Type INITIALIZE_REQUEST = PelotonMessage_Type_INITIALIZE_REQUEST;
+  static const Type INITIALIZE_RESPONSE = PelotonMessage_Type_INITIALIZE_RESPONSE;
+  static const Type SHUTDOWN_PREPARE_REQUEST = PelotonMessage_Type_SHUTDOWN_PREPARE_REQUEST;
+  static const Type SHUTDOWN_PREPARE_RESPONSE = PelotonMessage_Type_SHUTDOWN_PREPARE_RESPONSE;
+  static const Type SHUTDOWN_REQUEST = PelotonMessage_Type_SHUTDOWN_REQUEST;
+  static const Type SHUTDOWN_RESPONSE = PelotonMessage_Type_SHUTDOWN_RESPONSE;
+  static const Type HEARTBEAT_REQUEST = PelotonMessage_Type_HEARTBEAT_REQUEST;
+  static const Type HEARTBEAT_RESPONSE = PelotonMessage_Type_HEARTBEAT_RESPONSE;
+  static const Type UNEVICT_DATA_REQUEST = PelotonMessage_Type_UNEVICT_DATA_REQUEST;
+  static const Type UNEVICT_DATA_RESPONSE = PelotonMessage_Type_UNEVICT_DATA_RESPONSE;
+  static const Type TIME_SYNC_REQUEST = PelotonMessage_Type_TIME_SYNC_REQUEST;
+  static const Type TIME_SYNC_RESPONSE = PelotonMessage_Type_TIME_SYNC_RESPONSE;
+  static inline bool Type_IsValid(int value) {
+    return PelotonMessage_Type_IsValid(value);
+  }
+  static const Type Type_MIN =
+    PelotonMessage_Type_Type_MIN;
+  static const Type Type_MAX =
+    PelotonMessage_Type_Type_MAX;
+  static const int Type_ARRAYSIZE =
+    PelotonMessage_Type_Type_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  Type_descriptor() {
+    return PelotonMessage_Type_descriptor();
+  }
+  static inline const ::std::string& Type_Name(Type value) {
+    return PelotonMessage_Type_Name(value);
+  }
+  static inline bool Type_Parse(const ::std::string& name,
+      Type* value) {
+    return PelotonMessage_Type_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  // required .peloton.message.PelotonMessage.Type type = 1;
+  bool has_type() const;
+  void clear_type();
+  static const int kTypeFieldNumber = 1;
+  ::peloton::message::PelotonMessage_Type type() const;
+  void set_type(::peloton::message::PelotonMessage_Type value);
+
+  // optional .peloton.message.WorkFragment work_fragment = 2;
+  bool has_work_fragment() const;
+  void clear_work_fragment();
+  static const int kWorkFragmentFieldNumber = 2;
+  const ::peloton::message::WorkFragment& work_fragment() const;
+  ::peloton::message::WorkFragment* mutable_work_fragment();
+  ::peloton::message::WorkFragment* release_work_fragment();
+  void set_allocated_work_fragment(::peloton::message::WorkFragment* work_fragment);
+
+  // optional .peloton.message.WorkResult work_result = 3;
+  bool has_work_result() const;
+  void clear_work_result();
+  static const int kWorkResultFieldNumber = 3;
+  const ::peloton::message::WorkResult& work_result() const;
+  ::peloton::message::WorkResult* mutable_work_result();
+  ::peloton::message::WorkResult* release_work_result();
+  void set_allocated_work_result(::peloton::message::WorkResult* work_result);
+
+  // optional .peloton.message.QueryEstimate query_estimate = 4;
+  bool has_query_estimate() const;
+  void clear_query_estimate();
+  static const int kQueryEstimateFieldNumber = 4;
+  const ::peloton::message::QueryEstimate& query_estimate() const;
+  ::peloton::message::QueryEstimate* mutable_query_estimate();
+  ::peloton::message::QueryEstimate* release_query_estimate();
+  void set_allocated_query_estimate(::peloton::message::QueryEstimate* query_estimate);
+
+  // optional .peloton.message.TransactionInitRequest transaction_init_request = 5;
+  bool has_transaction_init_request() const;
+  void clear_transaction_init_request();
+  static const int kTransactionInitRequestFieldNumber = 5;
+  const ::peloton::message::TransactionInitRequest& transaction_init_request() const;
+  ::peloton::message::TransactionInitRequest* mutable_transaction_init_request();
+  ::peloton::message::TransactionInitRequest* release_transaction_init_request();
+  void set_allocated_transaction_init_request(::peloton::message::TransactionInitRequest* transaction_init_request);
+
+  // optional .peloton.message.TransactionInitResponse transaction_init_response = 6;
+  bool has_transaction_init_response() const;
+  void clear_transaction_init_response();
+  static const int kTransactionInitResponseFieldNumber = 6;
+  const ::peloton::message::TransactionInitResponse& transaction_init_response() const;
+  ::peloton::message::TransactionInitResponse* mutable_transaction_init_response();
+  ::peloton::message::TransactionInitResponse* release_transaction_init_response();
+  void set_allocated_transaction_init_response(::peloton::message::TransactionInitResponse* transaction_init_response);
+
+  // optional .peloton.message.TransactionWorkRequest transaction_work_request = 7;
+  bool has_transaction_work_request() const;
+  void clear_transaction_work_request();
+  static const int kTransactionWorkRequestFieldNumber = 7;
+  const ::peloton::message::TransactionWorkRequest& transaction_work_request() const;
+  ::peloton::message::TransactionWorkRequest* mutable_transaction_work_request();
+  ::peloton::message::TransactionWorkRequest* release_transaction_work_request();
+  void set_allocated_transaction_work_request(::peloton::message::TransactionWorkRequest* transaction_work_request);
+
+  // optional .peloton.message.TransactionWorkResponse transaction_work_response = 8;
+  bool has_transaction_work_response() const;
+  void clear_transaction_work_response();
+  static const int kTransactionWorkResponseFieldNumber = 8;
+  const ::peloton::message::TransactionWorkResponse& transaction_work_response() const;
+  ::peloton::message::TransactionWorkResponse* mutable_transaction_work_response();
+  ::peloton::message::TransactionWorkResponse* release_transaction_work_response();
+  void set_allocated_transaction_work_response(::peloton::message::TransactionWorkResponse* transaction_work_response);
+
+  // optional .peloton.message.TransactionPrefetchResult transaction_prefetch_result = 9;
+  bool has_transaction_prefetch_result() const;
+  void clear_transaction_prefetch_result();
+  static const int kTransactionPrefetchResultFieldNumber = 9;
+  const ::peloton::message::TransactionPrefetchResult& transaction_prefetch_result() const;
+  ::peloton::message::TransactionPrefetchResult* mutable_transaction_prefetch_result();
+  ::peloton::message::TransactionPrefetchResult* release_transaction_prefetch_result();
+  void set_allocated_transaction_prefetch_result(::peloton::message::TransactionPrefetchResult* transaction_prefetch_result);
+
+  // optional .peloton.message.TransactionPrefetchAcknowledgement transaction_prefetch_acknowledgement = 10;
+  bool has_transaction_prefetch_acknowledgement() const;
+  void clear_transaction_prefetch_acknowledgement();
+  static const int kTransactionPrefetchAcknowledgementFieldNumber = 10;
+  const ::peloton::message::TransactionPrefetchAcknowledgement& transaction_prefetch_acknowledgement() const;
+  ::peloton::message::TransactionPrefetchAcknowledgement* mutable_transaction_prefetch_acknowledgement();
+  ::peloton::message::TransactionPrefetchAcknowledgement* release_transaction_prefetch_acknowledgement();
+  void set_allocated_transaction_prefetch_acknowledgement(::peloton::message::TransactionPrefetchAcknowledgement* transaction_prefetch_acknowledgement);
+
+  // optional .peloton.message.TransactionMapRequest transaction_map_request = 11;
+  bool has_transaction_map_request() const;
+  void clear_transaction_map_request();
+  static const int kTransactionMapRequestFieldNumber = 11;
+  const ::peloton::message::TransactionMapRequest& transaction_map_request() const;
+  ::peloton::message::TransactionMapRequest* mutable_transaction_map_request();
+  ::peloton::message::TransactionMapRequest* release_transaction_map_request();
+  void set_allocated_transaction_map_request(::peloton::message::TransactionMapRequest* transaction_map_request);
+
+  // optional .peloton.message.TransactionMapResponse transaction_map_response = 12;
+  bool has_transaction_map_response() const;
+  void clear_transaction_map_response();
+  static const int kTransactionMapResponseFieldNumber = 12;
+  const ::peloton::message::TransactionMapResponse& transaction_map_response() const;
+  ::peloton::message::TransactionMapResponse* mutable_transaction_map_response();
+  ::peloton::message::TransactionMapResponse* release_transaction_map_response();
+  void set_allocated_transaction_map_response(::peloton::message::TransactionMapResponse* transaction_map_response);
+
+  // optional .peloton.message.TransactionReduceRequest transaction_reduce_request = 13;
+  bool has_transaction_reduce_request() const;
+  void clear_transaction_reduce_request();
+  static const int kTransactionReduceRequestFieldNumber = 13;
+  const ::peloton::message::TransactionReduceRequest& transaction_reduce_request() const;
+  ::peloton::message::TransactionReduceRequest* mutable_transaction_reduce_request();
+  ::peloton::message::TransactionReduceRequest* release_transaction_reduce_request();
+  void set_allocated_transaction_reduce_request(::peloton::message::TransactionReduceRequest* transaction_reduce_request);
+
+  // optional .peloton.message.TransactionReduceResponse transaction_reduce_response = 14;
+  bool has_transaction_reduce_response() const;
+  void clear_transaction_reduce_response();
+  static const int kTransactionReduceResponseFieldNumber = 14;
+  const ::peloton::message::TransactionReduceResponse& transaction_reduce_response() const;
+  ::peloton::message::TransactionReduceResponse* mutable_transaction_reduce_response();
+  ::peloton::message::TransactionReduceResponse* release_transaction_reduce_response();
+  void set_allocated_transaction_reduce_response(::peloton::message::TransactionReduceResponse* transaction_reduce_response);
+
+  // optional .peloton.message.TransactionPrepareRequest transaction_prepare_request = 15;
+  bool has_transaction_prepare_request() const;
+  void clear_transaction_prepare_request();
+  static const int kTransactionPrepareRequestFieldNumber = 15;
+  const ::peloton::message::TransactionPrepareRequest& transaction_prepare_request() const;
+  ::peloton::message::TransactionPrepareRequest* mutable_transaction_prepare_request();
+  ::peloton::message::TransactionPrepareRequest* release_transaction_prepare_request();
+  void set_allocated_transaction_prepare_request(::peloton::message::TransactionPrepareRequest* transaction_prepare_request);
+
+  // optional .peloton.message.TransactionPrepareResponse transaction_prepare_response = 16;
+  bool has_transaction_prepare_response() const;
+  void clear_transaction_prepare_response();
+  static const int kTransactionPrepareResponseFieldNumber = 16;
+  const ::peloton::message::TransactionPrepareResponse& transaction_prepare_response() const;
+  ::peloton::message::TransactionPrepareResponse* mutable_transaction_prepare_response();
+  ::peloton::message::TransactionPrepareResponse* release_transaction_prepare_response();
+  void set_allocated_transaction_prepare_response(::peloton::message::TransactionPrepareResponse* transaction_prepare_response);
+
+  // optional .peloton.message.TransactionFinishRequest transaction_finish_request = 17;
+  bool has_transaction_finish_request() const;
+  void clear_transaction_finish_request();
+  static const int kTransactionFinishRequestFieldNumber = 17;
+  const ::peloton::message::TransactionFinishRequest& transaction_finish_request() const;
+  ::peloton::message::TransactionFinishRequest* mutable_transaction_finish_request();
+  ::peloton::message::TransactionFinishRequest* release_transaction_finish_request();
+  void set_allocated_transaction_finish_request(::peloton::message::TransactionFinishRequest* transaction_finish_request);
+
+  // optional .peloton.message.TransactionFinishResponse transaction_finish_response = 18;
+  bool has_transaction_finish_response() const;
+  void clear_transaction_finish_response();
+  static const int kTransactionFinishResponseFieldNumber = 18;
+  const ::peloton::message::TransactionFinishResponse& transaction_finish_response() const;
+  ::peloton::message::TransactionFinishResponse* mutable_transaction_finish_response();
+  ::peloton::message::TransactionFinishResponse* release_transaction_finish_response();
+  void set_allocated_transaction_finish_response(::peloton::message::TransactionFinishResponse* transaction_finish_response);
+
+  // optional .peloton.message.TransactionRedirectRequest transaction_redirect_request = 19;
+  bool has_transaction_redirect_request() const;
+  void clear_transaction_redirect_request();
+  static const int kTransactionRedirectRequestFieldNumber = 19;
+  const ::peloton::message::TransactionRedirectRequest& transaction_redirect_request() const;
+  ::peloton::message::TransactionRedirectRequest* mutable_transaction_redirect_request();
+  ::peloton::message::TransactionRedirectRequest* release_transaction_redirect_request();
+  void set_allocated_transaction_redirect_request(::peloton::message::TransactionRedirectRequest* transaction_redirect_request);
+
+  // optional .peloton.message.TransactionRedirectResponse transaction_redirect_response = 20;
+  bool has_transaction_redirect_response() const;
+  void clear_transaction_redirect_response();
+  static const int kTransactionRedirectResponseFieldNumber = 20;
+  const ::peloton::message::TransactionRedirectResponse& transaction_redirect_response() const;
+  ::peloton::message::TransactionRedirectResponse* mutable_transaction_redirect_response();
+  ::peloton::message::TransactionRedirectResponse* release_transaction_redirect_response();
+  void set_allocated_transaction_redirect_response(::peloton::message::TransactionRedirectResponse* transaction_redirect_response);
+
+  // optional .peloton.message.TransactionDebugRequest transaction_debug_request = 21;
+  bool has_transaction_debug_request() const;
+  void clear_transaction_debug_request();
+  static const int kTransactionDebugRequestFieldNumber = 21;
+  const ::peloton::message::TransactionDebugRequest& transaction_debug_request() const;
+  ::peloton::message::TransactionDebugRequest* mutable_transaction_debug_request();
+  ::peloton::message::TransactionDebugRequest* release_transaction_debug_request();
+  void set_allocated_transaction_debug_request(::peloton::message::TransactionDebugRequest* transaction_debug_request);
+
+  // optional .peloton.message.TransactionDebugResponse transaction_debug_response = 22;
+  bool has_transaction_debug_response() const;
+  void clear_transaction_debug_response();
+  static const int kTransactionDebugResponseFieldNumber = 22;
+  const ::peloton::message::TransactionDebugResponse& transaction_debug_response() const;
+  ::peloton::message::TransactionDebugResponse* mutable_transaction_debug_response();
+  ::peloton::message::TransactionDebugResponse* release_transaction_debug_response();
+  void set_allocated_transaction_debug_response(::peloton::message::TransactionDebugResponse* transaction_debug_response);
+
+  // optional .peloton.message.SendDataRequest send_data_request = 23;
+  bool has_send_data_request() const;
+  void clear_send_data_request();
+  static const int kSendDataRequestFieldNumber = 23;
+  const ::peloton::message::SendDataRequest& send_data_request() const;
+  ::peloton::message::SendDataRequest* mutable_send_data_request();
+  ::peloton::message::SendDataRequest* release_send_data_request();
+  void set_allocated_send_data_request(::peloton::message::SendDataRequest* send_data_request);
+
+  // optional .peloton.message.SendDataResponse send_data_response = 24;
+  bool has_send_data_response() const;
+  void clear_send_data_response();
+  static const int kSendDataResponseFieldNumber = 24;
+  const ::peloton::message::SendDataResponse& send_data_response() const;
+  ::peloton::message::SendDataResponse* mutable_send_data_response();
+  ::peloton::message::SendDataResponse* release_send_data_response();
+  void set_allocated_send_data_response(::peloton::message::SendDataResponse* send_data_response);
+
+  // optional .peloton.message.InitializeRequest initialize_request = 25;
+  bool has_initialize_request() const;
+  void clear_initialize_request();
+  static const int kInitializeRequestFieldNumber = 25;
+  const ::peloton::message::InitializeRequest& initialize_request() const;
+  ::peloton::message::InitializeRequest* mutable_initialize_request();
+  ::peloton::message::InitializeRequest* release_initialize_request();
+  void set_allocated_initialize_request(::peloton::message::InitializeRequest* initialize_request);
+
+  // optional .peloton.message.InitializeResponse initialize_response = 26;
+  bool has_initialize_response() const;
+  void clear_initialize_response();
+  static const int kInitializeResponseFieldNumber = 26;
+  const ::peloton::message::InitializeResponse& initialize_response() const;
+  ::peloton::message::InitializeResponse* mutable_initialize_response();
+  ::peloton::message::InitializeResponse* release_initialize_response();
+  void set_allocated_initialize_response(::peloton::message::InitializeResponse* initialize_response);
+
+  // optional .peloton.message.ShutdownPrepareRequest shutdown_prepare_request = 27;
+  bool has_shutdown_prepare_request() const;
+  void clear_shutdown_prepare_request();
+  static const int kShutdownPrepareRequestFieldNumber = 27;
+  const ::peloton::message::ShutdownPrepareRequest& shutdown_prepare_request() const;
+  ::peloton::message::ShutdownPrepareRequest* mutable_shutdown_prepare_request();
+  ::peloton::message::ShutdownPrepareRequest* release_shutdown_prepare_request();
+  void set_allocated_shutdown_prepare_request(::peloton::message::ShutdownPrepareRequest* shutdown_prepare_request);
+
+  // optional .peloton.message.ShutdownPrepareResponse shutdown_prepare_response = 28;
+  bool has_shutdown_prepare_response() const;
+  void clear_shutdown_prepare_response();
+  static const int kShutdownPrepareResponseFieldNumber = 28;
+  const ::peloton::message::ShutdownPrepareResponse& shutdown_prepare_response() const;
+  ::peloton::message::ShutdownPrepareResponse* mutable_shutdown_prepare_response();
+  ::peloton::message::ShutdownPrepareResponse* release_shutdown_prepare_response();
+  void set_allocated_shutdown_prepare_response(::peloton::message::ShutdownPrepareResponse* shutdown_prepare_response);
+
+  // optional .peloton.message.ShutdownRequest shutdown_request = 29;
+  bool has_shutdown_request() const;
+  void clear_shutdown_request();
+  static const int kShutdownRequestFieldNumber = 29;
+  const ::peloton::message::ShutdownRequest& shutdown_request() const;
+  ::peloton::message::ShutdownRequest* mutable_shutdown_request();
+  ::peloton::message::ShutdownRequest* release_shutdown_request();
+  void set_allocated_shutdown_request(::peloton::message::ShutdownRequest* shutdown_request);
+
+  // optional .peloton.message.ShutdownResponse shutdown_response = 30;
+  bool has_shutdown_response() const;
+  void clear_shutdown_response();
+  static const int kShutdownResponseFieldNumber = 30;
+  const ::peloton::message::ShutdownResponse& shutdown_response() const;
+  ::peloton::message::ShutdownResponse* mutable_shutdown_response();
+  ::peloton::message::ShutdownResponse* release_shutdown_response();
+  void set_allocated_shutdown_response(::peloton::message::ShutdownResponse* shutdown_response);
+
+  // optional .peloton.message.HeartbeatRequest heartbeat_request = 31;
+  bool has_heartbeat_request() const;
+  void clear_heartbeat_request();
+  static const int kHeartbeatRequestFieldNumber = 31;
+  const ::peloton::message::HeartbeatRequest& heartbeat_request() const;
+  ::peloton::message::HeartbeatRequest* mutable_heartbeat_request();
+  ::peloton::message::HeartbeatRequest* release_heartbeat_request();
+  void set_allocated_heartbeat_request(::peloton::message::HeartbeatRequest* heartbeat_request);
+
+  // optional .peloton.message.HeartbeatResponse heartbeat_response = 32;
+  bool has_heartbeat_response() const;
+  void clear_heartbeat_response();
+  static const int kHeartbeatResponseFieldNumber = 32;
+  const ::peloton::message::HeartbeatResponse& heartbeat_response() const;
+  ::peloton::message::HeartbeatResponse* mutable_heartbeat_response();
+  ::peloton::message::HeartbeatResponse* release_heartbeat_response();
+  void set_allocated_heartbeat_response(::peloton::message::HeartbeatResponse* heartbeat_response);
+
+  // optional .peloton.message.UnevictDataRequest unevict_data_request = 33;
+  bool has_unevict_data_request() const;
+  void clear_unevict_data_request();
+  static const int kUnevictDataRequestFieldNumber = 33;
+  const ::peloton::message::UnevictDataRequest& unevict_data_request() const;
+  ::peloton::message::UnevictDataRequest* mutable_unevict_data_request();
+  ::peloton::message::UnevictDataRequest* release_unevict_data_request();
+  void set_allocated_unevict_data_request(::peloton::message::UnevictDataRequest* unevict_data_request);
+
+  // optional .peloton.message.UnevictDataResponse unevict_data_response = 34;
+  bool has_unevict_data_response() const;
+  void clear_unevict_data_response();
+  static const int kUnevictDataResponseFieldNumber = 34;
+  const ::peloton::message::UnevictDataResponse& unevict_data_response() const;
+  ::peloton::message::UnevictDataResponse* mutable_unevict_data_response();
+  ::peloton::message::UnevictDataResponse* release_unevict_data_response();
+  void set_allocated_unevict_data_response(::peloton::message::UnevictDataResponse* unevict_data_response);
+
+  // optional .peloton.message.TimeSyncRequest time_sync_request = 35;
+  bool has_time_sync_request() const;
+  void clear_time_sync_request();
+  static const int kTimeSyncRequestFieldNumber = 35;
+  const ::peloton::message::TimeSyncRequest& time_sync_request() const;
+  ::peloton::message::TimeSyncRequest* mutable_time_sync_request();
+  ::peloton::message::TimeSyncRequest* release_time_sync_request();
+  void set_allocated_time_sync_request(::peloton::message::TimeSyncRequest* time_sync_request);
+
+  // optional .peloton.message.TimeSyncResponse time_sync_response = 36;
+  bool has_time_sync_response() const;
+  void clear_time_sync_response();
+  static const int kTimeSyncResponseFieldNumber = 36;
+  const ::peloton::message::TimeSyncResponse& time_sync_response() const;
+  ::peloton::message::TimeSyncResponse* mutable_time_sync_response();
+  ::peloton::message::TimeSyncResponse* release_time_sync_response();
+  void set_allocated_time_sync_response(::peloton::message::TimeSyncResponse* time_sync_response);
+
+  // optional string dst_addr = 37;
+  bool has_dst_addr() const;
+  void clear_dst_addr();
+  static const int kDstAddrFieldNumber = 37;
+  const ::std::string& dst_addr() const;
+  void set_dst_addr(const ::std::string& value);
+  void set_dst_addr(const char* value);
+  void set_dst_addr(const char* value, size_t size);
+  ::std::string* mutable_dst_addr();
+  ::std::string* release_dst_addr();
+  void set_allocated_dst_addr(::std::string* dst_addr);
+
+  // optional string src_addr = 38;
+  bool has_src_addr() const;
+  void clear_src_addr();
+  static const int kSrcAddrFieldNumber = 38;
+  const ::std::string& src_addr() const;
+  void set_src_addr(const ::std::string& value);
+  void set_src_addr(const char* value);
+  void set_src_addr(const char* value, size_t size);
+  ::std::string* mutable_src_addr();
+  ::std::string* release_src_addr();
+  void set_allocated_src_addr(::std::string* src_addr);
+
+  // optional int32 dst_addr_32 = 39;
+  bool has_dst_addr_32() const;
+  void clear_dst_addr_32();
+  static const int kDstAddr32FieldNumber = 39;
+  ::google::protobuf::int32 dst_addr_32() const;
+  void set_dst_addr_32(::google::protobuf::int32 value);
+
+  // optional int32 src_addr_32 = 40;
+  bool has_src_addr_32() const;
+  void clear_src_addr_32();
+  static const int kSrcAddr32FieldNumber = 40;
+  ::google::protobuf::int32 src_addr_32() const;
+  void set_src_addr_32(::google::protobuf::int32 value);
+
+  // optional int32 socket = 41;
+  bool has_socket() const;
+  void clear_socket();
+  static const int kSocketFieldNumber = 41;
+  ::google::protobuf::int32 socket() const;
+  void set_socket(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:peloton.message.PelotonMessage)
+ private:
+  inline void set_has_type();
+  inline void clear_has_type();
+  inline void set_has_work_fragment();
+  inline void clear_has_work_fragment();
+  inline void set_has_work_result();
+  inline void clear_has_work_result();
+  inline void set_has_query_estimate();
+  inline void clear_has_query_estimate();
+  inline void set_has_transaction_init_request();
+  inline void clear_has_transaction_init_request();
+  inline void set_has_transaction_init_response();
+  inline void clear_has_transaction_init_response();
+  inline void set_has_transaction_work_request();
+  inline void clear_has_transaction_work_request();
+  inline void set_has_transaction_work_response();
+  inline void clear_has_transaction_work_response();
+  inline void set_has_transaction_prefetch_result();
+  inline void clear_has_transaction_prefetch_result();
+  inline void set_has_transaction_prefetch_acknowledgement();
+  inline void clear_has_transaction_prefetch_acknowledgement();
+  inline void set_has_transaction_map_request();
+  inline void clear_has_transaction_map_request();
+  inline void set_has_transaction_map_response();
+  inline void clear_has_transaction_map_response();
+  inline void set_has_transaction_reduce_request();
+  inline void clear_has_transaction_reduce_request();
+  inline void set_has_transaction_reduce_response();
+  inline void clear_has_transaction_reduce_response();
+  inline void set_has_transaction_prepare_request();
+  inline void clear_has_transaction_prepare_request();
+  inline void set_has_transaction_prepare_response();
+  inline void clear_has_transaction_prepare_response();
+  inline void set_has_transaction_finish_request();
+  inline void clear_has_transaction_finish_request();
+  inline void set_has_transaction_finish_response();
+  inline void clear_has_transaction_finish_response();
+  inline void set_has_transaction_redirect_request();
+  inline void clear_has_transaction_redirect_request();
+  inline void set_has_transaction_redirect_response();
+  inline void clear_has_transaction_redirect_response();
+  inline void set_has_transaction_debug_request();
+  inline void clear_has_transaction_debug_request();
+  inline void set_has_transaction_debug_response();
+  inline void clear_has_transaction_debug_response();
+  inline void set_has_send_data_request();
+  inline void clear_has_send_data_request();
+  inline void set_has_send_data_response();
+  inline void clear_has_send_data_response();
+  inline void set_has_initialize_request();
+  inline void clear_has_initialize_request();
+  inline void set_has_initialize_response();
+  inline void clear_has_initialize_response();
+  inline void set_has_shutdown_prepare_request();
+  inline void clear_has_shutdown_prepare_request();
+  inline void set_has_shutdown_prepare_response();
+  inline void clear_has_shutdown_prepare_response();
+  inline void set_has_shutdown_request();
+  inline void clear_has_shutdown_request();
+  inline void set_has_shutdown_response();
+  inline void clear_has_shutdown_response();
+  inline void set_has_heartbeat_request();
+  inline void clear_has_heartbeat_request();
+  inline void set_has_heartbeat_response();
+  inline void clear_has_heartbeat_response();
+  inline void set_has_unevict_data_request();
+  inline void clear_has_unevict_data_request();
+  inline void set_has_unevict_data_response();
+  inline void clear_has_unevict_data_response();
+  inline void set_has_time_sync_request();
+  inline void clear_has_time_sync_request();
+  inline void set_has_time_sync_response();
+  inline void clear_has_time_sync_response();
+  inline void set_has_dst_addr();
+  inline void clear_has_dst_addr();
+  inline void set_has_src_addr();
+  inline void clear_has_src_addr();
+  inline void set_has_dst_addr_32();
+  inline void clear_has_dst_addr_32();
+  inline void set_has_src_addr_32();
+  inline void clear_has_src_addr_32();
+  inline void set_has_socket();
+  inline void clear_has_socket();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint32 _has_bits_[2];
+  ::peloton::message::WorkFragment* work_fragment_;
+  ::peloton::message::WorkResult* work_result_;
+  ::peloton::message::QueryEstimate* query_estimate_;
+  ::peloton::message::TransactionInitRequest* transaction_init_request_;
+  ::peloton::message::TransactionInitResponse* transaction_init_response_;
+  ::peloton::message::TransactionWorkRequest* transaction_work_request_;
+  ::peloton::message::TransactionWorkResponse* transaction_work_response_;
+  ::peloton::message::TransactionPrefetchResult* transaction_prefetch_result_;
+  ::peloton::message::TransactionPrefetchAcknowledgement* transaction_prefetch_acknowledgement_;
+  ::peloton::message::TransactionMapRequest* transaction_map_request_;
+  ::peloton::message::TransactionMapResponse* transaction_map_response_;
+  ::peloton::message::TransactionReduceRequest* transaction_reduce_request_;
+  ::peloton::message::TransactionReduceResponse* transaction_reduce_response_;
+  ::peloton::message::TransactionPrepareRequest* transaction_prepare_request_;
+  ::peloton::message::TransactionPrepareResponse* transaction_prepare_response_;
+  ::peloton::message::TransactionFinishRequest* transaction_finish_request_;
+  ::peloton::message::TransactionFinishResponse* transaction_finish_response_;
+  ::peloton::message::TransactionRedirectRequest* transaction_redirect_request_;
+  ::peloton::message::TransactionRedirectResponse* transaction_redirect_response_;
+  int type_;
+  ::google::protobuf::int32 dst_addr_32_;
+  ::peloton::message::TransactionDebugRequest* transaction_debug_request_;
+  ::peloton::message::TransactionDebugResponse* transaction_debug_response_;
+  ::peloton::message::SendDataRequest* send_data_request_;
+  ::peloton::message::SendDataResponse* send_data_response_;
+  ::peloton::message::InitializeRequest* initialize_request_;
+  ::peloton::message::InitializeResponse* initialize_response_;
+  ::peloton::message::ShutdownPrepareRequest* shutdown_prepare_request_;
+  ::peloton::message::ShutdownPrepareResponse* shutdown_prepare_response_;
+  ::peloton::message::ShutdownRequest* shutdown_request_;
+  ::peloton::message::ShutdownResponse* shutdown_response_;
+  ::peloton::message::HeartbeatRequest* heartbeat_request_;
+  ::peloton::message::HeartbeatResponse* heartbeat_response_;
+  ::peloton::message::UnevictDataRequest* unevict_data_request_;
+  ::peloton::message::UnevictDataResponse* unevict_data_response_;
+  ::peloton::message::TimeSyncRequest* time_sync_request_;
+  ::peloton::message::TimeSyncResponse* time_sync_response_;
+  ::google::protobuf::internal::ArenaStringPtr dst_addr_;
+  ::google::protobuf::internal::ArenaStringPtr src_addr_;
+  ::google::protobuf::int32 src_addr_32_;
+  ::google::protobuf::int32 socket_;
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_abstract_5fservice_2eproto();
+  friend void protobuf_AssignDesc_abstract_5fservice_2eproto();
+  friend void protobuf_ShutdownFile_abstract_5fservice_2eproto();
+
+  void InitAsDefaultInstance();
+  static PelotonMessage* default_instance_;
+};
 // ===================================================================
 
 class AbstractPelotonService_Stub;
@@ -8707,7 +9386,1721 @@ inline void TimeSyncResponse::set_t1_s(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:peloton.message.TimeSyncResponse.t1_s)
 }
 
+// -------------------------------------------------------------------
+
+// PelotonMessage
+
+// required .peloton.message.PelotonMessage.Type type = 1;
+inline bool PelotonMessage::has_type() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void PelotonMessage::set_has_type() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void PelotonMessage::clear_has_type() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void PelotonMessage::clear_type() {
+  type_ = 1;
+  clear_has_type();
+}
+inline ::peloton::message::PelotonMessage_Type PelotonMessage::type() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.type)
+  return static_cast< ::peloton::message::PelotonMessage_Type >(type_);
+}
+inline void PelotonMessage::set_type(::peloton::message::PelotonMessage_Type value) {
+  assert(::peloton::message::PelotonMessage_Type_IsValid(value));
+  set_has_type();
+  type_ = value;
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.type)
+}
+
+// optional .peloton.message.WorkFragment work_fragment = 2;
+inline bool PelotonMessage::has_work_fragment() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void PelotonMessage::set_has_work_fragment() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void PelotonMessage::clear_has_work_fragment() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void PelotonMessage::clear_work_fragment() {
+  if (work_fragment_ != NULL) work_fragment_->::peloton::message::WorkFragment::Clear();
+  clear_has_work_fragment();
+}
+inline const ::peloton::message::WorkFragment& PelotonMessage::work_fragment() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.work_fragment)
+  return work_fragment_ != NULL ? *work_fragment_ : *default_instance_->work_fragment_;
+}
+inline ::peloton::message::WorkFragment* PelotonMessage::mutable_work_fragment() {
+  set_has_work_fragment();
+  if (work_fragment_ == NULL) {
+    work_fragment_ = new ::peloton::message::WorkFragment;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.work_fragment)
+  return work_fragment_;
+}
+inline ::peloton::message::WorkFragment* PelotonMessage::release_work_fragment() {
+  clear_has_work_fragment();
+  ::peloton::message::WorkFragment* temp = work_fragment_;
+  work_fragment_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_work_fragment(::peloton::message::WorkFragment* work_fragment) {
+  delete work_fragment_;
+  work_fragment_ = work_fragment;
+  if (work_fragment) {
+    set_has_work_fragment();
+  } else {
+    clear_has_work_fragment();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.work_fragment)
+}
+
+// optional .peloton.message.WorkResult work_result = 3;
+inline bool PelotonMessage::has_work_result() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void PelotonMessage::set_has_work_result() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void PelotonMessage::clear_has_work_result() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void PelotonMessage::clear_work_result() {
+  if (work_result_ != NULL) work_result_->::peloton::message::WorkResult::Clear();
+  clear_has_work_result();
+}
+inline const ::peloton::message::WorkResult& PelotonMessage::work_result() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.work_result)
+  return work_result_ != NULL ? *work_result_ : *default_instance_->work_result_;
+}
+inline ::peloton::message::WorkResult* PelotonMessage::mutable_work_result() {
+  set_has_work_result();
+  if (work_result_ == NULL) {
+    work_result_ = new ::peloton::message::WorkResult;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.work_result)
+  return work_result_;
+}
+inline ::peloton::message::WorkResult* PelotonMessage::release_work_result() {
+  clear_has_work_result();
+  ::peloton::message::WorkResult* temp = work_result_;
+  work_result_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_work_result(::peloton::message::WorkResult* work_result) {
+  delete work_result_;
+  work_result_ = work_result;
+  if (work_result) {
+    set_has_work_result();
+  } else {
+    clear_has_work_result();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.work_result)
+}
+
+// optional .peloton.message.QueryEstimate query_estimate = 4;
+inline bool PelotonMessage::has_query_estimate() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void PelotonMessage::set_has_query_estimate() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void PelotonMessage::clear_has_query_estimate() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void PelotonMessage::clear_query_estimate() {
+  if (query_estimate_ != NULL) query_estimate_->::peloton::message::QueryEstimate::Clear();
+  clear_has_query_estimate();
+}
+inline const ::peloton::message::QueryEstimate& PelotonMessage::query_estimate() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.query_estimate)
+  return query_estimate_ != NULL ? *query_estimate_ : *default_instance_->query_estimate_;
+}
+inline ::peloton::message::QueryEstimate* PelotonMessage::mutable_query_estimate() {
+  set_has_query_estimate();
+  if (query_estimate_ == NULL) {
+    query_estimate_ = new ::peloton::message::QueryEstimate;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.query_estimate)
+  return query_estimate_;
+}
+inline ::peloton::message::QueryEstimate* PelotonMessage::release_query_estimate() {
+  clear_has_query_estimate();
+  ::peloton::message::QueryEstimate* temp = query_estimate_;
+  query_estimate_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_query_estimate(::peloton::message::QueryEstimate* query_estimate) {
+  delete query_estimate_;
+  query_estimate_ = query_estimate;
+  if (query_estimate) {
+    set_has_query_estimate();
+  } else {
+    clear_has_query_estimate();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.query_estimate)
+}
+
+// optional .peloton.message.TransactionInitRequest transaction_init_request = 5;
+inline bool PelotonMessage::has_transaction_init_request() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_init_request() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void PelotonMessage::clear_has_transaction_init_request() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void PelotonMessage::clear_transaction_init_request() {
+  if (transaction_init_request_ != NULL) transaction_init_request_->::peloton::message::TransactionInitRequest::Clear();
+  clear_has_transaction_init_request();
+}
+inline const ::peloton::message::TransactionInitRequest& PelotonMessage::transaction_init_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_init_request)
+  return transaction_init_request_ != NULL ? *transaction_init_request_ : *default_instance_->transaction_init_request_;
+}
+inline ::peloton::message::TransactionInitRequest* PelotonMessage::mutable_transaction_init_request() {
+  set_has_transaction_init_request();
+  if (transaction_init_request_ == NULL) {
+    transaction_init_request_ = new ::peloton::message::TransactionInitRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_init_request)
+  return transaction_init_request_;
+}
+inline ::peloton::message::TransactionInitRequest* PelotonMessage::release_transaction_init_request() {
+  clear_has_transaction_init_request();
+  ::peloton::message::TransactionInitRequest* temp = transaction_init_request_;
+  transaction_init_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_init_request(::peloton::message::TransactionInitRequest* transaction_init_request) {
+  delete transaction_init_request_;
+  transaction_init_request_ = transaction_init_request;
+  if (transaction_init_request) {
+    set_has_transaction_init_request();
+  } else {
+    clear_has_transaction_init_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_init_request)
+}
+
+// optional .peloton.message.TransactionInitResponse transaction_init_response = 6;
+inline bool PelotonMessage::has_transaction_init_response() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_init_response() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void PelotonMessage::clear_has_transaction_init_response() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void PelotonMessage::clear_transaction_init_response() {
+  if (transaction_init_response_ != NULL) transaction_init_response_->::peloton::message::TransactionInitResponse::Clear();
+  clear_has_transaction_init_response();
+}
+inline const ::peloton::message::TransactionInitResponse& PelotonMessage::transaction_init_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_init_response)
+  return transaction_init_response_ != NULL ? *transaction_init_response_ : *default_instance_->transaction_init_response_;
+}
+inline ::peloton::message::TransactionInitResponse* PelotonMessage::mutable_transaction_init_response() {
+  set_has_transaction_init_response();
+  if (transaction_init_response_ == NULL) {
+    transaction_init_response_ = new ::peloton::message::TransactionInitResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_init_response)
+  return transaction_init_response_;
+}
+inline ::peloton::message::TransactionInitResponse* PelotonMessage::release_transaction_init_response() {
+  clear_has_transaction_init_response();
+  ::peloton::message::TransactionInitResponse* temp = transaction_init_response_;
+  transaction_init_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_init_response(::peloton::message::TransactionInitResponse* transaction_init_response) {
+  delete transaction_init_response_;
+  transaction_init_response_ = transaction_init_response;
+  if (transaction_init_response) {
+    set_has_transaction_init_response();
+  } else {
+    clear_has_transaction_init_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_init_response)
+}
+
+// optional .peloton.message.TransactionWorkRequest transaction_work_request = 7;
+inline bool PelotonMessage::has_transaction_work_request() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_work_request() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void PelotonMessage::clear_has_transaction_work_request() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void PelotonMessage::clear_transaction_work_request() {
+  if (transaction_work_request_ != NULL) transaction_work_request_->::peloton::message::TransactionWorkRequest::Clear();
+  clear_has_transaction_work_request();
+}
+inline const ::peloton::message::TransactionWorkRequest& PelotonMessage::transaction_work_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_work_request)
+  return transaction_work_request_ != NULL ? *transaction_work_request_ : *default_instance_->transaction_work_request_;
+}
+inline ::peloton::message::TransactionWorkRequest* PelotonMessage::mutable_transaction_work_request() {
+  set_has_transaction_work_request();
+  if (transaction_work_request_ == NULL) {
+    transaction_work_request_ = new ::peloton::message::TransactionWorkRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_work_request)
+  return transaction_work_request_;
+}
+inline ::peloton::message::TransactionWorkRequest* PelotonMessage::release_transaction_work_request() {
+  clear_has_transaction_work_request();
+  ::peloton::message::TransactionWorkRequest* temp = transaction_work_request_;
+  transaction_work_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_work_request(::peloton::message::TransactionWorkRequest* transaction_work_request) {
+  delete transaction_work_request_;
+  transaction_work_request_ = transaction_work_request;
+  if (transaction_work_request) {
+    set_has_transaction_work_request();
+  } else {
+    clear_has_transaction_work_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_work_request)
+}
+
+// optional .peloton.message.TransactionWorkResponse transaction_work_response = 8;
+inline bool PelotonMessage::has_transaction_work_response() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_work_response() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void PelotonMessage::clear_has_transaction_work_response() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void PelotonMessage::clear_transaction_work_response() {
+  if (transaction_work_response_ != NULL) transaction_work_response_->::peloton::message::TransactionWorkResponse::Clear();
+  clear_has_transaction_work_response();
+}
+inline const ::peloton::message::TransactionWorkResponse& PelotonMessage::transaction_work_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_work_response)
+  return transaction_work_response_ != NULL ? *transaction_work_response_ : *default_instance_->transaction_work_response_;
+}
+inline ::peloton::message::TransactionWorkResponse* PelotonMessage::mutable_transaction_work_response() {
+  set_has_transaction_work_response();
+  if (transaction_work_response_ == NULL) {
+    transaction_work_response_ = new ::peloton::message::TransactionWorkResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_work_response)
+  return transaction_work_response_;
+}
+inline ::peloton::message::TransactionWorkResponse* PelotonMessage::release_transaction_work_response() {
+  clear_has_transaction_work_response();
+  ::peloton::message::TransactionWorkResponse* temp = transaction_work_response_;
+  transaction_work_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_work_response(::peloton::message::TransactionWorkResponse* transaction_work_response) {
+  delete transaction_work_response_;
+  transaction_work_response_ = transaction_work_response;
+  if (transaction_work_response) {
+    set_has_transaction_work_response();
+  } else {
+    clear_has_transaction_work_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_work_response)
+}
+
+// optional .peloton.message.TransactionPrefetchResult transaction_prefetch_result = 9;
+inline bool PelotonMessage::has_transaction_prefetch_result() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_prefetch_result() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void PelotonMessage::clear_has_transaction_prefetch_result() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void PelotonMessage::clear_transaction_prefetch_result() {
+  if (transaction_prefetch_result_ != NULL) transaction_prefetch_result_->::peloton::message::TransactionPrefetchResult::Clear();
+  clear_has_transaction_prefetch_result();
+}
+inline const ::peloton::message::TransactionPrefetchResult& PelotonMessage::transaction_prefetch_result() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_prefetch_result)
+  return transaction_prefetch_result_ != NULL ? *transaction_prefetch_result_ : *default_instance_->transaction_prefetch_result_;
+}
+inline ::peloton::message::TransactionPrefetchResult* PelotonMessage::mutable_transaction_prefetch_result() {
+  set_has_transaction_prefetch_result();
+  if (transaction_prefetch_result_ == NULL) {
+    transaction_prefetch_result_ = new ::peloton::message::TransactionPrefetchResult;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_prefetch_result)
+  return transaction_prefetch_result_;
+}
+inline ::peloton::message::TransactionPrefetchResult* PelotonMessage::release_transaction_prefetch_result() {
+  clear_has_transaction_prefetch_result();
+  ::peloton::message::TransactionPrefetchResult* temp = transaction_prefetch_result_;
+  transaction_prefetch_result_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_prefetch_result(::peloton::message::TransactionPrefetchResult* transaction_prefetch_result) {
+  delete transaction_prefetch_result_;
+  transaction_prefetch_result_ = transaction_prefetch_result;
+  if (transaction_prefetch_result) {
+    set_has_transaction_prefetch_result();
+  } else {
+    clear_has_transaction_prefetch_result();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_prefetch_result)
+}
+
+// optional .peloton.message.TransactionPrefetchAcknowledgement transaction_prefetch_acknowledgement = 10;
+inline bool PelotonMessage::has_transaction_prefetch_acknowledgement() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_prefetch_acknowledgement() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void PelotonMessage::clear_has_transaction_prefetch_acknowledgement() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void PelotonMessage::clear_transaction_prefetch_acknowledgement() {
+  if (transaction_prefetch_acknowledgement_ != NULL) transaction_prefetch_acknowledgement_->::peloton::message::TransactionPrefetchAcknowledgement::Clear();
+  clear_has_transaction_prefetch_acknowledgement();
+}
+inline const ::peloton::message::TransactionPrefetchAcknowledgement& PelotonMessage::transaction_prefetch_acknowledgement() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_prefetch_acknowledgement)
+  return transaction_prefetch_acknowledgement_ != NULL ? *transaction_prefetch_acknowledgement_ : *default_instance_->transaction_prefetch_acknowledgement_;
+}
+inline ::peloton::message::TransactionPrefetchAcknowledgement* PelotonMessage::mutable_transaction_prefetch_acknowledgement() {
+  set_has_transaction_prefetch_acknowledgement();
+  if (transaction_prefetch_acknowledgement_ == NULL) {
+    transaction_prefetch_acknowledgement_ = new ::peloton::message::TransactionPrefetchAcknowledgement;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_prefetch_acknowledgement)
+  return transaction_prefetch_acknowledgement_;
+}
+inline ::peloton::message::TransactionPrefetchAcknowledgement* PelotonMessage::release_transaction_prefetch_acknowledgement() {
+  clear_has_transaction_prefetch_acknowledgement();
+  ::peloton::message::TransactionPrefetchAcknowledgement* temp = transaction_prefetch_acknowledgement_;
+  transaction_prefetch_acknowledgement_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_prefetch_acknowledgement(::peloton::message::TransactionPrefetchAcknowledgement* transaction_prefetch_acknowledgement) {
+  delete transaction_prefetch_acknowledgement_;
+  transaction_prefetch_acknowledgement_ = transaction_prefetch_acknowledgement;
+  if (transaction_prefetch_acknowledgement) {
+    set_has_transaction_prefetch_acknowledgement();
+  } else {
+    clear_has_transaction_prefetch_acknowledgement();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_prefetch_acknowledgement)
+}
+
+// optional .peloton.message.TransactionMapRequest transaction_map_request = 11;
+inline bool PelotonMessage::has_transaction_map_request() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_map_request() {
+  _has_bits_[0] |= 0x00000400u;
+}
+inline void PelotonMessage::clear_has_transaction_map_request() {
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline void PelotonMessage::clear_transaction_map_request() {
+  if (transaction_map_request_ != NULL) transaction_map_request_->::peloton::message::TransactionMapRequest::Clear();
+  clear_has_transaction_map_request();
+}
+inline const ::peloton::message::TransactionMapRequest& PelotonMessage::transaction_map_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_map_request)
+  return transaction_map_request_ != NULL ? *transaction_map_request_ : *default_instance_->transaction_map_request_;
+}
+inline ::peloton::message::TransactionMapRequest* PelotonMessage::mutable_transaction_map_request() {
+  set_has_transaction_map_request();
+  if (transaction_map_request_ == NULL) {
+    transaction_map_request_ = new ::peloton::message::TransactionMapRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_map_request)
+  return transaction_map_request_;
+}
+inline ::peloton::message::TransactionMapRequest* PelotonMessage::release_transaction_map_request() {
+  clear_has_transaction_map_request();
+  ::peloton::message::TransactionMapRequest* temp = transaction_map_request_;
+  transaction_map_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_map_request(::peloton::message::TransactionMapRequest* transaction_map_request) {
+  delete transaction_map_request_;
+  transaction_map_request_ = transaction_map_request;
+  if (transaction_map_request) {
+    set_has_transaction_map_request();
+  } else {
+    clear_has_transaction_map_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_map_request)
+}
+
+// optional .peloton.message.TransactionMapResponse transaction_map_response = 12;
+inline bool PelotonMessage::has_transaction_map_response() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_map_response() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void PelotonMessage::clear_has_transaction_map_response() {
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline void PelotonMessage::clear_transaction_map_response() {
+  if (transaction_map_response_ != NULL) transaction_map_response_->::peloton::message::TransactionMapResponse::Clear();
+  clear_has_transaction_map_response();
+}
+inline const ::peloton::message::TransactionMapResponse& PelotonMessage::transaction_map_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_map_response)
+  return transaction_map_response_ != NULL ? *transaction_map_response_ : *default_instance_->transaction_map_response_;
+}
+inline ::peloton::message::TransactionMapResponse* PelotonMessage::mutable_transaction_map_response() {
+  set_has_transaction_map_response();
+  if (transaction_map_response_ == NULL) {
+    transaction_map_response_ = new ::peloton::message::TransactionMapResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_map_response)
+  return transaction_map_response_;
+}
+inline ::peloton::message::TransactionMapResponse* PelotonMessage::release_transaction_map_response() {
+  clear_has_transaction_map_response();
+  ::peloton::message::TransactionMapResponse* temp = transaction_map_response_;
+  transaction_map_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_map_response(::peloton::message::TransactionMapResponse* transaction_map_response) {
+  delete transaction_map_response_;
+  transaction_map_response_ = transaction_map_response;
+  if (transaction_map_response) {
+    set_has_transaction_map_response();
+  } else {
+    clear_has_transaction_map_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_map_response)
+}
+
+// optional .peloton.message.TransactionReduceRequest transaction_reduce_request = 13;
+inline bool PelotonMessage::has_transaction_reduce_request() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_reduce_request() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void PelotonMessage::clear_has_transaction_reduce_request() {
+  _has_bits_[0] &= ~0x00001000u;
+}
+inline void PelotonMessage::clear_transaction_reduce_request() {
+  if (transaction_reduce_request_ != NULL) transaction_reduce_request_->::peloton::message::TransactionReduceRequest::Clear();
+  clear_has_transaction_reduce_request();
+}
+inline const ::peloton::message::TransactionReduceRequest& PelotonMessage::transaction_reduce_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_reduce_request)
+  return transaction_reduce_request_ != NULL ? *transaction_reduce_request_ : *default_instance_->transaction_reduce_request_;
+}
+inline ::peloton::message::TransactionReduceRequest* PelotonMessage::mutable_transaction_reduce_request() {
+  set_has_transaction_reduce_request();
+  if (transaction_reduce_request_ == NULL) {
+    transaction_reduce_request_ = new ::peloton::message::TransactionReduceRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_reduce_request)
+  return transaction_reduce_request_;
+}
+inline ::peloton::message::TransactionReduceRequest* PelotonMessage::release_transaction_reduce_request() {
+  clear_has_transaction_reduce_request();
+  ::peloton::message::TransactionReduceRequest* temp = transaction_reduce_request_;
+  transaction_reduce_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_reduce_request(::peloton::message::TransactionReduceRequest* transaction_reduce_request) {
+  delete transaction_reduce_request_;
+  transaction_reduce_request_ = transaction_reduce_request;
+  if (transaction_reduce_request) {
+    set_has_transaction_reduce_request();
+  } else {
+    clear_has_transaction_reduce_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_reduce_request)
+}
+
+// optional .peloton.message.TransactionReduceResponse transaction_reduce_response = 14;
+inline bool PelotonMessage::has_transaction_reduce_response() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_reduce_response() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void PelotonMessage::clear_has_transaction_reduce_response() {
+  _has_bits_[0] &= ~0x00002000u;
+}
+inline void PelotonMessage::clear_transaction_reduce_response() {
+  if (transaction_reduce_response_ != NULL) transaction_reduce_response_->::peloton::message::TransactionReduceResponse::Clear();
+  clear_has_transaction_reduce_response();
+}
+inline const ::peloton::message::TransactionReduceResponse& PelotonMessage::transaction_reduce_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_reduce_response)
+  return transaction_reduce_response_ != NULL ? *transaction_reduce_response_ : *default_instance_->transaction_reduce_response_;
+}
+inline ::peloton::message::TransactionReduceResponse* PelotonMessage::mutable_transaction_reduce_response() {
+  set_has_transaction_reduce_response();
+  if (transaction_reduce_response_ == NULL) {
+    transaction_reduce_response_ = new ::peloton::message::TransactionReduceResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_reduce_response)
+  return transaction_reduce_response_;
+}
+inline ::peloton::message::TransactionReduceResponse* PelotonMessage::release_transaction_reduce_response() {
+  clear_has_transaction_reduce_response();
+  ::peloton::message::TransactionReduceResponse* temp = transaction_reduce_response_;
+  transaction_reduce_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_reduce_response(::peloton::message::TransactionReduceResponse* transaction_reduce_response) {
+  delete transaction_reduce_response_;
+  transaction_reduce_response_ = transaction_reduce_response;
+  if (transaction_reduce_response) {
+    set_has_transaction_reduce_response();
+  } else {
+    clear_has_transaction_reduce_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_reduce_response)
+}
+
+// optional .peloton.message.TransactionPrepareRequest transaction_prepare_request = 15;
+inline bool PelotonMessage::has_transaction_prepare_request() const {
+  return (_has_bits_[0] & 0x00004000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_prepare_request() {
+  _has_bits_[0] |= 0x00004000u;
+}
+inline void PelotonMessage::clear_has_transaction_prepare_request() {
+  _has_bits_[0] &= ~0x00004000u;
+}
+inline void PelotonMessage::clear_transaction_prepare_request() {
+  if (transaction_prepare_request_ != NULL) transaction_prepare_request_->::peloton::message::TransactionPrepareRequest::Clear();
+  clear_has_transaction_prepare_request();
+}
+inline const ::peloton::message::TransactionPrepareRequest& PelotonMessage::transaction_prepare_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_prepare_request)
+  return transaction_prepare_request_ != NULL ? *transaction_prepare_request_ : *default_instance_->transaction_prepare_request_;
+}
+inline ::peloton::message::TransactionPrepareRequest* PelotonMessage::mutable_transaction_prepare_request() {
+  set_has_transaction_prepare_request();
+  if (transaction_prepare_request_ == NULL) {
+    transaction_prepare_request_ = new ::peloton::message::TransactionPrepareRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_prepare_request)
+  return transaction_prepare_request_;
+}
+inline ::peloton::message::TransactionPrepareRequest* PelotonMessage::release_transaction_prepare_request() {
+  clear_has_transaction_prepare_request();
+  ::peloton::message::TransactionPrepareRequest* temp = transaction_prepare_request_;
+  transaction_prepare_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_prepare_request(::peloton::message::TransactionPrepareRequest* transaction_prepare_request) {
+  delete transaction_prepare_request_;
+  transaction_prepare_request_ = transaction_prepare_request;
+  if (transaction_prepare_request) {
+    set_has_transaction_prepare_request();
+  } else {
+    clear_has_transaction_prepare_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_prepare_request)
+}
+
+// optional .peloton.message.TransactionPrepareResponse transaction_prepare_response = 16;
+inline bool PelotonMessage::has_transaction_prepare_response() const {
+  return (_has_bits_[0] & 0x00008000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_prepare_response() {
+  _has_bits_[0] |= 0x00008000u;
+}
+inline void PelotonMessage::clear_has_transaction_prepare_response() {
+  _has_bits_[0] &= ~0x00008000u;
+}
+inline void PelotonMessage::clear_transaction_prepare_response() {
+  if (transaction_prepare_response_ != NULL) transaction_prepare_response_->::peloton::message::TransactionPrepareResponse::Clear();
+  clear_has_transaction_prepare_response();
+}
+inline const ::peloton::message::TransactionPrepareResponse& PelotonMessage::transaction_prepare_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_prepare_response)
+  return transaction_prepare_response_ != NULL ? *transaction_prepare_response_ : *default_instance_->transaction_prepare_response_;
+}
+inline ::peloton::message::TransactionPrepareResponse* PelotonMessage::mutable_transaction_prepare_response() {
+  set_has_transaction_prepare_response();
+  if (transaction_prepare_response_ == NULL) {
+    transaction_prepare_response_ = new ::peloton::message::TransactionPrepareResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_prepare_response)
+  return transaction_prepare_response_;
+}
+inline ::peloton::message::TransactionPrepareResponse* PelotonMessage::release_transaction_prepare_response() {
+  clear_has_transaction_prepare_response();
+  ::peloton::message::TransactionPrepareResponse* temp = transaction_prepare_response_;
+  transaction_prepare_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_prepare_response(::peloton::message::TransactionPrepareResponse* transaction_prepare_response) {
+  delete transaction_prepare_response_;
+  transaction_prepare_response_ = transaction_prepare_response;
+  if (transaction_prepare_response) {
+    set_has_transaction_prepare_response();
+  } else {
+    clear_has_transaction_prepare_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_prepare_response)
+}
+
+// optional .peloton.message.TransactionFinishRequest transaction_finish_request = 17;
+inline bool PelotonMessage::has_transaction_finish_request() const {
+  return (_has_bits_[0] & 0x00010000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_finish_request() {
+  _has_bits_[0] |= 0x00010000u;
+}
+inline void PelotonMessage::clear_has_transaction_finish_request() {
+  _has_bits_[0] &= ~0x00010000u;
+}
+inline void PelotonMessage::clear_transaction_finish_request() {
+  if (transaction_finish_request_ != NULL) transaction_finish_request_->::peloton::message::TransactionFinishRequest::Clear();
+  clear_has_transaction_finish_request();
+}
+inline const ::peloton::message::TransactionFinishRequest& PelotonMessage::transaction_finish_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_finish_request)
+  return transaction_finish_request_ != NULL ? *transaction_finish_request_ : *default_instance_->transaction_finish_request_;
+}
+inline ::peloton::message::TransactionFinishRequest* PelotonMessage::mutable_transaction_finish_request() {
+  set_has_transaction_finish_request();
+  if (transaction_finish_request_ == NULL) {
+    transaction_finish_request_ = new ::peloton::message::TransactionFinishRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_finish_request)
+  return transaction_finish_request_;
+}
+inline ::peloton::message::TransactionFinishRequest* PelotonMessage::release_transaction_finish_request() {
+  clear_has_transaction_finish_request();
+  ::peloton::message::TransactionFinishRequest* temp = transaction_finish_request_;
+  transaction_finish_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_finish_request(::peloton::message::TransactionFinishRequest* transaction_finish_request) {
+  delete transaction_finish_request_;
+  transaction_finish_request_ = transaction_finish_request;
+  if (transaction_finish_request) {
+    set_has_transaction_finish_request();
+  } else {
+    clear_has_transaction_finish_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_finish_request)
+}
+
+// optional .peloton.message.TransactionFinishResponse transaction_finish_response = 18;
+inline bool PelotonMessage::has_transaction_finish_response() const {
+  return (_has_bits_[0] & 0x00020000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_finish_response() {
+  _has_bits_[0] |= 0x00020000u;
+}
+inline void PelotonMessage::clear_has_transaction_finish_response() {
+  _has_bits_[0] &= ~0x00020000u;
+}
+inline void PelotonMessage::clear_transaction_finish_response() {
+  if (transaction_finish_response_ != NULL) transaction_finish_response_->::peloton::message::TransactionFinishResponse::Clear();
+  clear_has_transaction_finish_response();
+}
+inline const ::peloton::message::TransactionFinishResponse& PelotonMessage::transaction_finish_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_finish_response)
+  return transaction_finish_response_ != NULL ? *transaction_finish_response_ : *default_instance_->transaction_finish_response_;
+}
+inline ::peloton::message::TransactionFinishResponse* PelotonMessage::mutable_transaction_finish_response() {
+  set_has_transaction_finish_response();
+  if (transaction_finish_response_ == NULL) {
+    transaction_finish_response_ = new ::peloton::message::TransactionFinishResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_finish_response)
+  return transaction_finish_response_;
+}
+inline ::peloton::message::TransactionFinishResponse* PelotonMessage::release_transaction_finish_response() {
+  clear_has_transaction_finish_response();
+  ::peloton::message::TransactionFinishResponse* temp = transaction_finish_response_;
+  transaction_finish_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_finish_response(::peloton::message::TransactionFinishResponse* transaction_finish_response) {
+  delete transaction_finish_response_;
+  transaction_finish_response_ = transaction_finish_response;
+  if (transaction_finish_response) {
+    set_has_transaction_finish_response();
+  } else {
+    clear_has_transaction_finish_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_finish_response)
+}
+
+// optional .peloton.message.TransactionRedirectRequest transaction_redirect_request = 19;
+inline bool PelotonMessage::has_transaction_redirect_request() const {
+  return (_has_bits_[0] & 0x00040000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_redirect_request() {
+  _has_bits_[0] |= 0x00040000u;
+}
+inline void PelotonMessage::clear_has_transaction_redirect_request() {
+  _has_bits_[0] &= ~0x00040000u;
+}
+inline void PelotonMessage::clear_transaction_redirect_request() {
+  if (transaction_redirect_request_ != NULL) transaction_redirect_request_->::peloton::message::TransactionRedirectRequest::Clear();
+  clear_has_transaction_redirect_request();
+}
+inline const ::peloton::message::TransactionRedirectRequest& PelotonMessage::transaction_redirect_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_redirect_request)
+  return transaction_redirect_request_ != NULL ? *transaction_redirect_request_ : *default_instance_->transaction_redirect_request_;
+}
+inline ::peloton::message::TransactionRedirectRequest* PelotonMessage::mutable_transaction_redirect_request() {
+  set_has_transaction_redirect_request();
+  if (transaction_redirect_request_ == NULL) {
+    transaction_redirect_request_ = new ::peloton::message::TransactionRedirectRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_redirect_request)
+  return transaction_redirect_request_;
+}
+inline ::peloton::message::TransactionRedirectRequest* PelotonMessage::release_transaction_redirect_request() {
+  clear_has_transaction_redirect_request();
+  ::peloton::message::TransactionRedirectRequest* temp = transaction_redirect_request_;
+  transaction_redirect_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_redirect_request(::peloton::message::TransactionRedirectRequest* transaction_redirect_request) {
+  delete transaction_redirect_request_;
+  transaction_redirect_request_ = transaction_redirect_request;
+  if (transaction_redirect_request) {
+    set_has_transaction_redirect_request();
+  } else {
+    clear_has_transaction_redirect_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_redirect_request)
+}
+
+// optional .peloton.message.TransactionRedirectResponse transaction_redirect_response = 20;
+inline bool PelotonMessage::has_transaction_redirect_response() const {
+  return (_has_bits_[0] & 0x00080000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_redirect_response() {
+  _has_bits_[0] |= 0x00080000u;
+}
+inline void PelotonMessage::clear_has_transaction_redirect_response() {
+  _has_bits_[0] &= ~0x00080000u;
+}
+inline void PelotonMessage::clear_transaction_redirect_response() {
+  if (transaction_redirect_response_ != NULL) transaction_redirect_response_->::peloton::message::TransactionRedirectResponse::Clear();
+  clear_has_transaction_redirect_response();
+}
+inline const ::peloton::message::TransactionRedirectResponse& PelotonMessage::transaction_redirect_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_redirect_response)
+  return transaction_redirect_response_ != NULL ? *transaction_redirect_response_ : *default_instance_->transaction_redirect_response_;
+}
+inline ::peloton::message::TransactionRedirectResponse* PelotonMessage::mutable_transaction_redirect_response() {
+  set_has_transaction_redirect_response();
+  if (transaction_redirect_response_ == NULL) {
+    transaction_redirect_response_ = new ::peloton::message::TransactionRedirectResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_redirect_response)
+  return transaction_redirect_response_;
+}
+inline ::peloton::message::TransactionRedirectResponse* PelotonMessage::release_transaction_redirect_response() {
+  clear_has_transaction_redirect_response();
+  ::peloton::message::TransactionRedirectResponse* temp = transaction_redirect_response_;
+  transaction_redirect_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_redirect_response(::peloton::message::TransactionRedirectResponse* transaction_redirect_response) {
+  delete transaction_redirect_response_;
+  transaction_redirect_response_ = transaction_redirect_response;
+  if (transaction_redirect_response) {
+    set_has_transaction_redirect_response();
+  } else {
+    clear_has_transaction_redirect_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_redirect_response)
+}
+
+// optional .peloton.message.TransactionDebugRequest transaction_debug_request = 21;
+inline bool PelotonMessage::has_transaction_debug_request() const {
+  return (_has_bits_[0] & 0x00100000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_debug_request() {
+  _has_bits_[0] |= 0x00100000u;
+}
+inline void PelotonMessage::clear_has_transaction_debug_request() {
+  _has_bits_[0] &= ~0x00100000u;
+}
+inline void PelotonMessage::clear_transaction_debug_request() {
+  if (transaction_debug_request_ != NULL) transaction_debug_request_->::peloton::message::TransactionDebugRequest::Clear();
+  clear_has_transaction_debug_request();
+}
+inline const ::peloton::message::TransactionDebugRequest& PelotonMessage::transaction_debug_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_debug_request)
+  return transaction_debug_request_ != NULL ? *transaction_debug_request_ : *default_instance_->transaction_debug_request_;
+}
+inline ::peloton::message::TransactionDebugRequest* PelotonMessage::mutable_transaction_debug_request() {
+  set_has_transaction_debug_request();
+  if (transaction_debug_request_ == NULL) {
+    transaction_debug_request_ = new ::peloton::message::TransactionDebugRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_debug_request)
+  return transaction_debug_request_;
+}
+inline ::peloton::message::TransactionDebugRequest* PelotonMessage::release_transaction_debug_request() {
+  clear_has_transaction_debug_request();
+  ::peloton::message::TransactionDebugRequest* temp = transaction_debug_request_;
+  transaction_debug_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_debug_request(::peloton::message::TransactionDebugRequest* transaction_debug_request) {
+  delete transaction_debug_request_;
+  transaction_debug_request_ = transaction_debug_request;
+  if (transaction_debug_request) {
+    set_has_transaction_debug_request();
+  } else {
+    clear_has_transaction_debug_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_debug_request)
+}
+
+// optional .peloton.message.TransactionDebugResponse transaction_debug_response = 22;
+inline bool PelotonMessage::has_transaction_debug_response() const {
+  return (_has_bits_[0] & 0x00200000u) != 0;
+}
+inline void PelotonMessage::set_has_transaction_debug_response() {
+  _has_bits_[0] |= 0x00200000u;
+}
+inline void PelotonMessage::clear_has_transaction_debug_response() {
+  _has_bits_[0] &= ~0x00200000u;
+}
+inline void PelotonMessage::clear_transaction_debug_response() {
+  if (transaction_debug_response_ != NULL) transaction_debug_response_->::peloton::message::TransactionDebugResponse::Clear();
+  clear_has_transaction_debug_response();
+}
+inline const ::peloton::message::TransactionDebugResponse& PelotonMessage::transaction_debug_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.transaction_debug_response)
+  return transaction_debug_response_ != NULL ? *transaction_debug_response_ : *default_instance_->transaction_debug_response_;
+}
+inline ::peloton::message::TransactionDebugResponse* PelotonMessage::mutable_transaction_debug_response() {
+  set_has_transaction_debug_response();
+  if (transaction_debug_response_ == NULL) {
+    transaction_debug_response_ = new ::peloton::message::TransactionDebugResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.transaction_debug_response)
+  return transaction_debug_response_;
+}
+inline ::peloton::message::TransactionDebugResponse* PelotonMessage::release_transaction_debug_response() {
+  clear_has_transaction_debug_response();
+  ::peloton::message::TransactionDebugResponse* temp = transaction_debug_response_;
+  transaction_debug_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_transaction_debug_response(::peloton::message::TransactionDebugResponse* transaction_debug_response) {
+  delete transaction_debug_response_;
+  transaction_debug_response_ = transaction_debug_response;
+  if (transaction_debug_response) {
+    set_has_transaction_debug_response();
+  } else {
+    clear_has_transaction_debug_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.transaction_debug_response)
+}
+
+// optional .peloton.message.SendDataRequest send_data_request = 23;
+inline bool PelotonMessage::has_send_data_request() const {
+  return (_has_bits_[0] & 0x00400000u) != 0;
+}
+inline void PelotonMessage::set_has_send_data_request() {
+  _has_bits_[0] |= 0x00400000u;
+}
+inline void PelotonMessage::clear_has_send_data_request() {
+  _has_bits_[0] &= ~0x00400000u;
+}
+inline void PelotonMessage::clear_send_data_request() {
+  if (send_data_request_ != NULL) send_data_request_->::peloton::message::SendDataRequest::Clear();
+  clear_has_send_data_request();
+}
+inline const ::peloton::message::SendDataRequest& PelotonMessage::send_data_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.send_data_request)
+  return send_data_request_ != NULL ? *send_data_request_ : *default_instance_->send_data_request_;
+}
+inline ::peloton::message::SendDataRequest* PelotonMessage::mutable_send_data_request() {
+  set_has_send_data_request();
+  if (send_data_request_ == NULL) {
+    send_data_request_ = new ::peloton::message::SendDataRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.send_data_request)
+  return send_data_request_;
+}
+inline ::peloton::message::SendDataRequest* PelotonMessage::release_send_data_request() {
+  clear_has_send_data_request();
+  ::peloton::message::SendDataRequest* temp = send_data_request_;
+  send_data_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_send_data_request(::peloton::message::SendDataRequest* send_data_request) {
+  delete send_data_request_;
+  send_data_request_ = send_data_request;
+  if (send_data_request) {
+    set_has_send_data_request();
+  } else {
+    clear_has_send_data_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.send_data_request)
+}
+
+// optional .peloton.message.SendDataResponse send_data_response = 24;
+inline bool PelotonMessage::has_send_data_response() const {
+  return (_has_bits_[0] & 0x00800000u) != 0;
+}
+inline void PelotonMessage::set_has_send_data_response() {
+  _has_bits_[0] |= 0x00800000u;
+}
+inline void PelotonMessage::clear_has_send_data_response() {
+  _has_bits_[0] &= ~0x00800000u;
+}
+inline void PelotonMessage::clear_send_data_response() {
+  if (send_data_response_ != NULL) send_data_response_->::peloton::message::SendDataResponse::Clear();
+  clear_has_send_data_response();
+}
+inline const ::peloton::message::SendDataResponse& PelotonMessage::send_data_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.send_data_response)
+  return send_data_response_ != NULL ? *send_data_response_ : *default_instance_->send_data_response_;
+}
+inline ::peloton::message::SendDataResponse* PelotonMessage::mutable_send_data_response() {
+  set_has_send_data_response();
+  if (send_data_response_ == NULL) {
+    send_data_response_ = new ::peloton::message::SendDataResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.send_data_response)
+  return send_data_response_;
+}
+inline ::peloton::message::SendDataResponse* PelotonMessage::release_send_data_response() {
+  clear_has_send_data_response();
+  ::peloton::message::SendDataResponse* temp = send_data_response_;
+  send_data_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_send_data_response(::peloton::message::SendDataResponse* send_data_response) {
+  delete send_data_response_;
+  send_data_response_ = send_data_response;
+  if (send_data_response) {
+    set_has_send_data_response();
+  } else {
+    clear_has_send_data_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.send_data_response)
+}
+
+// optional .peloton.message.InitializeRequest initialize_request = 25;
+inline bool PelotonMessage::has_initialize_request() const {
+  return (_has_bits_[0] & 0x01000000u) != 0;
+}
+inline void PelotonMessage::set_has_initialize_request() {
+  _has_bits_[0] |= 0x01000000u;
+}
+inline void PelotonMessage::clear_has_initialize_request() {
+  _has_bits_[0] &= ~0x01000000u;
+}
+inline void PelotonMessage::clear_initialize_request() {
+  if (initialize_request_ != NULL) initialize_request_->::peloton::message::InitializeRequest::Clear();
+  clear_has_initialize_request();
+}
+inline const ::peloton::message::InitializeRequest& PelotonMessage::initialize_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.initialize_request)
+  return initialize_request_ != NULL ? *initialize_request_ : *default_instance_->initialize_request_;
+}
+inline ::peloton::message::InitializeRequest* PelotonMessage::mutable_initialize_request() {
+  set_has_initialize_request();
+  if (initialize_request_ == NULL) {
+    initialize_request_ = new ::peloton::message::InitializeRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.initialize_request)
+  return initialize_request_;
+}
+inline ::peloton::message::InitializeRequest* PelotonMessage::release_initialize_request() {
+  clear_has_initialize_request();
+  ::peloton::message::InitializeRequest* temp = initialize_request_;
+  initialize_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_initialize_request(::peloton::message::InitializeRequest* initialize_request) {
+  delete initialize_request_;
+  initialize_request_ = initialize_request;
+  if (initialize_request) {
+    set_has_initialize_request();
+  } else {
+    clear_has_initialize_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.initialize_request)
+}
+
+// optional .peloton.message.InitializeResponse initialize_response = 26;
+inline bool PelotonMessage::has_initialize_response() const {
+  return (_has_bits_[0] & 0x02000000u) != 0;
+}
+inline void PelotonMessage::set_has_initialize_response() {
+  _has_bits_[0] |= 0x02000000u;
+}
+inline void PelotonMessage::clear_has_initialize_response() {
+  _has_bits_[0] &= ~0x02000000u;
+}
+inline void PelotonMessage::clear_initialize_response() {
+  if (initialize_response_ != NULL) initialize_response_->::peloton::message::InitializeResponse::Clear();
+  clear_has_initialize_response();
+}
+inline const ::peloton::message::InitializeResponse& PelotonMessage::initialize_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.initialize_response)
+  return initialize_response_ != NULL ? *initialize_response_ : *default_instance_->initialize_response_;
+}
+inline ::peloton::message::InitializeResponse* PelotonMessage::mutable_initialize_response() {
+  set_has_initialize_response();
+  if (initialize_response_ == NULL) {
+    initialize_response_ = new ::peloton::message::InitializeResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.initialize_response)
+  return initialize_response_;
+}
+inline ::peloton::message::InitializeResponse* PelotonMessage::release_initialize_response() {
+  clear_has_initialize_response();
+  ::peloton::message::InitializeResponse* temp = initialize_response_;
+  initialize_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_initialize_response(::peloton::message::InitializeResponse* initialize_response) {
+  delete initialize_response_;
+  initialize_response_ = initialize_response;
+  if (initialize_response) {
+    set_has_initialize_response();
+  } else {
+    clear_has_initialize_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.initialize_response)
+}
+
+// optional .peloton.message.ShutdownPrepareRequest shutdown_prepare_request = 27;
+inline bool PelotonMessage::has_shutdown_prepare_request() const {
+  return (_has_bits_[0] & 0x04000000u) != 0;
+}
+inline void PelotonMessage::set_has_shutdown_prepare_request() {
+  _has_bits_[0] |= 0x04000000u;
+}
+inline void PelotonMessage::clear_has_shutdown_prepare_request() {
+  _has_bits_[0] &= ~0x04000000u;
+}
+inline void PelotonMessage::clear_shutdown_prepare_request() {
+  if (shutdown_prepare_request_ != NULL) shutdown_prepare_request_->::peloton::message::ShutdownPrepareRequest::Clear();
+  clear_has_shutdown_prepare_request();
+}
+inline const ::peloton::message::ShutdownPrepareRequest& PelotonMessage::shutdown_prepare_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.shutdown_prepare_request)
+  return shutdown_prepare_request_ != NULL ? *shutdown_prepare_request_ : *default_instance_->shutdown_prepare_request_;
+}
+inline ::peloton::message::ShutdownPrepareRequest* PelotonMessage::mutable_shutdown_prepare_request() {
+  set_has_shutdown_prepare_request();
+  if (shutdown_prepare_request_ == NULL) {
+    shutdown_prepare_request_ = new ::peloton::message::ShutdownPrepareRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.shutdown_prepare_request)
+  return shutdown_prepare_request_;
+}
+inline ::peloton::message::ShutdownPrepareRequest* PelotonMessage::release_shutdown_prepare_request() {
+  clear_has_shutdown_prepare_request();
+  ::peloton::message::ShutdownPrepareRequest* temp = shutdown_prepare_request_;
+  shutdown_prepare_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_shutdown_prepare_request(::peloton::message::ShutdownPrepareRequest* shutdown_prepare_request) {
+  delete shutdown_prepare_request_;
+  shutdown_prepare_request_ = shutdown_prepare_request;
+  if (shutdown_prepare_request) {
+    set_has_shutdown_prepare_request();
+  } else {
+    clear_has_shutdown_prepare_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.shutdown_prepare_request)
+}
+
+// optional .peloton.message.ShutdownPrepareResponse shutdown_prepare_response = 28;
+inline bool PelotonMessage::has_shutdown_prepare_response() const {
+  return (_has_bits_[0] & 0x08000000u) != 0;
+}
+inline void PelotonMessage::set_has_shutdown_prepare_response() {
+  _has_bits_[0] |= 0x08000000u;
+}
+inline void PelotonMessage::clear_has_shutdown_prepare_response() {
+  _has_bits_[0] &= ~0x08000000u;
+}
+inline void PelotonMessage::clear_shutdown_prepare_response() {
+  if (shutdown_prepare_response_ != NULL) shutdown_prepare_response_->::peloton::message::ShutdownPrepareResponse::Clear();
+  clear_has_shutdown_prepare_response();
+}
+inline const ::peloton::message::ShutdownPrepareResponse& PelotonMessage::shutdown_prepare_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.shutdown_prepare_response)
+  return shutdown_prepare_response_ != NULL ? *shutdown_prepare_response_ : *default_instance_->shutdown_prepare_response_;
+}
+inline ::peloton::message::ShutdownPrepareResponse* PelotonMessage::mutable_shutdown_prepare_response() {
+  set_has_shutdown_prepare_response();
+  if (shutdown_prepare_response_ == NULL) {
+    shutdown_prepare_response_ = new ::peloton::message::ShutdownPrepareResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.shutdown_prepare_response)
+  return shutdown_prepare_response_;
+}
+inline ::peloton::message::ShutdownPrepareResponse* PelotonMessage::release_shutdown_prepare_response() {
+  clear_has_shutdown_prepare_response();
+  ::peloton::message::ShutdownPrepareResponse* temp = shutdown_prepare_response_;
+  shutdown_prepare_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_shutdown_prepare_response(::peloton::message::ShutdownPrepareResponse* shutdown_prepare_response) {
+  delete shutdown_prepare_response_;
+  shutdown_prepare_response_ = shutdown_prepare_response;
+  if (shutdown_prepare_response) {
+    set_has_shutdown_prepare_response();
+  } else {
+    clear_has_shutdown_prepare_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.shutdown_prepare_response)
+}
+
+// optional .peloton.message.ShutdownRequest shutdown_request = 29;
+inline bool PelotonMessage::has_shutdown_request() const {
+  return (_has_bits_[0] & 0x10000000u) != 0;
+}
+inline void PelotonMessage::set_has_shutdown_request() {
+  _has_bits_[0] |= 0x10000000u;
+}
+inline void PelotonMessage::clear_has_shutdown_request() {
+  _has_bits_[0] &= ~0x10000000u;
+}
+inline void PelotonMessage::clear_shutdown_request() {
+  if (shutdown_request_ != NULL) shutdown_request_->::peloton::message::ShutdownRequest::Clear();
+  clear_has_shutdown_request();
+}
+inline const ::peloton::message::ShutdownRequest& PelotonMessage::shutdown_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.shutdown_request)
+  return shutdown_request_ != NULL ? *shutdown_request_ : *default_instance_->shutdown_request_;
+}
+inline ::peloton::message::ShutdownRequest* PelotonMessage::mutable_shutdown_request() {
+  set_has_shutdown_request();
+  if (shutdown_request_ == NULL) {
+    shutdown_request_ = new ::peloton::message::ShutdownRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.shutdown_request)
+  return shutdown_request_;
+}
+inline ::peloton::message::ShutdownRequest* PelotonMessage::release_shutdown_request() {
+  clear_has_shutdown_request();
+  ::peloton::message::ShutdownRequest* temp = shutdown_request_;
+  shutdown_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_shutdown_request(::peloton::message::ShutdownRequest* shutdown_request) {
+  delete shutdown_request_;
+  shutdown_request_ = shutdown_request;
+  if (shutdown_request) {
+    set_has_shutdown_request();
+  } else {
+    clear_has_shutdown_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.shutdown_request)
+}
+
+// optional .peloton.message.ShutdownResponse shutdown_response = 30;
+inline bool PelotonMessage::has_shutdown_response() const {
+  return (_has_bits_[0] & 0x20000000u) != 0;
+}
+inline void PelotonMessage::set_has_shutdown_response() {
+  _has_bits_[0] |= 0x20000000u;
+}
+inline void PelotonMessage::clear_has_shutdown_response() {
+  _has_bits_[0] &= ~0x20000000u;
+}
+inline void PelotonMessage::clear_shutdown_response() {
+  if (shutdown_response_ != NULL) shutdown_response_->::peloton::message::ShutdownResponse::Clear();
+  clear_has_shutdown_response();
+}
+inline const ::peloton::message::ShutdownResponse& PelotonMessage::shutdown_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.shutdown_response)
+  return shutdown_response_ != NULL ? *shutdown_response_ : *default_instance_->shutdown_response_;
+}
+inline ::peloton::message::ShutdownResponse* PelotonMessage::mutable_shutdown_response() {
+  set_has_shutdown_response();
+  if (shutdown_response_ == NULL) {
+    shutdown_response_ = new ::peloton::message::ShutdownResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.shutdown_response)
+  return shutdown_response_;
+}
+inline ::peloton::message::ShutdownResponse* PelotonMessage::release_shutdown_response() {
+  clear_has_shutdown_response();
+  ::peloton::message::ShutdownResponse* temp = shutdown_response_;
+  shutdown_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_shutdown_response(::peloton::message::ShutdownResponse* shutdown_response) {
+  delete shutdown_response_;
+  shutdown_response_ = shutdown_response;
+  if (shutdown_response) {
+    set_has_shutdown_response();
+  } else {
+    clear_has_shutdown_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.shutdown_response)
+}
+
+// optional .peloton.message.HeartbeatRequest heartbeat_request = 31;
+inline bool PelotonMessage::has_heartbeat_request() const {
+  return (_has_bits_[0] & 0x40000000u) != 0;
+}
+inline void PelotonMessage::set_has_heartbeat_request() {
+  _has_bits_[0] |= 0x40000000u;
+}
+inline void PelotonMessage::clear_has_heartbeat_request() {
+  _has_bits_[0] &= ~0x40000000u;
+}
+inline void PelotonMessage::clear_heartbeat_request() {
+  if (heartbeat_request_ != NULL) heartbeat_request_->::peloton::message::HeartbeatRequest::Clear();
+  clear_has_heartbeat_request();
+}
+inline const ::peloton::message::HeartbeatRequest& PelotonMessage::heartbeat_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.heartbeat_request)
+  return heartbeat_request_ != NULL ? *heartbeat_request_ : *default_instance_->heartbeat_request_;
+}
+inline ::peloton::message::HeartbeatRequest* PelotonMessage::mutable_heartbeat_request() {
+  set_has_heartbeat_request();
+  if (heartbeat_request_ == NULL) {
+    heartbeat_request_ = new ::peloton::message::HeartbeatRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.heartbeat_request)
+  return heartbeat_request_;
+}
+inline ::peloton::message::HeartbeatRequest* PelotonMessage::release_heartbeat_request() {
+  clear_has_heartbeat_request();
+  ::peloton::message::HeartbeatRequest* temp = heartbeat_request_;
+  heartbeat_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_heartbeat_request(::peloton::message::HeartbeatRequest* heartbeat_request) {
+  delete heartbeat_request_;
+  heartbeat_request_ = heartbeat_request;
+  if (heartbeat_request) {
+    set_has_heartbeat_request();
+  } else {
+    clear_has_heartbeat_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.heartbeat_request)
+}
+
+// optional .peloton.message.HeartbeatResponse heartbeat_response = 32;
+inline bool PelotonMessage::has_heartbeat_response() const {
+  return (_has_bits_[0] & 0x80000000u) != 0;
+}
+inline void PelotonMessage::set_has_heartbeat_response() {
+  _has_bits_[0] |= 0x80000000u;
+}
+inline void PelotonMessage::clear_has_heartbeat_response() {
+  _has_bits_[0] &= ~0x80000000u;
+}
+inline void PelotonMessage::clear_heartbeat_response() {
+  if (heartbeat_response_ != NULL) heartbeat_response_->::peloton::message::HeartbeatResponse::Clear();
+  clear_has_heartbeat_response();
+}
+inline const ::peloton::message::HeartbeatResponse& PelotonMessage::heartbeat_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.heartbeat_response)
+  return heartbeat_response_ != NULL ? *heartbeat_response_ : *default_instance_->heartbeat_response_;
+}
+inline ::peloton::message::HeartbeatResponse* PelotonMessage::mutable_heartbeat_response() {
+  set_has_heartbeat_response();
+  if (heartbeat_response_ == NULL) {
+    heartbeat_response_ = new ::peloton::message::HeartbeatResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.heartbeat_response)
+  return heartbeat_response_;
+}
+inline ::peloton::message::HeartbeatResponse* PelotonMessage::release_heartbeat_response() {
+  clear_has_heartbeat_response();
+  ::peloton::message::HeartbeatResponse* temp = heartbeat_response_;
+  heartbeat_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_heartbeat_response(::peloton::message::HeartbeatResponse* heartbeat_response) {
+  delete heartbeat_response_;
+  heartbeat_response_ = heartbeat_response;
+  if (heartbeat_response) {
+    set_has_heartbeat_response();
+  } else {
+    clear_has_heartbeat_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.heartbeat_response)
+}
+
+// optional .peloton.message.UnevictDataRequest unevict_data_request = 33;
+inline bool PelotonMessage::has_unevict_data_request() const {
+  return (_has_bits_[1] & 0x00000001u) != 0;
+}
+inline void PelotonMessage::set_has_unevict_data_request() {
+  _has_bits_[1] |= 0x00000001u;
+}
+inline void PelotonMessage::clear_has_unevict_data_request() {
+  _has_bits_[1] &= ~0x00000001u;
+}
+inline void PelotonMessage::clear_unevict_data_request() {
+  if (unevict_data_request_ != NULL) unevict_data_request_->::peloton::message::UnevictDataRequest::Clear();
+  clear_has_unevict_data_request();
+}
+inline const ::peloton::message::UnevictDataRequest& PelotonMessage::unevict_data_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.unevict_data_request)
+  return unevict_data_request_ != NULL ? *unevict_data_request_ : *default_instance_->unevict_data_request_;
+}
+inline ::peloton::message::UnevictDataRequest* PelotonMessage::mutable_unevict_data_request() {
+  set_has_unevict_data_request();
+  if (unevict_data_request_ == NULL) {
+    unevict_data_request_ = new ::peloton::message::UnevictDataRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.unevict_data_request)
+  return unevict_data_request_;
+}
+inline ::peloton::message::UnevictDataRequest* PelotonMessage::release_unevict_data_request() {
+  clear_has_unevict_data_request();
+  ::peloton::message::UnevictDataRequest* temp = unevict_data_request_;
+  unevict_data_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_unevict_data_request(::peloton::message::UnevictDataRequest* unevict_data_request) {
+  delete unevict_data_request_;
+  unevict_data_request_ = unevict_data_request;
+  if (unevict_data_request) {
+    set_has_unevict_data_request();
+  } else {
+    clear_has_unevict_data_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.unevict_data_request)
+}
+
+// optional .peloton.message.UnevictDataResponse unevict_data_response = 34;
+inline bool PelotonMessage::has_unevict_data_response() const {
+  return (_has_bits_[1] & 0x00000002u) != 0;
+}
+inline void PelotonMessage::set_has_unevict_data_response() {
+  _has_bits_[1] |= 0x00000002u;
+}
+inline void PelotonMessage::clear_has_unevict_data_response() {
+  _has_bits_[1] &= ~0x00000002u;
+}
+inline void PelotonMessage::clear_unevict_data_response() {
+  if (unevict_data_response_ != NULL) unevict_data_response_->::peloton::message::UnevictDataResponse::Clear();
+  clear_has_unevict_data_response();
+}
+inline const ::peloton::message::UnevictDataResponse& PelotonMessage::unevict_data_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.unevict_data_response)
+  return unevict_data_response_ != NULL ? *unevict_data_response_ : *default_instance_->unevict_data_response_;
+}
+inline ::peloton::message::UnevictDataResponse* PelotonMessage::mutable_unevict_data_response() {
+  set_has_unevict_data_response();
+  if (unevict_data_response_ == NULL) {
+    unevict_data_response_ = new ::peloton::message::UnevictDataResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.unevict_data_response)
+  return unevict_data_response_;
+}
+inline ::peloton::message::UnevictDataResponse* PelotonMessage::release_unevict_data_response() {
+  clear_has_unevict_data_response();
+  ::peloton::message::UnevictDataResponse* temp = unevict_data_response_;
+  unevict_data_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_unevict_data_response(::peloton::message::UnevictDataResponse* unevict_data_response) {
+  delete unevict_data_response_;
+  unevict_data_response_ = unevict_data_response;
+  if (unevict_data_response) {
+    set_has_unevict_data_response();
+  } else {
+    clear_has_unevict_data_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.unevict_data_response)
+}
+
+// optional .peloton.message.TimeSyncRequest time_sync_request = 35;
+inline bool PelotonMessage::has_time_sync_request() const {
+  return (_has_bits_[1] & 0x00000004u) != 0;
+}
+inline void PelotonMessage::set_has_time_sync_request() {
+  _has_bits_[1] |= 0x00000004u;
+}
+inline void PelotonMessage::clear_has_time_sync_request() {
+  _has_bits_[1] &= ~0x00000004u;
+}
+inline void PelotonMessage::clear_time_sync_request() {
+  if (time_sync_request_ != NULL) time_sync_request_->::peloton::message::TimeSyncRequest::Clear();
+  clear_has_time_sync_request();
+}
+inline const ::peloton::message::TimeSyncRequest& PelotonMessage::time_sync_request() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.time_sync_request)
+  return time_sync_request_ != NULL ? *time_sync_request_ : *default_instance_->time_sync_request_;
+}
+inline ::peloton::message::TimeSyncRequest* PelotonMessage::mutable_time_sync_request() {
+  set_has_time_sync_request();
+  if (time_sync_request_ == NULL) {
+    time_sync_request_ = new ::peloton::message::TimeSyncRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.time_sync_request)
+  return time_sync_request_;
+}
+inline ::peloton::message::TimeSyncRequest* PelotonMessage::release_time_sync_request() {
+  clear_has_time_sync_request();
+  ::peloton::message::TimeSyncRequest* temp = time_sync_request_;
+  time_sync_request_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_time_sync_request(::peloton::message::TimeSyncRequest* time_sync_request) {
+  delete time_sync_request_;
+  time_sync_request_ = time_sync_request;
+  if (time_sync_request) {
+    set_has_time_sync_request();
+  } else {
+    clear_has_time_sync_request();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.time_sync_request)
+}
+
+// optional .peloton.message.TimeSyncResponse time_sync_response = 36;
+inline bool PelotonMessage::has_time_sync_response() const {
+  return (_has_bits_[1] & 0x00000008u) != 0;
+}
+inline void PelotonMessage::set_has_time_sync_response() {
+  _has_bits_[1] |= 0x00000008u;
+}
+inline void PelotonMessage::clear_has_time_sync_response() {
+  _has_bits_[1] &= ~0x00000008u;
+}
+inline void PelotonMessage::clear_time_sync_response() {
+  if (time_sync_response_ != NULL) time_sync_response_->::peloton::message::TimeSyncResponse::Clear();
+  clear_has_time_sync_response();
+}
+inline const ::peloton::message::TimeSyncResponse& PelotonMessage::time_sync_response() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.time_sync_response)
+  return time_sync_response_ != NULL ? *time_sync_response_ : *default_instance_->time_sync_response_;
+}
+inline ::peloton::message::TimeSyncResponse* PelotonMessage::mutable_time_sync_response() {
+  set_has_time_sync_response();
+  if (time_sync_response_ == NULL) {
+    time_sync_response_ = new ::peloton::message::TimeSyncResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.time_sync_response)
+  return time_sync_response_;
+}
+inline ::peloton::message::TimeSyncResponse* PelotonMessage::release_time_sync_response() {
+  clear_has_time_sync_response();
+  ::peloton::message::TimeSyncResponse* temp = time_sync_response_;
+  time_sync_response_ = NULL;
+  return temp;
+}
+inline void PelotonMessage::set_allocated_time_sync_response(::peloton::message::TimeSyncResponse* time_sync_response) {
+  delete time_sync_response_;
+  time_sync_response_ = time_sync_response;
+  if (time_sync_response) {
+    set_has_time_sync_response();
+  } else {
+    clear_has_time_sync_response();
+  }
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.time_sync_response)
+}
+
+// optional string dst_addr = 37;
+inline bool PelotonMessage::has_dst_addr() const {
+  return (_has_bits_[1] & 0x00000010u) != 0;
+}
+inline void PelotonMessage::set_has_dst_addr() {
+  _has_bits_[1] |= 0x00000010u;
+}
+inline void PelotonMessage::clear_has_dst_addr() {
+  _has_bits_[1] &= ~0x00000010u;
+}
+inline void PelotonMessage::clear_dst_addr() {
+  dst_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_dst_addr();
+}
+inline const ::std::string& PelotonMessage::dst_addr() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.dst_addr)
+  return dst_addr_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PelotonMessage::set_dst_addr(const ::std::string& value) {
+  set_has_dst_addr();
+  dst_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.dst_addr)
+}
+inline void PelotonMessage::set_dst_addr(const char* value) {
+  set_has_dst_addr();
+  dst_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:peloton.message.PelotonMessage.dst_addr)
+}
+inline void PelotonMessage::set_dst_addr(const char* value, size_t size) {
+  set_has_dst_addr();
+  dst_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:peloton.message.PelotonMessage.dst_addr)
+}
+inline ::std::string* PelotonMessage::mutable_dst_addr() {
+  set_has_dst_addr();
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.dst_addr)
+  return dst_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* PelotonMessage::release_dst_addr() {
+  clear_has_dst_addr();
+  return dst_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PelotonMessage::set_allocated_dst_addr(::std::string* dst_addr) {
+  if (dst_addr != NULL) {
+    set_has_dst_addr();
+  } else {
+    clear_has_dst_addr();
+  }
+  dst_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), dst_addr);
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.dst_addr)
+}
+
+// optional string src_addr = 38;
+inline bool PelotonMessage::has_src_addr() const {
+  return (_has_bits_[1] & 0x00000020u) != 0;
+}
+inline void PelotonMessage::set_has_src_addr() {
+  _has_bits_[1] |= 0x00000020u;
+}
+inline void PelotonMessage::clear_has_src_addr() {
+  _has_bits_[1] &= ~0x00000020u;
+}
+inline void PelotonMessage::clear_src_addr() {
+  src_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_src_addr();
+}
+inline const ::std::string& PelotonMessage::src_addr() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.src_addr)
+  return src_addr_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PelotonMessage::set_src_addr(const ::std::string& value) {
+  set_has_src_addr();
+  src_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.src_addr)
+}
+inline void PelotonMessage::set_src_addr(const char* value) {
+  set_has_src_addr();
+  src_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:peloton.message.PelotonMessage.src_addr)
+}
+inline void PelotonMessage::set_src_addr(const char* value, size_t size) {
+  set_has_src_addr();
+  src_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:peloton.message.PelotonMessage.src_addr)
+}
+inline ::std::string* PelotonMessage::mutable_src_addr() {
+  set_has_src_addr();
+  // @@protoc_insertion_point(field_mutable:peloton.message.PelotonMessage.src_addr)
+  return src_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* PelotonMessage::release_src_addr() {
+  clear_has_src_addr();
+  return src_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PelotonMessage::set_allocated_src_addr(::std::string* src_addr) {
+  if (src_addr != NULL) {
+    set_has_src_addr();
+  } else {
+    clear_has_src_addr();
+  }
+  src_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), src_addr);
+  // @@protoc_insertion_point(field_set_allocated:peloton.message.PelotonMessage.src_addr)
+}
+
+// optional int32 dst_addr_32 = 39;
+inline bool PelotonMessage::has_dst_addr_32() const {
+  return (_has_bits_[1] & 0x00000040u) != 0;
+}
+inline void PelotonMessage::set_has_dst_addr_32() {
+  _has_bits_[1] |= 0x00000040u;
+}
+inline void PelotonMessage::clear_has_dst_addr_32() {
+  _has_bits_[1] &= ~0x00000040u;
+}
+inline void PelotonMessage::clear_dst_addr_32() {
+  dst_addr_32_ = 0;
+  clear_has_dst_addr_32();
+}
+inline ::google::protobuf::int32 PelotonMessage::dst_addr_32() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.dst_addr_32)
+  return dst_addr_32_;
+}
+inline void PelotonMessage::set_dst_addr_32(::google::protobuf::int32 value) {
+  set_has_dst_addr_32();
+  dst_addr_32_ = value;
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.dst_addr_32)
+}
+
+// optional int32 src_addr_32 = 40;
+inline bool PelotonMessage::has_src_addr_32() const {
+  return (_has_bits_[1] & 0x00000080u) != 0;
+}
+inline void PelotonMessage::set_has_src_addr_32() {
+  _has_bits_[1] |= 0x00000080u;
+}
+inline void PelotonMessage::clear_has_src_addr_32() {
+  _has_bits_[1] &= ~0x00000080u;
+}
+inline void PelotonMessage::clear_src_addr_32() {
+  src_addr_32_ = 0;
+  clear_has_src_addr_32();
+}
+inline ::google::protobuf::int32 PelotonMessage::src_addr_32() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.src_addr_32)
+  return src_addr_32_;
+}
+inline void PelotonMessage::set_src_addr_32(::google::protobuf::int32 value) {
+  set_has_src_addr_32();
+  src_addr_32_ = value;
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.src_addr_32)
+}
+
+// optional int32 socket = 41;
+inline bool PelotonMessage::has_socket() const {
+  return (_has_bits_[1] & 0x00000100u) != 0;
+}
+inline void PelotonMessage::set_has_socket() {
+  _has_bits_[1] |= 0x00000100u;
+}
+inline void PelotonMessage::clear_has_socket() {
+  _has_bits_[1] &= ~0x00000100u;
+}
+inline void PelotonMessage::clear_socket() {
+  socket_ = 0;
+  clear_has_socket();
+}
+inline ::google::protobuf::int32 PelotonMessage::socket() const {
+  // @@protoc_insertion_point(field_get:peloton.message.PelotonMessage.socket)
+  return socket_;
+}
+inline void PelotonMessage::set_socket(::google::protobuf::int32 value) {
+  set_has_socket();
+  socket_ = value;
+  // @@protoc_insertion_point(field_set:peloton.message.PelotonMessage.socket)
+}
+
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
@@ -8788,6 +11181,11 @@ inline void TimeSyncResponse::set_t1_s(::google::protobuf::int64 value) {
 namespace google {
 namespace protobuf {
 
+template <> struct is_proto_enum< ::peloton::message::PelotonMessage_Type> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::peloton::message::PelotonMessage_Type>() {
+  return ::peloton::message::PelotonMessage_Type_descriptor();
+}
 template <> struct is_proto_enum< ::peloton::message::Status> : ::google::protobuf::internal::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::peloton::message::Status>() {

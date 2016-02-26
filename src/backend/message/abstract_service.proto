@@ -581,6 +581,16 @@ message PelotonMessage {
   optional UnevictDataResponse 					unevict_data_response 					= 34;
   optional TimeSyncRequest 						time_sync_request 						= 35;
   optional TimeSyncResponse 					time_sync_response 						= 36;
+  
+  // IP and port address
+  optional string dst_addr = 37;
+  optional string src_addr = 38;
+  
+  optional int32 dst_addr_32 = 39;
+  optional int32 src_addr_32 = 40;
+  
+  // This socket can be used to send or recv msg
+  optional int32  socket   = 41;
 }
 
 // -----------------------------------
