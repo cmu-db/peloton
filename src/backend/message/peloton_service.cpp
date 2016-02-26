@@ -158,7 +158,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
 	}
 
 	//TODO: use controller here
-	std::cout << controller << std::endl;
+	std::cout << "controller: " << controller << std::endl;
 }
 
 void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
