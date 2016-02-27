@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pelotonbackendlogger.h
+ * wbl_backend_logger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/pelotonbackendlogger.h
+ * /peloton/src/backend/logging/wbl_backend_logger.h
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,17 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Peloton Backend Logger
+// WBL Backend Logger
 //===--------------------------------------------------------------------===//
 
-class PelotonBackendLogger : public BackendLogger {
+class WriteBehindBackendLogger : public BackendLogger {
  public:
-  PelotonBackendLogger(const PelotonBackendLogger &) = delete;
-  PelotonBackendLogger &operator=(const PelotonBackendLogger &) = delete;
-  PelotonBackendLogger(PelotonBackendLogger &&) = delete;
-  PelotonBackendLogger &operator=(PelotonBackendLogger &&) = delete;
+  WriteBehindBackendLogger(const WriteBehindBackendLogger &) = delete;
+  WriteBehindBackendLogger &operator=(const WriteBehindBackendLogger &) = delete;
+  WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
+  WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  static PelotonBackendLogger *GetInstance(void);
+  static WriteBehindBackendLogger *GetInstance(void);
 
   void Log(LogRecord *record);
 
@@ -40,7 +40,7 @@ class PelotonBackendLogger : public BackendLogger {
                             oid_t db_oid = INVALID_OID);
 
  private:
-  PelotonBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
+  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
 
   CopySerializeOutput output_buffer;
 };

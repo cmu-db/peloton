@@ -13,8 +13,8 @@
 #include "backend_logger.h"
 
 #include "backend/common/logger.h"
-#include "backend/logging/loggers/aries_backend_logger.h"
-#include "backend/logging/loggers/peloton_backend_logger.h"
+#include "backend/logging/loggers/wal_backend_logger.h"
+#include "backend/logging/loggers/wbl_backend_logger.h"
 
 namespace peloton {
 namespace logging {
@@ -26,10 +26,10 @@ namespace logging {
 BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
   BackendLogger *backendLogger = nullptr;
 
-  if (IsSimilarToARIES(logging_type) == true) {
-    backendLogger = AriesBackendLogger::GetInstance();
-  } else if (IsSimilarToPeloton(logging_type) == true) {
-    backendLogger = PelotonBackendLogger::GetInstance();
+  if (IsBasedOnWriteAheadLogging(logging_type) == true) {
+    backendLogger = WriteBehindBackendLogger::GetInstance();
+  } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
+    backendLogger = WriteBehindBackendLogger::GetInstance();
   } else {
     LOG_ERROR("Unsupported logging type");
   }
