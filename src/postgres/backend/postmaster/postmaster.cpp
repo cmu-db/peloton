@@ -62,6 +62,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "backend/message/peloton_client.h"
+#include "backend/message/peloton_service.h"
+#include "backend/message/rpc_server.h"
+#include "backend/message/abstract_service.pb.h"
+#include "backend/message/message_queue.h"
 
 #include "postgres.h"
 
@@ -530,6 +535,130 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 /* Process handle of postmaster used for the same purpose on Windows */
 HANDLE PostmasterHandle;
 #endif
+
+//TODO: Peloton adds
+
+void Coordinator() {
+
+	google::protobuf::Service* service = NULL;
+
+	try {
+		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
+		service = new peloton::message::PelotonService();
+		rpc_server.RegisterService(service);
+		rpc_server.StartSimple();
+	} catch (peloton::message::exception& e) {
+		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+		delete service;
+	} catch (std::exception& e) {
+		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+		delete service;
+	} catch (...) {
+		std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+		delete service;
+	}
+}
+
+/*
+ * Sender is responsible for picking up the message from send_queue and send it
+ * The message should contain the dst_addr
+ */
+//void Sender(
+//		peloton::message::MessageQueue<peloton::message::PelotonMessage>* send_queue) {
+//
+//	try {
+//		while (1) {
+//			peloton::message::PelotonMessage msg = send_queue->Pop();
+//			peloton::message::PelotonMessage::Type msg_type = msg.type();
+//
+//			switch (msg_type) {
+//
+//			case peloton::message::PelotonMessage::HEARTBEAT_REQUEST: {
+//				LOG_TRACE("Pick up a HEARTBEAT_REQUEST");
+//				peloton::message::HeartbeatRequest request =
+//						msg.heartbeat_request();
+//
+//				peloton::message::HeartbeatResponse response;
+//
+//				peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
+//				client.Heartbeat(&request, &response);
+//
+//				if (response.has_sender_site() == true) {
+//					std::cout << "sender site: " << response.sender_site()
+//							<< std::endl;
+//				} else {
+//					std::cout << "No response: sender site" << std::endl;
+//				}
+//
+//				if (response.has_status() == true) {
+//					std::cout << "Status: " << response.status() << std::endl;
+//				} else {
+//					std::cout << "No response: sender status" << std::endl;
+//				}
+//
+//			}
+//				break;
+//
+//			case peloton::message::PelotonMessage::INITIALIZE_REQUEST: {
+//				LOG_TRACE("Pick up a INITIALIZE_REQUEST");
+//
+//			}
+//				break;
+//
+//			default:
+//				LOG_ERROR("Unrecognized REQUEST %d", msg_type);
+//				break;
+//			}
+//		}
+//
+//	} catch (peloton::message::exception& e) {
+//		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+//	} catch (std::exception& e) {
+//		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+//	} catch (...) {
+//		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+//	}
+//
+//}
+
+void TestSend() {
+
+	try {
+		for (int i = 0; i < 100; i++) {
+			peloton::message::HeartbeatRequest request;
+			peloton::message::HeartbeatResponse response;
+
+			request.set_sender_site(i);
+			request.set_last_transaction_id(i*10);
+
+			peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
+
+			client.Heartbeat(&request, &response);
+
+			if (response.has_sender_site() == true) {
+				std::cout << "sender site: " << response.sender_site()
+						<< std::endl;
+			} else {
+				std::cout << "No response: sender site" << std::endl;
+			}
+
+			if (response.has_status() == true) {
+				std::cout << "Status: " << response.status() << std::endl;
+			} else {
+				std::cout << "No response: sender status" << std::endl;
+			}
+		}
+
+	} catch (peloton::message::exception& e) {
+		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+	} catch (std::exception& e) {
+		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+	}
+
+
+}
 
 /*
  * Postmaster main entry point
@@ -1220,6 +1349,16 @@ void PostmasterMain(int argc, char *argv[]) {
 
   /* Some workers may be scheduled to start now */
   maybe_start_bgworker();
+
+  // Lanch coordinator to recv msg
+  std::thread coordinator(Coordinator);
+  coordinator.detach();
+
+  // Lanch test_send to put msg in send_queue.
+  // This is an example how to send msg to Peloton peers
+  // comment this to shutdown rpc test
+//  std::thread testsend(TestSend);
+//  testsend.detach();
 
   status = ServerLoop();
 
