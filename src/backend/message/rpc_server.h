@@ -25,48 +25,48 @@ namespace message {
 
 class RpcServer {
 
-	typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
-	typedef struct RecvItem {
-		NanoMsg*                    socket;
-		RpcMethod* 					method;
-		google::protobuf::Message* 	request;
-	} QueueItem;
+  typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
+  typedef struct RecvItem {
+    NanoMsg*                    socket;
+    RpcMethod* 					method;
+    google::protobuf::Message* 	request;
+  } QueueItem;
 
 public:
-	RpcServer(const char* url);
-	~RpcServer();
+  RpcServer(const char* url);
+  ~RpcServer();
 
-	// add more endpoints
-	void EndPoint(const char* url);
+  // add more endpoints
+  void EndPoint(const char* url);
 
-	// start
-	void Start();
-	void StartSimple();
+  // start
+  void Start();
+  void StartSimple();
 
-	// Multiple woker threads
-	void Worker(const char* debuginfo);
+  // Multiple woker threads
+  void Worker(const char* debuginfo);
 
-	std::thread WorkerThread(const char* debuginfo) {
-		return std::thread([=] { Worker(debuginfo); });
-	}
+//  std::thread WorkerThread(const char* debuginfo) {
+//    return std::thread([=] { Worker(debuginfo); });
+//  }
 
-	// register a service
-	void RegisterService(google::protobuf::Service *service);
+  // register a service
+  void RegisterService(google::protobuf::Service *service);
 
-	// remove all services
-	void RemoveService();
+  // remove all services
+  void RemoveService();
 
-	// close
-	void Close();
+  // close
+  void Close();
 
 private:
 
-	NanoMsg 		socket_;
-	int 			socket_id_;
-	RpcMethodMap 	rpc_method_map_;
+  NanoMsg        socket_;
+  int            socket_id_;
+  RpcMethodMap   rpc_method_map_;
 
-	std::thread		worker_thread_;
-	MessageQueue<RecvItem> 	recv_queue_;
+  std::thread    worker_thread_;
+  MessageQueue<RecvItem>   recv_queue_;
 };
 
 }  // namespace message
