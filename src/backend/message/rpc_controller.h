@@ -18,35 +18,41 @@
 namespace peloton {
 namespace message {
 
-    class RpcController : public google::protobuf::RpcController {
-	        std::string _error_str;
-		bool _is_failed;
-		public:
-		RpcController() { Reset(); }
-		void Reset() {
-			_error_str = "";
-			_is_failed = false;
-		}
-		bool Failed() const {
-			return _is_failed;
-		}
-		std::string ErrorText() const {
-			return _error_str;
-		}
-		void StartCancel() { // NOT IMPL
-			return ;
-		}
-		void SetFailed(const std::string &reason) {
-			_is_failed = true;
-			_error_str = reason;
-		}
-		bool IsCanceled() const { // NOT IMPL
-			return false;
-		}
+class RpcController : public google::protobuf::RpcController {
+	      std::string _error_str;
+  bool _is_failed;
+  public:
+    RpcController() { Reset(); }
+    void Reset() {
+      _error_str = "";
+      _is_failed = false;
+    }
+
+    bool Failed() const {
+      return _is_failed;
+    }
+
+    std::string ErrorText() const {
+      return _error_str;
+    }
+
+    void StartCancel() { // NOT IMPL
+      return ;
+    }
+
+    void SetFailed(const std::string &reason) {
+
+      _is_failed = true;
+      _error_str = reason;
+    }
+
+    bool IsCanceled() const { // NOT IMPL
+      return false;
+    }
   		
-		void NotifyOnCancel(google::protobuf::Closure* callback) { // NOT IMPL
-			return;
-		}
+    void NotifyOnCancel(google::protobuf::Closure* callback) { // NOT IMPL
+        return;
+    }
 };
 
 }  // namespace message
