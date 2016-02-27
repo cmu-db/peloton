@@ -35,7 +35,7 @@ TileGroup *TileGroupFactory::GetTileGroup(
   // Allocate the data file on a mmap'ed file
   // This is used for architectures similar to peloton logging
   // Where the data is allocated in NVM or HDD or SSD
-  if (IsSimilarToPeloton(peloton_logging_mode) == true) {
+  if (IsBasedOnWriteBehindLogging(peloton_logging_mode) == true) {
     backend_type = BACKEND_TYPE_FILE;
   }
 
