@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// nanomsg.h
+// message_queue.h
 //
 // Identification: src/backend/message/message_queue.h
 //

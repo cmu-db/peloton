@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// abstract_message.h
+// rpc_controller.h
 //
-// Identification: src/backend/message/abstract_message.h
+// Identification: src/backend/message/rpc_controller.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

@@ -1,8 +1,15 @@
-/**
-*
-* example: echo client
-*
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// peloton_client.h
+//
+// Identification: src/backend/message/peloton_client.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "abstract_service.pb.h"
