@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// nanomsg.cpp
+// peloton_service.cpp
 //
 // Identification: src/backend/message/peloton_service.cpp
 //
