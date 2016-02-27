@@ -84,6 +84,47 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     } break;
 
+    /*
+     * POSTGRES_VALUE_TYPE_BPCHAR2 is array of BPCHAR
+     * This case can be seen with IN operator:
+     * such as select * from foo where address IN ('Pitts','LA'),
+     * here address is type of char(50)
+     */
+    // This case is seen with IN operator: select * from foo where address IN ('Pitts','LA');
+    case POSTGRES_VALUE_TYPE_BPCHAR2: {
+
+        ArrayType *arr = DatumGetArrayTypeP(datum);
+        int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+        Oid arr_type = ARR_ELEMTYPE(arr);
+        Datum *elems;
+
+        // The element type should be POSTGRES_VALUE_TYPE_BPCHAR
+        if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+            ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_BPCHAR)
+          LOG_ERROR("expected 1-D text array");
+
+        deconstruct_array(arr, POSTGRES_VALUE_TYPE_BPCHAR, -1, false, 'i', &elems,
+                          NULL, &nelems);
+
+        value =
+            ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
+
+        std::vector<Value> vecValue;
+
+        for (int it = 0; it < nelems; ++it) {
+          char *pText = TextDatumGetCString(elems[it]);
+          std::string str(pText);
+          std::cout << pText << arr_type << str;
+          VarlenPool *data_pool = nullptr;
+          LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
+          Value val = ValueFactory::GetStringValue(str, data_pool);
+          vecValue.push_back(val);
+        }
+
+        value.SetArrayElements(vecValue);
+
+    } break;
+
     case POSTGRES_VALUE_TYPE_VARCHAR2: {
       struct varlena *varlenptr = reinterpret_cast<struct varlena *>(datum);
       int len = VARSIZE(varlenptr) - VARHDRSZ;
