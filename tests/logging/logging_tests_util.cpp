@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <chrono>
+#include <string>
 #include <getopt.h>
 
 #include "logging/logging_tests_util.h"
@@ -10,6 +11,7 @@
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/exception.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
@@ -102,6 +104,9 @@ bool LoggingTestsUtil::PrepareLogFile(std::string file_name) {
 
     return true;
   }
+
+  // TODO:
+  std::cout << "Log path :: " << file_path << "\n";
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
@@ -298,8 +303,8 @@ void LoggingTestsUtil::BuildLog(oid_t db_oid, oid_t table_oid) {
     LoggingTestsUtil::CheckTupleCount(db_oid, table_oid, total_expected);
   }
 
-  // We can only drop the table in case of ARIES
-  if (IsSimilarToARIES(peloton_logging_mode) == true) {
+  // We can only drop the table in case of WAL
+  if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true) {
     db->DropTableWithOid(table_oid);
     DropDatabase(db_oid);
   }
@@ -703,35 +708,53 @@ static void ValidateWaitTimeout(
 
 static void ValidateLogFileDir(
     LoggingTestsUtil::logging_test_configuration& state) {
+  struct stat data_stat;
+
   // Assign log file dir based on logging type
   switch (state.logging_type) {
+    // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_HDD_NVM:
     case LOGGING_TYPE_SSD_NVM:
+    case LOGGING_TYPE_HDD_NVM: {
+      int status = stat(NVM_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        state.log_file_dir = NVM_DIR;
+      }
+    } break;
 
-      state.log_file_dir = NVM_DIR;
-      break;
-
+    // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_SSD_HDD:
+    case LOGGING_TYPE_HDD_HDD: {
+      int status = stat(HDD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        state.log_file_dir = HDD_DIR;
+      }
+    } break;
 
-      state.log_file_dir = HDD_DIR;
-      break;
-
+    // Log file on SSD
     case LOGGING_TYPE_DRAM_SSD:
     case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_SSD_SSD:
-
-      state.log_file_dir = SSD_DIR;
-      break;
+    case LOGGING_TYPE_HDD_SSD: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        state.log_file_dir = SSD_DIR;
+      }
+    } break;
 
     case LOGGING_TYPE_INVALID:
-    default:
-
-      state.log_file_dir = TMP_DIR;
-      break;
+    default: {
+      int status = stat(TMP_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        state.log_file_dir = TMP_DIR;
+      }
+      else {
+        throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+      }
+    } break;
   }
 
   std::cout << std::setw(20) << std::left << "log_file_dir "
@@ -749,7 +772,7 @@ void LoggingTestsUtil::ParseArguments(int argc, char* argv[]) {
 
   state.check_tuple_count = false;
 
-  state.log_file_dir = "/tmp/";
+  state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
   state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;

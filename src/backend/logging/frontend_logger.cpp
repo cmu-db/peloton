@@ -15,8 +15,8 @@
 #include "backend/common/logger.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/frontend_logger.h"
-#include "backend/logging/loggers/aries_frontend_logger.h"
-#include "backend/logging/loggers/peloton_frontend_logger.h"
+#include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/logging/loggers/wbl_frontend_logger.h"
 
 // configuration for testing
 int64_t peloton_wait_timeout = 0;
@@ -44,10 +44,10 @@ FrontendLogger::~FrontendLogger() {
 FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type) {
   FrontendLogger *frontendLogger = nullptr;
 
-  if (IsSimilarToARIES(logging_type) == true) {
-    frontendLogger = new AriesFrontendLogger();
-  } else if (IsSimilarToPeloton(logging_type) == true) {
-    frontendLogger = new PelotonFrontendLogger();
+  if (IsBasedOnWriteAheadLogging(logging_type) == true) {
+    frontendLogger = new WriteAheadFrontendLogger();
+  } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
+    frontendLogger = new WriteBehindFrontendLogger();
   } else {
     LOG_ERROR("Unsupported logging type");
   }
