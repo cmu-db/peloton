@@ -19,6 +19,8 @@
 #include "nanomsg/src/pipeline.h"
 #include "nanomsg/src/pair.h"
 #include "nanomsg/src/pubsub.h"
+#include "nanomsg/inproc.h"
+
 #include <cassert>
 #include <exception>
 
@@ -81,6 +83,16 @@ inline void term () {
     nn_term ();
 }
 
+inline int device(int s1, int s2) {
+
+    int rc = nn_device (s1, s2);
+
+    if (nn_slow (rc < 0))
+        throw peloton::message::exception ();
+
+    return rc;
+}
+
 class NanoMsg : public AbstractMessage {
 
 public:
@@ -91,6 +103,7 @@ public:
     if (nn_slow (socket_ < 0))
       throw peloton::message::exception();
   }
+
   ~NanoMsg() {
     int rc = nn_close(socket_);
     assert(rc == 0);
@@ -175,6 +188,10 @@ public:
 
     if (nn_slow (rc != 0))
       throw peloton::message::exception ();
+  }
+
+  int GetSocket() {
+      return socket_;
   }
 
 private:
