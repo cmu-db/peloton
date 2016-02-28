@@ -16,7 +16,6 @@
 #include "peloton_endpoint.h"
 
 #include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/callback.h>
 #include <iostream>
 
 namespace peloton {
@@ -105,7 +104,7 @@ public:
 
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
         ::peloton::message::HeartbeatResponse* response) {
-    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&Call);
+    google::protobuf::Closure* callback = google::protobuf::NewCallback(&Call);
     stub_->Heartbeat(controller_, request, response, callback);
   }
 

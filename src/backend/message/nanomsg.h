@@ -93,7 +93,9 @@ public:
   }
   ~NanoMsg() {
     int rc = nn_close(socket_);
-    assert(rc == 0);
+    if(rc == 0) {
+      throw peloton::message::exception();
+    }
   }
 
   /** @brief BindSocket function nanomsg implementation */
