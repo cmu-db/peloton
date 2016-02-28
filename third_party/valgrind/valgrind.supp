@@ -180,3 +180,74 @@
         fun:start_thread
         fun:clone
 }
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:_Znwm
+        fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+        fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+        fun:_ZNSs7reserveEm
+        fun:_ZNSs6appendERKSs
+        fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+        fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+        fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+        fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+        fun:_ZN7peloton7message63protobuf_AddDesc_backend_2fmessage_2fabstract_5fservice_2eprotoEv
+        fun:call_init.part.0
+        fun:call_init
+        fun:_dl_init
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:_Znwm
+        fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+        fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+        fun:_ZNSs7reserveEm
+        fun:_ZNSs6appendERKSs
+        fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+        fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+        fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+        fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+        fun:_ZN6google8protobuf55protobuf_AddDesc_google_2fprotobuf_2fdescriptor_2eprotoEv
+        fun:call_init.part.0
+        fun:call_init
+        fun:_dl_init
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:_Znwm
+        fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+        fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+        fun:_ZNSsC1ERKSs
+        fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+        fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+        fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+        fun:_ZN6google8protobuf55protobuf_AddDesc_google_2fprotobuf_2fdescriptor_2eprotoEv
+        fun:call_init.part.0
+        fun:call_init
+        fun:_dl_init
+        obj:/lib/x86_64-linux-gnu/ld-2.19.so
+}
+{
+    <insert_a_suppression_name_here>
+        Memcheck:Leak
+        match-leak-kinds: possible
+        fun:_Znwm
+        fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+        fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+        fun:_ZNSsC1ERKSs
+        fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+        fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+        fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+        fun:_ZN7peloton7message63protobuf_AddDesc_backend_2fmessage_2fabstract_5fservice_2eprotoEv
+        fun:call_init.part.0
+        fun:call_init
+        fun:_dl_init
+        obj:/lib/x86_64-linux-gnu/ld-2.19.so
+}
+
