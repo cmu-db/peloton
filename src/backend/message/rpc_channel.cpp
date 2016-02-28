@@ -20,22 +20,19 @@ namespace peloton {
 namespace message {
 
 RpcChannel::RpcChannel(const char* url) :
-  socket_(AF_SP, NN_REQ),
-  socket_id_(socket_.Connect(url))
-{
+      socket_(AF_SP, NN_REQ),
+      socket_id_(socket_.Connect(url)){
 }
 
-RpcChannel::~RpcChannel()
-{
+RpcChannel::~RpcChannel(){
   Close();
 }
 
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
-                                  google::protobuf::RpcController* controller,
-                                  const google::protobuf::Message* request,
-                                  google::protobuf::Message* response,
-                                  google::protobuf::Closure* done)
-{
+                            google::protobuf::RpcController* controller,
+                            const google::protobuf::Message* request,
+                            google::protobuf::Message* response,
+                            google::protobuf::Closure* done){
   // Get the rpc function name
   std::string methodname = std::string( method->full_name() );
   std::hash<std::string> string_hash_fn;
@@ -79,8 +76,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   std::cout << controller << std::endl;
 }
 
-void RpcChannel::Close()
-{
+void RpcChannel::Close(){
   if (socket_id_ > 0) {
     socket_.Shutdown(socket_id_);
     socket_id_ = 0;
