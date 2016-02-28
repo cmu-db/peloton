@@ -3,7 +3,7 @@
 ######################################################################
 # MESSAGE
 ######################################################################
-
+    
 message_FILES = \
 				backend/message/abstract_service.pb.cc \
 				backend/message/rpc_channel.cpp \

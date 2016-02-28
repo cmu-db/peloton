@@ -48,6 +48,7 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(protobuf_FILES) \
 			$(expression_FILES) \
 			$(brain_FILES) \
 			$(catalog_FILES) \
@@ -78,7 +79,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg -lcityhash
+libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg
 
 ######################################################################
 # LIBPELOTONPG

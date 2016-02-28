@@ -13,8 +13,8 @@
 #include "rpc_channel.h"
 
 #include <google/protobuf/descriptor.h>
-#include <city.h>
 #include <iostream>
+#include <functional>
 
 namespace peloton {
 namespace message {
@@ -38,9 +38,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 {
   // Get the rpc function name
   std::string methodname = std::string( method->full_name() );
+  std::hash<std::string> string_hash_fn;
 
   // Get the hashcode for the rpc function name
-  uint64_t opcode = CityHash64(methodname.c_str(), methodname.length());
+  // TODO:
+  //uint64_t opcode = CityHash64(methodname.c_str(), methodname.length());
+  size_t opcode = string_hash_fn(methodname);
 
   // prepare the sending buf
   size_t msg_len = request->ByteSize() + sizeof(opcode);

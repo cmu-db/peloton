@@ -14,7 +14,6 @@
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>
-#include <city.h>
 #include <iostream>
 
 namespace peloton {
@@ -48,6 +47,7 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
 
   // Get the service descriptor
   const google::protobuf::ServiceDescriptor *descriptor = service->GetDescriptor();
+  std::hash<std::string> string_hash_fn;
 
   /*
    * Put all of the method names (descriptors)， msg types into rpc_method_map_
@@ -69,7 +69,9 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
 
     // Put the method into rpc_method_map_: hashcode-->method
     std::string methodname = std::string(method->full_name());
-    uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
+    // TODO:
+    //uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
+    size_t hash = string_hash_fn(methodname);
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
     if (iter == rpc_method_map_.end())
       rpc_method_map_[hash] = rpc_method;
