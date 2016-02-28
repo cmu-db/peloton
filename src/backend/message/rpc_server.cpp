@@ -20,9 +20,9 @@ namespace peloton {
 namespace message {
 
 RpcServer::RpcServer(const char* url) :
-  socket_(AF_SP, NN_REP),
-  socket_id_(socket_.Bind(url)),
-  worker_thread_() {
+      socket_(AF_SP, NN_REP),
+      socket_id_(socket_.Bind(url)),
+      worker_thread_() {
 }
 
 RpcServer::~RpcServer() {
@@ -54,7 +54,7 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
    * For example, peloton service has HeartBeat method, its
    * request msg type is HeartbeatRequest
    * response msg type is HeartbeatResponse
-  */
+   */
   for (int i = 0; i < descriptor->method_count(); ++i) {
 
     // Get the method descriptor
@@ -75,7 +75,7 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
     if (iter == rpc_method_map_.end())
       rpc_method_map_[hash] = rpc_method;
-    }
+  }
 }
 
 void RpcServer::StartSimple() {
@@ -84,7 +84,7 @@ void RpcServer::StartSimple() {
 
   while (1) {
 
-	// Receive message
+    // Receive message
     char* buf = NULL;
     int bytes = socket_.Receive(&buf, NN_MSG, 0);
     if (bytes <= 0) continue;
@@ -133,47 +133,47 @@ void RpcServer::StartSimple() {
 
 void RpcServer::Start() {
 
-//	worker_thread_ = std::thread(&RpcServer::Worker, this, "this is worker_thread");
+  //	worker_thread_ = std::thread(&RpcServer::Worker, this, "this is worker_thread");
 
   uint64_t opcode = 0;
 
-    while (1) {
-      // Receive message
-      char* buf = NULL;
-      int bytes = socket_.Receive(&buf, NN_MSG, 0);
-      if (bytes <= 0) continue;
+  while (1) {
+    // Receive message
+    char* buf = NULL;
+    int bytes = socket_.Receive(&buf, NN_MSG, 0);
+    if (bytes <= 0) continue;
 
-      // Get the hashcode of the rpc method
-      memcpy((char*)(&opcode), buf, sizeof(opcode));
+    // Get the hashcode of the rpc method
+    memcpy((char*)(&opcode), buf, sizeof(opcode));
 
-      // Get the method iter from local map
-      RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
+    // Get the method iter from local map
+    RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
 
-      if (iter == rpc_method_map_.end()) {
-        continue;
-      }
+    if (iter == rpc_method_map_.end()) {
+      continue;
+    }
 
-      // Get the rpc method meta info: method descriptor
-      RpcMethod *rpc_method = iter->second;
+    // Get the rpc method meta info: method descriptor
+    RpcMethod *rpc_method = iter->second;
 
-      // Get request and response type and create them
-      google::protobuf::Message *request = rpc_method->request_->New();
+    // Get request and response type and create them
+    google::protobuf::Message *request = rpc_method->request_->New();
 
-      // Deserialize the receiving message
-      request->ParseFromString(buf + sizeof(opcode));
+    // Deserialize the receiving message
+    request->ParseFromString(buf + sizeof(opcode));
 
-      RecvItem item;
-      item.socket = &socket_;
-      item.method = rpc_method;
-      item.request = request;
+    RecvItem item;
+    item.socket = &socket_;
+    item.method = rpc_method;
+    item.request = request;
 
 
-      recv_queue_.Push(item);
+    recv_queue_.Push(item);
 
-      // Must free the buf since we use NN_MSG flag
-      freemsg(buf);
+    // Must free the buf since we use NN_MSG flag
+    freemsg(buf);
 
-      //Worker("Function call");
+    //Worker("Function call");
   }
 }
 
@@ -213,19 +213,19 @@ void RpcServer::Worker(const char* debuginfo) {
     // Must free the buf since it is created using nanomsg::allocmsg()
     freemsg(buf);
 
-	} catch (std::exception& e) {
-      std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-      delete request;
-      delete response;
-	  // Must free the buf since it is created using nanomsg::allocmsg()
-      freemsg(buf);
-    } catch (...) {
-      std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
-      delete request;
-      delete response;
-      // Must free the buf since it is created using nanomsg::allocmsg()
-      freemsg(buf);
-    }
+  } catch (std::exception& e) {
+    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+    delete request;
+    delete response;
+    // Must free the buf since it is created using nanomsg::allocmsg()
+    freemsg(buf);
+  } catch (...) {
+    std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+    delete request;
+    delete response;
+    // Must free the buf since it is created using nanomsg::allocmsg()
+    freemsg(buf);
+  }
 
 }
 
@@ -235,7 +235,7 @@ void RpcServer::RemoveService() {
 
   for (RpcMethodMap::iterator it = rpc_method_map_.begin(); it != rpc_method_map_.end();) {
     RpcMethod *rpc_method = it->second;
-      ++it;
+    ++it;
     delete rpc_method;
   }
 }
