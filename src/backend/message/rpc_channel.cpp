@@ -15,7 +15,6 @@
 #include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
-#include <city.h>
 #include <iostream>
 
 namespace peloton {
