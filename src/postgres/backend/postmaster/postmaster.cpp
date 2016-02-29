@@ -546,7 +546,7 @@ void Coordinator() {
 		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
 		service = new peloton::message::PelotonService();
 		rpc_server.RegisterService(service);
-		rpc_server.StartSimple();
+		rpc_server.Start();
 	} catch (peloton::message::exception& e) {
 		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
 		delete service;
@@ -631,7 +631,7 @@ void TestSend() {
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
+			peloton::message::PelotonClient client(PELOTON_ENDPOINT_ADDR);
 
 			client.Heartbeat(&request, &response);
 
@@ -1356,9 +1356,8 @@ void PostmasterMain(int argc, char *argv[]) {
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
-  // comment this to shutdown rpc test
-//  std::thread testsend(TestSend);
-//  testsend.detach();
+  std::thread testsend(TestSend);
+  testsend.detach();
 
   status = ServerLoop();
 

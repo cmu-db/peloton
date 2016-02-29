@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "nanomsg.h"
-#include "message_queue.h"
-#include "rpc_method.h"
+#include "backend/message/nanomsg.h"
+#include "backend/message/rpc_method.h"
 
+#include <iostream>
 #include <string>
 #include <thread>
 #include <map>
@@ -23,14 +23,18 @@
 namespace peloton {
 namespace message {
 
+#define RECV_QUEUE "inproc://recv_queue"
+
 class RpcServer {
 
   typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
+
+  /*
   typedef struct RecvItem {
-    NanoMsg*                    socket;
     RpcMethod* 					method;
     google::protobuf::Message* 	request;
   } QueueItem;
+  */
 
 public:
   RpcServer(const char* url);
@@ -41,7 +45,7 @@ public:
 
   // start
   void Start();
-  void StartSimple();
+//  void StartSimple();
 
   // Multiple woker threads
   void Worker(const char* debuginfo);
@@ -61,12 +65,23 @@ public:
 
 private:
 
-  NanoMsg        socket_;
-  int            socket_id_;
+  // the rpc function can call this to execute something
+  static void Callback() {
+    std::cout << "This is server backcall:" << std::endl;
+  }
+
+  NanoMsg        socket_tcp_;
+  NanoMsg        socket_inproc_;
+  int            socket_tcp_id_;
+  int            socket_inproc_id_;
   RpcMethodMap   rpc_method_map_;
 
-  std::thread    worker_thread_;
-  MessageQueue<RecvItem>   recv_queue_;
+  std::thread    worker_thread1_;
+  std::thread    worker_thread2_;
+  std::thread    worker_thread3_;
+  std::thread    worker_thread4_;
+  std::thread    worker_thread5_;
+//  MessageQueue<RecvItem>   recv_queue_;
 };
 
 }  // namespace message
