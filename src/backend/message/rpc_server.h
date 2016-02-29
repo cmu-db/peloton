@@ -15,6 +15,7 @@
 #include "backend/message/nanomsg.h"
 #include "backend/message/rpc_method.h"
 
+#include <iostream>
 #include <string>
 #include <thread>
 #include <map>
@@ -63,6 +64,11 @@ public:
   void Close();
 
 private:
+
+  // the rpc function can call this to execute something
+  static void Callback() {
+    std::cout << "This is server backcall:" << std::endl;
+  }
 
   NanoMsg        socket_tcp_;
   NanoMsg        socket_inproc_;

@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "rpc_channel.h"
+#include "rpc_controller.h"
+#include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
 #include <city.h>
@@ -21,12 +23,10 @@ namespace message {
 
 RpcChannel::RpcChannel(const char* url) :
   socket_(AF_SP, NN_REQ),
-  socket_id_(socket_.Connect(url))
-{
+  socket_id_(socket_.Connect(url)) {
 }
 
-RpcChannel::~RpcChannel()
-{
+RpcChannel::~RpcChannel() {
   Close();
 }
 
@@ -34,8 +34,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                                   google::protobuf::RpcController* controller,
                                   const google::protobuf::Message* request,
                                   google::protobuf::Message* response,
-                                  google::protobuf::Closure* done)
-{
+                                  google::protobuf::Closure* done) {
+
+  if (controller->Failed()) {
+      std::string error = controller->ErrorText();
+      LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
+  }
   // Get the rpc function name
   std::string methodname = std::string( method->full_name() );
 
@@ -71,13 +75,10 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   if (done != NULL) {
     done->Run();
   }
-
-  //TODO: Use controller there
-  std::cout << controller << std::endl;
 }
 
-void RpcChannel::Close()
-{
+void RpcChannel::Close() {
+
   if (socket_id_ > 0) {
     socket_.Shutdown(socket_id_);
     socket_id_ = 0;

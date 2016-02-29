@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/message/rpc_server.h"
+#include "backend/message/rpc_controller.h"
 #include "backend/message/nanomsg.h"
+#include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>
@@ -194,7 +196,15 @@ void RpcServer::Worker(const char* debuginfo) {
       freemsg(buf);
 
       // Invoke the corresponding rpc method
-      rpc_method->service_->CallMethod(method, NULL, request, response, NULL);
+      google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&Callback);
+      RpcController controller;
+      rpc_method->service_->CallMethod(method, &controller, request, response, callback);
+
+      // TODO: controller should be set within rpc method
+      if (controller.Failed()) {
+          std::string error = controller.ErrorText();
+          LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str() );
+      }
 
       // Send back the response message. The message has been set up when executing rpc method
       size_t msg_len = response->ByteSize();

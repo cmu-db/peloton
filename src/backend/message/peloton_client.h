@@ -105,7 +105,7 @@ public:
 
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
         ::peloton::message::HeartbeatResponse* response) {
-    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&Call);
+    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
     stub_->Heartbeat(controller_, request, response, callback);
   }
 
@@ -121,11 +121,13 @@ public:
 
 private:
 
-  static void Call() {
-    std::cout << "This is backcall:" << std::endl;
+  static void HearbeatCallback() {
+    std::cout << "This is Hearbeat backcall:" << std::endl;
   }
 
   RpcChannel*       channel_;
+
+  //TODO: controller might be moved out if needed
   RpcController*    controller_;
   AbstractPelotonService::Stub* stub_;
 };
