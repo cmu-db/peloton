@@ -76,11 +76,6 @@ private:
   int            socket_inproc_id_;
   RpcMethodMap   rpc_method_map_;
 
-  std::thread    worker_thread1_;
-  std::thread    worker_thread2_;
-  std::thread    worker_thread3_;
-  std::thread    worker_thread4_;
-  std::thread    worker_thread5_;
 //  MessageQueue<RecvItem>   recv_queue_;
 };
 
