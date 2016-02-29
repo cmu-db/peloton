@@ -145,7 +145,8 @@ static int GetLowerBound() {
 }
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
-                        std::vector<double> columns_accessed, double cost) {
+                        std::vector<double> columns_accessed, double cost,
+                        const oid_t query_repeat_count) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
@@ -169,19 +170,25 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Run all the executors
     for (auto executor : executors) {
-      status = executor->Init();
-      if (status == false) throw Exception("Init failed");
 
-      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+      // Repeat the query
+      for(oid_t query_itr = 0; query_itr < query_repeat_count; query_itr++) {
 
-      while (executor->Execute() == true) {
-        std::unique_ptr<executor::LogicalTile> result_tile(
-            executor->GetOutput());
-        result_tiles.emplace_back(result_tile.release());
+        status = executor->Init();
+        if (status == false) throw Exception("Init failed");
+
+        std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+        while (executor->Execute() == true) {
+          std::unique_ptr<executor::LogicalTile> result_tile(
+              executor->GetOutput());
+          result_tiles.emplace_back(result_tile.release());
+        }
+
+        // Execute stuff
+        executor->Execute();
       }
 
-      // Execute stuff
-      executor->Execute();
     }
 
     // Capture fine-grained stats in adapt experiment
@@ -232,7 +239,7 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
-void RunDirectTest() {
+void RunDirectTest(const oid_t query_repeat_count) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -327,12 +334,12 @@ void RunDirectTest() {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
 
   txn_manager.CommitTransaction(txn);
 }
 
-void RunAggregateTest() {
+void RunAggregateTest(const oid_t query_repeat_count) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -482,12 +489,12 @@ void RunAggregateTest() {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
 
   txn_manager.CommitTransaction(txn);
 }
 
-void RunArithmeticTest() {
+void RunArithmeticTest(const oid_t query_repeat_count) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -623,7 +630,7 @@ void RunArithmeticTest() {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -726,7 +733,7 @@ void RunJoinTest() {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, 1);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -829,7 +836,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, 1);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -884,7 +891,7 @@ void RunInsertTest() {
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, 1);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -953,7 +960,7 @@ void RunUpdateTest() {
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors, columns_accessed, cost, 1);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -974,6 +981,8 @@ std::vector<OperatorType> operators = {
 std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 std::vector<double> projectivity = {0.02, 0.1, 0.5, 1.0};
+
+const oid_t query_repeat_count = 10;
 
 void RunProjectivityExperiment() {
   state.selectivity = 1.0;
@@ -1005,13 +1014,13 @@ void RunProjectivityExperiment() {
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest();
+          RunDirectTest(query_repeat_count);
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest();
+          RunAggregateTest(query_repeat_count);
 
-          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest();
+          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          //RunArithmeticTest();
         }
       }
     }
@@ -1050,13 +1059,13 @@ void RunSelectivityExperiment() {
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest();
+          RunDirectTest(query_repeat_count);
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest();
+          RunAggregateTest(query_repeat_count);
 
-          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest();
+          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          //RunArithmeticTest();
         }
       }
     }
@@ -1102,7 +1111,7 @@ void RunOperatorExperiment() {
 
           // Run operator
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunDirectTest();
+          RunDirectTest(query_repeat_count);
         }
       }
     }
