@@ -19,6 +19,7 @@
 #include <ctime>
 #include <cassert>
 #include <thread>
+#include <algorithm>
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
@@ -145,8 +146,7 @@ static int GetLowerBound() {
 }
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
-                        std::vector<double> columns_accessed, double cost,
-                        const oid_t query_repeat_count) {
+                        std::vector<double> columns_accessed, double cost) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   auto txn_count = state.transactions;
@@ -170,10 +170,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Run all the executors
     for (auto executor : executors) {
-
-      // Repeat the query
-      for(oid_t query_itr = 0; query_itr < query_repeat_count; query_itr++) {
-
         status = executor->Init();
         if (status == false) throw Exception("Init failed");
 
@@ -187,8 +183,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
         // Execute stuff
         executor->Execute();
-      }
-
     }
 
     // Capture fine-grained stats in adapt experiment
@@ -239,7 +233,7 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
-void RunDirectTest(const oid_t query_repeat_count) {
+void RunDirectTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -255,7 +249,7 @@ void RunDirectTest(const oid_t query_repeat_count) {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  oid_t column_count = state.projectivity * state.column_count;
+  oid_t column_count = std::max(1.0, state.projectivity * state.column_count);
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
@@ -334,12 +328,12 @@ void RunDirectTest(const oid_t query_repeat_count) {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
 
-void RunAggregateTest(const oid_t query_repeat_count) {
+void RunAggregateTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -374,7 +368,7 @@ void RunAggregateTest(const oid_t query_repeat_count) {
   /////////////////////////////////////////////////////////
 
   // Resize column ids to contain only columns over which we compute aggregates
-  column_count = state.projectivity * state.column_count;
+  column_count = std::max(1.0, state.projectivity * state.column_count);
   column_ids.resize(column_count);
 
   // (1-5) Setup plan node
@@ -489,12 +483,12 @@ void RunAggregateTest(const oid_t query_repeat_count) {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
 
-void RunArithmeticTest(const oid_t query_repeat_count) {
+void RunArithmeticTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -539,7 +533,7 @@ void RunArithmeticTest(const oid_t query_repeat_count) {
 
   // target list
   expression::AbstractExpression *sum_expr = nullptr;
-  oid_t projection_column_count = state.projectivity * state.column_count;
+  oid_t projection_column_count = std::max(1.0, state.projectivity * state.column_count);
 
   // Resize column ids to contain only columns over which we evaluate the
   // expression
@@ -630,7 +624,7 @@ void RunArithmeticTest(const oid_t query_repeat_count) {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost, query_repeat_count);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -733,7 +727,7 @@ void RunJoinTest() {
   column_ids.push_back(0);
   auto columns_accessed = GetColumnsAccessed(column_ids);
 
-  ExecuteTest(executors, columns_accessed, cost, 1);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -836,7 +830,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost, 1);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -891,7 +885,7 @@ void RunInsertTest() {
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost, 1);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -960,7 +954,7 @@ void RunUpdateTest() {
   double cost = 0;
   std::vector<double> columns_accessed;
 
-  ExecuteTest(executors, columns_accessed, cost, 1);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -969,9 +963,9 @@ void RunUpdateTest() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {50, 200};
+std::vector<oid_t> column_counts = {25, 100};
 
-std::vector<double> write_ratios = {0, 0.1};
+std::vector<double> write_ratios = {0, 1.0};
 
 std::vector<LayoutType> layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
@@ -1014,10 +1008,10 @@ void RunProjectivityExperiment() {
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest(query_repeat_count);
+          RunDirectTest();
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest(query_repeat_count);
+          RunAggregateTest();
 
           //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
           //RunArithmeticTest();
@@ -1059,10 +1053,10 @@ void RunSelectivityExperiment() {
 
           // Go over all ops
           state.operator_type = OPERATOR_TYPE_DIRECT;
-          RunDirectTest(query_repeat_count);
+          RunDirectTest();
 
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
-          RunAggregateTest(query_repeat_count);
+          RunAggregateTest();
 
           //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
           //RunArithmeticTest();
@@ -1111,7 +1105,7 @@ void RunOperatorExperiment() {
 
           // Run operator
           state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunDirectTest(query_repeat_count);
+          RunDirectTest();
         }
       }
     }

@@ -24,11 +24,11 @@ extern storage::DataTable *hyadapt_table;
 
 void CreateAndLoadTable(LayoutType layout_type);
 
-void RunDirectTest(const oid_t query_repeat_count = 1);
+void RunDirectTest();
 
-void RunAggregateTest(const oid_t query_repeat_count = 1);
+void RunAggregateTest();
 
-void RunArithmeticTest(const oid_t query_repeat_count = 1);
+void RunArithmeticTest();
 
 void RunJoinTest();
 
