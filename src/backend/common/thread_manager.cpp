@@ -35,25 +35,22 @@ ThreadManager::~ThreadManager() {
 
     if (!terminate_) {
         // Scope based locking.
-            {
-                // Put unique lock on task mutex.
-                std::unique_lock<std::mutex> lock(thread_pool_mutex_);
+        {
+            // Put unique lock on task mutex.
+            std::unique_lock < std::mutex > lock(thread_pool_mutex_);
 
-                // Set termination flag to true.
-                terminate_ = true;
-            }
+            // Set termination flag to true.
+            terminate_ = true;
+        }
 
-            // Wake up all threads.
-            condition_.notify_all();
+        // Wake up all threads.
+        condition_.notify_all();
 
-            // Join all threads.
-            for(std::thread &thread : thread_pool_) {
-                thread.join();
-            }
-
-            // Empty workers vector.
-            thread_pool_.empty();
-    }
+        // Join all threads.
+        for (std::thread &thread : thread_pool_) {
+            thread.join();
+        }
+    } // end if
 }
 
 void ThreadManager::AddTask(std::function<void()> f) {
