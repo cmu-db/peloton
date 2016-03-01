@@ -13,6 +13,7 @@
 #include "backend/message/peloton_service.h"
 #include "backend/message/peloton_endpoint.h"
 #include "backend/message/rpc_server.h"
+#include "backend/common/logger.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -27,17 +28,38 @@ void PelotonService::TransactionInit(::google::protobuf::RpcController* controll
         ::peloton::message::TransactionInitResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionWork(::google::protobuf::RpcController* controller,
         const ::peloton::message::TransactionWorkRequest* request,
         ::peloton::message::TransactionWorkResponse* response,
         ::google::protobuf::Closure* done) {
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionPrefetch(::google::protobuf::RpcController* controller,
@@ -45,8 +67,19 @@ void PelotonService::TransactionPrefetch(::google::protobuf::RpcController* cont
         ::peloton::message::TransactionPrefetchAcknowledgement* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionMap(::google::protobuf::RpcController* controller,
@@ -54,8 +87,19 @@ void PelotonService::TransactionMap(::google::protobuf::RpcController* controlle
         ::peloton::message::TransactionMapResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionReduce(::google::protobuf::RpcController* controller,
@@ -63,8 +107,19 @@ void PelotonService::TransactionReduce(::google::protobuf::RpcController* contro
         ::peloton::message::TransactionReduceResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionPrepare(::google::protobuf::RpcController* controller,
@@ -72,8 +127,19 @@ void PelotonService::TransactionPrepare(::google::protobuf::RpcController* contr
         ::peloton::message::TransactionPrepareResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionFinish(::google::protobuf::RpcController* controller,
@@ -81,8 +147,19 @@ void PelotonService::TransactionFinish(::google::protobuf::RpcController* contro
         ::peloton::message::TransactionFinishResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionRedirect(::google::protobuf::RpcController* controller,
@@ -90,8 +167,19 @@ void PelotonService::TransactionRedirect(::google::protobuf::RpcController* cont
         ::peloton::message::TransactionRedirectResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TransactionDebug(::google::protobuf::RpcController* controller,
@@ -99,8 +187,19 @@ void PelotonService::TransactionDebug(::google::protobuf::RpcController* control
         ::peloton::message::TransactionDebugResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::SendData(::google::protobuf::RpcController* controller,
@@ -108,8 +207,19 @@ void PelotonService::SendData(::google::protobuf::RpcController* controller,
         ::peloton::message::SendDataResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::Initialize(::google::protobuf::RpcController* controller,
@@ -117,8 +227,19 @@ void PelotonService::Initialize(::google::protobuf::RpcController* controller,
         ::peloton::message::InitializeResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::ShutdownPrepare(::google::protobuf::RpcController* controller,
@@ -126,8 +247,19 @@ void PelotonService::ShutdownPrepare(::google::protobuf::RpcController* controll
         ::peloton::message::ShutdownPrepareResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
@@ -135,14 +267,31 @@ void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
         ::peloton::message::ShutdownResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
         const ::peloton::message::HeartbeatRequest* request,
         ::peloton::message::HeartbeatResponse* response,
         ::google::protobuf::Closure* done) {
+
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
 
     std::cerr << "Received from client: " <<
         "sender site: " << request->sender_site() <<
@@ -153,12 +302,11 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
     Status status = ABORT_SPECULATIVE;
     response->set_status(status);
 
+    // if callback exist, run it
     if (done) {
         done->Run();
     }
 
-    //TODO: use controller here
-    std::cout << "controller: " << controller << std::endl;
 }
 
 void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
@@ -166,8 +314,19 @@ void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
         ::peloton::message::UnevictDataResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 
 void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
@@ -175,8 +334,19 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
         ::peloton::message::TimeSyncResponse* response,
         ::google::protobuf::Closure* done) {
 
-    //TODO: use controller here
-    std::cout << controller << request << response << done << std::endl;
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+    // TODO: process request and set response
+    std::cout << request << response;
+
+    // if callback exist, run it
+    if (done) {
+        done->Run();
+    }
 }
 /*
 void StartPelotonService() {
