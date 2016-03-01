@@ -249,7 +249,7 @@ void RunDirectTest() {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  oid_t column_count = std::max(1.0, state.projectivity * state.column_count);
+  oid_t column_count = state.projectivity * state.column_count;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
@@ -368,7 +368,7 @@ void RunAggregateTest() {
   /////////////////////////////////////////////////////////
 
   // Resize column ids to contain only columns over which we compute aggregates
-  column_count = std::max(1.0, state.projectivity * state.column_count);
+  column_count = state.projectivity * state.column_count;
   column_ids.resize(column_count);
 
   // (1-5) Setup plan node
@@ -533,7 +533,7 @@ void RunArithmeticTest() {
 
   // target list
   expression::AbstractExpression *sum_expr = nullptr;
-  oid_t projection_column_count = std::max(1.0, state.projectivity * state.column_count);
+  oid_t projection_column_count = state.projectivity * state.column_count;
 
   // Resize column ids to contain only columns over which we evaluate the
   // expression
@@ -963,7 +963,7 @@ void RunUpdateTest() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {25, 100};
+std::vector<oid_t> column_counts = {100, 500};
 
 std::vector<double> write_ratios = {0, 1.0};
 
