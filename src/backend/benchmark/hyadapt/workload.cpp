@@ -963,7 +963,7 @@ void RunUpdateTest() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {100, 500};
+std::vector<oid_t> column_counts = {25, 500};
 
 std::vector<double> write_ratios = {0, 1.0};
 
