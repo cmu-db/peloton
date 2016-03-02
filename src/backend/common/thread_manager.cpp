@@ -82,8 +82,7 @@ void ThreadManager::Invoke() {
             condition_.wait(lock, [this]{ return !task_pool_.empty() || terminate_; });
 
             // If termination signal received and queue is empty then exit else continue clearing the queue.
-            if (terminate_ && task_pool_.empty())
-            {
+            if (terminate_ && task_pool_.empty()) {
                 return;
             }
 

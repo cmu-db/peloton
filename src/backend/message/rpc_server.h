@@ -45,10 +45,6 @@ public:
 
   // start
   void Start();
-//  void StartSimple();
-
-  // Multiple woker threads
-  void Worker(const char* debuginfo);
 
 //  std::thread WorkerThread(const char* debuginfo) {
 //    return std::thread([=] { Worker(debuginfo); });
@@ -64,6 +60,12 @@ public:
   void Close();
 
 private:
+
+  // Multiple woker threads
+  void Worker(const char* debuginfo);
+
+  // Forward message between two socket
+  void Forward();
 
   // the rpc function can call this to execute something
   static void Callback() {

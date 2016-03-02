@@ -82,8 +82,13 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
   }
 }
 
-void RpcServer::Start() {
+void RpcServer::Forward() {
+    LOG_TRACE ("Start forwarding messages between sockets: %d and %d", socket_tcp_.GetSocket(), socket_inproc_.GetSocket());
+    device(socket_tcp_.GetSocket(), socket_inproc_.GetSocket());
+}
 
+void RpcServer::Start() {
+/*
     // prepaere workers
     std::function<void()> worker1 = std::bind(&RpcServer::Worker, this, "this is worker_thread1");
     std::function<void()> worker2 = std::bind(&RpcServer::Worker, this, "this is worker_thread2");
@@ -97,9 +102,38 @@ void RpcServer::Start() {
     ThreadManager::GetInstance().AddTask(worker3);
     ThreadManager::GetInstance().AddTask(worker4);
     ThreadManager::GetInstance().AddTask(worker5);
-
+*/
     // start receiving and forwarding
-    device(socket_tcp_.GetSocket(), socket_inproc_.GetSocket());
+    std::function<void()> forward = std::bind(&RpcServer::Forward, this);
+    // add workers to thread pool
+    ThreadManager::GetInstance().AddTask(forward);
+
+    pollfd pfd [1];
+    pfd [0].fd = socket_tcp_.GetSocket();
+    pfd [0].events = NN_POLLIN;
+
+    // Loop listening the socket_inproc_
+    while (true) {
+        int rc = poll (pfd, 1, 1000);
+        if (rc == 0) {
+            LOG_TRACE ("Timeout when check fd: %d out", pfd [0].fd);
+            continue;
+        }
+        if (rc == -1) {
+            LOG_TRACE ("Error when check fd: %d out", pfd [0].fd);
+            exit (1);
+        }
+        if (pfd [0].revents & NN_POLLIN) {
+            LOG_TRACE ("Message can be received from fd: %d", pfd [0].fd);
+
+            // prepaere workers
+            std::function<void()> worker =
+                    std::bind(&RpcServer::Worker, this, "this is worker_thread");
+
+            // add workers to thread pool
+            ThreadManager::GetInstance().AddTask(worker);
+        }
+    }
 
 }
 
@@ -113,58 +147,63 @@ void RpcServer::Worker(const char* debuginfo) {
 
     uint64_t opcode = 0;
 
-    while (1) {
-      // Receive message
-      char* buf = NULL;
-      int bytes = socket.Receive(&buf, NN_MSG, 0);
-      if (bytes <= 0) continue;
+    int bytes = 0;
 
-      // Get the hashcode of the rpc method
-      memcpy((char*)(&opcode), buf, sizeof(opcode));
+    while (bytes <= 0) {
+        // Receive message
+        char* buf = NULL;
+        int bytes = socket.Receive(&buf, NN_MSG, 0);
+        if (bytes <= 0) {
+            LOG_TRACE("receive nothing and continue");
+            continue;
+        }
+        // Get the hashcode of the rpc method
+        memcpy((char*) (&opcode), buf, sizeof(opcode));
 
-      // Get the method iter from local map
-      RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
-      if (iter == rpc_method_map_.end()) {
-        continue;
-      }
+        // Get the method iter from local map
+        RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
+        if (iter == rpc_method_map_.end()) {
+            LOG_TRACE("No method found");
+        }
+        // Get the rpc method meta info: method descriptor
+        RpcMethod *rpc_method = iter->second;
+        const google::protobuf::MethodDescriptor *method = rpc_method->method_;
 
-      // Get the rpc method meta info: method descriptor
-      RpcMethod *rpc_method = iter->second;
-      const google::protobuf::MethodDescriptor *method = rpc_method->method_;
+        // Get request and response type and create them
+        google::protobuf::Message *request = rpc_method->request_->New();
+        google::protobuf::Message *response = rpc_method->response_->New();
 
-      // Get request and response type and create them
-      google::protobuf::Message *request = rpc_method->request_->New();
-      google::protobuf::Message *response = rpc_method->response_->New();
+        // Deserialize the receiving message
+        request->ParseFromString(buf + sizeof(opcode));
 
-      // Deserialize the receiving message
-      request->ParseFromString(buf + sizeof(opcode));
+        // Must free the buf since we use NN_MSG flag
+        freemsg(buf);
 
-      // Must free the buf since we use NN_MSG flag
-      freemsg(buf);
+        // Invoke the corresponding rpc method
+        google::protobuf::Closure* callback =
+                google::protobuf::internal::NewCallback(&Callback);
+        RpcController controller;
+        rpc_method->service_->CallMethod(method, &controller, request, response,
+                callback);
 
-      // Invoke the corresponding rpc method
-      google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&Callback);
-      RpcController controller;
-      rpc_method->service_->CallMethod(method, &controller, request, response, callback);
+        // TODO: controller should be set within rpc method
+        if (controller.Failed()) {
+            std::string error = controller.ErrorText();
+            LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
+        }
 
-      // TODO: controller should be set within rpc method
-      if (controller.Failed()) {
-          std::string error = controller.ErrorText();
-          LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str() );
-      }
+        // Send back the response message. The message has been set up when executing rpc method
+        size_t msg_len = response->ByteSize();
+        buf = (char*) peloton::message::allocmsg(msg_len, 0);
+        response->SerializeToArray(buf, msg_len);
 
-      // Send back the response message. The message has been set up when executing rpc method
-      size_t msg_len = response->ByteSize();
-      buf = (char*)peloton::message::allocmsg(msg_len, 0);
-      response->SerializeToArray(buf, msg_len);
+        // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
+        socket.Send(buf, msg_len, 0);
+        delete request;
+        delete response;
 
-      // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
-      socket.Send(buf, msg_len, 0);
-      delete request;
-      delete response;
-
-      // Must free the buf since it is created using nanomsg::allocmsg()
-      freemsg(buf);
+        // Must free the buf since it is created using nanomsg::allocmsg()
+        freemsg(buf);
     }
 }
 

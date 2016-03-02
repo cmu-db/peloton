@@ -53,6 +53,8 @@ private:
 	int err;
 };
 
+typedef nn_pollfd pollfd;
+
 inline const char *symbol (int i, int *value) {
 
     return nn_symbol (i, value);
@@ -81,6 +83,16 @@ inline int freemsg (void *msg) {
 inline void term () {
 
     nn_term ();
+}
+
+inline int poll (struct nn_pollfd *fds, int nfds, int timeout) {
+
+    int rc = nn_poll (fds, nfds, timeout);
+
+    if (nn_slow (rc < 0))
+        throw peloton::message::exception ();
+
+    return rc;
 }
 
 inline int device(int s1, int s2) {
