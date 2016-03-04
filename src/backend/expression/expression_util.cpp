@@ -303,7 +303,8 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, Abstract
     case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LIKE: {
       ConstantValueExpression *r_const =
           dynamic_cast<ConstantValueExpression *>(rc);
 
