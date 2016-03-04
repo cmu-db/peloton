@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// peloton_client.h
+// rpc_client.h
 //
-// Identification: src/backend/message/peloton_client.h
+// Identification: src/backend/message/rpc_client.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -15,21 +15,23 @@
 #include "abstract_service.pb.h"
 #include "peloton_endpoint.h"
 
+#include "backend/common/logger.h"
+
 #include <google/protobuf/stubs/common.h>
 #include <iostream>
 
 namespace peloton {
 namespace message {
 
-class PelotonClient {
+class RpcClient {
  public:
-  PelotonClient(const char* url) {
+    RpcClient(const char* url) {
     channel_ = new RpcChannel(url);
     controller_ = new RpcController();
     stub_ = new AbstractPelotonService::Stub(channel_);
   };
 
-  ~PelotonClient() {
+  ~RpcClient() {
     delete channel_;
     delete controller_;
     delete stub_;
@@ -104,7 +106,7 @@ class PelotonClient {
 
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
                  ::peloton::message::HeartbeatResponse* response) {
-    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
+    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback, this);
     stub_->Heartbeat(controller_, request, response, callback);
   }
 
@@ -120,8 +122,14 @@ class PelotonClient {
 
  private:
 
-  static void HearbeatCallback() {
-    std::cout << "This is Hearbeat backcall:" << std::endl;
+  static void HearbeatCallback(PelotonClient* client) {
+    LOG_TRACE("This is client Hearbeat callback: socket: %s", (char *)client);
+
+    // process heartbeat response
+
+    if (client != nullptr) {
+        delete client;
+    }
   }
 
   RpcChannel*       channel_;
@@ -129,6 +137,7 @@ class PelotonClient {
   //TODO: controller might be moved out if needed
   RpcController*    controller_;
   AbstractPelotonService::Stub* stub_;
+
 };
 
 }  // namespace message

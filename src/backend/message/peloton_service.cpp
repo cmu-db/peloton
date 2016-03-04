@@ -293,10 +293,9 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
         LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
     }
 
-    std::cerr << "Received from client: " <<
-        "sender site: " << request->sender_site() <<
-        "last_txn_id: " << request->last_transaction_id() <<
-         std::endl;
+    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
+            request->sender_site(),
+            request->last_transaction_id());
 
     response->set_sender_site(9876);
     Status status = ABORT_SPECULATIVE;
