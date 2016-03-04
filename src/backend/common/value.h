@@ -432,6 +432,7 @@ class Value {
    * This Value is the value and the rhs is the pattern
    */
   Value Like(const Value rhs) const;
+  Value NotLike(const Value rhs) const;
 
   // TODO: passing Value arguments by const reference SHOULD be standard
   // practice
@@ -3696,6 +3697,10 @@ inline Value Value::Like(const Value rhs) const {
   Liker liker(valueChars, patternChars, valueUTF8Length, patternUTF8Length);
 
   return liker.Like() ? GetTrue() : GetFalse();
+}
+
+inline Value Value::NotLike(const Value rhs) const {
+  return Like(rhs).IsTrue() ? GetFalse() : GetTrue();
 }
 
 }  // End peloton namespace

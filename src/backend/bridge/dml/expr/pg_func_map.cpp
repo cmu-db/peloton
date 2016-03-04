@@ -78,9 +78,9 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {2055, {EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, 2}},
 
     {850, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
-    {851, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
     {1631, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
-    {1632, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
+    {851, {EXPRESSION_TYPE_COMPARE_NOTLIKE, 2}},
+    {1632, {EXPRESSION_TYPE_COMPARE_NOTLIKE, 2}},
 
     //====--------------------------------
     // String expressions

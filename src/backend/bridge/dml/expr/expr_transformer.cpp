@@ -587,6 +587,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LIKE:
+    case EXPRESSION_TYPE_COMPARE_NOTLIKE:
       return expression::ExpressionUtil::ComparisonFactory(plt_exprtype, children[0],
                                            children[1]);
 

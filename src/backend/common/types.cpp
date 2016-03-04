@@ -379,6 +379,9 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_COMPARE_LIKE: {
       return "COMPARE_LIKE";
     }
+    case EXPRESSION_TYPE_COMPARE_NOTLIKE: {
+      return "COMPARE_NOT_LIKE";
+    }
     case EXPRESSION_TYPE_COMPARE_IN: {
       return "COMPARE_IN";
     }
@@ -562,6 +565,8 @@ ExpressionType StringToExpressionType(std::string str) {
     return EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
   } else if (str == "COMPARE_LIKE") {
     return EXPRESSION_TYPE_COMPARE_LIKE;
+  } else if (str == "COMPARE_NOT_LIKE") {
+    return EXPRESSION_TYPE_COMPARE_NOTLIKE;
   } else if (str == "COMPARE_IN") {
     return EXPRESSION_TYPE_COMPARE_IN;
   } else if (str == "CONJUNCTION_AND") {
