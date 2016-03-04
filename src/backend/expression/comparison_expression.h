@@ -173,6 +173,14 @@ class CmpLike {
   }
 };
 
+class CmpNotLike {
+ public:
+  inline static const char *op_name() { return "CmpNotLike"; }
+  inline static Value compare_withoutNull(const Value &l, const Value &r) {
+    return l.NotLike(r);
+  }
+};
+
 class CmpIn {
  public:
   inline static const char *op_name() { return "CmpIn"; }
