@@ -35,10 +35,6 @@ class ThreadManager {
   // global singleton
   static ThreadManager &GetInstance(void);
 
-  // The number of the threads should be inited
-  ThreadManager(int threads);
-  ~ThreadManager();
-
   // The main function: add task into the task queue
   void AddTask(std::function<void()> f);
 
@@ -47,6 +43,12 @@ class ThreadManager {
 
   // TODO: we don't need this API? by Michael
   //bool DetachThread(std::shared_ptr<std::thread> thread);
+
+ private:
+  // Constructor is private means you can't instance class object
+  // The number of the threads should be inited
+  ThreadManager(int threads);
+  ~ThreadManager();
 
  private:
 

@@ -12,35 +12,40 @@
 
 #pragma once
 
+#include "nanomsg.h"
+#include "rpc_client.h"
+
+#include <map>
+#include <mutex>
+#include <functional>
+
+namespace peloton {
+namespace message {
+
 
 class RpcClientManager {
 
 public:
+    RpcClientManager();
+    ~RpcClientManager();
+
+    void SetCallback(RpcClient* client, std::function<void()> callback);
+
+    void DeleteCallback(int key);
 
 private:
 
-    static void Loop
-    static void Callback(PelotonClient* client,
-            google::protobuf::Closure* callback);
-    static void HearbeatCallback(PelotonClient* client) {
-        LOG_TRACE("This is client Hearbeat callback: socket: %s",
-                (char *) client);
-        HearbeatResponse response;
-        client->GetResponse(&response);
+    void FdSet(int socket);
+    void FdLoop();
 
-        // process heartbeat response
+    // poll_fds is a mutex for FdLoop thread and FdSet function
+    pollfd* poll_fds_;
+    int poll_fds_count_;
+    std::mutex poll_fds_mutex_;
 
-        if (client != nullptr) {
-            delete client;
-        }
-    }
-
-    RpcChannel* channel_;
-
-    //TODO: controller might be moved out if needed
-    RpcController* controller_;
-    AbstractPelotonService::Stub* stub_;
-
-    static pollfd poll_sockets_;static map(socket, callback);
-
+    std::map<int, std::function<void()>> sock_func_;
+    std::mutex sock_func_mutex;
 };
+
+}  // namespace message
+}  // namespace peloton

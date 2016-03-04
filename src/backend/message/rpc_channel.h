@@ -34,6 +34,10 @@ public:
 
   void Close();
 
+  int GetSocket() {
+      return socket_.GetSocket();
+  }
+
 private:
   NanoMsg socket_;
   int socket_id_;

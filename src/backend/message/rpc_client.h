@@ -37,6 +37,8 @@ class RpcClient {
     delete stub_;
   }
 
+ public:
+
   // same rpc interface except for controller and callback function
 
   void TransactionInit(const ::peloton::message::TransactionInitRequest* request,
@@ -120,9 +122,14 @@ class RpcClient {
     stub_->TimeSync(controller_, request, response, NULL);
   }
 
+ public:
+  int GetSocket() {
+      return channel_->GetSocket();
+  }
+
  private:
 
-  static void HearbeatCallback(PelotonClient* client) {
+  static void HearbeatCallback(RpcClient* client) {
     LOG_TRACE("This is client Hearbeat callback: socket: %s", (char *)client);
 
     // process heartbeat response

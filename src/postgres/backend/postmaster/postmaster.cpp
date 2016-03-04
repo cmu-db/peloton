@@ -62,7 +62,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "backend/message/peloton_client.h"
+#include "backend/message/rpc_client.h"
 #include "backend/message/peloton_service.h"
 #include "backend/message/rpc_server.h"
 #include "backend/message/abstract_service.pb.h"
@@ -631,7 +631,7 @@ void TestSend() {
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			peloton::message::PelotonClient client(PELOTON_ENDPOINT_ADDR);
+			peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
 
 			client.Heartbeat(&request, &response);
 
