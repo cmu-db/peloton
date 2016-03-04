@@ -236,6 +236,8 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
           return new ComparisonExpression<CmpGte>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_LIKE):
           return new ComparisonExpression<CmpLike>(c, l, r);
+    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
+          return new ComparisonExpression<CmpNotLike>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_IN):
           return new ComparisonExpression<CmpIn>(c, l, r);
     default:
@@ -267,6 +269,8 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
           return new InlinedComparisonExpression<CmpGte, L, R>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_LIKE):
           return new InlinedComparisonExpression<CmpLike, L, R>(c, l, r);
+    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
+          return new InlinedComparisonExpression<CmpNotLike, L, R>(c, l, r);
     case (EXPRESSION_TYPE_COMPARE_IN):
           return new InlinedComparisonExpression<CmpIn, L, R>(c, l, r);
     default:
@@ -304,7 +308,8 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c, Abstract
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-    case EXPRESSION_TYPE_COMPARE_LIKE: {
+    case EXPRESSION_TYPE_COMPARE_LIKE: 
+    case EXPRESSION_TYPE_COMPARE_NOTLIKE: {
       ConstantValueExpression *r_const =
           dynamic_cast<ConstantValueExpression *>(rc);
 
@@ -942,6 +947,7 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
     case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
     case (EXPRESSION_TYPE_COMPARE_LIKE):
+    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
     case (EXPRESSION_TYPE_COMPARE_IN):
     ret = ComparisonFactory(obj, et, lc, rc);
     break;
@@ -1073,6 +1079,7 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(json_spirit::Object &obj,
     case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
     case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
     case (EXPRESSION_TYPE_COMPARE_LIKE):
+    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
     ret = ComparisonFactory(et, lc, rc);
     break;
 
