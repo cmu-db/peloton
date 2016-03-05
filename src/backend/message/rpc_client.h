@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_channel.h"
 #include "rpc_controller.h"
+#include "rpc_channel.h"
 #include "abstract_service.pb.h"
 #include "peloton_endpoint.h"
 
@@ -23,12 +23,15 @@
 namespace peloton {
 namespace message {
 
+class RpcClientManager;
+
 class RpcClient {
  public:
-    RpcClient(const char* url) {
-    channel_ = new RpcChannel(url);
-    controller_ = new RpcController();
-    stub_ = new AbstractPelotonService::Stub(channel_);
+    RpcClient(const char* url) :
+        channel_ (new RpcChannel(url)),
+        controller_ (new RpcController()),
+        stub_ (new AbstractPelotonService::Stub(channel_)) {
+
   };
 
   ~RpcClient() {
@@ -109,6 +112,7 @@ class RpcClient {
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
                  ::peloton::message::HeartbeatResponse* response) {
     google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback, this);
+    //controller_->SetRpcClientManager(&client_manager_);
     stub_->Heartbeat(controller_, request, response, callback);
   }
 
@@ -122,10 +126,10 @@ class RpcClient {
     stub_->TimeSync(controller_, request, response, NULL);
   }
 
- public:
-  int GetSocket() {
-      return channel_->GetSocket();
-  }
+// public:
+//  int GetSocket() {
+//      return channel_->GetSocket();
+//  }
 
  private:
 
@@ -138,6 +142,8 @@ class RpcClient {
         delete client;
     }
   }
+
+ private:
 
   RpcChannel*       channel_;
 

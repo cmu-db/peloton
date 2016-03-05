@@ -17,23 +17,27 @@
 
 #include <map>
 #include <mutex>
+#include <memory>
 #include <functional>
 
 namespace peloton {
 namespace message {
 
-
 class RpcClientManager {
 
 public:
-    RpcClientManager();
-    ~RpcClientManager();
+public:
+    // global singleton
+    static RpcClientManager &GetInstance(void);
 
-    void SetCallback(RpcClient* client, std::function<void()> callback);
+    void SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback);
 
     void DeleteCallback(int key);
 
 private:
+
+    RpcClientManager();
+    ~RpcClientManager();
 
     void FdSet(int socket);
     void FdLoop();

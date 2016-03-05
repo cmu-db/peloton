@@ -12,6 +12,8 @@
 
 #include "rpc_channel.h"
 #include "rpc_controller.h"
+#include "rpc_client_manager.h"
+#include "nanomsg.h"
 #include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
@@ -21,9 +23,14 @@
 namespace peloton {
 namespace message {
 
+//RpcChannel::RpcChannel(const char* url) :
+//  socket_(AF_SP, NN_REQ),
+//  socket_id_(socket_.Connect(url)) {
+//}
+
 RpcChannel::RpcChannel(const char* url) :
-  socket_(AF_SP, NN_REQ),
-  socket_id_(socket_.Connect(url)) {
+  psocket_(std::make_shared<NanoMsg>(AF_SP, NN_REQ)),
+  socket_id_(psocket_->Connect(url)) {
 }
 
 RpcChannel::~RpcChannel() {
@@ -60,30 +67,34 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
 
   // send the message to server
-  socket_.Send(buf,msg_len,0);
+  psocket_->Send(buf,msg_len,0);
 
   // call nanomsg function to free the buf
   freemsg(buf);
 
-  // wait to receive the response
-  socket_.Receive(&buf, NN_MSG, 0);
+  std::function<void()> call = std::bind(Callback);
+  RpcClientManager::GetInstance().SetCallback(this->psocket_, call);
 
-  // deserialize the receiving msg
-  response->ParseFromString(buf);
-
-  // free the receiving buf
-  freemsg(buf);
+//  // wait to receive the response
+//  psocket_->Receive(&buf, NN_MSG, 0);
+//
+//  // deserialize the receiving msg
+//  response->ParseFromString(buf);
+//
+//  // free the receiving buf
+//  freemsg(buf);
 
   // run call back function
   if (done != NULL) {
     done->Run();
+    std::cout << response;
   }
 }
 
 void RpcChannel::Close() {
 
   if (socket_id_ > 0) {
-    socket_.Shutdown(socket_id_);
+    psocket_->Shutdown(socket_id_);
     socket_id_ = 0;
   }
 }

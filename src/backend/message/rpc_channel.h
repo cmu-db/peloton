@@ -13,9 +13,12 @@
 #pragma once
 
 #include "nanomsg.h"
+#include "backend/common/logger.h"
+
 #include <google/protobuf/service.h>
 #include <google/protobuf/message.h>
 #include <string>
+#include <memory>
 
 namespace peloton {
 namespace message {
@@ -34,13 +37,18 @@ public:
 
   void Close();
 
-  int GetSocket() {
-      return socket_.GetSocket();
+//  int GetSocket() {
+//      return socket_.GetSocket();
+//  }
+
+  static void Callback() {
+    LOG_TRACE("This is client test callback: socket");
   }
 
 private:
-  NanoMsg socket_;
+  std::shared_ptr<NanoMsg> psocket_;
   int socket_id_;
+
 };
 
 }  // namespace message

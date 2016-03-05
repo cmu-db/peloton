@@ -16,6 +16,12 @@
 namespace peloton {
 namespace message {
 
+// global singleton
+RpcClientManager &RpcClientManager::GetInstance(void) {
+  static RpcClientManager client_manager;
+  return client_manager;
+}
+
 RpcClientManager::RpcClientManager() :
         poll_fds_ (nullptr),
         poll_fds_count_ (0) {
@@ -28,13 +34,13 @@ RpcClientManager::~RpcClientManager() {
     }
 }
 
-void RpcClientManager::SetCallback(RpcClient* client, std::function<void()> callback) {
+void RpcClientManager::SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback) {
 
-    int socket = client->GetSocket();
+    int sock = socket->GetSocket();
 
     // the callback thread will delete this item
     std::lock_guard<std::mutex> guard(sock_func_mutex);
-    sock_func_.insert(std::make_pair(socket, callback));
+    sock_func_.insert(std::make_pair(sock, callback));
 }
 
 void RpcClientManager::DeleteCallback(int key) {

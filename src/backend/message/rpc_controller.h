@@ -18,12 +18,15 @@
 namespace peloton {
 namespace message {
 
+class RpcClientManager;
+
 class RpcController : public google::protobuf::RpcController {
 
   public:
     RpcController() { Reset(); }
 
     void Reset() {
+      client_manager_ = nullptr;
       error_str_ = "";
       is_failed_ = false;
     }
@@ -65,7 +68,13 @@ class RpcController : public google::protobuf::RpcController {
         return;
     }
 
+    void SetRpcClientManager(RpcClientManager* manager) {
+        client_manager_ = manager;
+    }
+
   private:
+
+    RpcClientManager* client_manager_;
 
     std::string error_str_;
     bool is_failed_;

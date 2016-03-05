@@ -83,6 +83,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <limits.h>
+#include <memory>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -631,9 +632,12 @@ void TestSend() {
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
+			auto pclient = std::make_shared<peloton::message::RpcClient>("PELOTON_ENDPOINT_ADDR");
 
-			client.Heartbeat(&request, &response);
+			//peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
+            //client.Heartbeat(&request, &response);
+
+			pclient->Heartbeat(&request, &response);
 
 			if (response.has_sender_site() == true) {
 				std::cout << "sender site: " << response.sender_site()
