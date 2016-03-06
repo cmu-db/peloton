@@ -549,7 +549,7 @@ void Coordinator() {
 		rpc_server.RegisterService(service);
 		rpc_server.Start();
 	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+		std::cerr << "NN EXCEPTION in Coordinator: " << e.what() << std::endl;
 		delete service;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
@@ -625,14 +625,14 @@ void Coordinator() {
 void TestSend() {
 
 	try {
-		for (int i = 0; i < 100; i++) {
+		for (int i = 1; i < 5; i++) {
 			peloton::message::HeartbeatRequest request;
 			peloton::message::HeartbeatResponse response;
 
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			auto pclient = std::make_shared<peloton::message::RpcClient>("PELOTON_ENDPOINT_ADDR");
+			auto pclient = std::make_shared<peloton::message::RpcClient>(PELOTON_ENDPOINT_ADDR);
 
 			//peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
             //client.Heartbeat(&request, &response);
@@ -654,7 +654,7 @@ void TestSend() {
 		}
 
 	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
+		std::cerr << "NN EXCEPTION in Sending: " << e.what() << std::endl;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 	} catch (...) {

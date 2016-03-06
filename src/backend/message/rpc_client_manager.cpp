@@ -11,7 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "rpc_client_manager.h"
+#include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
+#include "backend/common/thread_manager.h"
+
+#include <unistd.h>
 
 namespace peloton {
 namespace message {
@@ -23,8 +27,17 @@ RpcClientManager &RpcClientManager::GetInstance(void) {
 }
 
 RpcClientManager::RpcClientManager() :
-        poll_fds_ (nullptr),
+        poll_fds_ (NULL),
         poll_fds_count_ (0) {
+
+    LOG_TRACE( "This is RpcClientManager Constructor");
+
+    // prepaere workers
+    std::function<void()> listener =
+                        std::bind(&RpcClientManager::FdLoop, this);
+
+    // add workers to thread pool
+    ThreadManager::GetInstance().AddTask(listener);
 }
 
 RpcClientManager::~RpcClientManager() {
@@ -36,36 +49,55 @@ RpcClientManager::~RpcClientManager() {
 
 void RpcClientManager::SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback) {
 
+    LOG_TRACE( "Client: This is RPC Client Manager SetCallback");
+
     int sock = socket->GetSocket();
 
+    std::unique_lock<std::mutex> lock(poll_fds_mutex_);
+
+    LOG_TRACE( "Client: Set socket:%d in map", sock);
+    // set fd
+    FdSet(sock);
+
     // the callback thread will delete this item
-    std::lock_guard<std::mutex> guard(sock_func_mutex);
     sock_func_.insert(std::make_pair(sock, callback));
+
+    lock.unlock();
+    cond_.notify_one();
+
+    LOG_TRACE( "SetCallback: release lock");
 }
 
 void RpcClientManager::DeleteCallback(int key) {
 
     // the callback thread will delete this item
-    std::lock_guard<std::mutex> guard(sock_func_mutex);
+    std::unique_lock<std::mutex> lock(poll_fds_mutex_);
 
     auto iter = sock_func_.find(key);
     if (iter != sock_func_.end()) {
         sock_func_.erase(iter);
     }
+
+    lock.unlock();
 }
 
 void RpcClientManager::FdSet(int socket) {
 
-    // scope lock
-    std::lock_guard<std::mutex> guard(poll_fds_mutex_);
-
-    pollfd* more_poll_fds = (pollfd*) realloc( poll_fds_, sizeof(pollfd) );
+    pollfd* more_poll_fds = (pollfd*) realloc( poll_fds_, sizeof(pollfd)*(poll_fds_count_+1) );
 
     if (more_poll_fds != NULL) {
         poll_fds_ = more_poll_fds;
         poll_fds_count_ ++;
         poll_fds_[poll_fds_count_-1].fd = socket;
         poll_fds_[poll_fds_count_-1].events = NN_POLLIN;
+
+        // check out every socket
+        for (int it = 0; it < poll_fds_count_; it++) {
+
+            // if Message can be received, put recv task in thread pool
+            LOG_TRACE ("Client check fd%d: %d", it, poll_fds_[it].fd);
+
+        } // end for
     } else {
         LOG_TRACE ("Error (re)allocating memory");
     }
@@ -76,16 +108,22 @@ void RpcClientManager::FdLoop(){
     // Loop listening the socket_inproc_
     while (true) {
 
-        // scope lock
-        std::lock_guard<std::mutex> guard(poll_fds_mutex_);
-        int rc = poll (poll_fds_, poll_fds_count_, 0);
+        std::unique_lock<std::mutex> lock(poll_fds_mutex_);
+
+        LOG_TRACE ("FdLoop: Get lock");
+
+        cond_.wait(lock);
+
+        int rc = poll (poll_fds_, poll_fds_count_, 100);
 
         if (rc == 0) {
-            LOG_TRACE ("Timeout when check fd");
+            LOG_TRACE ("Client: Timeout when check fd in RpcClientManager");
+            lock.unlock();
             continue;
         }
         if (rc == -1) {
-            LOG_TRACE ("Error when check fd");
+            LOG_TRACE ("Error when check fd in RpcClientManager");
+            lock.unlock();
             continue;
         }
 
@@ -94,7 +132,7 @@ void RpcClientManager::FdLoop(){
 
             // if Message can be received, put recv task in thread pool
             if (poll_fds_[it].revents & NN_POLLIN) {
-                LOG_TRACE ("Message can be received from fd: %d", poll_fds_[it].fd);
+                LOG_TRACE ("Client: Message can be received from fd: %d", poll_fds_[it].fd);
 
                 int socket = poll_fds_[it].fd;
                 auto iter = sock_func_.find(socket);
@@ -106,6 +144,8 @@ void RpcClientManager::FdLoop(){
                 ThreadManager::GetInstance().AddTask(callback);
             }
         } // end for
+
+        lock.unlock();
     } // end while
 }
 

@@ -28,9 +28,13 @@ namespace message {
 //  socket_id_(socket_.Connect(url)) {
 //}
 
-RpcChannel::RpcChannel(const char* url) :
-  psocket_(std::make_shared<NanoMsg>(AF_SP, NN_REQ)),
-  socket_id_(psocket_->Connect(url)) {
+RpcChannel::RpcChannel(const char* url) //:
+  //psocket_(std::make_shared<NanoMsg>(AF_SP, NN_REQ)),
+//  psocket_(new NanoMsg(AF_SP, NN_REQ)),
+//  socket_id_(psocket_->Connect(url))
+{
+          psocket_ = std::make_shared<NanoMsg>(AF_SP, NN_REQ);
+          socket_id_ = psocket_->Connect(url);
 }
 
 RpcChannel::~RpcChannel() {
@@ -47,6 +51,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       std::string error = controller->ErrorText();
       LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
   }
+
   // Get the rpc function name
   std::string methodname = std::string( method->full_name() );
   std::hash<std::string> string_hash_fn;
@@ -72,7 +77,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // call nanomsg function to free the buf
   freemsg(buf);
 
-  std::function<void()> call = std::bind(Callback);
+  std::function<void()> call = std::bind(Callback, psocket_);
   RpcClientManager::GetInstance().SetCallback(this->psocket_, call);
 
 //  // wait to receive the response
@@ -87,7 +92,10 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // run call back function
   if (done != NULL) {
     done->Run();
-    std::cout << response;
+  }
+
+  if (response != NULL) {
+      std::cout << response << std::endl;
   }
 }
 

@@ -12,6 +12,7 @@
 
 #include "rpc_controller.h"
 #include "rpc_channel.h"
+#include "rpc_client_manager.h"
 #include "abstract_service.pb.h"
 #include "peloton_endpoint.h"
 
@@ -23,15 +24,15 @@
 namespace peloton {
 namespace message {
 
-class RpcClientManager;
+//class RpcClientManager;
 
 class RpcClient {
  public:
     RpcClient(const char* url) :
+        manager_ (RpcClientManager::GetInstance()),
         channel_ (new RpcChannel(url)),
         controller_ (new RpcController()),
         stub_ (new AbstractPelotonService::Stub(channel_)) {
-
   };
 
   ~RpcClient() {
@@ -111,7 +112,7 @@ class RpcClient {
 
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
                  ::peloton::message::HeartbeatResponse* response) {
-    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback, this);
+    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
     //controller_->SetRpcClientManager(&client_manager_);
     stub_->Heartbeat(controller_, request, response, callback);
   }
@@ -133,17 +134,13 @@ class RpcClient {
 
  private:
 
-  static void HearbeatCallback(RpcClient* client) {
-    LOG_TRACE("This is client Hearbeat callback: socket: %s", (char *)client);
-
-    // process heartbeat response
-
-    if (client != nullptr) {
-        delete client;
-    }
+  static void HearbeatCallback() {
+    LOG_TRACE("This is client Hearbeat callback");
   }
 
  private:
+
+  RpcClientManager& manager_;
 
   RpcChannel*       channel_;
 

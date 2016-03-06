@@ -124,7 +124,7 @@ void RpcServer::Start() {
             exit (1);
         }
         if (pfd [0].revents & NN_POLLIN) {
-            LOG_TRACE ("Message can be received from fd: %d", pfd [0].fd);
+            LOG_TRACE ("Server: Message can be received from fd: %d", pfd [0].fd);
 
             // prepaere workers
             std::function<void()> worker =
@@ -152,7 +152,7 @@ void RpcServer::Worker(const char* debuginfo) {
     while (bytes <= 0) {
         // Receive message
         char* buf = NULL;
-        int bytes = socket.Receive(&buf, NN_MSG, 0);
+        bytes = socket.Receive(&buf, NN_MSG, 0);
         if (bytes <= 0) {
             LOG_TRACE("receive nothing and continue");
             continue;
@@ -198,7 +198,10 @@ void RpcServer::Worker(const char* debuginfo) {
         response->SerializeToArray(buf, msg_len);
 
         // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
+        LOG_TRACE("Server:Before send back");
         socket.Send(buf, msg_len, 0);
+        LOG_TRACE("Server:After send back");;
+
         delete request;
         delete response;
 

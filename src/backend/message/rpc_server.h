@@ -69,7 +69,7 @@ private:
 
   // the rpc function can call this to execute something
   static void Callback() {
-    std::cout << "This is server backcall:" << std::endl;
+    std::cout << "This is server backcall" << std::endl;
   }
 
   NanoMsg        socket_tcp_;

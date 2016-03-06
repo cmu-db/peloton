@@ -13,12 +13,12 @@
 #pragma once
 
 #include "nanomsg.h"
-#include "rpc_client.h"
 
 #include <map>
 #include <mutex>
 #include <memory>
 #include <functional>
+#include <condition_variable>
 
 namespace peloton {
 namespace message {
@@ -46,9 +46,9 @@ private:
     pollfd* poll_fds_;
     int poll_fds_count_;
     std::mutex poll_fds_mutex_;
+    std::condition_variable cond_;
 
     std::map<int, std::function<void()>> sock_func_;
-    std::mutex sock_func_mutex;
 };
 
 }  // namespace message
