@@ -21,6 +21,8 @@
 #include "backend/planner/abstract_join_plan.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile.h"
 
 namespace peloton {
 namespace executor {
@@ -49,6 +51,7 @@ bool AbstractJoinExecutor::DInit() {
   predicate_ = node.GetPredicate();
   proj_info_ = node.GetProjInfo();
   join_type_ = node.GetJoinType();
+  proj_schema_ = node.GetSchema();
 
   return true;
 }
@@ -84,6 +87,112 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
   return schema;
 }
 
+std::vector<LogicalTile::ColumnInfo>
+AbstractJoinExecutor::BuildSchemaFromLeftTile(
+    const std::vector<LogicalTile::ColumnInfo> *left_schema,
+    const catalog::Schema *output_schema, oid_t left_pos_list_count) {
+  assert(left_schema != nullptr);
+
+  // dummy physical tile for the empty child
+  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
+      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      nullptr, *output_schema, nullptr, 1));
+
+  std::vector<LogicalTile::ColumnInfo> schema;
+  auto total_size = output_schema->GetColumnCount();
+  if (proj_info_ == nullptr) {
+    // no projection. each column's of the right tile maps to the last position
+    // list
+    schema.insert(schema.end(), left_schema->begin(), left_schema->end());
+    for (oid_t right_col_idx = 0;
+         right_col_idx < total_size - left_schema->size(); right_col_idx++) {
+      LogicalTile::ColumnInfo col;
+      col.base_tile = ptile;
+      col.origin_column_id = right_col_idx;
+      col.position_list_idx = left_pos_list_count;
+      schema.push_back(col);
+    }
+  } else {
+    // non trivial projection. construct from direct map list
+    assert(!proj_info_->isNonTrivial());
+    auto &direct_map_list = proj_info_->GetDirectMapList();
+    schema.resize(direct_map_list.size());
+
+    for (auto &entry : direct_map_list) {
+      auto schema_col_idx = entry.first;
+      // map right column to output tile column
+      if (entry.second.first == 1) {
+        LogicalTile::ColumnInfo col;
+        col.base_tile = ptile;
+        col.origin_column_id = schema_col_idx;
+        col.position_list_idx = left_pos_list_count;
+        schema[schema_col_idx] = col;
+      } else {
+        // map left column to output tile column
+        assert(entry.second.second < left_schema->size());
+        schema[schema_col_idx] = (*left_schema)[entry.second.second];
+      }
+    }
+  }
+  assert(schema.size() == total_size);
+  return schema;
+}
+
+std::vector<LogicalTile::ColumnInfo>
+AbstractJoinExecutor::BuildSchemaFromRightTile(
+    const std::vector<LogicalTile::ColumnInfo> *right_schema,
+    const catalog::Schema *output_schema) {
+  assert(right_schema != nullptr);
+  // dummy physical tile for the empty child tile
+  std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
+      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      nullptr, *output_schema, nullptr, 1));
+
+  std::vector<LogicalTile::ColumnInfo> schema;
+  auto total_size = output_schema->GetColumnCount();
+  if (proj_info_ == nullptr) {
+    // no projection. each column's of the right tile maps to the first position
+    // list
+    for (oid_t left_col_idx = 0;
+         left_col_idx < total_size - right_schema->size(); left_col_idx++) {
+      LogicalTile::ColumnInfo col;
+      col.base_tile = ptile;
+      col.origin_column_id = left_col_idx;
+      col.position_list_idx = 0;
+      schema.push_back(col);
+    }
+    schema.insert(schema.end(), right_schema->begin(), right_schema->end());
+  } else {
+    // non trivial projection. construct from direct map list
+    assert(!proj_info_->isNonTrivial());
+    auto &direct_map_list = proj_info_->GetDirectMapList();
+    schema.resize(direct_map_list.size());
+
+    for (auto &entry : direct_map_list) {
+      auto schema_col_idx = entry.first;
+      // map left column to output tile column
+      if (entry.second.first == 0) {
+        LogicalTile::ColumnInfo col;
+        col.base_tile = ptile;
+        col.origin_column_id = schema_col_idx;
+        col.position_list_idx = 0;
+        schema[schema_col_idx] = col;
+      } else {
+        // map right column to output tile column
+        assert(entry.second.second < right_schema->size());
+        schema[schema_col_idx] = (*right_schema)[entry.second.second];
+        // reserve the left-most position list for left tile
+        schema[schema_col_idx].position_list_idx += 1;
+      }
+    }
+  }
+  assert(schema.size() == total_size);
+  return schema;
+}
+
+/**
+ * @ brief Build the joined tile with schema derived from children tiles
+ */
 std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
     LogicalTile *left_tile, LogicalTile *right_tile) {
   // Check the input logical tiles.
@@ -96,6 +205,7 @@ std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
   auto left_tile_schema = left_tile->GetSchema();
   auto right_tile_schema = right_tile->GetSchema();
 
+  // advance the position list index of right tile schema
   for (auto &col : right_tile_schema) {
     col.position_list_idx += left_tile->GetPositionLists().size();
   }
@@ -109,28 +219,30 @@ std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
   return output_tile;
 }
 
-std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
-    LogicalTile *left_tile, LogicalTile *right_tile) {
-  // Get position list from two logical tiles
-  auto &left_tile_position_lists = left_tile->GetPositionLists();
-  auto &right_tile_position_lists = right_tile->GetPositionLists();
+std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
+    LogicalTile *left_tile, LogicalTile *right_tile,
+    const catalog::Schema *output_schema) {
+  assert(output_schema != nullptr);
 
-  // Compute the output logical tile column count
-  size_t left_tile_column_count = left_tile_position_lists.size();
-  size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count =
-      left_tile_column_count + right_tile_column_count;
+  std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
 
-  assert(left_tile_column_count > 0);
-  assert(right_tile_column_count > 0);
+  // get the non empty tile
+  LogicalTile *non_empty_tile = GetNonEmptyTile(left_tile, right_tile);
 
-  // Construct position lists for output tile
-  std::vector<std::vector<oid_t>> position_lists;
-  for (size_t column_itr = 0; column_itr < output_tile_column_count;
-       column_itr++)
-    position_lists.push_back(std::vector<oid_t>());
+  auto non_empty_tile_schema = non_empty_tile->GetSchema();
 
-  return position_lists;
+  // left tile is empty
+  if (non_empty_tile == right_tile) {
+    /* build the schema given the projection */
+    output_tile->SetSchema(std::move(
+        BuildSchemaFromRightTile(&non_empty_tile_schema, output_schema)));
+  } else {
+    // right tile is empty
+    output_tile->SetSchema(std::move(
+        BuildSchemaFromLeftTile(&non_empty_tile_schema, output_schema,
+                                left_tile->GetPositionLists().size())));
+  }
+  return output_tile;
 }
 
 /**
@@ -192,19 +304,26 @@ void AbstractJoinExecutor::UpdateJoinRowSets() {
       break;
   }
 }
-
+/**
+ * Update the row set with all rows from the last tile from left child
+ */
 void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
   assert(left_result_tiles_.size() - no_matching_left_row_sets_.size() == 1);
   no_matching_left_row_sets_.emplace_back(left_result_tiles_.back()->begin(),
                                           left_result_tiles_.back()->end());
 }
 
+/**
+ * Update the row set with all rows from the last tile from right child
+ */
 void AbstractJoinExecutor::UpdateRightJoinRowSets() {
   assert(right_result_tiles_.size() - no_matching_right_row_sets_.size() == 1);
   no_matching_right_row_sets_.emplace_back(right_result_tiles_.back()->begin(),
                                            right_result_tiles_.back()->end());
 }
-
+/**
+ * Update the row set with all rows from the last tile from both child
+ */
 void AbstractJoinExecutor::UpdateFullJoinRowSets() {
   UpdateLeftJoinRowSets();
   UpdateRightJoinRowSets();
@@ -252,7 +371,10 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
 
   return false;
 }
-
+/*
+ * build left join output by adding null rows for every row from right tile
+ * which doesn't have a match
+ */
 bool AbstractJoinExecutor::BuildLeftJoinOutput() {
   while (left_matching_idx < no_matching_left_row_sets_.size()) {
     if (no_matching_left_row_sets_[left_matching_idx].empty()) {
@@ -260,12 +382,24 @@ bool AbstractJoinExecutor::BuildLeftJoinOutput() {
       continue;
     }
 
-    assert(right_result_tiles_.size() > 0);
+    std::unique_ptr<LogicalTile> output_tile(nullptr);
     auto left_tile = left_result_tiles_[left_matching_idx].get();
-    auto right_tile = right_result_tiles_.front().get();
-    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
-
-    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
+    LogicalTile::PositionListsBuilder pos_lists_builder;
+    if (right_result_tiles_.size() == 0) {
+      // no tile information for right tile. construct a output tile from left
+      // tile only
+      output_tile = BuildOutputLogicalTile(left_tile, nullptr, proj_schema_);
+      pos_lists_builder = LogicalTile::PositionListsBuilder(
+          &(left_tile->GetPositionLists()), nullptr);
+    } else {
+      assert(right_result_tiles_.size() > 0);
+      // construct the output tile from both children tiles
+      auto right_tile = right_result_tiles_.front().get();
+      output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+      pos_lists_builder =
+          LogicalTile::PositionListsBuilder(left_tile, right_tile);
+    }
+    // add rows with null values on the left
     for (auto left_row_itr : no_matching_left_row_sets_[left_matching_idx]) {
       pos_lists_builder.AddRightNullRow(left_row_itr);
     }
@@ -279,6 +413,10 @@ bool AbstractJoinExecutor::BuildLeftJoinOutput() {
   return false;
 }
 
+/*
+ * build right join output by adding null rows for every row from left tile
+ * which doesn't have a match
+ */
 bool AbstractJoinExecutor::BuildRightJoinOutput() {
   while (right_matching_idx < no_matching_right_row_sets_.size()) {
     if (no_matching_right_row_sets_[right_matching_idx].empty()) {
@@ -286,18 +424,30 @@ bool AbstractJoinExecutor::BuildRightJoinOutput() {
       continue;
     }
 
-    assert(left_result_tiles_.size() > 0);
-    auto left_tile = left_result_tiles_.front().get();
+    std::unique_ptr<LogicalTile> output_tile(nullptr);
     auto right_tile = right_result_tiles_[right_matching_idx].get();
-    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
-
-    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
+    LogicalTile::PositionListsBuilder pos_lists_builder;
+    if (left_result_tiles_.size() == 0) {
+      // no tile information for left tile. construct a output tile from right
+      // tile only
+      output_tile = BuildOutputLogicalTile(nullptr, right_tile, proj_schema_);
+      pos_lists_builder = LogicalTile::PositionListsBuilder(
+          nullptr, &(right_tile->GetPositionLists()));
+    } else {
+      assert(left_result_tiles_.size() > 0);
+      // construct the output tile from both children tiles
+      auto left_tile = left_result_tiles_.front().get();
+      output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+      pos_lists_builder =
+          LogicalTile::PositionListsBuilder(left_tile, right_tile);
+    }
+    // add rows with null values on the left
     for (auto right_row_itr : no_matching_right_row_sets_[right_matching_idx]) {
       pos_lists_builder.AddLeftNullRow(right_row_itr);
     }
-
     assert(pos_lists_builder.Size() > 0);
     output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+
     SetOutput(output_tile.release());
     right_matching_idx++;
     return true;

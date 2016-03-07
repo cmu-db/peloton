@@ -56,6 +56,13 @@ class AbstractJoinExecutor : public AbstractExecutor {
    *
    * The number of tile should be identical to the number of row sets,
    * as a row can be uniquely identified by tile id and row oid.
+   *
+   * For example, if we get 3 result tiles from a child, the row sets
+   * [ <oid_t1, oid_t2, oid_t4>, <oid_t6, oid_t9>, </> ]
+   * represents that rows oid_t1, oid_t2 and oid_4 from the first tile
+   * don't have matched row; row oid_t6 and oid_t9 of the second tile
+   * don't have matched row; every row in the last tile has matched row.
+   *
    */
   typedef std::vector<std::unordered_set<oid_t>> RowSets;
 
@@ -71,10 +78,26 @@ class AbstractJoinExecutor : public AbstractExecutor {
   std::unique_ptr<LogicalTile> BuildOutputLogicalTile(LogicalTile *left_tile,
                                                       LogicalTile *right_tile);
 
+  // Build the joined tile with one of the child tile and the schema
+  // of the result tile
+  std::unique_ptr<LogicalTile> BuildOutputLogicalTile(
+      LogicalTile *left_tile, LogicalTile *right_tile,
+      const catalog::Schema *output_schema);
+
   // Build the schema of the joined tile based on the projection info
   std::vector<LogicalTile::ColumnInfo> BuildSchema(
       std::vector<LogicalTile::ColumnInfo> &left,
       std::vector<LogicalTile::ColumnInfo> &right);
+
+  // build the column information from the right tile and the output schema
+  std::vector<LogicalTile::ColumnInfo> BuildSchemaFromRightTile(
+      const std::vector<LogicalTile::ColumnInfo> *right_schema,
+      const catalog::Schema *output_schema);
+
+  // build the column information from the left tile and the output schema
+  std::vector<LogicalTile::ColumnInfo> BuildSchemaFromLeftTile(
+      const std::vector<LogicalTile::ColumnInfo> *left_schema,
+      const catalog::Schema *output_schema, oid_t left_pos_list_count);
 
   // Build position lists
   std::vector<std::vector<oid_t>> BuildPostitionLists(LogicalTile *left_tile,
@@ -87,6 +110,19 @@ class AbstractJoinExecutor : public AbstractExecutor {
   void UpdateLeftJoinRowSets();
   void UpdateRightJoinRowSets();
   void UpdateFullJoinRowSets();
+
+  inline LogicalTile *GetNonEmptyTile(LogicalTile *left_tile,
+                                      LogicalTile *right_tile) {
+    LogicalTile *non_empty_tile = nullptr;
+    if (left_tile == nullptr) {
+      non_empty_tile = right_tile;
+    }
+    if (right_tile == nullptr) {
+      non_empty_tile = left_tile;
+    }
+    assert(non_empty_tile != nullptr);
+    return non_empty_tile;
+  }
 
   /**
    * Record a matched left row, which should not be constructed
@@ -138,6 +174,9 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   /** @brief Projection info */
   const planner::ProjectInfo *proj_info_ = nullptr;
+
+  /** @brief Schema of the output tile before projection */
+  const catalog::Schema *proj_schema_ = nullptr;
 
   /** @brief Join Type */
   PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
