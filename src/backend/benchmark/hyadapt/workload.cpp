@@ -2069,7 +2069,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   planner::ProjectInfo::DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
