@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/dml/expr/expr_transformer.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/bridge/dml/mapper/dml_raw_structures.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
 #include "backend/common/logger.h"
 #include "backend/common/cache.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression_util.h"
+#include "backend/planner/abstract_plan.h"
 #include "backend/planner/project_info.h"
 
 #include "postgres.h"
@@ -146,6 +146,9 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformLockRows(
       const LockRowsPlanState *planstate);
 
+  static const planner::AbstractPlan *TransformUnique(
+      const UniquePlanState *planstate);
+
   static const planner::AbstractPlan *TransformMaterialization(
       const MaterialPlanState *planstate);
 
@@ -196,6 +199,9 @@ class PlanTransformer {
   static void BuildColumnListFromExpr(
       std::vector<oid_t> &col_ids,
       const expression::AbstractExpression *expression);
+
+  static const std::vector<oid_t> BuildColumnListFromExpStateList(
+		  List* expr_state_list);
 
   static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
       List *targetLis);

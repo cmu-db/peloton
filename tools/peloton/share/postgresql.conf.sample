@@ -265,6 +265,17 @@
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
 
+#------------------------------------------------------------------------------
+# CLUSTERING
+#------------------------------------------------------------------------------
+
+# - Settings -
+
+#cluster_mode = off
+#cluster_id = 0
+#cluster_address = ""                   # localhost
+#cluster_port = 5254
+#cluster_participant_addresses = ""     # "127.0.0.1:5452,127.0.0.1:5354"
 
 #------------------------------------------------------------------------------
 # QUERY TUNING

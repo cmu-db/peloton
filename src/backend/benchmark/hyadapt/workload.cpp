@@ -23,6 +23,8 @@
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
+
+#include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -45,7 +47,6 @@
 #include "backend/executor/nested_loop_join_executor.h"
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
@@ -84,16 +85,16 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
-      expression::TupleValueFactory(0, 0);
+      expression::ExpressionUtil::TupleValueFactory(0, 0);
 
   // Second, create constant value expression.
   Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
 
   expression::AbstractExpression *constant_value_expr =
-      expression::ConstantValueFactory(constant_value);
+      expression::ExpressionUtil::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate = expression::ComparisonFactory(
+  expression::AbstractExpression *predicate = expression::ExpressionUtil::ComparisonFactory(
       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
       constant_value_expr);
 
@@ -299,7 +300,7 @@ void RunDirectTest() {
   planner::ProjectInfo::DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -393,7 +394,7 @@ void RunAggregateTest() {
   for (auto column_id : column_ids) {
     planner::AggregatePlan::AggTerm max_column_agg(
         EXPRESSION_TYPE_AGGREGATE_MAX,
-        expression::TupleValueFactory(0, column_id), false);
+        expression::ExpressionUtil::TupleValueFactory(0, column_id), false);
     agg_terms.push_back(max_column_agg);
   }
 
@@ -455,7 +456,7 @@ void RunAggregateTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -541,11 +542,11 @@ void RunArithmeticTest() {
 
   for (oid_t col_itr = 0; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
-    auto column_expr = expression::TupleValueFactory(0, hyadapt_colum_id);
+    auto column_expr = expression::ExpressionUtil::TupleValueFactory(0, hyadapt_colum_id);
     if (sum_expr == nullptr)
       sum_expr = column_expr;
     else {
-      sum_expr = expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+      sum_expr = expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
                                              sum_expr, column_expr);
     }
   }
@@ -596,7 +597,7 @@ void RunArithmeticTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -857,7 +858,7 @@ void RunInsertTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ConstantValueFactory(insert_val);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
     column_ids.push_back(col_id);
   }

@@ -19,12 +19,15 @@
 
 #include "postgres.h"
 #include "nodes/execnodes.h"
+#include "nodes/nodes.h"
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 
 #include "executor/nodeAgg.h"
+
+#include "backend/bridge/dml/expr/expr_transformer.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,
@@ -132,6 +135,10 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       child_planstate =
           PrepareHashState(reinterpret_cast<HashState *>(planstate));
       break;
+
+    case T_UniqueState: {
+      child_planstate = PrepareUniqueState(reinterpret_cast<UniqueState*>(planstate));
+    } break;
 
     default:
       elog(ERROR, "PreparePlanState :: Unrecognized planstate type: %d",
@@ -301,6 +308,26 @@ ResultPlanState *DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   return info;
 }
 
+
+UniquePlanState *
+DMLUtils::PrepareUniqueState(UniqueState *unique_plan_state) {
+  UniquePlanState *info = (UniquePlanState*) palloc(sizeof(UniquePlanState));
+  info->type = unique_plan_state->ps.type;
+
+//  // Copy target list
+//  info->targetlist = CopyExprStateList(unique_plan_state->ps.targetlist);
+//
+//  // Copy tuple desc
+//  auto tup_desc = unique_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+//  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+//
+//  // Construct projection info
+//  info->ps_ProjInfo = BuildProjectInfo(unique_plan_state->ps.ps_ProjInfo,
+//                                               tup_desc->natts);
+
+  return info;
+}
+
 LockRowsPlanState *DMLUtils::PrepareLockRowsState(
     LockRowsState *lr_plan_state) {
   LockRowsPlanState *info =
@@ -407,6 +434,7 @@ NestLoopPlanState *DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
       (NestLoopPlanState *)palloc(sizeof(NestLoopPlanState));
 
   info->type = nl_state->js.ps.type;
+  info->nl = (NestLoop *) nl_state->js.ps.plan;
 
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
                                nl_state->js);
@@ -434,7 +462,9 @@ HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info =
       (HashJoinPlanState *)palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
-  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
+  info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join
+
+  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
                                hj_state->js);
 
   return info;
@@ -512,7 +542,9 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
   // Copy runtime scan keys
   info->iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
   info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
-                                          iss_plan_state->iss_NumRuntimeKeys);
+                                          iss_plan_state->iss_NumRuntimeKeys); // not copy scankey is it OK??
+
+  info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
 
   return info;
 }
@@ -857,6 +889,13 @@ IndexRuntimeKeyInfo *CopyRuntimeKeys(IndexRuntimeKeyInfo *from,
     retval[key_itr].key_expr =
         CopyExprState(from[key_itr].key_expr);  // Deep copy the expression
     // NB: No need to copy scan_key?
+    retval[key_itr].scan_key->sk_argument = from[key_itr].scan_key->sk_argument;
+    retval[key_itr].scan_key->sk_attno = from[key_itr].scan_key->sk_attno;
+    retval[key_itr].scan_key->sk_collation = from[key_itr].scan_key->sk_collation;
+    retval[key_itr].scan_key->sk_flags = from[key_itr].scan_key->sk_flags;
+    retval[key_itr].scan_key->sk_func = from[key_itr].scan_key->sk_func;
+    retval[key_itr].scan_key->sk_strategy = from[key_itr].scan_key->sk_strategy;
+    retval[key_itr].scan_key->sk_subtype = from[key_itr].scan_key->sk_subtype;
   }
 
   return retval;

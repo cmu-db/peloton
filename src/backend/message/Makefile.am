@@ -3,10 +3,12 @@
 ######################################################################
 # MESSAGE
 ######################################################################
-
+    
 message_FILES = \
-				backend/message/nanomsg.cpp \
-				backend/message/boost_serializer.cpp
+				backend/message/abstract_service.pb.cc \
+				backend/message/rpc_channel.cpp \
+				backend/message/rpc_server.cpp \
+				backend/message/peloton_service.cpp
 								
 message_INCLUDES = \
                   -I$(srcdir)/message

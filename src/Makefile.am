@@ -48,6 +48,7 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(protobuf_FILES) \
 			$(expression_FILES) \
 			$(brain_FILES) \
 			$(catalog_FILES) \
@@ -104,13 +105,15 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
 			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
+			  
+libpelotonpg_la_LDFLAGS = -lprotobuf
 
 ######################################################################
 # PELOTON
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
-peloton_LDFLAGS =
+peloton_LDFLAGS = 
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la

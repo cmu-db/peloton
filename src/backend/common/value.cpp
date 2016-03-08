@@ -360,6 +360,14 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       retval.SetObjectLength(length);  // this unSets the null tag.
       retval.SetSourceInlined(false);
       retval.SetCleanUp(false);
+
+      int len1 = retval.GetObjectLengthWithoutNull();
+      int len2 = retval.GetObjectLengthLength();
+
+      char* val = (char*) retval.GetObjectValueWithoutNull();
+
+      std::cout << len1 << len2 << val;
+
       break;
     }
     case VALUE_TYPE_TIMESTAMP:
@@ -389,6 +397,7 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
                       ValueTypeToString(type));
       /* no break */
   }
+
   return retval;
 }
 

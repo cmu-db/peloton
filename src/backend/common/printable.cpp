@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
+
 #include "backend/common/printable.h"
 
 namespace peloton {
 
-// Get a string representation
+// Get a string representation for debugging
 std::ostream &operator<<(std::ostream &os, const Printable &printable) {
-  os << printable.GetInfo() << std::endl;
-
+  os << printable.GetInfo() << "\n";
   return os;
-}
+};
 
-}  // End peloton namespace
+}  // namespace peloton
