@@ -53,8 +53,8 @@ const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
-    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                               join_filter, plan_filter);
+    predicate = expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter);
   } else if (join_filter) {
     predicate = join_filter;
   } else {
@@ -66,20 +66,22 @@ const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
+  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
+      mj_plan_state->tts_tupleDescriptor);
+
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        mj_plan_state->tts_tupleDescriptor);
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node =
-        new planner::MergeJoinPlan(join_type, predicate, nullptr, join_clauses);
+    plan_node = new planner::MergeJoinPlan(join_type, predicate, nullptr,
+                                           project_schema, join_clauses);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::MergeJoinPlan(
-        join_type, predicate, project_info.release(), join_clauses);
+    plan_node =
+        new planner::MergeJoinPlan(join_type, predicate, project_info.release(),
+                                   project_schema, join_clauses);
     result = plan_node;
   }
 
