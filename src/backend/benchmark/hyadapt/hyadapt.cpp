@@ -110,6 +110,14 @@ void RunBenchmark() {
         RunVersionExperiment();
         break;
 
+      case EXPERIMENT_TYPE_HYRISE:
+        RunHyriseExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_CONCURRENCY:
+        RunConcurrencyExperiment();
+        break;
+
       default:
         std::cout << "Unsupported experiment type : " << state.experiment_type
                   << "\n";

@@ -19,6 +19,7 @@
 #include <ctime>
 #include <cassert>
 #include <thread>
+#include <algorithm>
 
 #include "backend/benchmark/hyadapt/loader.h"
 #include "backend/benchmark/hyadapt/workload.h"
@@ -171,19 +172,19 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Run all the executors
     for (auto executor : executors) {
-      status = executor->Init();
-      if (status == false) throw Exception("Init failed");
+        status = executor->Init();
+        if (status == false) throw Exception("Init failed");
 
-      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+        std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
-      while (executor->Execute() == true) {
-        std::unique_ptr<executor::LogicalTile> result_tile(
-            executor->GetOutput());
-        result_tiles.emplace_back(result_tile.release());
-      }
+        while (executor->Execute() == true) {
+          std::unique_ptr<executor::LogicalTile> result_tile(
+              executor->GetOutput());
+          result_tiles.emplace_back(result_tile.release());
+        }
 
-      // Execute stuff
-      executor->Execute();
+        // Execute stuff
+        executor->Execute();
     }
 
     // Capture fine-grained stats in adapt experiment
@@ -192,7 +193,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
       std::chrono::duration<double> elapsed_seconds = end - start;
       double time_per_transaction = ((double)elapsed_seconds.count());
 
-      if (state.distribution == false) WriteOutput(time_per_transaction);
+      if (state.distribution == false)
+        WriteOutput(time_per_transaction);
 
       // Record sample
       if (state.fsm == true && cost != 0) {
@@ -309,6 +311,7 @@ void RunDirectTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+
   planner::InsertPlan insert_node(hyadapt_table, project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
@@ -963,9 +966,9 @@ void RunUpdateTest() {
 // EXPERIMENTS
 /////////////////////////////////////////////////////////
 
-std::vector<oid_t> column_counts = {50, 200};
+std::vector<oid_t> column_counts = {50, 500};
 
-std::vector<double> write_ratios = {0, 0.1};
+std::vector<double> write_ratios = {0, 1.0};
 
 std::vector<LayoutType> layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
@@ -975,6 +978,8 @@ std::vector<OperatorType> operators = {
 std::vector<double> selectivity = {0.2, 0.4, 0.6, 0.8, 1.0};
 
 std::vector<double> projectivity = {0.02, 0.1, 0.5, 1.0};
+
+const oid_t query_repeat_count = 10;
 
 void RunProjectivityExperiment() {
   state.selectivity = 1.0;
@@ -1011,8 +1016,8 @@ void RunProjectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
           RunAggregateTest();
 
-          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest();
+          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          //RunArithmeticTest();
         }
       }
     }
@@ -1056,8 +1061,8 @@ void RunSelectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
           RunAggregateTest();
 
-          state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          RunArithmeticTest();
+          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          //RunArithmeticTest();
         }
       }
     }
@@ -1357,7 +1362,6 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double direct_high_proj = 0.7;
   double insert_write_ratio = 0.05;
 
   state.projectivity = direct_low_proj;
@@ -1378,7 +1382,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_high_proj;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1387,7 +1391,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_high_proj;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -1413,14 +1417,15 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
+
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
-                                         LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
-std::vector<oid_t> adapt_column_counts = {200};
+std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
+
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1432,14 +1437,14 @@ void RunAdaptExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for (auto column_count : adapt_column_counts) {
+  for(auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for (auto layout : adapt_layouts) {
+    for(auto layout : adapt_layouts) {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
@@ -1448,13 +1453,13 @@ void RunAdaptExperiment() {
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType)peloton_layout_mode);
+      CreateAndLoadTable((LayoutType) peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1463,12 +1468,14 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if(state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
+
     }
+
   }
 
   // Reset
@@ -1839,6 +1846,322 @@ void RunVersionExperiment() {
   }
 
   out.close();
+}
+
+std::vector<LayoutType> hyrise_layouts = {LAYOUT_HYBRID, LAYOUT_ROW};
+
+std::vector<oid_t> hyrise_column_counts = {50};
+
+std::vector<double> hyrise_projectivities = {0.9, 0.04, 0.9, 0.04};
+
+static void RunHyriseTest() {
+
+  for(auto hyrise_projectivity : hyrise_projectivities) {
+    state.projectivity = hyrise_projectivity;
+    peloton_projectivity = state.projectivity;
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
+  }
+
+}
+
+void RunHyriseExperiment() {
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.transactions = 100;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  // Go over all column counts
+  for (auto column_count : hyrise_column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    oid_t layout_itr = 0;
+    // layout itr == 0 => HYBRID
+    // layout itr == 1 => HYRISE
+    for (auto layout : hyrise_layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      std::cout << "----------------------------------------- \n\n";
+
+      state.projectivity = hyrise_projectivities[0];
+      peloton_projectivity = state.projectivity;
+      // HYPER
+      if(layout == LAYOUT_COLUMN) {
+        CreateAndLoadTable((LayoutType) LAYOUT_COLUMN);
+      }
+      // HYRISE and HYBRID
+      else {
+        CreateAndLoadTable((LayoutType) LAYOUT_HYBRID);
+      }
+
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if (state.layout_mode == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunHyriseTest();
+
+      // Stop transformer
+      if (state.layout_mode == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+
+      // Update layout itr
+      layout_itr++;
+    }
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  query_itr = 0;
+
+  out.close();
+}
+
+oid_t scan_ctr = 0;
+oid_t insert_ctr = 0;
+
+static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors,
+                                  oid_t thread_id, oid_t num_threads,
+                                  double scan_ratio) {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1);
+
+  auto txn_count = state.transactions;
+  bool status = false;
+
+  start = std::chrono::system_clock::now();
+
+  // Run these many transactions
+  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+    // Increment query counter
+    query_itr++;
+
+    auto dis_sample = dis(gen);
+    executor::AbstractExecutor *executor = nullptr;
+
+    // SCAN
+    if(dis_sample < scan_ratio) {
+      executor = executors[0];
+      scan_ctr++;
+    }
+    // INSERT
+    else {
+      executor = executors[1];
+      insert_ctr++;
+    }
+
+    // Run the selected executor
+    status = executor->Init();
+    if (status == false) throw Exception("Init failed");
+
+    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+    while (executor->Execute() == true) {
+      std::unique_ptr<executor::LogicalTile> result_tile(
+          executor->GetOutput());
+      result_tiles.emplace_back(result_tile.release());
+    }
+
+    // Execute stuff
+    executor->Execute();
+
+  }
+
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
+
+  if(thread_id == 0) {
+    double throughput = (double)num_threads/time_per_transaction;
+    WriteOutput(throughput/1000.0);
+  }
+
+}
+
+void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
+  const int lower_bound = GetLowerBound();
+  const bool is_inlined = true;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.projectivity * state.column_count;
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
+
+  // Create and set up materialization executor
+  std::vector<catalog::Column> output_columns;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t col_itr = 0;
+  for (auto column_id : column_ids) {
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "" + std::to_string(column_id), is_inlined);
+    output_columns.push_back(column);
+
+    old_to_new_cols[col_itr] = col_itr;
+    col_itr++;
+  }
+
+  std::unique_ptr<catalog::Schema> output_schema(
+      new catalog::Schema(output_columns));
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema.release(), physify_flag);
+
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&seq_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  auto project_info = new planner::ProjectInfo(std::move(target_list),
+                                               std::move(direct_map_list));
+
+  auto bulk_insert_count = 1;
+
+  planner::InsertPlan insert_node(hyadapt_table, project_info,
+                                  bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&mat_executor);
+  executors.push_back(&insert_executor);
+
+  ExecuteConcurrentTest(executors, thread_id, num_threads, scan_ratio);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+
+std::vector<oid_t> num_threads_list = {1, 2, 4, 8, 16, 32};
+
+std::vector<double> scan_ratios = {0, 0.5, 0.9, 1.0};
+
+void RunConcurrencyExperiment() {
+
+  state.selectivity = 0.001;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+
+  // Set proj
+  state.projectivity = 0.1;
+  peloton_projectivity = state.projectivity;
+
+  // Go over all scan ratios
+  for(auto scan_ratio : scan_ratios) {
+
+    std::cout << "SCAN RATIO :" << scan_ratio << "\n\n\n";
+
+    // Go over all layouts
+    for (auto layout : layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      std::cout << "LAYOUT :" << layout << "\n";
+
+      // Go over all scale factors
+      for(auto num_threads : num_threads_list) {
+
+        // Reuse variables
+        state.theta = scan_ratio;
+        state.sample_weight = num_threads;
+
+        // Reset
+        scan_ctr = 0;
+        insert_ctr = 0;
+
+        // Load in the table with layout
+        CreateAndLoadTable(state.layout_mode);
+
+        // Set up thread group
+        std::vector<std::thread> thread_group;
+
+        auto initial_tg_count = hyadapt_table->GetTileGroupCount();
+
+        // Launch a group of threads
+        for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+          thread_group.push_back(std::thread(RunConcurrentTest, thread_itr, num_threads, scan_ratio));
+        }
+
+        // Join the threads with the main thread
+        for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+          thread_group[thread_itr].join();
+        }
+
+        auto final_tg_count = hyadapt_table->GetTileGroupCount();
+        auto diff_tg_count = final_tg_count - initial_tg_count;
+
+        std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+
+        std::cout << "Scan count   : " << scan_ctr << "\n";
+        std::cout << "Insert count : " << insert_ctr << "\n";
+      }
+
+    }
+
+  }
+
 }
 
 }  // namespace hyadapt
