@@ -2,19 +2,25 @@
 //
 //                         PelotonDB
 //
-// boost_serializer.cpp
+// peloton_endpoint.h
 //
-// Identification: src/backend/message/boost_serializer.cpp
+// Identification: src/backend/message/peloton_endpoint.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/message/boost_serializer.h"
+#pragma once
+
+#include "backend/message/rpc_server.h"
+#include "backend/message/peloton_service.h"
+#include <iostream>
 
 namespace peloton {
 namespace message {
 
+#define PELOTON_ENDPOINT_ADDR "tcp://127.0.0.1:9999"
+#define PELOTON_ENDPOINT_FILE "ipc:///tmp/echo.sock"
 
 
 }  // namespace message

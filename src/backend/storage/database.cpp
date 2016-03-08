@@ -179,7 +179,7 @@ const std::string Database::GetInfo() const {
 
   os << "=====================================================\n";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End storage namespace

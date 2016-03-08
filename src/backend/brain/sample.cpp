@@ -90,7 +90,7 @@ const std::string Sample::GetInfo() const {
   os << "  ::  " << std::round(weight_);
   os << "\n";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End brain namespace

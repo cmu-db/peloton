@@ -194,7 +194,7 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
   const std::vector<AbstractExpression *> &m_args;
 };
 
-expression::AbstractExpression *expression::FunctionFactory(
+expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
     int functionId, const std::vector<AbstractExpression *> *arguments) {
   AbstractExpression *ret = 0;
   assert(arguments);

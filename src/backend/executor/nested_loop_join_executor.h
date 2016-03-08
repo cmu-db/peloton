@@ -35,6 +35,8 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
  private:
   // Right child's result tiles iterator
   size_t right_result_itr_ = 0;
+
+  size_t left_result_itr_ = 0; // added by Michael
 };
 
 }  // namespace executor

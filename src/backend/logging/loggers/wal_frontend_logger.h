@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * ariesfrontendlogger.h
+ * wal_frontend_logger.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/ariesfrontendlogger.h
+ * /peloton/src/backend/logging/wal_frontend_logger.h
  *
  *-------------------------------------------------------------------------
  */
@@ -25,14 +25,14 @@ class Transaction;
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Aries Frontend Logger
+// Write Ahead Frontend Logger
 //===--------------------------------------------------------------------===//
 
-class AriesFrontendLogger : public FrontendLogger {
+class WriteAheadFrontendLogger : public FrontendLogger {
  public:
-  AriesFrontendLogger(void);
+  WriteAheadFrontendLogger(void);
 
-  ~AriesFrontendLogger(void);
+  ~WriteAheadFrontendLogger(void);
 
   void FlushLogRecords(void);
 

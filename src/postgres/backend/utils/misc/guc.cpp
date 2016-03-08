@@ -97,6 +97,7 @@
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
 #define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
 //#endif
+#define DEF_CLUSTER_PORT 5254
 
 /*
  * Precision with which REAL type guc values are to be printed for GUC
@@ -157,6 +158,7 @@ static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
+static bool check_cluster_mode(bool *newval, void **extra, GucSource source);
 static bool check_stage_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_canonical_path(char **newval, void **extra, GucSource source);
@@ -1119,7 +1121,15 @@ struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
-
+	{
+		{"cluster_mode", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Enables Cluster Mode."),
+			NULL
+		},
+		&EnableClusterMode,
+		false,
+		check_cluster_mode, NULL, NULL
+	},
 	{
 		{"log_duration", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Logs the duration of each completed SQL statement."),
@@ -1660,6 +1670,16 @@ struct config_bool ConfigureNamesBool[] =
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&data_checksums,
+		false,
+		NULL, NULL, NULL
+	},
+	{
+		{"start_as_cluster_leader", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Starts node as a cluster leader"),
+			NULL /* ,
+                        GUC_DISALLOW_IN_FILE | GUC_SUPERUSER_ONLY */
+		},
+		&IsClusterLeader,
 		false,
 		NULL, NULL, NULL
 	},
@@ -2718,6 +2738,24 @@ struct config_int ConfigureNamesInt[] =
 		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
+	{
+		{"cluster_id", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Sets Cluster ID for node."),
+			NULL
+		},
+		&ClusterId,
+		1, 1, 65535,
+		NULL, NULL, NULL
+	},
+	{
+		{"cluster_port", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Sets Cluster port for node."),
+			NULL
+		},
+		&ClusterPortNumber,
+		DEF_CLUSTER_PORT, 1, 65535,
+		NULL, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	{
@@ -3453,6 +3491,26 @@ struct config_string ConfigureNamesString[] =
     "peloton_log_directory",
     check_canonical_path, NULL, NULL
   },
+        // TODO: More polishing? May be the verification function?
+	{
+		{"cluster_address", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Sets Cluster address for node."),
+			NULL
+		},
+		&ClusterAddress,
+		"localhost",
+		NULL, NULL, NULL
+	},
+	{
+		{"cluster_participant_addresses", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
+			gettext_noop("Addresses of cluster participants."),
+			NULL,
+                        GUC_LIST_INPUT
+		},
+		&ClusterParticipantAddresses,
+		"",
+		NULL, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	{
@@ -9822,6 +9880,17 @@ check_ssl(bool *newval, void **extra, GucSource source)
 		return false;
 	}
 #endif
+	return true;
+}
+
+static bool
+check_cluster_mode(bool *newval, void **extra, GucSource source)
+{
+	if (*newval && EnableClusterMode)
+	{
+		GUC_check_errmsg("Changing Cluster Mode is not supported by this build");
+		return false;
+	}
 	return true;
 }
 

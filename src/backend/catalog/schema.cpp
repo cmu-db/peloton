@@ -174,7 +174,6 @@ Schema *Schema::AppendSchemaPtrList(
   return ret_schema;
 }
 
-
 const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
