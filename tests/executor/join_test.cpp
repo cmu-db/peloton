@@ -65,8 +65,7 @@ peloton::catalog::Schema *CreateJoinSchema() {
 }
 
 std::vector<PlanNodeType> join_algorithms = {
-    //    PLAN_NODE_TYPE_NESTLOOP,
-    PLAN_NODE_TYPE_MERGEJOIN, PLAN_NODE_TYPE_HASHJOIN};
+    PLAN_NODE_TYPE_NESTLOOP, PLAN_NODE_TYPE_MERGEJOIN, PLAN_NODE_TYPE_HASHJOIN};
 
 std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
                                            JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
@@ -486,7 +485,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          std::cout << (*result_logical_tile);
+          // std::cout << (*result_logical_tile);
         }
       }
 
