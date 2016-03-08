@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * tuplerecord.h
+ * tuple_record.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/records/tuplerecord.h
+ * /peloton/src/backend/logging/records/tuple_record.h
  *
  *-------------------------------------------------------------------------
  */

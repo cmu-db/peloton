@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/storage/storage_manager.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -25,6 +22,11 @@
 
 #include <string>
 #include <iostream>
+
+#include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/common/exception.h"
+#include "backend/storage/storage_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -48,12 +50,12 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-    : data_file_address(nullptr),
-      is_pmem(false),
-      data_file_len(0),
-      data_file_offset(0) {
+: data_file_address(nullptr),
+  is_pmem(false),
+  data_file_len(0),
+  data_file_offset(0) {
   // Check if we need a data pool
-  if (IsSimilarToARIES(peloton_logging_mode) == true ||
+  if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
   }
@@ -72,7 +74,7 @@ StorageManager::StorageManager()
   bool found_file_system = false;
 
   switch (peloton_logging_mode) {
-    // Check for NVM FS
+    // Check for NVM FS for data
     case LOGGING_TYPE_NVM_NVM:
     case LOGGING_TYPE_NVM_HDD:
     case LOGGING_TYPE_NVM_SSD: {
@@ -84,8 +86,21 @@ StorageManager::StorageManager()
 
     } break;
 
+    // Check for SSD FS
+    case LOGGING_TYPE_SSD_NVM:
+    case LOGGING_TYPE_SSD_SSD:
+    case LOGGING_TYPE_SSD_HDD: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    } break;
+
     // Check for HDD FS
     case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_HDD_SSD:
     case LOGGING_TYPE_HDD_HDD: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
@@ -95,27 +110,25 @@ StorageManager::StorageManager()
 
     } break;
 
-    // Check for SSD FS
-    case LOGGING_TYPE_SSD_NVM:
-    case LOGGING_TYPE_SSD_SSD: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
-        found_file_system = true;
-      }
-
-    } break;
-
     default:
       break;
   }
 
-  // Fallback to tmp if needed
+  // Fallback to tmp directory if needed
   if (found_file_system == false) {
-    data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+    int status = stat(TMP_DIR, &data_stat);
+    if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+      data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
+    }
+    else {
+      throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+    }
   }
 
   LOG_INFO("DATA DIR :: %s ", data_file_name.c_str());
+
+  // TODO:
+  std::cout << "Data path :: " << data_file_name << "\n";
 
   // Create a data file
   if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {

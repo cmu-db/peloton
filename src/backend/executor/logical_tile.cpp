@@ -427,7 +427,7 @@ const std::string LogicalTile::GetInfo() const {
 
   os << "\t-----------------------------------------------------------\n";
 
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End executor namespace

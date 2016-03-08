@@ -20,6 +20,7 @@
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
+#include "backend/common/printable.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"

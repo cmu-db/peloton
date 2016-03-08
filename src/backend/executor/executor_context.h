@@ -14,6 +14,7 @@
 
 #include "backend/concurrency/transaction.h"
 #include "backend/common/pool.h"
+#include "backend/common/value.h"
 
 namespace peloton {
 namespace executor {
@@ -39,6 +40,11 @@ class ExecutorContext {
   concurrency::Transaction *GetTransaction() const { return transaction_; }
 
   const std::vector<Value> &GetParams() const { return params_; }
+  uint32_t GetParamsExec() { return params_exec_; }
+
+  void SetParams(Value value) { params_.push_back(value); }
+  void SetParamsExec(uint32_t flag) { params_exec_ = flag; }
+  void ClearParams() { params_.clear(); }
 
   // Get a varlen pool (will construct the pool only if needed)
   VarlenPool *GetExecutorContextPool();
@@ -59,6 +65,14 @@ class ExecutorContext {
 
   // pool
   std::unique_ptr<VarlenPool> pool_;
+
+  // PARAMS_EXEC_Flag
+  /*
+   * 1 IN: nestloop+indexscan
+   * 2 unknown yet
+   * 3 unknown yet
+   */
+  uint32_t params_exec_ = 0; // 1 IN: nestloop+indexscan
 };
 
 }  // namespace executor

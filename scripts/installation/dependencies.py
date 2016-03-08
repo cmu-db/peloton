@@ -43,6 +43,7 @@ my_env = os.environ.copy()
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.join(os.path.dirname(FILE_DIR), os.pardir)
 THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "third_party")
+SRC_DIR = os.path.join(ROOT_DIR, "src")
 
 NVML_DIR = os.path.join(THIRD_PARTY_DIR, "nvml")
 NANOMSG_DIR = os.path.join(THIRD_PARTY_DIR, "nanomsg")
@@ -159,6 +160,18 @@ def install_dependencies():
     LOG.info(os.getcwd())
     LOG.info(FILE_DIR)
     LOG.info(ROOT_DIR)
+
+    ## ==============================================
+    ## Protobuf
+    ## ==============================================
+    LOG.info("Building protobuf files")
+    LOG.info(SRC_DIR)
+    os.chdir(SRC_DIR)
+    cmd = 'protoc backend/message/abstract_service.proto --cpp_out=.'
+    exec_cmd(cmd)
+    os.chdir('..')
+
+    LOG.info("Finished building protobuf files")
 
     ## ==============================================
     ## NVM Library

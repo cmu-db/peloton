@@ -34,7 +34,17 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan(PelotonJoinType join_type,
                const expression::AbstractExpression *predicate,
                const ProjectInfo *proj_info)
-      : AbstractJoinPlan(join_type, predicate, proj_info) {}
+      : AbstractJoinPlan(join_type, predicate, proj_info) {
+
+  }
+
+  HashJoinPlan(PelotonJoinType join_type,
+               const expression::AbstractExpression *predicate,
+               const ProjectInfo *proj_info,
+               const std::vector<oid_t> &outer_hashkeys) // outer_hashkeys is added for IN-subquery
+      : AbstractJoinPlan(join_type, predicate, proj_info) {
+	  	  outer_column_ids_ = outer_hashkeys; // added for IN-subquery
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_HASHJOIN;
@@ -42,7 +52,12 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   const std::string GetInfo() const { return "HashJoin"; }
 
+  const std::vector<oid_t> &GetOuterHashIds() const {
+    return outer_column_ids_;
+  }
+
  private:
+  std::vector<oid_t> outer_column_ids_;
 };
 
 }  // namespace planner

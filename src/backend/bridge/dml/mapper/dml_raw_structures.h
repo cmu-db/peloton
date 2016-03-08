@@ -85,6 +85,9 @@ struct IndexScanPlanState : public AbstractScanPlanState {
   int iss_NumScanKeys;
 
   IndexRuntimeKeyInfo *iss_RuntimeKeys;
+
+  ExprContext *iss_RuntimeContext;
+
   int iss_NumRuntimeKeys;
 };
 
@@ -123,6 +126,14 @@ struct ResultPlanState : public AbstractPlanState {
   PelotonProjectionInfo *proj;
 };
 
+struct UniquePlanState : public AbstractPlanState {
+
+	  PelotonProjectionInfo *ps_ProjInfo;
+	  TupleDesc tts_tupleDescriptor;
+
+	  List *targetlist;
+};
+
 struct AbstractJoinPlanState : public AbstractPlanState {
   PelotonProjectionInfo *ps_ProjInfo;
   TupleDesc tts_tupleDescriptor;
@@ -133,14 +144,18 @@ struct AbstractJoinPlanState : public AbstractPlanState {
   List *targetlist;
 };
 
-struct NestLoopPlanState : public AbstractJoinPlanState {};
+struct NestLoopPlanState : public AbstractJoinPlanState {
+	NestLoop *nl;
+};
 
 struct MergeJoinPlanState : public AbstractJoinPlanState {
   int mj_NumClauses;
-  MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
+  MergeJoinClause mj_Clauses; // array of length mj_NumClauses
 };
 
-struct HashJoinPlanState : public AbstractJoinPlanState {};
+struct HashJoinPlanState : public AbstractJoinPlanState {
+	List *outer_hashkeys;
+};
 
 struct AggPlanState : public AbstractPlanState {
   const Agg *agg_plan;

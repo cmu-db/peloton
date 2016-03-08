@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <atomic>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -40,7 +41,6 @@
 #include "executor/mock_executor.h"
 #include "harness.h"
 
-#include <atomic>
 #include "backend/planner/delete_plan.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/planner/seq_scan_plan.h"
@@ -66,7 +66,7 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);
-    auto expression = expression::ConstantValueFactory(value);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -115,7 +115,7 @@ void UpdateTuple(storage::DataTable *table) {
 
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
-  target_list.emplace_back(2, expression::ConstantValueFactory(update_val));
+  target_list.emplace_back(2, expression::ExpressionUtil::ConstantValueFactory(update_val));
   std::cout << target_list.at(0).first << std::endl;
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
