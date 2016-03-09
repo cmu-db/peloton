@@ -5,8 +5,7 @@
 ######################################################################
 
 BUILT_SOURCES += \
-				 backend/networking/abstract_service.pb.cc \
-				 backend/networking/abstract_service.pb.h
+				 backend/networking/abstract_service.pb.cc
 
 dist_noinst_DATA = \
 				    backend/networking/abstract_service.proto
