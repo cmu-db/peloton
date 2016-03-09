@@ -7,22 +7,19 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
-bin_peloton_PROGRAMS = initdb pg_ctl psql \
-					   createdb createuser dropdb dropuser             
-bin_pelotondir = /usr/local/peloton/bin
-if BUILD_OS_IS_DARWIN
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq -lm -lreadline
-else
-pg_common_ldflags = -L$(top_builddir)/src/.libs -lpq -lrt -lm -lreadline
-endif
+bin_PROGRAMS = initdb pg_ctl psql \
+			   createdb createuser dropdb dropuser
 
 pg_common_cxxflags = $(AM_CXXFLAGS) \
 					 -Wno-write-strings -Wno-sign-compare \
 					 -Wno-unused-parameter -Wno-missing-field-initializers \
-					 -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow					 
+					 -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow
 
 pg_common_ldadd = $(top_builddir)/src/libpelotonpg.la \
 				  $(top_builddir)/src/libpeloton.la
+
+pg_common_ldflags =	\
+					-L$(top_builddir)/src/.libs	-lpq
 
 ######################################################################
 # INITDB
@@ -153,13 +150,3 @@ dropuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 dropuser_LDFLAGS = $(pg_common_ldflags)
 dropuser_LDADD = $(pg_common_ldadd)
 dropuser_CXXFLAGS = $(pg_common_cxxflags)
-
-
-######################################################################
-# PELOTON CONFIGURATION
-######################################################################
-
-install-data-hook:
-	cp -rf $(top_srcdir)/tools/peloton /usr/local
-	mkdir -p /usr/local/peloton/lib
-	ln -sf $(top_builddir)/../src/peloton $(top_builddir)/tools/.libs/
