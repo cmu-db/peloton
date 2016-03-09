@@ -17,7 +17,7 @@ before_script:
     # setup environment
     - sudo -H sh ./scripts/installation/packages.sh
     - export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
-    - export PATH=/usr/local/peloton/bin/:$PATH
+    - export PATH=/usr/local/bin/:$PATH
 
 script:
     # bootstrap
