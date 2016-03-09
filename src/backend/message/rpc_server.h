@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/message/nanomsg.h"
 #include "backend/message/rpc_method.h"
+#include "tcp_listener.h"
 
 #include <iostream>
 #include <string>
@@ -22,8 +22,6 @@
 
 namespace peloton {
 namespace message {
-
-#define RECV_QUEUE "inproc://recv_queue"
 
 class RpcServer {
 
@@ -37,7 +35,7 @@ class RpcServer {
   */
 
 public:
-  RpcServer(const char* url);
+  RpcServer(const int port);
   ~RpcServer();
 
   // add more endpoints
@@ -72,12 +70,14 @@ private:
     std::cout << "This is server backcall" << std::endl;
   }
 
-  NanoMsg        socket_tcp_;
-  NanoMsg        socket_inproc_;
-  int            socket_tcp_id_;
-  int            socket_inproc_id_;
+//  NanoMsg        socket_tcp_;
+//  NanoMsg        socket_inproc_;
+//  int            socket_tcp_id_;
+//  int            socket_inproc_id_;
+
   RpcMethodMap   rpc_method_map_;
 
+  Listener listener_;
 //  MessageQueue<RecvItem>   recv_queue_;
 };
 
