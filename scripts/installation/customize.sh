@@ -16,4 +16,4 @@ cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
 sudo chsh -s /bin/zsh vagrant
 
 # Add peloton install dir to the path
-export PATH=$PATH:/usr/local/peloton/bin
+export PATH=$PATH:/usr/local/bin
