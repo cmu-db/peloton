@@ -17,10 +17,9 @@
 #include <functional>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 RpcChannel::RpcChannel(const char* url) :
-      socket_(AF_SP, NN_REQ),
       socket_id_(socket_.Connect(url)){
 }
 
@@ -44,7 +43,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // prepare the sending buf
   size_t msg_len = request->ByteSize() + sizeof(opcode);
-  char* buf = (char*)allocmsg(msg_len, 0);
+  char* buf = new char[msg_len];
 
   // copy the hashcode into the buf
   memcpy(buf, &opcode, sizeof(opcode));
@@ -56,16 +55,16 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   socket_.Send(buf,msg_len,0);
 
   // call nanomsg function to free the buf
-  freemsg(buf);
+  delete buf;
 
   // wait to receive the response
-  socket_.Receive(&buf, NN_MSG, 0);
+  socket_.Receive(&buf, 0, 0);
 
   // deserialize the receiving msg
   response->ParseFromString(buf);
 
   // free the receiving buf
-  freemsg(buf);
+  delete buf;
 
   // run call back function
   if (done != NULL) {
@@ -84,5 +83,5 @@ void RpcChannel::Close(){
 }
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include "backend/message/abstract_service.pb.h"
-#include "backend/message/rpc_server.h"
-#include "backend/message/peloton_endpoint.h"
+#include "backend/networking/abstract_service.pb.h"
+#include "backend/networking/rpc_server.h"
+#include "backend/networking/peloton_endpoint.h"
 
 #include <iostream>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class PelotonService : public AbstractPelotonService {
 public:
@@ -27,72 +27,72 @@ public:
 	// implements AbstractPelotonService ------------------------------------------
 
 	virtual void TransactionInit(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionInitRequest* request,
-			::peloton::message::TransactionInitResponse* response,
+			const TransactionInitRequest* request,
+			TransactionInitResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionWork(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionWorkRequest* request,
-			::peloton::message::TransactionWorkResponse* response,
+			const TransactionWorkRequest* request,
+			TransactionWorkResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionPrefetch(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionPrefetchResult* request,
-			::peloton::message::TransactionPrefetchAcknowledgement* response,
+			const TransactionPrefetchResult* request,
+			TransactionPrefetchAcknowledgement* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionMap(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionMapRequest* request,
-			::peloton::message::TransactionMapResponse* response,
+			const TransactionMapRequest* request,
+			TransactionMapResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionReduce(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionReduceRequest* request,
-			::peloton::message::TransactionReduceResponse* response,
+			const TransactionReduceRequest* request,
+			TransactionReduceResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionPrepare(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionPrepareRequest* request,
-			::peloton::message::TransactionPrepareResponse* response,
+			const TransactionPrepareRequest* request,
+			TransactionPrepareResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionFinish(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionFinishRequest* request,
-			::peloton::message::TransactionFinishResponse* response,
+			const TransactionFinishRequest* request,
+			TransactionFinishResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionRedirect(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionRedirectRequest* request,
-			::peloton::message::TransactionRedirectResponse* response,
+			const TransactionRedirectRequest* request,
+			TransactionRedirectResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TransactionDebug(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TransactionDebugRequest* request,
-			::peloton::message::TransactionDebugResponse* response,
+			const TransactionDebugRequest* request,
+			TransactionDebugResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void SendData(::google::protobuf::RpcController* controller,
-			const ::peloton::message::SendDataRequest* request,
-			::peloton::message::SendDataResponse* response,
+			const SendDataRequest* request,
+			SendDataResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void Initialize(::google::protobuf::RpcController* controller,
-			const ::peloton::message::InitializeRequest* request,
-			::peloton::message::InitializeResponse* response,
+			const InitializeRequest* request,
+			InitializeResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void ShutdownPrepare(::google::protobuf::RpcController* controller,
-			const ::peloton::message::ShutdownPrepareRequest* request,
-			::peloton::message::ShutdownPrepareResponse* response,
+			const ShutdownPrepareRequest* request,
+			ShutdownPrepareResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void Shutdown(::google::protobuf::RpcController* controller,
-			const ::peloton::message::ShutdownRequest* request,
-			::peloton::message::ShutdownResponse* response,
+			const ShutdownRequest* request,
+			ShutdownResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void Heartbeat(::google::protobuf::RpcController* controller,
-			const ::peloton::message::HeartbeatRequest* request,
-			::peloton::message::HeartbeatResponse* response,
+			const HeartbeatRequest* request,
+			HeartbeatResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void UnevictData(::google::protobuf::RpcController* controller,
-			const ::peloton::message::UnevictDataRequest* request,
-			::peloton::message::UnevictDataResponse* response,
+			const UnevictDataRequest* request,
+			UnevictDataResponse* response,
 			::google::protobuf::Closure* done);
 	virtual void TimeSync(::google::protobuf::RpcController* controller,
-			const ::peloton::message::TimeSyncRequest* request,
-			::peloton::message::TimeSyncResponse* response,
+			const TimeSyncRequest* request,
+			TimeSyncResponse* response,
 			::google::protobuf::Closure* done);
 };
 
 //void StartPelotonService();
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

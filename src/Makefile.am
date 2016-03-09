@@ -20,7 +20,7 @@ include $(srcdir)/backend/executor/Makefile.am
 include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
 include $(srcdir)/backend/main/Makefile.am
-include $(srcdir)/backend/message/Makefile.am
+include $(srcdir)/backend/networking/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
@@ -58,7 +58,7 @@ libpeloton_la_SOURCES = \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
 			$(index_FILES) \
-			$(message_FILES) \
+			$(networking_FILES) \
 			$(planner_FILES) \
 			$(storage_FILES) \
 			$(logging_FILES)
@@ -79,7 +79,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg
+libpeloton_la_LDFLAGS = -lm -lpmem
 
 ######################################################################
 # LIBPELOTONPG

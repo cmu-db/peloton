@@ -16,7 +16,7 @@
 #include <string>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcController : public google::protobuf::RpcController {
 	      std::string _error_str;
@@ -55,5 +55,5 @@ class RpcController : public google::protobuf::RpcController {
     }
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

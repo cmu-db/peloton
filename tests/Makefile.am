@@ -54,7 +54,7 @@ include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
 include $(srcdir)/language/Makefile.am
 include $(srcdir)/logging/Makefile.am
-include $(srcdir)/message/Makefile.am
+include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
 

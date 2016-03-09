@@ -17,10 +17,9 @@
 #include <iostream>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 RpcServer::RpcServer(const char* url) :
-      socket_(AF_SP, NN_REP),
       socket_id_(socket_.Bind(url)),
       worker_thread_() {
 }
@@ -86,7 +85,7 @@ void RpcServer::StartSimple() {
 
     // Receive message
     char* buf = NULL;
-    int bytes = socket_.Receive(&buf, NN_MSG, 0);
+    int bytes = socket_.Receive(&buf, 0, 0);
     if (bytes <= 0) continue;
 
     // Get the hashcode of the rpc method
@@ -109,15 +108,15 @@ void RpcServer::StartSimple() {
     // Deserialize the receiving message
     request->ParseFromString(buf + sizeof(opcode));
 
-    // Must free the buf since we use NN_MSG flag
-    freemsg(buf);
+    // Must free the buf
+    delete buf;
 
     // Invoke the corresponding rpc method
     rpc_method->service_->CallMethod(method, NULL, request, response, NULL);
 
     // Send back the response message. The message has been set up when executing rpc method
     size_t msg_len = response->ByteSize();
-    buf = (char*)peloton::message::allocmsg(msg_len, 0);
+    buf = new char[msg_len];
     response->SerializeToArray(buf, msg_len);
 
     // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
@@ -125,8 +124,8 @@ void RpcServer::StartSimple() {
     delete request;
     delete response;
 
-    // Must free the buf since it is created using nanomsg::allocmsg()
-    freemsg(buf);
+    // Must free the buf
+    delete buf;
   }
 }
 
@@ -140,7 +139,7 @@ void RpcServer::Start() {
   while (1) {
     // Receive message
     char* buf = NULL;
-    int bytes = socket_.Receive(&buf, NN_MSG, 0);
+    int bytes = socket_.Receive(&buf, 0, 0);
     if (bytes <= 0) continue;
 
     // Get the hashcode of the rpc method
@@ -170,8 +169,8 @@ void RpcServer::Start() {
 
     recv_queue_.Push(item);
 
-    // Must free the buf since we use NN_MSG flag
-    freemsg(buf);
+    // Must free the buf
+    delete buf;
 
     //Worker("Function call");
   }
@@ -195,7 +194,7 @@ void RpcServer::Worker(const char* debuginfo) {
   // Send back the response message. The message has been set up when executing rpc method
   size_t msg_len = response->ByteSize();
   char* buf = NULL;
-  buf = (char*) peloton::message::allocmsg(msg_len, 0);
+  buf = new char[msg_len];
   response->SerializeToArray(buf, msg_len);
 
   try {
@@ -204,27 +203,18 @@ void RpcServer::Worker(const char* debuginfo) {
     socket->Send(buf, msg_len, 0);
     std::cout << debuginfo << ": after send" << std::endl;
 
-  } catch (peloton::message::exception& e) {
-
-    std::cerr << "NN EXCEPTION in server send back: " << e.what() << std::endl;
-    delete request;
-    delete response;
-
-    // Must free the buf since it is created using nanomsg::allocmsg()
-    freemsg(buf);
-
   } catch (std::exception& e) {
     std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
     delete request;
     delete response;
-    // Must free the buf since it is created using nanomsg::allocmsg()
-    freemsg(buf);
+    // Must free the buf
+    delete buf;
   } catch (...) {
     std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
     delete request;
     delete response;
-    // Must free the buf since it is created using nanomsg::allocmsg()
-    freemsg(buf);
+    // Must free the buf
+    delete buf;
   }
 
 }
@@ -248,5 +238,5 @@ void RpcServer::Close() {
   }
 }
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

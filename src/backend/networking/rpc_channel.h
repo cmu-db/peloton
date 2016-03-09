@@ -18,7 +18,7 @@
 #include <string>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcChannel : public google::protobuf::RpcChannel {
 public:
@@ -39,5 +39,5 @@ private:
   int socket_id_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

@@ -21,7 +21,7 @@
 #include <map>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcServer {
 
@@ -69,5 +69,5 @@ private:
   MessageQueue<RecvItem>   recv_queue_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton
