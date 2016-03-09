@@ -1,7 +1,9 @@
 #!/bin/sh
 
 # Install prerequisites
-sudo apt-get -y install eclipse eclipse-cdt tmux zsh gdb valgrind linux-tools-generic vim emacs24-nox python-virtualenv
+sudo apt-get -y install eclipse eclipse-cdt tmux zsh gdb valgrind linux-tools-generic vim emacs24-nox python-virtualenv \
+                python-numpy uuid-dev clang-format-3.3 default-jdk default-jre ant kcachegrind scons
+                
 sudo apt-get -y --no-install-recommends install doxygen graphviz
 
 # Clone Oh My Zsh from the git repo
