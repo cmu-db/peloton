@@ -50,11 +50,11 @@ include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-include $(srcdir)/postgres/Makefile.am
+#include $(srcdir)/postgres/Makefile.am
 
 TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
-LOG_COMPILER = $(srcdir)/test-driver.sh 
-
+LOG_COMPILER = $(srcdir)/test-driver.sh
+ 
 CLEANFILES = /tmp/*.peloton
 
 check-build:
