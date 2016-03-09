@@ -62,11 +62,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "backend/message/peloton_client.h"
-#include "backend/message/peloton_service.h"
-#include "backend/message/rpc_server.h"
-#include "backend/message/abstract_service.pb.h"
-#include "backend/message/message_queue.h"
+
+// TODO: Peloton changes
+#include "backend/networking/peloton_client.h"
+#include "backend/networking/peloton_service.h"
+#include "backend/networking/rpc_server.h"
+#include "backend/networking/abstract_service.pb.h"
+#include "backend/networking/message_queue.h"
 
 #include "postgres.h"
 
@@ -543,13 +545,10 @@ void Coordinator() {
 	google::protobuf::Service* service = NULL;
 
 	try {
-		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
-		service = new peloton::message::PelotonService();
+		peloton::networking::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
+		service = new peloton::networking::PelotonService();
 		rpc_server.RegisterService(service);
 		rpc_server.StartSimple();
-	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
-		delete service;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 		delete service;
@@ -564,23 +563,23 @@ void Coordinator() {
  * The message should contain the dst_addr
  */
 //void Sender(
-//		peloton::message::MessageQueue<peloton::message::PelotonMessage>* send_queue) {
+//		peloton::networking::MessageQueue<peloton::networking::PelotonMessage>* send_queue) {
 //
 //	try {
 //		while (1) {
-//			peloton::message::PelotonMessage msg = send_queue->Pop();
-//			peloton::message::PelotonMessage::Type msg_type = msg.type();
+//			peloton::networking::PelotonMessage msg = send_queue->Pop();
+//			peloton::networking::PelotonMessage::Type msg_type = msg.type();
 //
 //			switch (msg_type) {
 //
-//			case peloton::message::PelotonMessage::HEARTBEAT_REQUEST: {
+//			case peloton::networking::PelotonMessage::HEARTBEAT_REQUEST: {
 //				LOG_TRACE("Pick up a HEARTBEAT_REQUEST");
-//				peloton::message::HeartbeatRequest request =
+//				peloton::networking::HeartbeatRequest request =
 //						msg.heartbeat_request();
 //
-//				peloton::message::HeartbeatResponse response;
+//				peloton::networking::HeartbeatResponse response;
 //
-//				peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
+//				peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
 //				client.Heartbeat(&request, &response);
 //
 //				if (response.has_sender_site() == true) {
@@ -599,7 +598,7 @@ void Coordinator() {
 //			}
 //				break;
 //
-//			case peloton::message::PelotonMessage::INITIALIZE_REQUEST: {
+//			case peloton::networking::PelotonMessage::INITIALIZE_REQUEST: {
 //				LOG_TRACE("Pick up a INITIALIZE_REQUEST");
 //
 //			}
@@ -611,8 +610,6 @@ void Coordinator() {
 //			}
 //		}
 //
-//	} catch (peloton::message::exception& e) {
-//		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
 //	} catch (std::exception& e) {
 //		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 //	} catch (...) {
@@ -625,13 +622,13 @@ void TestSend() {
 
 	try {
 		for (int i = 0; i < 100; i++) {
-			peloton::message::HeartbeatRequest request;
-			peloton::message::HeartbeatResponse response;
+			peloton::networking::HeartbeatRequest request;
+			peloton::networking::HeartbeatResponse response;
 
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
+			peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
 
 			client.Heartbeat(&request, &response);
 
@@ -649,8 +646,6 @@ void TestSend() {
 			}
 		}
 
-	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 	} catch (...) {

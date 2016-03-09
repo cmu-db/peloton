@@ -18,7 +18,7 @@
 #include <google/protobuf/stubs/common.h>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 struct RpcMethod {
 
@@ -40,5 +40,5 @@ public:
   const google::protobuf::MethodDescriptor *method_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton
