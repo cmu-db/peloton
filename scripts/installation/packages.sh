@@ -8,8 +8,3 @@ apt-get -y install git g++ autoconf pkg-config libtool libjson-spirit-dev librea
 
 # Pip
 pip install unittest-xml-reporting
-
-# Install dependencies
-cd "$(dirname "$0")"
-python ./dependencies.py
-cd -
