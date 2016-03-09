@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_channel.h"
-
-#include <google/protobuf/descriptor.h>
 #include <iostream>
 #include <functional>
+
+#include "backend/networking/rpc_channel.h"
+
+#include <google/protobuf/descriptor.h>
 
 namespace peloton {
 namespace networking {

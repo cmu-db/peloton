@@ -12,10 +12,12 @@
 
 #pragma once
 
-#include "nanomsg.h"
+#include <string>
+
+#include "backend/networking/nanomsg.h"
+
 #include <google/protobuf/service.h>
 #include <google/protobuf/message.h>
-#include <string>
 
 namespace peloton {
 namespace networking {

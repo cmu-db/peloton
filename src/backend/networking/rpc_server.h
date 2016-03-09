@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include "nanomsg.h"
-#include "message_queue.h"
-#include "rpc_method.h"
-
 #include <string>
 #include <thread>
 #include <map>
+
+#include "backend/networking/nanomsg.h"
+#include "backend/networking/message_queue.h"
+#include "backend/networking/rpc_method.h"
 
 namespace peloton {
 namespace networking {

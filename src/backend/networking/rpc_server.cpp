@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_server.h"
+#include <iostream>
+
+#include "backend/networking/rpc_server.h"
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>
-#include <iostream>
 
 namespace peloton {
 namespace networking {
