@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include <fstream>
 
@@ -28,10 +28,12 @@ std::string wal_log_file_name = "wal.log";
 
 std::string wbl_log_file_name = "wbl.log";
 
+class LoggingTests : public PelotonTest {};
+
 /**
  * @brief writing a simple log with multiple threads and then do recovery
  */
-TEST(LoggingTests, RecoveryTest) {
+TEST_F(LoggingTests, RecoveryTest) {
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
   peloton_data_file_size = state.data_file_size;

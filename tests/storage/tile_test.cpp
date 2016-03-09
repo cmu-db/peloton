@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
@@ -23,7 +23,9 @@ namespace test {
 // Tile Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TileTests, BasicTest) {
+class TileTests : public PelotonTest {};
+
+TEST_F(TileTests, BasicTest) {
   // Columns
   std::vector<catalog::Column> columns;
 

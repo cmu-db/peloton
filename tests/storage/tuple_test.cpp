@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include <memory>
 
@@ -24,7 +24,9 @@ namespace test {
 // Tuple Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TupleTests, BasicTest) {
+class TupleTests : public PelotonTest {};
+
+TEST_F(TupleTests, BasicTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
@@ -61,7 +63,7 @@ TEST(TupleTests, BasicTest) {
   delete schema;
 }
 
-TEST(TupleTests, VarcharTest) {
+TEST_F(TupleTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),

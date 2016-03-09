@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -19,9 +19,11 @@ namespace test {
 // Sample Test
 //===--------------------------------------------------------------------===//
 
-TEST(SampleTest, Test1) { EXPECT_EQ(3, 1 + 2); }
+class SampleTest : public PelotonTest {};
 
-TEST(SampleTest, Test2) { EXPECT_NE(1, 1 + 2); }
+TEST_F(SampleTest, Test1) { EXPECT_EQ(3, 1 + 2); }
+
+TEST_F(SampleTest, Test2) { EXPECT_NE(1, 1 + 2); }
 
 }  // End test namespace
 }  // End peloton namespace

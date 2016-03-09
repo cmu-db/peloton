@@ -14,7 +14,6 @@
 #include <random>
 #include <chrono>
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/brain/clusterer.h"
@@ -26,7 +25,9 @@ namespace test {
 // Clusterer Tests
 //===--------------------------------------------------------------------===//
 
-TEST(ClustererTests, BasicTest) {
+class ClustererTests : public PelotonTest {};
+
+TEST_F(ClustererTests, BasicTest) {
   oid_t column_count = 7;
   oid_t cluster_count = 3;
 

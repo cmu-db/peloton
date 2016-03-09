@@ -15,8 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/order_by_plan.h"
 #include "backend/common/types.h"
@@ -36,6 +35,8 @@ using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
+class OrderByTests : public PelotonTest {};
 
 namespace {
 
@@ -74,7 +75,7 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
   std::cout << std::endl;
 }
 
-TEST(OrderByTests, IntAscTest) {
+TEST_F(OrderByTests, IntAscTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({false});
@@ -124,7 +125,7 @@ TEST(OrderByTests, IntAscTest) {
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 }
 
-TEST(OrderByTests, IntDescTest) {
+TEST_F(OrderByTests, IntDescTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({true});
@@ -174,7 +175,7 @@ TEST(OrderByTests, IntDescTest) {
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 }
 
-TEST(OrderByTests, StringDescTest) {
+TEST_F(OrderByTests, StringDescTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({3});
   std::vector<bool> descend_flags({true});
@@ -224,7 +225,7 @@ TEST(OrderByTests, StringDescTest) {
   RunTest(executor, tile_size * 2, sort_keys, descend_flags);
 }
 
-TEST(OrderByTests, IntAscStringDescTest) {
+TEST_F(OrderByTests, IntAscStringDescTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({1, 3});
   std::vector<bool> descend_flags({false, true});
@@ -276,7 +277,7 @@ TEST(OrderByTests, IntAscStringDescTest) {
 /**
  * Switch the order of sort keys of the previous test case
  */
-TEST(OrderByTests, StringDescIntAscTest) {
+TEST_F(OrderByTests, StringDescIntAscTest) {
   // Create the plan node
   std::vector<oid_t> sort_keys({3, 1});
   std::vector<bool> descend_flags({true, false});

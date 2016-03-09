@@ -10,10 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-#include "harness.h"
-
 #include <memory>
+
+#include "harness.h"
 
 #include "backend/storage/tuple.h"
 
@@ -24,7 +23,9 @@ namespace test {
 // Value Copy Tests
 //===--------------------------------------------------------------------===//
 
-TEST(ValueCopyTests, VarcharTest) {
+class ValueCopyTests : public PelotonTest {};
+
+TEST_F(ValueCopyTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_VARCHAR, 25, "D", false);

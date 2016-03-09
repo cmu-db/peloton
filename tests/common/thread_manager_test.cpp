@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 #include "backend/common/thread_manager.h"
 
 namespace peloton {
@@ -20,7 +20,9 @@ namespace test {
 // Thread Manager Test
 //===--------------------------------------------------------------------===//
 
-TEST(ThreadManagerTests, BasicTest) {
+class ThreadManagerTests : public PelotonTest {};
+
+TEST_F(ThreadManagerTests, BasicTest) {
 
   auto& thread_manager = ThreadManager::GetInstance();
   std::shared_ptr<std::thread> t1(new std::thread);

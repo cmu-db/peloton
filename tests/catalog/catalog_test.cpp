@@ -12,7 +12,6 @@
 
 #include <cstdio>
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 //#include "backend/catalog/catalog.h"
@@ -24,7 +23,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-TEST(CatalogTests, BasicTest) { EXPECT_EQ(1, 1); }
+class CatalogTests : public PelotonTest {};
+
+TEST_F(CatalogTests, BasicTest) { EXPECT_EQ(1, 1); }
 
 }  // End test namespace
 }  // End peloton namespace

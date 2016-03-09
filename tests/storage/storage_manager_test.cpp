@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
+
 #include "backend/storage/storage_manager.h"
 
 namespace peloton {
@@ -20,11 +21,13 @@ namespace test {
 // Storage Manager Test
 //===--------------------------------------------------------------------===//
 
+class StorageManagerTests : public PelotonTest {};
+
 /**
  * Test basic functionality
  *
  */
-TEST(StorageManagerTests, BasicTest) {
+TEST_F(StorageManagerTests, BasicTest) {
   peloton::storage::StorageManager storage_manager;
 
   std::vector<peloton::BackendType> backend_types = {peloton::BACKEND_TYPE_MM};

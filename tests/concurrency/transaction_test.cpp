@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include "harness.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
@@ -22,6 +20,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
+
+class TransactionTests : public PelotonTest {};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -42,7 +42,7 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
   }
 }
 
-TEST(TransactionTests, TransactionTest) {
+TEST_F(TransactionTests, TransactionTest) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
   LaunchParallelTest(8, TransactionTest, &txn_manager);

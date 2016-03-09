@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include "harness.h"
 #include "backend/common/logger.h"
 
@@ -22,7 +20,9 @@ namespace test {
 // Logger Tests
 //===--------------------------------------------------------------------===//
 
-TEST(LoggerTests, BasicTest) {
+class LoggerTests : public PelotonTest {};
+
+TEST_F(LoggerTests, BasicTest) {
   LOG_TRACE("trace message");
   LOG_WARN("warning message");
   LOG_ERROR("error message");

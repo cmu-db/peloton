@@ -10,7 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+
+#include "harness.h"
+
 #include "backend/common/cache.h"
 #include "backend/common/logger.h"
 #include "backend/planner/mock_plan.h"
@@ -25,6 +27,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Cache Test
 //===--------------------------------------------------------------------===//
+
+class CacheTest : public PelotonTest {};
 
 #define CACHE_SIZE 5
 
@@ -41,7 +45,7 @@ static void fill(
  * Test basic functionality
  *
  */
-TEST(CacheTest, Basic) {
+TEST_F(CacheTest, Basic) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -53,7 +57,7 @@ TEST(CacheTest, Basic) {
  *  Test find operation
  *
  */
-TEST(CacheTest, Find) {
+TEST_F(CacheTest, Find) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -64,7 +68,7 @@ TEST(CacheTest, Find) {
  * Test insert operation
  *
  */
-TEST(CacheTest, Insert) {
+TEST_F(CacheTest, Insert) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -87,7 +91,7 @@ TEST(CacheTest, Insert) {
 /**
  * Test iterator function
  */
-TEST(CacheTest, Iterator) {
+TEST_F(CacheTest, Iterator) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -115,7 +119,7 @@ TEST(CacheTest, Iterator) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-TEST(CacheTest, EvictionByInsert) {
+TEST_F(CacheTest, EvictionByInsert) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -147,7 +151,7 @@ TEST(CacheTest, EvictionByInsert) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-TEST(CacheTest, EvictionWithAccessing) {
+TEST_F(CacheTest, EvictionWithAccessing) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 
@@ -231,7 +235,7 @@ TEST(CacheTest, EvictionWithAccessing) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-TEST(CacheTest, Updating) {
+TEST_F(CacheTest, Updating) {
   Cache<uint32_t, const planner::AbstractPlan> cache(
       CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
 

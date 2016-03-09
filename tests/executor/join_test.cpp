@@ -12,8 +12,7 @@
 
 #include <memory>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/common/types.h"
 #include "backend/executor/logical_tile.h"
@@ -39,13 +38,14 @@
 #include "mock_executor.h"
 #include "executor/executor_tests_util.h"
 #include "executor/join_tests_util.h"
-#include "harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
+class JoinTests : public PelotonTest {};
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
@@ -77,7 +77,7 @@ enum JOIN_TEST_TYPE {
   BASIC_TEST = 0
 };
 
-TEST(JoinTests, JoinPredicateTest) {
+TEST_F(JoinTests, JoinPredicateTest) {
 
   oid_t join_test_types = 1;
 
@@ -86,7 +86,7 @@ TEST(JoinTests, JoinPredicateTest) {
       join_test_type < join_test_types ;
       join_test_type++) {
 
-    std::cout << "JOIN TEST ------------------------ :: " << std::to_string(join_test_type) << "\n";
+    std::cout << "JOIN TEST_F ------------------------ :: " << std::to_string(join_test_type) << "\n";
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {

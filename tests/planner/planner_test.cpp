@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/planner/abstract_plan.h"
-#include "gtest/gtest.h"
 
 #include "harness.h"
 
@@ -22,7 +21,9 @@ namespace test {
 // Planner Tests
 //===--------------------------------------------------------------------===//
 
-TEST(PlannerTests, BasicTest) {}
+class PlannerTests : public PelotonTest {};
+
+TEST_F(PlannerTests, BasicTest) {}
 
 }  // End test namespace
 }  // End peloton namespace

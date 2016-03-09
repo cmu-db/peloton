@@ -12,8 +12,7 @@
 
 #include <memory>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/index_scan_plan.h"
 #include "backend/common/types.h"
@@ -33,8 +32,10 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
+class IndexScanTests : public PelotonTest {};
+
 // Index scan of table with index predicate.
-TEST(IndexScanTests, IndexPredicateTest) {
+TEST_F(IndexScanTests, IndexPredicateTest) {
   // First, generate the table with index
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
@@ -97,7 +98,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   txn_manager.CommitTransaction();
 }
 
-TEST(IndexScanTests, MultiColumnPredicateTest) {
+TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   // First, generate the table with index
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
