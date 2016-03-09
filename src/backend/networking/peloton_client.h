@@ -10,13 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_channel.h"
-#include "rpc_controller.h"
-#include "abstract_service.pb.h"
-#include "peloton_endpoint.h"
+#include <iostream>
+
+#include "backend/networking/rpc_channel.h"
+#include "backend/networking/rpc_controller.h"
+#include "backend/networking/abstract_service.pb.h"
+#include "backend/networking/peloton_endpoint.h"
 
 #include <google/protobuf/stubs/common.h>
-#include <iostream>
 
 namespace peloton {
 namespace networking {

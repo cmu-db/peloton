@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/networking/peloton_service.h"
-#include "backend/networking/peloton_endpoint.h"
-#include "backend/networking/rpc_server.h"
-
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <iostream>
+
+#include "backend/networking/peloton_service.h"
+#include "backend/networking/peloton_endpoint.h"
+#include "backend/networking/rpc_server.h"
 
 namespace peloton {
 namespace networking {

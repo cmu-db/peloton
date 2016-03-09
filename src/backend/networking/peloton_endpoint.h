@@ -12,9 +12,10 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "backend/networking/rpc_server.h"
 #include "backend/networking/peloton_service.h"
-#include <iostream>
 
 namespace peloton {
 namespace networking {
