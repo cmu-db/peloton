@@ -35,7 +35,7 @@ public:
 
     Connection(int fd, void* arg) :
         socket_(fd),
-        rpc_server_ ((RpcServer*)arg) {
+        client_server_ (arg) {
 
         base_ = event_base_new();
         bev_ = bufferevent_socket_new(
@@ -141,7 +141,11 @@ public:
     }
 
     RpcServer* GetRpcServer() {
-        return rpc_server_;
+        return (RpcServer*)client_server_;
+    }
+
+    RpcClient* GetRpcServer() {
+        return (RpcClient*)client_server_;
     }
 
     // Get the readable length of the read buf
@@ -196,7 +200,7 @@ public:
 private:
 
     int socket_;
-    RpcServer* rpc_server_;
+    void* client_server_;
     bufferevent* bev_;
     event_base* base_;
 };

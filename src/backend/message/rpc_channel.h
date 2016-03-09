@@ -28,6 +28,7 @@ namespace message {
 class RpcChannel : public google::protobuf::RpcChannel {
 public:
   RpcChannel(const char* url);
+  //RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
 
@@ -84,8 +85,11 @@ public:
     }
 
 private:
-  std::shared_ptr<NanoMsg> psocket_;
-  int socket_id_;
+//  std::shared_ptr<NanoMsg> psocket_;
+//  int socket_id_;
+
+  std::string ip_;
+  int port_;
 
 };
 

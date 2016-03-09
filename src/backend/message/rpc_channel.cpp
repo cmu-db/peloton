@@ -13,6 +13,7 @@
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "rpc_client_manager.h"
+#include "tcp_connection.h"
 #include "nanomsg.h"
 #include "backend/common/logger.h"
 
@@ -23,18 +24,14 @@
 namespace peloton {
 namespace message {
 
-//RpcChannel::RpcChannel(const char* url) :
-//  socket_(AF_SP, NN_REQ),
-//  socket_id_(socket_.Connect(url)) {
+
+//RpcChannel::RpcChannel(const char* url) {
+//          psocket_ = std::make_shared<NanoMsg>(AF_SP, NN_REQ);
+//          socket_id_ = psocket_->Connect(url);
 //}
 
-RpcChannel::RpcChannel(const char* url) //:
-  //psocket_(std::make_shared<NanoMsg>(AF_SP, NN_REQ)),
-//  psocket_(new NanoMsg(AF_SP, NN_REQ)),
-//  socket_id_(psocket_->Connect(url))
-{
-          psocket_ = std::make_shared<NanoMsg>(AF_SP, NN_REQ);
-          socket_id_ = psocket_->Connect(url);
+RpcChannel::RpcChannel(const char* url) {
+
 }
 
 RpcChannel::~RpcChannel() {
@@ -63,13 +60,17 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // prepare the sending buf
   size_t msg_len = request->ByteSize() + sizeof(opcode);
-  char* buf = (char*)allocmsg(msg_len, 0);
+  char* buf[msg_len];
 
   // copy the hashcode into the buf
   memcpy(buf, &opcode, sizeof(opcode));
 
   // call protobuf to serialize the request message into sending buf
   request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
+
+  // use a thread to dispatch this sending event
+  Connection* conn = new Connection(-1, NULL);
+
 
   // send the message to server
   psocket_->Send(buf,msg_len,0);

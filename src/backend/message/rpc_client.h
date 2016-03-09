@@ -29,7 +29,7 @@ namespace message {
 class RpcClient {
  public:
     RpcClient(const char* url) :
-        manager_ (RpcClientManager::GetInstance()),
+//        manager_ (RpcClientManager::GetInstance()),
         channel_ (new RpcChannel(url)),
         controller_ (new RpcController()),
         stub_ (new AbstractPelotonService::Stub(channel_)) {
@@ -140,7 +140,7 @@ class RpcClient {
 
  private:
 
-  RpcClientManager& manager_;
+//  RpcClientManager& manager_;
 
   RpcChannel*       channel_;
 
