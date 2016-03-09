@@ -1,2 +1,0 @@
-<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] clflush supported
-<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] clflushopt supported

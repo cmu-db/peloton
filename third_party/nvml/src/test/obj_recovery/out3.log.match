@@ -1,3 +1,0 @@
-obj_recovery/TEST3: START: obj_recovery
- ./obj_recovery$(nW) $(nW)/testset n o s
-obj_recovery/TEST3: Done

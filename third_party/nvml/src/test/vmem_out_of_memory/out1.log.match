@@ -1,3 +1,0 @@
-vmem_out_of_memory/TEST1: START: vmem_out_of_memory
- ./vmem_out_of_memory$(nW) $(nW)
-vmem_out_of_memory/TEST1: Done

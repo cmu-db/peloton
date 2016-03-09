@@ -79,7 +79,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -lpmem
+libpeloton_la_LDFLAGS =
 
 ######################################################################
 # LIBPELOTONPG

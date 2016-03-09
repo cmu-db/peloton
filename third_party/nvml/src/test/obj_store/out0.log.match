@@ -1,3 +1,0 @@
-obj_store/TEST0: START: obj_store
- ./obj_store$(nW) $(nW)/testfile1 r
-obj_store/TEST0: Done

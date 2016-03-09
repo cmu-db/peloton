@@ -1,3 +1,0 @@
-obj_sync/TEST1: START: obj_sync
- ./obj_sync$(nW) $(nW) $(N) $(N)
-obj_sync/TEST1: Done
