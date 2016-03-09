@@ -544,7 +544,7 @@ void Coordinator() {
 	google::protobuf::Service* service = NULL;
 
 	try {
-		peloton::message::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
+		peloton::message::RpcServer rpc_server(PELOTON_SERVER_PORT);
 		service = new peloton::message::PelotonService();
 		rpc_server.RegisterService(service);
 		rpc_server.Start();

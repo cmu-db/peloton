@@ -24,22 +24,20 @@
 namespace peloton {
 namespace message {
 
-RpcServer::RpcServer(const char* url) :
-    socket_tcp_(AF_SP_RAW, NN_REP),
-    socket_inproc_(AF_SP_RAW, NN_REQ),
-    socket_tcp_id_(socket_tcp_.Bind(url)),
-    socket_inproc_id_(socket_inproc_.Bind(RECV_QUEUE))
-{}
+//RpcServer::RpcServer(const char* url) :
+//    socket_tcp_(AF_SP_RAW, NN_REP),
+//    socket_inproc_(AF_SP_RAW, NN_REQ),
+//    socket_tcp_id_(socket_tcp_.Bind(url)),
+//    socket_inproc_id_(socket_inproc_.Bind(RECV_QUEUE))
+//{}
+
+RpcServer::RpcServer(const int port) :
+    listener_(port) {
+}
 
 RpcServer::~RpcServer() {
 
     RemoveService();
-    Close();
-}
-
-void RpcServer::EndPoint(const char* url) {
-
-    socket_tcp_.Bind(url);
 }
 
 /*
@@ -82,11 +80,6 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
   }
 }
 
-void RpcServer::Forward() {
-    LOG_TRACE ("Start forwarding messages between sockets: %d and %d", socket_tcp_.GetSocket(), socket_inproc_.GetSocket());
-    device(socket_tcp_.GetSocket(), socket_inproc_.GetSocket());
-}
-
 void RpcServer::Start() {
 /*
     // prepaere workers
@@ -103,112 +96,111 @@ void RpcServer::Start() {
     ThreadManager::GetInstance().AddTask(worker4);
     ThreadManager::GetInstance().AddTask(worker5);
 */
-    // start receiving and forwarding
-    std::function<void()> forward = std::bind(&RpcServer::Forward, this);
-    // add workers to thread pool
-    ThreadManager::GetInstance().AddTask(forward);
-
-    pollfd pfd [1];
-    pfd [0].fd = socket_tcp_.GetSocket();
-    pfd [0].events = NN_POLLIN;
-
-    // Loop listening the socket_inproc_
-    while (true) {
-        int rc = poll (pfd, 1, 1000);
-        if (rc == 0) {
-            LOG_TRACE ("Timeout when check fd: %d out", pfd [0].fd);
-            continue;
-        }
-        if (rc == -1) {
-            LOG_TRACE ("Error when check fd: %d out", pfd [0].fd);
-            exit (1);
-        }
-        if (pfd [0].revents & NN_POLLIN) {
-            LOG_TRACE ("Server: Message can be received from fd: %d", pfd [0].fd);
-
-            // prepaere workers
-            std::function<void()> worker =
-                    std::bind(&RpcServer::Worker, this, "this is worker_thread");
-
-            // add workers to thread pool
-            ThreadManager::GetInstance().AddTask(worker);
-        }
-    }
+//    // start receiving and forwarding
+//    std::function<void()> forward = std::bind(&RpcServer::Forward, this);
+//    // add workers to thread pool
+//    ThreadManager::GetInstance().AddTask(forward);
+//
+//    pollfd pfd [1];
+//    pfd [0].fd = socket_tcp_.GetSocket();
+//    pfd [0].events = NN_POLLIN;
+//
+//    // Loop listening the socket_inproc_
+//    while (true) {
+//        int rc = poll (pfd, 1, 1000);
+//        if (rc == 0) {
+//            LOG_TRACE ("Timeout when check fd: %d out", pfd [0].fd);
+//            continue;
+//        }
+//        if (rc == -1) {
+//            LOG_TRACE ("Error when check fd: %d out", pfd [0].fd);
+//            exit (1);
+//        }
+//        if (pfd [0].revents & NN_POLLIN) {
+//            LOG_TRACE ("Server: Message can be received from fd: %d", pfd [0].fd);
+//
+//            // prepaere workers
+//            std::function<void()> worker =
+//                    std::bind(&RpcServer::Worker, this, "this is worker_thread");
+//
+//            // add workers to thread pool
+//            ThreadManager::GetInstance().AddTask(worker);
+//        }
+//    }
+    listener_.Run(this);
 
 }
 
-void RpcServer::Worker(const char* debuginfo) {
-
-    std::cout << debuginfo << std::endl;
-
-    NanoMsg socket(AF_SP, NN_REP);
-
-    socket.Connect(RECV_QUEUE);
-
-    uint64_t opcode = 0;
-
-    int bytes = 0;
-
-    while (bytes <= 0) {
-        // Receive message
-        char* buf = NULL;
-        bytes = socket.Receive(&buf, NN_MSG, 0);
-        if (bytes <= 0) {
-            LOG_TRACE("receive nothing and continue");
-            continue;
-        }
-        // Get the hashcode of the rpc method
-        memcpy((char*) (&opcode), buf, sizeof(opcode));
-
-        // Get the method iter from local map
-        RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
-        if (iter == rpc_method_map_.end()) {
-            LOG_TRACE("No method found");
-        }
-        // Get the rpc method meta info: method descriptor
-        RpcMethod *rpc_method = iter->second;
-        const google::protobuf::MethodDescriptor *method = rpc_method->method_;
-
-        // Get request and response type and create them
-        google::protobuf::Message *request = rpc_method->request_->New();
-        google::protobuf::Message *response = rpc_method->response_->New();
-
-        // Deserialize the receiving message
-        request->ParseFromString(buf + sizeof(opcode));
-
-        // Must free the buf since we use NN_MSG flag
-        freemsg(buf);
-
-        // Invoke the corresponding rpc method
-        google::protobuf::Closure* callback =
-                google::protobuf::internal::NewCallback(&Callback);
-        RpcController controller;
-        rpc_method->service_->CallMethod(method, &controller, request, response,
-                callback);
-
-        // TODO: controller should be set within rpc method
-        if (controller.Failed()) {
-            std::string error = controller.ErrorText();
-            LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
-        }
-
-        // Send back the response message. The message has been set up when executing rpc method
-        size_t msg_len = response->ByteSize();
-        buf = (char*) peloton::message::allocmsg(msg_len, 0);
-        response->SerializeToArray(buf, msg_len);
-
-        // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
-        LOG_TRACE("Server:Before send back");
-        socket.Send(buf, msg_len, 0);
-        LOG_TRACE("Server:After send back");;
-
-        delete request;
-        delete response;
-
-        // Must free the buf since it is created using nanomsg::allocmsg()
-        freemsg(buf);
-    }
-}
+//void RpcServer::Worker(const char* debuginfo) {
+//
+//    std::cout << debuginfo << std::endl;
+//
+//    NanoMsg socket(AF_SP, NN_REP);
+//
+//    uint64_t opcode = 0;
+//
+//    int bytes = 0;
+//
+//    while (bytes <= 0) {
+//        // Receive message
+//        char* buf = NULL;
+//        bytes = socket.Receive(&buf, NN_MSG, 0);
+//        if (bytes <= 0) {
+//            LOG_TRACE("receive nothing and continue");
+//            continue;
+//        }
+//        // Get the hashcode of the rpc method
+//        memcpy((char*) (&opcode), buf, sizeof(opcode));
+//
+//        // Get the method iter from local map
+//        RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
+//        if (iter == rpc_method_map_.end()) {
+//            LOG_TRACE("No method found");
+//        }
+//        // Get the rpc method meta info: method descriptor
+//        RpcMethod *rpc_method = iter->second;
+//        const google::protobuf::MethodDescriptor *method = rpc_method->method_;
+//
+//        // Get request and response type and create them
+//        google::protobuf::Message *request = rpc_method->request_->New();
+//        google::protobuf::Message *response = rpc_method->response_->New();
+//
+//        // Deserialize the receiving message
+//        request->ParseFromString(buf + sizeof(opcode));
+//
+//        // Must free the buf since we use NN_MSG flag
+//        freemsg(buf);
+//
+//        // Invoke the corresponding rpc method
+//        google::protobuf::Closure* callback =
+//                google::protobuf::internal::NewCallback(&Callback);
+//        RpcController controller;
+//        rpc_method->service_->CallMethod(method, &controller, request, response,
+//                callback);
+//
+//        // TODO: controller should be set within rpc method
+//        if (controller.Failed()) {
+//            std::string error = controller.ErrorText();
+//            LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
+//        }
+//
+//        // Send back the response message. The message has been set up when executing rpc method
+//        size_t msg_len = response->ByteSize();
+//        buf = (char*) peloton::message::allocmsg(msg_len, 0);
+//        response->SerializeToArray(buf, msg_len);
+//
+//        // We can use NN_MSG instead of msg_len here, but using msg_len is still ok
+//        LOG_TRACE("Server:Before send back");
+//        socket.Send(buf, msg_len, 0);
+//        LOG_TRACE("Server:After send back");;
+//
+//        delete request;
+//        delete response;
+//
+//        // Must free the buf since it is created using nanomsg::allocmsg()
+//        freemsg(buf);
+//    }
+//}
 
 void RpcServer::RemoveService() {
 
@@ -218,19 +210,6 @@ void RpcServer::RemoveService() {
       RpcMethod *rpc_method = it->second;
         ++it;
       delete rpc_method;
-    }
-}
-
-void RpcServer::Close() {
-
-    if (socket_tcp_id_ > 0) {
-      socket_tcp_.Shutdown(socket_tcp_id_);
-      socket_tcp_id_ = 0;
-    }
-
-    if (socket_inproc_id_ > 0) {
-      socket_inproc_.Shutdown(socket_inproc_id_);
-      socket_inproc_id_ = 0;
     }
 }
 

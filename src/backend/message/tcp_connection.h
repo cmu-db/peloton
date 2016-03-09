@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/logger.h"
+#include "rpc_server.h"
 
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -27,44 +28,51 @@ class Connection {
 
 public:
 
-    Connection(int fd) :
-        socket_(fd) {
+    Connection(int fd, void* arg) :
+        socket_(fd),
+        rpc_server_ ((RpcServer*)arg) {
+
         base_ = event_base_new();
         bev_ = bufferevent_socket_new(
                     base_, socket_, BEV_OPT_CLOSE_ON_FREE);
 
         bufferevent_setcb(bev_, ReadCb, NULL, EventCb, this);
-
         bufferevent_enable(bev_, EV_READ|EV_WRITE);
     }
 
-    static void Dispatch(Connection* conn) {
+    static void Dispatch(std::shared_ptr<Connection> conn) {
         event_base_dispatch(conn->base_);
     }
 
     static void ReadCb(struct bufferevent *bev, void *ctx) {
 
-            /* This callback is invoked when there is data to read on bev. */
-            struct evbuffer *input = bufferevent_get_input(bev);
-            struct evbuffer *output = bufferevent_get_output(bev);
+        /* This callback is invoked when there is data to read on bev. */
+        struct evbuffer *input = bufferevent_get_input(bev);
+        struct evbuffer *output = bufferevent_get_output(bev);
 
-            /* Copy all the data from the input buffer to the output buffer. */
-            evbuffer_add_buffer(output, input);
+        /* Copy all the data from the input buffer to the output buffer. */
+        evbuffer_add_buffer(output, input);
+
+        // TODO: by michael
+        std::cout << ctx;
     }
 
     static void EventCb(struct bufferevent *bev, short events, void *ctx) {
 
-            if (events & BEV_EVENT_ERROR)
-                    LOG_TRACE("Error from bufferevent");
-            if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-                    bufferevent_free(bev);
-            }
+        if (events & BEV_EVENT_ERROR)
+            LOG_TRACE("Error from bufferevent");
+        if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+            bufferevent_free(bev);
+        }
+
+        // TODO: by michael
+        std::cout << ctx;
     }
 
     ~Connection() {
 
         if (base_ != NULL) {
-            event_base_free(connection_base_);
+            event_base_free(base_);
         }
     }
 
@@ -120,7 +128,8 @@ public:
 private:
 
     int socket_;
-    bufferevent bev_;
+    RpcServer* rpc_server_;
+    bufferevent* bev_;
     event_base* base_;
 };
 

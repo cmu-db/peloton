@@ -38,15 +38,8 @@ public:
   RpcServer(const int port);
   ~RpcServer();
 
-  // add more endpoints
-  void EndPoint(const char* url);
-
   // start
   void Start();
-
-//  std::thread WorkerThread(const char* debuginfo) {
-//    return std::thread([=] { Worker(debuginfo); });
-//  }
 
   // register a service
   void RegisterService(google::protobuf::Service *service);
@@ -60,10 +53,7 @@ public:
 private:
 
   // Multiple woker threads
-  void Worker(const char* debuginfo);
-
-  // Forward message between two socket
-  void Forward();
+  //void Worker(const char* debuginfo);
 
   // the rpc function can call this to execute something
   static void Callback() {
@@ -78,6 +68,7 @@ private:
   RpcMethodMap   rpc_method_map_;
 
   Listener listener_;
+
 //  MessageQueue<RecvItem>   recv_queue_;
 };
 

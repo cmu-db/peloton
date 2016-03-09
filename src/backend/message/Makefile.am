@@ -9,7 +9,8 @@ message_FILES = \
 				backend/message/rpc_channel.cpp \
 				backend/message/rpc_server.cpp \
 				backend/message/rpc_client_manager.cpp \
-				backend/message/peloton_service.cpp
+				backend/message/peloton_service.cpp \
+				backend/message/tcp_listener.cpp
 								
 message_INCLUDES = \
                   -I$(srcdir)/message

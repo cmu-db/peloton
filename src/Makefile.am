@@ -78,7 +78,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg
+libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg -levent
 
 ######################################################################
 # LIBPELOTONPG
@@ -112,7 +112,7 @@ libpelotonpg_la_LDFLAGS = -lprotobuf
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
-peloton_LDFLAGS = 
+peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la

@@ -21,6 +21,7 @@ namespace message {
 
 #define PELOTON_ENDPOINT_ADDR "tcp://127.0.0.1:9999"
 #define PELOTON_ENDPOINT_FILE "ipc:///tmp/echo.sock"
+#define PELOTON_SERVER_PORT 9000
 
 
 }  // namespace message

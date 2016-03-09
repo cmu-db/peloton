@@ -45,40 +45,47 @@ void Listener::Run(void* arg) {
       return;
     }
 
-    evconnlistener_set_error_cb(listener_, AcceptConnCb);
+    evconnlistener_set_error_cb(listener_, AcceptErrorCb);
 
     event_base_dispatch(listen_base_);
 
     return;
 }
 
-static void Listener::AcceptConnCb(struct evconnlistener *listener,
+void Listener::AcceptConnCb(struct evconnlistener *listener,
         evutil_socket_t fd, struct sockaddr *address, int socklen,
         void *ctx) {
 
+    assert(listener != NULL && address != NULL && socklen >= 0);
+
     /* We got a new connection! Set up a bufferevent for it. */
-    Connection conn = new Connection(fd);
+
+    // We should be careful here new connection would lead to memory leak
+    // if we don't use shared ptr
+    std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, ctx);
 
     LOG_TRACE ("Server: connection received from fd: %d", fd);
 
     // prepaere workers
     std::function<void()> worker_conn =
-            std::bind(&Connection::Dispatch(), conn);
+            std::bind(&Connection::Dispatch, conn);
 
     // add workers to thread pool
     ThreadManager::GetInstance().AddTask(worker_conn);
 }
 
-static void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {
+void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {
 
-        struct event_base *base = evconnlistener_get_base(listener);
-        int err = EVUTIL_SOCKET_ERROR();
+    assert(ctx != NULL);
 
-        // Debug info
-        fprintf(stderr, "Got an error %d (%s) on the listener. "
-                "Shutting down.\n", err, evutil_socket_error_to_string(err));
+    struct event_base *base = evconnlistener_get_base(listener);
+    int err = EVUTIL_SOCKET_ERROR();
 
-        event_base_loopexit(base_, NULL);
+    // Debug info
+    fprintf(stderr, "Got an error %d (%s) on the listener. "
+            "Shutting down.\n", err, evutil_socket_error_to_string(err));
+
+    event_base_loopexit(base, NULL);
 }
 
 }  // namespace message
