@@ -47,6 +47,8 @@ public:
   // remove all services
   void RemoveService();
 
+  RpcMethod* FindMethod(uint64_t opcode);
+
   // close
   void Close();
 

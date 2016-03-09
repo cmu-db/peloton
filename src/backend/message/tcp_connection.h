@@ -14,6 +14,7 @@
 
 #include "backend/common/logger.h"
 #include "rpc_server.h"
+#include "rpc_controller.h"
 
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -23,6 +24,10 @@
 
 namespace peloton {
 namespace message {
+
+#include "rpc_controller.h"
+
+#define MAXBYTES 1024
 
 class Connection {
 
@@ -40,6 +45,17 @@ public:
         bufferevent_enable(bev_, EV_READ|EV_WRITE);
     }
 
+    ~Connection() {
+
+        if (base_ != NULL) {
+            event_base_free(base_);
+        }
+
+        if (bev_ != NULL) {
+            bufferevent_free(bev_);
+        }
+    }
+
     static void Dispatch(std::shared_ptr<Connection> conn) {
         event_base_dispatch(conn->base_);
     }
@@ -47,14 +63,69 @@ public:
     static void ReadCb(struct bufferevent *bev, void *ctx) {
 
         /* This callback is invoked when there is data to read on bev. */
-        struct evbuffer *input = bufferevent_get_input(bev);
-        struct evbuffer *output = bufferevent_get_output(bev);
+        //struct evbuffer *input = bufferevent_get_input(bev);
+        //struct evbuffer *output = bufferevent_get_output(bev);
+        // TODO: We might use bev in futurn
+        assert(bev != NULL);
 
-        /* Copy all the data from the input buffer to the output buffer. */
-        evbuffer_add_buffer(output, input);
+        Connection* conn = (Connection*) ctx;
 
-        // TODO: by michael
-        std::cout << ctx;
+        uint64_t opcode = 0;
+
+        // Receive message
+        char buf[MAXBYTES];
+
+        while (conn->GetReadBufferLen()) {
+
+            // Get the data
+            conn->GetReadData(buf, sizeof(buf));
+
+            // Get the hashcode of the rpc method
+            memcpy((char*) (&opcode), buf, sizeof(opcode));
+
+            // Get the rpc method meta info: method descriptor
+            RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
+
+            if (rpc_method == NULL) {
+                LOG_TRACE("No method found");
+                return;
+            }
+
+            const google::protobuf::MethodDescriptor *method = rpc_method->method_;
+
+            // Get request and response type and create them
+            google::protobuf::Message *request = rpc_method->request_->New();
+            google::protobuf::Message *response = rpc_method->response_->New();
+
+            // Deserialize the receiving message
+            request->ParseFromString(buf + sizeof(opcode));
+
+            // Create the corresponding rpc method
+            // google::protobuf::Closure* callback =
+            //         google::protobuf::internal::NewCallback(&Callback);
+
+             RpcController controller;
+             rpc_method->service_->CallMethod(method, &controller, request, response,
+                     NULL);
+
+             // TODO: controller should be set within rpc method
+             if (controller.Failed()) {
+                 std::string error = controller.ErrorText();
+                 LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
+             }
+
+             // Send back the response message. The message has been set up when executing rpc method
+             size_t msg_len = response->ByteSize();
+
+             char buffer[msg_len];
+             response->SerializeToArray(buf, msg_len);
+
+             // send data
+             conn->AddToWriteBuffer(buffer, msg_len);
+
+             delete request;
+             delete response;
+        }
     }
 
     static void EventCb(struct bufferevent *bev, short events, void *ctx) {
@@ -69,11 +140,8 @@ public:
         std::cout << ctx;
     }
 
-    ~Connection() {
-
-        if (base_ != NULL) {
-            event_base_free(base_);
-        }
+    RpcServer* GetRpcServer() {
+        return rpc_server_;
     }
 
     // Get the readable length of the read buf

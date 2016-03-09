@@ -213,5 +213,17 @@ void RpcServer::RemoveService() {
     }
 }
 
+RpcMethod* RpcServer::FindMethod(uint64_t opcode) {
+
+    // Get the method iter from local map
+    RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
+    if (iter == rpc_method_map_.end()) {
+        return NULL;
+    }
+    // Get the rpc method meta info: method descriptor
+    RpcMethod *rpc_method = iter->second;
+
+    return rpc_method;
+}
 }  // namespace message
 }  // namespace peloton
