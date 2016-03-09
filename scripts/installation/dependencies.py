@@ -77,19 +77,7 @@ def install_dependencies():
     LOG.info(os.getcwd())
     LOG.info(FILE_DIR)
     LOG.info(ROOT_DIR)
-
-    ## ==============================================
-    ## Protobuf
-    ## ==============================================
-    LOG.info("Building protobuf files")
-    LOG.info(SRC_DIR)
-    os.chdir(SRC_DIR)
-    cmd = 'protoc backend/networking/abstract_service.proto --cpp_out=.'
-    exec_cmd(cmd)
-    os.chdir('..')
-
-    LOG.info("Finished building protobuf files")
-
+    
 ## ==============================================
 ## MAIN
 ## ==============================================
