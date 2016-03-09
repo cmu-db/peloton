@@ -15,8 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/materialization_plan.h"
@@ -44,9 +43,11 @@ namespace test {
 // Materialization Tests
 //===--------------------------------------------------------------------===//
 
+class MaterializationTests : public PelotonTest {};
+
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
-TEST(MaterializationTests, SingleBaseTileTest) {
+TEST_F(MaterializationTests, SingleBaseTileTest) {
   const int tuple_count = 9;
   std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
@@ -93,7 +94,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 // Materializing logical tile composed of two base tiles.
 // The materialized tile's output columns are reordered.
 // Also, one of the columns is dropped.
-TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
+TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   const int tuple_count = 9;
   std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));

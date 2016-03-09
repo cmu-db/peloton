@@ -12,8 +12,7 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/append_plan.h"
 
@@ -25,7 +24,6 @@
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -34,6 +32,8 @@ namespace peloton {
 namespace test {
 
 namespace {
+
+class AppendTests : public PelotonTest {};
 
 void RunTest(executor::AppendExecutor &executor, size_t expected_num_tuples) {
   EXPECT_TRUE(executor.Init());
@@ -51,7 +51,7 @@ void RunTest(executor::AppendExecutor &executor, size_t expected_num_tuples) {
   EXPECT_EQ(expected_num_tuples, actual_num_tuples_returned);
 }
 
-TEST(AppendTests, AppendTwoTest) {
+TEST_F(AppendTests, AppendTwoTest) {
   // Create the plan node
   planner::AppendPlan node;
 

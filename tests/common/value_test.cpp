@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include <cfloat>
+#include <limits>
 
 #include "harness.h"
 
@@ -19,9 +20,6 @@
 #include "backend/common/value_peeker.h"
 #include "backend/common/serializer.h"
 
-#include <cfloat>
-#include <limits>
-
 namespace peloton {
 namespace test {
 
@@ -29,20 +27,22 @@ namespace test {
 // Value Tests
 //===--------------------------------------------------------------------===//
 
+class ValueTest : public PelotonTest {};
+
 void deserDecHelper(Value nv, ValueType &vt, TTInt &value, std::string &str) {
   vt = ValuePeeker::PeekValueType(nv);
   value = ValuePeeker::PeekDecimal(nv);
   str = ValuePeeker::PeekDecimalString(nv);
 }
 
-TEST(ValueTest, CloneInt) {
+TEST_F(ValueTest, CloneInt) {
   Value v1 = ValueFactory::GetIntegerValue(1234);
   Value v2 = ValueFactory::Clone(v1, nullptr);
 
   ASSERT_TRUE(v1 == v2);
 }
 
-TEST(ValueTest, CloneString) {
+TEST_F(ValueTest, CloneString) {
   Value v1 = ValueFactory::GetStringValue("This string has 30 chars long.");
   Value v2 = ValueFactory::Clone(v1, nullptr);
 
@@ -53,7 +53,7 @@ TEST(ValueTest, CloneString) {
                ValuePeeker::PeekObjectValue(v2));
 }
 
-TEST(ValueTest, DeserializeDecimal) {
+TEST_F(ValueTest, DeserializeDecimal) {
   int64_t scale = 1000000000000;
   std::string str;
 
@@ -214,7 +214,7 @@ TEST(ValueTest, DeserializeDecimal) {
   ASSERT_EQ(1, 1);
 }
 
-TEST(ValueTest, TestCastToBigInt) {
+TEST_F(ValueTest, TestCastToBigInt) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(255);
   Value integer = ValueFactory::GetIntegerValue(243432);
@@ -272,7 +272,7 @@ TEST(ValueTest, TestCastToBigInt) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestCastToInteger) {
+TEST_F(ValueTest, TestCastToInteger) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(255);
   Value integer = ValueFactory::GetIntegerValue(243432);
@@ -351,7 +351,7 @@ TEST(ValueTest, TestCastToInteger) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestCastToSmallInt) {
+TEST_F(ValueTest, TestCastToSmallInt) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(255);
   Value integer = ValueFactory::GetIntegerValue(3432);
@@ -457,7 +457,7 @@ TEST(ValueTest, TestCastToSmallInt) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestCastToTinyInt) {
+TEST_F(ValueTest, TestCastToTinyInt) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(120);
   Value integer = ValueFactory::GetIntegerValue(120);
@@ -583,7 +583,7 @@ TEST(ValueTest, TestCastToTinyInt) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestCastToDouble) {
+TEST_F(ValueTest, TestCastToDouble) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(120);
   Value integer = ValueFactory::GetIntegerValue(120);
@@ -632,7 +632,7 @@ TEST(ValueTest, TestCastToDouble) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestCastToString) {
+TEST_F(ValueTest, TestCastToString) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(120);
   Value integer = ValueFactory::GetIntegerValue(120);
@@ -676,7 +676,7 @@ TEST(ValueTest, TestCastToString) {
   EXPECT_FALSE(caught);
 }
 
-TEST(ValueTest, TestCastToDecimal) {
+TEST_F(ValueTest, TestCastToDecimal) {
   Value tinyInt = ValueFactory::GetTinyIntValue(120);
   Value smallInt = ValueFactory::GetSmallIntValue(120);
   Value integer = ValueFactory::GetIntegerValue(120);
@@ -741,7 +741,7 @@ TEST(ValueTest, TestCastToDecimal) {
 
 // Adding can only overflow BigInt since they are all cast to BigInt before
 // addition takes place.
-TEST(ValueTest, TestBigIntOpAddOverflow) {
+TEST_F(ValueTest, TestBigIntOpAddOverflow) {
   Value lhs = ValueFactory::GetBigIntValue(INT64_MAX - 10);
   Value rhs = ValueFactory::GetBigIntValue(INT32_MAX);
   bool caught = false;
@@ -773,7 +773,7 @@ TEST(ValueTest, TestBigIntOpAddOverflow) {
 
 // Subtraction can only overflow BigInt since they are all cast to BigInt before
 // addition takes place.
-TEST(ValueTest, TestBigIntOpSubtractOverflow) {
+TEST_F(ValueTest, TestBigIntOpSubtractOverflow) {
   Value lhs = ValueFactory::GetBigIntValue(INT64_MAX - 10);
   Value rhs = ValueFactory::GetBigIntValue(-INT32_MAX);
   bool caught = false;
@@ -805,7 +805,7 @@ TEST(ValueTest, TestBigIntOpSubtractOverflow) {
 
 // Multiplication can only overflow BigInt since they are all cast to BigInt
 // before addition takes place.
-TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
+TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   Value lhs = ValueFactory::GetBigIntValue(INT64_MAX);
   Value rhs = ValueFactory::GetBigIntValue(INT32_MAX);
   bool caught = false;
@@ -857,7 +857,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
   std::cout << result << std::endl;
 }
 
-TEST(ValueTest, TestDoubleOpAddOverflow) {
+TEST_F(ValueTest, TestDoubleOpAddOverflow) {
   // Positive infinity
   Value lhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
   Value rhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
@@ -891,7 +891,7 @@ TEST(ValueTest, TestDoubleOpAddOverflow) {
   std::cout << result << std::endl;
 }
 
-TEST(ValueTest, TestDoubleOpSubtractOverflow) {
+TEST_F(ValueTest, TestDoubleOpSubtractOverflow) {
   // Positive infinity
   Value lhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
   Value rhs = ValueFactory::GetDoubleValue(
@@ -925,7 +925,7 @@ TEST(ValueTest, TestDoubleOpSubtractOverflow) {
   std::cout << result << std::endl;
 }
 
-TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
+TEST_F(ValueTest, TestDoubleOpMultiplyOverflow) {
   // Positive infinity
   Value lhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
   Value rhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
@@ -958,7 +958,7 @@ TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
   std::cout << result << std::endl;
 }
 
-TEST(ValueTest, TestDoubleOpDivideOverflow) {
+TEST_F(ValueTest, TestDoubleOpDivideOverflow) {
   // Positive infinity
   Value lhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::max());
   Value rhs = ValueFactory::GetDoubleValue(std::numeric_limits<double>::min());
@@ -991,7 +991,7 @@ TEST(ValueTest, TestDoubleOpDivideOverflow) {
   std::cout << result << std::endl;
 }
 
-TEST(ValueTest, TestOpIncrementOverflow) {
+TEST_F(ValueTest, TestOpIncrementOverflow) {
   Value bigIntValue = ValueFactory::GetBigIntValue(INT64_MAX);
   Value integerValue = ValueFactory::GetIntegerValue(INT32_MAX);
   Value smallIntValue = ValueFactory::GetSmallIntValue(INT16_MAX);
@@ -1030,7 +1030,7 @@ TEST(ValueTest, TestOpIncrementOverflow) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestOpDecrementOverflow) {
+TEST_F(ValueTest, TestOpDecrementOverflow) {
   Value bigIntValue = ValueFactory::GetBigIntValue(PELOTON_INT64_MIN);
   Value integerValue = ValueFactory::GetIntegerValue(PELOTON_INT32_MIN);
   Value smallIntValue = ValueFactory::GetSmallIntValue(PELOTON_INT16_MIN);
@@ -1069,7 +1069,7 @@ TEST(ValueTest, TestOpDecrementOverflow) {
   EXPECT_TRUE(caught);
 }
 
-TEST(ValueTest, TestComparisonOps) {
+TEST_F(ValueTest, TestComparisonOps) {
   Value tinyInt = ValueFactory::GetTinyIntValue(101);
   Value smallInt = ValueFactory::GetSmallIntValue(1001);
   Value integer = ValueFactory::GetIntegerValue(1000001);
@@ -1111,12 +1111,12 @@ TEST(ValueTest, TestComparisonOps) {
   EXPECT_TRUE(floatVal.OpLessThan(tinyInt).IsTrue());
 }
 
-TEST(ValueTest, TestNullHandling) {
+TEST_F(ValueTest, TestNullHandling) {
   Value nullTinyInt = ValueFactory::GetTinyIntValue(INT8_NULL);
   EXPECT_TRUE(nullTinyInt.IsNull());
 }
 
-TEST(ValueTest, TestDivideByZero) {
+TEST_F(ValueTest, TestDivideByZero) {
   Value zeroBigInt = ValueFactory::GetBigIntValue(0);
   Value oneBigInt = ValueFactory::GetBigIntValue(1);
   Value zeroDouble = ValueFactory::GetDoubleValue(0.0);
@@ -1217,7 +1217,7 @@ TEST(ValueTest, TestDivideByZero) {
   EXPECT_FALSE(caught_exception);
 }
 
-TEST(ValueTest, CompareDecimal) {
+TEST_F(ValueTest, CompareDecimal) {
   Value intv;
   Value decv;
 
@@ -1296,7 +1296,7 @@ TEST(ValueTest, CompareDecimal) {
   ASSERT_EQ(-1, intv.Compare(decv));
 }
 
-TEST(ValueTest, AddDecimal) {
+TEST_F(ValueTest, AddDecimal) {
   Value rhs;
   Value lhs;
   Value ans;
@@ -1360,7 +1360,7 @@ TEST(ValueTest, AddDecimal) {
   ASSERT_TRUE(caughtException);
 }
 
-TEST(ValueTest, SubtractDecimal) {
+TEST_F(ValueTest, SubtractDecimal) {
   Value rhs;
   Value lhs;
   Value ans;
@@ -1426,7 +1426,7 @@ TEST(ValueTest, SubtractDecimal) {
   ASSERT_TRUE(caughtException);
 }
 
-TEST(ValueTest, DecimalProducts) {
+TEST_F(ValueTest, DecimalProducts) {
   Value rhs;
   Value lhs;
   Value product;
@@ -1506,7 +1506,7 @@ TEST(ValueTest, DecimalProducts) {
   ASSERT_TRUE(caughtException);
 }
 
-TEST(ValueTest, DecimalQuotients) {
+TEST_F(ValueTest, DecimalQuotients) {
   Value rhs;
   Value lhs;
   Value quo;

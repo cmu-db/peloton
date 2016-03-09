@@ -17,8 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/catalog/schema.h"
 #include "backend/common/value.h"
@@ -35,7 +34,6 @@
 #include "backend/index/index_factory.h"
 
 #include "executor/mock_executor.h"
-#include "harness.h"
 
 using ::testing::IsNull;
 using ::testing::NotNull;

@@ -16,8 +16,7 @@
 #include <vector>
 #include <atomic>
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include "harness.h"
 
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
@@ -39,7 +38,6 @@
 
 #include "executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
 
 #include "backend/planner/delete_plan.h"
 #include "backend/planner/insert_plan.h"
@@ -77,6 +75,8 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 //===--------------------------------------------------------------------===//
 // Mutator Tests
 //===--------------------------------------------------------------------===//
+
+class MutateTests : public PelotonTest {};
 
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
@@ -192,7 +192,7 @@ void DeleteTuple(storage::DataTable *table) {
   txn_manager.CommitTransaction();
 }
 
-TEST(MutateTests, StressTests) {
+TEST_F(MutateTests, StressTests) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -289,7 +289,7 @@ TEST(MutateTests, StressTests) {
 }
 
 // Insert a logical tile into a table
-TEST(MutateTests, InsertTest) {
+TEST_F(MutateTests, InsertTest) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(

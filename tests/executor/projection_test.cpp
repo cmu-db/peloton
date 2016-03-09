@@ -15,8 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/projection_plan.h"
 #include "backend/expression/expression_util.h"
@@ -35,6 +34,8 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
+class ProjectionTests : public PelotonTest {};
+
 void RunTest(executor::ProjectionExecutor &executor,
              size_t expected_num_tiles) {
   EXPECT_TRUE(executor.Init());
@@ -47,7 +48,7 @@ void RunTest(executor::ProjectionExecutor &executor,
   EXPECT_EQ(expected_num_tiles, result_tiles.size());
 }
 
-TEST(ProjectionTests, BasicTest) {
+TEST_F(ProjectionTests, BasicTest) {
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
@@ -107,7 +108,7 @@ TEST(ProjectionTests, BasicTest) {
   RunTest(executor, 1);
 }
 
-TEST(ProjectionTests, TwoColumnTest) {
+TEST_F(ProjectionTests, TwoColumnTest) {
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
@@ -175,7 +176,7 @@ TEST(ProjectionTests, TwoColumnTest) {
   RunTest(executor, 1);
 }
 
-TEST(ProjectionTests, BasicTargetTest) {
+TEST_F(ProjectionTests, BasicTargetTest) {
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
