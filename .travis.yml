@@ -16,24 +16,14 @@ addons:
 before_script:
     # setup environment
     - sudo -H sh ./scripts/installation/packages.sh
-    - export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
-    - export PATH=/usr/local/bin/:$PATH
 
 script:
     # bootstrap
     - ./bootstrap
     - cd build
-    - ../configure --enable-debug
+    - ../configure CXXFLAGS="-O0" --enable-debug
     # make
     - make -j4
     # debugging
-    - ls -larth /usr/local/lib
-    - echo $LD_LIBRARY_PATH
-    - echo $PATH
-    - cd tests
-    - make check-build -j4
+    - make check -j4
     - ldd ./tuple_test
-    - ldd ./pair_test
-    - cd ..    
-    # run tests
-    - make check
