@@ -27,7 +27,6 @@ script:
     # make
     - make -j4
     # debugging
-    - ls -larth /usr/local
     - ls -larth /usr/local/lib
     - echo $LD_LIBRARY_PATH
     - echo $PATH
@@ -37,4 +36,4 @@ script:
     - ldd ./pair_test
     - cd ..    
     # run tests
-    - sudo make check
+    - make check
