@@ -1,3 +1,0 @@
-vmmalloc_fork/TEST4: START: vmmalloc_fork
- ./vmmalloc_fork$(nW) e 4 2
-vmmalloc_fork/TEST4: Done

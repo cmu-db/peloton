@@ -153,7 +153,34 @@ fi
 AC_SUBST([DEBUG_CXXFLAGS])
 AC_SUBST([DEBUG_CPPFLAGS])
 
+#####################################################################
+# Check for NVML Library
+#####################################################################
 
+# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
+OLD_CXXFLAGS=$CXXFLAGS;
+OLD_LDFLAGS=$LDFLAGS;
+CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
+LDFLAGS="$AM_LDFLAGS $LDFLAGS"
+
+# ensure the library to check for is covered by the LIBS variable
+OLD_LIBS=$LIBS
+LIBS="$LIBS -lpmem"
+
+# try to link the function 'pmem_is_pmem' out of library pmem
+AC_MSG_CHECKING([whether the nvml library can be linked])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[#include <libpmem.h>]],
+        [[pmem_map(0);]])],
+    [AC_MSG_RESULT([yes])
+        OLD_CXXFLAGS="$OLD_CXXFLAGS -DNVML";],
+    [AC_MSG_RESULT([no])
+        LIBS=$OLD_LIBS; dnl reset to old value since PMEM was not found
+        found_pmem=0;])
+        
+# reset original *FLAGS
+CXXFLAGS=$OLD_CXXFLAGS
+LDFLAGS=$OLD_LDFLAGS
 
 #####################################################################
 # Workaround for Code Coverage

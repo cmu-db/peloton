@@ -1,3 +1,0 @@
-pmem_memcpy/TEST3: START: pmem_memcpy
- ./pmem_memcpy$(nW) $(nW)/testfile1 0 9 4096
-pmem_memcpy/TEST3: Done

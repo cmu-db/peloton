@@ -1,3 +1,0 @@
-pmem_movnt/TEST0: START: pmem_movnt
- ./pmem_movnt$(nW)
-pmem_movnt/TEST0: Done

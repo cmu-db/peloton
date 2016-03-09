@@ -1,3 +1,0 @@
-vmem_calloc/TEST1: START: vmem_calloc
- ./vmem_calloc$(nW) $(nW)
-vmem_calloc/TEST1: Done

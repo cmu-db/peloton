@@ -45,8 +45,6 @@ ROOT_DIR = os.path.join(os.path.dirname(FILE_DIR), os.pardir)
 THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "third_party")
 SRC_DIR = os.path.join(ROOT_DIR, "src")
 
-NVML_DIR = os.path.join(THIRD_PARTY_DIR, "nvml")
-
 ## ==============================================
 ## Utilities
 ## ==============================================
@@ -91,20 +89,6 @@ def install_dependencies():
     os.chdir('..')
 
     LOG.info("Finished building protobuf files")
-
-    ## ==============================================
-    ## NVM Library
-    ## ==============================================
-    LOG.info(NVML_DIR)
-    LOG.info("Installing nvml library")
-    os.chdir(NVML_DIR)
-    cmd = 'make -j4'
-    exec_cmd(cmd)
-    cmd = 'sudo make install -j4'
-    exec_cmd(cmd)
-    os.chdir('..')
-
-    LOG.info("Finished installing nvml library")
 
 ## ==============================================
 ## MAIN

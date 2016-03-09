@@ -1,3 +1,0 @@
-vmmalloc_malloc/TEST0: START: vmmalloc_malloc
- ./vmmalloc_malloc$(nW)
-vmmalloc_malloc/TEST0: Done

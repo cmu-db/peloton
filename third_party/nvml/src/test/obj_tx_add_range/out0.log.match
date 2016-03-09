@@ -1,3 +1,0 @@
-obj_tx_add_range/TEST0: START: obj_tx_add_range
- ./obj_tx_add_range$(nW) $(nW)testfile1
-obj_tx_add_range/TEST0: Done

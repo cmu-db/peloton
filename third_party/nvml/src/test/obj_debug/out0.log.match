@@ -1,3 +1,0 @@
-obj_debug/TEST0: START: obj_debug
- ./obj_debug$(nW) $(nW)/testfile1 f
-obj_debug/TEST0: Done

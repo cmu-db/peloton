@@ -1,3 +1,0 @@
-obj_store/TEST2: START: obj_store
- ./obj_store$(nW) $(nW)/testfile1 f
-obj_store/TEST2: Done
