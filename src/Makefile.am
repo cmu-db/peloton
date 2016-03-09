@@ -7,6 +7,8 @@
 ## Common flags
 include $(top_srcdir)/common.am
 
+BUILT_SOURCES =
+
 ######################################################################
 # SUBDIRS
 ######################################################################
@@ -46,7 +48,6 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-			$(protobuf_FILES) \
 			$(expression_FILES) \
 			$(brain_FILES) \
 			$(catalog_FILES) \
