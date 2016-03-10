@@ -13,6 +13,7 @@
 #pragma once
 
 #include "nanomsg.h"
+#include "tcp_address.h"
 #include "backend/common/logger.h"
 #include "abstract_service.pb.h"
 
@@ -27,7 +28,7 @@ namespace message {
 
 class RpcChannel : public google::protobuf::RpcChannel {
 public:
-  RpcChannel(const char* url);
+  RpcChannel(const std::string& url);
   //RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
@@ -87,10 +88,7 @@ public:
 private:
 //  std::shared_ptr<NanoMsg> psocket_;
 //  int socket_id_;
-
-  std::string ip_;
-  int port_;
-
+    NetworkAddress addr_;
 };
 
 }  // namespace message

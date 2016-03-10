@@ -14,9 +14,9 @@
 
 
 #include "tcp_address.h"
+#include "backend/common/cast.h"
 
 #include <netdb.h>
-
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -33,8 +33,13 @@ using std::vector;
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
+NetworkAddress::NetworkAddress(const std::string& address) {
+    bool re = Parse(address);
+    assert(re == true);
+}
+
 // Returns true if the address is parsed successfully.
-bool NetworkAddress::parse(const std::string& address) {
+bool NetworkAddress::Parse(const std::string& address) {
     vector<string> parts = splitExcluding(address, ' ');
     if (parts.size() == 1) {
         // Try splitting with a colon
@@ -47,7 +52,7 @@ bool NetworkAddress::parse(const std::string& address) {
 
     addrinfo* node = NULL;
     int error = getaddrinfo(parts[0].c_str(), NULL, NULL, &node);
-    ASSERT(error == 0);
+    assert(error == 0);
 
     bool found = false;
     addrinfo* ptr = node;
@@ -83,22 +88,22 @@ bool NetworkAddress::operator==(const sockaddr_in& other) const {
 static const int MAX_PORT_STRING = 6;  // maximum length: 6 bytes (5 digits, 1 NUL)
 static std::string callGetNameInfo(const NetworkAddress& address, char* port_string) {
     sockaddr_in addr;
-    address.fill(&addr);
+    address.FillAddr(&addr);
 
     string retval;
     // maximum length for IPv4 address is 16 (12 digits, 3 '.', 1 NUL)
     // IPv6 is 16 bytes = 32 hex bytes + 7 ':' + NULL = 40
     retval.resize(40);
     int error = getnameinfo(reinterpret_cast<struct sockaddr*>(&addr),
-            sizeof(addr), base::stringArray(&retval), static_cast<socklen_t>(retval.size()),
+            sizeof(addr), stringArray(&retval), static_cast<socklen_t>(retval.size()),
             port_string, MAX_PORT_STRING, NI_NUMERICHOST | NI_NUMERICSERV);
-    ASSERT(error == 0);
+    assert(error == 0);
     retval.resize(strlen(retval.data()));
 
     return retval;
 }
 
-string NetworkAddress::toString() const {
+string NetworkAddress::ToString() const {
     char port_string[MAX_PORT_STRING];
     string retval = callGetNameInfo(*this, port_string);
     retval.push_back(':');
@@ -107,29 +112,29 @@ string NetworkAddress::toString() const {
     return retval;
 }
 
-string NetworkAddress::ipToString() const {
+string NetworkAddress::IpToString() const {
     char port_string[MAX_PORT_STRING];
     return callGetNameInfo(*this, port_string);
 }
 
-void NetworkAddress::fill(struct sockaddr_in* addr) const {
+void NetworkAddress::FillAddr(struct sockaddr_in* addr) const {
     addr->sin_family = AF_INET;
     addr->sin_port = port_;
     addr->sin_addr.s_addr = ip_address_;
     memset(addr->sin_zero, 0, sizeof(addr->sin_zero));
 }
 
-sockaddr_in NetworkAddress::sockaddr() const {
+sockaddr_in NetworkAddress::Sockaddr() const {
     sockaddr_in addr;
-    fill(&addr);
+    FillAddr(&addr);
     return addr;
 }
 
-uint16_t NetworkAddress::port() const {
+uint16_t NetworkAddress::GetPort() const {
     return ntohs(port_);
 }
 
-void NetworkAddress::set_port(uint16_t port) {
+void NetworkAddress::SetPort(uint16_t port) {
     assert(port != 0);
     port_ = htons(port);
 }

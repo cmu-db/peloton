@@ -14,7 +14,7 @@
 #include "rpc_controller.h"
 #include "rpc_client_manager.h"
 #include "tcp_connection.h"
-#include "nanomsg.h"
+#include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
@@ -30,8 +30,8 @@ namespace message {
 //          socket_id_ = psocket_->Connect(url);
 //}
 
-RpcChannel::RpcChannel(const char* url) {
-
+RpcChannel::RpcChannel(const std::string& url) :
+        addr_(url) {
 }
 
 RpcChannel::~RpcChannel() {
@@ -60,7 +60,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // prepare the sending buf
   size_t msg_len = request->ByteSize() + sizeof(opcode);
-  char* buf[msg_len];
+  char buf[msg_len];
 
   // copy the hashcode into the buf
   memcpy(buf, &opcode, sizeof(opcode));
@@ -68,27 +68,28 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // call protobuf to serialize the request message into sending buf
   request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
 
+  // crate a connection to prcess the rpc send and recv
+  std::shared_ptr<Connection> conn = std::make_shared<Connection>(-1, this);
+
+  // write data into sending buffer
+  if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
+      LOG_TRACE("Write data Error");
+      return;
+  }
+
+  // Connect to server with given address
+  if ( conn->Connect(addr_) == false ) {
+      LOG_TRACE("Connect Error");
+      return;
+  }
+
   // use a thread to dispatch this sending event
-  Connection* conn = new Connection(-1, NULL);
+  // prepaere workers_thread to send and recv data
+  std::function<void()> worker_conn =
+          std::bind(&Connection::Dispatch, conn);
 
-
-  // send the message to server
-  psocket_->Send(buf,msg_len,0);
-
-  // call nanomsg function to free the buf
-  freemsg(buf);
-
-  std::function<void()> call = std::bind(Callback, psocket_);
-  RpcClientManager::GetInstance().SetCallback(this->psocket_, call);
-
-//  // wait to receive the response
-//  psocket_->Receive(&buf, NN_MSG, 0);
-//
-//  // deserialize the receiving msg
-//  response->ParseFromString(buf);
-//
-//  // free the receiving buf
-//  freemsg(buf);
+  // add workers to thread pool to send and recv data
+  ThreadManager::GetInstance().AddTask(worker_conn);
 
   // run call back function
   if (done != NULL) {
@@ -102,10 +103,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
 void RpcChannel::Close() {
 
-  if (socket_id_ > 0) {
-    psocket_->Shutdown(socket_id_);
-    socket_id_ = 0;
-  }
 }
 
 

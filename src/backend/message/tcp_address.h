@@ -14,21 +14,22 @@
 
 
 #include <stdint.h>
-
+#include <vector>
 #include <string>
-
+#include <netinet/in.h>
 
 namespace peloton {
 namespace message {
 
-struct sockaddr_in;
+//struct sockaddr_in;
 
 class NetworkAddress {
 public:
     NetworkAddress() : ip_address_(0), port_(0) {}
+    NetworkAddress(const std::string& address);
 
     // Returns true if the address is parsed successfully.
-    bool parse(const std::string& address);
+    bool Parse(const std::string& address);
 
     bool operator==(const NetworkAddress& other) const {
         return ip_address_ == other.ip_address_ && port_ == other.port_;
@@ -37,22 +38,22 @@ public:
     bool operator==(const sockaddr_in& other) const;
 
     /** Returns IP:port as a string. */
-    std::string toString() const;
+    std::string ToString() const;
 
     /** Returns the IP address formatted as a string. */
-    std::string ipToString() const;
+    std::string IpToString() const;
 
     // Fills the addr structure with this address.
-    void fill(struct sockaddr_in* addr) const;
+    void FillAddr(struct sockaddr_in* addr) const;
 
     // Returns a sockaddr_in for this address. ::fill() can be more efficient.
-    struct sockaddr_in sockaddr() const;
+    struct sockaddr_in Sockaddr() const;
 
     // Returns the port in host byte order.
-    uint16_t port() const;
+    uint16_t GetPort() const;
 
     // Set the port to new_port in host byte order.
-    void set_port(uint16_t new_port);
+    void SetPort(uint16_t new_port);
 
 private:
     // IPv4 address in network byte order
@@ -67,13 +68,14 @@ inline bool operator==(const sockaddr_in& a, const NetworkAddress& b) {
     return b == a;
 }
 
-inline vector<string> splitExcluding(const std::string& input, char split) {
-    std::vector<string> splits;
+inline std::vector<std::string> splitExcluding(const std::string& input, char split) {
+
+    std::vector<std::string> splits;
 
     size_t last = 0;
     while (last <= input.size()) {
         size_t next = input.find(split, last);
-        if (next == string::npos) {
+        if (next == std::string::npos) {
             next = input.size();
         }
 
@@ -84,6 +86,14 @@ inline vector<string> splitExcluding(const std::string& input, char split) {
 
     return splits;
 }
+
+// Returns a pointer to the raw array in a string.
+// NOTE: const_cast<char*>(s->data()) fails due to reference counting implementations. See test.
+inline char* stringArray(std::string* s) {
+    if (s->empty()) return NULL;
+    return &(*s->begin());
+}
+
 
 }  // namespace message
 }  // namespace peloton
