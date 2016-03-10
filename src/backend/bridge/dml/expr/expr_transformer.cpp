@@ -234,7 +234,8 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
           expression::ExpressionUtil::ConstantValueFactory(tmpVal);
       vecExpr->push_back(ce);
     }
-    auto rv = expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
+    auto rv =
+        expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
     return rv;
     // Free val and vector here ?michael vector_expression delete vecExpr
   } else {
@@ -288,7 +289,8 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     ic++;
   }
 
-  return expression::ExpressionUtil::ComparisonFactory(EXPRESSION_TYPE_COMPARE_IN, lc, rc);
+  return expression::ExpressionUtil::ComparisonFactory(
+      EXPRESSION_TYPE_COMPARE_IN, lc, rc);
   // return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc,
   // rc);
 }
@@ -420,8 +422,8 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
       auto child_es =
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
-      return expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_NOT, child,
-                                         nullptr);
+      return expression::ExpressionUtil::OperatorFactory(
+          EXPRESSION_TYPE_OPERATOR_NOT, child, nullptr);
     }
 
     default:
@@ -438,15 +440,16 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
   switch (param_expr->paramkind) {
     case PARAM_EXTERN: {
       LOG_TRACE("Handle EXTREN PARAM");
-      return expression::ExpressionUtil::ParameterValueFactory(param_expr->paramid -
-                                               1);  // 1 indexed
+      return expression::ExpressionUtil::ParameterValueFactory(
+          param_expr->paramid - 1);  // 1 indexed
     } break;
     case PARAM_EXEC: {
-        LOG_TRACE("Handle EXEC PARAM");
-        return expression::ExpressionUtil::ParameterValueFactory(param_expr->paramid);  // 1 indexed
+      LOG_TRACE("Handle EXEC PARAM");
+      return expression::ExpressionUtil::ParameterValueFactory(
+          param_expr->paramid);  // 1 indexed
     } break;
-    //PARAM_SUBLINK,
-    //PARAM_MULTIEXPR
+    // PARAM_SUBLINK,
+    // PARAM_MULTIEXPR
     default:
       LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
       break;
@@ -473,8 +476,7 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
 }
 
 expression::AbstractExpression *ExprTransformer::TransformRelabelType(
-		const Expr *es) {
-
+    const Expr *es) {
   auto expr = reinterpret_cast<const RelabelType *>(es);
   auto child_state = expr->arg;
 
@@ -560,10 +562,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
   // Extract function arguments (at most four)
-  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM];
-  for (int i = 0; i < EXPRESSION_MAX_ARG_NUM; i++) {
-    children[i] = nullptr;
-  }
+  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM] = {};
+
   int i = 0;
   ListCell *arg;
   foreach (arg, args) {
@@ -588,13 +588,14 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LIKE:
     case EXPRESSION_TYPE_COMPARE_NOTLIKE:
-      return expression::ExpressionUtil::ComparisonFactory(plt_exprtype, children[0],
-                                           children[1]);
+      return expression::ExpressionUtil::ComparisonFactory(
+          plt_exprtype, children[0], children[1]);
 
     case EXPRESSION_TYPE_OPERATOR_PLUS:
     case EXPRESSION_TYPE_OPERATOR_MINUS:
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
     case EXPRESSION_TYPE_OPERATOR_DIVIDE:
+    case EXPRESSION_TYPE_OPERATOR_MOD:
     case EXPRESSION_TYPE_SUBSTR:
     case EXPRESSION_TYPE_ASCII:
     case EXPRESSION_TYPE_OCTET_LEN:
@@ -611,8 +612,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPLACE:
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
-      return expression::ExpressionUtil::OperatorFactory(plt_exprtype, children[0], children[1],
-                                         children[2], children[3]);
+      return expression::ExpressionUtil::OperatorFactory(
+          plt_exprtype, children[0], children[1], children[2], children[3]);
 
     default:
       LOG_ERROR(

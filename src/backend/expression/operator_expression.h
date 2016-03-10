@@ -183,6 +183,11 @@ class OpDivide {
   }
 };
 
+class OpMod {
+ public:
+  inline Value op(Value left, Value right) const { return left.OpMod(right); }
+};
+
 /*
  * Expressions templated on binary operator types
  */
