@@ -25,13 +25,13 @@ namespace peloton {
 namespace benchmark {
 namespace logger {
 
-enum LoggingExperimentType {
-  LOGGING_EXPERIMENT_TYPE_INVALID = 0,
+enum ExperimentType {
+  EXPERIMENT_TYPE_INVALID = 0,
 
-  LOGGING_EXPERIMENT_TYPE_ACTIVE = 1,
-  LOGGING_EXPERIMENT_TYPE_RECOVERY = 2,
-  LOGGING_EXPERIMENT_TYPE_STORAGE = 3,
-  LOGGING_EXPERIMENT_TYPE_WAIT = 4
+  EXPERIMENT_TYPE_ACTIVE = 1,
+  EXPERIMENT_TYPE_RECOVERY = 2,
+  EXPERIMENT_TYPE_STORAGE = 3,
+  EXPERIMENT_TYPE_WAIT = 4
 };
 
 extern int orig_scale_factor;
@@ -39,7 +39,7 @@ extern int orig_scale_factor;
 class configuration {
  public:
   // experiment type
-  LoggingExperimentType experiment_type;
+  ExperimentType experiment_type;
 
   // logging type
   LoggingType logging_type;

@@ -4,7 +4,7 @@
 //
 // workload.h
 //
-// Identification: benchmark/hyadapt/workload.h
+// Identification: benchmark/logger/workload.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,12 +12,17 @@
 
 #pragma once
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/benchmark/logger/logger_configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace logger {
 
-}  // namespace hyadapt
+extern configuration state;
+
+void RunActiveExperiment();
+
+
+}  // namespace logger
 }  // namespace benchmark
 }  // namespace peloton

@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/logger/logger_configuration.h"
-
 #include <iomanip>
 #include <algorithm>
 #include <sys/stat.h>
 
 #include "backend/common/exception.h"
+#include "backend/benchmark/logger/logger_configuration.h"
 
 namespace peloton {
 namespace benchmark {
@@ -194,7 +193,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
-  state.experiment_type = LOGGING_EXPERIMENT_TYPE_INVALID;
+  state.experiment_type = EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 0;
 
   // Parse args
@@ -224,7 +223,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         state.data_file_size = atoi(optarg);
         break;
       case 'e':
-        state.experiment_type = (LoggingExperimentType)atoi(optarg);
+        state.experiment_type = (ExperimentType)atoi(optarg);
         break;
       case 'w':
         state.wait_timeout = atoi(optarg);

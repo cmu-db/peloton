@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "logger_configuration.h"
+#include "backend/benchmark/logger/logger_configuration.h"
 
 namespace peloton {
 namespace benchmark {
