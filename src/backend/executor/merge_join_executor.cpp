@@ -93,6 +93,15 @@ bool MergeJoinExecutor::DExecute() {
     if (children_[0]->Execute() == false) {
       LOG_TRACE("Did not get left tile ");
       left_child_done_ = true;
+      // if we know the join type is left join, we don't have to get the
+      // tiles from right child anymore.
+      if (join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_INNER) {
+        return BuildOuterJoinOutput();
+      } else {
+        // otherwise, try again
+        return DExecute();
+      }
+
       // Try again
       return DExecute();
     }
@@ -108,8 +117,8 @@ bool MergeJoinExecutor::DExecute() {
   }
 
   // Check if we have logical tiles to process
-  if(left_result_tiles_.empty() || right_result_tiles_.empty()) {
-    return false;
+  if (left_result_tiles_.empty() || right_result_tiles_.empty()) {
+    return BuildOuterJoinOutput();
   }
 
   LogicalTile *left_tile = left_result_tiles_.back().get();
@@ -162,7 +171,7 @@ bool MergeJoinExecutor::DExecute() {
       // Left key == Right key, go and check next join clause
     }
 
-    // Atleast one of the join clauses don't match
+    // At least one of the join clauses don't match
     // One of the tile has been advanced
     if (not_matching_tuple_pair) {
       continue;
@@ -199,12 +208,14 @@ bool MergeJoinExecutor::DExecute() {
       }
     }
 
-    // Then, advance both
-    left_start_row = left_end_row;
-    left_end_row = Advance(left_tile, left_start_row, true);
-
+    // Then, advance both if necessary
     right_start_row = right_end_row;
     right_end_row = Advance(right_tile, right_start_row, false);
+
+    if (right_start_row != right_end_row) {
+      left_start_row = left_end_row;
+      left_end_row = Advance(left_tile, left_start_row, true);
+    }
   }
 
   // Check if we have any join tuples.
@@ -241,8 +252,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
   while (end_row < tuple_count) {
     expression::ContainerTuple<executor::LogicalTile> this_tuple(tile,
                                                                  this_row);
-    expression::ContainerTuple<executor::LogicalTile> next_tuple(tile,
-                                                                 end_row);
+    expression::ContainerTuple<executor::LogicalTile> next_tuple(tile, end_row);
 
     bool diff = false;
 

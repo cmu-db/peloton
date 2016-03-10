@@ -678,7 +678,7 @@ void RunJoinTest() {
 
   planner::NestedLoopJoinPlan nested_loop_join_node(join_type,
                                                     join_predicate,
-                                                    nullptr);
+                                                    nullptr, nullptr);
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
