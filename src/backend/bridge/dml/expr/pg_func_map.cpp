@@ -158,6 +158,11 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {941, {EXPRESSION_TYPE_OPERATOR_MOD, 2}},
 
     //====--------------------------------
+    // Date
+    //====--------------------------------
+
+    {2021, {EXPRESSION_TYPE_EXTRACT, 2}},
+    //====--------------------------------
     // Cast
     //====--------------------------------
     {480, {EXPRESSION_TYPE_CAST, 1}},   // int8 -> int4
