@@ -33,6 +33,7 @@
 #include "backend/expression/function_expression.h"
 #include "backend/expression/subquery_expression.h"
 #include "backend/expression/string_expression.h"
+#include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
 
 #include <json_spirit.h>
@@ -541,6 +542,9 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       break;
     case (EXPRESSION_TYPE_OPERATOR_MOD):
       ret = new OperatorExpression<OpMod>(et, first, second);
+      break;
+    case (EXPRESSION_TYPE_EXTRACT):
+      ret = new ExtractExpression(first, second);
       break;
     case (EXPRESSION_TYPE_OPERATOR_CONCAT):
       throw ExpressionException("Concat operator not yet supported.");
