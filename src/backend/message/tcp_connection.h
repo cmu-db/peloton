@@ -29,7 +29,9 @@
 namespace peloton {
 namespace message {
 
-#define MAXBYTES 1024
+#define MAXBYTES   1024
+#define HEADERLEN  4    // the length should be equal with sizeof uint32_t
+#define OPCODELEN  8    // the length should be equal with sizeof uint64_t
 
 class Connection {
 

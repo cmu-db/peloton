@@ -38,6 +38,18 @@ RpcChannel::~RpcChannel() {
   Close();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//                 Request message structure:
+// --Header:  message length (Opcode + request),         uint32_t (4bytes)
+// --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
+// --Request: the serialization result of protobuf       Header-8
+//
+// TODO: We did not add checksum code in this version
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Channel is only use by protobuf rpc client. So the this method is sending request msg
+ */
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                                   google::protobuf::RpcController* controller,
                                   const google::protobuf::Message* request,
@@ -56,22 +68,30 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // Get the hashcode for the rpc function name
   // TODO:
   //uint64_t opcode = CityHash64(methodname.c_str(), methodname.length());
-  size_t opcode = string_hash_fn(methodname);
+
+  uint64_t opcode = string_hash_fn(methodname);
 
   // prepare the sending buf
-  size_t msg_len = request->ByteSize() + sizeof(opcode);
-  char buf[msg_len];
+  uint32_t msg_len = request->ByteSize() + sizeof(opcode);
 
-  // copy the hashcode into the buf
-  memcpy(buf, &opcode, sizeof(opcode));
+  // total length of the message: header length (4bytes) + message length (8bytes + ...)
+  assert(HEADERLEN == sizeof(msg_len));
+  char buf[sizeof(msg_len) + msg_len];
+
+  // copy the header into the buf
+  memcpy(buf, &msg_len, sizeof(msg_len));
+
+  // copy the hashcode into the buf, following the header
+  assert(OPCODELEN == sizeof(opcode));
+  memcpy(buf + sizeof(msg_len), &opcode, sizeof(opcode));
 
   // call protobuf to serialize the request message into sending buf
-  request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
+  request->SerializeToArray(buf + sizeof(msg_len) + sizeof(opcode), request->ByteSize());
 
   // crate a connection to prcess the rpc send and recv
   std::shared_ptr<Connection> conn(new Connection(-1, NULL));
 
-  // write data into sending buffer
+  // write data into sending buffer, when using libevent we don't need loop send
   if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
       LOG_TRACE("Write data Error");
       return;
@@ -83,7 +103,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       return;
   }
 
-  // use a thread to dispatch this sending event
   // prepaere workers_thread to send and recv data
   std::function<void()> worker_conn =
           std::bind(&Connection::Dispatch, conn);

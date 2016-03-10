@@ -83,18 +83,42 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
     Connection* conn = (Connection*) ctx;
 
-    uint64_t opcode = 0;
-
-    // Receive message
-    char buf[MAXBYTES];
-
     while (conn->GetReadBufferLen()) {
+
+        // Get the total readable data length
+        uint32_t readable_len = conn->GetReadBufferLen();
+
+        // If the total readable data is too less
+        if (readable_len < HEADERLEN + OPCODELEN) {
+            LOG_TRACE("Readable data is too less, return");
+            return;
+        }
+
+        /*
+         * Copy the header.
+         * Note: should not remove the header from buffer, cuz we might return
+         *       if there are no enough data as a whole message
+         */
+        uint32_t msg_len = 0;
+        int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
+        assert(nread == HEADERLEN);
+
+        // if readable data is less than a message, return to wait the next callback
+        if (readable_len < msg_len + HEADERLEN) {
+            LOG_TRACE("Readable data is less than a message, return");
+            return;
+        }
+
+        // Receive message.
+        char buf[msg_len + HEADERLEN];
+        LOG_TRACE("Begin to read a request, length is %d", msg_len);
 
         // Get the data
         conn->GetReadData(buf, sizeof(buf));
 
         // Get the hashcode of the rpc method
-        memcpy((char*) (&opcode), buf, sizeof(opcode));
+        uint64_t opcode = 0;
+        memcpy((char*) (&opcode), buf + HEADERLEN, sizeof(opcode));
 
         // Get the rpc method meta info: method descriptor
         RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
@@ -111,7 +135,7 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         google::protobuf::Message *response = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        request->ParseFromString(buf + sizeof(opcode));
+        request->ParseFromString(buf + sizeof(opcode) + HEADERLEN);
 
         // Create the corresponding rpc method
         // google::protobuf::Closure* callback =
