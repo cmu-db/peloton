@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// hyadapt.cpp
+// logger.cpp
 //
-// Identification: benchmark/hyadapt/hyadapt.h
+// Identification: benchmark/logger/logger.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include "hyadapt_configuration.h"
+#include "logger_configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace logger {
 
 extern configuration state;
 
-}  // namespace hyadapt
+}  // namespace logger
 }  // namespace benchmark
 }  // namespace peloton

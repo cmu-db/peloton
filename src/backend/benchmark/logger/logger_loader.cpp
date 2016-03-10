@@ -2,31 +2,28 @@
 //
 //                         PelotonDB
 //
-// workload.h
+// loader.cpp
 //
-// Identification: benchmark/hyadapt/workload.h
+// Identification: benchmark/hyadapt/loader.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#include "backend/benchmark/hyadapt/hyadapt_loader.h"
 
-#include "backend/benchmark/hyadapt/configuration.h"
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <chrono>
+#include <iostream>
+#include <ctime>
+#include <cassert>
 
 namespace peloton {
 namespace benchmark {
 namespace hyadapt {
-
-extern configuration state;
-
-extern storage::DataTable *hyadapt_table;
-
-void CreateTable();
-
-void LoadTable();
-
-void CreateAndLoadTable(LayoutType layout_type);
 
 }  // namespace hyadapt
 }  // namespace benchmark

@@ -36,7 +36,10 @@ include $(srcdir)/postgres/timezone/Makefile.am
 
 include $(top_srcdir)/third_party/Makefile.am
 
-bin_PROGRAMS = peloton hyadapt
+bin_PROGRAMS = \
+			   peloton \
+			   hyadapt \
+			   logger
 
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
