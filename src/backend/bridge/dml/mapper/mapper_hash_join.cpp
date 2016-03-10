@@ -53,8 +53,8 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
-    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                               join_filter, plan_filter);
+    predicate = expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter);
   } else if (join_filter) {
     predicate = join_filter;
   } else {
@@ -68,21 +68,25 @@ const planner::AbstractPlan *PlanTransformer::TransformHashJoin(
 
   LOG_INFO("%s", project_info.get()->Debug().c_str());
 
-  std::vector<oid_t> outer_hashkeys = BuildColumnListFromExpStateList(hj_plan_state->outer_hashkeys);
+  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
+      hj_plan_state->tts_tupleDescriptor);
+
+  std::vector<oid_t> outer_hashkeys =
+      BuildColumnListFromExpStateList(hj_plan_state->outer_hashkeys);
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        hj_plan_state->tts_tupleDescriptor);
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::HashJoinPlan(join_type, predicate, nullptr, outer_hashkeys);
+    plan_node = new planner::HashJoinPlan(join_type, predicate, nullptr,
+                                          project_schema, outer_hashkeys);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node =
-        new planner::HashJoinPlan(join_type, predicate, project_info.release(), outer_hashkeys);
+        new planner::HashJoinPlan(join_type, predicate, project_info.release(),
+                                  project_schema, outer_hashkeys);
     result = plan_node;
   }
 

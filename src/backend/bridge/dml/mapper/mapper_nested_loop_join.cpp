@@ -46,8 +46,8 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
 
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
-    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                               join_filter, plan_filter);
+    predicate = expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter);
   } else if (join_filter) {
     predicate = join_filter;
   } else {
@@ -64,23 +64,23 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
 
   planner::AbstractPlan *result = nullptr;
   planner::NestedLoopJoinPlan *plan_node = nullptr;
+  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
+      nl_plan_state->tts_tupleDescriptor);
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
 
-    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-        nl_plan_state->tts_tupleDescriptor);
-
     result =
         new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node =
-    	new planner::NestedLoopJoinPlan(peloton_join_type, predicate, nullptr, nl);
+    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
+                                                nullptr, project_schema, nl);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
-                                                    project_info.release(), nl);
+                                                project_info.release(),
+                                                project_schema, nl);
     result = plan_node;
   }
 

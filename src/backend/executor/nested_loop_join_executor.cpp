@@ -62,7 +62,8 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
-  const planner::NestedLoopJoinPlan &nl_plan_node = GetPlanNode<planner::NestedLoopJoinPlan>();
+  const planner::NestedLoopJoinPlan &nl_plan_node =
+      GetPlanNode<planner::NestedLoopJoinPlan>();
   const NestLoop *nl = nl_plan_node.GetNestLoop();
 
   // Loop until we have non-empty result tile or exit
@@ -85,7 +86,6 @@ bool NestedLoopJoinExecutor::DExecute() {
     if (left_child_done_ == true) {
       LOG_TRACE("Advance the left buffer iterator.");
 
-      assert(!left_result_tiles_.empty());
       assert(!right_result_tiles_.empty());
       left_result_itr_++;
 
@@ -100,12 +100,6 @@ bool NestedLoopJoinExecutor::DExecute() {
       // Left child is finished, no more tiles
       if (children_[0]->Execute() == false) {
         LOG_TRACE("Left child is exhausted.");
-
-        if (left_result_tiles_.empty()) {
-          assert(right_result_tiles_.empty());
-          LOG_TRACE("Left child returned nothing. Exit.");
-          return false;
-        }
 
         left_child_done_ = true;
         left_result_itr_ = 0;
@@ -123,35 +117,40 @@ bool NestedLoopJoinExecutor::DExecute() {
      * Go over every pair of tuples in left (outer plan)
      * and pass the joinkey to the executor and inner plan (right)
      */
-    if ( nl != nullptr ) { // nl is supposed to be set but here is for the original version
-        left_tile = left_result_tiles_.back().get();
-        for (auto left_tile_row_itr : *left_tile) {
-          expression::ContainerTuple<executor::LogicalTile> left_tuple(
-               left_tile, left_tile_row_itr);
-          ListCell *lc = nullptr;
-    	  foreach(lc, nl->nestParams) {
+    if (nl != nullptr) {  // nl is supposed to be set but here is for the
+                          // original version
+      left_tile = left_result_tiles_.back().get();
+      for (auto left_tile_row_itr : *left_tile) {
+        expression::ContainerTuple<executor::LogicalTile> left_tuple(
+            left_tile, left_tile_row_itr);
+        ListCell *lc = nullptr;
+        foreach (lc, nl->nestParams) {
+          NestLoopParam *nlp = (NestLoopParam *)lfirst(lc);
+          // int			paramno = nlp->paramno;
+          // Var		   *paramval = nlp->paramval;
 
-    			NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
-    			//int			paramno = nlp->paramno;
-    			//Var		   *paramval = nlp->paramval;
+          /*
+           * pass the joinkeys to executor params and set the flag = 1
+           */
+          Value value = left_tuple.GetValue(nlp->paramval->varattno - 1);
+          executor_context_->ClearParams();
+          executor_context_->SetParams(value);
+          executor_context_->SetParamsExec(1);
+          children_[1]->ClearContext();
+          children_[1]->SetContext(value, 1);
 
-    			/*
-    			 * pass the joinkeys to executor params and set the flag = 1
-    			 */
-    			Value value = left_tuple.GetValue(nlp->paramval->varattno -1);
-    			executor_context_->ClearParams();
-    			executor_context_->SetParams(value);
-    			executor_context_->SetParamsExec(1);
-    			children_[1]->ClearContext();
-    			children_[1]->SetContext(value, 1);
-
-    			/* Flag parameter value as changed */
-    			// innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
-    	  } // end foreach
-        }  // end for
-    } // end if
+          /* Flag parameter value as changed */
+          // innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
+        }  // end foreach
+      }    // end for
+    }      // end if
 
     if (advance_right_child == true || right_result_tiles_.empty()) {
+      // return if right tile is empty
+      if (right_child_done_ && right_result_tiles_.empty()) {
+        return BuildOuterJoinOutput();
+      }
+
       assert(left_result_itr_ == 0);
 
       // Right child is finished, no more tiles
@@ -160,7 +159,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         // Right child exhausted.
         // Release cur Right tile. Clear right child's result buffer and return.
-        assert(left_result_tiles_.size() > 0);
         right_child_done_ = true;
 
         return BuildOuterJoinOutput();
@@ -169,6 +167,10 @@ bool NestedLoopJoinExecutor::DExecute() {
       else {
         LOG_TRACE("Advance the Right child.");
         BufferRightTile(children_[1]->GetOutput());
+        // return if left tile is empty
+        if (left_child_done_ && left_result_tiles_.empty()) {
+          return BuildOuterJoinOutput();
+        }
       }
     }
 
@@ -216,7 +218,8 @@ bool NestedLoopJoinExecutor::DExecute() {
 
       // For Right and Full Outer Join
       if (has_left_match) {
-        RecordMatchedRightRow(right_result_tiles_.size() - 1, right_tile_row_itr);
+        RecordMatchedRightRow(right_result_tiles_.size() - 1,
+                              right_tile_row_itr);
       }
 
     }  // Outer loop of NLJ
@@ -229,7 +232,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
 
     LOG_TRACE("This pair produces empty join result. Continue the loop.");
-  } // end the very beginning for loop
+  }  // end the very beginning for loop
 }
 
 }  // namespace executor

@@ -51,8 +51,9 @@ class MergeJoinPlan : public AbstractJoinPlan {
   MergeJoinPlan(PelotonJoinType join_type,
                 const expression::AbstractExpression *predicate,
                 const ProjectInfo *proj_info,
+                const catalog::Schema *proj_schema,
                 std::vector<JoinClause> &join_clauses)
-      : AbstractJoinPlan(join_type, predicate, proj_info),
+      : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema),
         join_clauses_(std::move(join_clauses)) {
     // Nothing to see here...
   }
