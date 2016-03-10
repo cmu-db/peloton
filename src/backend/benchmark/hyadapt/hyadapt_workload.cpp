@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -20,9 +22,6 @@
 #include <cassert>
 #include <thread>
 #include <algorithm>
-
-#include "backend/benchmark/hyadapt/loader.h"
-#include "backend/benchmark/hyadapt/workload.h"
 
 #include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
@@ -68,6 +67,7 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
+#include "hyadapt_loader.h"
 
 namespace peloton {
 namespace benchmark {
