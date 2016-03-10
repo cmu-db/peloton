@@ -154,6 +154,9 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {217, {EXPRESSION_TYPE_OPERATOR_DIVIDE, 2}},
     {1727, {EXPRESSION_TYPE_OPERATOR_DIVIDE, 2}},
 
+    {156, {EXPRESSION_TYPE_OPERATOR_MOD, 2}},
+    {941, {EXPRESSION_TYPE_OPERATOR_MOD, 2}},
+
     //====--------------------------------
     // Cast
     //====--------------------------------
