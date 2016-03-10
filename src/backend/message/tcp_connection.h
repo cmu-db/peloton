@@ -24,6 +24,8 @@
 #include <event2/util.h>
 #include <event2/event.h>
 
+#include <memory>
+
 namespace peloton {
 namespace message {
 
@@ -40,10 +42,11 @@ public:
 
     static void ServerReadCb(struct bufferevent *bev, void *ctx);
     static void ClientReadCb(struct bufferevent *bev, void *ctx);
-    static void EventCb(struct bufferevent *bev, short events, void *ctx);
+    static void ServerEventCb(struct bufferevent *bev, short events, void *ctx);
+    static void ClientEventCb(struct bufferevent *bev, short events, void *ctx);
 
     RpcServer* GetRpcServer();
-    RpcChannel* GetRpcClient();
+//    RpcChannel* GetRpcClient();
 
     bool Connect(const NetworkAddress& addr);
 
@@ -81,7 +84,10 @@ public:
 private:
 
     int socket_;
-    void* client_server_;
+
+    //
+    RpcServer* rpc_server_;
+
     bufferevent* bev_;
     event_base* base_;
 };

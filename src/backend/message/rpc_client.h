@@ -112,9 +112,9 @@ class RpcClient {
 
   void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
                  ::peloton::message::HeartbeatResponse* response) {
-    google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
+    //google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
     //controller_->SetRpcClientManager(&client_manager_);
-    stub_->Heartbeat(controller_, request, response, callback);
+    stub_->Heartbeat(controller_, request, response, NULL);
   }
 
   void UnevictData(const ::peloton::message::UnevictDataRequest* request,

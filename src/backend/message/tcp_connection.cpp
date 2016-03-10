@@ -16,16 +16,22 @@ namespace peloton {
 namespace message {
 
 Connection::Connection(int fd, void* arg) :
-        socket_(fd), client_server_(arg) {
+        socket_(fd) {
+
+    if (arg == NULL) {
+        rpc_server_ = NULL;
+    } else {
+        rpc_server_ = (RpcServer*)arg;
+    }
 
     base_ = event_base_new();
     bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE);
 
     // client passes fd with -1 when new a connection
     if ( fd != -1) { // server
-        bufferevent_setcb(bev_, ServerReadCb, NULL, EventCb, this);
+        bufferevent_setcb(bev_, ServerReadCb, NULL, ServerEventCb, this);
     } else { // client
-        bufferevent_setcb(bev_, ClientReadCb, NULL, EventCb, this);
+        bufferevent_setcb(bev_, ClientReadCb, NULL, ClientEventCb, this);
     }
 
     bufferevent_enable(bev_, EV_READ | EV_WRITE);
@@ -63,7 +69,8 @@ void Connection::Dispatch(std::shared_ptr<Connection> conn) {
 }
 
 void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
-    std::cout << bev << ctx;
+    LOG_TRACE("ClientReadCb is invoked");
+    assert (bev != NULL && ctx != NULL);
 }
 
 void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
@@ -121,38 +128,58 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         }
 
         // Send back the response message. The message has been set up when executing rpc method
-        size_t msg_len = response->ByteSize();
+        //size_t msg_len = response->ByteSize();
 
-        char buffer[msg_len];
-        response->SerializeToArray(buf, msg_len);
+        //char buffer[msg_len];
+        //response->SerializeToArray(buf, msg_len);
 
         // send data
-        conn->AddToWriteBuffer(buffer, msg_len);
+        //conn->AddToWriteBuffer(buffer, msg_len);
+
+        /* Copy all the data from the input buffer to the output buffer. */
+        //conn->MoveBufferData();
+        conn->AddToWriteBuffer(buf, sizeof(buf));
 
         delete request;
         delete response;
     }
 }
 
-void Connection::EventCb(struct bufferevent *bev, short events, void *ctx) {
+void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx) {
 
-    if (events & BEV_EVENT_ERROR)
-        LOG_TRACE("Error from bufferevent");
+    if (events & BEV_EVENT_ERROR) {
+        LOG_TRACE("Error from server bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+    }
     if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
         bufferevent_free(bev);
     }
 
-    // TODO: by michael
-    std::cout << ctx;
+    // TODO
+    Connection* conn = (Connection*)ctx;
+    assert(conn != NULL);
+}
+
+void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx) {
+
+    if (events & BEV_EVENT_ERROR) {
+        LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+    }
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+        bufferevent_free(bev);
+    }
+
+    // TODO
+    Connection* conn = (Connection*)ctx;
+    assert(conn != NULL);
 }
 
 RpcServer* Connection::GetRpcServer() {
-    return (RpcServer*) client_server_;
+    return rpc_server_;
 }
-
-RpcChannel* Connection::GetRpcClient() {
-    return (RpcChannel*) client_server_;
-}
+//
+//RpcChannel* Connection::GetRpcClient() {
+//    return (RpcChannel*) client_server_;
+//}
 
 // Get the readable length of the read buf
 int Connection::GetReadBufferLen() {

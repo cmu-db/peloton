@@ -625,7 +625,7 @@ void Coordinator() {
 void TestSend() {
 
 	try {
-		for (int i = 1; i < 5; i++) {
+		for (int i = 1; i < 4; i++) {
 			peloton::message::HeartbeatRequest request;
 			peloton::message::HeartbeatResponse response;
 
@@ -639,18 +639,18 @@ void TestSend() {
 
 			pclient->Heartbeat(&request, &response);
 
-			if (response.has_sender_site() == true) {
-				std::cout << "sender site: " << response.sender_site()
-						<< std::endl;
-			} else {
-				std::cout << "No response: sender site" << std::endl;
-			}
-
-			if (response.has_status() == true) {
-				std::cout << "Status: " << response.status() << std::endl;
-			} else {
-				std::cout << "No response: sender status" << std::endl;
-			}
+//			if (response.has_sender_site() == true) {
+//				std::cout << "sender site: " << response.sender_site()
+//						<< std::endl;
+//			} else {
+//				std::cout << "No response: sender site" << std::endl;
+//			}
+//
+//			if (response.has_status() == true) {
+//				std::cout << "Status: " << response.status() << std::endl;
+//			} else {
+//				std::cout << "No response: sender status" << std::endl;
+//			}
 		}
 
 	} catch (peloton::message::exception& e) {

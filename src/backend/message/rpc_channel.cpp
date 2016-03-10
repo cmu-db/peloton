@@ -69,7 +69,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   request->SerializeToArray(buf + sizeof(opcode), request->ByteSize());
 
   // crate a connection to prcess the rpc send and recv
-  std::shared_ptr<Connection> conn = std::make_shared<Connection>(-1, this);
+  std::shared_ptr<Connection> conn(new Connection(-1, NULL));
 
   // write data into sending buffer
   if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
@@ -96,8 +96,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     done->Run();
   }
 
+  // TODO
   if (response != NULL) {
-      std::cout << response << std::endl;
+      LOG_TRACE("Client: RpcChannel::CallMethod finished");
   }
 }
 

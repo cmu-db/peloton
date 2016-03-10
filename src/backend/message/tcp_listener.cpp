@@ -56,7 +56,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
         evutil_socket_t fd, struct sockaddr *address, int socklen,
         void *ctx) {
 
-    assert(listener != NULL && address != NULL && socklen >= 0);
+    assert(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
     /* We got a new connection! Set up a bufferevent for it. */
 
