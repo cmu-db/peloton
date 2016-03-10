@@ -214,8 +214,9 @@ StorageManager::~StorageManager() {
 
   // unmap the pmem file
 #ifdef NVML
-    if(is_pmem == true)
+    if(is_pmem == true) {
       pmem_unmap(data_file_address, data_file_len);
+    }
 #else
     pelonton_pmem_unmap(data_file_address, data_file_len);
 #endif
@@ -276,9 +277,12 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
         pmem_persist(address, length);
         clflush_count++;
       }
+      else{
+        pmem_msync(address, length);
+        msync_count++;
+      }
 #else
         peloton_msync(address, length);
-        msync_count++;
 #endif
     } break;
 
