@@ -19,7 +19,7 @@
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 
 // configuration for testing
-int64_t peloton_wait_timeout = 0;
+extern int64_t peloton_wait_timeout;
 
 namespace peloton {
 namespace logging {
@@ -27,9 +27,8 @@ namespace logging {
 FrontendLogger::FrontendLogger() {
   logger_type = LOGGER_TYPE_FRONTEND;
 
-  if (peloton_wait_timeout != 0) {
-    wait_timeout = peloton_wait_timeout;
-  }
+  // Set wait timeout
+  wait_timeout = peloton_wait_timeout;
 }
 
 FrontendLogger::~FrontendLogger() {
