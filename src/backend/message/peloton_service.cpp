@@ -294,6 +294,9 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
     }
 
 
+    /*
+     * If request is not null, this is a rpc  call, server should handle the reqeust
+     */
     if (request != NULL) {
 
         LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
@@ -316,6 +319,18 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
     else {
         // proecess the response
         LOG_TRACE("proecess the Heartbeat response");
+
+        if (response->has_sender_site() == true) {
+            std::cout << "sender site: " << response->sender_site() << std::endl;
+        } else {
+            std::cout << "No response: site is null" << std::endl;
+        }
+
+        if (response->has_status() == true) {
+            std::cout << "Status: " << response->status() << std::endl;
+        } else {
+            std::cout << "No response: status is null" << std::endl;
+        }
     }
 
 

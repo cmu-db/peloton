@@ -81,6 +81,8 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
     LOG_TRACE("ClientReadCb is invoked");
     assert (bev != NULL && ctx != NULL);
 
+    // ***prepair the callback type message****//
+
     PelotonService service;
 
     Connection* conn = (Connection*) ctx;
@@ -95,11 +97,66 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
 
     google::protobuf::Message *response = response_type->New();
 
-    RpcController controller;
+    // ***recv data and put the data into message****//
 
-    service.CallMethod(mds, &controller, NULL, response, NULL);
+    while (conn->GetReadBufferLen()) {
 
+        // Get the total readable data length
+        uint32_t readable_len = conn->GetReadBufferLen();
+
+        // If the total readable data is too less
+        if (readable_len < HEADERLEN) {
+            LOG_TRACE("ClientReadCb: Readable data is too less, return");
+            return;
+        }
+
+        /*
+         * Copy the header.
+         * Note: should not remove the header from buffer, cuz we might return
+         *       if there are no enough data as a whole message
+         */
+        uint32_t msg_len = 0;
+        int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
+        assert(nread == HEADERLEN);
+
+        // if readable data is less than a message, return to wait the next callback
+        if (readable_len < msg_len + HEADERLEN) {
+            LOG_TRACE("ClientReadCb: Readable data is less than a message, return");
+            return;
+        }
+
+        // Receive message.
+        char buf[msg_len + HEADERLEN];
+        LOG_TRACE("Begin to read a request, length is %d", msg_len);
+
+        // Get the data
+        conn->GetReadData(buf, sizeof(buf));
+
+        // Deserialize the receiving message
+        response->ParseFromString(buf + HEADERLEN);
+
+        // process data
+        RpcController controller;
+        service.CallMethod(mds, &controller, NULL, response, NULL);
+
+        // TODO: controller should be set within rpc method
+        if (controller.Failed()) {
+            std::string error = controller.ErrorText();
+            LOG_TRACE( "ClientReadCb:  with controller failed:%s ", error.c_str());
+        }
+
+    }
+
+    delete response;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//                 Response message structure:
+// --Header:  message length of Response,                 uint32_t (4bytes)
+// --Response: the serialization result of protobuf       ...
+//
+// TODO: We did not add checksum code in this version
+////////////////////////////////////////////////////////////////////////////////
 
 void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
@@ -180,17 +237,21 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         }
 
         // Send back the response message. The message has been set up when executing rpc method
-        //size_t msg_len = response->ByteSize();
+        msg_len = response->ByteSize();
 
-        //char buffer[msg_len];
-        //response->SerializeToArray(buf, msg_len);
+        char send_buf[sizeof(msg_len) + msg_len];
+        assert(sizeof(msg_len) == HEADERLEN);
+
+        // copy the header into the buf
+        memcpy(send_buf, &msg_len, sizeof(msg_len));
+
+        // call protobuf to serialize the request message into sending buf
+        response->SerializeToArray(send_buf + sizeof(msg_len), msg_len);
 
         // send data
-        //conn->AddToWriteBuffer(buffer, msg_len);
-
-        /* Copy all the data from the input buffer to the output buffer. */
-        //conn->MoveBufferData();
-        conn->AddToWriteBuffer(buf, sizeof(buf));
+        // Note: if we use raw socket send api, we should loop send
+        assert(sizeof(send_buf) == HEADERLEN+msg_len);
+        conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
         delete request;
         delete response;
