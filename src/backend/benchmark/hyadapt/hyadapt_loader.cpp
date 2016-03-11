@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -19,7 +21,6 @@
 #include <ctime>
 #include <cassert>
 
-#include "backend/benchmark/hyadapt/loader.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"

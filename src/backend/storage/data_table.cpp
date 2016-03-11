@@ -15,11 +15,12 @@
 
 #include "backend/brain/clusterer.h"
 #include "backend/storage/data_table.h"
+
+#include "../benchmark/hyadapt/hyadapt_configuration.h"
 #include "backend/storage/database.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
-#include "backend/benchmark/hyadapt/configuration.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile.h"

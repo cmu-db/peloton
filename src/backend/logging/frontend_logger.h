@@ -55,6 +55,10 @@ class FrontendLogger : public Logger {
   // Restore database
   virtual void DoRecovery(void) = 0;
 
+  size_t GetFsyncCount() const {
+    return fsync_count;
+  }
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -72,6 +76,9 @@ class FrontendLogger : public Logger {
 
   // used to indicate if backend has new logs
   bool need_to_collect_new_log_records = false;
+
+  // stats
+  size_t fsync_count = 0;
 };
 
 }  // namespace logging

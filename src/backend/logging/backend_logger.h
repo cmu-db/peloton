@@ -30,11 +30,7 @@ class BackendLogger : public Logger {
  public:
   BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; }
 
-  ~BackendLogger() {
-    for (auto log_record : local_queue) {
-      delete log_record;
-    }
-  }
+  ~BackendLogger();
 
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
 
