@@ -194,7 +194,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   state.data_file_size = 512;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
-  state.wait_timeout = 0;
+  state.wait_timeout = 100;
 
   // Parse args
   while (1) {
