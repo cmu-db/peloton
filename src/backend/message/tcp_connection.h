@@ -52,6 +52,10 @@ public:
 
     bool Connect(const NetworkAddress& addr);
 
+    void SetMethodName(std::string name);
+
+    const char* GetMethodName();
+
     // Get the readable length of the read buf
     int GetReadBufferLen();
 
@@ -92,6 +96,8 @@ private:
 
     bufferevent* bev_;
     event_base* base_;
+
+    std::string method_name_;
 };
 
 }  // namespace message

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "rpc_type.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "rpc_client_manager.h"
@@ -61,6 +62,11 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
   }
 
+  // run call back function
+  if (done != NULL) {
+     done->Run();
+  }
+
   // Get the rpc function name
   std::string methodname = std::string( method->full_name() );
   std::hash<std::string> string_hash_fn;
@@ -91,6 +97,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // crate a connection to prcess the rpc send and recv
   std::shared_ptr<Connection> conn(new Connection(-1, NULL));
 
+  // Client connection must set method name
+  conn->SetMethodName(methodname);
+
   // write data into sending buffer, when using libevent we don't need loop send
   if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
       LOG_TRACE("Write data Error");
@@ -109,11 +118,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // add workers to thread pool to send and recv data
   ThreadManager::GetInstance().AddTask(worker_conn);
-
-  // run call back function
-  if (done != NULL) {
-    done->Run();
-  }
 
   // TODO
   if (response != NULL) {

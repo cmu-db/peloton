@@ -74,6 +74,7 @@ class RpcController : public google::protobuf::RpcController {
 
     std::string error_str_;
     bool is_failed_;
+
 };
 
 }  // namespace message

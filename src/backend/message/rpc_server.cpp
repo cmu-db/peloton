@@ -73,7 +73,7 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
     std::string methodname = std::string(method->full_name());
     // TODO:
     //uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
-    size_t hash = string_hash_fn(methodname);
+    uint64_t hash = string_hash_fn(methodname);
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
     if (iter == rpc_method_map_.end())
       rpc_method_map_[hash] = rpc_method;

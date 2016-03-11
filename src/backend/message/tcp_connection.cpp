@@ -64,6 +64,14 @@ bool Connection::Connect(const NetworkAddress& addr) {
 }
 
 
+void Connection::SetMethodName(std::string name) {
+    method_name_ = name;
+}
+
+const char* Connection::GetMethodName() {
+    return method_name_.c_str();
+}
+
 void Connection::Dispatch(std::shared_ptr<Connection> conn) {
     event_base_dispatch(conn->base_);
 }
@@ -71,6 +79,19 @@ void Connection::Dispatch(std::shared_ptr<Connection> conn) {
 void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
     LOG_TRACE("ClientReadCb is invoked");
     assert (bev != NULL && ctx != NULL);
+
+    peloton::message::PelotonService service;
+
+    Connection* conn = (Connection*) ctx;
+
+    const std::string methodname = conn->GetMethodName();
+
+    const google::protobuf::DescriptorPool* dspool = google::protobuf::DescriptorPool::generated_pool();
+
+    const google::protobuf::MethodDescriptor* mds = dspool->FindMethodByName(methodname);
+
+    const google::protobuf::Message response = service.GetResponsePrototype(method);
+
 }
 
 void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {

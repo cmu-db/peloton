@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "rpc_type.h"
 #include "rpc_controller.h"
 #include "rpc_channel.h"
 #include "rpc_client_manager.h"
