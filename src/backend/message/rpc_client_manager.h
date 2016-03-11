@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "nanomsg.h"
-
 #include <map>
 #include <mutex>
 #include <memory>
@@ -30,7 +28,7 @@ public:
     // global singleton
     static RpcClientManager &GetInstance(void);
 
-    void SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback);
+    //void SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback);
 
     void DeleteCallback(int key);
 

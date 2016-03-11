@@ -12,7 +12,7 @@
 
 #include "backend/common/thread_manager.h"
 
-#define NUM_THREAD 30
+#define NUM_THREAD 10
 
 namespace peloton {
 

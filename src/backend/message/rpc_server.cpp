@@ -12,7 +12,6 @@
 
 #include "backend/message/rpc_server.h"
 #include "backend/message/rpc_controller.h"
-#include "backend/message/nanomsg.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 

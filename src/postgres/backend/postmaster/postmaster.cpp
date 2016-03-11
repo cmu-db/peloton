@@ -66,7 +66,6 @@
 #include "backend/message/peloton_service.h"
 #include "backend/message/rpc_server.h"
 #include "backend/message/abstract_service.pb.h"
-#include "backend/message/message_queue.h"
 
 #include "postgres.h"
 
@@ -538,6 +537,10 @@ HANDLE PostmasterHandle;
 #endif
 
 //TODO: Peloton adds
+extern uint64_t server_request_recv_number;
+extern uint64_t server_request_recv_bytes;
+extern uint64_t server_response_send_number;
+extern uint64_t server_response_send_bytes;
 
 void Coordinator() {
 
@@ -548,9 +551,7 @@ void Coordinator() {
 		service = new peloton::message::PelotonService();
 		rpc_server.RegisterService(service);
 		rpc_server.Start();
-	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION in Coordinator: " << e.what() << std::endl;
-		delete service;
+
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 		delete service;
@@ -625,9 +626,8 @@ void Coordinator() {
 void TestSend() {
 
 	try {
-		for (int i = 1; i < 4; i++) {
+		for (int i = 1; i < 500; i++) {
 			peloton::message::HeartbeatRequest request;
-			peloton::message::HeartbeatResponse response;
 
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
@@ -637,24 +637,13 @@ void TestSend() {
 			//peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
             //client.Heartbeat(&request, &response);
 
-			pclient->Heartbeat(&request, &response);
-
-//			if (response.has_sender_site() == true) {
-//				std::cout << "sender site: " << response.sender_site()
-//						<< std::endl;
-//			} else {
-//				std::cout << "No response: sender site" << std::endl;
-//			}
-//
-//			if (response.has_status() == true) {
-//				std::cout << "Status: " << response.status() << std::endl;
-//			} else {
-//				std::cout << "No response: sender status" << std::endl;
-//			}
+			pclient->Heartbeat(&request, NULL);
 		}
 
-	} catch (peloton::message::exception& e) {
-		std::cerr << "NN EXCEPTION in Sending: " << e.what() << std::endl;
+		std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
+		std::cout << "server_request_recv_bytes: " << server_response_send_bytes <<  std::endl;
+		std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
+		std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 	} catch (...) {

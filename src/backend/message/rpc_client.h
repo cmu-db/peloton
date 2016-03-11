@@ -13,7 +13,6 @@
 #include "rpc_type.h"
 #include "rpc_controller.h"
 #include "rpc_channel.h"
-#include "rpc_client_manager.h"
 #include "abstract_service.pb.h"
 #include "peloton_endpoint.h"
 
@@ -30,7 +29,6 @@ namespace message {
 class RpcClient {
  public:
     RpcClient(const char* url) :
-//        manager_ (RpcClientManager::GetInstance()),
         channel_ (new RpcChannel(url)),
         controller_ (new RpcController()),
         stub_ (new AbstractPelotonService::Stub(channel_)) {
@@ -128,21 +126,14 @@ class RpcClient {
     stub_->TimeSync(controller_, request, response, NULL);
   }
 
-// public:
-//  int GetSocket() {
-//      return channel_->GetSocket();
+// private:
+//
+//  static void HearbeatCallback(std::string str) {
+//    LOG_TRACE("This is client Hearbeat callback");
+//    std::cout << "the passing by str is: " << str << std::endl;
 //  }
 
  private:
-
-  static void HearbeatCallback(std::string str) {
-    LOG_TRACE("This is client Hearbeat callback");
-    std::cout << "the passing by str is: " << str << std::endl;
-  }
-
- private:
-
-//  RpcClientManager& manager_;
 
   RpcChannel*       channel_;
 

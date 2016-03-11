@@ -13,7 +13,6 @@
 #include "rpc_type.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
-#include "rpc_client_manager.h"
 #include "tcp_connection.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
@@ -61,6 +60,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       std::string error = controller->ErrorText();
       LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
   }
+
+  // TODO
+  assert(response == NULL);
 
   // run call back function
   if (done != NULL) {
@@ -118,11 +120,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // add workers to thread pool to send and recv data
   ThreadManager::GetInstance().AddTask(worker_conn);
-
-  // TODO
-  if (response != NULL) {
-      LOG_TRACE("Client: RpcChannel::CallMethod finished");
-  }
 }
 
 void RpcChannel::Close() {

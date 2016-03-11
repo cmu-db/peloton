@@ -13,11 +13,16 @@
 #include "tcp_connection.h"
 #include "peloton_service.h"
 
+uint64_t server_request_recv_number = 0;   // number of rpc
+uint64_t server_request_recv_bytes = 0;   // bytes
+uint64_t server_response_send_number = 0;  // number of rpc
+uint64_t server_response_send_bytes = 0;  // bytes
+
 namespace peloton {
 namespace message {
 
 Connection::Connection(int fd, void* arg) :
-        socket_(fd) {
+        socket_(fd), close_(false) {
 
     if (arg == NULL) {
         rpc_server_ = NULL;
@@ -44,7 +49,7 @@ Connection::~Connection() {
         event_base_free(base_);
     }
 
-    if (bev_ != NULL) {
+    if (bev_ != NULL && close_ == false) {
         bufferevent_free(bev_);
     }
 }
@@ -62,6 +67,11 @@ bool Connection::Connect(const NetworkAddress& addr) {
     }
 
     return true;
+}
+
+void Connection::Close() {
+    bufferevent_free(bev_);
+    close_ = true;
 }
 
 
@@ -127,7 +137,6 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
 
         // Receive message.
         char buf[msg_len + HEADERLEN];
-        LOG_TRACE("Begin to read a request, length is %d", msg_len);
 
         // Get the data
         conn->GetReadData(buf, sizeof(buf));
@@ -148,6 +157,8 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
     }
 
     delete response;
+
+    conn->Close();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -196,10 +207,14 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
         // Receive message.
         char buf[msg_len + HEADERLEN];
-        LOG_TRACE("Begin to read a request, length is %d", msg_len);
 
         // Get the data
         conn->GetReadData(buf, sizeof(buf));
+
+        // for test
+        server_request_recv_number++;
+        server_request_recv_bytes += (msg_len + HEADERLEN);
+        // end test
 
         // Get the hashcode of the rpc method
         uint64_t opcode = 0;
@@ -253,6 +268,17 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         assert(sizeof(send_buf) == HEADERLEN+msg_len);
         conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
+
+        // for test
+        server_response_send_number++;
+        server_response_send_bytes += (msg_len + HEADERLEN);
+        // end test
+
+        std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
+        std::cout << "server_request_recv_bytes: " << server_request_recv_bytes <<  std::endl;
+        std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
+        std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
+
         delete request;
         delete response;
     }
@@ -260,30 +286,32 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
 void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx) {
 
-    if (events & BEV_EVENT_ERROR) {
-        LOG_TRACE("Error from server bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
-    }
-    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-        bufferevent_free(bev);
-    }
-
     // TODO
     Connection* conn = (Connection*)ctx;
-    assert(conn != NULL);
+    assert(conn != NULL && bev != NULL);
+
+    if (events & BEV_EVENT_ERROR) {
+        LOG_TRACE("Error from server bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+//        conn->Close();
+    }
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+        conn->Close();
+    }
 }
 
 void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx) {
 
-    if (events & BEV_EVENT_ERROR) {
-        LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
-    }
-    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-        bufferevent_free(bev);
-    }
-
     // TODO
     Connection* conn = (Connection*)ctx;
-    assert(conn != NULL);
+    assert(conn != NULL && bev != NULL);
+
+    if (events & BEV_EVENT_ERROR) {
+        LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+//        conn->Close();
+    }
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+        conn->Close();
+    }
 }
 
 RpcServer* Connection::GetRpcServer() {

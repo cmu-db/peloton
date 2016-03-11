@@ -52,6 +52,8 @@ public:
 
     bool Connect(const NetworkAddress& addr);
 
+    void Close();
+
     void SetMethodName(std::string name);
 
     const char* GetMethodName();
@@ -91,6 +93,7 @@ private:
 
     int socket_;
 
+    bool close_;
     //
     RpcServer* rpc_server_;
 

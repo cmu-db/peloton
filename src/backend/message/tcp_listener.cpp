@@ -41,7 +41,7 @@ void Listener::Run(void* arg) {
         (struct sockaddr*)&sin, sizeof(sin));
 
     if (!listener_) {
-      LOG_TRACE("Couldn't create listener");
+      LOG_ERROR("Couldn't create listener");
       return;
     }
 
@@ -64,7 +64,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
     // if we don't use shared ptr
     std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, ctx);
 
-    LOG_TRACE ("Server: connection received from fd: %d", fd);
+    LOG_INFO ("Server: connection received from fd: %d", fd);
 
     // prepaere workers
     std::function<void()> worker_conn =
@@ -82,8 +82,8 @@ void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {
     int err = EVUTIL_SOCKET_ERROR();
 
     // Debug info
-    fprintf(stderr, "Got an error %d (%s) on the listener. "
-            "Shutting down.\n", err, evutil_socket_error_to_string(err));
+    LOG_ERROR("Got an error %d (%s) on the listener. "
+            "Shutting down", err, evutil_socket_error_to_string(err));
 
     event_base_loopexit(base, NULL);
 }

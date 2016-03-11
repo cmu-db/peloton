@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_client_manager.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/thread_manager.h"
