@@ -293,18 +293,31 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
         LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
     }
 
-    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
-            request->sender_site(),
-            request->last_transaction_id());
 
-    response->set_sender_site(9876);
-    Status status = ABORT_SPECULATIVE;
-    response->set_status(status);
+    if (request != NULL) {
 
-    // if callback exist, run it
-    if (done) {
-        done->Run();
+        LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
+                request->sender_site(),
+                request->last_transaction_id());
+
+        response->set_sender_site(9876);
+        Status status = ABORT_SPECULATIVE;
+        response->set_status(status);
+
+        // if callback exist, run it
+        if (done) {
+            done->Run();
+        }
     }
+
+    /*
+     * Here is for the client callback for Heartbeat
+     */
+    else {
+        // proecess the response
+        LOG_TRACE("proecess the Heartbeat response");
+    }
+
 
 }
 

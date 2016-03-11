@@ -135,8 +135,9 @@ class RpcClient {
 
  private:
 
-  static void HearbeatCallback() {
+  static void HearbeatCallback(std::string str) {
     LOG_TRACE("This is client Hearbeat callback");
+    std::cout << "the passing by str is: " << str << std::endl;
   }
 
  private:

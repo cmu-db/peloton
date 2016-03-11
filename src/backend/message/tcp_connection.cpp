@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "tcp_connection.h"
+#include "peloton_service.h"
 
 namespace peloton {
 namespace message {
@@ -80,7 +81,7 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
     LOG_TRACE("ClientReadCb is invoked");
     assert (bev != NULL && ctx != NULL);
 
-    peloton::message::PelotonService service;
+    PelotonService service;
 
     Connection* conn = (Connection*) ctx;
 
@@ -90,7 +91,13 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
 
     const google::protobuf::MethodDescriptor* mds = dspool->FindMethodByName(methodname);
 
-    const google::protobuf::Message response = service.GetResponsePrototype(method);
+    const google::protobuf::Message *response_type = &service.GetResponsePrototype(mds);
+
+    google::protobuf::Message *response = response_type->New();
+
+    RpcController controller;
+
+    service.CallMethod(mds, &controller, NULL, response, NULL);
 
 }
 
