@@ -18,7 +18,7 @@ namespace message {
 
 #define CLIENT_THREADS 1
 
-ThreadManager RpcClient::client_threads_(CLIENT_THREADS);
+//ThreadManager RpcClient::client_threads_(CLIENT_THREADS);
 
 RpcClient::RpcClient(const char* url) :
        channel_ (new RpcChannel(url)),

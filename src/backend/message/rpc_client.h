@@ -31,7 +31,7 @@ class RpcClient {
     RpcClient(const char* url);
     ~RpcClient();
 
-    static ThreadManager client_threads_;
+    //static ThreadManager client_threads_;
 
  public:
 

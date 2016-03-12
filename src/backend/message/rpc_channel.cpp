@@ -120,8 +120,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
           std::bind(&Connection::Dispatch, conn);
 
   // add workers to thread pool to send and recv data
-  ThreadManager::GetInstance().AddTask(worker_conn);
+  //ThreadManager::GetInstance().AddTask(worker_conn);
   //RpcClient::client_threads_.AddTask(worker_conn);
+  ThreadManager::GetClientThreadPool().AddTask(worker_conn);
 }
 
 void RpcChannel::Close() {

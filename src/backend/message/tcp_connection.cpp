@@ -13,8 +13,9 @@
 #include "tcp_connection.h"
 #include "peloton_service.h"
 
-uint64_t server_request_recv_number = 0;   // number of rpc
-uint64_t server_request_recv_bytes = 0;   // bytes
+#include <mutex>
+
+std::mutex send_mutex;
 uint64_t server_response_send_number = 0;  // number of rpc
 uint64_t server_response_send_bytes = 0;  // bytes
 
@@ -232,11 +233,6 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         // Get the data
         conn->GetReadData(buf, sizeof(buf));
 
-        // for test
-        //server_request_recv_number++;
-        //server_request_recv_bytes += (msg_len + HEADERLEN);
-        // end test
-
         // Get the hashcode of the rpc method
         uint64_t opcode = 0;
         memcpy((char*) (&opcode), buf + HEADERLEN, sizeof(opcode));
@@ -289,16 +285,30 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         assert(sizeof(send_buf) == HEADERLEN+msg_len);
         conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
+        // test
+        {
+            std::lock_guard < std::mutex > lock(send_mutex);
+            server_response_send_number++;
+            server_response_send_bytes += (msg_len + HEADERLEN);
 
-        // for test
-        //server_response_send_number++;
-        //server_response_send_bytes += (msg_len + HEADERLEN);
+            struct timeval end;
+            long useconds;
+            gettimeofday(&end, NULL);
+            useconds = end.tv_usec - conn->GetRpcServer()->start_time_;
+
+            float rpc_speed = 0;
+            float bytes_speed = 0;
+
+            rpc_speed = (float)(server_response_send_number * 1000000)/useconds;
+            bytes_speed = (float)(server_response_send_bytes * 1000000)/useconds;
+
+            std::cout << "server_response_send_number: "
+                    << server_response_send_number << " speed:-------------------------------------------------"<< rpc_speed << "----------" <<std::endl;
+            std::cout << "server_response_send_bytes: "
+                    << server_response_send_bytes << " spped:***************************************************" << bytes_speed << "*********" << std::endl;
+        }
         // end test
 
-//        std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
-//        std::cout << "server_request_recv_bytes: " << server_response_send_bytes <<  std::endl;
-//        std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
-//        std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
 
         delete request;
         delete response;

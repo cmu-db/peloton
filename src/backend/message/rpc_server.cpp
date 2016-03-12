@@ -25,10 +25,16 @@ namespace message {
 
 #define SERVER_THREADS 1
 
-ThreadManager RpcServer::server_threads_(SERVER_THREADS);
+//ThreadManager RpcServer::server_threads_(SERVER_THREADS);
 
 RpcServer::RpcServer(const int port) :
     listener_(port) {
+
+    struct timeval start;
+
+    gettimeofday(&start, NULL);
+
+    start_time_ = start.tv_usec;
 }
 
 RpcServer::~RpcServer() {

@@ -52,7 +52,10 @@ public:
   // close
   void Close();
 
-  static ThreadManager server_threads_;
+  //ThreadManager server_threads_;
+
+  // for test
+  long start_time_;
 
 private:
 

@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "backend/common/thread_manager.h"
+
 #include <event2/listener.h>
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -25,9 +27,10 @@ class Listener {
 public:
 
     Listener(int port) :
+        //server_threads_(1),
         listen_base_(event_base_new()),
         listener_(NULL),
-        port_(port){
+        port_(port) {
 
         assert(listen_base_ != NULL);
         assert(port_ > 0 && port_ < 65535);
@@ -52,6 +55,8 @@ public:
 
     // Begin listening on port.
     void Run(void* arg);
+
+    //ThreadManager server_threads_;
 
 private:
     static void AcceptConnCb(struct evconnlistener *listener,
