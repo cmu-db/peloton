@@ -4,7 +4,7 @@
 //
 // rpc_controller.h
 //
-// Identification: src/backend/message/rpc_controller.h
+// Identification: src/backend/networking/rpc_controller.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

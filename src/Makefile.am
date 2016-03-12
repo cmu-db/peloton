@@ -20,7 +20,7 @@ include $(srcdir)/backend/executor/Makefile.am
 include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
 include $(srcdir)/backend/main/Makefile.am
-include $(srcdir)/backend/message/Makefile.am
+include $(srcdir)/backend/networking/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am

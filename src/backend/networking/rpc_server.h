@@ -4,7 +4,7 @@
 //
 // rpc_server.h
 //
-// Identification: src/backend/message/rpc_server.h
+// Identification: src/backend/networking/rpc_server.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 #include "backend/common/thread_manager.h"
-#include "backend/message/rpc_method.h"
+#include "backend/networking/rpc_method.h"
 #include "tcp_listener.h"
 
 #include <iostream>

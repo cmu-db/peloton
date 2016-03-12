@@ -4,15 +4,15 @@
 //
 // peloton_service.cpp
 //
-// Identification: src/backend/message/peloton_service.cpp
+// Identification: src/backend/networking/peloton_service.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/message/peloton_service.h"
-#include "backend/message/peloton_endpoint.h"
-#include "backend/message/rpc_server.h"
+#include "backend/networking/peloton_service.h"
+#include "backend/networking/peloton_endpoint.h"
+#include "backend/networking/rpc_server.h"
 #include "backend/common/logger.h"
 
 #include <unistd.h>

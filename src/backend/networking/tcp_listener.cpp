@@ -4,7 +4,7 @@
 //
 // rpc_network.cpp
 //
-// Identification: /peloton/src/backend/message/tcp_network.cpp
+// Identification: /peloton/src/backend/networking/tcp_network.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

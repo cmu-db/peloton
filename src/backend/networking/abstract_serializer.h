@@ -4,7 +4,7 @@
 //
 // abstract_serializer.h
 //
-// Identification: src/backend/message/abstract_serializer.h
+// Identification: src/backend/networking/abstract_serializer.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

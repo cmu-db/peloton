@@ -4,14 +4,14 @@
 //
 // rpc_server.h
 //
-// Identification: src/backend/message/rpc_server.cpp
+// Identification: src/backend/networking/rpc_server.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/message/rpc_server.h"
-#include "backend/message/rpc_controller.h"
+#include "backend/networking/rpc_server.h"
+#include "backend/networking/rpc_controller.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 

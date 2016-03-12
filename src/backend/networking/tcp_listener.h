@@ -4,7 +4,7 @@
 //
 // rpc_network.h
 //
-// Identification: /peloton/src/backend/message/tcp_listener.h
+// Identification: /peloton/src/backend/networking/tcp_listener.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

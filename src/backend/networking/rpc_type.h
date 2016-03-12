@@ -4,7 +4,7 @@
 //
 // rpc_type.h
 //
-// Identification: /peloton/src/backend/message/rpc_type.h
+// Identification: /peloton/src/backend/networking/rpc_type.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

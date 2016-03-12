@@ -4,7 +4,7 @@
 //
 // tcp_connection.cpp
 //
-// Identification: /peloton/src/backend/message/tcp_connection.cpp
+// Identification: /peloton/src/backend/networking/tcp_connection.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

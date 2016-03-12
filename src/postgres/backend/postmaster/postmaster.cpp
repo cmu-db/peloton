@@ -62,10 +62,10 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "backend/message/rpc_client.h"
-#include "backend/message/peloton_service.h"
-#include "backend/message/rpc_server.h"
-#include "backend/message/abstract_service.pb.h"
+#include "backend/networking/rpc_client.h"
+#include "backend/networking/peloton_service.h"
+#include "backend/networking/rpc_server.h"
+#include "backend/networking/abstract_service.pb.h"
 
 #include "postgres.h"
 

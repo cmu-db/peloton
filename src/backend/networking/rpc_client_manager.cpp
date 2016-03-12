@@ -4,7 +4,7 @@
 //
 // rpc_client_manager.cpp
 //
-// Identification: /peloton/src/backend/message/rpc_client_manager.cpp
+// Identification: /peloton/src/backend/networking/rpc_client_manager.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

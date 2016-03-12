@@ -4,7 +4,7 @@
 //
 // tcp_address.h
 //
-// Identification: /peloton/src/backend/message/tcp_address.h
+// Identification: /peloton/src/backend/networking/tcp_address.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
