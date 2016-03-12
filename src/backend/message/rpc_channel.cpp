@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "rpc_type.h"
+#include "rpc_client.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "tcp_connection.h"
@@ -120,6 +121,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
   // add workers to thread pool to send and recv data
   ThreadManager::GetInstance().AddTask(worker_conn);
+  //RpcClient::client_threads_.AddTask(worker_conn);
 }
 
 void RpcChannel::Close() {

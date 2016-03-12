@@ -23,12 +23,9 @@
 namespace peloton {
 namespace message {
 
-//RpcServer::RpcServer(const char* url) :
-//    socket_tcp_(AF_SP_RAW, NN_REP),
-//    socket_inproc_(AF_SP_RAW, NN_REQ),
-//    socket_tcp_id_(socket_tcp_.Bind(url)),
-//    socket_inproc_id_(socket_inproc_.Bind(RECV_QUEUE))
-//{}
+#define SERVER_THREADS 1
+
+ThreadManager RpcServer::server_threads_(SERVER_THREADS);
 
 RpcServer::RpcServer(const int port) :
     listener_(port) {

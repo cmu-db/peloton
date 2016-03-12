@@ -12,11 +12,12 @@
 
 #include "backend/common/thread_manager.h"
 
-#define NUM_THREAD 10
+#define NUM_THREAD 2
 
 namespace peloton {
 
 // global singleton
+
 ThreadManager &ThreadManager::GetInstance(void) {
   static ThreadManager thread_manager(NUM_THREAD);
   return thread_manager;

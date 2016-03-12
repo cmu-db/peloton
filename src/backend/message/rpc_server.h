@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-
+#include "backend/common/thread_manager.h"
 #include "backend/message/rpc_method.h"
 #include "tcp_listener.h"
 
@@ -52,6 +52,8 @@ public:
   // close
   void Close();
 
+  static ThreadManager server_threads_;
+
 private:
 
   // Multiple woker threads
@@ -61,11 +63,6 @@ private:
   static void Callback() {
     std::cout << "This is server backcall" << std::endl;
   }
-
-//  NanoMsg        socket_tcp_;
-//  NanoMsg        socket_inproc_;
-//  int            socket_tcp_id_;
-//  int            socket_inproc_id_;
 
   RpcMethodMap   rpc_method_map_;
 

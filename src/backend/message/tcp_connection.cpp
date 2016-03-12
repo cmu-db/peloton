@@ -36,14 +36,22 @@ Connection::Connection(int fd, void* arg) :
     // client passes fd with -1 when new a connection
     if ( fd != -1) { // server
         bufferevent_setcb(bev_, ServerReadCb, NULL, ServerEventCb, this);
+        LOG_TRACE("Server: connection init");
     } else { // client
         bufferevent_setcb(bev_, ClientReadCb, NULL, ClientEventCb, this);
+        LOG_TRACE("Client: connection init");
     }
 
     bufferevent_enable(bev_, EV_READ | EV_WRITE);
 }
 
 Connection::~Connection() {
+
+    if (rpc_server_ == NULL) {
+        LOG_TRACE("Client: begin connection destroy");
+    } else {
+        LOG_TRACE("Server: begin connection destroy");
+    }
 
     if (base_ != NULL) {
         event_base_free(base_);
@@ -52,6 +60,13 @@ Connection::~Connection() {
     if (bev_ != NULL && close_ == false) {
         bufferevent_free(bev_);
     }
+
+    if (rpc_server_ == NULL) {
+        LOG_TRACE("Client: connection destroy");
+    } else {
+        LOG_TRACE("Server: connection destroy");
+    }
+
 }
 
 bool Connection::Connect(const NetworkAddress& addr) {
@@ -85,6 +100,12 @@ const char* Connection::GetMethodName() {
 
 void Connection::Dispatch(std::shared_ptr<Connection> conn) {
     event_base_dispatch(conn->base_);
+
+    if (conn->rpc_server_ == NULL) {
+        LOG_TRACE("Client: exit Dispatch");
+    } else {
+        LOG_TRACE("Server: exit Dispatch");
+    }
 }
 
 void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
@@ -212,8 +233,8 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         conn->GetReadData(buf, sizeof(buf));
 
         // for test
-        server_request_recv_number++;
-        server_request_recv_bytes += (msg_len + HEADERLEN);
+        //server_request_recv_number++;
+        //server_request_recv_bytes += (msg_len + HEADERLEN);
         // end test
 
         // Get the hashcode of the rpc method
@@ -270,14 +291,14 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
 
         // for test
-        server_response_send_number++;
-        server_response_send_bytes += (msg_len + HEADERLEN);
+        //server_response_send_number++;
+        //server_response_send_bytes += (msg_len + HEADERLEN);
         // end test
 
-        std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
-        std::cout << "server_request_recv_bytes: " << server_request_recv_bytes <<  std::endl;
-        std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
-        std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
+//        std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
+//        std::cout << "server_request_recv_bytes: " << server_response_send_bytes <<  std::endl;
+//        std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
+//        std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
 
         delete request;
         delete response;
@@ -295,6 +316,7 @@ void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx)
 //        conn->Close();
     }
     if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+        LOG_TRACE("ServerEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
         conn->Close();
     }
 }
@@ -310,6 +332,7 @@ void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx)
 //        conn->Close();
     }
     if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+        LOG_TRACE("ClientEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
         conn->Close();
     }
 }

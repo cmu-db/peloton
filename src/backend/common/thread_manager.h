@@ -33,6 +33,8 @@ class ThreadManager {
 
  public:
   // global singleton
+  // TODO: For now, rpc client and server use separated thread pool
+  //       global thread pool can lead to starving for client/server
   static ThreadManager &GetInstance(void);
 
   // The main function: add task into the task queue
@@ -44,8 +46,6 @@ class ThreadManager {
   // TODO: we don't need this API? by Michael
   //bool DetachThread(std::shared_ptr<std::thread> thread);
 
- private:
-  // Constructor is private means you can't instance class object
   // The number of the threads should be inited
   ThreadManager(int threads);
   ~ThreadManager();

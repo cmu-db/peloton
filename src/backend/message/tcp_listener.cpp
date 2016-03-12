@@ -72,6 +72,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
 
     // add workers to thread pool
     ThreadManager::GetInstance().AddTask(worker_conn);
+    //RpcServer::server_threads_.AddTask(worker_conn);
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {

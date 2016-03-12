@@ -626,7 +626,7 @@ void Coordinator() {
 void TestSend() {
 
 	try {
-		for (int i = 1; i < 500; i++) {
+		for (int i = 1; i < 2; i++) {
 			peloton::message::HeartbeatRequest request;
 
 			request.set_sender_site(i);
@@ -640,10 +640,10 @@ void TestSend() {
 			pclient->Heartbeat(&request, NULL);
 		}
 
-		std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
-		std::cout << "server_request_recv_bytes: " << server_response_send_bytes <<  std::endl;
-		std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
-		std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
+//		std::cout << "server_request_recv_number: " << server_request_recv_number <<  std::endl;
+//		std::cout << "server_request_recv_bytes: " << server_response_send_bytes <<  std::endl;
+//		std::cout << "server_response_send_number: " << server_response_send_number <<  std::endl;
+//		std::cout << "server_response_send_bytes: " << server_response_send_bytes <<  std::endl;
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 	} catch (...) {
@@ -1344,13 +1344,13 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-  std::thread coordinator(Coordinator);
-  coordinator.detach();
+//  std::thread coordinator(Coordinator);
+//  coordinator.detach();
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
-  std::thread testsend(TestSend);
-  testsend.detach();
+//  std::thread testsend(TestSend);
+//  testsend.detach();
 
   status = ServerLoop();
 
