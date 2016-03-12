@@ -42,10 +42,10 @@ public:
   void Start();
 
   // register a service
-  void RegisterService(google::protobuf::Service *service);
+  bool RegisterService(google::protobuf::Service *service);
 
   // remove all services
-  void RemoveService();
+  bool RemoveService();
 
   // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);

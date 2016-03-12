@@ -26,56 +26,40 @@ namespace networking {
 class Listener {
 public:
 
-    Listener(int port) :
-        //server_threads_(1),
-        listen_base_(event_base_new()),
-        listener_(NULL),
-        port_(port) {
+    // This is the server port
+    Listener(int port);
+    ~Listener();
 
-        assert(listen_base_ != NULL);
-        assert(port_ > 0 && port_ < 65535);
-    }
-
-    ~Listener() {
-
-        if (listener_ != NULL) {
-            evconnlistener_free(listener_);
-        }
-
-        if (listen_base_ != NULL) {
-            event_base_free(listen_base_);
-        }
-    }
-
+    // Get the server port
     int GetPort() const { return port_; }
 
+    // The listenner event is in the listen_base_
     event_base* GetEventBase() const { return listen_base_; }
 
+    // listener is a evconnlistener type which is a libevent type
     evconnlistener* GetListener() const { return listener_; }
 
-    // Begin listening on port.
+    // Begin listening
     void Run(void* arg);
 
-    //ThreadManager server_threads_;
-
 private:
+    // AcceptConnCb is a callback invoked when a new connection is accepted
     static void AcceptConnCb(struct evconnlistener *listener,
             evutil_socket_t fd, struct sockaddr *address, int socklen,
             void *ctx);
 
+    // AcceptErrorCb is invoked when error occurs
     static void AcceptErrorCb(struct evconnlistener *listener,
             void *ctx);
 
-//    static void echo_read_cb(struct bufferevent *bev, void *ctx);
-
-//    static void echo_event_cb(struct bufferevent *bev, short events, void *ctx);
-
-    event_base* listen_base_;
-    evconnlistener* listener_;
+    // server listenning port
     int port_;
-    //TCPListenerCallback* target_;
 
-    event* event_;
+    // The listenner event is in the listen_base_
+    event_base* listen_base_;
+
+    // listener is a evconnlistener type which is a libevent type
+    evconnlistener* listener_;
 };
 
 

@@ -44,7 +44,7 @@ RpcServer::~RpcServer() {
  * Therefore, a service has several methods. These methods can be registered using
  * this function
  */
-void RpcServer::RegisterService(google::protobuf::Service *service) {
+bool RpcServer::RegisterService(google::protobuf::Service *service) {
 
   // Get the service descriptor
   const google::protobuf::ServiceDescriptor *descriptor = service->GetDescriptor();
@@ -79,13 +79,15 @@ void RpcServer::RegisterService(google::protobuf::Service *service) {
     if (iter == rpc_method_map_.end())
       rpc_method_map_[hash] = rpc_method;
   }
+
+  return true;
 }
 
 void RpcServer::Start() {
     listener_.Run(this);
 }
 
-void RpcServer::RemoveService() {
+bool RpcServer::RemoveService() {
 
     RpcMethodMap::iterator iter;
 
@@ -94,6 +96,8 @@ void RpcServer::RemoveService() {
         ++it;
       delete rpc_method;
     }
+
+    return true;
 }
 
 RpcMethod* RpcServer::FindMethod(uint64_t opcode) {

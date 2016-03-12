@@ -21,8 +21,6 @@
 namespace peloton {
 namespace networking {
 
-//struct sockaddr_in;
-
 class NetworkAddress {
 public:
     NetworkAddress() : ip_address_(0), port_(0) {}

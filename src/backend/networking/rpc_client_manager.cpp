@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "rpc_client_manager.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/thread_manager.h"
@@ -44,27 +45,6 @@ RpcClientManager::~RpcClientManager() {
     if ( poll_fds_ != nullptr) {
         free (poll_fds_);
     }
-}
-
-void RpcClientManager::SetCallback(std::shared_ptr<NanoMsg> socket, std::function<void()> callback) {
-
-    LOG_TRACE( "Client: This is RPC Client Manager SetCallback");
-
-    int sock = socket->GetSocket();
-
-    std::unique_lock<std::mutex> lock(poll_fds_mutex_);
-
-    LOG_TRACE( "Client: Set socket:%d in map", sock);
-    // set fd
-    FdSet(sock);
-
-    // the callback thread will delete this item
-    sock_func_.insert(std::make_pair(sock, callback));
-
-    lock.unlock();
-    cond_.notify_one();
-
-    LOG_TRACE( "SetCallback: release lock");
 }
 
 void RpcClientManager::DeleteCallback(int key) {

@@ -29,7 +29,6 @@
 namespace peloton {
 namespace networking {
 
-#define MAXBYTES   1024
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
 #define OPCODELEN  8    // the length should be equal with sizeof uint64_t
 
@@ -37,6 +36,13 @@ class Connection {
 
 public:
 
+    /*
+     * @brief A connection has its own evenbase.
+     * @param fd is the socket
+     *            If a connection is created by server, fd(socket) is passed by listener
+     *            If a connection is created by client, fd(socket) is -1.
+     *        arg is used to pass the rpc_server pointer
+     */
     Connection(int fd, void* arg);
     ~Connection();
 
@@ -50,12 +56,26 @@ public:
     RpcServer* GetRpcServer();
 //    RpcChannel* GetRpcClient();
 
+    /*
+     * @brief After a connection is created, you can use this function to connect to
+     *        any server with the given address
+     */
     bool Connect(const NetworkAddress& addr);
 
+    /*
+     * @brief a rpc will be closed by client after it recvs the response by server
+     *        close frees the socket event
+     */
     void Close();
 
+    /*
+     * This is used by client to execute callback function
+     */
     void SetMethodName(std::string name);
 
+    /*
+     * This is used by client to execute callback function
+     */
     const char* GetMethodName();
 
     // Get the readable length of the read buf
@@ -92,9 +112,8 @@ public:
 private:
 
     int socket_;
-
     bool close_;
-    //
+
     RpcServer* rpc_server_;
 
     bufferevent* bev_;
