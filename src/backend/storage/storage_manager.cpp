@@ -18,7 +18,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/mman.h>
+
+#ifdef NVML
 #include <libpmem.h>
+#endif
 
 #include <string>
 #include <iostream>
@@ -142,6 +146,7 @@ StorageManager::StorageManager()
     exit(EXIT_FAILURE);
   }
 
+#ifdef NVML
   // memory map the data file
   if ((data_file_address = reinterpret_cast<char *>(pmem_map(data_fd))) ==
       NULL) {
@@ -152,6 +157,7 @@ StorageManager::StorageManager()
   // true only if the entire range [addr, addr+len) consists of persistent
   // memory
   is_pmem = pmem_is_pmem(data_file_address, data_file_len);
+#endif
 
   // close the pmem file -- it will remain mapped
   close(data_fd);
@@ -162,7 +168,12 @@ StorageManager::~StorageManager() {
   if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
 
   // unmap the pmem file
-  pmem_unmap(data_file_address, data_file_len);
+#ifdef NVML
+    if(is_pmem == true) {
+      pmem_unmap(data_file_address, data_file_len);
+    }
+#endif
+
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
@@ -207,7 +218,9 @@ void StorageManager::Release(BackendType type, void *address) {
   }
 }
 
-void StorageManager::Sync(BackendType type, void *address, size_t length) {
+void StorageManager::Sync(BackendType type,
+                          __attribute__((unused)) void *address,
+                          __attribute__((unused)) size_t length) {
   switch (type) {
     case BACKEND_TYPE_MM: {
       // Nothing to do here
@@ -215,10 +228,16 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
 
     case BACKEND_TYPE_FILE: {
       // flush writes for persistence
-      if (is_pmem)
+#ifdef NVML
+      if (is_pmem) {
         pmem_persist(address, length);
-      else
+        clflush_count++;
+      }
+      else{
         pmem_msync(address, length);
+        msync_count++;
+      }
+#endif
     } break;
 
     case BACKEND_TYPE_INVALID:

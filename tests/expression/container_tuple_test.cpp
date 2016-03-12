@@ -14,7 +14,6 @@
 #include <sstream>
 #include <queue>
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/common/types.h"
@@ -26,7 +25,9 @@
 namespace peloton {
 namespace test {
 
-TEST(ContainerTupleTest, VectorValue) {
+class ContainerTupleTest : public PelotonTest {};
+
+TEST_F(ContainerTupleTest, VectorValue) {
   std::vector<Value> values;
   values.push_back(ValueFactory::GetIntegerValue(11));
   values.push_back(ValueFactory::GetIntegerValue(22));

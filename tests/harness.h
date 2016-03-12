@@ -20,6 +20,11 @@
 
 #include "backend/common/types.h"
 
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include <google/protobuf/stubs/common.h>
+
 namespace peloton {
 
 class VarlenPool;
@@ -83,6 +88,23 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
     thread_group[thread_itr].join();
   }
 }
+
+//===--------------------------------------------------------------------===//
+// Peloton Test
+//===--------------------------------------------------------------------===//
+
+// All tests inherit from this class
+class PelotonTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {}
+
+  virtual void TearDown() {
+
+    // shutdown protocol buf library
+    google::protobuf::ShutdownProtobufLibrary();
+  }
+
+};
 
 }  // End test namespace
 }  // End peloton namespace

@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
@@ -26,7 +26,9 @@ namespace test {
 // TileGroupIterator Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TileGroupIteratorTests, BasicTest) {
+class TileGroupIteratorTests : public PelotonTest {};
+
+TEST_F(TileGroupIteratorTests, BasicTest) {
   const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;
   const int expected_tilegroup_count = 5;
   const int tuple_count = tuples_per_tilegroup * expected_tilegroup_count;

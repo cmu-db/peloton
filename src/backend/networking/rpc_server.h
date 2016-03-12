@@ -21,7 +21,7 @@
 #include <map>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcServer {
 
@@ -47,6 +47,7 @@ public:
   // remove all services
   void RemoveService();
 
+  // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);
 
   // close
@@ -54,13 +55,10 @@ public:
 
   //ThreadManager server_threads_;
 
-  // for test
-  long start_time_;
+  // for testing the rpc performance
+  //long start_time_;
 
 private:
-
-  // Multiple woker threads
-  //void Worker(const char* debuginfo);
 
   // the rpc function can call this to execute something
   static void Callback() {
@@ -74,5 +72,5 @@ private:
 //  MessageQueue<RecvItem>   recv_queue_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

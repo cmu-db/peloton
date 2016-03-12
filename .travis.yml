@@ -16,6 +16,7 @@ addons:
 before_script:
     # setup environment
     - sudo -H sh ./scripts/installation/packages.sh
+<<<<<<< HEAD
     - export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
     - export PATH=/usr/local/peloton/bin/:$PATH
 
@@ -38,3 +39,15 @@ script:
     - cd ..    
     # run tests
     - sudo make check
+=======
+
+script:
+    # bootstrap
+    - ./bootstrap
+    - cd build
+    - ../configure CXXFLAGS="-O0"
+    # make
+    - make
+    # debugging
+    - make check
+>>>>>>> refs/remotes/upstream/master

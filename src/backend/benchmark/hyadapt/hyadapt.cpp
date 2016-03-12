@@ -14,8 +14,8 @@
 #include <fstream>
 
 #include "backend/benchmark/hyadapt/hyadapt.h"
-#include "backend/benchmark/hyadapt/configuration.h"
-#include "backend/benchmark/hyadapt/workload.h"
+#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "hyadapt_workload.h"
 
 namespace peloton {
 namespace benchmark {
@@ -108,6 +108,14 @@ void RunBenchmark() {
 
       case EXPERIMENT_TYPE_VERSION:
         RunVersionExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_HYRISE:
+        RunHyriseExperiment();
+        break;
+
+      case EXPERIMENT_TYPE_CONCURRENCY:
+        RunConcurrencyExperiment();
         break;
 
       default:

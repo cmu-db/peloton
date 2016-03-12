@@ -15,8 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -43,6 +42,8 @@ using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
+class SeqScanTests : public PelotonTest {};
 
 namespace {
 
@@ -237,7 +238,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
 // Sequential scan of table with predicate.
 // The table being scanned has more than one tile group. i.e. the vertical
 // partitioning changes midway.
-TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
+TEST_F(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   // Create table.
   std::unique_ptr<storage::DataTable> table(CreateTable());
 
@@ -260,7 +261,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
 }
 
 // Sequential scan of logical tile with predicate.
-TEST(SeqScanTests, NonLeafNodePredicateTest) {
+TEST_F(SeqScanTests, NonLeafNodePredicateTest) {
   // No table for this case as seq scan is not a leaf node.
   storage::DataTable *table = nullptr;
 

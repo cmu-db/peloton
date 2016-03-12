@@ -245,6 +245,7 @@ void WriteBehindFrontendLogger::WriteTransactionLogRecord(
 
   // Finally, sync
   ret = fsync(log_file_fd);
+  fsync_count++;
   if (ret != 0) {
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }

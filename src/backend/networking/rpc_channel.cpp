@@ -23,8 +23,7 @@
 #include <functional>
 
 namespace peloton {
-namespace message {
-
+namespace networking {
 
 //RpcChannel::RpcChannel(const char* url) {
 //          psocket_ = std::make_shared<NanoMsg>(AF_SP, NN_REQ);
@@ -52,10 +51,10 @@ RpcChannel::~RpcChannel() {
  * Channel is only use by protobuf rpc client. So the this method is sending request msg
  */
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
-                                  google::protobuf::RpcController* controller,
-                                  const google::protobuf::Message* request,
-                                  google::protobuf::Message* response,
-                                  google::protobuf::Closure* done) {
+                            google::protobuf::RpcController* controller,
+                            const google::protobuf::Message* request,
+                            google::protobuf::Message* response,
+                            google::protobuf::Closure* done) {
 
   if (controller->Failed()) {
       std::string error = controller->ErrorText();
@@ -77,7 +76,8 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // Get the hashcode for the rpc function name
   // TODO:
   //uint64_t opcode = CityHash64(methodname.c_str(), methodname.length());
-
+  
+  // we use unit64_t because we should specify the exact length
   uint64_t opcode = string_hash_fn(methodname);
 
   // prepare the sending buf

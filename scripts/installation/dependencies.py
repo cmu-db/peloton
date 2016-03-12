@@ -45,6 +45,7 @@ ROOT_DIR = os.path.join(os.path.dirname(FILE_DIR), os.pardir)
 THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "third_party")
 SRC_DIR = os.path.join(ROOT_DIR, "src")
 
+<<<<<<< HEAD
 NVML_DIR = os.path.join(THIRD_PARTY_DIR, "nvml")
 NANOMSG_DIR = os.path.join(THIRD_PARTY_DIR, "nanomsg")
 LOGCABIN_DIR = os.path.join(THIRD_PARTY_DIR, "logcabin")
@@ -228,6 +229,41 @@ def install_dependencies():
 
     LOG.info("Finished installing logcabin library")
 
+=======
+## ==============================================
+## Utilities
+## ==============================================
+
+def exec_cmd(cmd):
+    """
+    Execute the external command and get its exitcode, stdout and stderr.
+    """
+    args = shlex.split(cmd)
+    verbose = True
+
+    # TRY
+    FNULL = open(os.devnull, 'w')
+    try:
+      if verbose == True:
+        subprocess.check_call(args, env=my_env)
+      else:
+        subprocess.check_call(args, stdout=FNULL, stderr=subprocess.STDOUT, env=my_env)
+    # Exception
+    except subprocess.CalledProcessError as e:
+        print "Command     :: ", e.cmd
+        print "Return Code :: ", e.returncode
+        print "Output      :: ", e.output
+    # Finally
+    finally:
+      FNULL.close()
+
+def install_dependencies():
+
+    LOG.info(os.getcwd())
+    LOG.info(FILE_DIR)
+    LOG.info(ROOT_DIR)
+    
+>>>>>>> refs/remotes/upstream/master
 ## ==============================================
 ## MAIN
 ## ==============================================

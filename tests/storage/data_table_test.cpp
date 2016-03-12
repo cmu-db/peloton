@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
@@ -23,7 +23,9 @@ namespace test {
 // Data Table Tests
 //===--------------------------------------------------------------------===//
 
-TEST(DataTableTests, TransformTileGroupTest) {
+class DataTableTests : public PelotonTest {};
+
+TEST_F(DataTableTests, TransformTileGroupTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles

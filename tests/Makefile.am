@@ -27,19 +27,11 @@ AM_CPPFLAGS += \
 
 AM_CXXFLAGS += $(GTEST_CXXFLAGS)
 
-if BUILD_OS_IS_DARWIN
-AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
-			  $(GMOCK_BUILDDIR)/libgmock.la \
-			  $(GMOCK_BUILDDIR)/libgmock_main.la \
-			  $(top_builddir)/src/libpeloton.la \
-			  $(top_builddir)/src/libpelotonpg.la
-else
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
 			  $(top_builddir)/src/libpelotonpg.la
-endif
 
 ######################################################################
 # SUBDIRS
@@ -54,15 +46,15 @@ include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
 include $(srcdir)/language/Makefile.am
 include $(srcdir)/logging/Makefile.am
-include $(srcdir)/message/Makefile.am
+include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-include $(srcdir)/postgres/Makefile.am
+#include $(srcdir)/postgres/Makefile.am
 
 TESTS = $(check_SCRIPTS) $(check_PROGRAMS)
-LOG_COMPILER = $(srcdir)/test-driver.sh 
-
+LOG_COMPILER = $(srcdir)/test-driver.sh
+ 
 CLEANFILES = /tmp/*.peloton
 
 check-build:

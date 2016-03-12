@@ -14,7 +14,6 @@
 #include <sstream>
 #include <queue>
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/expression/abstract_expression.h"
@@ -33,6 +32,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Expression Tests
 //===--------------------------------------------------------------------===//
+
+class ExpressionTest : public PelotonTest {};
 
 /*
    Description of test:
@@ -245,7 +246,7 @@ expression::AbstractExpression *ConvertToExpression(std::queue<AE *> &e) {
 /*
  * Show that simple addition works with the framework
  */
-TEST(ExpressionTest, SimpleAddition) {
+TEST_F(ExpressionTest, SimpleAddition) {
   std::queue<AE *> e;
   storage::Tuple junk;
 
@@ -267,7 +268,7 @@ TEST(ExpressionTest, SimpleAddition) {
 /*
  * Show that the associative property is as expected
  */
-TEST(ExpressionTest, SimpleMultiplication) {
+TEST_F(ExpressionTest, SimpleMultiplication) {
   std::queue<AE *> e;
   storage::Tuple junk;
 
@@ -302,7 +303,7 @@ TEST(ExpressionTest, SimpleMultiplication) {
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
 }
 
-TEST(ExpressionTest, SimpleFilter) {
+TEST_F(ExpressionTest, SimpleFilter) {
   // WHERE id = 20
 
   // EXPRESSION
@@ -346,7 +347,7 @@ TEST(ExpressionTest, SimpleFilter) {
   delete tuple;
 }
 
-TEST(ExpressionTest, SimpleInFilter) {
+TEST_F(ExpressionTest, SimpleInFilter) {
   // WHERE id in (15, 20)
 
   // EXPRESSION

@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cstring>
+
 #include "backend/common/pool.h"
 
 namespace peloton {
@@ -18,6 +20,9 @@ void VarlenPool::Init() {
   auto &storage_manager = storage::StorageManager::GetInstance();
   char *storage = reinterpret_cast<char *>(
       storage_manager.Allocate(backend_type, allocation_size));
+
+  // zero out the data
+  std::memset(storage, 0, allocation_size);
 
   chunks.push_back(Chunk(allocation_size, storage));
 }

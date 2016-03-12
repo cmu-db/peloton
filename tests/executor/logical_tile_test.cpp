@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -28,7 +28,6 @@
 #include "backend/storage/tile.h"
 
 #include "executor/executor_tests_util.h"
-#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -37,7 +36,9 @@ namespace test {
 // Logical Tile Tests
 //===--------------------------------------------------------------------===//
 
-TEST(LogicalTileTests, TileMaterializationTest) {
+class LogicalTileTests : public PelotonTest {};
+
+TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));

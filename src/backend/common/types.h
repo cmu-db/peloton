@@ -245,8 +245,11 @@ enum ExpressionType {
       15,  // greater than equal operator between left and right
   EXPRESSION_TYPE_COMPARE_LIKE =
       16,  // LIKE operator (left LIKE right). both children must be string.
+  EXPRESSION_TYPE_COMPARE_NOTLIKE = 17,  // NOT LIKE operator (left NOT LIKE
+                                         // right). both children must be
+                                         // string.
   EXPRESSION_TYPE_COMPARE_IN =
-      17,  // IN operator [left IN (right1, right2, ...)]
+      19,  // IN operator [left IN (right1, right2, ...)]
 
   // -----------------------------
   // Conjunction Operators
@@ -319,6 +322,11 @@ enum ExpressionType {
   EXPRESSION_TYPE_BTRIM = 513,
   EXPRESSION_TYPE_REPLACE = 514,
   EXPRESSION_TYPE_OVERLAY = 515,
+
+  // -----------------------------
+  // Date operators
+  // -----------------------------
+  EXPRESSION_TYPE_EXTRACT = 600,
 
   //===--------------------------------------------------------------------===//
   // Parser
@@ -456,8 +464,7 @@ enum StatementType {
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
 
-enum ScanDirectionType
-{
+enum ScanDirectionType {
   SCAN_DIRECTION_TYPE_INVALID = 0,  // invalid scan direction
 
   SCAN_DIRECTION_TYPE_FORWARD = 1,  // forward

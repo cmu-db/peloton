@@ -17,12 +17,12 @@
 #include <iostream>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 #define PELOTON_ENDPOINT_ADDR "127.0.0.1:9000"
 #define PELOTON_ENDPOINT_FILE "ipc:///tmp/echo.sock"
 #define PELOTON_SERVER_PORT 9000
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

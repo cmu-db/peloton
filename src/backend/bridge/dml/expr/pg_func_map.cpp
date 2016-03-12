@@ -77,6 +77,11 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {1723, {EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, 2}},
     {2055, {EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, 2}},
 
+    {850, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
+    {1631, {EXPRESSION_TYPE_COMPARE_LIKE, 2}},
+    {851, {EXPRESSION_TYPE_COMPARE_NOTLIKE, 2}},
+    {1632, {EXPRESSION_TYPE_COMPARE_NOTLIKE, 2}},
+
     //====--------------------------------
     // String expressions
     //====--------------------------------
@@ -149,6 +154,14 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     {217, {EXPRESSION_TYPE_OPERATOR_DIVIDE, 2}},
     {1727, {EXPRESSION_TYPE_OPERATOR_DIVIDE, 2}},
 
+    {156, {EXPRESSION_TYPE_OPERATOR_MOD, 2}},
+    {941, {EXPRESSION_TYPE_OPERATOR_MOD, 2}},
+
+    //====--------------------------------
+    // Date
+    //====--------------------------------
+
+    {2021, {EXPRESSION_TYPE_EXTRACT, 2}},
     //====--------------------------------
     // Cast
     //====--------------------------------

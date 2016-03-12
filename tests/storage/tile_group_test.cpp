@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/common/value_factory.h"
@@ -29,7 +28,9 @@ namespace test {
 // Tile Group Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TileGroupTests, BasicTest) {
+class TileGroupTests : public PelotonTest {};
+
+TEST_F(TileGroupTests, BasicTest) {
   std::vector<catalog::Column> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
@@ -157,7 +158,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   delete tuple;
 }
 
-TEST(TileGroupTests, StressTest) {
+TEST_F(TileGroupTests, StressTest) {
   std::vector<catalog::Column> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
@@ -221,7 +222,7 @@ TEST(TileGroupTests, StressTest) {
   delete schema;
 }
 
-TEST(TileGroupTests, MVCCInsert) {
+TEST_F(TileGroupTests, MVCCInsert) {
   std::vector<catalog::Column> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
@@ -327,7 +328,7 @@ TEST(TileGroupTests, MVCCInsert) {
   delete schema2;
 }
 
-TEST(TileGroupTests, TileCopyTest) {
+TEST_F(TileGroupTests, TileCopyTest) {
   std::vector<catalog::Column> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;

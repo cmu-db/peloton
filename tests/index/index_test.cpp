@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/common/logger.h"
@@ -30,6 +29,8 @@ catalog::Schema *tuple_schema = nullptr;
 ItemPointer item0(120, 5);
 ItemPointer item1(120, 7);
 ItemPointer item2(123, 19);
+
+class IndexTests : public PelotonTest {};
 
 index::Index *BuildIndex() {
   // Build tuple and key schema
@@ -76,7 +77,7 @@ index::Index *BuildIndex() {
 }
 
 
-TEST(IndexTests, BasicTest) {
+TEST_F(IndexTests, BasicTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer> locations;
 
@@ -219,7 +220,7 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor){
 
 }
 
-TEST(IndexTests, DeleteTest) {
+TEST_F(IndexTests, DeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer> locations;
 
@@ -256,7 +257,7 @@ TEST(IndexTests, DeleteTest) {
   delete tuple_schema;
 }
 
-TEST(IndexTests, MultiThreadedInsertTest) {
+TEST_F(IndexTests, MultiThreadedInsertTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer> locations;
 

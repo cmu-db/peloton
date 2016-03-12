@@ -78,11 +78,6 @@ bool HashJoinExecutor::DExecute() {
       right_child_done_ = true;
     }
 
-    if (right_result_tiles_.size() == 0) {
-      LOG_TRACE("Did not get any right tiles \n");
-      return false;
-    }
-
     // Get next tile from LEFT child
     if (children_[0]->Execute() == false) {
       LOG_TRACE("Did not get left tile \n");
@@ -92,6 +87,11 @@ bool HashJoinExecutor::DExecute() {
 
     BufferLeftTile(children_[0]->GetOutput());
     LOG_TRACE("Got left tile \n");
+
+    if (right_result_tiles_.size() == 0) {
+      LOG_INFO("Did not get any right tiles \n");
+      return BuildOuterJoinOutput();
+    }
 
     LogicalTile *left_tile = left_result_tiles_.back().get();
 

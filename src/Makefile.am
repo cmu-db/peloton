@@ -7,6 +7,8 @@
 ## Common flags
 include $(top_srcdir)/common.am
 
+BUILT_SOURCES =
+
 ######################################################################
 # SUBDIRS
 ######################################################################
@@ -34,9 +36,10 @@ include $(srcdir)/postgres/timezone/Makefile.am
 
 include $(top_srcdir)/third_party/Makefile.am
 
-bin_peloton_PROGRAMS = peloton hyadapt
-
-bin_pelotondir = /usr/local/peloton/bin
+bin_PROGRAMS = \
+			   peloton \
+			   hyadapt \
+			   logger
 
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
@@ -57,7 +60,7 @@ libpeloton_la_SOURCES = \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
 			$(index_FILES) \
-			$(message_FILES) \
+			$(networking_FILES) \
 			$(planner_FILES) \
 			$(storage_FILES) \
 			$(logging_FILES)
@@ -78,7 +81,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -lm -lpmem -lnanomsg -levent
+libpeloton_la_LDFLAGS = -lm -lpmem -levent
 
 ######################################################################
 # LIBPELOTONPG
@@ -112,7 +115,7 @@ libpelotonpg_la_LDFLAGS = -lprotobuf
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
-peloton_LDFLAGS =
+peloton_LDFLAGS = 
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la

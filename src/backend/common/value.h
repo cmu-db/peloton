@@ -427,11 +427,13 @@ class Value {
   Value OpAdd(const Value &rhs) const;
   Value OpMultiply(const Value &rhs) const;
   Value OpDivide(const Value &rhs) const;
+  Value OpMod(const Value &rhs) const;
   /*
    * This Value must be VARCHAR and the rhs must be VARCHAR.
    * This Value is the value and the rhs is the pattern
    */
   Value Like(const Value rhs) const;
+  Value NotLike(const Value rhs) const;
 
   // TODO: passing Value arguments by const reference SHOULD be standard
   // practice
@@ -3210,9 +3212,9 @@ inline Value Value::GetNullValue(ValueType type) {
 }
 
 template <class T>
-inline void hash_combine(std::size_t& seed, const T& v){
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+inline void hash_combine(std::size_t &seed, const T &v) {
+  std::hash<T> hasher;
+  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
 inline void Value::HashCombine(std::size_t &seed) const {
@@ -3259,7 +3261,8 @@ inline void Value::HashCombine(std::size_t &seed) const {
         hash_combine<std::string>(seed, std::string(""));
       } else {
         const int32_t length = GetObjectLengthWithoutNull();
-        hash_combine<std::string>(seed, std::string(reinterpret_cast<const char *>(
+        hash_combine<std::string>(seed,
+                                  std::string(reinterpret_cast<const char *>(
                                                   GetObjectValueWithoutNull()),
                                               length));
       }
@@ -3456,6 +3459,27 @@ inline Value Value::OpAdd(const Value &rhs) const {
     case VALUE_TYPE_DECIMAL:
       return OpAddDecimals(CastAsDecimal(), rhs.CastAsDecimal());
 
+    default:
+      break;
+  }
+  throw Exception("Promotion of %s and %s failed in OpAdd." +
+                  GetValueTypeString() + rhs.GetValueTypeString());
+}
+
+inline Value Value::OpMod(const Value &rhs) const {
+  ValueType vt = PromoteForOp(GetValueType(), rhs.GetValueType());
+  if (IsNull() || rhs.IsNull()) {
+    return GetNullValue(vt);
+  }
+
+  switch (vt) {
+    case VALUE_TYPE_TINYINT:
+    case VALUE_TYPE_SMALLINT:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_TIMESTAMP:
+      return GetBigIntValue(CastAsBigIntAndGetValue() %
+                            rhs.CastAsBigIntAndGetValue());
     default:
       break;
   }
@@ -3696,6 +3720,10 @@ inline Value Value::Like(const Value rhs) const {
   Liker liker(valueChars, patternChars, valueUTF8Length, patternUTF8Length);
 
   return liker.Like() ? GetTrue() : GetFalse();
+}
+
+inline Value Value::NotLike(const Value rhs) const {
+  return Like(rhs).IsTrue() ? GetFalse() : GetTrue();
 }
 
 }  // End peloton namespace

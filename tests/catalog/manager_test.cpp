@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include "harness.h"
+
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/storage/tile_group.h"
@@ -24,6 +23,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Manager Tests
 //===--------------------------------------------------------------------===//
+
+class ManagerTests : public PelotonTest {};
 
 void AddTileGroup() {
   // TILES
@@ -57,7 +58,7 @@ void AddTileGroup() {
   delete schema1;
 }
 
-TEST(ManagerTests, TransactionTest) {
+TEST_F(ManagerTests, TransactionTest) {
   LaunchParallelTest(8, AddTileGroup);
 
   std::cout << "Catalog allocations :: "

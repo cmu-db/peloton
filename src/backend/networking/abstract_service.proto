@@ -1,6 +1,6 @@
 option cc_generic_services = true;
 
-package peloton.message;
+package peloton.networking;
 
 enum Status {
     // Everything is ok with the transaction and it is allowed

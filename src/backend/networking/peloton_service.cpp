@@ -21,11 +21,11 @@
 #include <iostream>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 void PelotonService::TransactionInit(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionInitRequest* request,
-        ::peloton::message::TransactionInitResponse* response,
+        const TransactionInitRequest* request,
+        TransactionInitResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -44,8 +44,8 @@ void PelotonService::TransactionInit(::google::protobuf::RpcController* controll
 }
 
 void PelotonService::TransactionWork(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionWorkRequest* request,
-        ::peloton::message::TransactionWorkResponse* response,
+        const TransactionWorkRequest* request,
+        TransactionWorkResponse* response,
         ::google::protobuf::Closure* done) {
     // TODO: controller should be set, we probably use it in the future
     if (controller->Failed()) {
@@ -63,8 +63,8 @@ void PelotonService::TransactionWork(::google::protobuf::RpcController* controll
 }
 
 void PelotonService::TransactionPrefetch(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionPrefetchResult* request,
-        ::peloton::message::TransactionPrefetchAcknowledgement* response,
+        const TransactionPrefetchResult* request,
+        TransactionPrefetchAcknowledgement* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -83,8 +83,8 @@ void PelotonService::TransactionPrefetch(::google::protobuf::RpcController* cont
 }
 
 void PelotonService::TransactionMap(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionMapRequest* request,
-        ::peloton::message::TransactionMapResponse* response,
+        const TransactionMapRequest* request,
+        TransactionMapResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -103,8 +103,8 @@ void PelotonService::TransactionMap(::google::protobuf::RpcController* controlle
 }
 
 void PelotonService::TransactionReduce(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionReduceRequest* request,
-        ::peloton::message::TransactionReduceResponse* response,
+        const TransactionReduceRequest* request,
+        TransactionReduceResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -123,8 +123,8 @@ void PelotonService::TransactionReduce(::google::protobuf::RpcController* contro
 }
 
 void PelotonService::TransactionPrepare(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionPrepareRequest* request,
-        ::peloton::message::TransactionPrepareResponse* response,
+        const TransactionPrepareRequest* request,
+        TransactionPrepareResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -143,8 +143,8 @@ void PelotonService::TransactionPrepare(::google::protobuf::RpcController* contr
 }
 
 void PelotonService::TransactionFinish(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionFinishRequest* request,
-        ::peloton::message::TransactionFinishResponse* response,
+        const TransactionFinishRequest* request,
+        TransactionFinishResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -163,8 +163,8 @@ void PelotonService::TransactionFinish(::google::protobuf::RpcController* contro
 }
 
 void PelotonService::TransactionRedirect(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionRedirectRequest* request,
-        ::peloton::message::TransactionRedirectResponse* response,
+        const TransactionRedirectRequest* request,
+        TransactionRedirectResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -183,8 +183,8 @@ void PelotonService::TransactionRedirect(::google::protobuf::RpcController* cont
 }
 
 void PelotonService::TransactionDebug(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TransactionDebugRequest* request,
-        ::peloton::message::TransactionDebugResponse* response,
+        const TransactionDebugRequest* request,
+        TransactionDebugResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -203,8 +203,8 @@ void PelotonService::TransactionDebug(::google::protobuf::RpcController* control
 }
 
 void PelotonService::SendData(::google::protobuf::RpcController* controller,
-        const ::peloton::message::SendDataRequest* request,
-        ::peloton::message::SendDataResponse* response,
+        const SendDataRequest* request,
+        SendDataResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -223,8 +223,8 @@ void PelotonService::SendData(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::Initialize(::google::protobuf::RpcController* controller,
-        const ::peloton::message::InitializeRequest* request,
-        ::peloton::message::InitializeResponse* response,
+        const InitializeRequest* request,
+        InitializeResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -243,8 +243,8 @@ void PelotonService::Initialize(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::ShutdownPrepare(::google::protobuf::RpcController* controller,
-        const ::peloton::message::ShutdownPrepareRequest* request,
-        ::peloton::message::ShutdownPrepareResponse* response,
+        const ShutdownPrepareRequest* request,
+        ShutdownPrepareResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -263,8 +263,8 @@ void PelotonService::ShutdownPrepare(::google::protobuf::RpcController* controll
 }
 
 void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
-        const ::peloton::message::ShutdownRequest* request,
-        ::peloton::message::ShutdownResponse* response,
+        const ShutdownRequest* request,
+        ShutdownResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -283,34 +283,14 @@ void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
-        const ::peloton::message::HeartbeatRequest* request,
-        ::peloton::message::HeartbeatResponse* response,
+        const HeartbeatRequest* request,
+        HeartbeatResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
     if (controller->Failed()) {
         std::string error = controller->ErrorText();
         LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
-    }
-
-
-    /*
-     * If request is not null, this is a rpc  call, server should handle the reqeust
-     */
-    if (request != NULL) {
-
-        LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
-                request->sender_site(),
-                request->last_transaction_id());
-
-        response->set_sender_site(9876);
-        Status status = ABORT_SPECULATIVE;
-        response->set_status(status);
-
-        // if callback exist, run it
-        if (done) {
-            done->Run();
-        }
     }
 
     /*
@@ -337,8 +317,8 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
-        const ::peloton::message::UnevictDataRequest* request,
-        ::peloton::message::UnevictDataResponse* response,
+        const UnevictDataRequest* request,
+        UnevictDataResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -357,8 +337,8 @@ void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
-        const ::peloton::message::TimeSyncRequest* request,
-        ::peloton::message::TimeSyncResponse* response,
+        const TimeSyncRequest* request,
+        TimeSyncResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -397,5 +377,5 @@ void StartPelotonService() {
 	}
 }
 */
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

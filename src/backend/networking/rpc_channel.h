@@ -23,7 +23,7 @@
 #include <memory>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcChannel : public google::protobuf::RpcChannel {
 public:
@@ -41,10 +41,8 @@ public:
   void Close();
 
 private:
-//  std::shared_ptr<NanoMsg> psocket_;
-//  int socket_id_;
     NetworkAddress addr_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

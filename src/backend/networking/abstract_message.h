@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class AbstractMessage {
  public:
@@ -43,5 +43,5 @@ class AbstractMessage {
     void Shutdown(int how);
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

@@ -12,8 +12,7 @@
 
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/planner/set_op_plan.h"
 
@@ -25,13 +24,14 @@
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
+class HashSetOptTests : public PelotonTest {};
 
 namespace {
 
@@ -55,7 +55,7 @@ void RunTest(executor::HashSetOpExecutor &executor,
   ExecutorTestsUtil::PrintTileVector(result_tiles);
 }
 
-TEST(HashSetOptTests, ExceptTest) {
+TEST_F(HashSetOptTests, ExceptTest) {
   // Create the plan node
   planner::SetOpPlan node(SETOP_TYPE_EXCEPT);
 
@@ -128,7 +128,7 @@ TEST(HashSetOptTests, ExceptTest) {
   RunTest(executor, tile_size * 2 / 5);
 }
 
-TEST(HashSetOptTests, ExceptAllTest) {
+TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create the plan node
   planner::SetOpPlan node(SETOP_TYPE_EXCEPT_ALL);
 
@@ -221,7 +221,7 @@ TEST(HashSetOptTests, ExceptAllTest) {
   RunTest(executor, 2 * (tile_size * 2 / 5));
 }
 
-TEST(HashSetOptTests, IntersectTest) {
+TEST_F(HashSetOptTests, IntersectTest) {
   // Create the plan node
   planner::SetOpPlan node(SETOP_TYPE_INTERSECT);
 
@@ -293,7 +293,7 @@ TEST(HashSetOptTests, IntersectTest) {
   RunTest(executor, tile_size - 2 * (tile_size * 2 / 5));
 }
 
-TEST(HashSetOptTests, IntersectAllTest) {
+TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create the plan node
   planner::SetOpPlan node(SETOP_TYPE_INTERSECT_ALL);
 

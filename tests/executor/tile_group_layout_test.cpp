@@ -18,8 +18,6 @@
 #include <iostream>
 #include <ctime>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "harness.h"
 
 #include "backend/planner/abstract_plan.h"
@@ -58,6 +56,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
+
+class TileGroupLayoutTest : public PelotonTest {};
 
 void ExecuteTileGroupTest() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -210,12 +210,12 @@ void ExecuteTileGroupTest() {
   std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
-TEST(TileGroupLayoutTest, RowLayout) {
+TEST_F(TileGroupLayoutTest, RowLayout) {
   peloton_layout_mode = LAYOUT_ROW;
   ExecuteTileGroupTest();
 }
 
-TEST(TileGroupLayoutTest, ColumnLayout) {
+TEST_F(TileGroupLayoutTest, ColumnLayout) {
   peloton_layout_mode = LAYOUT_COLUMN;
   ExecuteTileGroupTest();
 }

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/catalog/schema.h"
 
@@ -21,7 +21,9 @@ namespace test {
 // Tuple Schema Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TupleSchemaTests, ColumnInfoTest) {
+class TupleSchemaTests : public PelotonTest {};
+
+TEST_F(TupleSchemaTests, ColumnInfoTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
@@ -39,7 +41,7 @@ TEST(TupleSchemaTests, ColumnInfoTest) {
   EXPECT_NE(column1, column3);
 }
 
-TEST(TupleSchemaTests, TupleSchemaTest) {
+TEST_F(TupleSchemaTests, TupleSchemaTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),

@@ -15,8 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "harness.h"
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
@@ -31,7 +30,6 @@
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -39,7 +37,9 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-TEST(AggregateTests, SortedDistinctTest) {
+class AggregateTests : public PelotonTest {};
+
+TEST_F(AggregateTests, SortedDistinctTest) {
   /*
    * SELECT d, a, b, c FROM table GROUP BY a, b, c, d;
    */
@@ -141,7 +141,7 @@ TEST(AggregateTests, SortedDistinctTest) {
                   .IsTrue());
 }
 
-TEST(AggregateTests, SortedSumGroupByTest) {
+TEST_F(AggregateTests, SortedSumGroupByTest) {
   /*
    * SELECT a, SUM(b) from table GROUP BY a;
    */
@@ -245,7 +245,7 @@ TEST(AggregateTests, SortedSumGroupByTest) {
                   .IsTrue());
 }
 
-TEST(AggregateTests, SortedSumMaxGroupByTest) {
+TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   /*
    * SELECT a, SUM(b), MAX(c) from table GROUP BY a;
    */
@@ -352,7 +352,7 @@ TEST(AggregateTests, SortedSumMaxGroupByTest) {
                   .IsTrue());
 }
 
-TEST(AggregateTests, HashDistinctTest) {
+TEST_F(AggregateTests, HashDistinctTest) {
   /*
    * SELECT d, a, b, c FROM table GROUP BY a, b, c, d;
    */
@@ -446,7 +446,7 @@ TEST(AggregateTests, HashDistinctTest) {
   }
 }
 
-TEST(AggregateTests, HashSumGroupByTest) {
+TEST_F(AggregateTests, HashSumGroupByTest) {
   /*
    * SELECT b, SUM(c) from table GROUP BY b;
    */
@@ -539,7 +539,7 @@ TEST(AggregateTests, HashSumGroupByTest) {
   //  std::cout << *result_tile;
 }
 
-TEST(AggregateTests, HashCountDistinctGroupByTest) {
+TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   /*
    * SELECT a, COUNT(b), COUNT(DISTINCT b) from table group by a
    */
@@ -648,7 +648,7 @@ TEST(AggregateTests, HashCountDistinctGroupByTest) {
                   .IsTrue());
 }
 
-TEST(AggregateTests, PlainSumCountDistinctTest) {
+TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   /*
    * SELECT SUM(a), COUNT(b), COUNT(DISTINCT b) from table
    */

@@ -18,7 +18,7 @@
 #include <condition_variable>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 template <typename T>
 class MessageQueue {
@@ -68,5 +68,5 @@ class MessageQueue {
 };
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

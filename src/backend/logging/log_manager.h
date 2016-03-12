@@ -102,15 +102,15 @@ class LogManager {
     return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
   }
 
- private:
-  LogManager();
-  ~LogManager();
-
   //===--------------------------------------------------------------------===//
   // Utility Functions
   //===--------------------------------------------------------------------===//
 
   FrontendLogger *GetFrontendLogger();
+
+ private:
+  LogManager();
+  ~LogManager();
 
   bool RemoveFrontendLogger();
 

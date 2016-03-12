@@ -62,6 +62,8 @@
  *
  *-------------------------------------------------------------------------
  */
+ 
+// TODO: Peloton changes
 #include "backend/networking/rpc_client.h"
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/rpc_server.h"
@@ -536,7 +538,7 @@ thread_local int postmaster_alive_fds[2] = { -1, -1 };
 HANDLE PostmasterHandle;
 #endif
 
-//TODO: Peloton adds
+//TODO: Peloton adds for rpc test
 //extern uint64_t server_request_recv_number;
 //extern uint64_t server_request_recv_bytes;
 //extern uint64_t server_response_send_number;
@@ -547,11 +549,10 @@ void Coordinator() {
 	google::protobuf::Service* service = NULL;
 
 	try {
-		peloton::message::RpcServer rpc_server(PELOTON_SERVER_PORT);
-		service = new peloton::message::PelotonService();
+		peloton::networking::RpcServer rpc_server(PELOTON_SERVER_PORT);
+		service = new peloton::networking::PelotonService();
 		rpc_server.RegisterService(service);
 		rpc_server.Start();
-
 	} catch (std::exception& e) {
 		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
 		delete service;
@@ -565,74 +566,17 @@ void Coordinator() {
  * Sender is responsible for picking up the message from send_queue and send it
  * The message should contain the dst_addr
  */
-//void Sender(
-//		peloton::message::MessageQueue<peloton::message::PelotonMessage>* send_queue) {
-//
-//	try {
-//		while (1) {
-//			peloton::message::PelotonMessage msg = send_queue->Pop();
-//			peloton::message::PelotonMessage::Type msg_type = msg.type();
-//
-//			switch (msg_type) {
-//
-//			case peloton::message::PelotonMessage::HEARTBEAT_REQUEST: {
-//				LOG_TRACE("Pick up a HEARTBEAT_REQUEST");
-//				peloton::message::HeartbeatRequest request =
-//						msg.heartbeat_request();
-//
-//				peloton::message::HeartbeatResponse response;
-//
-//				peloton::message::PelotonClient client("tcp://127.0.0.1:9999");
-//				client.Heartbeat(&request, &response);
-//
-//				if (response.has_sender_site() == true) {
-//					std::cout << "sender site: " << response.sender_site()
-//							<< std::endl;
-//				} else {
-//					std::cout << "No response: sender site" << std::endl;
-//				}
-//
-//				if (response.has_status() == true) {
-//					std::cout << "Status: " << response.status() << std::endl;
-//				} else {
-//					std::cout << "No response: sender status" << std::endl;
-//				}
-//
-//			}
-//				break;
-//
-//			case peloton::message::PelotonMessage::INITIALIZE_REQUEST: {
-//				LOG_TRACE("Pick up a INITIALIZE_REQUEST");
-//
-//			}
-//				break;
-//
-//			default:
-//				LOG_ERROR("Unrecognized REQUEST %d", msg_type);
-//				break;
-//			}
-//		}
-//
-//	} catch (peloton::message::exception& e) {
-//		std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
-//	} catch (std::exception& e) {
-//		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-//	} catch (...) {
-//		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
-//	}
-//
-//}
-
 void TestSend() {
 
 	try {
 		for (int i = 1; i < 5000; i++) {
-			peloton::message::HeartbeatRequest request;
+			peloton::networking::HeartbeatRequest request;
 
 			request.set_sender_site(i);
 			request.set_last_transaction_id(i*10);
 
-			auto pclient = std::make_shared<peloton::message::RpcClient>(PELOTON_ENDPOINT_ADDR);
+            // it is not necessary to use smart point here
+			auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
 
 			//peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
             //client.Heartbeat(&request, &response);
@@ -645,8 +589,6 @@ void TestSend() {
 	} catch (...) {
 		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
 	}
-
-
 }
 
 /*
@@ -1345,6 +1287,8 @@ void PostmasterMain(int argc, char *argv[]) {
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
+  // comment this to shutdown rpc test
+  // comment this to shutdown rpc test
   std::thread testsend(TestSend);
   testsend.detach();
 

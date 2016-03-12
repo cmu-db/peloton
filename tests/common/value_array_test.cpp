@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-#include "gtest/gtest.h"
-
 #include "harness.h"
 
 #include "backend/common/types.h"
@@ -29,7 +27,9 @@ namespace test {
 // Value Array Tests
 //===--------------------------------------------------------------------===//
 
-TEST(ValueArrayTest, BasicTest) {
+class ValueArrayTest : public PelotonTest {};
+
+TEST_F(ValueArrayTest, BasicTest) {
   std::vector<Value> array1;
   std::vector<Value> array2;
   array1.reserve(3);

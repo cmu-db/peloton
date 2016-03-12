@@ -13,7 +13,7 @@
 #pragma once
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class AbstractSerializer {
  public:
@@ -27,5 +27,5 @@ class AbstractSerializer {
   virtual ~AbstractSerializer(){};
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

@@ -16,9 +16,7 @@
 #include <string>
 
 namespace peloton {
-namespace message {
-
-class RpcClientManager;
+namespace networking {
 
 class RpcController : public google::protobuf::RpcController {
 
@@ -26,7 +24,6 @@ class RpcController : public google::protobuf::RpcController {
     RpcController() { Reset(); }
 
     void Reset() {
-//      client_manager_ = nullptr;
       error_str_ = "";
       is_failed_ = false;
     }
@@ -70,12 +67,10 @@ class RpcController : public google::protobuf::RpcController {
 
   private:
 
-//    RpcClientManager* client_manager_;
-
     std::string error_str_;
     bool is_failed_;
 
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton
