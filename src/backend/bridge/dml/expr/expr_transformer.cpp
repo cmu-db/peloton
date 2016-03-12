@@ -26,6 +26,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/expression/cast_expression.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/expression/operator_expression.h"
 #include "backend/expression/vector_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/expression_util.h"
@@ -90,6 +91,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
 
     case T_FuncExpr:
       peloton_expr = TransformFunc(expr_state);
+      break;
+
+    case T_CaseExpr:
+      peloton_expr = TransformCase(expr_state);
       break;
 
     case T_Aggref:
@@ -330,6 +335,63 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   }
 
   return retval;
+}
+
+expression::AbstractExpression *ExprTransformer::TransformCase(
+    const ExprState *es) {
+  auto case_es = reinterpret_cast<const CaseExprState *>(es);
+  auto case_expr = reinterpret_cast<const CaseExpr *>(es->expr);
+
+  assert(case_expr->xpr.type == T_CaseExpr);
+  auto value_type = PostgresValueTypeToPelotonValueType(
+      static_cast<PostgresValueType>(case_expr->casetype));
+
+  const List *args = case_es->args;
+  ListCell *l;
+  auto length = list_length(args);
+  if (length == 0) return nullptr;
+  LOG_TRACE("Expression List of length %d", length);
+
+  // Dump argument list into a vector to traverse in reverse order
+  std::vector<CaseWhenState *> args_vec(length);
+  int args_vec_idx = 0;
+  foreach (l, args) {
+    args_vec[args_vec_idx++] = reinterpret_cast<CaseWhenState *>(lfirst(l));
+  }
+
+  // For simple form, replace the placeholder with arg in expression state
+  if (case_es->arg != nullptr) {
+    LOG_TRACE("CASE with 'simple' form");
+    for (auto arg : args_vec) {
+      auto func_state = reinterpret_cast<const FuncExprState *>(arg->expr);
+      pfree(lfirst(func_state->args->head));
+      // TODO: should be wrapped in list functions
+      func_state->args->head->data.ptr_value = case_es->arg;
+    }
+  }
+
+  expression::AbstractExpression *cur_expr;
+  for (args_vec_idx = (int)args_vec.size() - 1; args_vec_idx >= 0;
+       --args_vec_idx) {
+    auto case_arg =
+        reinterpret_cast<const CaseWhenState *>(args_vec[args_vec_idx]);
+    if (args_vec_idx == (int)args_vec.size() - 1) {
+      // In ELSE part
+      cur_expr = expression::ExpressionUtil::CaseWhenFactory(
+          value_type, TransformExpr(case_arg->expr),
+          new expression::OperatorAlternativeExpression(
+              TransformExpr(case_arg->result),
+              TransformExpr(case_expr->defresult)));
+    } else {
+      // In WHEN part
+      cur_expr = expression::ExpressionUtil::CaseWhenFactory(
+          value_type, TransformExpr(case_arg->expr),
+          new expression::OperatorAlternativeExpression(
+              TransformExpr(case_arg->result), cur_expr));
+    }
+  }
+
+  return cur_expr;
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(
