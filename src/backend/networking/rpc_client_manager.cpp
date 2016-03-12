@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 // global singleton
 RpcClientManager &RpcClientManager::GetInstance(void) {
@@ -148,6 +148,6 @@ void RpcClientManager::FdLoop(){
     } // end while
 }
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton
 

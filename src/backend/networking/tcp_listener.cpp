@@ -19,7 +19,7 @@
 #include <functional>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 void Listener::Run(void* arg) {
 
@@ -89,5 +89,5 @@ void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {
     event_base_loopexit(base, NULL);
 }
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

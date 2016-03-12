@@ -21,7 +21,7 @@
 #include <cassert>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class Listener {
 public:
@@ -79,7 +79,7 @@ private:
 };
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton
 
 

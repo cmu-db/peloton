@@ -22,7 +22,7 @@
 #include <functional>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 RpcServer::RpcServer(const int port) :
     listener_(port) {

@@ -12,9 +12,10 @@
 
 
 #include "rpc_client.h"
+#include "abstract_service.pb.h"
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 #define CLIENT_THREADS 1
 
@@ -32,88 +33,88 @@ RpcClient::~RpcClient() {
    delete stub_;
  }
 
- void RpcClient::TransactionInit(const ::peloton::message::TransactionInitRequest* request,
-                      ::peloton::message::TransactionInitResponse* response) {
+ void RpcClient::TransactionInit(const TransactionInitRequest* request,
+                      TransactionInitResponse* response) {
    stub_->TransactionInit(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionWork(const ::peloton::message::TransactionWorkRequest* request,
-                      ::peloton::message::TransactionWorkResponse* response) {
+ void RpcClient::TransactionWork(const TransactionWorkRequest* request,
+                      TransactionWorkResponse* response) {
    stub_->TransactionWork(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionPrefetch(const ::peloton::message::TransactionPrefetchResult* request,
-                          ::peloton::message::TransactionPrefetchAcknowledgement* response) {
+ void RpcClient::TransactionPrefetch(const TransactionPrefetchResult* request,
+                          TransactionPrefetchAcknowledgement* response) {
    stub_->TransactionPrefetch(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionMap(const ::peloton::message::TransactionMapRequest* request,
-                     ::peloton::message::TransactionMapResponse* response) {
+ void RpcClient::TransactionMap(const TransactionMapRequest* request,
+                     TransactionMapResponse* response) {
    stub_->TransactionMap(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionReduce(const ::peloton::message::TransactionReduceRequest* request,
-                        ::peloton::message::TransactionReduceResponse* response) {
+ void RpcClient::TransactionReduce(const TransactionReduceRequest* request,
+                        TransactionReduceResponse* response) {
    stub_->TransactionReduce(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionPrepare(const ::peloton::message::TransactionPrepareRequest* request,
-                         ::peloton::message::TransactionPrepareResponse* response) {
+ void RpcClient::TransactionPrepare(const TransactionPrepareRequest* request,
+                         TransactionPrepareResponse* response) {
    stub_->TransactionPrepare(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionFinish(const ::peloton::message::TransactionFinishRequest* request,
-                        ::peloton::message::TransactionFinishResponse* response) {
+ void RpcClient::TransactionFinish(const TransactionFinishRequest* request,
+                        TransactionFinishResponse* response) {
    stub_->TransactionFinish(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionRedirect(const ::peloton::message::TransactionRedirectRequest* request,
-                          ::peloton::message::TransactionRedirectResponse* response) {
+ void RpcClient::TransactionRedirect(const TransactionRedirectRequest* request,
+                          TransactionRedirectResponse* response) {
    stub_->TransactionRedirect(controller_, request, response, NULL);
  }
 
- void RpcClient::TransactionDebug(const ::peloton::message::TransactionDebugRequest* request,
-                       ::peloton::message::TransactionDebugResponse* response) {
+ void RpcClient::TransactionDebug(const TransactionDebugRequest* request,
+                       TransactionDebugResponse* response) {
    stub_->TransactionDebug(controller_, request, response, NULL);
  }
 
- void RpcClient::SendData(const ::peloton::message::SendDataRequest* request,
-               ::peloton::message::SendDataResponse* response) {
+ void RpcClient::SendData(const SendDataRequest* request,
+               SendDataResponse* response) {
    stub_->SendData(controller_, request, response, NULL);
  }
 
- void RpcClient::Initialize(const ::peloton::message::InitializeRequest* request,
-                 ::peloton::message::InitializeResponse* response) {
+ void RpcClient::Initialize(const InitializeRequest* request,
+                 InitializeResponse* response) {
    stub_->Initialize(controller_, request, response, NULL);
  }
 
- void RpcClient::ShutdownPrepare(const ::peloton::message::ShutdownPrepareRequest* request,
-                      ::peloton::message::ShutdownPrepareResponse* response) {
+ void RpcClient::ShutdownPrepare(const ShutdownPrepareRequest* request,
+                      ShutdownPrepareResponse* response) {
    stub_->ShutdownPrepare(controller_, request, response, NULL);
  }
 
- void RpcClient::Shutdown(const ::peloton::message::ShutdownRequest* request,
-               ::peloton::message::ShutdownResponse* response) {
+ void RpcClient::Shutdown(const ShutdownRequest* request,
+               ShutdownResponse* response) {
    stub_->Shutdown(controller_, request, response, NULL);
  }
 
- void RpcClient::Heartbeat(const ::peloton::message::HeartbeatRequest* request,
-                ::peloton::message::HeartbeatResponse* response) {
+ void RpcClient::Heartbeat(const HeartbeatRequest* request,
+                HeartbeatResponse* response) {
    //google::protobuf::Closure* callback = google::protobuf::internal::NewCallback(&HearbeatCallback);
    //controller_->SetRpcClientManager(&client_manager_);
    stub_->Heartbeat(controller_, request, response, NULL);
  }
 
- void RpcClient::UnevictData(const ::peloton::message::UnevictDataRequest* request,
-                  ::peloton::message::UnevictDataResponse* response) {
+ void RpcClient::UnevictData(const UnevictDataRequest* request,
+                  UnevictDataResponse* response) {
    stub_->UnevictData(controller_, request, response, NULL);
  }
 
- void RpcClient::TimeSync(const ::peloton::message::TimeSyncRequest* request,
-               ::peloton::message::TimeSyncResponse* response) {
+ void RpcClient::TimeSync(const TimeSyncRequest* request,
+               TimeSyncResponse* response) {
    stub_->TimeSync(controller_, request, response, NULL);
  }
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

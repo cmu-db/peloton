@@ -22,7 +22,7 @@
 #include <cstring>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 using std::string;
 using std::vector;
@@ -139,5 +139,5 @@ void NetworkAddress::SetPort(uint16_t port) {
     port_ = htons(port);
 }
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

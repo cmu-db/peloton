@@ -19,7 +19,7 @@
 #include <condition_variable>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 class RpcClientManager {
 
@@ -49,5 +49,5 @@ private:
     std::map<int, std::function<void()>> sock_func_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

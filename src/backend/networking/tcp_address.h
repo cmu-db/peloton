@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 //struct sockaddr_in;
 
@@ -95,5 +95,5 @@ inline char* stringArray(std::string* s) {
 }
 
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

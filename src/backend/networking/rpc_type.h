@@ -13,7 +13,7 @@
 #pragma once
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 enum MessageType {
     MSG_TYPE_INVALID = 0,

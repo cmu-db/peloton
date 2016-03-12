@@ -27,7 +27,7 @@
 #include <memory>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 #define MAXBYTES   1024
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
@@ -103,5 +103,5 @@ private:
     std::string method_name_;
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

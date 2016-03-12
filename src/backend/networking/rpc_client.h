@@ -22,7 +22,7 @@
 #include <iostream>
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 //class RpcClientManager;
 
@@ -37,53 +37,53 @@ class RpcClient {
 
   // TODO: same rpc interface except for controller and callback function. We might delete response in future
 
-  void TransactionInit(const ::peloton::message::TransactionInitRequest* request,
-                       ::peloton::message::TransactionInitResponse* response);
+  void TransactionInit(const TransactionInitRequest* request,
+                       TransactionInitResponse* response);
 
-  void TransactionWork(const ::peloton::message::TransactionWorkRequest* request,
-                       ::peloton::message::TransactionWorkResponse* response);
+  void TransactionWork(const TransactionWorkRequest* request,
+                       TransactionWorkResponse* response);
 
-  void TransactionPrefetch(const ::peloton::message::TransactionPrefetchResult* request,
-                           ::peloton::message::TransactionPrefetchAcknowledgement* response);
+  void TransactionPrefetch(const TransactionPrefetchResult* request,
+                           TransactionPrefetchAcknowledgement* response);
 
-  void TransactionMap(const ::peloton::message::TransactionMapRequest* request,
-                      ::peloton::message::TransactionMapResponse* response);
+  void TransactionMap(const TransactionMapRequest* request,
+                      TransactionMapResponse* response);
 
-  void TransactionReduce(const ::peloton::message::TransactionReduceRequest* request,
-                         ::peloton::message::TransactionReduceResponse* response);
+  void TransactionReduce(const TransactionReduceRequest* request,
+                         TransactionReduceResponse* response);
 
-  void TransactionPrepare(const ::peloton::message::TransactionPrepareRequest* request,
-                          ::peloton::message::TransactionPrepareResponse* response);
+  void TransactionPrepare(const TransactionPrepareRequest* request,
+                          TransactionPrepareResponse* response);
 
-  void TransactionFinish(const ::peloton::message::TransactionFinishRequest* request,
-                         ::peloton::message::TransactionFinishResponse* response);
+  void TransactionFinish(const TransactionFinishRequest* request,
+                         TransactionFinishResponse* response);
 
-  void TransactionRedirect(const ::peloton::message::TransactionRedirectRequest* request,
-                           ::peloton::message::TransactionRedirectResponse* response);
+  void TransactionRedirect(const TransactionRedirectRequest* request,
+                           TransactionRedirectResponse* response);
 
-  void TransactionDebug(const ::peloton::message::TransactionDebugRequest* request,
-                        ::peloton::message::TransactionDebugResponse* response);
+  void TransactionDebug(const TransactionDebugRequest* request,
+                        TransactionDebugResponse* response);
 
-  void SendData(const ::peloton::message::SendDataRequest* request,
-                ::peloton::message::SendDataResponse* response);
+  void SendData(const SendDataRequest* request,
+                SendDataResponse* response);
 
-  void Initialize(const ::peloton::message::InitializeRequest* request,
-                  ::peloton::message::InitializeResponse* response);
+  void Initialize(const InitializeRequest* request,
+                  InitializeResponse* response);
 
-  void ShutdownPrepare(const ::peloton::message::ShutdownPrepareRequest* request,
-                       ::peloton::message::ShutdownPrepareResponse* response);
+  void ShutdownPrepare(const ShutdownPrepareRequest* request,
+                       ShutdownPrepareResponse* response);
 
-  void Shutdown(const ::peloton::message::ShutdownRequest* request,
-                ::peloton::message::ShutdownResponse* response);
+  void Shutdown(const ShutdownRequest* request,
+                ShutdownResponse* response);
 
-  void Heartbeat(const ::peloton::message::HeartbeatRequest* request,
-                 ::peloton::message::HeartbeatResponse* response);
+  void Heartbeat(const HeartbeatRequest* request,
+                 HeartbeatResponse* response);
 
-  void UnevictData(const ::peloton::message::UnevictDataRequest* request,
-                   ::peloton::message::UnevictDataResponse* response);
+  void UnevictData(const UnevictDataRequest* request,
+                   UnevictDataResponse* response);
 
-  void TimeSync(const ::peloton::message::TimeSyncRequest* request,
-                ::peloton::message::TimeSyncResponse* response);
+  void TimeSync(const TimeSyncRequest* request,
+                TimeSyncResponse* response);
 
  private:
 
@@ -95,5 +95,5 @@ class RpcClient {
 
 };
 
-}  // namespace message
+}  // namespace networking
 }  // namespace peloton

@@ -15,12 +15,14 @@
 
 #include <mutex>
 
+/*** this is for the test of rpc performance
 std::mutex send_mutex;
 uint64_t server_response_send_number = 0;  // number of rpc
 uint64_t server_response_send_bytes = 0;  // bytes
+*/
 
 namespace peloton {
-namespace message {
+namespace networking {
 
 Connection::Connection(int fd, void* arg) :
         socket_(fd), close_(false) {
@@ -121,10 +123,9 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
 
     const std::string methodname = conn->GetMethodName();
 
+    // use the protobuf lookup mechanism to locate the method
     const google::protobuf::DescriptorPool* dspool = google::protobuf::DescriptorPool::generated_pool();
-
     const google::protobuf::MethodDescriptor* mds = dspool->FindMethodByName(methodname);
-
     const google::protobuf::Message *response_type = &service.GetResponsePrototype(mds);
 
     google::protobuf::Message *response = response_type->New();
@@ -285,6 +286,7 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
         assert(sizeof(send_buf) == HEADERLEN+msg_len);
         conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
+        /* this is for the test of rpc performance
         // test
         {
             std::lock_guard < std::mutex > lock(send_mutex);
@@ -308,7 +310,7 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
                     << server_response_send_bytes << " spped:***************************************************" << bytes_speed << "*********" << std::endl;
         }
         // end test
-
+         */
 
         delete request;
         delete response;
@@ -412,5 +414,5 @@ void Connection::MoveBufferData() {
     evbuffer_add_buffer(output, input);
 }
 
-} // namespace message
+} // namespace networking
 } // namespace peloton
