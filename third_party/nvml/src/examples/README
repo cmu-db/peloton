@@ -1,0 +1,35 @@
+Linux NVM Library
+
+This is examples/README.
+
+This directory contains brief educational examples illustrating the use
+of the NVM libraries.  For many of these examples, the Makefile rules
+are here just to check that the example compiles, loads against the
+appropriate library, and passes cstyle.
+
+If you're looking for documentation to get you started using NVML,
+start here: http://pmem.io/nvml and follow the links to examples and
+man pages.  Developers new to NVML are probably looking for libpmemobj.
+
+Many of the examples in this directory are described in more detail
+on the above web site.
+
+libpmem(3) -- low-level persistent memory support
+    Example programs are in the libpmem directory.
+    More documentation: http://pmem.io/nvml/libpmem
+
+libpmemblk(3) -- pmem-resident arrays of blocks
+    Example programs are in the libpmemblk directory.
+    More documentation: http://pmem.io/nvml/libpmemblk
+
+libpmemlog(3) -- pmem-resident log files
+    Example programs are in the libpmemlog directory.
+    More documentation: http://pmem.io/nvml/libpmemlog
+
+libpmemobj(3) -- transactional object store
+    Example programs are in the libpmemobj directory.
+    More documentation: http://pmem.io/nvml/libpmemobj
+
+libvmem(3) -- volatile memory allocation library
+    Example programs are in the libvmem directory.
+    More documentation: http://pmem.io/nvml/libvmem

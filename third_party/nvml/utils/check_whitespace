@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+#
+# Copyright (c) 2015, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in
+#       the documentation and/or other materials provided with the
+#       distribution.
+#
+#     * Neither the name of Intel Corporation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#
+# check_whitespace -- scrub source tree for whitespace errors
+#
+
+use strict;
+use warnings;
+
+use File::Find;
+
+my $Me = $0;
+$Me =~ s,.*/,,;
+
+$SIG{HUP} = $SIG{INT} = $SIG{TERM} = $SIG{__DIE__} = sub {
+	die @_ if $^S;
+
+	my $errstr = shift;
+
+	die "$Me: ERROR: $errstr";
+};
+
+my $Errcount = 0;
+
+#
+# err -- emit error, keep total error count
+#
+sub err {
+	warn "$Me: ERROR: ", @_, "\n";
+	$Errcount++;
+}
+
+#
+# check_whitespace -- run the checks on the given file
+#
+sub check_whitespace {
+	my ($full, $file) = @_;
+	my $fh;
+
+	open($fh, '<', $file) or die "$full $!\n";
+
+	my $line = 0;
+	my $eol;
+	my $nf = 0;
+	while (<$fh>) {
+		$line++;
+		$eol = /\n/s;
+		if (/^\.nf$/) {
+			err("$full: $line: nested .nf") if $nf;
+			$nf = 1;
+		} elsif (/^\.fi$/) {
+			$nf = 0;
+		} elsif ($nf == 0) {
+			chomp;
+			err("$full: $line: trailing whitespace") if /\s$/;
+			err("$full: $line: spaces before tabs") if / \t/;
+		}
+	}
+
+	close($fh);
+
+	err("$full: $line: .nf without .fi") if $nf;
+	err("$full: noeol") unless $eol;
+}
+
+# descend directory structure, finding interesting files to check
+find(sub {
+		my $full = $File::Find::name;
+
+		if ($full eq './.git' ||
+		    $full eq './src/jemalloc' ||
+		    $full eq './src/debug' ||
+		    $full eq './src/nondebug' ||
+		    $full eq './rpmbuild' ||
+		    $full eq './dpkgbuild') {
+			$File::Find::prune = 1;
+			return;
+		}
+
+		return unless -f;
+
+		return unless /^(README.*|LICENSE.*|Makefile.*|.gitignore|TEST.*|RUNTESTS|check_whitespace|.*\.([chp13]|sh|map))$/;
+
+		return if -z;
+
+		check_whitespace($full, $_);
+
+	}, '.');
+
+exit $Errcount;

@@ -1,0 +1,188 @@
+// Copyright (c) 2015 Diego Ongaro
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR(S) DISCLAIM ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHORS BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+package LogCabin.Protocol;
+
+/**
+ * The format that Core::RollingStat serializes into.
+ */
+message RollingStat {
+    message Exceptional {
+        optional int64 when = 1;
+        optional uint64 value = 2;
+    };
+
+    optional double average = 1;
+    optional uint64 count = 2;
+    optional double ewma2 = 3;
+    optional double ewma4 = 4;
+    optional uint64 exceptional_count = 5;
+    optional uint64 last = 6;
+    optional uint64 min = 7;
+    optional uint64 max = 8;
+    optional uint64 sum = 9;
+    optional double stddev = 10;
+    repeated Exceptional last_exceptional = 11;
+};
+
+
+/**
+ * The format for server statistics, useful for diagnostic purposes.
+ */
+message ServerStats {
+    message Raft {
+        enum State {
+            UNKNOWN = 0;
+            FOLLOWER = 1;
+            CANDIDATE = 2;
+            LEADER = 3;
+        };
+
+        // See RaftConsensus::Server.
+        message Peer {
+            optional uint64 server_id = 1;
+            optional string addresses = 2;
+
+            optional bool old_member = 21;
+            optional bool new_member = 22;
+            optional bool staging_member = 23;
+
+            // localhost
+            optional uint64 last_synced_index = 31;
+
+            // remote peer
+            optional bool request_vote_done = 41;
+            optional bool have_vote = 42;
+            optional bool suppress_bulk_data = 43;
+            optional uint64 next_index = 44;
+            optional uint64 last_agree_index = 45;
+            optional bool is_caught_up = 46;
+
+            optional int64 next_heartbeat_at = 51;
+            optional int64 backoff_until = 52;
+        };
+
+
+        // See RaftConsensus.
+
+        optional uint64 current_term = 11;
+        optional State state = 12;
+        optional uint64 commit_index = 13;
+        optional uint64 last_log_index = 14;
+        optional uint64 leader_id = 15;
+        optional uint64 voted_for = 16;
+
+        optional int64 start_election_at = 21;
+        optional int64 withhold_votes_until = 22;
+        optional uint64 cluster_time = 23;
+        optional uint64 cluster_time_epoch = 24;
+
+        optional uint64 last_snapshot_index = 31;
+        optional uint64 last_snapshot_bytes = 32;
+        optional uint64 last_snapshot_term = 35;
+        optional uint64 last_snapshot_cluster_time = 36;
+        optional uint64 log_start_index = 33;
+        optional uint64 log_bytes = 34;
+        optional uint64 num_entries_truncated = 37;
+
+        repeated Peer peer = 91;
+    };
+
+    message Storage {
+        optional uint64 num_segments = 1;
+        optional uint64 open_segment_bytes = 2;
+        optional uint64 metadata_version = 3;
+        optional RollingStat metadata_write_nanos = 4;
+        optional RollingStat filesystem_ops_nanos = 5;
+    };
+
+    message Tree {
+        optional uint64 num_conditions_checked = 1;
+        optional uint64 num_conditions_failed = 2;
+        optional uint64 num_make_directory_attempted = 3;
+        optional uint64 num_make_directory_success = 4;
+        optional uint64 num_list_directory_attempted = 5;
+        optional uint64 num_list_directory_success = 6;
+        optional uint64 num_remove_directory_attempted = 7;
+        optional uint64 num_remove_directory_parent_not_found = 8;
+        optional uint64 num_remove_directory_target_not_found = 9;
+        optional uint64 num_remove_directory_done = 10;
+        optional uint64 num_remove_directory_success = 11;
+        optional uint64 num_write_attempted = 12;
+        optional uint64 num_write_success = 13;
+        optional uint64 num_read_attempted = 14;
+        optional uint64 num_read_success = 15;
+        optional uint64 num_remove_file_attempted = 16;
+        optional uint64 num_remove_file_parent_not_found = 17;
+        optional uint64 num_remove_file_target_not_found = 18;
+        optional uint64 num_remove_file_done = 19;
+        optional uint64 num_remove_file_success = 20;
+    };
+
+    message StateMachine {
+        optional bool snapshotting = 1;
+        optional uint64 last_applied = 2;
+        optional uint64 num_sessions = 3;
+        optional uint64 num_snapshots_attempted = 4;
+        optional uint64 num_snapshots_failed = 5;
+        optional uint64 num_redundant_advance_version_entries = 6;
+        optional uint64 num_rejected_advance_version_entries = 7;
+        optional uint64 num_successful_advance_version_entries = 8;
+        optional uint64 num_total_advance_version_entries = 9;
+        optional uint32 min_supported_version = 10;
+        optional uint32 max_supported_version = 11;
+        optional uint32 running_version = 12;
+        optional Tree tree = 13;
+        optional uint64 num_unknown_requests = 14;
+        optional int64 may_snapshot_at = 15;
+    };
+
+    /**
+     * The ID of the server.
+     */
+    optional uint64 server_id = 1;
+    /**
+     * The network address(es) of the server (comma-delimited).
+     */
+    optional string addresses = 2;
+
+    /**
+     * The time in nanoseconds since the Unix epoch when the collection of these
+     * statistics began.
+     */
+    optional int64 start_at = 3;
+
+    /**
+     * The time in nanoseconds since the Unix epoch when the collection of these
+     * statistics completed.
+     */
+    optional int64 end_at = 4;
+
+    /**
+     * Raft-related stats.
+     */
+    optional Raft raft = 11;
+
+    /**
+     * Storage module (log) stats.
+     */
+    optional Storage storage = 12;
+
+    /**
+     * Stats for this server's StateMachine.
+     */
+    optional StateMachine state_machine = 13;
+
+};
+

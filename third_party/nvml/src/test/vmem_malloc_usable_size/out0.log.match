@@ -1,0 +1,3 @@
+vmem_malloc_usable_size/TEST0: START: vmem_malloc_usable_size
+ ./vmem_malloc_usable_size$(nW)
+vmem_malloc_usable_size/TEST0: Done

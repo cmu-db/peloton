@@ -1,0 +1,9 @@
+Linux NVM Library
+
+This is src/test/pmempool_check/README.
+
+This directory contains a unit test for 'pmempool check' command.
+
+The tests in this directory verify the consistency checking mechanism and
+repairing of pool file. The tests utilize 'pmemspoil' command for corrupting
+pool files.

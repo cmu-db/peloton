@@ -1,0 +1,10 @@
+blk_rw/TEST8: START: blk_rw
+ ./blk_rw$(nW) 512 $(nW)/testset1 c w:0 w:1 r:1 r:0 w:4161445 r:4161445
+512 block size 512 usable blocks 4161446
+write     lba 0: {1}
+write     lba 1: {2}
+read      lba 1: {2}
+read      lba 0: {1}
+write     lba 4161445: {3}
+read      lba 4161445: {3}
+blk_rw/TEST8: Done

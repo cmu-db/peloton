@@ -1,0 +1,8 @@
+Import('env', 'object_files')
+
+src = [
+    "ProtoBuf.cc",
+    "Tree.cc",
+]
+object_files['Tree'] = (env.StaticObject(src) +
+                        env.Protobuf("Snapshot.proto"))

@@ -22,6 +22,7 @@ namespace test {
 
 class ThreadManagerTests : public PelotonTest {};
 
+/* this is the old test
 TEST_F(ThreadManagerTests, BasicTest) {
 
   auto& thread_manager = ThreadManager::GetInstance();
@@ -37,6 +38,26 @@ TEST_F(ThreadManagerTests, BasicTest) {
   EXPECT_EQ(status, true);
 
   status = thread_manager.DetachThread(t1);
+  EXPECT_EQ(status, false);
+
+}
+*/
+
+TEST_F(ThreadManagerTests, BasicTest) {
+
+  auto& server_thread_manager1 = ThreadManager::GetServerThreadPool();
+  auto& server_thread_manager2 = ThreadManager::GetServerThreadPool();
+
+  bool status = (&server_thread_manager1 == &server_thread_manager2);
+  EXPECT_EQ(status, true);
+
+  auto& client_thread_manager1 = ThreadManager::GetClientThreadPool();
+  auto& client_thread_manager2 = ThreadManager::GetClientThreadPool();
+
+  status = (&client_thread_manager1 == &client_thread_manager2);
+  EXPECT_EQ(status, true);
+
+  status = (&server_thread_manager1 == &client_thread_manager2);
   EXPECT_EQ(status, false);
 
 }

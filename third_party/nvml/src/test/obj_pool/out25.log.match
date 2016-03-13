@@ -1,0 +1,4 @@
+obj_pool/TEST25: START: obj_pool
+ ./obj_pool$(nW) o $(nW)/testfile NULL
+$(nW)/testfile: pmemobj_open: Permission denied
+obj_pool/TEST25: Done

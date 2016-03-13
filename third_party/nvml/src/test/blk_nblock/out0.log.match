@@ -1,0 +1,41 @@
+blk_nblock/TEST0: START: blk_nblock
+ ./blk_nblock$(nW) 512:$(nW)/testfile1 512:$(nW)/testfile2.512 4096:$(nW)/testfile2.512 520:$(nW)/testfile2.520 528:$(nW)/testfile2.528 4096:$(nW)/testfile2.4096 4160:$(nW)/testfile2.4160 4224:$(nW)/testfile2.4224 512:$(nW)/testfile3.512 520:$(nW)/testfile3.520 528:$(nW)/testfile3.528 4096:$(nW)/testfile3.4096 4160:$(nW)/testfile3.4160 4224:$(nW)/testfile3.4224 512:$(nW)/testfile4.512 520:$(nW)/testfile4.520 528:$(nW)/testfile4.528 4096:$(nW)/testfile4.4096 4160:$(nW)/testfile4.4160 4224:$(nW)/testfile4.4224 512:$(nW)/testfile5.512 520:$(nW)/testfile5.520 528:$(nW)/testfile5.528 4096:$(nW)/testfile5.4096 4160:$(nW)/testfile5.4160 4224:$(nW)/testfile5.4224 512:$(nW)/testfile6.512 520:$(nW)/testfile6.520 528:$(nW)/testfile6.528 4096:$(nW)/testfile6.4096 4160:$(nW)/testfile6.4160 4224:$(nW)/testfile6.4224 512:$(nW)/testfile7.512 520:$(nW)/testfile7.520 528:$(nW)/testfile7.528 4096:$(nW)/testfile7.4096 4160:$(nW)/testfile7.4160 4224:$(nW)/testfile7.4224
+$(nW)/testfile1: pmemblk_create: Invalid argument
+$(nW)/testfile2.512: block size 512 usable blocks: 4161462
+$(nW)/testfile2.512: pmemblk_create: Invalid argument
+$(nW)/testfile2.520: block size 520 usable blocks: 2781410
+$(nW)/testfile2.528: block size 528 usable blocks: 2781410
+$(nW)/testfile2.4096: block size 4096 usable blocks: 523511
+$(nW)/testfile2.4160: block size 4160 usable blocks: 492729
+$(nW)/testfile2.4224: block size 4224 usable blocks: 492729
+$(nW)/testfile3.512: block size 512 usable blocks: 1065417916
+$(nW)/testfile3.520: block size 520 usable blocks: 712118626
+$(nW)/testfile3.528: block size 528 usable blocks: 712118626
+$(nW)/testfile3.4096: block size 4096 usable blocks: 134086518
+$(nW)/testfile3.4160: block size 4160 usable blocks: 126206304
+$(nW)/testfile3.4224: block size 4224 usable blocks: 126206304
+$(nW)/testfile4.512: block size 512 usable blocks: 1065417932
+$(nW)/testfile4.520: block size 520 usable blocks: 712118636
+$(nW)/testfile4.528: block size 528 usable blocks: 712118636
+$(nW)/testfile4.4096: block size 4096 usable blocks: 134086520
+$(nW)/testfile4.4160: block size 4160 usable blocks: 126206306
+$(nW)/testfile4.4224: block size 4224 usable blocks: 126206306
+$(nW)/testfile5.512: block size 512 usable blocks: 1067498499
+$(nW)/testfile5.520: block size 520 usable blocks: 713509189
+$(nW)/testfile5.528: block size 528 usable blocks: 713509189
+$(nW)/testfile5.4096: block size 4096 usable blocks: 134348143
+$(nW)/testfile5.4160: block size 4160 usable blocks: 126452538
+$(nW)/testfile5.4224: block size 4224 usable blocks: 126452538
+$(nW)/testfile6.512: block size 512 usable blocks: 1069579394
+$(nW)/testfile6.520: block size 520 usable blocks: 714900046
+$(nW)/testfile6.528: block size 528 usable blocks: 714900046
+$(nW)/testfile6.4096: block size 4096 usable blocks: 134610031
+$(nW)/testfile6.4160: block size 4160 usable blocks: 126699035
+$(nW)/testfile6.4224: block size 4224 usable blocks: 126699035
+$(nW)/testfile7.512: block size 512 usable blocks: 32202
+$(nW)/testfile7.520: block size 520 usable blocks: 21439
+$(nW)/testfile7.528: block size 528 usable blocks: 21439
+$(nW)/testfile7.4096: block size 4096 usable blocks: 3829
+$(nW)/testfile7.4160: block size 4160 usable blocks: 3588
+$(nW)/testfile7.4224: block size 4224 usable blocks: 3588
+blk_nblock/TEST0: Done

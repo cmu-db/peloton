@@ -70,8 +70,7 @@ std::vector<PlanNodeType> join_algorithms = {
 std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
                                            JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
-                     oid_t join_test_type);
+void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type, oid_t join_test_type);
 
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
 

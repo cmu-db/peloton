@@ -1,0 +1,4 @@
+obj_out_of_memory/TEST1: START: obj_out_of_memory
+ ./obj_out_of_memory$(nW) 1024 $(nW)/testset1
+size: 1024 allocs: 2176
+obj_out_of_memory/TEST1: Done

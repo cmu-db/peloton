@@ -1,0 +1,14 @@
+Linux NVM Library
+
+This is src/test/tools/pmemwrite/README.
+
+This directory contains a simple application for writing data to pool files.
+It's used as a helper program by some unit tests.
+
+Usage:
+	$ pmemwrite <file> <args>...
+
+	Valid arguments:
+	<blockno>:w:<string>  - write <string> to <blockno> block
+	<blockno>:z           - set zero flag on <blockno> block
+	<blockno>:z           - set error flag on <blockno> block

@@ -4,7 +4,7 @@
 //
 // message_queue.h
 //
-// Identification: src/backend/message/message_queue.h
+// Identification: src/backend/networking/message_queue.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

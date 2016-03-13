@@ -1,0 +1,35 @@
+Linux NVM Library
+
+This is examples/libpmemobj/pmemlog/README.
+
+This directory contains a set of example implementations of libpmemlog using
+libpmemobj. All implementations have exactly the same API as libpmemlog, but
+due to the different approaches to the implementation, some functions might
+not be available.
+
+To launch the examples:
+    <executable_name> [co] file [cmd[:param]...]
+
+Where:
+    c - create file
+    o - open file
+
+ The "cmd" arguments match the pmemlog functions:
+    a - append
+    v - appendv
+    r - rewind
+    w - walk
+    n - nbyte
+    t - tell
+"a" and "v" require a parameter string(s) separated by a colon.
+
+Due to a different implementation obj_pmemlog_simple requires an additional
+chunksize parameter for the walk function.
+
+These examples demonstrate the usage of the very basics of the pmemobj library.
+That includes the pool management (open/create/close), type-safety macros,
+transactions, transactional allocations and synchronization.
+
+Please take note that this is only an example and does not implement full user
+input validation, so for example creating the same pool twice yields undefined
+behavior.

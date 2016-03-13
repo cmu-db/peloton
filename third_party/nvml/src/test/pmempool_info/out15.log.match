@@ -1,0 +1,74 @@
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+No root object...
+
+POOL Header:
+Signature                : PMEMOBJ
+Major                    : $(*)
+Mandatory features       : $(*)
+Not mandatory features   : $(*)
+Forced RO                : $(*)
+Pool set UUID            : $(*)
+UUID                     : $(*)
+Previous part UUID       : $(*)
+Next part UUID           : $(*)
+Previous replica UUID    : $(*)
+Next replica UUID        : $(*)
+Creation Time            : $(*)
+Alignment Descriptor     : $(*)
+Class                    : $(*)
+Data                     : $(*)
+Machine                  : $(*)
+Checksum                 : $(*) [OK]
+
+PMEM OBJ Header:
+Layout                   : pmempool
+Lanes offset             : $(*)
+Number of lanes          : $(*)
+Object store offset      : $(*)
+Object store size        : $(*)
+Heap offset              : $(*)
+Heap size                : $(*)
+Checksum                 : $(*) [OK]
+
+Root object:
+Offset                   : $(*)
+Size                     : 1
+ 
+Allocation Header:
+ Zone id                  : $(*)
+ Chunk id                 : $(*)
+ Size                     : $(*)
+ 
+OOB Header:
+ Next                     : off: $(*) pool_uuid_lo: $(*) [OK]
+ Prev                     : off: $(*) pool_uuid_lo: $(*) [OK]
+ Internal Type            : allocated
+ User Type                : 65535 [root object]

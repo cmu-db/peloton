@@ -1,0 +1,26 @@
+vmmalloc_memalign/TEST2: START: vmmalloc_memalign
+ ./vmmalloc_memalign$(nW) a
+testing aligned_alloc
+alignment 4194304
+alignment 2097152
+alignment 1048576
+alignment 524288
+alignment 262144
+alignment 131072
+alignment 65536
+alignment 32768
+alignment 16384
+alignment 8192
+alignment 4096
+alignment 2048
+alignment 1024
+alignment 512
+alignment 256
+alignment 128
+alignment 64
+alignment 32
+alignment 16
+alignment 8
+alignment 4
+alignment 2
+vmmalloc_memalign/TEST2: Done

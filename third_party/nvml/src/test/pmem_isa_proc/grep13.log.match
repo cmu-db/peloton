@@ -1,0 +1,12 @@
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] clflush supported
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] clflushopt supported
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] PMEM_NO_CLFLUSHOPT forced no clflushopt
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] clwb supported
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] PMEM_NO_CLWB forced no clwb
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] using clflush
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] pcommit supported
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] PMEM_NO_PCOMMIT forced no pcommit
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] not using pcommit
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] movnt supported
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] PMEM_NO_MOVNT forced no movnt
+<libpmem>: <3> [pmem.c:$(N) pmem_parse_cpuinfo] not using movnt
