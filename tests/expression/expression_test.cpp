@@ -418,19 +418,18 @@ TEST_F(ExpressionTest, SimpleCase) {
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(100));
   expression::ConstantValueExpression *const_val_exp_0 =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(0));
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(0));
   expression::OperatorAlternativeExpression *op_alter =
-      new expression::OperatorAlternativeExpression(
-          const_val_exp_100, const_val_exp_0);
+      new expression::OperatorAlternativeExpression(const_val_exp_100,
+                                                    const_val_exp_0);
 
   expression::ComparisonExpression<expression::CmpEq> *case_when_cond =
       new expression::ComparisonExpression<expression::CmpEq>(
           EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp_20);
 
   expression::OperatorCaseWhenExpression *case_when =
-      new expression::OperatorCaseWhenExpression(
-          VALUE_TYPE_INTEGER, case_when_cond, op_alter);
+      new expression::OperatorCaseWhenExpression(VALUE_TYPE_INTEGER,
+                                                 case_when_cond, op_alter);
 
   // TUPLE
 
