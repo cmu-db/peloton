@@ -76,8 +76,11 @@ bool RpcServer::RegisterService(google::protobuf::Service *service) {
     // although the return type is size_t, again we should specify the size of the type
     uint64_t hash = string_hash_fn(methodname);
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
-    if (iter == rpc_method_map_.end())
-      rpc_method_map_[hash] = rpc_method;
+    if (iter == rpc_method_map_.end()) {
+        auto pair = std::make_pair(hash, rpc_method);
+        rpc_method_map_.insert(pair);
+    }
+
   }
 
   return true;
@@ -87,17 +90,16 @@ void RpcServer::Start() {
     listener_.Run(this);
 }
 
-bool RpcServer::RemoveService() {
+void RpcServer::RemoveService() {
 
-    RpcMethodMap::iterator iter;
+    for (RpcMethodMap::iterator iter = rpc_method_map_.begin(); iter != rpc_method_map_.end(); iter++) {
+      RpcMethod *rpc_method = iter->second;
 
-    for (RpcMethodMap::iterator it = rpc_method_map_.begin(); it != rpc_method_map_.end();) {
-      RpcMethod *rpc_method = it->second;
-        ++it;
-      delete rpc_method;
+      if ( rpc_method != NULL ) {
+          delete rpc_method;
+      }
+
     }
-
-    return true;
 }
 
 RpcMethod* RpcServer::FindMethod(uint64_t opcode) {
@@ -107,6 +109,7 @@ RpcMethod* RpcServer::FindMethod(uint64_t opcode) {
     if (iter == rpc_method_map_.end()) {
         return NULL;
     }
+
     // Get the rpc method meta info: method descriptor
     RpcMethod *rpc_method = iter->second;
 

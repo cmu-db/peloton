@@ -50,26 +50,20 @@ Connection::Connection(int fd, void* arg) :
 
 Connection::~Connection() {
 
-    if (rpc_server_ == NULL) {
-        LOG_TRACE("Client: begin connection destroy");
-    } else {
-        LOG_TRACE("Server: begin connection destroy");
-    }
+//    if (rpc_server_ == NULL) {
+//        LOG_TRACE("Client: begin connection destroy");
+//    } else {
+//        LOG_TRACE("Server: begin connection destroy");
+//    }
 
-    if (base_ != NULL) {
-        event_base_free(base_);
-    }
-
-    if (bev_ != NULL && close_ == false) {
+    // We must free event before free base
+    if ( close_ == false ) {
+        close_ = true;
         bufferevent_free(bev_);
     }
 
-    if (rpc_server_ == NULL) {
-        LOG_TRACE("Client: connection destroy");
-    } else {
-        LOG_TRACE("Server: connection destroy");
-    }
-
+    // After free event, base is finally freed
+    event_base_free(base_);
 }
 
 bool Connection::Connect(const NetworkAddress& addr) {

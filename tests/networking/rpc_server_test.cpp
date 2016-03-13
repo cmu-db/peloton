@@ -28,8 +28,8 @@ TEST_F(RpcServerTests, BasicTest) {
   bool status = rpc_server.RegisterService(&service);
   EXPECT_EQ(status, true);
 
-  status = rpc_server.RemoveService();
-  EXPECT_EQ(status, true);
+  auto ptr = rpc_server.FindMethod(1);
+  EXPECT_EQ(ptr, NULL);
 }
 
 }

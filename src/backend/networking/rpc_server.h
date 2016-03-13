@@ -41,24 +41,19 @@ public:
   // start
   void Start();
 
-  // register a service
+  // register service
   bool RegisterService(google::protobuf::Service *service);
-
-  // remove all services
-  bool RemoveService();
 
   // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);
-
-  // close
-  void Close();
-
-  //ThreadManager server_threads_;
 
   // for testing the rpc performance
   //long start_time_;
 
 private:
+
+  // remove all services. It is only invoked by destroy constructor
+  void RemoveService();
 
   // the rpc function can call this to execute something
   static void Callback() {
