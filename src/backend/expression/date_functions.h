@@ -91,7 +91,9 @@ namespace peloton {
 
 static const long COUNTER_BITS = 9;
 static const long PARTITIONID_BITS = 14;
-static const int64_t VOLT_EPOCH = epoch_microseconds_from_components(2008);
+
+// defined not used, comment out
+// static const int64_t VOLT_EPOCH = epoch_microseconds_from_components(2008);
 
 /** implement the timestamp YEAR extract function **/
 template <>
