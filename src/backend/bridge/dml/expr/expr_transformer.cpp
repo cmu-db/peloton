@@ -32,7 +32,7 @@
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
-
+#include "backend/expression/case_expression.h"
 namespace peloton {
 namespace bridge {
 
@@ -92,6 +92,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformFunc(expr_state);
       break;
 
+    case T_CaseExpr:
+      peloton_expr = TransformCaseExpr(expr_state);
+      break;
+
     case T_Aggref:
       peloton_expr = TransformAggRef(expr_state);
       break;
@@ -120,6 +124,15 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
 
     case T_Var:
       peloton_expr = TransformVar(expr);
+      break;
+      
+    case T_OpExpr:
+      peloton_expr = TransformOp(expr);
+      break;
+
+    case T_CaseTestExpr:
+      peloton_expr =
+          NULL;  // this is just a place holder, so it doesn't matter.
       break;
 
     case T_RelabelType:
@@ -259,6 +272,20 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
   return ReMapPgFunc(pg_func_id, func_state->args);
 }
 
+expression::AbstractExpression *ExprTransformer::TransformOp(const Expr *ex) {
+  LOG_TRACE("Transform Op ");
+
+  auto op_expr = reinterpret_cast<const OpExpr *>(ex);
+
+  assert(op_expr->opfuncid !=
+         0);  // Hopefully it has been filled in by PG planner
+
+  auto pg_func_id = op_expr->opfuncid;
+
+  return ReMapPgExprFunc(pg_func_id, op_expr->args);
+}
+
+
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     const ExprState *es) {
   LOG_TRACE("Transform ScalarArrayOp ");
@@ -331,6 +358,54 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
   return retval;
 }
+
+expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
+    const ExprState *es) {
+  auto case_expr = reinterpret_cast<const CaseExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(case_expr->casetype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = case_expr->args;
+  ListCell *arg;
+  Expr *_testExpr = case_expr->arg;
+
+  expression::AbstractExpression *condition = NULL, *result = NULL;
+
+  auto *clauses = new std::vector<expression::AbstractExpression *>();
+  foreach (arg, list) {
+    CaseWhen *clause =
+        (CaseWhen *)reinterpret_cast<const CaseWhen *>(lfirst(arg));
+    if (_testExpr == NULL)
+      condition = ExprTransformer::TransformExpr((clause->expr));
+    else {
+      ListCell *t_arg;
+      int i = 0;
+      expression::AbstractExpression *t = NULL;
+      OpExpr *t_expr = reinterpret_cast<OpExpr *>(clause->expr);
+
+      // Get the second parameter,
+      // because the first paramter is a place holder for testExpr.
+      foreach (t_arg, t_expr->args) {
+        Expr *expr = (Expr *)lfirst(t_arg);
+
+        t = TransformExpr(expr);
+
+        if (i == 1) break;
+        i++;
+      }
+      condition = expression::ExpressionUtil::ComparisonFactory(
+          EXPRESSION_TYPE_COMPARE_EQUAL,
+          ExprTransformer::TransformExpr(_testExpr), t);
+    }
+    result = ExprTransformer::TransformExpr((clause->result));
+    clauses->push_back(
+        expression::ExpressionUtil::CaseWhenFactory(vt, condition, result));
+  }
+  expression::AbstractExpression *defresult = ExprTransformer::TransformExpr(
+      reinterpret_cast<Expr *>(case_expr->defresult));
+
+  return new expression::CaseExpression(vt, clauses, defresult);
+}
+
 
 expression::AbstractExpression *ExprTransformer::TransformVar(
     const ExprState *es) {
@@ -613,6 +688,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+    
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 
@@ -625,6 +702,98 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
 
   return nullptr;
 }
+
+
+//overlap here, could be optimized.
+expression::AbstractExpression *ExprTransformer::ReMapPgExprFunc(Oid pg_func_id,
+                                                                 List *args) {
+  assert(pg_func_id > 0);
+
+  // Perform lookup
+  auto itr = kPgFuncMap.find(pg_func_id);
+
+  if (itr == kPgFuncMap.end()) {
+    LOG_ERROR("Unsupported PG Op Function ID : %u (check fmgrtab.cpp)",
+              pg_func_id);
+    return nullptr;
+  }
+  PltFuncMetaInfo func_meta = itr->second;
+
+  if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
+    // it is a cast, but we need casted type and the child expr.
+    // so we just create an empty cast expr and return it.
+    return expression::ExpressionUtil::CastFactory();
+  }
+
+  // mperron some string functions have 4 children
+  assert(list_length(args) <=
+         EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
+  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
+
+  // Extract function arguments (at most four)
+  expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM];
+  for (int i = 0; i < EXPRESSION_MAX_ARG_NUM; i++) {
+    children[i] = nullptr;
+  }
+  int i = 0;
+  ListCell *arg;
+  foreach (arg, args) {
+    Expr *expr = (Expr *)lfirst(arg);
+
+    if (i >= func_meta.nargs) break;
+
+    children[i] = TransformExpr(expr);
+
+    i++;
+  }
+
+  // Construct the corresponding Peloton expression
+  auto plt_exprtype = func_meta.exprtype;
+
+  switch (plt_exprtype) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+      return expression::ExpressionUtil::ComparisonFactory(
+          plt_exprtype, children[0], children[1]);
+
+    case EXPRESSION_TYPE_OPERATOR_PLUS:
+    case EXPRESSION_TYPE_OPERATOR_MINUS:
+    case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
+    case EXPRESSION_TYPE_OPERATOR_DIVIDE:
+    case EXPRESSION_TYPE_SUBSTR:
+    case EXPRESSION_TYPE_ASCII:
+    case EXPRESSION_TYPE_OCTET_LEN:
+    case EXPRESSION_TYPE_CHAR:
+    case EXPRESSION_TYPE_CHAR_LEN:
+    case EXPRESSION_TYPE_SPACE:
+    case EXPRESSION_TYPE_CONCAT:
+    case EXPRESSION_TYPE_OVERLAY:
+    case EXPRESSION_TYPE_LEFT:
+    case EXPRESSION_TYPE_RIGHT:
+    case EXPRESSION_TYPE_RTRIM:
+    case EXPRESSION_TYPE_LTRIM:
+    case EXPRESSION_TYPE_BTRIM:
+    case EXPRESSION_TYPE_REPLACE:
+    case EXPRESSION_TYPE_REPEAT:
+    case EXPRESSION_TYPE_POSITION:
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+      return expression::ExpressionUtil::OperatorFactory(
+          plt_exprtype, children[0], children[1], children[2], children[3]);
+
+    default:
+      LOG_ERROR(
+          "This Peloton ExpressionType is in our map but not transformed here "
+          ": %u",
+          plt_exprtype);
+  }
+
+  return nullptr;
+}
+
 
 }  // namespace bridge
 }  // namespace peloton

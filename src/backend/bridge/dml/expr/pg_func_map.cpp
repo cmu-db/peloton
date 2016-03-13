@@ -130,6 +130,10 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap({
     //====--------------------------------
     // Basic arithmetics
     //====--------------------------------
+    
+    {212, {EXPRESSION_TYPE_OPERATOR_UNARY_MINUS, 1}},
+    {220, {EXPRESSION_TYPE_OPERATOR_UNARY_MINUS, 1}},
+
     {176, {EXPRESSION_TYPE_OPERATOR_PLUS, 2}},
     {177, {EXPRESSION_TYPE_OPERATOR_PLUS, 2}},
     {178, {EXPRESSION_TYPE_OPERATOR_PLUS, 2}},
