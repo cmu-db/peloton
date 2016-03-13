@@ -474,6 +474,10 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       ret = new OperatorExpression<OpPlus>(et, first, second);
       break;
 
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+      ret = new OperatorUnaryMinusExpression(first);
+      break;
+
     case (EXPRESSION_TYPE_OPERATOR_MINUS):
       ret = new OperatorExpression<OpMinus>(et, first, second);
       break;
@@ -571,13 +575,9 @@ AbstractExpression *ExpressionUtil::CastFactory(PostgresValueType type,
 AbstractExpression *ExpressionUtil::CaseWhenFactory(ValueType vt,
                                                     AbstractExpression *lc,
                                                     AbstractExpression *rc) {
-  OperatorAlternativeExpression *alternative =
-      dynamic_cast<OperatorAlternativeExpression *>(rc);
-  if (!rc) {
-    throw Exception("operator case when has incorrect expression");
-  }
-  return new OperatorCaseWhenExpression(vt, lc, alternative);
+  return new OperatorCaseWhenExpression(vt, lc, rc);
 }
+
 
 // provide an interface for creating constant value expressions that
 // is more useful to testcases
@@ -1006,9 +1006,10 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     case (EXPRESSION_TYPE_OPERATOR_CASE_WHEN):
       ret = CaseWhenFactory(vt, lc, rc);
       break;
-    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
-      ret = new OperatorAlternativeExpression(lc, rc);
-      break;
+// Anyway, this function is not implemented. comment out.
+//    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
+//      ret = new OperatorAlternativeExpression(lc, rc);
+//      break;
 
     // Subquery
     case (EXPRESSION_TYPE_ROW_SUBQUERY):
