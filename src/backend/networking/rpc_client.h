@@ -2,132 +2,97 @@
 //
 //                         PelotonDB
 //
-// peloton_client.h
+// rpc_client.h
 //
-// Identification: src/backend/message/peloton_client.h
+// Identification: src/backend/networking/rpc_client.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
+#include "rpc_type.h"
+#include "rpc_controller.h"
+#include "rpc_channel.h"
+#include "abstract_service.pb.h"
+#include "peloton_endpoint.h"
 
-#include "backend/networking/rpc_channel.h"
-#include "backend/networking/rpc_controller.h"
-#include "backend/networking/abstract_service.pb.h"
-#include "backend/networking/peloton_endpoint.h"
+#include "backend/common/logger.h"
 
 #include <google/protobuf/stubs/common.h>
+#include <iostream>
 
 namespace peloton {
 namespace networking {
 
-class PelotonClient {
+//class RpcClientManager;
+
+class RpcClient {
  public:
-  PelotonClient(const char* url) {
-    channel_ = new RpcChannel(url);
-    controller_ = new RpcController();
-    stub_ = new AbstractPelotonService::Stub(channel_);
-  };
+    RpcClient(const char* url);
+    ~RpcClient();
 
-  ~PelotonClient() {
-    delete channel_;
-    delete controller_;
-    delete stub_;
-  }
+    //static ThreadManager client_threads_;
 
-  // same rpc interface except for controller and callback function
+ public:
+
+  // TODO: same rpc interface except for controller and callback function. We might delete response in future
 
   void TransactionInit(const TransactionInitRequest* request,
-                       TransactionInitResponse* response) {
-    stub_->TransactionInit(controller_, request, response, NULL);
-  }
+                       TransactionInitResponse* response);
 
   void TransactionWork(const TransactionWorkRequest* request,
-                       TransactionWorkResponse* response) {
-    stub_->TransactionWork(controller_, request, response, NULL);
-  }
+                       TransactionWorkResponse* response);
 
   void TransactionPrefetch(const TransactionPrefetchResult* request,
-                           TransactionPrefetchAcknowledgement* response) {
-    stub_->TransactionPrefetch(controller_, request, response, NULL);
-  }
+                           TransactionPrefetchAcknowledgement* response);
 
   void TransactionMap(const TransactionMapRequest* request,
-                      TransactionMapResponse* response) {
-    stub_->TransactionMap(controller_, request, response, NULL);
-  }
+                      TransactionMapResponse* response);
 
   void TransactionReduce(const TransactionReduceRequest* request,
-                         TransactionReduceResponse* response) {
-    stub_->TransactionReduce(controller_, request, response, NULL);
-  }
+                         TransactionReduceResponse* response);
 
   void TransactionPrepare(const TransactionPrepareRequest* request,
-                          TransactionPrepareResponse* response) {
-    stub_->TransactionPrepare(controller_, request, response, NULL);
-  }
+                          TransactionPrepareResponse* response);
 
   void TransactionFinish(const TransactionFinishRequest* request,
-                         TransactionFinishResponse* response) {
-    stub_->TransactionFinish(controller_, request, response, NULL);
-  }
+                         TransactionFinishResponse* response);
 
   void TransactionRedirect(const TransactionRedirectRequest* request,
-                           TransactionRedirectResponse* response) {
-    stub_->TransactionRedirect(controller_, request, response, NULL);
-  }
+                           TransactionRedirectResponse* response);
 
   void TransactionDebug(const TransactionDebugRequest* request,
-                        TransactionDebugResponse* response) {
-    stub_->TransactionDebug(controller_, request, response, NULL);
-  }
+                        TransactionDebugResponse* response);
 
   void SendData(const SendDataRequest* request,
-                SendDataResponse* response) {
-    stub_->SendData(controller_, request, response, NULL);
-  }
+                SendDataResponse* response);
 
   void Initialize(const InitializeRequest* request,
-                  InitializeResponse* response) {
-    stub_->Initialize(controller_, request, response, NULL);
-  }
+                  InitializeResponse* response);
 
   void ShutdownPrepare(const ShutdownPrepareRequest* request,
-                       ShutdownPrepareResponse* response) {
-    stub_->ShutdownPrepare(controller_, request, response, NULL);
-  }
+                       ShutdownPrepareResponse* response);
 
   void Shutdown(const ShutdownRequest* request,
-                ShutdownResponse* response) {
-    stub_->Shutdown(controller_, request, response, NULL);
-  }
+                ShutdownResponse* response);
 
   void Heartbeat(const HeartbeatRequest* request,
-                 HeartbeatResponse* response) {
-    //google::protobuf::Closure* callback = google::protobuf::NewCallback(&Call);
-    stub_->Heartbeat(controller_, request, response, NULL);
-  }
+                 HeartbeatResponse* response);
 
   void UnevictData(const UnevictDataRequest* request,
-                   UnevictDataResponse* response) {
-    stub_->UnevictData(controller_, request, response, NULL);
-  }
+                   UnevictDataResponse* response);
 
   void TimeSync(const TimeSyncRequest* request,
-                TimeSyncResponse* response) {
-    stub_->TimeSync(controller_, request, response, NULL);
-  }
+                TimeSyncResponse* response);
 
  private:
 
-  static void Call() {
-    std::cout << "This is backcall:" << std::endl;
-  }
-
   RpcChannel*       channel_;
+
+  //TODO: controller might be moved out if needed
   RpcController*    controller_;
   AbstractPelotonService::Stub* stub_;
+
 };
 
 }  // namespace networking
