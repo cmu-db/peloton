@@ -75,5 +75,3 @@ class RpcController : public google::protobuf::RpcController {
 }  // namespace networking
 }  // namespace peloton
 
-    Status API Training Shop Blog About Pricing
-
