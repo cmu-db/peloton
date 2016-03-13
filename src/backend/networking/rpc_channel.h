@@ -4,7 +4,7 @@
 //
 // rpc_channel.h
 //
-// Identification: src/backend/message/rpc_channel.h
+// Identification: src/backend/networking/rpc_channel.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,19 +12,23 @@
 
 #pragma once
 
-#include <string>
-
-#include "backend/networking/nanomsg.h"
+#include "tcp_address.h"
+#include "backend/common/logger.h"
+#include "abstract_service.pb.h"
 
 #include <google/protobuf/service.h>
 #include <google/protobuf/message.h>
+#include <string>
+#include <iostream>
+#include <memory>
 
 namespace peloton {
 namespace networking {
 
 class RpcChannel : public google::protobuf::RpcChannel {
 public:
-  RpcChannel(const char* url);
+  RpcChannel(const std::string& url);
+  //RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
 
@@ -37,8 +41,7 @@ public:
   void Close();
 
 private:
-  NanoMsg socket_;
-  int socket_id_;
+    NetworkAddress addr_;
 };
 
 }  // namespace networking
