@@ -36,12 +36,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::InsertEn
   index_key.SetFromKey(key);
 
   {
-    index_lock.WriteLock();
+    //index_lock.WriteLock();
 
     // Insert the key, val pair
     container.insert(std::pair<KeyType, ValueType>(index_key, location));
-
-    index_lock.Unlock();
+    //index_lock.Unlock();
   }
 
   return true;
@@ -54,7 +53,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::DeleteEn
   index_key.SetFromKey(key);
 
   {
-    index_lock.WriteLock();
+    //index_lock.WriteLock();
 
     // Delete the < key, location > pair
     bool try_again = true;
@@ -78,7 +77,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::DeleteEn
       }
     }
 
-    index_lock.Unlock();
+    //index_lock.Unlock();
   }
 
   return true;
@@ -95,7 +94,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   KeyType index_key;
 
   {
-    index_lock.ReadLock();
+    //index_lock.ReadLock();
 
     // Check if we have leading (leftmost) column equality
     // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
@@ -166,7 +165,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         break;
     }
 
-    index_lock.Unlock();
+    //index_lock.Unlock();
   }
 
   return result;
@@ -178,7 +177,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys()
   std::vector<ItemPointer> result;
 
   {
-    index_lock.ReadLock();
+    //index_lock.ReadLock();
 
     auto itr = container.begin();
 
@@ -189,7 +188,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys()
       itr++;
     }
 
-    index_lock.Unlock();
+    //index_lock.Unlock();
   }
 
   return result;
@@ -207,7 +206,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   index_key.SetFromKey(key);
 
   {
-    index_lock.ReadLock();
+    //index_lock.ReadLock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -215,7 +214,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
       result.push_back(entry->second);
     }
 
-    index_lock.Unlock();
+    //index_lock.Unlock();
   }
 
   return result;

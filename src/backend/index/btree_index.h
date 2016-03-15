@@ -22,6 +22,7 @@
 #include "backend/index/index.h"
 
 #include "stx/btree_multimap.h"
+#include "cpp-btree/btree_map.h"
 
 namespace peloton {
 namespace index {
@@ -36,7 +37,8 @@ class BTreeIndex : public Index {
   friend class IndexFactory;
 
   // Define the container type
-  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  //typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  typedef btree::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
   BTreeIndex(IndexMetadata *metadata);
@@ -63,7 +65,8 @@ class BTreeIndex : public Index {
   }
 
   size_t GetMemoryFootprint() {
-    return container.GetMemoryFootprint();
+    return 0;
+    //return container.GetMemoryFootprint();
   }
 
  protected:
@@ -74,7 +77,7 @@ class BTreeIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  RWLock index_lock;
+  //RWLock index_lock;
 };
 
 }  // End index namespace
