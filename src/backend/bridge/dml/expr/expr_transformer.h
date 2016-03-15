@@ -59,12 +59,14 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformRelabelType(
       const ExprState *es);
   static expression::AbstractExpression *TransformRelabelType(
-  		const Expr *es); // added by Michael for IN: where TITLE in (). Here TITLE is varchar(20)
+      const Expr *es);  // added by Michael for IN: where TITLE in (). Here
+                        // TITLE is varchar(20)
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
+  static expression::AbstractExpression *TransformFunc(const Expr *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
   static expression::AbstractExpression *TransformCaseExpr(
       const ExprState *es);  // added by Heqing
-
+  static expression::AbstractExpression *TransformCoalesce(const ExprState *es);
   static expression::AbstractExpression *TransformConst(const Expr *es);
   static expression::AbstractExpression *TransformVar(const Expr *es);
   static expression::AbstractExpression *TransformBool(const Expr *es);
@@ -79,7 +81,6 @@ class ExprTransformer {
   // the content in args are different from above.
   static expression::AbstractExpression *ReMapPgExprFunc(Oid pg_func_id,
                                                          List *args);
-
 };
 
 }  // namespace bridge

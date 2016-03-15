@@ -100,6 +100,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformAggRef(expr_state);
       break;
 
+    case T_CoalesceExpr:
+      peloton_expr = TransformCoalesce(expr_state);
+      break;
+
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr_state->expr));
@@ -125,9 +129,13 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
     case T_Var:
       peloton_expr = TransformVar(expr);
       break;
-      
+
     case T_OpExpr:
       peloton_expr = TransformOp(expr);
+      break;
+
+    case T_FuncExpr:
+      peloton_expr = TransformFunc(expr);
       break;
 
     case T_CaseTestExpr:
@@ -285,7 +293,6 @@ expression::AbstractExpression *ExprTransformer::TransformOp(const Expr *ex) {
   return ReMapPgExprFunc(pg_func_id, op_expr->args);
 }
 
-
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
     const ExprState *es) {
   LOG_TRACE("Transform ScalarArrayOp ");
@@ -359,6 +366,40 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   return retval;
 }
 
+expression::AbstractExpression *ExprTransformer::TransformFunc(const Expr *es) {
+  auto fn_expr = reinterpret_cast<const FuncExpr *>(es);
+
+  assert(fn_expr->xpr.type == T_FuncExpr);
+
+  auto pg_func_id = fn_expr->funcid;
+  auto rettype = fn_expr->funcresulttype;
+
+  LOG_TRACE("PG Func oid : %u , return type : %u ", pg_func_id, rettype);
+
+  auto retval = ReMapPgExprFunc(pg_func_id, fn_expr->args);
+
+  // FIXME It will generate incorrect results.
+  if (!retval) {
+    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
+    assert(list_length(fn_es->args) > 0);
+
+    Expr *first_child = (Expr *)lfirst(list_head(fn_expr->args));
+    return TransformExpr(first_child);
+  }
+
+  if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
+    expression::CastExpression *cast_expr =
+        reinterpret_cast<expression::CastExpression *>(retval);
+    Expr *first_child = (Expr *)lfirst(list_head(fn_expr->args));
+    cast_expr->SetChild(TransformExpr(first_child));
+    PostgresValueType type = static_cast<PostgresValueType>(rettype);
+    cast_expr->SetResultType(type);
+    return cast_expr;
+  }
+
+  return retval;
+}
+
 expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
     const ExprState *es) {
   auto case_expr = reinterpret_cast<const CaseExpr *>(es->expr);
@@ -403,9 +444,8 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
   expression::AbstractExpression *defresult = ExprTransformer::TransformExpr(
       reinterpret_cast<Expr *>(case_expr->defresult));
 
-  return new expression::CaseExpression(vt, clauses, defresult);
+  return expression::ExpressionUtil::CaseExprFactory(vt, clauses, defresult);
 }
-
 
 expression::AbstractExpression *ExprTransformer::TransformVar(
     const ExprState *es) {
@@ -689,7 +729,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
     case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
-    
+
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 
@@ -703,8 +743,25 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   return nullptr;
 }
 
+expression::AbstractExpression *ExprTransformer::TransformCoalesce(
+    const ExprState *es) {
+  auto expr = reinterpret_cast<CoalesceExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(expr->coalescetype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = expr->args;
+  ListCell *arg;
 
-//overlap here, could be optimized.
+  auto *values = new std::vector<expression::AbstractExpression *>();
+  foreach (arg, list) {
+    Expr *expr = reinterpret_cast<Expr *> lfirst(arg);
+    auto t = TransformExpr(expr);
+    values->push_back(t);
+  }
+
+  return expression::ExpressionUtil::CoalesceFactory(vt, values);
+}
+
+// overlap here, could be optimized.
 expression::AbstractExpression *ExprTransformer::ReMapPgExprFunc(Oid pg_func_id,
                                                                  List *args) {
   assert(pg_func_id > 0);
@@ -793,7 +850,6 @@ expression::AbstractExpression *ExprTransformer::ReMapPgExprFunc(Oid pg_func_id,
 
   return nullptr;
 }
-
 
 }  // namespace bridge
 }  // namespace peloton

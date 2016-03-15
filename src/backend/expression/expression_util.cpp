@@ -23,6 +23,7 @@
 #include "backend/expression/hash_range_expression.h"
 #include "backend/expression/operator_expression.h"
 #include "backend/expression/comparison_expression.h"
+#include "backend/expression/case_expression.h"
 #include "backend/expression/conjunction_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
@@ -35,7 +36,7 @@
 #include "backend/expression/string_expression.h"
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
-
+#include "backend/expression/coalesce_expression.h"
 #include <json_spirit.h>
 
 namespace peloton {
@@ -578,7 +579,6 @@ AbstractExpression *ExpressionUtil::CaseWhenFactory(ValueType vt,
   return new OperatorCaseWhenExpression(vt, lc, rc);
 }
 
-
 // provide an interface for creating constant value expressions that
 // is more useful to testcases
 AbstractExpression *ExpressionUtil::ConstantValueFactory(
@@ -901,6 +901,17 @@ void raiseFunctionFactoryError(const std::string &nameString, int functionId,
   throw Exception(fn_message);
 }
 
+AbstractExpression *ExpressionUtil::CaseExprFactory(
+    ValueType vt, std::vector<AbstractExpression *> *clauses,
+    AbstractExpression *defresult) {
+  return new expression::CaseExpression(vt, clauses, defresult);
+}
+
+AbstractExpression *ExpressionUtil::CoalesceFactory(
+    ValueType vt, std::vector<AbstractExpression *> *values) {
+  return new expression::CoalesceExpression(vt, values);
+}
+
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
@@ -1006,10 +1017,10 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     case (EXPRESSION_TYPE_OPERATOR_CASE_WHEN):
       ret = CaseWhenFactory(vt, lc, rc);
       break;
-// Anyway, this function is not implemented. comment out.
-//    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
-//      ret = new OperatorAlternativeExpression(lc, rc);
-//      break;
+    // Anyway, this function is not implemented. comment out.
+    //    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
+    //      ret = new OperatorAlternativeExpression(lc, rc);
+    //      break;
 
     // Subquery
     case (EXPRESSION_TYPE_ROW_SUBQUERY):
