@@ -37,6 +37,7 @@
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
 #include "backend/expression/coalesce_expression.h"
+#include "backend/expression/nullif_expression.h"
 #include <json_spirit.h>
 
 namespace peloton {
@@ -910,6 +911,11 @@ AbstractExpression *ExpressionUtil::CaseExprFactory(
 AbstractExpression *ExpressionUtil::CoalesceFactory(
     ValueType vt, std::vector<AbstractExpression *> *values) {
   return new expression::CoalesceExpression(vt, values);
+}
+
+AbstractExpression *ExpressionUtil::NullIfFactory(
+    ValueType vt, std::vector<AbstractExpression *> *values) {
+  return new expression::NullIfExpression(vt, values);
 }
 
 // Given an expression type and a valuetype, find the best

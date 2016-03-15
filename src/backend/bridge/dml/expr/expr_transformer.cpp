@@ -104,6 +104,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformCoalesce(expr_state);
       break;
 
+    case T_NullIfExpr:
+      peloton_expr = TransformNullIf(expr_state);
+      break;
+
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')",
                 nodeTag(expr_state->expr));
@@ -741,6 +745,24 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   }
 
   return nullptr;
+}
+
+expression::AbstractExpression *ExprTransformer::TransformNullIf(
+    const ExprState *es) {
+  auto expr = reinterpret_cast<NullIfExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(expr->opresulttype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = expr->args;
+  ListCell *arg;
+
+  auto *values = new std::vector<expression::AbstractExpression *>();
+  foreach (arg, list) {
+    Expr *expr = reinterpret_cast<Expr *> lfirst(arg);
+    auto t = TransformExpr(expr);
+    values->push_back(t);
+  }
+
+  return expression::ExpressionUtil::NullIfFactory(vt, values);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformCoalesce(
