@@ -570,7 +570,7 @@ void Coordinator() {
 void TestSend() {
 
     try {
-        for (int i = 1; i < 5000; i++) {
+        for (int i = 1; i < 2; i++) {
             peloton::networking::HeartbeatRequest request;
 
             request.set_sender_site(i);
@@ -1283,14 +1283,14 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-  std::thread coordinator(Coordinator);
-  coordinator.detach();
+//  std::thread coordinator(Coordinator);
+//  coordinator.detach();
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
   // comment this to shutdown rpc test
-//  std::thread testsend(TestSend);
-//  testsend.detach();
+  std::thread testsend(TestSend);
+  testsend.detach();
 
   status = ServerLoop();
 
