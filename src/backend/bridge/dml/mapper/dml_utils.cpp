@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// ddl_utils.cpp
+// dml_utils.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_utils.cpp
+// Identification: src/backend/bridge/dml/mapper/dml_utils.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -128,7 +128,9 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_ResultState:
-      // TODO: Do we need to handle this ?
+      // TODO: How to handle this ?
+      child_planstate =
+          PrepareResultState(reinterpret_cast<ResultState *>(planstate));
       break;
 
     case T_HashState:
@@ -304,7 +306,6 @@ void DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
 ResultPlanState *DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   ResultPlanState *info = (ResultPlanState *)palloc(sizeof(ResultPlanState));
   info->type = result_plan_state->ps.type;
-
   return info;
 }
 
