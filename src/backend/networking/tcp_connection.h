@@ -32,7 +32,16 @@ namespace networking {
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
 #define OPCODELEN  8    // the length should be equal with sizeof uint64_t
 
+
+
 class Connection {
+
+typedef enum  {
+    INIT,
+    CONNECTED,
+    SENDING,
+    RECVING
+} ConnStatus;
 
 public:
 
@@ -52,6 +61,9 @@ public:
     static void ClientReadCb(struct bufferevent *bev, void *ctx);
     static void ServerEventCb(struct bufferevent *bev, short events, void *ctx);
     static void ClientEventCb(struct bufferevent *bev, short events, void *ctx);
+
+    static void BufferCb(struct evbuffer *buffer,
+            const struct evbuffer_cb_info *info, void *arg);
 
     RpcServer* GetRpcServer();
 //    RpcChannel* GetRpcClient();
@@ -114,12 +126,17 @@ private:
     int socket_;
     bool close_;
 
+    ConnStatus status_;
+
     RpcServer* rpc_server_;
 
     bufferevent* bev_;
     event_base* base_;
 
     std::string method_name_;
+
+    // this can be used in buffer cb
+    //int total_send_;
 };
 
 }  // namespace networking

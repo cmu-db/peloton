@@ -25,7 +25,7 @@ namespace peloton {
 namespace networking {
 
 Connection::Connection(int fd, void* arg) :
-        socket_(fd), close_(false) {
+        socket_(fd), close_(false), status_(INIT) {
 
     if (arg == NULL) {
         rpc_server_ = NULL;
@@ -35,6 +35,8 @@ Connection::Connection(int fd, void* arg) :
 
     base_ = event_base_new();
     bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE);
+
+    //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
     // client passes fd with -1 when new a connection
     if ( fd != -1) { // server
@@ -57,10 +59,7 @@ Connection::~Connection() {
 //    }
 
     // We must free event before free base
-    if ( close_ == false ) {
-        close_ = true;
-        bufferevent_free(bev_);
-    }
+    this->Close();
 
     // After free event, base is finally freed
     event_base_free(base_);
@@ -82,8 +81,11 @@ bool Connection::Connect(const NetworkAddress& addr) {
 }
 
 void Connection::Close() {
-    bufferevent_free(bev_);
-    close_ = true;
+
+    if ( close_ == false ) {
+        close_ = true;
+        bufferevent_free(bev_);
+    }
 }
 
 
@@ -193,6 +195,9 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
     //struct evbuffer *output = bufferevent_get_output(bev);
     // TODO: We might use bev in futurn
     assert(bev != NULL);
+
+    // change the status of the connection
+    status_ = RECVING;
 
     Connection* conn = (Connection*) ctx;
 
@@ -313,34 +318,67 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
 
 void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx) {
 
-    // TODO
     Connection* conn = (Connection*)ctx;
     assert(conn != NULL && bev != NULL);
 
     if (events & BEV_EVENT_ERROR) {
+
         LOG_TRACE("Error from server bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
-//        conn->Close();
+        conn->Close();
     }
+
     if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+
+        // This means client explicitly closes the connection
         LOG_TRACE("ServerEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+
+        // free the buffer event
         conn->Close();
     }
 }
 
 void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx) {
 
-    // TODO
     Connection* conn = (Connection*)ctx;
     assert(conn != NULL && bev != NULL);
 
     if (events & BEV_EVENT_ERROR) {
+
         LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
-//        conn->Close();
-    }
-    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-        LOG_TRACE("ClientEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+
+        // tell the client send error, and the client should send again or do some other things
+        if (status_ == SENDING) {
+            LOG_TRACE("Send error");
+            // TODO: let the client know
+        }
+
         conn->Close();
     }
+
+    // The other side explicitly closes the connection
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+
+        // This means server explicitly closes the connection
+        LOG_TRACE("ClientEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR())); // the error string is "SUCCESS"
+
+        // free the buffer event
+        conn->Close();
+    }
+}
+
+void Connection::BufferCb(struct evbuffer *buffer,
+    const struct evbuffer_cb_info *info, void *arg) {
+
+//    std::cout<< buffer<<  "This is BufferCb " <<
+//            "info->orig_size: "<< info->orig_size
+//            <<"info->n_deleted: " << info->n_deleted
+//            << "info->n_added: " << info->n_added
+//            << std::endl;
+
+//    struct total_processed *tp = (struct total_processed *) arg;
+//    size_t old_n = tp->n;
+//    int megabytes, i;
+//    total_send_ += info->n_deleted;
 }
 
 RpcServer* Connection::GetRpcServer() {
@@ -387,6 +425,8 @@ int Connection::GetWriteBufferLen() {
 
 // Add data to write buff
 bool Connection::AddToWriteBuffer(char *buffer, int len) {
+
+    status_ = SENDING;
 
     struct evbuffer *output = bufferevent_get_output(bev_);
 

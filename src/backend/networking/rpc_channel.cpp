@@ -55,12 +55,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                             const google::protobuf::Message* request,
                             google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
-
-  if (controller->Failed()) {
-      std::string error = controller->ErrorText();
-      LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
-  }
-
   // TODO
   assert(response == NULL);
 
@@ -112,6 +106,10 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // Connect to server with given address
   if ( conn->Connect(addr_) == false ) {
       LOG_TRACE("Connect Error");
+
+      // rpc client use this info to decide whether re-send the message
+      controller->SetFailed("Connect Error");
+
       return;
   }
 
