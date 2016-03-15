@@ -452,6 +452,12 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_HASH_RANGE: {
       return "HASH_RANGE";
     }
+    case EXPRESSION_TYPE_OPERATOR_NULLIF: {
+      return "NULLIF";
+    }
+    case EXPRESSION_TYPE_OPERATOR_COALESCE: {
+      return "COALESCE";
+    }
     case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
       return "OPERATOR_CASE_WHEN";
     }
