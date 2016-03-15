@@ -67,6 +67,7 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformCaseExpr(
       const ExprState *es);  // added by Heqing
   static expression::AbstractExpression *TransformCoalesce(const ExprState *es);
+  static expression::AbstractExpression *TransformNullIf(const ExprState *es);
   static expression::AbstractExpression *TransformConst(const Expr *es);
   static expression::AbstractExpression *TransformVar(const Expr *es);
   static expression::AbstractExpression *TransformBool(const Expr *es);

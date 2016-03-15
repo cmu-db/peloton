@@ -135,6 +135,9 @@ class ExpressionUtil {
   static AbstractExpression *CoalesceFactory(
       ValueType vt, std::vector<AbstractExpression *> *values);
 
+  static AbstractExpression *NullIfFactory(
+      ValueType vt, std::vector<AbstractExpression *> *values);
+
   static AbstractExpression *CaseWhenFactory(ValueType vt,
                                              AbstractExpression *lc,
                                              AbstractExpression *rc);
