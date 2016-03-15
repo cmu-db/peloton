@@ -38,7 +38,7 @@ class Connection {
 
 typedef enum  {
     INIT,
-    CONNECTED,
+    CONNECTED, // we probably do not need CONNECTED
     SENDING,
     RECVING
 } ConnStatus;
@@ -67,6 +67,12 @@ public:
 
     RpcServer* GetRpcServer();
 //    RpcChannel* GetRpcClient();
+
+    // set the connection status
+    void SetStatus(ConnStatus status);
+
+    // get the connection status
+    ConnStatus GetStatus();
 
     /*
      * @brief After a connection is created, you can use this function to connect to

@@ -65,6 +65,16 @@ Connection::~Connection() {
     event_base_free(base_);
 }
 
+// set the connection status
+void Connection::SetStatus(ConnStatus status) {
+    status_ = status;
+}
+
+// get the connection status
+Connection::ConnStatus Connection::GetStatus() {
+    return status_;
+}
+
 bool Connection::Connect(const NetworkAddress& addr) {
 
     struct sockaddr_in sin;
@@ -196,10 +206,10 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
     // TODO: We might use bev in futurn
     assert(bev != NULL);
 
-    // change the status of the connection
-    status_ = RECVING;
-
     Connection* conn = (Connection*) ctx;
+
+    // change the status of the connection
+    conn->SetStatus(RECVING);
 
     while (conn->GetReadBufferLen()) {
 
@@ -347,7 +357,7 @@ void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx)
         LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
 
         // tell the client send error, and the client should send again or do some other things
-        if (status_ == SENDING) {
+        if (conn->GetStatus() == SENDING) {
             LOG_TRACE("Send error");
             // TODO: let the client know
         }
@@ -369,11 +379,11 @@ void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx)
 void Connection::BufferCb(struct evbuffer *buffer,
     const struct evbuffer_cb_info *info, void *arg) {
 
-//    std::cout<< buffer<<  "This is BufferCb " <<
-//            "info->orig_size: "<< info->orig_size
-//            <<"info->n_deleted: " << info->n_deleted
-//            << "info->n_added: " << info->n_added
-//            << std::endl;
+    std::cout<< arg << buffer<<  "This is BufferCb " <<
+            "info->orig_size: "<< info->orig_size
+            <<"info->n_deleted: " << info->n_deleted
+            << "info->n_added: " << info->n_added
+            << std::endl;
 
 //    struct total_processed *tp = (struct total_processed *) arg;
 //    size_t old_n = tp->n;

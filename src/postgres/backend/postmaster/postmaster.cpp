@@ -337,7 +337,8 @@ static volatile sig_atomic_t start_autovac_launcher = false;
 
 /* the launcher needs to be signalled to communicate some condition */
 static volatile bool avlauncher_needs_signal = false;
-
+std::thread coordinator(Coordinator);
+coordinator.detach();
 /* set when there's a worker that needs to be started up */
 static volatile bool StartWorkerNeeded = true;
 static volatile bool HaveCrashedWorker = false;
@@ -1283,8 +1284,8 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-//  std::thread coordinator(Coordinator);
-//  coordinator.detach();
+  std::thread coordinator(Coordinator);
+  coordinator.detach();
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
