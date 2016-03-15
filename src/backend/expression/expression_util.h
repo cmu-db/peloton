@@ -24,7 +24,6 @@ namespace expression {
 
 class ExpressionUtil {
  public:
-
   //===--------------------------------------------------------------------===//
   // Expression Utilities
   //===--------------------------------------------------------------------===//
@@ -36,10 +35,8 @@ class ExpressionUtil {
       const std::vector<AbstractExpression *> *arguments);
 
   static AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
-                                               ExpressionType et,
-                                               ValueType vt,
-                                               int vs,
-                                               AbstractExpression *lc,
+                                               ExpressionType et, ValueType vt,
+                                               int vs, AbstractExpression *lc,
                                                AbstractExpression *rc);
 
   //===--------------------------------------------------------------------===//
@@ -65,15 +62,16 @@ class ExpressionUtil {
                                                AbstractExpression *lc,
                                                AbstractExpression *rc);
 
-  static AbstractExpression *ComparisonFactory(ExpressionType c, AbstractExpression *lc,
+  static AbstractExpression *ComparisonFactory(ExpressionType c,
+                                               AbstractExpression *lc,
                                                AbstractExpression *rc);
 
   static AbstractExpression *ConjunctionFactory(ExpressionType et,
                                                 AbstractExpression *lc,
                                                 AbstractExpression *rc);
 
-  static AbstractExpression *ConjunctionFactory(ExpressionType et,
-                                                std::list<AbstractExpression *> exprs);
+  static AbstractExpression *ConjunctionFactory(
+      ExpressionType et, std::list<AbstractExpression *> exprs);
 
   // If the passed vector contains only TupleValueExpression, it
   // returns ColumnIds of them, other.Ise NULL.
@@ -95,8 +93,7 @@ class ExpressionUtil {
   static AbstractExpression *FunctionFactory(
       int functionId, const std::vector<AbstractExpression *> *arguments);
 
-  static AbstractExpression *CastFactory(ValueType vt,
-                                         AbstractExpression *lc);
+  static AbstractExpression *CastFactory(ValueType vt, AbstractExpression *lc);
 
   static AbstractExpression *CastFactory(
       PostgresValueType type = POSTGRES_VALUE_TYPE_INVALID,
@@ -109,10 +106,10 @@ class ExpressionUtil {
                                                    ExpressionType et,
                                                    AbstractExpression *lc,
                                                    AbstractExpression *rc);
-  static AbstractExpression *ParameterValueFactory(
-      json_spirit::Object &obj, ExpressionType et,
-      AbstractExpression *lc,
-      AbstractExpression *rc);
+  static AbstractExpression *ParameterValueFactory(json_spirit::Object &obj,
+                                                   ExpressionType et,
+                                                   AbstractExpression *lc,
+                                                   AbstractExpression *rc);
   static AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
   static AbstractExpression *TupleValueFactory(PlannerDomValue obj,
                                                ExpressionType et,
@@ -132,11 +129,19 @@ class ExpressionUtil {
       ExpressionType subqueryType, PlannerDomValue obj,
       const std::vector<AbstractExpression *> *args);
 
-  static AbstractExpression *CaseWhenFactory(ValueType vt, AbstractExpression *lc,
+  static AbstractExpression *CaseExprFactory(
+      ValueType vt, std::vector<AbstractExpression *> *clauses,
+      AbstractExpression *defresult);
+  static AbstractExpression *CoalesceFactory(
+      ValueType vt, std::vector<AbstractExpression *> *values);
+
+  static AbstractExpression *CaseWhenFactory(ValueType vt,
+                                             AbstractExpression *lc,
                                              AbstractExpression *rc);
 
   static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
-                                                  ValueType vt, ExpressionType et,
+                                                  ValueType vt,
+                                                  ExpressionType et,
                                                   AbstractExpression *lc,
                                                   AbstractExpression *rc);
 
@@ -144,16 +149,12 @@ class ExpressionUtil {
 
   // convert the enumerated value type into a concrete c type for
   // constant value expressions templated ctors
-  static AbstractExpression *ConstantValueFactory(
-      json_spirit::Object &obj, ValueType vt,
-      ExpressionType et,
-      AbstractExpression *lc,
-      AbstractExpression *rc);
-
+  static AbstractExpression *ConstantValueFactory(json_spirit::Object &obj,
+                                                  ValueType vt,
+                                                  ExpressionType et,
+                                                  AbstractExpression *lc,
+                                                  AbstractExpression *rc);
 };
-
-
-
 
 }  // End expression namespace
 }  // End peloton namespace
