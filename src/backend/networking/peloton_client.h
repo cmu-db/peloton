@@ -102,8 +102,7 @@ class PelotonClient {
   }
 
   void Heartbeat(const HeartbeatRequest* request, HeartbeatResponse* response) {
-    google::protobuf::Closure* callback =
-        google::protobuf::internal::NewCallback(&Call);
+    google::protobuf::Closure* callback = google::protobuf::NewCallback(&Call);
     stub_->Heartbeat(controller_, request, response, callback);
   }
 
