@@ -94,15 +94,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // crate a connection to prcess the rpc send and recv
   std::shared_ptr<Connection> conn(new Connection(-1, NULL));
 
-  // Client connection must set method name
-  conn->SetMethodName(methodname);
-
-  // write data into sending buffer, when using libevent we don't need loop send
-  if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
-      LOG_TRACE("Write data Error");
-      return;
-  }
-
   // Connect to server with given address
   if ( conn->Connect(addr_) == false ) {
       LOG_TRACE("Connect Error");
@@ -110,6 +101,15 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       // rpc client use this info to decide whether re-send the message
       controller->SetFailed("Connect Error");
 
+      return;
+  }
+
+  // Client connection must set method name
+  conn->SetMethodName(methodname);
+
+  // write data into sending buffer, when using libevent we don't need loop send
+  if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
+      LOG_TRACE("Write data Error");
       return;
   }
 
