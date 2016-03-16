@@ -15,6 +15,7 @@
 
 #include "tcp_address.h"
 #include "backend/common/cast.h"
+#include "backend/common/exception.h"
 
 #include <netdb.h>
 #include <cassert>
