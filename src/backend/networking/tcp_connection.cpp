@@ -117,7 +117,8 @@ void Connection::Dispatch(std::shared_ptr<Connection> conn) {
     }
 }
 
-void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
+void Connection::ClientReadCb(__attribute__((unused)) struct bufferevent *bev,
+                              void *ctx) {
     LOG_TRACE("ClientReadCb is invoked");
     assert (bev != NULL && ctx != NULL);
 
@@ -156,7 +157,10 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
          */
         uint32_t msg_len = 0;
         int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
-        assert(nread == HEADERLEN);
+        if(nread != HEADERLEN) {
+          LOG_ERROR("nread does not match header length \n");
+          return;
+        }
 
         // if readable data is less than a message, return to wait the next callback
         if (readable_len < msg_len + HEADERLEN) {
@@ -198,7 +202,8 @@ void Connection::ClientReadCb(struct bufferevent *bev, void *ctx) {
 // TODO: We did not add checksum code in this version
 ////////////////////////////////////////////////////////////////////////////////
 
-void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
+void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
+                              void *ctx) {
 
     /* This callback is invoked when there is data to read on bev. */
     //struct evbuffer *input = bufferevent_get_input(bev);
@@ -229,7 +234,10 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
          */
         uint32_t msg_len = 0;
         int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
-        assert(nread == HEADERLEN);
+        if(nread != HEADERLEN) {
+          LOG_ERROR("nread does not match header length \n");
+          return;
+        }
 
         // if readable data is less than a message, return to wait the next callback
         if (readable_len < msg_len + HEADERLEN) {
@@ -326,7 +334,7 @@ void Connection::ServerReadCb(struct bufferevent *bev, void *ctx) {
     }
 }
 
-void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx) {
+void Connection::ServerEventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
 
     Connection* conn = (Connection*)ctx;
     assert(conn != NULL && bev != NULL);
@@ -347,7 +355,7 @@ void Connection::ServerEventCb(struct bufferevent *bev, short events, void *ctx)
     }
 }
 
-void Connection::ClientEventCb(struct bufferevent *bev, short events, void *ctx) {
+void Connection::ClientEventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
 
     Connection* conn = (Connection*)ctx;
     assert(conn != NULL && bev != NULL);

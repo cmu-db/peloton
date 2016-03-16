@@ -83,9 +83,11 @@ void Listener::Run(void* arg) {
  *        First it new a connection with the passing by socket and ctx
  *        where ctx is passed by Run which is rpc_server pointer
  */
-void Listener::AcceptConnCb(struct evconnlistener *listener,
-        evutil_socket_t fd, struct sockaddr *address, int socklen,
-        void *ctx) {
+void Listener::AcceptConnCb(__attribute__((unused)) struct evconnlistener *listener,
+                            evutil_socket_t fd,
+                            __attribute__((unused)) struct sockaddr *address,
+                            __attribute__((unused)) int socklen,
+                            __attribute__((unused)) void *ctx) {
 
     assert(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
@@ -106,16 +108,17 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
     ThreadManager::GetServerThreadPool().AddTask(worker_conn);
 }
 
-void Listener::AcceptErrorCb(struct evconnlistener *listener, void *ctx) {
+void Listener::AcceptErrorCb(struct evconnlistener *listener,
+                             __attribute__((unused)) void *ctx) {
 
     assert(ctx != NULL);
 
     struct event_base *base = evconnlistener_get_base(listener);
-    int err = EVUTIL_SOCKET_ERROR();
 
     // Debug info
     LOG_ERROR("Got an error %d (%s) on the listener. "
-            "Shutting down", err, evutil_socket_error_to_string(err));
+            "Shutting down", EVUTIL_SOCKET_ERROR(),
+            evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
 
     event_base_loopexit(base, NULL);
 }

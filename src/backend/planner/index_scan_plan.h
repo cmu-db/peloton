@@ -80,11 +80,6 @@ class IndexScanPlan : public AbstractScan {
     for (auto expr : runtime_keys_) {
       delete expr;
     }
-
-    // otherwise how to free the values? added by ?michael
-    //    for(auto value : values_){
-    //      value.Free();
-    //    }
   }
 
   index::Index *GetIndex() const { return index_; }
