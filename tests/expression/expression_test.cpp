@@ -424,8 +424,11 @@ TEST_F(ExpressionTest, SimpleCase) {
   expression::OperatorCaseWhenExpression *case_when_clause =
       new expression::OperatorCaseWhenExpression(
           VALUE_TYPE_INTEGER, case_when_cond, const_val_exp_2);
-  auto *clauses = new std::vector<expression::AbstractExpression *>();
-  clauses->push_back(case_when_clause);
+
+
+  std::vector<expression::AbstractExpression *> clauses;
+  clauses.push_back(case_when_clause);
+
   expression::CaseExpression *case_expression = new expression::CaseExpression(
       VALUE_TYPE_INTEGER, clauses, const_val_exp_2);
   // TUPLE

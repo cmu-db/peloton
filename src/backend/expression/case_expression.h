@@ -19,25 +19,22 @@ namespace expression {
 class CaseExpression : public AbstractExpression {
 
  public:
-  CaseExpression(ValueType vt, std::vector<AbstractExpression *> *clauses,
-                 AbstractExpression *defresult)
+  CaseExpression(ValueType vt,
+                 const std::vector<AbstractExpression *>& clauses,
+                 AbstractExpression *default_result)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
         clauses(clauses),
-        defresult(defresult),
+        default_result(default_result),
         case_type(vt) {}
 
   ~CaseExpression() {
-    if(clauses != nullptr){
-      for (auto clause : *clauses)
-        delete clause;
-    }
-
-    delete clauses;
+    for (auto clause : clauses)
+      delete clause;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    for (auto clause : *clauses) {
+    for (auto clause : clauses) {
       try {
         return clause->Evaluate(tuple1, tuple2, context);
       } catch (int ExceptionCode) {
@@ -45,7 +42,7 @@ class CaseExpression : public AbstractExpression {
         throw Exception("Unknown Exception code in CaseExpression.");
       }
     }
-    return defresult->Evaluate(tuple1, tuple2, context);
+    return default_result->Evaluate(tuple1, tuple2, context);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -53,11 +50,11 @@ class CaseExpression : public AbstractExpression {
   }
 
  private:
-  // Arguments
-  std::vector<AbstractExpression *> *clauses;
+  // Case expression clauses
+  std::vector<AbstractExpression *> clauses;
 
-  // default result
-  AbstractExpression *defresult;
+  // Fallback case result expression
+  AbstractExpression *default_result;
 
   ValueType case_type;
 };
