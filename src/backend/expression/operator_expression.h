@@ -98,33 +98,31 @@ class OperatorCastExpression : public AbstractExpression {
   ValueType m_targetType;
 };
 
-class OperatorAlternativeExpression : public AbstractExpression {
+class OperatorUnaryMinusExpression : public AbstractExpression {
  public:
-  OperatorAlternativeExpression(AbstractExpression *left,
-                                AbstractExpression *right)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_ALTERNATIVE, left, right) {
-    assert(m_left);
-    assert(m_right);
+  OperatorUnaryMinusExpression(AbstractExpression *left)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
+    m_left = left;
   };
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                 __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused))
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    throw Exception(
-        "OperatorAlternativeExpression::Evaluate function has no "
-        "implementation.");
+    assert(m_left);
+    Value operand = m_left->Evaluate(tuple1, tuple2, context);
+    // NOT TRUE.Is FALSE
+    return Value::GetUnaryMinus(operand);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "Operator ALTERNATIVE Expression");
+    return (spacer + "OperatorNotExpression");
   }
 };
+
 
 class OperatorCaseWhenExpression : public AbstractExpression {
  public:
   OperatorCaseWhenExpression(ValueType vt, AbstractExpression *left,
-                             OperatorAlternativeExpression *right)
+                             AbstractExpression *right)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_WHEN, left, right),
         m_returnType(vt){};
 
@@ -135,13 +133,11 @@ class OperatorCaseWhenExpression : public AbstractExpression {
     Value thenClause = m_left->Evaluate(tuple1, tuple2, context);
 
     if (thenClause.IsTrue()) {
-      return m_right->GetLeft()
-          ->Evaluate(tuple1, tuple2, context)
-          .CastAs(m_returnType);
+      return m_right->Evaluate(tuple1, tuple2, context).CastAs(m_returnType);
     } else {
-      return m_right->GetRight()
-          ->Evaluate(tuple1, tuple2, context)
-          .CastAs(m_returnType);
+      // the condition value is not true
+      // this statement shouldn't be executed
+      throw 0;
     }
   }
 
@@ -152,6 +148,7 @@ class OperatorCaseWhenExpression : public AbstractExpression {
  private:
   ValueType m_returnType;
 };
+
 
 /*
  * Binary operators.

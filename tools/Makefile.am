@@ -150,3 +150,10 @@ dropuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 dropuser_LDFLAGS = $(pg_common_ldflags)
 dropuser_LDADD = $(pg_common_ldadd)
 dropuser_CXXFLAGS = $(pg_common_cxxflags)
+
+######################################################################
+# PELOTON CONFIGURATION
+######################################################################
+
+install-data-hook:
+	cp -rf $(top_srcdir)/tools/share/. $(datadir)

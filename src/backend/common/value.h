@@ -2383,6 +2383,39 @@ class Value {
     return retval;
   }
 
+ public:
+  static Value GetUnaryMinus(const Value &value) {
+    ValueType mType;
+    Value retval(value);
+    mType = value.GetValueType();
+    if (value.IsNull()) return GetNullValue();
+
+    switch (mType) {
+      case VALUE_TYPE_TINYINT:
+        retval.GetTinyInt() = -value.GetTinyInt();
+        break;
+      case VALUE_TYPE_SMALLINT:
+        retval.GetSmallInt() = -value.GetSmallInt();
+        break;
+      case VALUE_TYPE_INTEGER:
+        retval.GetInteger() = -value.GetInteger();
+        break;
+      case VALUE_TYPE_BIGINT:
+        retval.GetBigInt() = -value.GetBigInt();
+        break;
+      case VALUE_TYPE_DECIMAL:
+        retval.GetDecimal() = -value.GetDecimal();
+        break;
+      case VALUE_TYPE_DOUBLE:
+        retval.GetDouble() = -value.GetDouble();
+        break;
+      default:
+        throw Exception("Unsupported type for GetUnaryMinus");
+    }
+    return retval;
+  }
+
+ private:
   static Value GetDecimalValueFromString(const std::string &value) {
     Value retval(VALUE_TYPE_DECIMAL);
     retval.CreateDecimalFromString(value);
