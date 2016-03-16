@@ -52,7 +52,7 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformOp(const ExprState *es);
   static expression::AbstractExpression *TransformOp(const Expr *ex);
   static expression::AbstractExpression *TransformScalarArrayOp(
-      const ExprState *es);  // added by michael for IN operator
+      const ExprState *es);
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);

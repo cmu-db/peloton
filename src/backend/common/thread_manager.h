@@ -13,10 +13,13 @@
 #pragma once
 
 #include <atomic>
-#include <set>
+#include <vector>
 #include <mutex>
 #include <memory>
 #include <thread>
+#include <condition_variable>
+#include <functional>
+#include <queue>
 
 namespace peloton {
 
@@ -30,19 +33,45 @@ class ThreadManager {
 
  public:
   // global singleton
-  static ThreadManager &GetInstance(void);
+  // TODO: For now, rpc client and server use separated thread pool
+  //       global thread pool can lead to starving for client/server
+  //static ThreadManager &GetInstance(void);
 
-  bool AttachThread(std::shared_ptr<std::thread> thread);
+  static ThreadManager &GetServerThreadPool(void);
+  static ThreadManager &GetClientThreadPool(void);
 
-  bool DetachThread(std::shared_ptr<std::thread> thread);
+  // The main function: add task into the task queue
+  void AddTask(std::function<void()> f);
+
+  // TODO: we don't need this API? by Michael
+  //bool AttachThread(std::shared_ptr<std::thread> thread);
+
+  // TODO: we don't need this API? by Michael
+  //bool DetachThread(std::shared_ptr<std::thread> thread);
+
+  // The number of the threads should be inited
+  ThreadManager(int threads);
+  ~ThreadManager();
 
  private:
 
   // thread pool
-  std::set<std::shared_ptr<std::thread>> thread_pool;
+  std::vector<std::thread> thread_pool_;
+
+  // Queue to keep track of incoming tasks.
+  std::queue<std::function<void()>> task_pool_;
 
   // thread pool mutex
-  std::mutex thread_pool_mutex;
+  std::mutex thread_pool_mutex_;
+
+  // Condition variable.
+  std::condition_variable condition_;
+
+  // Indicates that pool needs to be shut down and terminated.
+  bool terminate_;
+
+  // Function that will be invoked by our threads.
+  void Invoke();
 };
 
 }  // End peloton namespace
