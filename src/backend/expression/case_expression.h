@@ -17,11 +17,6 @@ namespace peloton {
 namespace expression {
 
 class CaseExpression : public AbstractExpression {
- private:
-  // Arguments
-  std::vector<AbstractExpression *> *clauses;
-  AbstractExpression *defresult;  // default result
-  ValueType casetype;
 
  public:
   CaseExpression(ValueType vt, std::vector<AbstractExpression *> *clauses,
@@ -29,12 +24,15 @@ class CaseExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
         clauses(clauses),
         defresult(defresult),
-        casetype(vt) {}
+        case_type(vt) {}
 
-  virtual ~CaseExpression() {
-    for (auto clause : *clauses) delete clause;
+  ~CaseExpression() {
+    if(clauses != nullptr){
+      for (auto clause : *clauses)
+        delete clause;
+    }
+
     delete clauses;
-    delete defresult;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -53,6 +51,15 @@ class CaseExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "CaseExpression";
   }
+
+ private:
+  // Arguments
+  std::vector<AbstractExpression *> *clauses;
+
+  // default result
+  AbstractExpression *defresult;
+
+  ValueType case_type;
 };
 
 }  // End expression namespace

@@ -385,7 +385,6 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(const Expr *es) {
   // FIXME It will generate incorrect results.
   if (!retval) {
     LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
-    assert(list_length(fn_es->args) > 0);
 
     Expr *first_child = (Expr *)lfirst(list_head(fn_expr->args));
     return TransformExpr(first_child);
