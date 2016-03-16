@@ -60,6 +60,7 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformRelabelType(
   		const Expr *es); // added by Michael for IN: where TITLE in (). Here TITLE is varchar(20)
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
+  static expression::AbstractExpression *TransformCase(const ExprState *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
 
   static expression::AbstractExpression *TransformConst(const Expr *es);

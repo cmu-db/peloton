@@ -819,6 +819,40 @@ ExprState *CopyExprState(ExprState *expr_state) {
       }
     } break;
 
+    case T_CaseExprState: {
+      expr_state_copy = (ExprState *)makeNode(CaseExprState);
+      CaseExprState *case_expr_state_copy = (CaseExprState *)expr_state_copy;
+      CaseExprState *case_expr_state = (CaseExprState *)expr_state;
+      *case_expr_state_copy = *case_expr_state;
+
+      ExprState *expr_state = case_expr_state->arg;
+      if (expr_state != nullptr) {
+        auto child_expr_state = CopyExprState(expr_state);
+        case_expr_state_copy->arg = child_expr_state;
+      } else {
+        case_expr_state_copy->arg = nullptr;
+      }
+
+      List *items = case_expr_state->args;
+      ListCell *item;
+
+      case_expr_state_copy->args = NIL;
+      foreach (item, items) {
+        ExprState *expr_state = (ExprState *)lfirst(item);
+        auto child_expr_state = CopyExprState(expr_state);
+        case_expr_state_copy->args =
+            lappend(case_expr_state_copy->args, child_expr_state);
+      }
+    } break;
+
+    case T_CaseWhenState: {
+      expr_state_copy = (ExprState *)makeNode(CaseWhenState);
+      CaseWhenState *case_when_state_copy =
+          (CaseWhenState *)expr_state_copy;
+      CaseWhenState *case_when_state = (CaseWhenState *)expr_state;
+      *case_when_state_copy = *case_when_state;
+    } break;
+
     case T_GenericExprState: {
       expr_state_copy = (ExprState *)makeNode(GenericExprState);
       GenericExprState *generic_expr_state_copy =
