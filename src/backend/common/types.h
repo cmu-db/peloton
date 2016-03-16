@@ -228,6 +228,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_OPERATOR_NOT = 8,      // logical not operator
   EXPRESSION_TYPE_OPERATOR_IS_NULL = 9,  // is null test.
   EXPRESSION_TYPE_OPERATOR_EXISTS = 18,  // exists test.
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 50,
 
   // -----------------------------
   // Comparison Operators
@@ -296,6 +297,17 @@ enum ExpressionType {
   // -----------------------------
   EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
   EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
+  EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
+
+  // -----------------------------
+  // Internals added for NULLIF
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_NULLIF = 304,
+
+  // -----------------------------
+  // Internals added for COALESCE
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_COALESCE = 305,
 
   // -----------------------------
   // Subquery IN/EXISTS
