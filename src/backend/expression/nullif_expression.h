@@ -16,38 +16,47 @@
 namespace peloton {
 namespace expression {
 
+// Returns a null value if the two specified expressions are equal.
+// Otherwise, returns the first expression result.
 class NullIfExpression : public AbstractExpression {
- private:
-  // Arguments
-  std::vector<AbstractExpression *> *values;
-  ValueType valuetype;
 
  public:
-  NullIfExpression(ValueType vt, std::vector<AbstractExpression *> *values)
+  NullIfExpression(ValueType vt, const std::vector<AbstractExpression *>& expressions)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
-        values(values),
-        valuetype(vt) {}
+        expressions(expressions),
+        value_type(vt) {}
 
   virtual ~NullIfExpression() {
-    for (auto value : *values) delete value;
-    delete values;
+    for (auto value : expressions)
+      delete value;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    Value v[2];
+    assert(expressions.size() == 2);
 
-    for (std::vector<AbstractExpression *>::size_type i = 0; i < values->size();
-         i++)
-      v[i] = values->at(i)->Evaluate(tuple1, tuple2, context);
+    auto left_result = expressions[0]->Evaluate(tuple1, tuple2, context);
+    auto right_result = expressions[1]->Evaluate(tuple1, tuple2, context);
 
-    return v[0] == v[1] ? Value::GetNullValue(valuetype)
-                        : v[1];  // the order is reversed somewhere
+    if(left_result == right_result) {
+      return Value::GetNullValue(value_type);
+    }
+    else {
+      // FIXME: Order of expressions got reversed somewhere
+      return right_result;
+    }
+
   }
 
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "NullIfExpression";
   }
+
+ private:
+  // Specified expressions
+  std::vector<AbstractExpression *> expressions;
+
+  ValueType value_type;
 };
 
 }  // End expression namespace

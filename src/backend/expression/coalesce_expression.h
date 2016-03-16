@@ -16,36 +16,42 @@
 namespace peloton {
 namespace expression {
 
+// Evaluates the arguments in order and returns the current value of the first
+// expression that initially does not evaluate to NULL.
 class CoalesceExpression : public AbstractExpression {
- private:
-  // Arguments
-  std::vector<AbstractExpression *> *values;
-  ValueType valuetype;
 
  public:
-  CoalesceExpression(ValueType vt, std::vector<AbstractExpression *> *values)
+  CoalesceExpression(ValueType vt, const std::vector<AbstractExpression *>& expressions)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
-        values(values),
-        valuetype(vt) {}
+        expressions(expressions),
+        value_type(vt) {}
 
   virtual ~CoalesceExpression() {
-    for (auto value : *values) delete value;
-    delete values;
+    for (auto value : expressions)
+      delete value;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    for (auto value : *values) {
-      auto v = value->Evaluate(tuple1, tuple2, context);
-      if (v.IsNull()) continue;
-      return v;
+    for (auto value : expressions) {
+      auto result = value->Evaluate(tuple1, tuple2, context);
+      if (result.IsNull()) continue;
+      return result;
     }
-    return Value::GetNullValue(valuetype);
+
+    return Value::GetNullValue(value_type);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "CoalesceExpression";
   }
+
+ private:
+  // Expression arguments
+  std::vector<AbstractExpression *> expressions;
+
+  ValueType value_type;
+
 };
 
 }  // End expression namespace

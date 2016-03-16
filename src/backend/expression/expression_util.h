@@ -130,13 +130,13 @@ class ExpressionUtil {
       const std::vector<AbstractExpression *> *args);
 
   static AbstractExpression *CaseExprFactory(
-      ValueType vt, std::vector<AbstractExpression *> *clauses,
-      AbstractExpression *defresult);
+      ValueType vt, const std::vector<AbstractExpression *>& clauses,
+      AbstractExpression *default_result);
   static AbstractExpression *CoalesceFactory(
-      ValueType vt, std::vector<AbstractExpression *> *values);
+      ValueType vt, const std::vector<AbstractExpression *>& values);
 
   static AbstractExpression *NullIfFactory(
-      ValueType vt, std::vector<AbstractExpression *> *values);
+      ValueType vt, const std::vector<AbstractExpression *>& values);
 
   static AbstractExpression *CaseWhenFactory(ValueType vt,
                                              AbstractExpression *lc,

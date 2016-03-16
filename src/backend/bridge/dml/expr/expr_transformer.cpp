@@ -414,7 +414,7 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
 
   expression::AbstractExpression *condition = NULL, *result = NULL;
 
-  auto *clauses = new std::vector<expression::AbstractExpression *>();
+  std::vector<expression::AbstractExpression *> clauses;
   foreach (arg, list) {
     CaseWhen *clause =
         (CaseWhen *)reinterpret_cast<const CaseWhen *>(lfirst(arg));
@@ -441,7 +441,7 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
           ExprTransformer::TransformExpr(_testExpr), t);
     }
     result = ExprTransformer::TransformExpr((clause->result));
-    clauses->push_back(
+    clauses.push_back(
         expression::ExpressionUtil::CaseWhenFactory(vt, condition, result));
   }
   expression::AbstractExpression *defresult = ExprTransformer::TransformExpr(
@@ -754,14 +754,14 @@ expression::AbstractExpression *ExprTransformer::TransformNullIf(
   const List *list = expr->args;
   ListCell *arg;
 
-  auto *values = new std::vector<expression::AbstractExpression *>();
+  std::vector<expression::AbstractExpression *> expressions;
   foreach (arg, list) {
     Expr *expr = reinterpret_cast<Expr *> lfirst(arg);
-    auto t = TransformExpr(expr);
-    values->push_back(t);
+    auto expression = TransformExpr(expr);
+    expressions.push_back(expression);
   }
 
-  return expression::ExpressionUtil::NullIfFactory(vt, values);
+  return expression::ExpressionUtil::NullIfFactory(vt, expressions);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformCoalesce(
@@ -772,14 +772,14 @@ expression::AbstractExpression *ExprTransformer::TransformCoalesce(
   const List *list = expr->args;
   ListCell *arg;
 
-  auto *values = new std::vector<expression::AbstractExpression *>();
+  std::vector<expression::AbstractExpression *> expressions;
   foreach (arg, list) {
     Expr *expr = reinterpret_cast<Expr *> lfirst(arg);
-    auto t = TransformExpr(expr);
-    values->push_back(t);
+    auto expression = TransformExpr(expr);
+    expressions.push_back(expression);
   }
 
-  return expression::ExpressionUtil::CoalesceFactory(vt, values);
+  return expression::ExpressionUtil::CoalesceFactory(vt, expressions);
 }
 
 // overlap here, could be optimized.

@@ -903,19 +903,19 @@ void raiseFunctionFactoryError(const std::string &nameString, int functionId,
 }
 
 AbstractExpression *ExpressionUtil::CaseExprFactory(
-    ValueType vt, std::vector<AbstractExpression *> *clauses,
-    AbstractExpression *defresult) {
-  return new expression::CaseExpression(vt, clauses, defresult);
+    ValueType vt, const std::vector<AbstractExpression *>& clauses,
+    AbstractExpression *default_result) {
+  return new expression::CaseExpression(vt, clauses, default_result);
 }
 
 AbstractExpression *ExpressionUtil::CoalesceFactory(
-    ValueType vt, std::vector<AbstractExpression *> *values) {
-  return new expression::CoalesceExpression(vt, values);
+    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+  return new expression::CoalesceExpression(vt, expressions);
 }
 
 AbstractExpression *ExpressionUtil::NullIfFactory(
-    ValueType vt, std::vector<AbstractExpression *> *values) {
-  return new expression::NullIfExpression(vt, values);
+    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+  return new expression::NullIfExpression(vt, expressions);
 }
 
 // Given an expression type and a valuetype, find the best
