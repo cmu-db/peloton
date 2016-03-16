@@ -34,8 +34,8 @@ class ConnectionManager {
     bool DeleteConn(std::string& addr);
 
  private:
-    // The number of the threads should be inited
-    ConnectionManager(int threads);
+    // the format of every item in addlist is ip:port
+    ConnectionManager(std::list<std::string&>& addrlist);
     ~ConnectionManager();
 
  private:
