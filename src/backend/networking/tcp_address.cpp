@@ -24,9 +24,6 @@
 namespace peloton {
 namespace networking {
 
-using std::string;
-using std::vector;
-
 // disable -Wconversion to work around a bug in htons in glibc
 // TODO: Remove this eventually
 #if defined(__OPTIMIZE__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 3
@@ -35,12 +32,14 @@ using std::vector;
 
 NetworkAddress::NetworkAddress(const std::string& address) {
     bool re = Parse(address);
-    assert(re == true);
+    if(re == false) {
+      throw Exception("Could not parse address \n");
+    }
 }
 
 // Returns true if the address is parsed successfully.
 bool NetworkAddress::Parse(const std::string& address) {
-    vector<string> parts = splitExcluding(address, ' ');
+    std::vector<std::string> parts = splitExcluding(address, ' ');
     if (parts.size() == 1) {
         // Try splitting with a colon
         parts = splitExcluding(address, ':');
@@ -52,7 +51,9 @@ bool NetworkAddress::Parse(const std::string& address) {
 
     addrinfo* node = NULL;
     int error = getaddrinfo(parts[0].c_str(), NULL, NULL, &node);
-    assert(error == 0);
+    if(error != 0) {
+      return false;
+    }
 
     bool found = false;
     addrinfo* ptr = node;
@@ -90,29 +91,31 @@ static std::string callGetNameInfo(const NetworkAddress& address, char* port_str
     sockaddr_in addr;
     address.FillAddr(&addr);
 
-    string retval;
+    std::string retval;
     // maximum length for IPv4 address is 16 (12 digits, 3 '.', 1 NUL)
     // IPv6 is 16 bytes = 32 hex bytes + 7 ':' + NULL = 40
     retval.resize(40);
     int error = getnameinfo(reinterpret_cast<struct sockaddr*>(&addr),
             sizeof(addr), stringArray(&retval), static_cast<socklen_t>(retval.size()),
             port_string, MAX_PORT_STRING, NI_NUMERICHOST | NI_NUMERICSERV);
-    assert(error == 0);
+    if(error != 0) {
+      throw Exception("Could not get name info \n");
+    }
     retval.resize(strlen(retval.data()));
 
     return retval;
 }
 
-string NetworkAddress::ToString() const {
+std::string NetworkAddress::ToString() const {
     char port_string[MAX_PORT_STRING];
-    string retval = callGetNameInfo(*this, port_string);
+    std::string retval = callGetNameInfo(*this, port_string);
     retval.push_back(':');
     retval.append(port_string);
 
     return retval;
 }
 
-string NetworkAddress::IpToString() const {
+std::string NetworkAddress::IpToString() const {
     char port_string[MAX_PORT_STRING];
     return callGetNameInfo(*this, port_string);
 }

@@ -10,25 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_type.h"
-#include "rpc_client.h"
-#include "rpc_channel.h"
-#include "rpc_controller.h"
-#include "tcp_connection.h"
+#include "backend/networking/rpc_type.h"
+#include "backend/networking/rpc_client.h"
+#include "backend/networking/rpc_channel.h"
+#include "backend/networking/rpc_controller.h"
+#include "backend/networking/tcp_connection.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
 
 #include <google/protobuf/descriptor.h>
+
 #include <iostream>
 #include <functional>
 
 namespace peloton {
 namespace networking {
-
-//RpcChannel::RpcChannel(const char* url) {
-//          psocket_ = std::make_shared<NanoMsg>(AF_SP, NN_REQ);
-//          socket_id_ = psocket_->Connect(url);
-//}
 
 RpcChannel::RpcChannel(const std::string& url) :
         addr_(url) {
@@ -53,11 +49,9 @@ RpcChannel::~RpcChannel() {
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                             google::protobuf::RpcController* controller,
                             const google::protobuf::Message* request,
-                            google::protobuf::Message* response,
+                            __attribute__((unused)) google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
-  // TODO
-  assert(response == NULL);
-
+  assert(response != nullptr);
   // run call back function
   if (done != NULL) {
      done->Run();
@@ -68,9 +62,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   std::hash<std::string> string_hash_fn;
 
   // Get the hashcode for the rpc function name
-  // TODO:
-  //uint64_t opcode = CityHash64(methodname.c_str(), methodname.length());
-
   // we use unit64_t because we should specify the exact length
   uint64_t opcode = string_hash_fn(methodname);
 
