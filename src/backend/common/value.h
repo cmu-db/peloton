@@ -3168,10 +3168,7 @@ inline bool Value::IsNull() const {
 inline bool Value::IsNan() const {
   if (GetValueType() == VALUE_TYPE_DOUBLE) {
     return std::isnan(GetDouble());
-  } else if ((GetValueType() == VALUE_TYPE_DECIMAL)) {
-    return std::isnan(GetDecimal());
   }
-
   return false;
 }
 
