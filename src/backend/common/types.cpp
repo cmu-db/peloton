@@ -334,6 +334,13 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_OPERATOR_MINUS: {
       return "OPERATOR_MINUS";
     }
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
+      return "OPERATOR_UNARY_MINUS";
+    }
+
+    case EXPRESSION_TYPE_OPERATOR_CASE_EXPR: {
+      return "OPERATOR_CASE_EXPR";
+    }
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
       return "OPERATOR_MULTIPLY";
     }
@@ -444,6 +451,12 @@ std::string ExpressionTypeToString(ExpressionType type) {
     }
     case EXPRESSION_TYPE_HASH_RANGE: {
       return "HASH_RANGE";
+    }
+    case EXPRESSION_TYPE_OPERATOR_NULLIF: {
+      return "NULLIF";
+    }
+    case EXPRESSION_TYPE_OPERATOR_COALESCE: {
+      return "COALESCE";
     }
     case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
       return "OPERATOR_CASE_WHEN";
