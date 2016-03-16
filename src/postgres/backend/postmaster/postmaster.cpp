@@ -337,8 +337,7 @@ static volatile sig_atomic_t start_autovac_launcher = false;
 
 /* the launcher needs to be signalled to communicate some condition */
 static volatile bool avlauncher_needs_signal = false;
-std::thread coordinator(Coordinator);
-coordinator.detach();
+
 /* set when there's a worker that needs to be started up */
 static volatile bool StartWorkerNeeded = true;
 static volatile bool HaveCrashedWorker = false;
