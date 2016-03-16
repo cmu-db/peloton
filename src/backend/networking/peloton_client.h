@@ -83,8 +83,7 @@ class PelotonClient {
     stub_->TransactionDebug(controller_, request, response, NULL);
   }
 
-  void SendData(const SendDataRequest* request,
-                SendDataResponse* response) {
+  void SendData(const SendDataRequest* request, SendDataResponse* response) {
     stub_->SendData(controller_, request, response, NULL);
   }
 
@@ -98,13 +97,11 @@ class PelotonClient {
     stub_->ShutdownPrepare(controller_, request, response, NULL);
   }
 
-  void Shutdown(const ShutdownRequest* request,
-                ShutdownResponse* response) {
+  void Shutdown(const ShutdownRequest* request, ShutdownResponse* response) {
     stub_->Shutdown(controller_, request, response, NULL);
   }
 
-  void Heartbeat(const HeartbeatRequest* request,
-                 HeartbeatResponse* response) {
+  void Heartbeat(const HeartbeatRequest* request, HeartbeatResponse* response) {
     google::protobuf::Closure* callback = google::protobuf::NewCallback(&Call);
     stub_->Heartbeat(controller_, request, response, callback);
   }
@@ -114,19 +111,15 @@ class PelotonClient {
     stub_->UnevictData(controller_, request, response, NULL);
   }
 
-  void TimeSync(const TimeSyncRequest* request,
-                TimeSyncResponse* response) {
+  void TimeSync(const TimeSyncRequest* request, TimeSyncResponse* response) {
     stub_->TimeSync(controller_, request, response, NULL);
   }
 
  private:
+  static void Call() { std::cout << "This is backcall:" << std::endl; }
 
-  static void Call() {
-    std::cout << "This is backcall:" << std::endl;
-  }
-
-  RpcChannel*       channel_;
-  RpcController*    controller_;
+  RpcChannel* channel_;
+  RpcController* controller_;
   AbstractPelotonService::Stub* stub_;
 };
 

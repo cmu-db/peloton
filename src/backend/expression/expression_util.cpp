@@ -23,6 +23,7 @@
 #include "backend/expression/hash_range_expression.h"
 #include "backend/expression/operator_expression.h"
 #include "backend/expression/comparison_expression.h"
+#include "backend/expression/case_expression.h"
 #include "backend/expression/conjunction_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
@@ -33,8 +34,10 @@
 #include "backend/expression/function_expression.h"
 #include "backend/expression/subquery_expression.h"
 #include "backend/expression/string_expression.h"
+#include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
-
+#include "backend/expression/coalesce_expression.h"
+#include "backend/expression/nullif_expression.h"
 #include <json_spirit.h>
 
 namespace peloton {
@@ -473,6 +476,10 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       ret = new OperatorExpression<OpPlus>(et, first, second);
       break;
 
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+      ret = new OperatorUnaryMinusExpression(first);
+      break;
+
     case (EXPRESSION_TYPE_OPERATOR_MINUS):
       ret = new OperatorExpression<OpMinus>(et, first, second);
       break;
@@ -542,6 +549,9 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
     case (EXPRESSION_TYPE_OPERATOR_MOD):
       ret = new OperatorExpression<OpMod>(et, first, second);
       break;
+    case (EXPRESSION_TYPE_EXTRACT):
+      ret = new ExtractExpression(first, second);
+      break;
     case (EXPRESSION_TYPE_OPERATOR_CONCAT):
       throw ExpressionException("Concat operator not yet supported.");
 
@@ -567,12 +577,7 @@ AbstractExpression *ExpressionUtil::CastFactory(PostgresValueType type,
 AbstractExpression *ExpressionUtil::CaseWhenFactory(ValueType vt,
                                                     AbstractExpression *lc,
                                                     AbstractExpression *rc) {
-  OperatorAlternativeExpression *alternative =
-      dynamic_cast<OperatorAlternativeExpression *>(rc);
-  if (!rc) {
-    throw Exception("operator case when has incorrect expression");
-  }
-  return new OperatorCaseWhenExpression(vt, lc, alternative);
+  return new OperatorCaseWhenExpression(vt, lc, rc);
 }
 
 // provide an interface for creating constant value expressions that
@@ -897,6 +902,22 @@ void raiseFunctionFactoryError(const std::string &nameString, int functionId,
   throw Exception(fn_message);
 }
 
+AbstractExpression *ExpressionUtil::CaseExprFactory(
+    ValueType vt, const std::vector<AbstractExpression *>& clauses,
+    AbstractExpression *default_result) {
+  return new expression::CaseExpression(vt, clauses, default_result);
+}
+
+AbstractExpression *ExpressionUtil::CoalesceFactory(
+    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+  return new expression::CoalesceExpression(vt, expressions);
+}
+
+AbstractExpression *ExpressionUtil::NullIfFactory(
+    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+  return new expression::NullIfExpression(vt, expressions);
+}
+
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
@@ -1002,9 +1023,10 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     case (EXPRESSION_TYPE_OPERATOR_CASE_WHEN):
       ret = CaseWhenFactory(vt, lc, rc);
       break;
-    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
-      ret = new OperatorAlternativeExpression(lc, rc);
-      break;
+    // Anyway, this function is not implemented. comment out.
+    //    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):
+    //      ret = new OperatorAlternativeExpression(lc, rc);
+    //      break;
 
     // Subquery
     case (EXPRESSION_TYPE_ROW_SUBQUERY):

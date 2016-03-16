@@ -35,15 +35,15 @@ bool IsNumeric(ValueType type) {
     case (VALUE_TYPE_BIGINT):
     case (VALUE_TYPE_DECIMAL):
     case (VALUE_TYPE_DOUBLE):
-    return true;
-    break;
+      return true;
+      break;
     case (VALUE_TYPE_VARCHAR):
     case (VALUE_TYPE_VARBINARY):
     case (VALUE_TYPE_TIMESTAMP):
     case (VALUE_TYPE_NULL):
     case (VALUE_TYPE_INVALID):
     case (VALUE_TYPE_ARRAY):
-    return false;
+      return false;
     default:
       throw Exception("IsNumeric");
   }
@@ -57,8 +57,8 @@ bool IsIntegralType(ValueType type) {
     case (VALUE_TYPE_SMALLINT):
     case (VALUE_TYPE_INTEGER):
     case (VALUE_TYPE_BIGINT):
-    return true;
-    break;
+      return true;
+      break;
     case (VALUE_TYPE_DOUBLE):
     case (VALUE_TYPE_VARCHAR):
     case (VALUE_TYPE_VARBINARY):
@@ -66,7 +66,7 @@ bool IsIntegralType(ValueType type) {
     case (VALUE_TYPE_NULL):
     case (VALUE_TYPE_DECIMAL):
     case (VALUE_TYPE_ARRAY):
-    return false;
+      return false;
     default:
       throw Exception("IsIntegralType");
   }
@@ -121,27 +121,27 @@ Value GetRandomValue(ValueType type) {
 std::size_t GetTypeSize(ValueType type) {
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-          return 1;
+      return 1;
     case (VALUE_TYPE_SMALLINT):
-          return 2;
+      return 2;
     case (VALUE_TYPE_INTEGER):
-          return 4;
+      return 4;
     case (VALUE_TYPE_BIGINT):
-          return 8;
+      return 8;
     case (VALUE_TYPE_DOUBLE):
-          return 8;
+      return 8;
     case (VALUE_TYPE_VARCHAR):
-          return 0;
+      return 0;
     case (VALUE_TYPE_VARBINARY):
-          return 0;
+      return 0;
     case (VALUE_TYPE_TIMESTAMP):
-          return 8;
+      return 8;
     case (VALUE_TYPE_DECIMAL):
-          return 0;
+      return 0;
     case (VALUE_TYPE_INVALID):
-          return 0;
+      return 0;
     case (VALUE_TYPE_NULL):
-          return 0;
+      return 0;
     default: { return 0; }
   }
 }
@@ -155,11 +155,11 @@ std::string BackendTypeToString(BackendType type) {
 
   switch (type) {
     case (BACKEND_TYPE_MM):
-          return "MM";
+      return "MM";
     case (BACKEND_TYPE_FILE):
-          return "FILE";
+      return "FILE";
     case (BACKEND_TYPE_INVALID):
-          return "INVALID";
+      return "INVALID";
     default: {
       char buffer[32];
       ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
@@ -278,7 +278,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   bool status = false;
 
-  switch(logging_type) {
+  switch (logging_type) {
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_DRAM_SSD:
@@ -296,7 +296,7 @@ bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
 bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
   bool status = true;
 
-  switch(logging_type) {
+  switch (logging_type) {
     case LOGGING_TYPE_NVM_NVM:
     case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_NVM_HDD:
@@ -333,6 +333,13 @@ std::string ExpressionTypeToString(ExpressionType type) {
     }
     case EXPRESSION_TYPE_OPERATOR_MINUS: {
       return "OPERATOR_MINUS";
+    }
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
+      return "OPERATOR_UNARY_MINUS";
+    }
+
+    case EXPRESSION_TYPE_OPERATOR_CASE_EXPR: {
+      return "OPERATOR_CASE_EXPR";
     }
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
       return "OPERATOR_MULTIPLY";
@@ -445,6 +452,12 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_HASH_RANGE: {
       return "HASH_RANGE";
     }
+    case EXPRESSION_TYPE_OPERATOR_NULLIF: {
+      return "NULLIF";
+    }
+    case EXPRESSION_TYPE_OPERATOR_COALESCE: {
+      return "COALESCE";
+    }
     case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
       return "OPERATOR_CASE_WHEN";
     }
@@ -457,8 +470,6 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_SELECT_SUBQUERY: {
       return "SELECT_SUBQUERY";
     }
-
-
 
     // TODO: Added by us
     case EXPRESSION_TYPE_PLACEHOLDER: {
@@ -476,53 +487,56 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_STAR: {
       return "STAR";
     }
-    case EXPRESSION_TYPE_SUBSTR :{
+    case EXPRESSION_TYPE_SUBSTR: {
       return "SUBSTRING";
     }
-    case EXPRESSION_TYPE_ASCII :{
+    case EXPRESSION_TYPE_ASCII: {
       return "ASCII";
     }
-    case EXPRESSION_TYPE_OCTET_LEN:{
+    case EXPRESSION_TYPE_OCTET_LEN: {
       return "OCTET_LENGTH";
     }
-    case EXPRESSION_TYPE_CHAR:{
+    case EXPRESSION_TYPE_CHAR: {
       return "CHAR";
     }
-    case EXPRESSION_TYPE_CHAR_LEN:{
+    case EXPRESSION_TYPE_CHAR_LEN: {
       return "CHAR_LEN";
     }
-    case EXPRESSION_TYPE_SPACE:{
+    case EXPRESSION_TYPE_SPACE: {
       return "SPACE";
     }
-    case EXPRESSION_TYPE_REPEAT:{
+    case EXPRESSION_TYPE_REPEAT: {
       return "REPEAT";
     }
-    case EXPRESSION_TYPE_POSITION:{
+    case EXPRESSION_TYPE_POSITION: {
       return "POSITION";
     }
-    case EXPRESSION_TYPE_LEFT:{
+    case EXPRESSION_TYPE_LEFT: {
       return "LEFT";
     }
-    case EXPRESSION_TYPE_RIGHT:{
+    case EXPRESSION_TYPE_RIGHT: {
       return "RIGHT";
     }
-    case EXPRESSION_TYPE_CONCAT:{
+    case EXPRESSION_TYPE_CONCAT: {
       return "CONCAT";
     }
-    case EXPRESSION_TYPE_LTRIM:{
+    case EXPRESSION_TYPE_LTRIM: {
       return "L_TRIM";
     }
-    case EXPRESSION_TYPE_RTRIM:{
+    case EXPRESSION_TYPE_RTRIM: {
       return "R_TRIM";
     }
-    case EXPRESSION_TYPE_BTRIM:{
+    case EXPRESSION_TYPE_BTRIM: {
       return "B_TRIM";
     }
-    case EXPRESSION_TYPE_REPLACE:{
+    case EXPRESSION_TYPE_REPLACE: {
       return "REPLACE";
     }
-    case EXPRESSION_TYPE_OVERLAY:{
+    case EXPRESSION_TYPE_OVERLAY: {
       return "OVERLAY";
+    }
+    case EXPRESSION_TYPE_EXTRACT: {
+      return "EXTRACT";
     }
   }
   return "INVALID";
@@ -646,7 +660,7 @@ IndexType StringToIndexType(std::string str) {
     return INDEX_TYPE_INVALID;
   } else if (str == "BTREE") {
     return INDEX_TYPE_BTREE;
-  }  else if (str == "BWTREE") {
+  } else if (str == "BWTREE") {
     return INDEX_TYPE_BWTREE;
   }
   return INDEX_TYPE_INVALID;
@@ -1030,7 +1044,7 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_BOOLEAN;
       break;
 
-      /* INTEGER */
+    /* INTEGER */
     case POSTGRES_VALUE_TYPE_SMALLINT:
       valueType = VALUE_TYPE_SMALLINT;
       break;
@@ -1041,12 +1055,12 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_BIGINT;
       break;
 
-      /* DOUBLE */
+    /* DOUBLE */
     case POSTGRES_VALUE_TYPE_DOUBLE:
       valueType = VALUE_TYPE_DOUBLE;
       break;
 
-      /* CHAR */
+    /* CHAR */
     case POSTGRES_VALUE_TYPE_BPCHAR:
     case POSTGRES_VALUE_TYPE_BPCHAR2:
     case POSTGRES_VALUE_TYPE_VARCHAR:
@@ -1055,18 +1069,18 @@ ValueType PostgresValueTypeToPelotonValueType(
       valueType = VALUE_TYPE_VARCHAR;
       break;
 
-      /* TIMESTAMPS */
+    /* TIMESTAMPS */
     case POSTGRES_VALUE_TYPE_TIMESTAMPS:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
       valueType = VALUE_TYPE_TIMESTAMP;
       break;
 
-      /* DECIMAL */
+    /* DECIMAL */
     case POSTGRES_VALUE_TYPE_DECIMAL:
       valueType = VALUE_TYPE_DECIMAL;
       break;
 
-      /* INVALID VALUE TYPE */
+    /* INVALID VALUE TYPE */
     default:
       LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
       valueType = VALUE_TYPE_INVALID;

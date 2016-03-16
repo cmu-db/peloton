@@ -100,7 +100,7 @@ class Value;
 #define VALUE_COMPARE_GREATERTHAN 1
 #define VALUE_COMPARE_INVALID -2
 #define VALUE_COMPARE_NO_EQUAL \
-  -3  // assigned when comparing array list and no element matching. by michael
+  -3  // assigned when comparing array list and no element matching.
 
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
@@ -162,15 +162,15 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
   POSTGRES_VALUE_TYPE_TEXT_ARRAY =
-      1009,  // added by michael: TEXTARRAYOID in postgres code
+      1009,  // TEXTARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_INT2_ARRAY =
-      1005,  // added by michael: INT2ARRAYOID in postgres code
+      1005,  // INT2ARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_INT4_ARRAY =
-      1007,  // added by michael: INT4ARRAYOID in postgres code
+      1007,  // INT4ARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_OID_ARRAY =
-      1028,  // added by michael: OIDARRAYOID in postgres code
+      1028,  // OIDARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_FLOADT4_ARRAY =
-      1021,  // added by michael: FLOADT4ARRAYOID in postgres code
+      1021,  // FLOADT4ARRAYOID in postgres code
 
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
@@ -228,6 +228,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_OPERATOR_NOT = 8,      // logical not operator
   EXPRESSION_TYPE_OPERATOR_IS_NULL = 9,  // is null test.
   EXPRESSION_TYPE_OPERATOR_EXISTS = 18,  // exists test.
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 50,
 
   // -----------------------------
   // Comparison Operators
@@ -245,8 +246,9 @@ enum ExpressionType {
       15,  // greater than equal operator between left and right
   EXPRESSION_TYPE_COMPARE_LIKE =
       16,  // LIKE operator (left LIKE right). both children must be string.
-  EXPRESSION_TYPE_COMPARE_NOTLIKE =
-      17, // NOT LIKE operator (left NOT LIKE right). both children must be string.
+  EXPRESSION_TYPE_COMPARE_NOTLIKE = 17,  // NOT LIKE operator (left NOT LIKE
+                                         // right). both children must be
+                                         // string.
   EXPRESSION_TYPE_COMPARE_IN =
       19,  // IN operator [left IN (right1, right2, ...)]
 
@@ -295,6 +297,17 @@ enum ExpressionType {
   // -----------------------------
   EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
   EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
+  EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
+
+  // -----------------------------
+  // Internals added for NULLIF
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_NULLIF = 304,
+
+  // -----------------------------
+  // Internals added for COALESCE
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_COALESCE = 305,
 
   // -----------------------------
   // Subquery IN/EXISTS
@@ -321,6 +334,11 @@ enum ExpressionType {
   EXPRESSION_TYPE_BTRIM = 513,
   EXPRESSION_TYPE_REPLACE = 514,
   EXPRESSION_TYPE_OVERLAY = 515,
+
+  // -----------------------------
+  // Date operators
+  // -----------------------------
+  EXPRESSION_TYPE_EXTRACT = 600,
 
   //===--------------------------------------------------------------------===//
   // Parser
@@ -458,8 +476,7 @@ enum StatementType {
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
 
-enum ScanDirectionType
-{
+enum ScanDirectionType {
   SCAN_DIRECTION_TYPE_INVALID = 0,  // invalid scan direction
 
   SCAN_DIRECTION_TYPE_FORWARD = 1,  // forward

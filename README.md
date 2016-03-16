@@ -38,5 +38,5 @@ Before reporting a problem, check out this how to [file an issue](https://github
 
 ## License
 
-Copyright (c) 2014-15 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)  
-Licensed under the [Apache License](LICENSE).
+Licensed under the [Apache License](LICENSE).  
+Copyright (c) 2015-16 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)  
