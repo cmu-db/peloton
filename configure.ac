@@ -191,8 +191,10 @@ AC_CONFIG_LINKS([src/postgres/backend/utils/sort/qsort_tuple.cpp:src/postgres/ba
 AC_CONFIG_LINKS([tools/pg_psql/sql_help.cpp:tools/pg_psql/sql_help.cpp])
 AC_CONFIG_LINKS([tools/pg_psql/psqlscan.cpp:tools/pg_psql/psqlscan.cpp])
 
-AC_OUTPUT
+CXXFLAGS="$CXXFLAGS -DPELOTON_PREFIX_DIR=\\\"${prefix}\\\""
 
+AC_OUTPUT
+                             
 echo \
     "---------------------------------------------------------------------
 
