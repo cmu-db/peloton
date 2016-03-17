@@ -70,10 +70,14 @@ public:
     RpcServer* GetRpcServer();
 //    RpcChannel* GetRpcClient();
 
-    // set the connection status
+    /*
+     * set the connection status
+     */
     void SetStatus(ConnStatus status);
 
-    // get the connection status
+    /*
+     * get the connection status
+     */
     ConnStatus GetStatus();
 
     /*
@@ -98,7 +102,9 @@ public:
      */
     const char* GetMethodName();
 
-    // Get the readable length of the read buf
+    /*
+     * Get the readable length of the read buf
+     */
     int GetReadBufferLen();
 
     /*
@@ -117,7 +123,9 @@ public:
      */
     int CopyReadBuffer(char *buffer, int len);
 
-    // Get the lengh a write buf
+    /*
+     * Get the lengh a write buf
+     */
     int GetWriteBufferLen();
 
     /*
@@ -126,7 +134,9 @@ public:
      */
     bool AddToWriteBuffer(char *buffer, int len);
 
-    // Forward data in read buf into write buf
+    /*
+     * Forward data in read buf into write buf
+     */
     void MoveBufferData();
 
 private:

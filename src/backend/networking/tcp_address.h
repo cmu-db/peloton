@@ -24,6 +24,8 @@ namespace networking {
 class NetworkAddress {
 public:
     NetworkAddress() : ip_address_(0), port_(0) {}
+    NetworkAddress(sockaddr_in& addrin);
+    NetworkAddress(sockaddr& addr);
     NetworkAddress(const std::string& address);
 
     // Returns true if the address is parsed successfully.
