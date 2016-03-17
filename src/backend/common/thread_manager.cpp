@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/thread_manager.h"
+#include <cassert>
 
 #define NUM_THREAD 10
 
