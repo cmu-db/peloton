@@ -16,6 +16,9 @@
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 
+#include <event2/thread.h>
+#include <pthread.h>
+
 #include <functional>
 
 namespace peloton {
@@ -25,6 +28,10 @@ Listener::Listener(int port) :
     port_(port),
     listen_base_(event_base_new()),
     listener_(NULL) {
+
+    // make libevent support multiple threads (pthread)
+    // TODO: put this before event_base_new()?
+    evthread_use_pthreads();
 
     assert(listen_base_ != NULL);
     assert(port_ > 0 && port_ < 65535);
@@ -62,8 +69,9 @@ void Listener::Run(void* arg) {
     /* Listen on the given port. */
     sin.sin_port = htons(port_);
 
+    // TODO: LEV_OPT_THREADSAFE is necessary here?
     listener_ = evconnlistener_new_bind(listen_base_, AcceptConnCb, arg,
-        LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1,
+        LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE|LEV_OPT_THREADSAFE, -1,
         (struct sockaddr*)&sin, sizeof(sin));
 
     if (!listener_) {
@@ -83,19 +91,20 @@ void Listener::Run(void* arg) {
  *        First it new a connection with the passing by socket and ctx
  *        where ctx is passed by Run which is rpc_server pointer
  */
-void Listener::AcceptConnCb(__attribute__((unused)) struct evconnlistener *listener,
+void Listener::AcceptConnCb(struct evconnlistener *listener,
                             evutil_socket_t fd,
                             __attribute__((unused)) struct sockaddr *address,
                             __attribute__((unused)) int socklen,
-                            __attribute__((unused)) void *ctx) {
+                            void *ctx) {
 
     assert(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
     /* We got a new connection! Set up a bufferevent for it. */
+    struct event_base *base = evconnlistener_get_base(listener);
 
     // We should be careful here new connection would lead to memory leak
     // if we don't use shared ptr
-    std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, ctx);
+    std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, base, ctx);
 
     LOG_INFO ("Server: connection received from fd: %d", fd);
 

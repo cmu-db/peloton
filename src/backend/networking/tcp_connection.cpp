@@ -24,8 +24,8 @@ uint64_t server_response_send_bytes = 0;  // bytes
 namespace peloton {
 namespace networking {
 
-Connection::Connection(int fd, void* arg) :
-        socket_(fd), close_(false), status_(INIT) {
+Connection::Connection(int fd, event_base* base, void* arg) :
+        socket_(fd), close_(false), status_(INIT), base_(base) {
 
     if (arg == NULL) {
         rpc_server_ = NULL;
@@ -33,9 +33,14 @@ Connection::Connection(int fd, void* arg) :
         rpc_server_ = (RpcServer*)arg;
     }
 
-    base_ = event_base_new();
-    bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE);
+//    base_ = event_base_new(); // note: we share the base among different connections
 
+    // BEV_OPT_THREADSAFE must be specified
+    bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
+
+    evbuffer_enable_locking();
+
+    /* we can add callback function with output and input evbuffer*/
     //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
     // client passes fd with -1 when new a connection
@@ -409,8 +414,14 @@ RpcServer* Connection::GetRpcServer() {
 
 // Get the readable length of the read buf
 int Connection::GetReadBufferLen() {
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_get_length(input);
+    bufferevent_unlock(bev_);
 }
 
 /*
@@ -420,8 +431,14 @@ int Connection::GetReadBufferLen() {
  * Note: the len data are deleted from read buf after this operation
  */
 int Connection::GetReadData(char *buffer, int len) {
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_remove(input, buffer, len);
+    bufferevent_unlock(bev_);
 }
 
 /*
@@ -431,14 +448,26 @@ int Connection::GetReadData(char *buffer, int len) {
  * the data still exist in the read buf after this operation
  */
 int Connection::CopyReadBuffer(char *buffer, int len) {
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_copyout(input, buffer, len);
+    bufferevent_unlock(bev_);
 }
 
 // Get the lengh a write buf
 int Connection::GetWriteBufferLen() {
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
     struct evbuffer *output = bufferevent_get_output(bev_);
     return evbuffer_get_length(output);
+    bufferevent_unlock(bev_);
 }
 
 // Add data to write buff
@@ -446,9 +475,14 @@ bool Connection::AddToWriteBuffer(char *buffer, int len) {
 
     status_ = SENDING;
 
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
     struct evbuffer *output = bufferevent_get_output(bev_);
-
     int re = evbuffer_add(output, buffer, len);
+    bufferevent_unlock(bev_);
 
     if (re == 0) {
         return true;
@@ -459,11 +493,20 @@ bool Connection::AddToWriteBuffer(char *buffer, int len) {
 
 // put data in read buf into write buf
 void Connection::MoveBufferData() {
+
+    /*
+     * Locking the bufferevent with this function will
+     * lock its associated evbuffersas well
+     */
+    bufferevent_lock(bev_);
+
     struct evbuffer *input = bufferevent_get_input(bev_);
     struct evbuffer *output = bufferevent_get_output(bev_);
 
     /* Copy all the data from the input buffer to the output buffer. */
     evbuffer_add_buffer(output, input);
+
+    bufferevent_unlock(bev_);
 }
 
 } // namespace networking
