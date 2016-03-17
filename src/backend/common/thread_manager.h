@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "backend/common/mutex.h"
+
 #include <pthread.h>
 
 #include <atomic>
@@ -122,14 +124,11 @@ class ThreadPool {
   // Queue to keep track of incoming tasks.
   std::queue<std::function<void()>> task_pool_;
 
-  // thread attributes
-  pthread_attr_t attr_;
-
   // thread pool mutex
-  pthread_mutex_t thread_pool_mutex_;
+  Mutex mutex_;
 
-  // Condition variable.
-  pthread_cond_t condition_;
+  // thread cond_
+  Condition cond_;
 
   // Indicates that pool needs to be shut down and terminated.
   bool terminate_;

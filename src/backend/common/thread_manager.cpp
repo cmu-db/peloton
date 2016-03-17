@@ -129,16 +129,13 @@ ThreadPool &ThreadPool::GetClientThreadPool(void) {
 }
 
 ThreadPool::ThreadPool(int threads) :
-    terminate_(false) {
-
-    pthread_attr_init(&attr_);
-    pthread_mutex_init(&thread_pool_mutex_, NULL);
-    pthread_cond_init(&condition_, NULL);
+    terminate_(false),
+    cond_ (&mutex_) {
 
     // Create number of required threads and add them to the thread pool vector.
     for(int i = 0; i < threads; i++) {
         pthread_t threadx;
-        pthread_create(&threadx, &attr_, &ThreadPool::InvokeEntry, static_cast<void *>(this));
+        pthread_create(&threadx, NULL, &ThreadPool::InvokeEntry, static_cast<void *>(this));
         thread_pool_.emplace_back(threadx);
     }
 }
@@ -146,17 +143,17 @@ ThreadPool::ThreadPool(int threads) :
 ThreadPool::~ThreadPool() {
 
     // Put lock on task mutex.
-    pthread_mutex_lock(&thread_pool_mutex_);
+    mutex_.Lock();
 
     if (!terminate_) {
         // Set termination flag to true.
         terminate_ = true;
     }
 
-    pthread_mutex_unlock(&thread_pool_mutex_);
+    mutex_.UnLock();
 
     // Wake up all threads.
-    pthread_cond_broadcast(&condition_);
+    cond_.Broadcast();
 
     // Join all threads.
     for (pthread_t &thread : thread_pool_) {
@@ -168,16 +165,16 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::AddTask(std::function<void()> f) {
 
     // Put unique lock on task mutex.
-    pthread_mutex_lock(&thread_pool_mutex_);
+    mutex_.Lock();
 
     // Push task into queue.
     task_pool_.push(f);
 
     // unlock
-    pthread_mutex_unlock(&thread_pool_mutex_);
+    mutex_.UnLock();
 
     // Wake up one thread.
-    pthread_cond_signal(&condition_);
+    cond_.Signal();
 
 }
 
@@ -197,10 +194,10 @@ void ThreadPool::Invoke() {
     while(true) {
 
         // Put the lock on task mutex.
-        pthread_mutex_lock(&thread_pool_mutex_);
+        mutex_.Lock()
 
         if (task_pool_.empty() && terminate_ == false) {
-            pthread_cond_wait(&condition_, &thread_pool_mutex_);
+            cond_.Wait();
         }
 
         // If termination signal received and queue is empty then exit else continue clearing the queue.
@@ -217,7 +214,7 @@ void ThreadPool::Invoke() {
         // Remove it from the queue.
         task_pool_.pop();
 
-        pthread_mutex_unlock(&mutex);
+        mutex_.UnLock();
 
         // Execute the task.
         task();
