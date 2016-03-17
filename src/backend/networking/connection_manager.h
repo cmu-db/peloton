@@ -27,6 +27,10 @@ class ConnectionManager {
     static ConnectionManager &GetInstance(void);
 
     Connection* GetConn(std::string& addr);
+    Connection* GetConn(struct sockaddr);
+
+    Connection* FindConn(std::string& addr);
+    Connection* FindConn(struct sockaddr);
 
     bool AddConn(std::string& addr);
     bool AddConn(std::string& addr, Connection* conn);
@@ -41,7 +45,7 @@ class ConnectionManager {
  private:
 
     // all the connections established: addr --> connection instance
-    std::map<std::string, Connection*> conn_pool_;
+    std::map<NetworkAddress, Connection*> conn_pool_;
 
 };
 

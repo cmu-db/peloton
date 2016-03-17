@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <pthread.h>
+
 #include <atomic>
 #include <vector>
 #include <mutex>
@@ -33,12 +35,10 @@ class ThreadManager {
 
  public:
   // global singleton
-  // TODO: For now, rpc client and server use separated thread pool
-  //       global thread pool can lead to starving for client/server
-  //static ThreadManager &GetInstance(void);
+  static ThreadManager &GetInstance(void);
 
-  static ThreadManager &GetServerThreadPool(void);
-  static ThreadManager &GetClientThreadPool(void);
+  //static ThreadManager &GetServerThreadPool(void);
+  //static ThreadManager &GetClientThreadPool(void);
 
   // The main function: add task into the task queue
   void AddTask(std::function<void()> f);
@@ -72,6 +72,68 @@ class ThreadManager {
 
   // Function that will be invoked by our threads.
   void Invoke();
+};
+
+//===--------------------------------------------------------------------===//
+// Thread Pool implemented using pthread. The functionality is similar
+// wtih thread manager. We probably combine this with thread manager
+// in the future
+//===--------------------------------------------------------------------===//
+
+class ThreadPool {
+    ThreadPool & operator=(const ThreadPool &) = delete;
+    ThreadPool & operator=(ThreadPool &&) = delete;
+
+ public:
+  // global singleton
+  // TODO: For now, rpc client and server use separated thread pool
+  //       global thread pool can lead to starving for client/server
+  //static ThreadManager &GetInstance(void);
+
+  static ThreadPool &GetServerThreadPool(void);
+  static ThreadPool &GetClientThreadPool(void);
+
+  // The main function: add task into the task queue
+  void AddTask(std::function<void()> f);
+
+  // TODO: we don't need this API? by Michael
+  //bool AttachThread(std::shared_ptr<std::thread> thread);
+
+  // TODO: we don't need this API? by Michael
+  //bool DetachThread(std::shared_ptr<std::thread> thread);
+
+  // The number of the threads should be inited
+  ThreadPool(int threads);
+  ~ThreadPool();
+
+ protected:
+
+  // Function that will be invoked by our threads.
+  void Invoke();
+
+ private:
+
+  // pthread can only access static function
+  static void InvokeEntry(void* args);
+
+  // thread pool
+  std::vector<pthread_t> thread_pool_;
+
+  // Queue to keep track of incoming tasks.
+  std::queue<std::function<void()>> task_pool_;
+
+  // thread attributes
+  pthread_attr_t attr_;
+
+  // thread pool mutex
+  pthread_mutex_t thread_pool_mutex_;
+
+  // Condition variable.
+  pthread_cond_t condition_;
+
+  // Indicates that pool needs to be shut down and terminated.
+  bool terminate_;
+
 };
 
 }  // End peloton namespace

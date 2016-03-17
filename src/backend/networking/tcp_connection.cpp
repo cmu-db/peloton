@@ -38,8 +38,6 @@ Connection::Connection(int fd, event_base* base, void* arg) :
     // BEV_OPT_THREADSAFE must be specified
     bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
 
-    evbuffer_enable_locking();
-
     /* we can add callback function with output and input evbuffer*/
     //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
