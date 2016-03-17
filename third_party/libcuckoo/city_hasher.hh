@@ -1,7 +1,7 @@
 #ifndef _CITY_HASHER_HH
 #define _CITY_HASHER_HH
 
-#include <city.h>
+#include "cityhash-1.1.1/city.h"
 #include <string>
 
 /*! CityHasher is a std::hash-style wrapper around CityHash. We
