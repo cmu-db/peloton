@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <pthread.h>
+
 namespace peloton {
 namespace networking {
 //===--------------------------------------------------------------------===//
@@ -46,6 +48,9 @@ class ConnectionManager {
 
     // all the connections established: addr --> connection instance
     std::map<NetworkAddress, Connection*> conn_pool_;
+
+    pthread_mutex_t mutex_;
+    pthread_cond_t cond_;
 
 };
 
