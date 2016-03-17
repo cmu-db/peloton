@@ -32,7 +32,9 @@ namespace networking {
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
 #define OPCODELEN  8    // the length should be equal with sizeof uint64_t
 
-
+/*
+ * Connection is thread-safe
+ */
 
 class Connection {
 
