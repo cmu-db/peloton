@@ -6,7 +6,7 @@
 //
 // Identification: /peloton/src/backend/common/assert.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2016, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
