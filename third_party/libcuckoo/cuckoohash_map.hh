@@ -30,11 +30,12 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "default_hasher.hh"
+#include "city_hasher.hh"
 
 //! cuckoohash_map is the hash table class.
 template < class Key,
            class T,
-           class Hash = DefaultHasher<Key>,
+           class Hash = CityHasher<Key>,
            class Pred = std::equal_to<Key>,
            class Alloc = std::allocator<std::pair<const Key, T>>,
            size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
@@ -60,6 +61,7 @@ public:
     //! For any update operations, the callable passed in must be convertible to
     //! the following type
     typedef std::function<void(mapped_type&)> updater_type;
+    typedef std::function<void(mapped_type&, void*)> arg_updater_type;
 
     //! Class returned by operator[] which wraps an entry in the hash table.
     //! Note that this reference type behave somewhat differently from an STL
@@ -336,9 +338,8 @@ private:
     }
 
     // eqfn returns an instance of the equality predicate
-    static key_equal eqfn() {
-        static key_equal eq;
-        return eq;
+    key_equal eqfn() const {
+        return eq_;
     }
 
 public:
@@ -353,10 +354,11 @@ public:
      * @throw std::invalid_argument if the given minimum load factor is invalid,
      * or if the initial space exceeds the maximum hashpower
      */
-    cuckoohash_map(size_t n = DEFAULT_SIZE,
+    cuckoohash_map(key_equal eq = key_equal(),
+                   size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
                    size_t mhp = NO_MAXIMUM_HASHPOWER)
-        : locks_(kNumLocks) {
+        : locks_(kNumLocks), eq_(eq) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -544,6 +546,19 @@ public:
         return (st == ok);
     }
 
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgUpdater>
+    typename std::enable_if<
+        std::is_convertible<ArgUpdater, arg_updater_type>::value,
+        bool>::type update_fn(const key_type& key, ArgUpdater fn, void *arg) {
+        size_t hv = hashed_key(key);
+        auto b = snapshot_and_lock_two(hv);
+        const cuckoo_status st = cuckoo_update_fn(key, fn, arg, hv, b.first,
+                                                  b.second);
+        unlock_two(b.first, b.second);
+        return (st == ok);
+    }
+
     //! upsert is a combination of update_fn and insert. It first tries updating
     //! the value associated with \p key using \p fn. If \p key is not in the
     //! table, then it runs an insert with \p key and \p val. It will always
@@ -559,6 +574,41 @@ public:
             auto b = snapshot_and_lock_two(hv);
             size_t hp = get_hashpower();
             st = cuckoo_update_fn(key, fn, hv, b.first, b.second);
+            if (st == ok) {
+                unlock_two(b.first, b.second);
+                break;
+            }
+
+            // We run an insert, since the update failed. Since we already have
+            // the locks, we don't run cuckoo_insert_loop immediately, to avoid
+            // releasing and re-grabbing the locks. Recall, that the locks will
+            // be released at the end of this call to cuckoo_insert.
+            st = cuckoo_insert(hv, b.first, b.second, std::forward<K>(key),
+                               std::forward<Args>(val)...);
+            if (st == failure_table_full) {
+                cuckoo_expand_simple(hp + 1, true);
+                // Retry until the insert doesn't fail due to expansion.
+                if (cuckoo_insert_loop(hv, std::forward<K>(key),
+                                       std::forward<Args>(val)...)) {
+                    break;
+                }
+                // The only valid reason for failure is a duplicate key. In this
+                // case, we retry the entire upsert operation.
+            }
+        } while (st != ok);
+    }
+
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgUpdater, typename K, typename... Args>
+    typename std::enable_if<
+        std::is_convertible<ArgUpdater, arg_updater_type>::value,
+        void>::type upsert(K&& key, ArgUpdater fn, void *arg, Args&&... val) {
+        size_t hv = hashed_key(key);
+        cuckoo_status st;
+        do {
+            auto b = snapshot_and_lock_two(hv);
+            size_t hp = get_hashpower();
+            st = cuckoo_update_fn(key, fn, arg, hv, b.first, b.second);
             if (st == ok) {
                 unlock_two(b.first, b.second);
                 break;
@@ -1358,6 +1408,25 @@ private:
         return false;
     }
 
+    // this method passes an argument arg to the function fn.
+    template <typename ArgUpdater>
+    bool try_update_bucket_fn(const partial_t partial, const key_type &key,
+                              ArgUpdater fn, void *arg, const size_t i) {
+        for (size_t j = 0; j < slot_per_bucket; ++j) {
+            if (!buckets_[i].occupied(j)) {
+                continue;
+            }
+            if (!is_simple && buckets_[i].partial(j) != partial) {
+                continue;
+            }
+            if (eqfn()(buckets_[i].key(j), key)) {
+                fn(buckets_[i].val(j), arg);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // cuckoo_find searches the table for the given key and value, storing the
     // value in the val if it finds the key. It expects the locks to be taken
     // and released outside the function.
@@ -1540,6 +1609,21 @@ private:
         return failure_key_not_found;
     }
 
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgUpdater>
+    cuckoo_status cuckoo_update_fn(const key_type &key, ArgUpdater fn,
+                                   void *arg, const size_t hv,
+                                   const size_t i1, const size_t i2) {
+        const partial_t partial = partial_key(hv);
+        if (try_update_bucket_fn(partial, key, fn, arg, i1)) {
+            return ok;
+        }
+        if (try_update_bucket_fn(partial, key, fn, arg, i2)) {
+            return ok;
+        }
+        return failure_key_not_found;
+    }
+
     // cuckoo_clear empties the table, calling the destructors of all the
     // elements it removes from the table. It assumes the locks are taken as
     // necessary.
@@ -1617,7 +1701,7 @@ private:
         // Creates a new hash table with hashpower new_hp and adds all
         // the elements from the old buckets
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
-            hashsize(new_hp) * slot_per_bucket);
+            eq_, hashsize(new_hp) * slot_per_bucket);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread = (
             (hashsize(hp) + threadnum - 1) / threadnum);
@@ -1962,6 +2046,7 @@ private:
     // Even though it's a vector, it should not ever change in size after the
     // initial allocation.
     mutable locks_t locks_;
+    key_equal eq_;
 
     // per-core counters for the number of inserts and deletes
     std::vector<
