@@ -71,11 +71,21 @@ class Transaction : public Printable {
   void RecordRead(ItemPointer location);
 
   // record write set
-  void RecordWrite(ItemPointer location);
+  void RecordWritten(ItemPointer location);
+
+  // record insert set
+  void RecordInserted(ItemPointer location);
+
+  // record delete set
+  void RecordDeleted(ItemPointer location);
 
   const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
 
-  const std::map<oid_t, std::vector<oid_t>> &GetWriteTuples();
+  const std::map<oid_t, std::vector<oid_t>> &GetWrittenTuples();
+
+  const std::map<oid_t, std::vector<oid_t>> &GetInsertedTuples();
+
+  const std::map<oid_t, std::vector<oid_t>> &GetDeletedTuples();
 
   // reset inserted tuples and deleted tuples
   // used by recovery (logging)
@@ -118,11 +128,17 @@ class Transaction : public Printable {
   // cid context
   Transaction *next __attribute__((aligned(16)));
 
-  // inserted tuples
+  // read tuples
   std::map<oid_t, std::vector<oid_t>> read_tuples;
 
+  // written tuples
+  std::map<oid_t, std::vector<oid_t>> written_tuples;
+
+  // inserted tuples
+  std::map<oid_t, std::vector<oid_t>> inserted_tuples;
+
   // deleted tuples
-  std::map<oid_t, std::vector<oid_t>> write_tuples;
+  std::map<oid_t, std::vector<oid_t>> deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;
