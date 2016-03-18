@@ -87,24 +87,24 @@ bool UpdateExecutor::DExecute() {
 
     // (A) Try to delete the tuple first
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
-    bool status = target_table_->DeleteTuple(transaction_, delete_location);
-    if (status == false) {
-      LOG_INFO("Fail to delete old tuple. Set txn failure.");
-      transaction_->SetResult(Result::RESULT_FAILURE);
-      return false;
-    }
-    transaction_->RecordDelete(delete_location);
+    //bool status = target_table_->DeleteTuple(transaction_, delete_location);
+//    if (status == false) {
+//      LOG_INFO("Fail to delete old tuple. Set txn failure.");
+//      transaction_->SetResult(Result::RESULT_FAILURE);
+//      return false;
+//    }
+//    transaction_->RecordDelete(delete_location);
 
-    // (B.1) Make a copy of the original tuple and allocate a new tuple
+    // Make a copy of the original tuple and allocate a new tuple
     expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                              physical_tuple_id);
     storage::Tuple *new_tuple =
         new storage::Tuple(target_table_->GetSchema(), true);
 
-    // (B.2) Execute the projections
+    // Execute the projections
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
-    // (C) finally insert updated tuple into the table
+    // finally insert updated tuple into the table
     ItemPointer location = target_table_->InsertTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       delete new_tuple;
@@ -115,7 +115,7 @@ bool UpdateExecutor::DExecute() {
 
     executor_context_->num_processed += 1;  // updated one
 
-    transaction_->RecordInsert(location);
+    transaction_->RecordWrite(location);
 
     // Logging
     {

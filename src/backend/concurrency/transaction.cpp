@@ -22,11 +22,11 @@
 namespace peloton {
 namespace concurrency {
 
-void Transaction::RecordRead(const ItemPointer &location) {
+void Transaction::RecordRead(ItemPointer location) {
   read_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordWrite(const ItemPointer &location) {
+void Transaction::RecordWrite(ItemPointer location) {
   write_tuples[location.block].push_back(location.offset);
 }
 

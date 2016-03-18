@@ -134,6 +134,7 @@ bool SeqScanExecutor::DExecute() {
       // and applying the predicate.
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
+        // check transaction visibility
         if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) ==
             false) {
           continue;
@@ -143,10 +144,14 @@ bool SeqScanExecutor::DExecute() {
                                                              tuple_id);
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
+          transaction_->RecordRead(ItemPointer(tile_group->GetTileGroupId(), tuple_id));
         } else {
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if (eval == true) position_list.push_back(tuple_id);
+          if (eval == true) {
+            position_list.push_back(tuple_id);
+            transaction_->RecordRead(ItemPointer(tile_group->GetTileGroupId(), tuple_id));
+          }
         }
       }
 

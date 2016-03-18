@@ -32,10 +32,6 @@ namespace peloton {
             static TransactionManager &GetInstance();
 
             txn_id_t GetNextTransactionId(){
-                if (next_txn_id == MAX_TXN_ID) {
-                    throw TransactionException("Txn id equals MAX_TXN_ID");
-                }
-
                 return next_txn_id++;
             }
 
@@ -44,8 +40,6 @@ namespace peloton {
             }
 
             Transaction *BeginTransaction();
-
-            void EndTransaction();
 
             void CommitTransaction();
 
@@ -56,11 +50,6 @@ namespace peloton {
         private:
             std::atomic<txn_id_t> next_txn_id;
             std::atomic<cid_t> next_cid;
-
-            Transaction *last_txn;
-
-            //std::unordered_map<txn_id_t, Transaction *> txn_table;
-            //Spinlock txn_table_lock;
         };
     }  // End storage namespace
 }  // End peloton namespace

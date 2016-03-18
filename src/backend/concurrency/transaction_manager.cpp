@@ -13,6 +13,7 @@
 #include "backend/concurrency/transaction_manager.h"
 
 #include "backend/concurrency/transaction.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
     namespace concurrency {
@@ -23,14 +24,9 @@ namespace peloton {
         TransactionManager::TransactionManager() {
             next_txn_id = START_TXN_ID;
             next_cid = START_CID;
-
-            last_txn = new Transaction(START_TXN_ID, START_CID);
-            last_txn->end_cid = START_CID;
         }
 
-        TransactionManager::~TransactionManager() {
-            delete last_txn;
-        }
+        TransactionManager::~TransactionManager() {}
 
         TransactionManager &TransactionManager::GetInstance() {
             static TransactionManager txn_manager;
@@ -39,29 +35,44 @@ namespace peloton {
 
         Transaction * TransactionManager::BeginTransaction(){
             Transaction *txn = new Transaction(GetNextTransactionId(), GetNextCommitId());
-
             current_txn = txn;
             return txn;
         }
 
-        void TransactionManager::EndTransaction(){}
+        void TransactionManager::CommitTransaction(){
+            LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+            // generate transaction id.
+            cid_t end_commit_id = GetNextCommitId();
 
-        void TransactionManager::CommitTransaction(){}
+            // validate read set.
+            auto read_tuples = current_txn->GetReadTuples();
+            for (auto entry : read_tuples){
+                oid_t tile_group_id = entry.first;
+
+                for (auto tuple_slot : entry.second){
+
+                }     
+            }
+
+            // install write set.
+            auto write_tuples = current_txn->GetWriteTuples();
+            for (auto entry : write_tuples){
+                oid_t tile_group_id = entry.first;
+
+                for (auto tuple_slot : entry.second){
+
+                }
+            }
+        }
 
         void TransactionManager::AbortTransaction(){
-
+            LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
 
         }
 
         void TransactionManager::ResetStates() {
             next_txn_id = START_TXN_ID;
             next_cid = START_CID;
-
-            delete last_txn;
-            last_txn = new Transaction(START_TXN_ID, START_CID);
-            last_txn->end_cid = START_CID;
-
-
         }
 
     }  // End storage namespace
