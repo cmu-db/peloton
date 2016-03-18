@@ -120,7 +120,7 @@ bool SeqScanExecutor::DExecute() {
 
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
-      cid_t commit_id = transaction_->GetLastCommitId();
+      cid_t commit_id = transaction_->GetStartCommitId();
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility

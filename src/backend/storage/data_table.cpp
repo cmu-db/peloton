@@ -99,9 +99,9 @@ bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
     auto header = tile_group->GetHeader();
 
     auto transaction_id = transaction->GetTransactionId();
-    auto last_commit_id = transaction->GetLastCommitId();
+    auto start_commit_id = transaction->GetStartCommitId();
     bool visible =
-        header->IsVisible(tuple_offset, transaction_id, last_commit_id);
+        header->IsVisible(tuple_offset, transaction_id, start_commit_id);
 
     if (visible) return true;
   }
