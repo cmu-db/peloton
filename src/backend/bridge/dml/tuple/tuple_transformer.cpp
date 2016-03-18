@@ -56,7 +56,11 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       LOG_TRACE("%ld", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
     } break;
-
+    case POSTGRES_VALUE_TYPE_REAL: {
+      double fpnum = DatumGetFloat4(datum);
+      LOG_TRACE("%f", fpnum);
+      value = ValueFactory::GetDoubleValue(fpnum);
+    } break;
     case POSTGRES_VALUE_TYPE_DOUBLE: {
       double fpnum = DatumGetFloat8(datum);
       LOG_TRACE("%f", fpnum);

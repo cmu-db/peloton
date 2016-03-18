@@ -1056,6 +1056,8 @@ ValueType PostgresValueTypeToPelotonValueType(
       break;
 
     /* DOUBLE */
+    case POSTGRES_VALUE_TYPE_REAL:  // modified by Heqing. The real type is
+                                    // missing here. Replace with Double
     case POSTGRES_VALUE_TYPE_DOUBLE:
       valueType = VALUE_TYPE_DOUBLE;
       break;
