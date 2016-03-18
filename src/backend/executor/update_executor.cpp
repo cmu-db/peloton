@@ -23,6 +23,7 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile.h"
 
 namespace peloton {
@@ -76,6 +77,7 @@ bool UpdateExecutor::DExecute() {
   auto &pos_lists = source_tile.get()->GetPositionLists();
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
   auto transaction_ = executor_context_->GetTransaction();
   auto tile_group_id = tile_group->GetTileGroupId();
 
@@ -85,8 +87,49 @@ bool UpdateExecutor::DExecute() {
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
+    txn_id_t tid = transaction_->GetTransactionId();
+    ItemPointer location;
+    storage::Tuple *new_tuple = nullptr;
+    if (tile_group_header->IsOwned(physical_tuple_id, tid) == true){
+      // if the thread is the owner of the tuple, then directly update the tuple.
+      new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+
+      // Make a copy of the original tuple and allocate a new tuple
+      expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                               physical_tuple_id);
+      // Execute the projections
+      project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+      // TODO: update in place.
+
+    } else if (tile_group_header->IsUpdatable(physical_tuple_id, tid)){
+      // if it is the latest version and not locked by other threads, then insert a new version.
+      new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+
+      // Make a copy of the original tuple and allocate a new tuple
+      expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                               physical_tuple_id);
+      // Execute the projections
+      project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+
+      // finally insert updated tuple into the table
+      location = target_table_->InsertTuple(transaction_, new_tuple);
+      if (location.block == INVALID_OID) {
+        delete new_tuple;
+        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        transaction_->SetResult(Result::RESULT_FAILURE);
+        return false;
+      }
+    } else{
+      // transaction should be aborted as we cannot update the latest version.
+      LOG_INFO("Fail to update tuple. Set txn failure.");
+      transaction_->SetResult(Result::RESULT_FAILURE);
+      return false;
+    }
+
+
+
     // (A) Try to delete the tuple first
-    auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
+    //auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
     //bool status = target_table_->DeleteTuple(transaction_, delete_location);
 //    if (status == false) {
 //      LOG_INFO("Fail to delete old tuple. Set txn failure.");
@@ -95,41 +138,38 @@ bool UpdateExecutor::DExecute() {
 //    }
 //    transaction_->RecordDelete(delete_location);
 
-    // Make a copy of the original tuple and allocate a new tuple
-    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                             physical_tuple_id);
-    storage::Tuple *new_tuple =
-        new storage::Tuple(target_table_->GetSchema(), true);
+    //storage::Tuple *new_tuple =
+        //new storage::Tuple(target_table_->GetSchema(), true);
 
     // Execute the projections
-    project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+    //project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // finally insert updated tuple into the table
-    ItemPointer location = target_table_->InsertTuple(transaction_, new_tuple);
-    if (location.block == INVALID_OID) {
-      delete new_tuple;
-      LOG_INFO("Fail to insert new tuple. Set txn failure.");
-      transaction_->SetResult(Result::RESULT_FAILURE);
-      return false;
-    }
+//    ItemPointer location = target_table_->InsertTuple(transaction_, new_tuple);
+//    if (location.block == INVALID_OID) {
+//      delete new_tuple;
+//      LOG_INFO("Fail to insert new tuple. Set txn failure.");
+//      transaction_->SetResult(Result::RESULT_FAILURE);
+//      return false;
+//    }
 
     executor_context_->num_processed += 1;  // updated one
 
-    transaction_->RecordWrite(location);
+    transaction_->RecordWritten(location);
 
     // Logging
-    {
-      auto &log_manager = logging::LogManager::GetInstance();
-
-      if (log_manager.IsInLoggingMode()) {
-        auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-            target_table_->GetOid(), location, delete_location, new_tuple);
-
-        logger->Log(record);
-      }
-    }
+//    {
+//      auto &log_manager = logging::LogManager::GetInstance();
+//
+//      if (log_manager.IsInLoggingMode()) {
+//        auto logger = log_manager.GetBackendLogger();
+//        auto record = logger->GetTupleRecord(
+//            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+//            target_table_->GetOid(), location, delete_location, new_tuple);
+//
+//        logger->Log(record);
+//      }
+//    }
 
     delete new_tuple;
   }

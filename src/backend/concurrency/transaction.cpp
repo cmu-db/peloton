@@ -26,21 +26,39 @@ void Transaction::RecordRead(ItemPointer location) {
   read_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordWrite(ItemPointer location) {
-  write_tuples[location.block].push_back(location.offset);
+void Transaction::RecordWritten(ItemPointer location) {
+  written_tuples[location.block].push_back(location.offset);
+}
+
+void Transaction::RecordInserted(ItemPointer location) {
+  inserted_tuples[location.block].push_back(location.offset);
+}
+
+void Transaction::RecordDeleted(ItemPointer location) {
+  deleted_tuples[location.block].push_back(location.offset);
 }
 
 const std::map<oid_t, std::vector<oid_t>> &Transaction::GetReadTuples() {
   return read_tuples;
 }
 
-const std::map<oid_t, std::vector<oid_t>> &Transaction::GetWriteTuples() {
-  return write_tuples;
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetWrittenTuples() {
+  return written_tuples;
+}
+
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetInsertedTuples() {
+  return inserted_tuples;
+}
+
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetDeletedTuples() {
+  return deleted_tuples;
 }
 
 void Transaction::ResetState(void) {
   read_tuples.clear();
-  write_tuples.clear();
+  written_tuples.clear();
+  inserted_tuples.clear();
+  deleted_tuples.clear();
 }
 
 const std::string Transaction::GetInfo() const{
