@@ -133,7 +133,6 @@ static void ValidateLogFileDir(
     // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_SSD_NVM:
     case LOGGING_TYPE_HDD_NVM: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
@@ -144,22 +143,10 @@ static void ValidateLogFileDir(
     // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_SSD_HDD:
     case LOGGING_TYPE_HDD_HDD: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
-      }
-    } break;
-
-    // Log file on SSD
-    case LOGGING_TYPE_DRAM_SSD:
-    case LOGGING_TYPE_NVM_SSD:
-    case LOGGING_TYPE_SSD_SSD:
-    case LOGGING_TYPE_HDD_SSD: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = SSD_DIR;
       }
     } break;
 
