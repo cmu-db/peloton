@@ -20,6 +20,7 @@ namespace peloton {
 namespace networking {
 
 #define PELOTON_ENDPOINT_ADDR "127.0.0.1:9000"
+#define PELOTON_ENDPOINT_INTER "128.2.209.31:9000"
 #define PELOTON_ENDPOINT_FILE "ipc:///tmp/echo.sock"
 #define PELOTON_SERVER_PORT 9000
 

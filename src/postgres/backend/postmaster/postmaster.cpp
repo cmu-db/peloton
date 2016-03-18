@@ -569,6 +569,8 @@ void Coordinator() {
  */
 void TestSend() {
 
+    sleep(2);
+
     try {
         for (int i = 1; i < 2; i++) {
             peloton::networking::HeartbeatRequest request;
@@ -577,7 +579,7 @@ void TestSend() {
             request.set_last_transaction_id(i*10);
 
             // it is not necessary to use smart point here
-            auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+            auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_INTER);
 
             //peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
             //client.Heartbeat(&request, &response);

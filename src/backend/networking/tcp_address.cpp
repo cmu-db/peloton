@@ -31,6 +31,10 @@ namespace networking {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
+NetworkAddress::NetworkAddress(const NetworkAddress& addr) {
+    ip_address_ = addr.ip_address_;
+    port_ = addr.port_;
+}
 NetworkAddress::NetworkAddress(const sockaddr_in& addrin) {
     ip_address_ = addrin.sin_addr.s_addr;
     port_ = addrin.sin_port;

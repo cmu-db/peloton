@@ -31,7 +31,7 @@ namespace networking {
 
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
 #define OPCODELEN  8    // the length should be equal with sizeof uint64_t
-
+#define TYPELEN    2    // the length should be equal with sizeof uint16_t
 /*
  * Connection is thread-safe
  */
@@ -54,16 +54,15 @@ public:
      *            If a connection is created by client, fd(socket) is -1.
      *        arg is used to pass the rpc_server pointer
      */
-    Connection(int fd, event_base* base, void* arg);
+    Connection(int fd, event_base* base, void* arg, NetworkAddress& addr);
     ~Connection();
 
     //static void Dispatch(std::shared_ptr<Connection> conn);
     static void Dispatch(Connection* conn);
 
-    static void ServerReadCb(struct bufferevent *bev, void *ctx);
-    static void ClientReadCb(struct bufferevent *bev, void *ctx);
-    static void ServerEventCb(struct bufferevent *bev, short events, void *ctx);
-    static void ClientEventCb(struct bufferevent *bev, short events, void *ctx);
+    static void ReadCb(struct bufferevent *bev, void *ctx);
+    static void EventCb(struct bufferevent *bev, short events, void *ctx);
+    static void ProcessMessage(Connection* conn);
 
     static void BufferCb(struct evbuffer *buffer,
             const struct evbuffer_cb_info *info, void *arg);
@@ -142,7 +141,8 @@ public:
 
 private:
 
-    int socket_;
+    // addr is the other side address
+    NetworkAddress addr_;
     bool close_;
 
     ConnStatus status_;

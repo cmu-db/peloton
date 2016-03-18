@@ -15,6 +15,11 @@
 
 #define NUM_THREAD 10
 
+// for test
+int xthread = 1;
+#include <iostream>
+// end test
+
 namespace peloton {
 
 // global singleton
@@ -191,6 +196,9 @@ void* ThreadPool::InvokeEntry(void* self) {
 
 void ThreadPool::Invoke() {
 
+    std::cout << "thread: " << xthread << std::endl;
+    xthread++;
+
     std::function<void()> task;
 
     while(true) {
@@ -200,7 +208,7 @@ void ThreadPool::Invoke() {
 
         // wait will "atomically" unlock the mutex,
         // allowing others access to the condition variable (for signalling)
-        if (task_pool_.empty() && terminate_ == false) {
+        while (task_pool_.empty() && terminate_ == false) {
             cond_.Wait();
         }
 
