@@ -398,7 +398,7 @@ static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status);
 static int ServerLoop(void);
-static int BackendStartup(Port *port);
+static int BackendStartup(Port *port, bool is_memcached);
 static int ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int initMasks(fd_set *rmask);
@@ -1677,7 +1677,7 @@ static int ServerLoop(void) {
 
           port = ConnCreate(ListenSocket[i]);
           if (port) {
-            BackendStartup(port);
+            BackendStartup(port, false);
 
             /*
              * We no longer need the open socket or port structure
@@ -1686,6 +1686,14 @@ static int ServerLoop(void) {
             // TODO: Peloton Changes
             // StreamClose(port->sock);
             // ConnFree(port);
+          }
+        }
+
+        // check memcached port as well
+        if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
+          Port *port = ConnCreate(MemcachedListenSocket[i]);
+          if(port){
+            BackendStartup(port, true);
           }
         }
       }
@@ -3645,7 +3653,7 @@ static void LaunchBackendTask(Backend *bn, Port *port) {
  *
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
-static int BackendStartup(Port *port) {
+static int BackendStartup(Port *port, bool is_memcached) {
   Backend *bn; /* for backend cleanup */
   pid_t pid;
 
