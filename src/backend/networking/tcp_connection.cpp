@@ -12,6 +12,7 @@
 
 #include "tcp_connection.h"
 #include "peloton_service.h"
+#include "rpc_type.h"
 
 #include <mutex>
 
@@ -24,31 +25,24 @@ uint64_t server_response_send_bytes = 0;  // bytes
 namespace peloton {
 namespace networking {
 
-Connection::Connection(int fd, event_base* base, void* arg) :
-        socket_(fd), close_(false), status_(INIT), base_(base) {
+Connection::Connection(int fd, event_base* base, void* arg, NetworkAddress& addr) :
+      addr_(addr), close_(false), status_(INIT), base_(base) {
 
-    if (arg == NULL) {
-        rpc_server_ = NULL;
-    } else {
-        rpc_server_ = (RpcServer*)arg;
-    }
+    // we must pass rpc_server when new a connection
+    assert( arg != NULL );
+    rpc_server_ = (RpcServer*)arg;
 
 //    base_ = event_base_new(); // note: we share the base among different connections
 
     // BEV_OPT_THREADSAFE must be specified
-    bev_ = bufferevent_socket_new(base_, socket_, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
+    // if fd==-1, it is a connection from client
+    bev_ = bufferevent_socket_new(base_, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
 
     /* we can add callback function with output and input evbuffer*/
     //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
-    // client passes fd with -1 when new a connection
-    if ( fd != -1) { // server
-        bufferevent_setcb(bev_, ServerReadCb, NULL, ServerEventCb, this);
-        LOG_TRACE("Server: connection init");
-    } else { // client
-        bufferevent_setcb(bev_, ClientReadCb, NULL, ClientEventCb, this);
-        LOG_TRACE("Client: connection init");
-    }
+    // set read callback and event callback
+    bufferevent_setcb(bev_, ReadCb, NULL, EventCb, this);
 
     bufferevent_enable(bev_, EV_READ | EV_WRITE);
 }
@@ -101,131 +95,18 @@ void Connection::Close() {
     }
 }
 
-
-void Connection::SetMethodName(std::string name) {
-    method_name_ = name;
-}
-
-const char* Connection::GetMethodName() {
-    return method_name_.c_str();
-}
-
-//void Connection::Dispatch(std::shared_ptr<Connection> conn) {
-//    event_base_dispatch(conn->base_);
-//
-//    if (conn->rpc_server_ == NULL) {
-//        LOG_TRACE("Client: exit Dispatch");
-//    } else {
-//        LOG_TRACE("Server: exit Dispatch");
-//    }
-//}
-void Connection::Dispatch(Connection* conn) {
-    event_base_dispatch(conn->base_);
-
-    if (conn->rpc_server_ == NULL) {
-        LOG_TRACE("Client: exit Dispatch");
-    } else {
-        LOG_TRACE("Server: exit Dispatch");
-    }
-}
-void Connection::ClientReadCb(__attribute__((unused)) struct bufferevent *bev,
-                              void *ctx) {
-    LOG_TRACE("ClientReadCb is invoked");
-    assert (bev != NULL && ctx != NULL);
-
-    // ***prepair the callback type message****//
-
-    PelotonService service;
-
-    Connection* conn = (Connection*) ctx;
-
-    const std::string methodname = conn->GetMethodName();
-
-    // use the protobuf lookup mechanism to locate the method
-    const google::protobuf::DescriptorPool* dspool = google::protobuf::DescriptorPool::generated_pool();
-    const google::protobuf::MethodDescriptor* mds = dspool->FindMethodByName(methodname);
-    const google::protobuf::Message *response_type = &service.GetResponsePrototype(mds);
-
-    google::protobuf::Message *response = response_type->New();
-
-    // ***recv data and put the data into message****//
-
-    while (conn->GetReadBufferLen()) {
-
-        // Get the total readable data length
-        uint32_t readable_len = conn->GetReadBufferLen();
-
-        // If the total readable data is too less
-        if (readable_len < HEADERLEN) {
-            LOG_TRACE("ClientReadCb: Readable data is too less, return");
-            return;
-        }
-
-        /*
-         * Copy the header.
-         * Note: should not remove the header from buffer, cuz we might return
-         *       if there are no enough data as a whole message
-         */
-        uint32_t msg_len = 0;
-        int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
-        if(nread != HEADERLEN) {
-          LOG_ERROR("nread does not match header length \n");
-          return;
-        }
-
-        // if readable data is less than a message, return to wait the next callback
-        if (readable_len < msg_len + HEADERLEN) {
-            LOG_TRACE("ClientReadCb: Readable data is less than a message, return");
-            return;
-        }
-
-        // Receive message.
-        char buf[msg_len + HEADERLEN];
-
-        // Get the data
-        conn->GetReadData(buf, sizeof(buf));
-
-        // Deserialize the receiving message
-        response->ParseFromString(buf + HEADERLEN);
-
-        // process data
-        RpcController controller;
-        service.CallMethod(mds, &controller, NULL, response, NULL);
-
-        // TODO: controller should be set within rpc method
-        if (controller.Failed()) {
-            std::string error = controller.ErrorText();
-            LOG_TRACE( "ClientReadCb:  with controller failed:%s ", error.c_str());
-        }
-
-    }
-
-    delete response;
-
-    conn->Close();
-}
-
 ////////////////////////////////////////////////////////////////////////////////
-//                 Response message structure:
-// --Header:  message length of Response,                 uint32_t (4bytes)
-// --Response: the serialization result of protobuf       ...
+//                  message structure:
+// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
+// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
+// --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
+// --Content: the serialization result of protobuf       Header-8-2
 //
 // TODO: We did not add checksum code in this version
-////////////////////////////////////////////////////////////////////////////////
 
-void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
-                              void *ctx) {
+void Connection::ProcessMessage(Connection* conn) {
 
-    /* This callback is invoked when there is data to read on bev. */
-    //struct evbuffer *input = bufferevent_get_input(bev);
-    //struct evbuffer *output = bufferevent_get_output(bev);
-    // TODO: We might use bev in futurn
-    assert(bev != NULL);
-
-    Connection* conn = (Connection*) ctx;
-
-    // change the status of the connection
-    conn->SetStatus(RECVING);
+    assert(conn != NULL);
 
     while (conn->GetReadBufferLen()) {
 
@@ -233,7 +114,7 @@ void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
         uint32_t readable_len = conn->GetReadBufferLen();
 
         // If the total readable data is too less
-        if (readable_len < HEADERLEN + OPCODELEN) {
+        if (readable_len < HEADERLEN + OPCODELEN + TYPELEN) {
             LOG_TRACE("Readable data is too less, return");
             return;
         }
@@ -250,21 +131,31 @@ void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
           return;
         }
 
-        // if readable data is less than a message, return to wait the next callback
+        /*
+         * if readable data is less than a message, return to wait the next callback
+         * Note: msg_len includes the length of type + opcode + message
+         */
         if (readable_len < msg_len + HEADERLEN) {
             LOG_TRACE("Readable data is less than a message, return");
             return;
         }
 
-        // Receive message.
+        /*
+         * Get a message.
+         * Note: we only get one message each time. so the buf is msg_len + HEADERLEN
+         */
         char buf[msg_len + HEADERLEN];
 
         // Get the data
         conn->GetReadData(buf, sizeof(buf));
 
+        // Get the message type
+        uint16_t type = 0;
+        memcpy((char*) (&type), buf + HEADERLEN, sizeof(type));
+
         // Get the hashcode of the rpc method
         uint64_t opcode = 0;
-        memcpy((char*) (&opcode), buf + HEADERLEN, sizeof(opcode));
+        memcpy((char*) (&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
 
         // Get the rpc method meta info: method descriptor
         RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
@@ -275,44 +166,83 @@ void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
         }
 
         const google::protobuf::MethodDescriptor *method = rpc_method->method_;
-
-        // Get request and response type and create them
-        google::protobuf::Message *request = rpc_method->request_->New();
-        google::protobuf::Message *response = rpc_method->response_->New();
-
-        // Deserialize the receiving message
-        request->ParseFromString(buf + sizeof(opcode) + HEADERLEN);
-
-        // Create the corresponding rpc method
-        // google::protobuf::Closure* callback =
-        //         google::protobuf::internal::NewCallback(&Callback);
-
         RpcController controller;
-        rpc_method->service_->CallMethod(method, &controller, request, response,
-                NULL);
+
+        switch ( type ) {
+
+          case MSG_TYPE_REQ: {
+            LOG_TRACE("Handle MSG_TYPE: Request");
+
+            // Get request and response type and create them
+            google::protobuf::Message *message = rpc_method->request_->New();
+            google::protobuf::Message *response = rpc_method->response_->New();
+
+            // Deserialize the receiving message
+            message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+
+            //Invoke rpc call.
+            rpc_method->service_->CallMethod(method, &controller, message, response,
+                    NULL);
+
+            // Send back the response message. The message has been set up when executing rpc method
+            msg_len = response->ByteSize() + OPCODELEN + TYPELEN;
+
+            char send_buf[sizeof(msg_len) + msg_len];
+            assert(sizeof(msg_len) == HEADERLEN);
+
+            // copy the header into the buf
+            memcpy(send_buf, &msg_len, sizeof(msg_len));
+
+            // copy the type into the buf
+            type = MSG_TYPE_REP;
+
+            assert(sizeof(type) == TYPELEN);
+            memcpy(send_buf + HEADERLEN, &type, TYPELEN);
+
+            // copy the opcode into the buf
+            assert(sizeof(opcode) == OPCODELEN);
+            memcpy(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
+
+            // call protobuf to serialize the request message into sending buf
+            response->SerializeToArray(send_buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len);
+
+            // send data
+            // Note: if we use raw socket send api, we should loop send
+            assert(sizeof(send_buf) == HEADERLEN+msg_len);
+            conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
+
+            delete message;
+            delete response;
+
+          } break;
+
+          case MSG_TYPE_REP: {
+            LOG_TRACE("Handle MSG_TYPE: Response");
+
+            // Get response and response type and create them
+            google::protobuf::Message *message = rpc_method->response_->New();
+
+            // Deserialize the receiving message
+            message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+
+            // Invoke rpc call. request is null
+            rpc_method->service_->CallMethod(method, &controller, NULL, message,
+                    NULL);
+
+            delete message;
+
+          } break;
+
+          default:
+            LOG_ERROR("Unrecognized message type %d", type);
+            break;
+        }
 
         // TODO: controller should be set within rpc method
         if (controller.Failed()) {
             std::string error = controller.ErrorText();
             LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
         }
-
-        // Send back the response message. The message has been set up when executing rpc method
-        msg_len = response->ByteSize();
-
-        char send_buf[sizeof(msg_len) + msg_len];
-        assert(sizeof(msg_len) == HEADERLEN);
-
-        // copy the header into the buf
-        memcpy(send_buf, &msg_len, sizeof(msg_len));
-
-        // call protobuf to serialize the request message into sending buf
-        response->SerializeToArray(send_buf + sizeof(msg_len), msg_len);
-
-        // send data
-        // Note: if we use raw socket send api, we should loop send
-        assert(sizeof(send_buf) == HEADERLEN+msg_len);
-        conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
         /* this is for the test of rpc performance
         // test
@@ -339,34 +269,43 @@ void Connection::ServerReadCb(__attribute__((unused)) struct bufferevent *bev,
         }
         // end test
          */
-
-        delete request;
-        delete response;
     }
 }
 
-void Connection::ServerEventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
+void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
+                              void *ctx) {
 
-    Connection* conn = (Connection*)ctx;
-    assert(conn != NULL && bev != NULL);
+    /* This callback is invoked when there is data to read on bev. */
+    //struct evbuffer *input = bufferevent_get_input(bev);
+    //struct evbuffer *output = bufferevent_get_output(bev);
+    // TODO: We might use bev in future
+    assert(bev != NULL);
 
-    if (events & BEV_EVENT_ERROR) {
+    Connection* conn = (Connection*) ctx;
 
-        LOG_TRACE("Error from server bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
-        conn->Close();
-    }
+    // change the status of the connection
+    conn->SetStatus(RECVING);
 
-    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+    /*
+     * Process the message will invoke rpc call.
+     * Note: this might take a long time. So we put this in a thread
+     */
 
-        // This means client explicitly closes the connection
-        LOG_TRACE("ServerEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+    // prepaere workers_thread to send and recv data
+    std::function<void()> worker_conn =
+            std::bind(&Connection::ProcessMessage, conn);
 
-        // free the buffer event
-        conn->Close();
-    }
+    /*
+     * Add workers to thread pool to send and recv data
+     * Note: after AddTask, ReadCb will return and another
+     * request on this connection can be processed while
+     * the former is still being processed
+     */
+    ThreadPool::GetServerThreadPool().AddTask(worker_conn);
+
 }
 
-void Connection::ClientEventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
+void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
 
     Connection* conn = (Connection*)ctx;
     assert(conn != NULL && bev != NULL);

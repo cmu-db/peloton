@@ -43,6 +43,11 @@ void ConnectionManager::ResterRpcServer(RpcServer* server) {
     mutex_.UnLock();
 }
 
+RpcServer* ConnectionManager::GetRpcServer() {
+    assert(rpc_server_ != NULL);
+    return rpc_server_;
+}
+
 /*
  * if the there is no connection, create it
  */
@@ -56,13 +61,14 @@ Connection* ConnectionManager::GetConn(std::string& addr) {
 event_base* ConnectionManager::GetEventBase() {
 
     event_base* base;
-    mutex_.Lock();
+    // TODO: should we lock the server?
+    //mutex_.Lock();
     if (rpc_server_ == NULL) {
         base = NULL;
     } else {
         base = rpc_server_->GetListener()->GetEventBase();
     }
-    mutex_.UnLock();
+    //mutex_.UnLock();
 
     return base;
 }
@@ -85,8 +91,11 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
         if (base == NULL) {
             return NULL;
         }
+
+        RpcServer* server = GetRpcServer();
+        assert(server != NULL);
         // for a client connection, the socket is -1 and the rpc_server is NULL
-        conn = new Connection(-1, NULL, base);
+        conn = new Connection(-1, base, server, addr);
 
         // Connect to server with the given address
         if ( conn->Connect(addr) == false ) {
@@ -96,6 +105,7 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
         }
 
         conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+        LOG_TRACE("Connect to ---> %s:%d", addr.IpToString().c_str(), addr.GetPort());
 
     } else {
         conn = iter->second;

@@ -106,19 +106,13 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
     // We should be careful here new connection would lead to memory leak
     // if we don't use shared ptr
     //std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, base, ctx);
-    Connection* conn = new Connection(fd, base, ctx);
+    NetworkAddress addr(*address);
+    Connection* conn = new Connection(fd, base, ctx, addr);
 
     ConnectionManager::GetInstance().AddConn(*address, conn);
 
-    LOG_INFO ("Server: connection received from fd: %d", fd);
-
-    // prepaere workers
-    //std::function<void()> worker_conn =
-    //        std::bind(&Connection::Dispatch, conn);
-
-    // add workers to thread pool
-    //ThreadManager::GetInstance().AddTask(worker_conn);
-    //ThreadManager::GetServerThreadPool().AddTask(worker_conn);
+    LOG_INFO ("Server: connection received from fd: %d, address: %s, port:%d",
+            fd, addr.IpToString().c_str(), addr.GetPort());
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,

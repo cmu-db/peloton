@@ -33,6 +33,8 @@ class ConnectionManager {
     static ConnectionManager &GetInstance(void);
 
     void ResterRpcServer(RpcServer* server);
+    RpcServer* GetRpcServer();
+
     event_base* GetEventBase();
 
     Connection* GetConn(std::string& addr);
