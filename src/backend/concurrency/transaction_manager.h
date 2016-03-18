@@ -13,99 +13,54 @@
 #pragma once
 
 #include <atomic>
-#include <cassert>
-#include <vector>
-#include <map>
-#include <mutex>
+#include <unordered_map>
 
+#include "backend/common/platform.h"
 #include "backend/common/types.h"
 
+
 namespace peloton {
-namespace concurrency {
+    namespace concurrency {
 
-typedef unsigned int TransactionId;
+        extern thread_local Transaction *current_txn;
 
-class Transaction;
+        class TransactionManager {
+        public:
+            TransactionManager();
+            ~TransactionManager();
 
-extern thread_local Transaction *current_txn;
+            static TransactionManager &GetInstance();
 
-//===--------------------------------------------------------------------===//
-// Transaction Manager
-//===--------------------------------------------------------------------===//
+            txn_id_t GetNextTransactionId(){
+                if (next_txn_id == MAX_TXN_ID) {
+                    throw TransactionException("Txn id equals MAX_TXN_ID");
+                }
 
-class TransactionManager {
- public:
-  TransactionManager();
+                return next_txn_id++;
+            }
 
-  ~TransactionManager();
+            cid_t GetNextCommitId(){
+                return next_cid++;
+            }
 
-  // Get next transaction id
-  txn_id_t GetNextTransactionId();
+            Transaction *BeginTransaction();
 
-  // Get last commit id for visibility checks
-  cid_t GetLastCommitId() { return last_cid; }
+            void EndTransaction();
 
-  //===--------------------------------------------------------------------===//
-  // Transaction processing
-  //===--------------------------------------------------------------------===//
+            void CommitTransaction();
 
-  static TransactionManager &GetInstance();
+            void AbortTransaction();
 
-  // Begin a new transaction
-  Transaction *BeginTransaction();
+            void ResetStates();
 
-  // Get entry in transaction table
-  //Transaction *GetTransaction(txn_id_t txn_id);
+        private:
+            std::atomic<txn_id_t> next_txn_id;
+            std::atomic<cid_t> next_cid;
 
-  // End the transaction
-  void EndTransaction(Transaction *txn, bool sync = true);
+            Transaction *last_txn;
 
-  // Get the list of current transactions
-  //std::vector<Transaction *> GetCurrentTransactions();
-
-  // validity checks
-  //bool IsValid(txn_id_t txn_id);
-
-  // used by recovery testing
-  void ResetStates(void);
-
-  // COMMIT
-
-  void BeginCommitPhase(Transaction *txn);
-
-  void CommitModifications(Transaction *txn, bool sync = true);
-
-  void CommitPendingTransactions(std::vector<Transaction *> &txns,
-                                 Transaction *txn);
-
-  std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
-
-  void CommitTransaction(bool sync = true);
-
-  // ABORT
-
-  void AbortTransaction();
-
- private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  std::atomic<txn_id_t> next_txn_id;
-
-  std::atomic<cid_t> next_cid;
-
-  cid_t last_cid __attribute__((aligned(16)));
-
-  Transaction *last_txn;
-
-  // Table tracking all active transactions
-  // Our transaction id -> our transaction
-  // Sync access with txn_table_mutex
-  std::map<txn_id_t, Transaction *> txn_table;
-
-  std::mutex txn_table_mutex;
-};
-
-}  // End concurrency namespace
+            //std::unordered_map<txn_id_t, Transaction *> txn_table;
+            //Spinlock txn_table_lock;
+        };
+    }  // End storage namespace
 }  // End peloton namespace

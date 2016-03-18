@@ -40,9 +40,7 @@ namespace storage {
  *
  * 	-----------------------------------------------------------------------------
  *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- *--
- *  |InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (16 bytes)
- *| lock bit (1 byte)
+ *  | InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (16 bytes)
  * 	-----------------------------------------------------------------------------
  *
  */
@@ -204,14 +202,6 @@ class TileGroupHeader : public Printable {
     return true;
   }
 
-  void AcquireLockBit(const oid_t tuple_slot_id) const {
-    (*((Spinlock *)(data + (tuple_slot_id * header_entry_size) + lock_bit_offset))).Lock();
-  }
-
-  void ReleaseLockBit(const oid_t tuple_slot_id) const {
-    (*((Spinlock *)(data + (tuple_slot_id * header_entry_size) + lock_bit_offset))).Unlock();
-  }
-
   // Visibility check
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
@@ -314,16 +304,13 @@ class TileGroupHeader : public Printable {
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
                                           2 * sizeof(bool) +
-                                          sizeof(ItemPointer) +
-                                          sizeof(Spinlock);
+                                          sizeof(ItemPointer);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
   static const size_t insert_commit_offset = end_cid_offset + sizeof(cid_t);
   static const size_t delete_commit_offset = insert_commit_offset + sizeof(bool);
   static const size_t pointer_offset = delete_commit_offset + sizeof(bool);
-  static const size_t lock_bit_offset = pointer_offset + sizeof(ItemPointer);
-
 
   //===--------------------------------------------------------------------===//
   // Data members
