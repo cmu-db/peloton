@@ -54,10 +54,11 @@ public:
      *            If a connection is created by client, fd(socket) is -1.
      *        arg is used to pass the rpc_server pointer
      */
-    Connection(int fd, void* arg);
+    Connection(int fd, event_base* base, void* arg);
     ~Connection();
 
-    static void Dispatch(std::shared_ptr<Connection> conn);
+    //static void Dispatch(std::shared_ptr<Connection> conn);
+    static void Dispatch(Connection* conn);
 
     static void ServerReadCb(struct bufferevent *bev, void *ctx);
     static void ClientReadCb(struct bufferevent *bev, void *ctx);

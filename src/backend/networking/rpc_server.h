@@ -47,6 +47,9 @@ public:
   // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);
 
+  // get listener
+  Listener* GetListener();
+
   // for testing the rpc performance
   //long start_time_;
 

@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include "backend/common/mutex.h"
+#include "backend/networking/tcp_connection.h"
+
+#include <event2/event.h>
 #include <pthread.h>
 
 namespace peloton {
@@ -28,34 +32,33 @@ class ConnectionManager {
     // global singleton
     static ConnectionManager &GetInstance(void);
 
+    void ResterRpcServer(RpcServer* server);
+    event_base* GetEventBase();
+
     Connection* GetConn(std::string& addr);
-    Connection* GetConn(struct sockaddr);
 
-    Connection* FindConn(std::string& addr);
-    Connection* FindConn(struct sockaddr);
+    Connection* GetConn(NetworkAddress& addr);
+    Connection* FindConn(NetworkAddress& addr);
+    void AddConn(NetworkAddress addr, Connection* conn);
+    void AddConn(struct sockaddr& addr, Connection* conn);
+    bool DeleteConn(NetworkAddress& addr);
 
-    bool AddConn(std::string& addr);
-    bool AddConn(std::string& addr, Connection* conn);
-
-    bool DeleteConn(std::string& addr);
-
- private:
-    // the format of every item in addlist is ip:port
-    ConnectionManager(std::list<std::string&>& addrlist);
+    ConnectionManager();
     ~ConnectionManager();
 
  private:
 
+    // rpc server
+    RpcServer* rpc_server_;
+
     // all the connections established: addr --> connection instance
     std::map<NetworkAddress, Connection*> conn_pool_;
 
-    pthread_mutex_t mutex_;
-    pthread_cond_t cond_;
+    // a connection can be shared among pthreads
+    Mutex mutex_;
+    Condition cond_;
 
 };
 
 }  // End peloton networking
 }  // End peloton namespace
-
-
-

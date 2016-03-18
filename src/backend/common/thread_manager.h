@@ -116,7 +116,7 @@ class ThreadPool {
  private:
 
   // pthread can only access static function
-  static void InvokeEntry(void* args);
+  static void* InvokeEntry(void* args);
 
   // thread pool
   std::vector<pthread_t> thread_pool_;

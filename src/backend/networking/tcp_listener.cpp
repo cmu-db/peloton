@@ -15,6 +15,7 @@
 #include "tcp_connection.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
+#include "backend/networking/connection_manager.h"
 
 #include <event2/thread.h>
 #include <pthread.h>
@@ -93,7 +94,7 @@ void Listener::Run(void* arg) {
  */
 void Listener::AcceptConnCb(struct evconnlistener *listener,
                             evutil_socket_t fd,
-                            __attribute__((unused)) struct sockaddr *address,
+                            struct sockaddr *address,
                             __attribute__((unused)) int socklen,
                             void *ctx) {
 
@@ -104,17 +105,20 @@ void Listener::AcceptConnCb(struct evconnlistener *listener,
 
     // We should be careful here new connection would lead to memory leak
     // if we don't use shared ptr
-    std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, base, ctx);
+    //std::shared_ptr<Connection> conn = std::make_shared<Connection>(fd, base, ctx);
+    Connection* conn = new Connection(fd, base, ctx);
+
+    ConnectionManager::GetInstance().AddConn(*address, conn);
 
     LOG_INFO ("Server: connection received from fd: %d", fd);
 
     // prepaere workers
-    std::function<void()> worker_conn =
-            std::bind(&Connection::Dispatch, conn);
+    //std::function<void()> worker_conn =
+    //        std::bind(&Connection::Dispatch, conn);
 
     // add workers to thread pool
     //ThreadManager::GetInstance().AddTask(worker_conn);
-    ThreadManager::GetServerThreadPool().AddTask(worker_conn);
+    //ThreadManager::GetServerThreadPool().AddTask(worker_conn);
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,
