@@ -321,7 +321,11 @@ Datum TupleTransformer::GetDatum(Value value) {
       LOG_TRACE("%ld", bigint);
       datum = Int64GetDatum(bigint);
     } break;
-
+    case VALUE_TYPE_REAL: {
+      float real = float(ValuePeeker::PeekDouble(value));
+      LOG_TRACE("%f", real);
+      datum = Float4GetDatum(real);
+    } break;
     case VALUE_TYPE_DOUBLE: {
       double double_precision = ValuePeeker::PeekDouble(value);
       LOG_TRACE("%f", double_precision);

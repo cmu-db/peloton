@@ -667,7 +667,7 @@ class Value {
       case VALUE_TYPE_DECIMAL:
         rt = s_decimalPromotionTable[vtb];
         break;
-
+      case VALUE_TYPE_REAL:
       case VALUE_TYPE_DOUBLE:
         rt = s_doublePromotionTable[vtb];
         break;
@@ -2725,6 +2725,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
     case VALUE_TYPE_BIGINT:
       *reinterpret_cast<int64_t *>(storage) = GetBigInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
@@ -3129,6 +3130,7 @@ inline void Value::SerializeToExportWithoutNull(
       io.WriteLong(GetBigInt());
       return;
     }
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE: {
       io.WriteDouble(GetDouble());
       return;
