@@ -147,7 +147,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
   POSTGRES_VALUE_TYPE_INTEGER = 23,
   POSTGRES_VALUE_TYPE_BIGINT = 20,
-
+  POSTGRES_VALUE_TYPE_REAL = 700,  // add by heqing. handle missing type
   POSTGRES_VALUE_TYPE_DOUBLE = 701,
 
   POSTGRES_VALUE_TYPE_TEXT = 25,
@@ -161,16 +161,11 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
-  POSTGRES_VALUE_TYPE_TEXT_ARRAY =
-      1009,  // TEXTARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT2_ARRAY =
-      1005,  // INT2ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT4_ARRAY =
-      1007,  // INT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_OID_ARRAY =
-      1028,  // OIDARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY =
-      1021,  // FLOADT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
 
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
@@ -187,6 +182,7 @@ enum ValueType {
   VALUE_TYPE_SMALLINT = 4,    // 2 bytes int
   VALUE_TYPE_INTEGER = 5,     // 4 bytes int
   VALUE_TYPE_BIGINT = 6,      // 8 bytes int
+  VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
