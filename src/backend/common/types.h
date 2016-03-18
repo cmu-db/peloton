@@ -182,6 +182,7 @@ enum ValueType {
   VALUE_TYPE_SMALLINT = 4,    // 2 bytes int
   VALUE_TYPE_INTEGER = 5,     // 4 bytes int
   VALUE_TYPE_BIGINT = 6,      // 8 bytes int
+  VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
