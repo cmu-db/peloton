@@ -145,14 +145,6 @@ TEST_F(JoinTests, ComplicatedTest) {
   }
 }
 
-TEST_F(JoinTests, SpeedTest) {
-  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
-
-  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
-
-  ExecuteJoinTest(PLAN_NODE_TYPE_NESTLOOP, JOIN_TYPE_OUTER, SPEED_TEST);
-}
-
 TEST_F(JoinTests, LeftTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
@@ -204,6 +196,14 @@ TEST_F(JoinTests, JoinPredicateTest) {
       }
     }
   }
+}
+
+TEST_F(JoinTests, SpeedTest) {
+  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+
+  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+
+  ExecuteJoinTest(PLAN_NODE_TYPE_NESTLOOP, JOIN_TYPE_OUTER, SPEED_TEST);
 }
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
@@ -310,16 +310,13 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
                             left_table_logical_tile_ptrs);
 
   } else if (join_test_type == BOTH_TABLES_EMPTY) {
-    if (join_algorithm != PLAN_NODE_TYPE_NESTLOOP &&
-        join_algorithm != PLAN_NODE_TYPE_HASHJOIN) {
-      ExpectEmptyTileResult(&left_table_scan_executor);
-    }
-
+    ExpectEmptyTileResult(&left_table_scan_executor);
   } else if (join_test_type == LEFT_TABLE_EMPTY) {
     ExpectEmptyTileResult(&left_table_scan_executor);
   } else if (join_test_type == RIGHT_TABLE_EMPTY) {
     if (join_type == JOIN_TYPE_INNER || join_type == JOIN_TYPE_RIGHT) {
-      // do nothing. left child executor is never invoked
+      ExpectMoreThanOneTileResults(&left_table_scan_executor,
+                                   left_table_logical_tile_ptrs);
     } else {
       ExpectNormalTileResults(left_table_tile_group_count,
                               &left_table_scan_executor,
