@@ -34,6 +34,8 @@ include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
 
+include $(srcdir)/mc_driver/Makefile.am
+
 include $(top_srcdir)/third_party/Makefile.am
 
 bin_PROGRAMS = \
@@ -63,7 +65,8 @@ libpeloton_la_SOURCES = \
 			$(networking_FILES) \
 			$(planner_FILES) \
 			$(storage_FILES) \
-			$(logging_FILES)
+			$(logging_FILES) \
+			$(mc_driver_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
