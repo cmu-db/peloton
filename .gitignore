@@ -161,3 +161,6 @@ scripts/PelotonTest/lib
 third_party/nanomsg/
 third_party/nvml/
 third_party/logcabin/
+
+
+CMakeLists.txt
