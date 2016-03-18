@@ -39,8 +39,8 @@ class ConnectionManager {
 
     Connection* GetConn(NetworkAddress& addr);
     Connection* FindConn(NetworkAddress& addr);
-    void AddConn(NetworkAddress addr, Connection* conn);
-    void AddConn(struct sockaddr& addr, Connection* conn);
+    bool AddConn(NetworkAddress addr, Connection* conn);
+    bool AddConn(struct sockaddr& addr, Connection* conn);
     bool DeleteConn(NetworkAddress& addr);
 
     ConnectionManager();
