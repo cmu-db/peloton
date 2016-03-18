@@ -2797,6 +2797,7 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
     case VALUE_TYPE_BIGINT:
       *reinterpret_cast<int64_t *>(storage) = GetBigInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
