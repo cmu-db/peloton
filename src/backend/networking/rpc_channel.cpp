@@ -15,6 +15,7 @@
 #include "backend/networking/rpc_channel.h"
 #include "backend/networking/rpc_controller.h"
 #include "backend/networking/tcp_connection.h"
+#include "backend/networking/connection_manager.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
 
@@ -82,12 +83,13 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // call protobuf to serialize the request message into sending buf
   request->SerializeToArray(buf + sizeof(msg_len) + sizeof(opcode), request->ByteSize());
 
-  // crate a connection to prcess the rpc send and recv
-  std::shared_ptr<Connection> conn(new Connection(-1, NULL));
+  // GET a connection to prcess the rpc send and recv
+  //std::shared_ptr<Connection> conn(new Connection(-1, NULL));
+  Connection* conn = ConnectionManager::GetInstance().GetConn(addr_);
 
   // Connect to server with given address
-  if ( conn->Connect(addr_) == false ) {
-      LOG_TRACE("Connect Error");
+  if ( conn == NULL ) {
+      LOG_TRACE("Can't get connection");
 
       // rpc client use this info to decide whether re-send the message
       controller->SetFailed("Connect Error");
@@ -111,7 +113,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   // add workers to thread pool to send and recv data
   //ThreadManager::GetInstance().AddTask(worker_conn);
   //RpcClient::client_threads_.AddTask(worker_conn);
-  ThreadManager::GetClientThreadPool().AddTask(worker_conn);
+  ThreadPool::GetClientThreadPool().AddTask(worker_conn);
 }
 
 void RpcChannel::Close() {

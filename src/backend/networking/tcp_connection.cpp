@@ -110,7 +110,16 @@ const char* Connection::GetMethodName() {
     return method_name_.c_str();
 }
 
-void Connection::Dispatch(std::shared_ptr<Connection> conn) {
+//void Connection::Dispatch(std::shared_ptr<Connection> conn) {
+//    event_base_dispatch(conn->base_);
+//
+//    if (conn->rpc_server_ == NULL) {
+//        LOG_TRACE("Client: exit Dispatch");
+//    } else {
+//        LOG_TRACE("Server: exit Dispatch");
+//    }
+//}
+void Connection::Dispatch(Connection* conn) {
     event_base_dispatch(conn->base_);
 
     if (conn->rpc_server_ == NULL) {
@@ -119,7 +128,6 @@ void Connection::Dispatch(std::shared_ptr<Connection> conn) {
         LOG_TRACE("Server: exit Dispatch");
     }
 }
-
 void Connection::ClientReadCb(__attribute__((unused)) struct bufferevent *bev,
                               void *ctx) {
     LOG_TRACE("ClientReadCb is invoked");

@@ -114,28 +114,28 @@ void ThreadManager::Invoke() {
 
 //===--------------------------------------------------------------------===//
 // Thread Pool implemented using pthread. The functionality is similar
-// wtih thread manager. We probably combine this with thread manager
-// in the future
+// wtih thread manager, but mutex and cond are wrappered. We probably
+// combine this with thread manager in the future
 //===--------------------------------------------------------------------===//
 
 ThreadPool &ThreadPool::GetServerThreadPool(void) {
-  static ThreadManager server_thread_pool(NUM_THREAD);
+  static ThreadPool server_thread_pool(NUM_THREAD);
   return server_thread_pool;
 }
 
 ThreadPool &ThreadPool::GetClientThreadPool(void) {
-  static ThreadManager client_thread_pool(NUM_THREAD);
+  static ThreadPool client_thread_pool(NUM_THREAD);
   return client_thread_pool;
 }
 
 ThreadPool::ThreadPool(int threads) :
-    terminate_(false),
-    cond_ (&mutex_) {
+    cond_ (&mutex_),
+    terminate_(false) {
 
     // Create number of required threads and add them to the thread pool vector.
     for(int i = 0; i < threads; i++) {
         pthread_t threadx;
-        pthread_create(&threadx, NULL, &ThreadPool::InvokeEntry, static_cast<void *>(this));
+        pthread_create(&threadx, NULL, ThreadPool::InvokeEntry, static_cast<void *>(this));
         thread_pool_.emplace_back(threadx);
     }
 }
@@ -179,12 +179,14 @@ void ThreadPool::AddTask(std::function<void()> f) {
 }
 
 /*
- * @Param args include:
+ * @Param args
  *                      ThreadPool instance
- *                      Message to be processed
  */
-void ThreadPool::InvokeEntry(void* self) {
+void* ThreadPool::InvokeEntry(void* self) {
     ((ThreadPool *)self)->Invoke();
+
+    pthread_exit((void *)0);
+    return NULL;
 }
 
 void ThreadPool::Invoke() {
@@ -194,8 +196,10 @@ void ThreadPool::Invoke() {
     while(true) {
 
         // Put the lock on task mutex.
-        mutex_.Lock()
+        mutex_.Lock();
 
+        // wait will "atomically" unlock the mutex,
+        // allowing others access to the condition variable (for signalling)
         if (task_pool_.empty() && terminate_ == false) {
             cond_.Wait();
         }

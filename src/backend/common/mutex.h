@@ -66,11 +66,11 @@ class MutexLock {
 public:
     explicit MutexLock(Mutex* mutex) :
             mutex_(mutex) {
-        mutex_->lock();
+        mutex_->Lock();
     }
 
     ~MutexLock() {
-        mutex_->unlock();
+        mutex_->UnLock();
     }
 
 private:
@@ -100,7 +100,7 @@ public:
     // Wait for the condition to be signalled. This must be called with the Mutex held.
     // This must be called within a loop. See man pthread_cond_wait for details.
     void Wait() {
-        int status = pthread_cond_wait(&cond_, mutex_->raw_mutex());
+        int status = pthread_cond_wait(&cond_, mutex_->RawMutex());
         ASSERT(status == 0);
     }
 
@@ -122,14 +122,14 @@ public:
         }
         ASSERT(0 <= absolute.tv_nsec && absolute.tv_nsec < ONE_S_IN_NS);
 
-        return timedwait(absolute);
+        return Timedwait(absolute);
     }
 
     // Returns true if the lock is acquired, false otherwise. abstime is the *absolute* time.
     bool Timedwait(const struct timespec& absolute_time) {
         ASSERT(0 <= absolute_time.tv_nsec && absolute_time.tv_nsec < ONE_S_IN_NS);
 
-        int status = pthread_cond_timedwait(&cond_, mutex_->raw_mutex(), &absolute_time);
+        int status = pthread_cond_timedwait(&cond_, mutex_->RawMutex(), &absolute_time);
         if (status == ETIMEDOUT) {
             return false;
         }
