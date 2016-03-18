@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "connection_manager.h"
+#include "backend/common/assert.h"
 
 namespace peloton {
 namespace networking {
@@ -25,7 +26,15 @@ ConnectionManager::ConnectionManager() :
         rpc_server_(NULL),
         cond_(&mutex_) {}
 
-ConnectionManager::~ConnectionManager() {}
+ConnectionManager::~ConnectionManager() {
+
+    std::map<NetworkAddress, Connection*>::iterator iter;
+
+    for (iter = conn_pool_.begin(); iter != conn_pool_.end(); iter++) {
+        ASSERT( iter->second != NULL);
+        delete iter->second;
+    }
+}
 
 void ConnectionManager::ResterRpcServer(RpcServer* server) {
     // this function is only called once, but in case, we still have lock here
@@ -82,6 +91,7 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
         // Connect to server with the given address
         if ( conn->Connect(addr) == false ) {
             LOG_TRACE("Connect Error ---> ");
+            delete conn;
             return NULL;
         }
 
@@ -112,17 +122,27 @@ Connection* ConnectionManager::FindConn(NetworkAddress& addr) {
     return iter->second;
 }
 
-void ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
+bool ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
     // the map is a critical section
     mutex_.Lock();
-    conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+
+    std::map<NetworkAddress, Connection*>::iterator iter =
+            conn_pool_.find(addr);
+    if (iter != conn_pool_.end()) {
+        mutex_.UnLock();
+        return false;
+    } else {
+        conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+    }
     mutex_.UnLock();
+
+    return true;
 }
 
-void ConnectionManager::AddConn(struct sockaddr& addr, Connection* conn) {
+bool ConnectionManager::AddConn(struct sockaddr& addr, Connection* conn) {
     NetworkAddress netaddr(addr);
     // the map is a critical section
-    AddConn(netaddr, conn);
+    return AddConn(netaddr, conn);
 }
 /*
  * if there is no corresponding connection, return false
@@ -136,6 +156,8 @@ bool ConnectionManager::DeleteConn(NetworkAddress& addr) {
         mutex_.UnLock();
         return false;
     }
+    ASSERT(iter->second != NULL);
+    delete iter->second;
     conn_pool_.erase(iter);
     mutex_.UnLock();
 
