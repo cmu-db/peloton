@@ -502,6 +502,9 @@ LoggingType     peloton_logging_mode;
 // Directory for peloton logs
 char    *peloton_log_directory;
 
+// Wait Time Out
+int64_t peloton_wait_timeout;
+
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
