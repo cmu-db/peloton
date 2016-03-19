@@ -651,6 +651,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_BWTREE: {
       return "BWTREE";
     }
+    case INDEX_TYPE_HASH: {
+      return "HASH";
+    }
   }
   return "INVALID";
 }

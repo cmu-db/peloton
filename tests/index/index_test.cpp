@@ -38,6 +38,7 @@ index::Index *BuildIndex() {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
   IndexType index_type = INDEX_TYPE_BTREE;
+  index_type = INDEX_TYPE_HASH;
   // TODO: Uncomment the line below
   //index_type = INDEX_TYPE_BWTREE;
 
@@ -218,6 +219,45 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor){
     index->DeleteEntry(key4.get(), item1);
   }
 
+}
+
+TEST_F(IndexTests, InsertTest) {
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  std::vector<ItemPointer> locations;
+
+  // INDEX
+  std::unique_ptr<index::Index> index(BuildIndex());
+
+  // Single threaded test
+  size_t scale_factor = 1;
+  LaunchParallelTest(1, InsertTest, index.get(), pool, scale_factor);
+
+  locations = index->ScanAllKeys();
+  EXPECT_EQ(locations.size(), 9);
+
+  // Checks
+  std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
+
+  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
+  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
+  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+
+  locations = index->ScanKey(key0.get());
+  EXPECT_EQ(locations.size(), 1);
+
+  locations = index->ScanKey(key1.get());
+  EXPECT_EQ(locations.size(), 5);
+
+  locations = index->ScanKey(key2.get());
+  EXPECT_EQ(locations.size(), 1);
+  EXPECT_EQ(locations[0].block, item1.block);
+
+  delete tuple_schema;
 }
 
 TEST_F(IndexTests, DeleteTest) {

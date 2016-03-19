@@ -30,12 +30,11 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "default_hasher.hh"
-#include "city_hasher.hh"
 
 //! cuckoohash_map is the hash table class.
 template < class Key,
            class T,
-           class Hash = CityHasher<Key>,
+           class Hash = DefaultHasher<Key>,
            class Pred = std::equal_to<Key>,
            class Alloc = std::allocator<std::pair<const Key, T>>,
            size_t SLOT_PER_BUCKET = DEFAULT_SLOT_PER_BUCKET
@@ -332,9 +331,8 @@ private:
     }
 
     // hashfn returns an instance of the hash function
-    static hasher hashfn() {
-        static hasher hash;
-        return hash;
+    hasher hashfn() const {
+        return hash_;
     }
 
     // eqfn returns an instance of the equality predicate
@@ -354,11 +352,12 @@ public:
      * @throw std::invalid_argument if the given minimum load factor is invalid,
      * or if the initial space exceeds the maximum hashpower
      */
-    cuckoohash_map(key_equal eq = key_equal(),
+    cuckoohash_map(hasher hash = hasher(),
+                   key_equal eq = key_equal(),
                    size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
                    size_t mhp = NO_MAXIMUM_HASHPOWER)
-        : locks_(kNumLocks), eq_(eq) {
+        : locks_(kNumLocks), hash_(hash), eq_(eq) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -896,7 +895,7 @@ private:
     }
 
     // hashed_key hashes the given key.
-    static inline size_t hashed_key(const key_type &key) {
+    inline size_t hashed_key(const key_type &key) const {
         return hashfn()(key);
     }
 
@@ -1701,7 +1700,7 @@ private:
         // Creates a new hash table with hashpower new_hp and adds all
         // the elements from the old buckets
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
-            eq_, hashsize(new_hp) * slot_per_bucket);
+            hash_, eq_, hashsize(new_hp) * slot_per_bucket);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread = (
             (hashsize(hp) + threadnum - 1) / threadnum);
@@ -2046,6 +2045,7 @@ private:
     // Even though it's a vector, it should not ever change in size after the
     // initial allocation.
     mutable locks_t locks_;
+    hasher hash_;
     key_equal eq_;
 
     // per-core counters for the number of inserts and deletes
