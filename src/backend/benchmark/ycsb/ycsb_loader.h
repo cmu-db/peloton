@@ -20,9 +20,9 @@ namespace ycsb {
 
 extern configuration state;
 
-void CreateTable();
+void CreateUserTable();
 
-void LoadTable();
+void LoadUserTable();
 
 }  // namespace ycsb
 }  // namespace benchmark

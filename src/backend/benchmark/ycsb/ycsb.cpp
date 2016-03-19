@@ -26,11 +26,13 @@ configuration state;
 // Main Entry Point
 void RunBenchmark() {
 
-  CreateTable();
+  // Create and load the user table
+  CreateUserTable();
 
-  LoadTable();
+  LoadUserTable();
 
-  RunWorkload();
+  // Run the workload
+  //RunWorkload();
 
 }
 
