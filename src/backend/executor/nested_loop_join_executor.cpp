@@ -117,8 +117,8 @@ bool NestedLoopJoinExecutor::DExecute() {
      * Go over every pair of tuples in left (outer plan)
      * and pass the joinkey to the executor and inner plan (right)
      */
-    if (nl != nullptr) {  // nl is supposed to be set but here is for the
-                          // original version
+    if (nl != nullptr && !left_result_tiles_.empty()) {
+      // nl is supposed to be set but here is for the original version
       left_tile = left_result_tiles_.back().get();
       for (auto left_tile_row_itr : *left_tile) {
         expression::ContainerTuple<executor::LogicalTile> left_tuple(
