@@ -72,7 +72,7 @@ class FrontendLogger : public Logger {
 
   // period with which it collects log records from backend loggers
   // (in microseconds)
-  int64_t wait_timeout = 5;
+  int64_t wait_timeout;
 
   // used to indicate if backend has new logs
   bool need_to_collect_new_log_records = false;
