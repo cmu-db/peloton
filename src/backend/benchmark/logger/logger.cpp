@@ -13,7 +13,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "backend/benchmark/logger/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/logger/logger_workload.h"
 
