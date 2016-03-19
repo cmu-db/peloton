@@ -43,13 +43,10 @@
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/executor/update_executor.h"
-#include "backend/executor/nested_loop_join_executor.h"
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
 
 #include "backend/index/index_factory.h"
 

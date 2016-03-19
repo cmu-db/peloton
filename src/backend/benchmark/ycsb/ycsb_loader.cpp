@@ -38,26 +38,31 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-storage::DataTable *ycsb_table;
+storage::DataTable* ycsb_table;
 
-void CreateTable() {
+static const oid_t ycsb_field_length = 100;
+
+void CreateUserTable() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
-  const bool indexes = false;
 
   // Create schema first
   std::vector<catalog::Column> columns;
 
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+  auto column =
+      catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
+                      "YCSB_KEY", is_inlined);
+  columns.push_back(column);
+
+  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "" + std::to_string(col_itr), is_inlined);
-
+                        "FIELD" + std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
-  std::string table_name("HYADAPTTABLE");
+  std::string table_name("USERTABLE");
 
   /////////////////////////////////////////////////////////
   // Create table.
@@ -67,36 +72,36 @@ void CreateTable() {
   delete ycsb_table;
 
   bool own_schema = true;
-  bool adapt_table = true;
+  bool adapt_table = false;
   ycsb_table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 
-  // PRIMARY INDEX
-  if (indexes == true) {
-    std::vector<oid_t> key_attrs;
+  // Primary index on user key
+  std::vector<oid_t> key_attrs;
 
-    auto tuple_schema = ycsb_table->GetSchema();
-    catalog::Schema *key_schema;
-    index::IndexMetadata *index_metadata;
-    bool unique;
+  auto tuple_schema = ycsb_table->GetSchema();
+  catalog::Schema *key_schema;
+  index::IndexMetadata *index_metadata;
+  bool unique;
 
-    key_attrs = {0};
-    key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-    key_schema->SetIndexedColumns(key_attrs);
+  key_attrs = {0};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
 
-    unique = true;
+  unique = true;
 
-    index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+  index_metadata = new index::IndexMetadata(
+      "primary_index", 1000, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      tuple_schema, key_schema, unique);
 
-    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-    ycsb_table->AddIndex(pkey_index);
-  }
+  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  ycsb_table->AddIndex(pkey_index);
+
 }
 
-void LoadTable() {
+void LoadUserTable() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
@@ -114,13 +119,14 @@ void LoadTable() {
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
-    int populate_value = rowid;
 
     storage::Tuple tuple(table_schema, allocate);
+    auto key_value = ValueFactory::GetIntegerValue(rowid);
+    auto field_value = ValueFactory::GetStringValue(std::to_string(rowid));
 
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      auto value = ValueFactory::GetIntegerValue(populate_value);
-      tuple.SetValue(col_itr, value, pool.get());
+    tuple.SetValue(0, key_value, nullptr);
+    for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+      tuple.SetValue(col_itr, field_value, pool.get());
     }
 
     ItemPointer tuple_slot_id = ycsb_table->InsertTuple(txn, &tuple);
@@ -130,6 +136,7 @@ void LoadTable() {
   }
 
   txn_manager.CommitTransaction(txn);
+
 }
 
 
