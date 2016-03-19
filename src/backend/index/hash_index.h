@@ -31,12 +31,14 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType, typename ValueType, class KeyHasher, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyHasher,
+          class KeyComparator, class KeyEqualityChecker>
 class HashIndex : public Index {
   friend class IndexFactory;
 
   // Define the container type
-  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher, KeyEqualityChecker> Table;
+  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher,
+                         KeyEqualityChecker> Table;
 
  public:
   HashIndex(IndexMetadata *metadata);
@@ -50,7 +52,7 @@ class HashIndex : public Index {
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types,
-                                const ScanDirectionType& scan_direction);
+                                const ScanDirectionType &scan_direction);
 
   std::vector<ItemPointer> ScanAllKeys();
 
@@ -58,9 +60,7 @@ class HashIndex : public Index {
 
   std::string GetTypeName() const;
 
-  bool Cleanup() {
-    return true;
-  }
+  bool Cleanup() { return true; }
 
   size_t GetMemoryFootprint() {
     // TODO: implement it
