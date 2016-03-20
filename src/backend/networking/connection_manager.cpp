@@ -58,9 +58,9 @@ Connection* ConnectionManager::GetConn(std::string& addr) {
     return GetConn(netaddr);
 }
 
-event_base* ConnectionManager::GetEventBase() {
+struct event_base* ConnectionManager::GetEventBase() {
 
-    event_base* base;
+    struct event_base* base;
     // TODO: should we lock the server?
     //mutex_.Lock();
     if (rpc_server_ == NULL) {
@@ -86,7 +86,7 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
 
     if (iter == conn_pool_.end()) {
 
-        event_base* base = GetEventBase();
+        struct event_base* base = GetEventBase();
 
         if (base == NULL) {
             return NULL;

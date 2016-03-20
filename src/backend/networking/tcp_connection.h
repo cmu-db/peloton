@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
 #include "rpc_server.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "tcp_address.h"
+#include "backend/common/logger.h"
 
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -35,7 +35,7 @@ namespace networking {
 /*
  * Connection is thread-safe
  */
-
+class RpcServer;
 class Connection {
 
 typedef enum  {
@@ -54,15 +54,15 @@ public:
      *            If a connection is created by client, fd(socket) is -1.
      *        arg is used to pass the rpc_server pointer
      */
-    Connection(int fd, event_base* base, void* arg, NetworkAddress& addr);
+    Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr);
     ~Connection();
 
     //static void Dispatch(std::shared_ptr<Connection> conn);
-    static void Dispatch(Connection* conn);
+    //static void Dispatch(Connection* conn);
 
     static void ReadCb(struct bufferevent *bev, void *ctx);
     static void EventCb(struct bufferevent *bev, short events, void *ctx);
-    static void ProcessMessage(Connection* conn);
+    static void* ProcessMessage(void* connection);
 
     static void BufferCb(struct evbuffer *buffer,
             const struct evbuffer_cb_info *info, void *arg);
@@ -149,8 +149,8 @@ private:
 
     RpcServer* rpc_server_;
 
-    bufferevent* bev_;
-    event_base* base_;
+    struct bufferevent* bev_;
+    struct event_base* base_;
 
     std::string method_name_;
 

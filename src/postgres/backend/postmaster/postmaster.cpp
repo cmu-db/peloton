@@ -545,7 +545,7 @@ HANDLE PostmasterHandle;
 //extern uint64_t server_response_send_number;
 //extern uint64_t server_response_send_bytes;
 
-void Coordinator() {
+void* Coordinator(__attribute__((unused)) void* arg) {
 
     google::protobuf::Service* service = NULL;
 
@@ -561,6 +561,8 @@ void Coordinator() {
         std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
         delete service;
     }
+
+    return NULL;
 }
 
 /*
@@ -1285,14 +1287,19 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-  std::thread coordinator(Coordinator);
-  coordinator.detach();
+//  std::thread coordinator(Coordinator);
+//  coordinator.detach();
+
+  pthread_t testThread;
+  int ret = pthread_create(&testThread, NULL, Coordinator, NULL);
+      if( -1 == ret ) { printf( "create thread error\n" ); }
+  pthread_detach(testThread);
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
   // comment this to shutdown rpc test
-  std::thread testsend(TestSend);
-  testsend.detach();
+//  std::thread testsend(TestSend);
+//  testsend.detach();
 
   status = ServerLoop();
 

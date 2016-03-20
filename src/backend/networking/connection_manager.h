@@ -35,7 +35,7 @@ class ConnectionManager {
     void ResterRpcServer(RpcServer* server);
     RpcServer* GetRpcServer();
 
-    event_base* GetEventBase();
+    struct event_base* GetEventBase();
 
     Connection* GetConn(std::string& addr);
 
