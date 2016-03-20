@@ -28,6 +28,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint() {}
+  void DoCheckpoint();
 
  private:
 };

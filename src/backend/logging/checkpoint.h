@@ -11,6 +11,7 @@
  */
 
 #pragma once
+#include <cassert>
 
 namespace peloton {
 namespace logging {
@@ -22,6 +23,7 @@ namespace logging {
 class Checkpoint {
  public:
   virtual ~Checkpoint(void){};
+  virtual void DoCheckpoint() = 0;
 
  protected:
 };
