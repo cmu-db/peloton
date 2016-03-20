@@ -20,6 +20,7 @@
 #include <cassert>
 #include <thread>
 #include <algorithm>
+#include <random>
 
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
@@ -27,11 +28,14 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
+
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
 #include "backend/common/timer.h"
+#include "backend/common/generator.h"
+
 #include "backend/concurrency/transaction.h"
 
 #include "backend/executor/executor_context.h"
@@ -46,6 +50,7 @@
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
+#include "backend/expression/expression_util.h"
 
 #include "backend/index/index_factory.h"
 
@@ -66,13 +71,13 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat);
 
-Timer<std::ratio<1, 1> > timer;
-
 /////////////////////////////////////////////////////////
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
 void RunRead();
+
+void RunUpdate();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -80,18 +85,29 @@ void RunRead();
 
 void RunWorkload() {
   auto txn_count = state.transactions;
+  auto update_ratio = state.update_ratio;
 
-  // Reset timer
+  UniformGenerator generator;
+  Timer<> timer;
+
+  // Start timer
   timer.Reset();
   timer.Start();
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+    auto rng_val = generator.GetSample();
 
-    RunRead();
+    if (rng_val < update_ratio) {
+      RunUpdate();
+    }
+    else {
+      RunRead();
+    }
 
   }
 
+  // Stop timer
   timer.Stop();
   double throughput = txn_count/(timer.GetDuration());
 
@@ -105,9 +121,9 @@ static void WriteOutput(double stat) {
       << state.column_count << " :: ";
   std::cout << stat << " tps\n";
 
-  out << state.column_count << " ";
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
+  out << state.column_count << " ";
   out << stat << "\n";
   out.flush();
 }
@@ -219,6 +235,94 @@ void RunRead() {
 
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void RunUpdate() {
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count + 1;
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
+
+  // Create and set up index scan executor
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto lookup_key = rand() % tuple_count;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+
+  auto ycsb_pkey_index = ycsb_table->GetIndexWithOid(YCSB_TABLE_PKEY_INDEX_OID);
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+
+  // Create plan node.
+  auto predicate = nullptr;
+
+  planner::IndexScanPlan index_scan_node(ycsb_table,
+                                         predicate, column_ids,
+                                         index_scan_desc);
+
+  // Run the executor
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  /////////////////////////////////////////////////////////
+  // UPDATE
+  /////////////////////////////////////////////////////////
+
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  // Update the second attribute
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    if(col_itr != 1) {
+    direct_map_list.emplace_back(col_itr,
+                                 std::pair<oid_t, oid_t>(0, col_itr));
+    }
+  }
+
+  Value update_val = ValueFactory::GetStringValue(std::string("updated"));
+  target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+  planner::UpdatePlan update_node(
+      ycsb_table, new planner::ProjectInfo(std::move(target_list),
+                                           std::move(direct_map_list)));
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+  update_executor.AddChild(&index_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&update_executor);
 
   ExecuteTest(executors);
 

@@ -74,9 +74,10 @@ int orig_scale_factor;
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
-  state.scale_factor = 10.0;
-  state.transactions = 1;
+  state.scale_factor = 10;
+  state.transactions = 100;
   state.column_count = 10;
+  state.update_ratio = 0;
 
   // Parse args
   while (1) {
@@ -95,7 +96,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'c':
         state.column_count = atoi(optarg);
         break;
-      case 'w':
+      case 'u':
         state.update_ratio = atof(optarg);
         break;
       case 'h':
