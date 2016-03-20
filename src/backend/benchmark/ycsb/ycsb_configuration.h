@@ -22,6 +22,8 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
+#define YCSB_TABLE_PKEY_INDEX_OID  1001
+
 extern int orig_scale_factor;
 
 class configuration {

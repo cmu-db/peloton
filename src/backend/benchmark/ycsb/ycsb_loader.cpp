@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/ycsb/ycsb_loader.h"
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -21,6 +19,8 @@
 #include <ctime>
 #include <cassert>
 
+#include "backend/benchmark/ycsb/ycsb_loader.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
@@ -50,13 +50,13 @@ void CreateUserTable() {
   std::vector<catalog::Column> columns;
 
   auto column =
-      catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
                         "FIELD" + std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
@@ -92,7 +92,7 @@ void CreateUserTable() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 1000, INDEX_TYPE_BTREE,
+      "primary_index", YCSB_TABLE_PKEY_INDEX_OID, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema, key_schema, unique);
 
