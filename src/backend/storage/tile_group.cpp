@@ -103,8 +103,6 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
     return INVALID_OID;
   }
 
-  // tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id);
-
   oid_t tile_column_count;
   oid_t column_itr = 0;
 

@@ -22,6 +22,8 @@
 namespace peloton {
     namespace concurrency {
 
+        class Transaction;
+
         extern thread_local Transaction *current_txn;
 
         class TransactionManager {

@@ -230,34 +230,49 @@ class TileGroupHeader : public Printable {
   // Visibility check
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-    if (tuple_txn_id == INVALID_TXN_ID) {
-      // the tuple has been deleted.
-      return false;
-    }
-
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
     cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
+    if (tuple_txn_id == INVALID_TXN_ID) {
+      // the tuple is not available.
+      return false;
+    }
     bool own = (txn_id == tuple_txn_id);
 
     // there are exactly two versions that can be owned by a transaction.
     if (own == true) {
-      if (tuple_begin_cid == MAX_CID) {
+      if (tuple_end_cid == MAX_CID) {
         // the only version that is visible is the newly inserted one.
         return true;
       } else {
-        // the old version is not visible.
+        // the older version is not visible.
         return false;
       }
     }
     else {
       bool activated = (at_lcid >= tuple_begin_cid);
       bool invalidated = (at_lcid >= tuple_end_cid);
-      if (activated && !invalidated) {
-        return true;
-      }
-      else {
-        return false;
+      if (tuple_txn_id != INITIAL_TXN_ID) {
+        // if the tuple is owned by other transactions.
+        if (tuple_end_cid == MAX_CID) {
+          // currently, we do not handle cascading abort. so never read an uncommitted version.
+          return false;
+        } else {
+          // the older version may be visible.
+          if (activated && !invalidated) {
+            return true;
+          } else{
+            return false;
+          }
+        }
+      } else {
+        // if the tuple is not owned by any transaction.
+        if (activated && !invalidated) {
+          return true;
+        }
+        else {
+          return false;
+        }
       }
     }
 

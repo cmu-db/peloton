@@ -26,15 +26,15 @@ void Transaction::RecordRead(ItemPointer location) {
   read_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordWritten(ItemPointer location) {
+void Transaction::RecordWrite(ItemPointer location) {
   written_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordInserted(ItemPointer location) {
+void Transaction::RecordInsert(ItemPointer location) {
   inserted_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordDeleted(ItemPointer location) {
+void Transaction::RecordDelete(ItemPointer location) {
   deleted_tuples[location.block].push_back(location.offset);
 }
 

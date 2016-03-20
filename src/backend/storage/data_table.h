@@ -94,6 +94,8 @@ class DataTable : public AbstractTable {
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
 
+  ItemPointer InsertVersion(const concurrency::Transaction *transaction,
+                            const Tuple *tuple);
   // insert tuple in table
   ItemPointer InsertTuple(const concurrency::Transaction *transaction,
                           const Tuple *tuple);
