@@ -202,31 +202,6 @@ class TileGroupHeader : public Printable {
     return true;
   }
 
-  bool IsUpdatable(const oid_t tuple_slot_id, txn_id_t txn_id) {
-    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-
-    bool own = (txn_id == tuple_txn_id);
-    if (own == true) {
-      return true;
-    } else {
-      // if already locked by other transactions, then abort.
-      if (tuple_txn_id != INITIAL_TXN_ID) {
-        return false;
-      }
-      cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
-      // if already updated by other transactions, then abort.
-      if (tuple_end_cid != MAX_CID) {
-        return false;
-      }
-      return true;
-    }
-  }
-
-  bool IsOwned(const oid_t tuple_slot_id, txn_id_t txn_id) {
-    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-    return tuple_txn_id == txn_id;
-  }
-
   // Visibility check
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);

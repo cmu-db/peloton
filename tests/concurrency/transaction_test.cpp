@@ -45,9 +45,9 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 TEST_F(TransactionTests, TransactionTest) {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
-  LaunchParallelTest(8, TransactionTest, &txn_manager);
+  LaunchParallelTest(1, TransactionTest, &txn_manager);
 
-  std::cout << "Last Commit Id :: " << txn_manager.GetLastCommitId() << "\n";
+  std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
 }
 
 }  // End test namespace
