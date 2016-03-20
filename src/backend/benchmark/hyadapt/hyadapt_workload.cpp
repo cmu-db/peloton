@@ -331,7 +331,7 @@ void RunDirectTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunAggregateTest() {
@@ -486,7 +486,7 @@ void RunAggregateTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunArithmeticTest() {
@@ -627,7 +627,7 @@ void RunArithmeticTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunJoinTest() {
@@ -730,7 +730,7 @@ void RunJoinTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunSubsetTest(SubsetType subset_test_type, double fraction,
@@ -833,7 +833,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunInsertTest() {
@@ -888,7 +888,7 @@ void RunInsertTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunUpdateTest() {
@@ -957,7 +957,7 @@ void RunUpdateTest() {
 
   ExecuteTest(executors, columns_accessed, cost);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 /////////////////////////////////////////////////////////
@@ -2092,7 +2092,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 
   ExecuteConcurrentTest(executors, thread_id, num_threads, scan_ratio);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 
