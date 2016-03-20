@@ -89,8 +89,8 @@ bool UpdateExecutor::DExecute() {
 
     txn_id_t tid = transaction_->GetTransactionId();
     storage::Tuple *new_tuple = nullptr;
-    if (tile_group_header->IsOwned(physical_tuple_id, tid) == true){
-      // if the thread is the owner of the tuple, then directly update the tuple.
+    if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
+      // if the thread is the owner of the tuple, then directly update in place.
       new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
@@ -100,9 +100,15 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
       // TODO: update in place.
 
-    } else if (tile_group_header->IsUpdatable(physical_tuple_id, tid)){
+    } else if (tile_group_header->GetTransactionId(physical_tuple_id) == INITIAL_TXN_ID &&
+            tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
+
+      if (tile_group_header->LatchTupleSlot(physical_tuple_id, tid) == false){
+        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        transaction_->SetResult(Result::RESULT_FAILURE);
+        return false;
+      }
       tile_group_header->SetEndCommitId(physical_tuple_id, transaction_->GetStartCommitId());
-      tile_group_header->LatchTupleSlot(physical_tuple_id, tid);
 
       // if it is the latest version and not locked by other threads, then insert a new version.
       new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
