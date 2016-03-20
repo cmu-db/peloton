@@ -108,6 +108,7 @@ namespace peloton {
                     tile_group->CommitDeletedTuple(tuple_slot, current_txn->txn_id, end_commit_id);
                 }
             }
+            delete current_txn;
         }
 
         void TransactionManager::AbortTransaction(){
@@ -128,6 +129,7 @@ namespace peloton {
                     new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
                 }
             }
+            delete current_txn;
         }
 
         void TransactionManager::ResetStates() {
