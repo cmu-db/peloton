@@ -31,18 +31,22 @@
 // Timer
 //===--------------------------------------------------------------------===//
 
-template<typename ResolutionRatio>
+typedef std::chrono::high_resolution_clock clock_;
+
+typedef std::chrono::time_point<clock_> time_point_;
+
+template<typename ResolutionRatio = std::ratio<1> >
 class Timer{
 
  public:
   Timer() : elapsed(0) {}
 
   void Start(){
-    begin = std::chrono::high_resolution_clock::now();
+    begin = clock_::now();
   }
 
   void Stop() {
-    end = std::chrono::high_resolution_clock::now();
+    end = clock_::now();
 
     double duration =
         std::chrono::duration_cast<
@@ -61,10 +65,10 @@ class Timer{
  private:
 
   // Start
-  std::chrono::time_point<std::chrono::high_resolution_clock> begin;
+  time_point_ begin;
 
   // End
-  std::chrono::time_point<std::chrono::high_resolution_clock> end;
+  time_point_ end;
 
   // Elapsed time (with desired resolution)
   double elapsed;

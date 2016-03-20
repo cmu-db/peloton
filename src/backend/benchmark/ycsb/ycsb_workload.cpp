@@ -83,12 +83,16 @@ void RunWorkload() {
 
   // Reset timer
   timer.Reset();
+  timer.Start();
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+
     RunRead();
+
   }
 
+  timer.Stop();
   double throughput = txn_count/(timer.GetDuration());
 
   WriteOutput(throughput);
@@ -113,10 +117,8 @@ static void WriteOutput(double stat) {
 /////////////////////////////////////////////////////////
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
+  time_point_ start, end;
   bool status = false;
-
-  timer.Start();
 
   // Run all the executors
   for (auto executor : executors) {
@@ -134,8 +136,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
       result_tiles.emplace_back(result_tile.release());
     }
   }
-
-  timer.Stop();
 
 }
 
