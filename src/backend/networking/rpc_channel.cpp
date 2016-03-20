@@ -36,22 +36,23 @@ RpcChannel::~RpcChannel() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                 Request message structure:
-// --Header:  message length (Opcode + request),         uint32_t (4bytes)
+//                  Request message structure:
+// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
+// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
 // --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
-// --Request: the serialization result of protobuf       Header-8
+// --Content: the serialization result of protobuf       Header-8-2
 //
-// TODO: We did not add checksum code in this version
-////////////////////////////////////////////////////////////////////////////////
+// TODO: We did not add checksum code in this version     ///////////////
 
 /*
- * Channel is only use by protobuf rpc client. So this method is sending request msg
+ * Channel is only invoked by protobuf rpc client. So this method is sending request msg
  */
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                             google::protobuf::RpcController* controller,
                             const google::protobuf::Message* request,
                             __attribute__((unused)) google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
+
   assert(request != nullptr);
   // run call back function
   if (done != NULL) {
@@ -62,12 +63,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   std::string methodname = std::string( method->full_name() );
   std::hash<std::string> string_hash_fn;
 
+  // Set the type
+  uint16_t type = MSG_TYPE_REQ;
+
   // Get the hashcode for the rpc function name
   // we use unit64_t because we should specify the exact length
   uint64_t opcode = string_hash_fn(methodname);
-
-  // Set the type
-  uint16_t type = MSG_TYPE_REQ;
 
   // prepare the sending buf
   uint32_t msg_len = request->ByteSize() + OPCODELEN + TYPELEN;
@@ -112,15 +113,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       LOG_TRACE("Write data Error");
       return;
   }
-
-  // prepaere workers_thread to send and recv data
-  //std::function<void()> worker_conn =
-  //        std::bind(&Connection::Dispatch, conn);
-
-  // add workers to thread pool to send and recv data
-  //ThreadManager::GetInstance().AddTask(worker_conn);
-  //RpcClient::client_threads_.AddTask(worker_conn);
-  //ThreadPool::GetClientThreadPool().AddTask(worker_conn);
 }
 
 void RpcChannel::Close() {
