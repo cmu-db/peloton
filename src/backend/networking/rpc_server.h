@@ -51,7 +51,7 @@ public:
   Listener* GetListener();
 
   // for testing the rpc performance
-  //long start_time_;
+  long start_time_;
 
 private:
 
