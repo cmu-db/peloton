@@ -32,7 +32,7 @@ void RunBenchmark() {
   LoadUserTable();
 
   // Run the workload
-  //RunWorkload();
+  RunWorkload();
 
 }
 

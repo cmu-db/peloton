@@ -123,12 +123,13 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     if (special_case == true) {
 
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
-      index_key.SetFromKey(start_key.get());
 
       // Construct the lower bound key tuple
       all_constraints_are_equal =
           ConstructLowerBoundTuple(start_key.get(), values, key_column_ids, expr_types);
       LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
+
+      index_key.SetFromKey(start_key.get());
 
       // Set scan begin iterator
       scan_begin_itr = container.equal_range(index_key).first;
