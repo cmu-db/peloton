@@ -32,6 +32,9 @@ struct total_processed {
 namespace peloton {
 namespace networking {
 
+/*
+ * A connection includes a bufferevent which must be specified THREAD-SAFE
+ */
 Connection::Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr) :
       addr_(addr), close_(false), status_(INIT), base_(base) {
 
@@ -39,17 +42,12 @@ Connection::Connection(int fd, struct event_base* base, void* arg, NetworkAddres
     assert( arg != NULL );
     rpc_server_ = (RpcServer*)arg;
 
-//    base_ = event_base_new(); // note: we share the base among different connections
-
     // BEV_OPT_THREADSAFE must be specified
     bev_ = bufferevent_socket_new(base_, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
 
-    int ret = bufferevent_enable(bev_, BEV_OPT_THREADSAFE );
-    if( ret < 0 ) { printf( "----------------------------\n" ); }
-
     struct total_processed *tp = (total_processed *)malloc(sizeof(*tp));
     tp->n = 0;
-    /* we can add callback function with output and input evbuffer*/
+    /* we can add callback function with output and input evbuffer */
     evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
     // set read callback and event callback
@@ -60,29 +58,27 @@ Connection::Connection(int fd, struct event_base* base, void* arg, NetworkAddres
 
 Connection::~Connection() {
 
-//    if (rpc_server_ == NULL) {
-//        LOG_TRACE("Client: begin connection destroy");
-//    } else {
-//        LOG_TRACE("Server: begin connection destroy");
-//    }
-
     // We must free event before free base
     this->Close();
-
-    // After free event, base is finally freed
-//   event_base_free(base_);
 }
 
-// set the connection status
+/*
+ * Set the connection status
+ */
 void Connection::SetStatus(ConnStatus status) {
     status_ = status;
 }
 
-// get the connection status
+/*
+ * Get the connection status
+ */
 Connection::ConnStatus Connection::GetStatus() {
     return status_;
 }
 
+/*
+ * Connect is only used by client to connect to server
+ */
 bool Connection::Connect(const NetworkAddress& addr) {
 
     struct sockaddr_in sin;
@@ -91,7 +87,6 @@ bool Connection::Connect(const NetworkAddress& addr) {
     if (bufferevent_socket_connect(bev_, (struct sockaddr *) &sin, sizeof(sin))
             < 0) {
         /* Error starting connection */
-        //bufferevent_free (bev_);
         return false;
     }
 
@@ -106,15 +101,14 @@ void Connection::Close() {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//                  message structure:
-// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
-// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
-// --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
-// --Content: the serialization result of protobuf       Header-8-2
-//
-// TODO: We did not add checksum code in this version
-
+/*
+ * @brief ProcessMessage is responsible for processing a message.
+ *        Generally, a message is either a request or a response.
+ *        So the type of a message is REQ or REP.
+ *        The detail processing is through RPC call.
+ *        Note: if a new RPC message is added we only need to implement the
+ *          corresponding RPC method.
+ */
 void* Connection::ProcessMessage(void* connection) {
 
     assert(connection != NULL);
@@ -284,30 +278,29 @@ void* Connection::ProcessMessage(void* connection) {
          */
     }
 
-    std::cout << "return after adding data" << std::endl;
     return NULL;
 }
 
+/*
+ * ReadCb is invoked when there is new data coming.
+ */
 void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
                               void *ctx) {
 
-    /* This callback is invoked when there is data to read on bev. */
-    //struct evbuffer *input = bufferevent_get_input(bev);
-    //struct evbuffer *output = bufferevent_get_output(bev);
     // TODO: We might use bev in future
     assert(bev != NULL);
 
     Connection* conn = (Connection*) ctx;
 
-    // change the status of the connection
-    //conn->SetStatus(RECVING);
+    /* Change the status of the connection */
+    // conn->SetStatus(RECVING);
 
     /*
      * Process the message will invoke rpc call.
      * Note: this might take a long time. So we put this in a thread
      */
 
-    // prepaere workers_thread to send and recv data
+    /* prepaere workers_thread to send and recv data */
     std::function<void()> worker_conn =
             std::bind(&Connection::ProcessMessage, conn);
 
@@ -371,7 +364,9 @@ RpcServer* Connection::GetRpcServer() {
     return rpc_server_;
 }
 
-// Get the readable length of the read buf
+/*
+ * Get the readable length of the read buf
+ */
 int Connection::GetReadBufferLen() {
     /*
      * Locking the bufferevent with this function will
@@ -419,7 +414,9 @@ int Connection::CopyReadBuffer(char *buffer, int len) {
     return evbuffer_copyout(input, buffer, len);
 }
 
-// Get the lengh a write buf
+/*
+ * Get the lengh a write buf
+ */
 int Connection::GetWriteBufferLen() {
     /*
      * Note: it is automatically locked so we don't need
@@ -431,11 +428,10 @@ int Connection::GetWriteBufferLen() {
     return evbuffer_get_length(output);
 }
 
-// Add data to write buff
+/*
+ * Add data to write buff
+ */
 bool Connection::AddToWriteBuffer(char *buffer, int len) {
-
-    //status_ = SENDING;
-
     /*
      * Note: it is automatically locked so we don't need
      *       to explicitly lock it
@@ -456,7 +452,9 @@ bool Connection::AddToWriteBuffer(char *buffer, int len) {
     }
 }
 
-// put data in read buf into write buf
+/*
+ * put data in read buf into write buf
+ */
 void Connection::MoveBufferData() {
 
     /*

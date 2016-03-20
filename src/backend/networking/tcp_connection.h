@@ -29,13 +29,22 @@
 namespace peloton {
 namespace networking {
 
+////////////////////////////////////////////////////////////////////////////////
+//                  message structure:
+// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
+// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
+// --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
+// --Content: the serialization result of protobuf       Header-8-2
+//
+// TODO: We did not add checksum code in this version     ///////////////
+
+
 #define HEADERLEN  4    // the length should be equal with sizeof uint32_t
 #define OPCODELEN  8    // the length should be equal with sizeof uint64_t
 #define TYPELEN    2    // the length should be equal with sizeof uint16_t
 /*
  * Connection is thread-safe
  */
-class RpcServer;
 class Connection {
 
 typedef enum  {
@@ -57,9 +66,6 @@ public:
     Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr);
     ~Connection();
 
-    //static void Dispatch(std::shared_ptr<Connection> conn);
-    //static void Dispatch(Connection* conn);
-
     static void ReadCb(struct bufferevent *bev, void *ctx);
     static void EventCb(struct bufferevent *bev, short events, void *ctx);
     static void* ProcessMessage(void* connection);
@@ -68,7 +74,6 @@ public:
             const struct evbuffer_cb_info *info, void *arg);
 
     RpcServer* GetRpcServer();
-//    RpcChannel* GetRpcClient();
 
     /*
      * set the connection status
