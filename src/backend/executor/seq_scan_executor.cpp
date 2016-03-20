@@ -120,7 +120,7 @@ bool SeqScanExecutor::DExecute() {
 
       auto transaction_ = executor_context_->GetTransaction();
       txn_id_t txn_id = transaction_->GetTransactionId();
-      cid_t commit_id = transaction_->GetStartCommitId();
+      cid_t start_cid = transaction_->GetStartCommitId();
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility
@@ -135,8 +135,7 @@ bool SeqScanExecutor::DExecute() {
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
         // check transaction visibility
-        if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) ==
-            false) {
+        if (tile_group_header->IsVisible(tuple_id, txn_id, start_cid) == false) {
           continue;
         }
 

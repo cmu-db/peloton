@@ -88,7 +88,6 @@ bool UpdateExecutor::DExecute() {
              visible_tuple_id, physical_tuple_id);
 
     txn_id_t tid = transaction_->GetTransactionId();
-    ItemPointer location;
     storage::Tuple *new_tuple = nullptr;
     if (tile_group_header->IsOwned(physical_tuple_id, tid) == true){
       // if the thread is the owner of the tuple, then directly update the tuple.
@@ -102,6 +101,9 @@ bool UpdateExecutor::DExecute() {
       // TODO: update in place.
 
     } else if (tile_group_header->IsUpdatable(physical_tuple_id, tid)){
+      tile_group_header->SetEndCommitId(physical_tuple_id, transaction_->GetStartCommitId());
+      tile_group_header->LatchTupleSlot(physical_tuple_id, tid);
+
       // if it is the latest version and not locked by other threads, then insert a new version.
       new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
@@ -112,21 +114,26 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
       // finally insert updated tuple into the table
-      location = target_table_->InsertTuple(transaction_, new_tuple);
+      ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple);
+      tile_group_header->SetPrevItemPointer(physical_tuple_id, location);
+
       if (location.block == INVALID_OID) {
         delete new_tuple;
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
       }
+
+      executor_context_->num_processed += 1;  // updated one
+
+      transaction_->RecordWrite(ItemPointer(tile_group_id, physical_tuple_id));
+
     } else{
       // transaction should be aborted as we cannot update the latest version.
       LOG_INFO("Fail to update tuple. Set txn failure.");
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
-
-
 
     // (A) Try to delete the tuple first
     //auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
@@ -153,9 +160,6 @@ bool UpdateExecutor::DExecute() {
 //      return false;
 //    }
 
-    executor_context_->num_processed += 1;  // updated one
-
-    transaction_->RecordWritten(location);
 
     // Logging
 //    {

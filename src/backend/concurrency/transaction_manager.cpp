@@ -20,6 +20,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
     namespace concurrency {
@@ -57,18 +58,34 @@ namespace peloton {
             for (auto entry : read_tuples){
                 oid_t tile_group_id = entry.first;
                 auto tile_group = manager.GetTileGroup(tile_group_id);
+                auto tile_group_header = tile_group->GetHeader();
                 for (auto tuple_slot : entry.second){
-                //    tile_group->CommitInsertedTuple(tuple_slot, current_txn->txn_id, end_commit_id);
+                    if (tile_group_header->GetTransactionId(tuple_slot) == current_txn->GetTransactionId()){
+                        // the version is owned by the transaction.
+                        continue;
+                    }
+                    else {
+                        if (tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
+                            continue;
+                        }
+                    }
+                    AbortTransaction();
+                    return;
                 }
-
             }
 
             auto written_tuples = current_txn->GetWrittenTuples();
             for (auto entry : written_tuples){
                 oid_t tile_group_id = entry.first;
                 auto tile_group = manager.GetTileGroup(tile_group_id);
-                for (auto tuple_slot : entry.second){
-                //    tile_group->CommitDeletedTuple(tuple_slot, current_txn->txn_id, end_commit_id);
+                auto tile_group_header = tile_group->GetHeader();
+                for (auto tuple_slot : entry.second) {
+                    tile_group_header->ReleaseTupleSlot(tuple_slot, current_txn->GetTransactionId());
+                    tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+                    ItemPointer new_version = tile_group_header->GetPrevItemPointer(tuple_slot);
+                    auto new_tile_group_header = manager.GetTileGroup(new_version.block)->GetHeader();
+                    new_tile_group_header->SetTransactionId(new_version.offset, current_txn->GetTransactionId());
+                    new_tile_group_header->SetBeginCommitId(new_version.offset, end_commit_id);
                 }
             }
 
@@ -95,7 +112,22 @@ namespace peloton {
 
         void TransactionManager::AbortTransaction(){
             LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
-
+            auto &manager = catalog::Manager::GetInstance();
+            auto written_tuples = current_txn->GetWrittenTuples();
+            for (auto entry : written_tuples){
+                oid_t tile_group_id = entry.first;
+                auto tile_group = manager.GetTileGroup(tile_group_id);
+                auto tile_group_header = tile_group->GetHeader();
+                for (auto tuple_slot : entry.second) {
+                    tile_group_header->ReleaseTupleSlot(tuple_slot, current_txn->GetTransactionId());
+                    tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+                    ItemPointer new_version = tile_group_header->GetPrevItemPointer(tuple_slot);
+                    auto new_tile_group_header = manager.GetTileGroup(new_version.block)->GetHeader();
+                    new_tile_group_header->SetTransactionId(new_version.offset, INVALID_TXN_ID);
+                    new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+                    new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+                }
+            }
         }
 
         void TransactionManager::ResetStates() {

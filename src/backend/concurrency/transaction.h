@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <atomic>
 #include <vector>
 #include <map>
@@ -71,13 +72,13 @@ class Transaction : public Printable {
   void RecordRead(ItemPointer location);
 
   // record write set
-  void RecordWritten(ItemPointer location);
+  void RecordWrite(ItemPointer location);
 
   // record insert set
-  void RecordInserted(ItemPointer location);
+  void RecordInsert(ItemPointer location);
 
   // record delete set
-  void RecordDeleted(ItemPointer location);
+  void RecordDelete(ItemPointer location);
 
   const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
 

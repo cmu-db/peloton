@@ -189,6 +189,21 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 // INSERT
 //===--------------------------------------------------------------------===//
 
+ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+
+  IncreaseNumberOfTuplesBy(1);
+  return location;
+}
+
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
