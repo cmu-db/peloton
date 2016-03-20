@@ -14,6 +14,9 @@
 #include "peloton_service.h"
 #include "rpc_type.h"
 
+#include <pthread.h>
+
+#include <iostream>
 #include <mutex>
 
 /*** this is for the test of rpc performance
@@ -22,10 +25,14 @@ uint64_t server_response_send_number = 0;  // number of rpc
 uint64_t server_response_send_bytes = 0;  // bytes
 */
 
+struct total_processed {
+    size_t n;
+};
+
 namespace peloton {
 namespace networking {
 
-Connection::Connection(int fd, event_base* base, void* arg, NetworkAddress& addr) :
+Connection::Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr) :
       addr_(addr), close_(false), status_(INIT), base_(base) {
 
     // we must pass rpc_server when new a connection
@@ -35,11 +42,15 @@ Connection::Connection(int fd, event_base* base, void* arg, NetworkAddress& addr
 //    base_ = event_base_new(); // note: we share the base among different connections
 
     // BEV_OPT_THREADSAFE must be specified
-    // if fd==-1, it is a connection from client
     bev_ = bufferevent_socket_new(base_, fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
 
+    int ret = bufferevent_enable(bev_, BEV_OPT_THREADSAFE );
+    if( ret < 0 ) { printf( "----------------------------\n" ); }
+
+    struct total_processed *tp = (total_processed *)malloc(sizeof(*tp));
+    tp->n = 0;
     /* we can add callback function with output and input evbuffer*/
-    //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
+    evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
     // set read callback and event callback
     bufferevent_setcb(bev_, ReadCb, NULL, EventCb, this);
@@ -59,7 +70,7 @@ Connection::~Connection() {
     this->Close();
 
     // After free event, base is finally freed
-    event_base_free(base_);
+//   event_base_free(base_);
 }
 
 // set the connection status
@@ -104,9 +115,11 @@ void Connection::Close() {
 //
 // TODO: We did not add checksum code in this version
 
-void Connection::ProcessMessage(Connection* conn) {
+void* Connection::ProcessMessage(void* connection) {
 
-    assert(conn != NULL);
+    assert(connection != NULL);
+
+    Connection* conn = (Connection*)connection;
 
     while (conn->GetReadBufferLen()) {
 
@@ -116,7 +129,7 @@ void Connection::ProcessMessage(Connection* conn) {
         // If the total readable data is too less
         if (readable_len < HEADERLEN + OPCODELEN + TYPELEN) {
             LOG_TRACE("Readable data is too less, return");
-            return;
+            return NULL;
         }
 
         /*
@@ -128,7 +141,7 @@ void Connection::ProcessMessage(Connection* conn) {
         int nread = conn->CopyReadBuffer((char*) &msg_len, HEADERLEN);
         if(nread != HEADERLEN) {
           LOG_ERROR("nread does not match header length \n");
-          return;
+          return NULL;
         }
 
         /*
@@ -137,7 +150,7 @@ void Connection::ProcessMessage(Connection* conn) {
          */
         if (readable_len < msg_len + HEADERLEN) {
             LOG_TRACE("Readable data is less than a message, return");
-            return;
+            return NULL;
         }
 
         /*
@@ -162,7 +175,7 @@ void Connection::ProcessMessage(Connection* conn) {
 
         if (rpc_method == NULL) {
             LOG_TRACE("No method found");
-            return;
+            return NULL;
         }
 
         const google::protobuf::MethodDescriptor *method = rpc_method->method_;
@@ -270,6 +283,9 @@ void Connection::ProcessMessage(Connection* conn) {
         // end test
          */
     }
+
+    std::cout << "return after adding data" << std::endl;
+    return NULL;
 }
 
 void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
@@ -284,7 +300,7 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
     Connection* conn = (Connection*) ctx;
 
     // change the status of the connection
-    conn->SetStatus(RECVING);
+    //conn->SetStatus(RECVING);
 
     /*
      * Process the message will invoke rpc call.
@@ -302,7 +318,6 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
      * the former is still being processed
      */
     ThreadPool::GetServerThreadPool().AddTask(worker_conn);
-
 }
 
 void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
@@ -343,30 +358,31 @@ void Connection::BufferCb(struct evbuffer *buffer,
             << "info->n_added: " << info->n_added
             << std::endl;
 
-//    struct total_processed *tp = (struct total_processed *) arg;
-//    size_t old_n = tp->n;
-//    int megabytes, i;
-//    total_send_ += info->n_deleted;
+    struct total_processed *tp = (total_processed *)arg;
+    size_t old_n = tp->n;
+    int megabytes, i;
+    tp->n += info->n_deleted;
+    megabytes = ((tp->n) >> 20) - (old_n >> 20);
+    for (i=0; i<megabytes; ++i)
+        putc('.', stdout);
 }
 
 RpcServer* Connection::GetRpcServer() {
     return rpc_server_;
 }
-//
-//RpcChannel* Connection::GetRpcClient() {
-//    return (RpcChannel*) client_server_;
-//}
 
 // Get the readable length of the read buf
 int Connection::GetReadBufferLen() {
     /*
      * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * lock its associated evbuffers as well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_get_length(input);
-    bufferevent_unlock(bev_);
 }
 
 /*
@@ -377,13 +393,13 @@ int Connection::GetReadBufferLen() {
  */
 int Connection::GetReadData(char *buffer, int len) {
     /*
-     * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_remove(input, buffer, len);
-    bufferevent_unlock(bev_);
 }
 
 /*
@@ -394,40 +410,44 @@ int Connection::GetReadData(char *buffer, int len) {
  */
 int Connection::CopyReadBuffer(char *buffer, int len) {
     /*
-     * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
     struct evbuffer *input = bufferevent_get_input(bev_);
     return evbuffer_copyout(input, buffer, len);
-    bufferevent_unlock(bev_);
 }
 
 // Get the lengh a write buf
 int Connection::GetWriteBufferLen() {
     /*
-     * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
     struct evbuffer *output = bufferevent_get_output(bev_);
     return evbuffer_get_length(output);
-    bufferevent_unlock(bev_);
 }
 
 // Add data to write buff
 bool Connection::AddToWriteBuffer(char *buffer, int len) {
 
-    status_ = SENDING;
+    //status_ = SENDING;
 
     /*
-     * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
-    struct evbuffer *output = bufferevent_get_output(bev_);
-    int re = evbuffer_add(output, buffer, len);
-    bufferevent_unlock(bev_);
+//    bufferevent_lock(bev_);
+//    struct evbuffer *output = bufferevent_get_output(bev_);
+//    int re = evbuffer_add(output, buffer, len);
+//    bufferevent_unlock(bev_);
+
+    int re = bufferevent_write(bev_, buffer, len);
 
     if (re == 0) {
         return true;
@@ -440,18 +460,16 @@ bool Connection::AddToWriteBuffer(char *buffer, int len) {
 void Connection::MoveBufferData() {
 
     /*
-     * Locking the bufferevent with this function will
-     * lock its associated evbuffersas well
+     * Note: it is automatically locked so we don't need
+     *       to explicitly lock it
+     *       bufferevent_lock(bev_);
+     *       bufferevent_unlock(bev_);
      */
-    bufferevent_lock(bev_);
-
     struct evbuffer *input = bufferevent_get_input(bev_);
     struct evbuffer *output = bufferevent_get_output(bev_);
 
     /* Copy all the data from the input buffer to the output buffer. */
     evbuffer_add_buffer(output, input);
-
-    bufferevent_unlock(bev_);
 }
 
 } // namespace networking

@@ -15,6 +15,7 @@
 
 #include "tcp_address.h"
 #include "backend/common/cast.h"
+#include "backend/common/logger.h"
 #include "backend/common/exception.h"
 
 #include <netdb.h>
@@ -49,7 +50,8 @@ NetworkAddress::NetworkAddress(const sockaddr& addr) {
 NetworkAddress::NetworkAddress(const std::string& address) {
     bool re = Parse(address);
     if(re == false) {
-      throw Exception("Could not parse address \n");
+        LOG_ERROR("Could not parse address");
+        throw Exception("Could not parse address\n");
     }
 }
 
