@@ -22,6 +22,7 @@ namespace peloton {
 namespace networking {
 //===--------------------------------------------------------------------===//
 // Connection Manager
+// Connection Manager can be used by both server and client
 //===--------------------------------------------------------------------===//
 
 class ConnectionManager {

@@ -79,35 +79,54 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
 
     Connection* conn = NULL;
 
+    /* conn_pool_ is a critical section */
     mutex_.Lock();
 
+    /* Check whether the connection already exists */
     std::map<NetworkAddress, Connection*>::iterator iter =
             conn_pool_.find(addr);
 
+    /* If there is such a connection, create a connection*/
     if (iter == conn_pool_.end()) {
 
+        /* Before creating a connection we should know the event base*/
         struct event_base* base = GetEventBase();
 
         if (base == NULL) {
+            LOG_ERROR("No event base when creating a connection");
             return NULL;
         }
 
+        /* A connection should know rpc server, which is used to find RPC method */
         RpcServer* server = GetRpcServer();
         assert(server != NULL);
-        // for a client connection, the socket is -1 and the rpc_server is NULL
+
+        /* For a client connection, the socket fd is -1 (required by libevent)
+         * After new a connection, a bufferevent is created and callback is set
+         */
         conn = new Connection(-1, base, server, addr);
 
-        // Connect to server with the given address
+        /* Connect to server with the given address
+         * Note: when connect return true, it doesn't mean connect successfully
+         *       we might still get error in event callback
+         */
         if ( conn->Connect(addr) == false ) {
             LOG_TRACE("Connect Error ---> ");
             delete conn;
             return NULL;
         }
 
+        /* Put the new connection in conn_pool
+         * Note: if we get close error in event callback, we should remove the connection
+         */
         conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
         LOG_TRACE("Connect to ---> %s:%d", addr.IpToString().c_str(), addr.GetPort());
 
     } else {
+
+        /*
+         * We already have the connection in the conn_pool
+         */
         conn = iter->second;
     }
 
@@ -138,12 +157,17 @@ bool ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
 
     std::map<NetworkAddress, Connection*>::iterator iter =
             conn_pool_.find(addr);
+
     if (iter != conn_pool_.end()) {
+        /* If we already have the connection in conn_pool, we do nothing
+         * return false. The caller should do the rest.
+         */
         mutex_.UnLock();
         return false;
     } else {
         conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
     }
+
     mutex_.UnLock();
 
     return true;

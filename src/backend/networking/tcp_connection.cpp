@@ -19,11 +19,9 @@
 #include <iostream>
 #include <mutex>
 
-/*** this is for the test of rpc performance
 std::mutex send_mutex;
 uint64_t server_response_send_number = 0;  // number of rpc
 uint64_t server_response_send_bytes = 0;  // bytes
-*/
 
 struct total_processed {
     size_t n;
@@ -48,7 +46,7 @@ Connection::Connection(int fd, struct event_base* base, void* arg, NetworkAddres
     struct total_processed *tp = (total_processed *)malloc(sizeof(*tp));
     tp->n = 0;
     /* we can add callback function with output and input evbuffer */
-    evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
+    //evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
 
     // set read callback and event callback
     bufferevent_setcb(bev_, ReadCb, NULL, EventCb, this);
@@ -251,7 +249,7 @@ void* Connection::ProcessMessage(void* connection) {
             LOG_TRACE( "RpcServer with controller failed:%s ", error.c_str());
         }
 
-        /* this is for the test of rpc performance
+
         // test
         {
             std::lock_guard < std::mutex > lock(send_mutex);
@@ -275,7 +273,7 @@ void* Connection::ProcessMessage(void* connection) {
                     << server_response_send_bytes << " spped:***************************************************" << bytes_speed << "*********" << std::endl;
         }
         // end test
-         */
+
     }
 
     return NULL;
@@ -313,6 +311,9 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
     ThreadPool::GetServerThreadPool().AddTask(worker_conn);
 }
 
+/*
+ * If recv close event, we should delete the connection from conn_pool
+ */
 void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev, short events, void *ctx) {
 
     Connection* conn = (Connection*)ctx;
