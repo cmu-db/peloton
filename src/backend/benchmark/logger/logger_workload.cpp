@@ -12,7 +12,6 @@
 
 
 #include <thread>
-#include <chrono>
 #include <string>
 #include <getopt.h>
 #include <sys/stat.h>
@@ -22,6 +21,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/timer.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
@@ -182,9 +182,6 @@ void ResetSystem() {
  * @brief recover the database and check the tuples
  */
 void DoRecovery(std::string file_name) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-  std::chrono::duration<double, std::milli> elapsed_milliseconds;
-
   auto file_path = GetFilePath(state.log_file_dir, file_name);
 
   std::ifstream log_file(file_path);
@@ -206,7 +203,8 @@ void DoRecovery(std::string file_name) {
   // RECOVERY
   //===--------------------------------------------------------------------===//
 
-  start = std::chrono::system_clock::now();
+  Timer<std::milli> timer;
+  timer.Start();
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
@@ -223,12 +221,11 @@ void DoRecovery(std::string file_name) {
   // Wait for the frontend logger to enter LOGGING mode after recovery
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
 
-  end = std::chrono::system_clock::now();
-  elapsed_milliseconds = end - start;
+  timer.Stop();
 
   // Recovery time
   if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY)
-    WriteOutput(elapsed_milliseconds.count());
+    WriteOutput(timer.GetDuration());
 
   // Check the tuple count if needed
   if (state.check_tuple_count) {
@@ -275,9 +272,6 @@ void CheckTupleCount(oid_t db_oid, oid_t table_oid,
 //===--------------------------------------------------------------------===//
 
 void BuildLog(oid_t db_oid, oid_t table_oid) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-  std::chrono::duration<double, std::milli> elapsed_milliseconds;
-
   // Build a pool
   auto logging_pool = new VarlenPool(BACKEND_TYPE_MM);
 
@@ -302,8 +296,8 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
   //===--------------------------------------------------------------------===//
   // ACTIVE PROCESSING
   //===--------------------------------------------------------------------===//
-
-  start = std::chrono::system_clock::now();
+  Timer<std::milli> timer;
+  timer.Start();
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
@@ -319,13 +313,12 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
     thread_group[thread_itr].join();
   }
 
-  end = std::chrono::system_clock::now();
-  elapsed_milliseconds = end - start;
+  timer.Stop();
 
   // Build log time
   if (state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
       state.experiment_type == EXPERIMENT_TYPE_WAIT) {
-    WriteOutput(elapsed_milliseconds.count());
+    WriteOutput(timer.GetDuration());
   } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
     auto log_file_size = GetLogFileSize();
     std::cout << "Log file size :: " << log_file_size << "\n";
