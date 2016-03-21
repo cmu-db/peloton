@@ -299,7 +299,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
      */
     if (request != NULL) {
 
-        LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
+        LOG_TRACE("Received from client, sender site: %d, last_txn_id: %ld",
                 request->sender_site(),
                 request->last_transaction_id());
 
