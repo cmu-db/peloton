@@ -91,6 +91,60 @@ oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
+void TileGroup::CopyTuple(txn_id_t transaction_id, const Tuple *tuple, oid_t tuple_slot_id) {
+  //oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
+
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+            tile_group_id, tuple_slot_id, num_tuple_slots);
+
+  // No more slots
+  // if (tuple_slot_id == INVALID_OID) {
+  //   LOG_INFO("Failed to get next empty tuple slot within tile group.");
+  //   return INVALID_OID;
+  // }
+
+  oid_t tile_column_count;
+  oid_t column_itr = 0;
+
+  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+    const catalog::Schema &schema = tile_schemas[tile_itr];
+    tile_column_count = schema.GetColumnCount();
+
+    storage::Tile *tile = GetTile(tile_itr);
+    assert(tile);
+    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
+    assert(tile_tuple_location);
+
+    // NOTE:: Only a tuple wrapper
+    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+
+    for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
+         tile_column_itr++) {
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
+                          tile->GetPool());
+      column_itr++;
+    }
+  }
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_slot_id) == transaction_id);
+  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+
+  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+}
+
+
+
+/**
+ * Grab next slot (thread-safe) and fill in the tuple
+ *
+ * Returns slot where inserted (INVALID_ID if not inserted)
+ */
 oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
