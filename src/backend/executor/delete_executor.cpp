@@ -100,7 +100,6 @@ bool DeleteExecutor::DExecute() {
     if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
       // if the thread is the owner of the tuple, then directly update in place.
       tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
-
     } else if (tile_group_header->GetTransactionId(physical_tuple_id) == INITIAL_TXN_ID &&
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
 
@@ -109,7 +108,6 @@ bool DeleteExecutor::DExecute() {
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
       }
-
       // if it is the latest version and not locked by other threads, then insert a new version.
       storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
@@ -118,7 +116,8 @@ bool DeleteExecutor::DExecute() {
                                                                physical_tuple_id);
 
       // finally insert updated tuple into the table
-      ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple);
+      ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple, false);
+
       tile_group_header->SetPrevItemPointer(physical_tuple_id, location);
       tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
 

@@ -142,10 +142,13 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 }
 
 ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple) {
+                                    const storage::Tuple *tuple, bool check_constraint) {
   assert(tuple);
+  if (check_constraint == true && CheckConstraints(tuple) == false) {
+  
+    return INVALID_ITEMPOINTER;
 
-  if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
+  }
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
@@ -190,9 +193,9 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 
 ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple) {
+                                   const storage::Tuple *tuple, bool check_constraint) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
+  ItemPointer location = GetTupleSlot(transaction, tuple, check_constraint);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
