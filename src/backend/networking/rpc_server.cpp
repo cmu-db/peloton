@@ -28,10 +28,6 @@ namespace networking {
 RpcServer::RpcServer(const int port) :
     listener_(port) {
 
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    start_time_ = start.tv_usec;
-
     // We have listener here, so we also have event base
     ConnectionManager::GetInstance().ResterRpcServer(this);
 }

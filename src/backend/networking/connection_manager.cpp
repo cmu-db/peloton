@@ -24,7 +24,11 @@ ConnectionManager &ConnectionManager::GetInstance(void) {
 // the format of every item in addlist is ip:port
 ConnectionManager::ConnectionManager() :
         rpc_server_(NULL),
-        cond_(&mutex_) {}
+        cond_(&mutex_) {
+    struct timeval start;
+    gettimeofday(&start, NULL);
+    start_time_ = start.tv_usec;
+}
 
 ConnectionManager::~ConnectionManager() {
 
@@ -136,6 +140,69 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
 }
 
 /*
+ * This method is only for test, we don't use it for now!!!
+ */
+Connection* ConnectionManager::CreateConn(NetworkAddress& addr) {
+
+    Connection* conn = NULL;
+
+    /* conn_pool_ is a critical section */
+//    mutex_.Lock();
+
+    /* Check whether the connection already exists */
+    std::map<NetworkAddress, Connection*>::iterator iter =
+            client_conn_pool_.find(addr);
+
+    /* If there is such a connection, create a connection*/
+    if (iter == client_conn_pool_.end()) {
+
+        /* Before creating a connection we should know the event base*/
+        struct event_base* base = GetEventBase();
+
+        if (base == NULL) {
+            LOG_ERROR("No event base when creating a connection");
+            return NULL;
+        }
+
+        /* A connection should know rpc server, which is used to find RPC method */
+        RpcServer* server = GetRpcServer();
+        assert(server != NULL);
+
+        /* For a client connection, the socket fd is -1 (required by libevent)
+         * After new a connection, a bufferevent is created and callback is set
+         */
+        conn = new Connection(-1, base, server, addr);
+
+        /* Connect to server with the given address
+         * Note: when connect return true, it doesn't mean connect successfully
+         *       we might still get error in event callback
+         */
+        if ( conn->Connect(addr) == false ) {
+            LOG_TRACE("Connect Error ---> ");
+            delete conn;
+            return NULL;
+        }
+
+        /* Put the new connection in conn_pool
+         * Note: if we get close error in event callback, we should remove the connection
+         */
+        client_conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+        LOG_TRACE("Connect to ---> %s:%d", addr.IpToString().c_str(), addr.GetPort());
+
+    } else {
+
+        /*
+         * We already have the connection in the conn_pool
+         */
+        conn = iter->second;
+    }
+
+//    mutex_.UnLock();
+
+    return conn;
+}
+
+/*
  * if the there is no connection, return NULL
  */
 Connection* ConnectionManager::FindConn(NetworkAddress& addr) {
@@ -197,6 +264,16 @@ bool ConnectionManager::DeleteConn(NetworkAddress& addr) {
 
     return true;
 }
+
+/*
+ * if there is no corresponding connection, return false
+ */
+bool ConnectionManager::DeleteConn(Connection* conn) {
+
+    NetworkAddress& addr = conn->GetAddr();
+    return DeleteConn(addr);
+}
+
 }  // End peloton networking
 }  // End peloton namespace
 
