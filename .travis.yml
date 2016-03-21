@@ -21,13 +21,7 @@ script:
     # bootstrap
     - ./bootstrap
     - cd build
-    # Enable debugging
-    - ../configure CXXFLAGS="-O0" --enable-debug
-    - make
-    - make check
-    # clean
-    - make clean
-    # Disable debugging
+    # build
     - ../configure CXXFLAGS="-O0"
     - make
     - make check
