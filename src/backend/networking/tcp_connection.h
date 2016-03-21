@@ -74,6 +74,7 @@ public:
             const struct evbuffer_cb_info *info, void *arg);
 
     RpcServer* GetRpcServer();
+    NetworkAddress& GetAddr();
 
     /*
      * set the connection status

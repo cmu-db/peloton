@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "tcp_connection.h"
+#include "connection_manager.h"
 #include "peloton_service.h"
 #include "rpc_type.h"
 
@@ -259,7 +260,7 @@ void* Connection::ProcessMessage(void* connection) {
             struct timeval end;
             long useconds;
             gettimeofday(&end, NULL);
-            useconds = end.tv_usec - conn->GetRpcServer()->start_time_;
+            useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
 
             float rpc_speed = 0;
             float bytes_speed = 0;
@@ -323,23 +324,30 @@ void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev, short 
 
         LOG_TRACE("Error from client bufferevent: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
 
-        // tell the client send error, and the client should send again or do some other things
+        /* tell the client send error, and the client should send again or do some other things*/
         if (conn->GetStatus() == SENDING) {
             LOG_TRACE("Send error");
             // TODO: let the client know
         }
 
+        /* free the buffer event */
         conn->Close();
+
+        /* Since the connection is closed, we should delete it from conn_pool */
+        ConnectionManager::GetInstance().DeleteConn(conn);
     }
 
-    // The other side explicitly closes the connection
+    /* The other side explicitly closes the connection */
     if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
 
-        // This means server explicitly closes the connection
+        /* This means server explicitly closes the connection */
         LOG_TRACE("ClientEventCb: %s",evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR())); // the error string is "SUCCESS"
 
-        // free the buffer event
+        /* free the buffer event */
         conn->Close();
+
+        /* Since the connection is closed, we should delete it from conn_pool */
+        ConnectionManager::GetInstance().DeleteConn(conn);
     }
 }
 
@@ -365,6 +373,9 @@ RpcServer* Connection::GetRpcServer() {
     return rpc_server_;
 }
 
+NetworkAddress& Connection::GetAddr() {
+    return addr_;
+}
 /*
  * Get the readable length of the read buf
  */

@@ -50,9 +50,6 @@ public:
   // get listener
   Listener* GetListener();
 
-  // for testing the rpc performance
-  long start_time_;
-
 private:
 
   // remove all services. It is only invoked by destroy constructor

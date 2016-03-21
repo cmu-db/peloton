@@ -41,13 +41,17 @@ class ConnectionManager {
     Connection* GetConn(std::string& addr);
 
     Connection* GetConn(NetworkAddress& addr);
+    Connection* CreateConn(NetworkAddress& addr);
     Connection* FindConn(NetworkAddress& addr);
     bool AddConn(NetworkAddress addr, Connection* conn);
     bool AddConn(struct sockaddr& addr, Connection* conn);
     bool DeleteConn(NetworkAddress& addr);
+    bool DeleteConn(Connection* conn);
 
     ConnectionManager();
     ~ConnectionManager();
+
+    long start_time_;
 
  private:
 
@@ -60,6 +64,11 @@ class ConnectionManager {
     // a connection can be shared among pthreads
     Mutex mutex_;
     Condition cond_;
+
+    //////////////////////////////////////////////
+    // The following is only for performance test
+    //////////////////////////////////////////////
+    std::map<NetworkAddress, Connection*> client_conn_pool_;
 
 };
 
