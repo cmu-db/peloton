@@ -229,7 +229,8 @@ class TileGroupHeader : public Printable {
 
     // there are exactly two versions that can be owned by a transaction.
     if (own == true) {
-      if (tuple_begin_cid == MAX_CID) {
+      if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+        assert(tuple_end_cid == MAX_CID);
         // the only version that is visible is the newly inserted one.
         return true;
       } else {
