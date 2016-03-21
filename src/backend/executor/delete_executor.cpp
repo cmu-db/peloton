@@ -99,14 +99,7 @@ bool DeleteExecutor::DExecute() {
     txn_id_t tid = transaction_->GetTransactionId();
     if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
       // if the thread is the owner of the tuple, then directly update in place.
-      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
-
-      // Make a copy of the original tuple and allocate a new tuple
-      //expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-      //                                                         physical_tuple_id);
-      // Execute the projections
-
-      delete new_tuple;
+      tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
 
     } else if (tile_group_header->GetTransactionId(physical_tuple_id) == INITIAL_TXN_ID &&
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
@@ -119,16 +112,16 @@ bool DeleteExecutor::DExecute() {
 
       // if it is the latest version and not locked by other threads, then insert a new version.
       storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
-      // TODO: make a copy.
+
       // Make a copy of the original tuple and allocate a new tuple
-      //expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-      //                                                         physical_tuple_id);
-      // make a copy
-      //project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+      expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                               physical_tuple_id);
+      // TODO: make a copy.
 
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple);
       tile_group_header->SetPrevItemPointer(physical_tuple_id, location);
+      tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
 
       if (location.block == INVALID_OID) {
         delete new_tuple;
