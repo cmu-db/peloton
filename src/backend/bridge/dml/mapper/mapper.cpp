@@ -145,12 +145,7 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
 
     case T_UniqueState:
       peloton_plan = PlanTransformer::TransformUnique(
-          reinterpret_cast<const UniquePlanState *>(planstate));
-      break;
-
-    case T_ResultState:
-      peloton_plan = PlanTransformer::TransformResult(
-          reinterpret_cast<const ResultPlanState *>(planstate));
+          reinterpret_cast<const UniquePlanState*>(planstate));
       break;
 
     default: {
