@@ -129,7 +129,7 @@ void LoadTable() {
     txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {

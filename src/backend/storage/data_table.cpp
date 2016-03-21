@@ -99,9 +99,9 @@ bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
     auto header = tile_group->GetHeader();
 
     auto transaction_id = transaction->GetTransactionId();
-    auto last_commit_id = transaction->GetLastCommitId();
+    auto start_commit_id = transaction->GetStartCommitId();
     bool visible =
-        header->IsVisible(tuple_offset, transaction_id, last_commit_id);
+        header->IsVisible(tuple_offset, transaction_id, start_commit_id);
 
     if (visible) return true;
   }
@@ -142,10 +142,13 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 }
 
 ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple) {
+                                    const storage::Tuple *tuple, bool check_constraint) {
   assert(tuple);
+  if (check_constraint == true && CheckConstraints(tuple) == false) {
+  
+    return INVALID_ITEMPOINTER;
 
-  if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
+  }
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
@@ -188,6 +191,21 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
+
+ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple, bool check_constraint) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple, check_constraint);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+
+  IncreaseNumberOfTuplesBy(1);
+  return location;
+}
 
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
@@ -292,7 +310,7 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
 
   auto tile_group = GetTileGroupById(tile_group_id);
   txn_id_t transaction_id = transaction->GetTransactionId();
-  cid_t last_cid = transaction->GetLastCommitId();
+  cid_t last_cid = transaction->GetStartCommitId();
 
   // Delete slot in underlying tile group
   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);

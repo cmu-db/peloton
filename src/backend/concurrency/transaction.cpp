@@ -22,12 +22,28 @@
 namespace peloton {
 namespace concurrency {
 
+void Transaction::RecordRead(ItemPointer location) {
+  read_tuples[location.block].push_back(location.offset);
+}
+
+void Transaction::RecordWrite(ItemPointer location) {
+  written_tuples[location.block].push_back(location.offset);
+}
+
 void Transaction::RecordInsert(ItemPointer location) {
   inserted_tuples[location.block].push_back(location.offset);
 }
 
 void Transaction::RecordDelete(ItemPointer location) {
   deleted_tuples[location.block].push_back(location.offset);
+}
+
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetReadTuples() {
+  return read_tuples;
+}
+
+const std::map<oid_t, std::vector<oid_t>> &Transaction::GetWrittenTuples() {
+  return written_tuples;
 }
 
 const std::map<oid_t, std::vector<oid_t>> &Transaction::GetInsertedTuples() {
@@ -39,6 +55,8 @@ const std::map<oid_t, std::vector<oid_t>> &Transaction::GetDeletedTuples() {
 }
 
 void Transaction::ResetState(void) {
+  read_tuples.clear();
+  written_tuples.clear();
   inserted_tuples.clear();
   deleted_tuples.clear();
 }
@@ -47,8 +65,8 @@ const std::string Transaction::GetInfo() const{
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id
-     << " Commit ID : " << std::setw(4) << cid
-     << " Last Commit ID : " << std::setw(4) << last_cid
+     << " Start Commit ID : " << std::setw(4) << start_cid
+     << " End Commit ID : " << std::setw(4) << end_cid
      << " Result : " << result_;
 
   if (next == nullptr) {

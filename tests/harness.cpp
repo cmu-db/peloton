@@ -46,7 +46,7 @@ txn_id_t TestingHarness::GetNextTransactionId() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 
   return txn_id;
 }

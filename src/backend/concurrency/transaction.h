@@ -12,9 +12,11 @@
 
 #pragma once
 
+#include <mutex>
 #include <atomic>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -36,16 +38,16 @@ class Transaction : public Printable {
  public:
   Transaction()
       : txn_id(INVALID_TXN_ID),
-        cid(INVALID_CID),
-        last_cid(INVALID_CID),
+        start_cid(INVALID_CID),
+        end_cid(INVALID_CID),
         ref_count(BASE_REF_COUNT),
         waiting_to_commit(false),
         next(nullptr) {}
 
-  Transaction(txn_id_t txn_id, cid_t last_cid)
+  Transaction(txn_id_t txn_id, cid_t start_cid)
       : txn_id(txn_id),
-        cid(INVALID_CID),
-        last_cid(last_cid),
+        start_cid(start_cid),
+        end_cid(INVALID_CID),
         ref_count(BASE_REF_COUNT),
         waiting_to_commit(false),
         next(nullptr) {}
@@ -62,15 +64,25 @@ class Transaction : public Printable {
 
   inline txn_id_t GetTransactionId() const { return txn_id; }
 
-  inline cid_t GetCommitId() const { return cid; }
+  inline cid_t GetStartCommitId() const { return start_cid; }
 
-  inline cid_t GetLastCommitId() const { return last_cid; }
+  inline cid_t GetEndCommitId() const { return end_cid; }
 
-  // record inserted tuple
+  // record read set
+  void RecordRead(ItemPointer location);
+
+  // record write set
+  void RecordWrite(ItemPointer location);
+
+  // record insert set
   void RecordInsert(ItemPointer location);
 
-  // record deleted tuple
+  // record delete set
   void RecordDelete(ItemPointer location);
+
+  const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
+
+  const std::map<oid_t, std::vector<oid_t>> &GetWrittenTuples();
 
   const std::map<oid_t, std::vector<oid_t>> &GetInsertedTuples();
 
@@ -102,11 +114,11 @@ class Transaction : public Printable {
   // transaction id
   txn_id_t txn_id;
 
-  // commit id
-  cid_t cid;
+  // start commit id
+  cid_t start_cid;
 
-  // last visible commit id
-  cid_t last_cid;
+  // end commit id
+  cid_t end_cid;
 
   // references
   std::atomic<size_t> ref_count;
@@ -116,6 +128,12 @@ class Transaction : public Printable {
 
   // cid context
   Transaction *next __attribute__((aligned(16)));
+
+  // read tuples
+  std::map<oid_t, std::vector<oid_t>> read_tuples;
+
+  // written tuples
+  std::map<oid_t, std::vector<oid_t>> written_tuples;
 
   // inserted tuples
   std::map<oid_t, std::vector<oid_t>> inserted_tuples;

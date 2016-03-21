@@ -25,7 +25,9 @@
 #include "backend/index/index.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/manager.h"
 
 namespace peloton {
 namespace executor {
@@ -181,14 +183,60 @@ bool IndexScanExecutor::ExecIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
-
   auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
-  cid_t commit_id = transaction_->GetLastCommitId();
+  cid_t commit_id = transaction_->GetStartCommitId();
 
-  // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
-                                              txn_id, commit_id);
+  std::vector<ItemPointer> visible_items;
+
+  for (auto tuple_location : tuple_locations) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto tile_group_header = tile_group.get()->GetHeader();
+    auto tile_group_id = tuple_location.block;
+    auto tuple_id = tuple_location.offset;
+
+    while (true) {
+      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
+        ItemPointer visible_item(tile_group_id, tuple_id);
+        visible_items.push_back(visible_item);
+        transaction_->RecordRead(visible_item);
+        break;
+      } else {
+        ItemPointer next_item = tile_group_header->GetPrevItemPointer(tuple_id);
+        if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
+          break;
+        }
+        tile_group_id = next_item.block;
+        tuple_id = next_item.offset;
+        tile_group = manager.GetTileGroup(tile_group_id);
+        tile_group_header = tile_group.get()->GetHeader();
+      }
+    }
+  }
+
+  // Get the list of blocks
+  std::map<oid_t, std::vector<oid_t>> blocks;
+  for (auto visible_item : visible_items) {
+    blocks[visible_item.block].push_back(visible_item.offset);
+  }
+  // Construct a logical tile for each block
+  for (auto block : blocks) {
+    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
+
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(block.first);
+
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, full_column_ids_);
+
+    // Print tile group visibility
+    // tile_group_header->PrintVisibility(txn_id, commit_id);
+
+    logical_tile->AddPositionList(std::move(block.second));
+
+    result.push_back(logical_tile);
+  }
 
   done_ = true;
 
