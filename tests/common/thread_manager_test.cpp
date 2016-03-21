@@ -37,21 +37,12 @@ TEST_F(ThreadManagerTests, BasicTest) {
 }
 */
 
-TEST_F(ThreadManagerTests, ThreadMananger) {
+TEST_F(ThreadManagerTests, BasicTest1) {
 
   auto& thread_manager1 = ThreadManager::GetInstance();
   auto& thread_manager2 = ThreadManager::GetInstance();
 
   bool status = (&thread_manager1 == &thread_manager2);
-  EXPECT_EQ(status, true);
-}
-
-TEST_F(ThreadManagerTests, ThreadPool) {
-
-  auto& thread_pool1 = ThreadPool::GetInstance();
-  auto& thread_pool2 = ThreadPool::GetInstance();
-
-  bool status = (&thread_pool1 == &thread_pool2);
   EXPECT_EQ(status, true);
 }
 

@@ -27,13 +27,6 @@ class RpcServer {
 
   typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
 
-  /*
-  typedef struct RecvItem {
-    RpcMethod*                  method;
-    google::protobuf::Message*  request;
-  } QueueItem;
-  */
-
 public:
   RpcServer(const int port);
   ~RpcServer();

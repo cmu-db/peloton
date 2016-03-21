@@ -167,9 +167,9 @@ ThreadPool::~ThreadPool() {
     cond_.Broadcast();
 
     // Join all threads.
-    for (pthread_t &thread : thread_pool_) {
-        pthread_join(thread, NULL);
-    }
+//    for (pthread_t &thread : thread_pool_) {
+//        pthread_join(thread, NULL);
+//    }
 
 }
 
