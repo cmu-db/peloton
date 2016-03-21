@@ -80,12 +80,13 @@ namespace peloton {
                 auto tile_group = manager.GetTileGroup(tile_group_id);
                 auto tile_group_header = tile_group->GetHeader();
                 for (auto tuple_slot : entry.second) {
-                    tile_group_header->ReleaseTupleSlot(tuple_slot, current_txn->GetTransactionId());
+                    // TODO: atomic execution.
                     tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
                     ItemPointer new_version = tile_group_header->GetPrevItemPointer(tuple_slot);
                     auto new_tile_group_header = manager.GetTileGroup(new_version.block)->GetHeader();
                     new_tile_group_header->SetTransactionId(new_version.offset, current_txn->GetTransactionId());
                     new_tile_group_header->SetBeginCommitId(new_version.offset, end_commit_id);
+                    tile_group_header->ReleaseTupleSlot(tuple_slot, current_txn->GetTransactionId());
                 }
             }
 
@@ -104,8 +105,15 @@ namespace peloton {
             for (auto entry : deleted_tuples){
                 oid_t tile_group_id = entry.first;
                 auto tile_group = manager.GetTileGroup(tile_group_id);
-                for (auto tuple_slot : entry.second){
-                    tile_group->CommitDeletedTuple(tuple_slot, current_txn->txn_id, end_commit_id);
+                auto tile_group_header = tile_group->GetHeader();
+                for (auto tuple_slot : entry.second) {
+                    // TODO: atomic execution.
+                    tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+                    ItemPointer new_version = tile_group_header->GetPrevItemPointer(tuple_slot);
+                    auto new_tile_group_header = manager.GetTileGroup(new_version.block)->GetHeader();
+                    new_tile_group_header->SetTransactionId(new_version.offset, current_txn->GetTransactionId());
+                    new_tile_group_header->SetBeginCommitId(new_version.offset, end_commit_id);
+                    tile_group_header->ReleaseDeleteTupleSlot(tuple_slot, current_txn->GetTransactionId());
                 }
             }
             delete current_txn;
@@ -129,6 +137,22 @@ namespace peloton {
                     new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
                 }
             }
+
+            for (auto entry : written_tuples){
+                oid_t tile_group_id = entry.first;
+                auto tile_group = manager.GetTileGroup(tile_group_id);
+                auto tile_group_header = tile_group->GetHeader();
+                for (auto tuple_slot : entry.second) {
+                    tile_group_header->ReleaseTupleSlot(tuple_slot, current_txn->GetTransactionId());
+                    tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+                    ItemPointer new_version = tile_group_header->GetPrevItemPointer(tuple_slot);
+                    auto new_tile_group_header = manager.GetTileGroup(new_version.block)->GetHeader();
+                    new_tile_group_header->SetTransactionId(new_version.offset, INVALID_TXN_ID);
+                    new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+                    new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+                }
+            }
+
             delete current_txn;
         }
 

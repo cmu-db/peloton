@@ -116,47 +116,47 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
  *
  * @return Logical tile(s) wrapping the give tuple locations.
  */
-std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
-    const std::vector<ItemPointer> tuple_locations,
-    const std::vector<oid_t> column_ids, txn_id_t txn_id, cid_t commit_id) {
-  std::vector<LogicalTile *> result;
+ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
+     const std::vector<ItemPointer> tuple_locations,
+     const std::vector<oid_t> column_ids, txn_id_t txn_id, cid_t commit_id) {
+   std::vector<LogicalTile *> result;
 
-  // Get the list of blocks
-  std::map<oid_t, std::vector<oid_t>> blocks;
+   // Get the list of blocks
+   std::map<oid_t, std::vector<oid_t>> blocks;
 
-  for (auto tuple_location : tuple_locations) {
-    blocks[tuple_location.block].push_back(tuple_location.offset);
-  }
+   for (auto tuple_location : tuple_locations) {
+     blocks[tuple_location.block].push_back(tuple_location.offset);
+   }
 
-  // Construct a logical tile for each block
-  for (auto block : blocks) {
-    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
+   // Construct a logical tile for each block
+   for (auto block : blocks) {
+     LogicalTile *logical_tile = LogicalTileFactory::GetTile();
 
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(block.first);
-    storage::TileGroupHeader *tile_group_header = tile_group.get()->GetHeader();
+     auto &manager = catalog::Manager::GetInstance();
+     auto tile_group = manager.GetTileGroup(block.first);
+     storage::TileGroupHeader *tile_group_header = tile_group.get()->GetHeader();
 
-    // Add relevant columns to logical tile
-    logical_tile->AddColumns(tile_group, column_ids);
+     // Add relevant columns to logical tile
+     logical_tile->AddColumns(tile_group, column_ids);
 
-    // Print tile group visibility
-    // tile_group_header->PrintVisibility(txn_id, commit_id);
+     // Print tile group visibility
+     // tile_group_header->PrintVisibility(txn_id, commit_id);
 
-    // Add visible tuples to logical tile
-    std::vector<oid_t> position_list;
-    for (auto tuple_id : block.second) {
-      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
-        position_list.push_back(tuple_id);
-      }
-    }
+     // Add visible tuples to logical tile
+     std::vector<oid_t> position_list;
+     for (auto tuple_id : block.second) {
+       if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
+         position_list.push_back(tuple_id);
+       }
+     }
 
-    logical_tile->AddPositionList(std::move(position_list));
+     logical_tile->AddPositionList(std::move(position_list));
 
-    result.push_back(logical_tile);
-  }
+     result.push_back(logical_tile);
+   }
 
-  return result;
-}
+   return result;
+ }
 
 }  // namespace executor
 }  // namespace peloton

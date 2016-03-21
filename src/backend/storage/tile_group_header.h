@@ -202,7 +202,20 @@ class TileGroupHeader : public Printable {
     return true;
   }
 
-  // Visibility check
+  inline bool ReleaseDeleteTupleSlot(const oid_t tuple_slot_id,
+                               txn_id_t transaction_id) {
+    txn_id_t *txn_id = (txn_id_t *)(data + (tuple_slot_id * header_entry_size));
+    if (!atomic_cas(txn_id, transaction_id, INVALID_TXN_ID)) {
+      LOG_INFO("Release failed, expecting a deleted own insert: %lu",
+               GetTransactionId(tuple_slot_id));
+      assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+      return false;
+    }
+    return true;
+  }
+
+
+    // Visibility check
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
@@ -216,7 +229,7 @@ class TileGroupHeader : public Printable {
 
     // there are exactly two versions that can be owned by a transaction.
     if (own == true) {
-      if (tuple_end_cid == MAX_CID) {
+      if (tuple_begin_cid == MAX_CID) {
         // the only version that is visible is the newly inserted one.
         return true;
       } else {
@@ -229,7 +242,7 @@ class TileGroupHeader : public Printable {
       bool invalidated = (at_lcid >= tuple_end_cid);
       if (tuple_txn_id != INITIAL_TXN_ID) {
         // if the tuple is owned by other transactions.
-        if (tuple_end_cid == MAX_CID) {
+        if (tuple_begin_cid == MAX_CID) {
           // currently, we do not handle cascading abort. so never read an uncommitted version.
           return false;
         } else {
