@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/logging/checkpoint.h"
+#include <thread>
 
 namespace peloton {
 namespace logging {
@@ -27,7 +28,10 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint() {}
+  SimpleCheckpoint() {
+    std::thread t(&SimpleCheckpoint::DoCheckpoint, this);
+    t.detach();
+  }
   void DoCheckpoint();
 
  private:
