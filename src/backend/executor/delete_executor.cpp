@@ -116,7 +116,6 @@ bool DeleteExecutor::DExecute() {
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                                physical_tuple_id);
-      // TODO: make a copy.
 
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple);

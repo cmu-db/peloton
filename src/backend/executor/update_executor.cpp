@@ -98,7 +98,8 @@ bool UpdateExecutor::DExecute() {
                                                                physical_tuple_id);
       // Execute the projections
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
-      // TODO: update in place.
+
+      tile_group->CopyTuple(tid, new_tuple, physical_tuple_id);
 
       delete new_tuple;
 
