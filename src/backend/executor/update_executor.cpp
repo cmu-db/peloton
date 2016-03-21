@@ -88,10 +88,10 @@ bool UpdateExecutor::DExecute() {
              visible_tuple_id, physical_tuple_id);
 
     txn_id_t tid = transaction_->GetTransactionId();
-    storage::Tuple *new_tuple = nullptr;
+    //storage::Tuple *new_tuple = nullptr;
     if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
       // if the thread is the owner of the tuple, then directly update in place.
-      new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
@@ -99,6 +99,8 @@ bool UpdateExecutor::DExecute() {
       // Execute the projections
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
       // TODO: update in place.
+
+      delete new_tuple;
 
     } else if (tile_group_header->GetTransactionId(physical_tuple_id) == INITIAL_TXN_ID &&
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
@@ -108,10 +110,9 @@ bool UpdateExecutor::DExecute() {
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
       }
-      tile_group_header->SetEndCommitId(physical_tuple_id, transaction_->GetStartCommitId());
 
       // if it is the latest version and not locked by other threads, then insert a new version.
-      new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
@@ -133,6 +134,7 @@ bool UpdateExecutor::DExecute() {
       executor_context_->num_processed += 1;  // updated one
 
       transaction_->RecordWrite(ItemPointer(tile_group_id, physical_tuple_id));
+      delete new_tuple;
 
     } else{
       // transaction should be aborted as we cannot update the latest version.
@@ -181,9 +183,8 @@ bool UpdateExecutor::DExecute() {
 //      }
 //    }
 
-    delete new_tuple;
+    //delete new_tuple;
   }
-
   // By default, update should return nothing?
   // SetOutput(source_tile.release());
   return true;
