@@ -667,7 +667,7 @@ class Value {
       case VALUE_TYPE_DECIMAL:
         rt = s_decimalPromotionTable[vtb];
         break;
-
+      case VALUE_TYPE_REAL:
       case VALUE_TYPE_DOUBLE:
         rt = s_doublePromotionTable[vtb];
         break;
@@ -1916,6 +1916,7 @@ class Value {
     double rhsValue;
 
     switch (rhs.GetValueType()) {
+      case VALUE_TYPE_REAL:
       case VALUE_TYPE_DOUBLE:
         rhsValue = rhs.GetDouble();
         break;
@@ -2037,6 +2038,7 @@ class Value {
       case VALUE_TYPE_DECIMAL: {
         return CompareValue<TTInt>(GetDecimal(), rhs.GetDecimal());
       }
+      case VALUE_TYPE_REAL:
       case VALUE_TYPE_DOUBLE: {
         const double rhsValue = rhs.GetDouble();
         TTInt scaledValue = GetDecimal();
@@ -2406,6 +2408,7 @@ class Value {
       case VALUE_TYPE_DECIMAL:
         retval.GetDecimal() = -value.GetDecimal();
         break;
+      case VALUE_TYPE_REAL:
       case VALUE_TYPE_DOUBLE:
         retval.GetDouble() = -value.GetDouble();
         break;
@@ -2564,6 +2567,7 @@ inline uint16_t Value::GetTupleStorageSize(const ValueType type) {
       return sizeof(int16_t);
     case VALUE_TYPE_INTEGER:
       return sizeof(int32_t);
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return sizeof(double);
     case VALUE_TYPE_VARCHAR:
@@ -2625,6 +2629,7 @@ inline int Value::CompareWithoutNull(const Value rhs) const {
       return CompareTinyInt(rhs);
     case VALUE_TYPE_TIMESTAMP:
       return CompareTimestamp(rhs);
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return CompareDoubleValue(rhs);
     case VALUE_TYPE_VARBINARY:
@@ -2681,6 +2686,7 @@ inline void Value::SetNull() {
     case VALUE_TYPE_BIGINT:
       GetBigInt() = INT64_NULL;
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       GetDouble() = DOUBLE_MIN;
       break;
@@ -2725,6 +2731,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
     case VALUE_TYPE_BIGINT:
       *reinterpret_cast<int64_t *>(storage) = GetBigInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
@@ -2796,6 +2803,7 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
     case VALUE_TYPE_BIGINT:
       *reinterpret_cast<int64_t *>(storage) = GetBigInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
@@ -2872,6 +2880,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
     case VALUE_TYPE_INTEGER:
       *reinterpret_cast<int32_t *>(storage) = input.ReadInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       *reinterpret_cast<double *>(storage) = input.ReadDouble();
       break;
@@ -2998,6 +3007,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type,
         tagAsNull();
       }
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       GetDouble() = input.ReadDouble();
       if (GetDouble() <= DOUBLE_NULL) {
@@ -3081,6 +3091,7 @@ inline void Value::SerializeTo(SerializeOutput &output) const {
       output.WriteLong(GetBigInt());
       break;
     }
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE: {
       output.WriteDouble(GetDouble());
       break;
@@ -3129,6 +3140,7 @@ inline void Value::SerializeToExportWithoutNull(
       io.WriteLong(GetBigInt());
       return;
     }
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE: {
       io.WriteDouble(GetDouble());
       return;
@@ -3266,6 +3278,7 @@ inline void Value::HashCombine(std::size_t &seed) const {
     case VALUE_TYPE_TIMESTAMP:
       hash_combine<int64_t>(seed, GetBigInt());
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
 // This method was observed to fail on Centos 5 / GCC 4.1.2, returning different
 // hashes
@@ -3367,6 +3380,7 @@ inline Value Value::OpIncrement() const {
       }
       retval.GetBigInt() = GetBigInt() + 1;
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       retval.GetDouble() = GetDouble() + 1;
       break;
@@ -3411,6 +3425,7 @@ inline Value Value::OpDecrement() const {
       }
       retval.GetBigInt() = GetBigInt() - 1;
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       retval.GetDouble() = GetDouble() - 1;
       break;
@@ -3455,7 +3470,7 @@ inline Value Value::OpSubtract(const Value &rhs) const {
     case VALUE_TYPE_TIMESTAMP:
       return OpSubtractBigInts(CastAsBigIntAndGetValue(),
                                rhs.CastAsBigIntAndGetValue());
-
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return OpSubtractDoubles(CastAsDoubleAndGetValue(),
                                rhs.CastAsDoubleAndGetValue());
@@ -3534,7 +3549,7 @@ inline Value Value::OpMultiply(const Value &rhs) const {
     case VALUE_TYPE_TIMESTAMP:
       return OpMultiplyBigInts(CastAsBigIntAndGetValue(),
                                rhs.CastAsBigIntAndGetValue());
-
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return OpMultiplyDoubles(CastAsDoubleAndGetValue(),
                                rhs.CastAsDoubleAndGetValue());
@@ -3563,7 +3578,7 @@ inline Value Value::OpDivide(const Value &rhs) const {
     case VALUE_TYPE_TIMESTAMP:
       return OpDivideBigInts(CastAsBigIntAndGetValue(),
                              rhs.CastAsBigIntAndGetValue());
-
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return OpDivideDoubles(CastAsDoubleAndGetValue(),
                              rhs.CastAsDoubleAndGetValue());
@@ -3585,6 +3600,7 @@ inline int32_t Value::MurmurHash3() const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TIMESTAMP:
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_INTEGER:
