@@ -238,10 +238,6 @@ bool IndexScanExecutor::ExecIndexLookup() {
     result.push_back(logical_tile);
   }
 
-  // Get the logical tiles corresponding to the given tuple locations
-  //result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
-  //                                            txn_id, commit_id);
-
   done_ = true;
 
   LOG_TRACE("Result tiles : %lu", result.size());
