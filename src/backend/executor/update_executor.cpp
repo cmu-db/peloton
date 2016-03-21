@@ -88,7 +88,7 @@ bool UpdateExecutor::DExecute() {
              visible_tuple_id, physical_tuple_id);
 
     txn_id_t tid = transaction_->GetTransactionId();
-    //storage::Tuple *new_tuple = nullptr;
+
     if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
       // if the thread is the owner of the tuple, then directly update in place.
       storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
@@ -101,11 +101,25 @@ bool UpdateExecutor::DExecute() {
 
       tile_group->CopyTuple(tid, new_tuple, physical_tuple_id);
 
+      // TODO: Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), location, delete_location, new_tuple);
+
+      //     logger->Log(record);
+      //   }
+      // }
+
       delete new_tuple;
 
     } else if (tile_group_header->GetTransactionId(physical_tuple_id) == INITIAL_TXN_ID &&
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
-
+      // if the tuple is not owned by any transaction and is visible to current transdaction.
+      
       if (tile_group_header->LatchTupleSlot(physical_tuple_id, tid) == false){
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
         transaction_->SetResult(Result::RESULT_FAILURE);
@@ -134,7 +148,21 @@ bool UpdateExecutor::DExecute() {
 
       executor_context_->num_processed += 1;  // updated one
 
-      transaction_->RecordWrite(ItemPointer(tile_group_id, physical_tuple_id));
+      ItemPointer old_location(tile_group_id, physical_tuple_id);
+      transaction_->RecordWrite(old_location);
+
+      // Logging
+      {
+        auto &log_manager = logging::LogManager::GetInstance();
+        if (log_manager.IsInLoggingMode()) {
+          auto logger = log_manager.GetBackendLogger();
+          auto record = logger->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+            target_table_->GetOid(), location, old_location, new_tuple);
+
+          logger->Log(record);
+        }
+      }
       delete new_tuple;
 
     } else{
@@ -143,51 +171,7 @@ bool UpdateExecutor::DExecute() {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
-
-    // (A) Try to delete the tuple first
-    //auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
-    //bool status = target_table_->DeleteTuple(transaction_, delete_location);
-//    if (status == false) {
-//      LOG_INFO("Fail to delete old tuple. Set txn failure.");
-//      transaction_->SetResult(Result::RESULT_FAILURE);
-//      return false;
-//    }
-//    transaction_->RecordDelete(delete_location);
-
-    //storage::Tuple *new_tuple =
-        //new storage::Tuple(target_table_->GetSchema(), true);
-
-    // Execute the projections
-    //project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
-
-    // finally insert updated tuple into the table
-//    ItemPointer location = target_table_->InsertTuple(transaction_, new_tuple);
-//    if (location.block == INVALID_OID) {
-//      delete new_tuple;
-//      LOG_INFO("Fail to insert new tuple. Set txn failure.");
-//      transaction_->SetResult(Result::RESULT_FAILURE);
-//      return false;
-//    }
-
-
-    // Logging
-//    {
-//      auto &log_manager = logging::LogManager::GetInstance();
-//
-//      if (log_manager.IsInLoggingMode()) {
-//        auto logger = log_manager.GetBackendLogger();
-//        auto record = logger->GetTupleRecord(
-//            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-//            target_table_->GetOid(), location, delete_location, new_tuple);
-//
-//        logger->Log(record);
-//      }
-//    }
-
-    //delete new_tuple;
   }
-  // By default, update should return nothing?
-  // SetOutput(source_tile.release());
   return true;
 }
 
