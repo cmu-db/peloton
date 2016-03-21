@@ -90,10 +90,7 @@ class ThreadPool {
   // global singleton
   // TODO: For now, rpc client and server use separated thread pool
   //       global thread pool can lead to starving for client/server
-  //static ThreadManager &GetInstance(void);
-
-  static ThreadPool &GetServerThreadPool(void);
-  static ThreadPool &GetClientThreadPool(void);
+  static ThreadPool &GetInstance(void);
 
   // The main function: add task into the task queue
   void AddTask(std::function<void()> f);

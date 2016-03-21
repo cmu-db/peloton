@@ -309,7 +309,7 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
      * request on this connection can be processed while
      * the former is still being processed
      */
-    ThreadPool::GetServerThreadPool().AddTask(worker_conn);
+    ThreadPool::GetInstance().AddTask(worker_conn);
 }
 
 /*
