@@ -55,16 +55,16 @@ class TransactionManager {
   Transaction *BeginTransaction();
 
   // Get entry in transaction table
-  Transaction *GetTransaction(txn_id_t txn_id);
+  //Transaction *GetTransaction(txn_id_t txn_id);
 
   // End the transaction
   void EndTransaction(Transaction *txn, bool sync = true);
 
   // Get the list of current transactions
-  std::vector<Transaction *> GetCurrentTransactions();
+  //std::vector<Transaction *> GetCurrentTransactions();
 
   // validity checks
-  bool IsValid(txn_id_t txn_id);
+  //bool IsValid(txn_id_t txn_id);
 
   // used by recovery testing
   void ResetStates(void);

@@ -78,9 +78,9 @@ Transaction *TransactionManager::BeginTransaction() {
   return next_txn;
 }
 
-bool TransactionManager::IsValid(txn_id_t txn_id) {
-  return (txn_id < next_txn_id);
-}
+// bool TransactionManager::IsValid(txn_id_t txn_id) {
+//   return (txn_id < next_txn_id);
+// }
 
 void TransactionManager::ResetStates(void) {
   next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
