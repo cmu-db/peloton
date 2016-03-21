@@ -123,15 +123,21 @@ void ThreadManager::Invoke() {
 // combine this with thread manager in the future
 //===--------------------------------------------------------------------===//
 
-ThreadPool &ThreadPool::GetServerThreadPool(void) {
-  static ThreadPool server_thread_pool(NUM_THREAD);
-  return server_thread_pool;
+// global singleton
+ThreadPool &ThreadPool::GetInstance(void) {
+  static ThreadPool thread_pool(NUM_THREAD);
+  return thread_pool;
 }
 
-ThreadPool &ThreadPool::GetClientThreadPool(void) {
-  static ThreadPool client_thread_pool(NUM_THREAD);
-  return client_thread_pool;
-}
+//ThreadPool &ThreadPool::GetServerThreadPool(void) {
+//  static ThreadPool server_thread_pool(NUM_THREAD);
+//  return server_thread_pool;
+//}
+//
+//ThreadPool &ThreadPool::GetClientThreadPool(void) {
+//  static ThreadPool client_thread_pool(NUM_THREAD);
+//  return client_thread_pool;
+//}
 
 ThreadPool::ThreadPool(int threads) :
     cond_ (&mutex_),
