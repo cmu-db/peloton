@@ -81,11 +81,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-<<<<<<< HEAD
-libpeloton_la_LDFLAGS = -levent -lpthread -levent_pthreads
-=======
-libpeloton_la_LDFLAGS = -levent -lprotobuf
->>>>>>> refs/remotes/upstream/master
+libpeloton_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads
 
 ######################################################################
 # LIBPELOTONPG
