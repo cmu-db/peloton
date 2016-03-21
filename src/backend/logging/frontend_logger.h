@@ -21,6 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
 #include "backend/logging/backend_logger.h"
+#include "backend/logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {
@@ -79,6 +80,9 @@ class FrontendLogger : public Logger {
 
   // stats
   size_t fsync_count = 0;
+
+  // checkpoint
+  Checkpoint *checkpoint;
 };
 
 }  // namespace logging

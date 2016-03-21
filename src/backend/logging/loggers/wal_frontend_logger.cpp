@@ -19,6 +19,7 @@
 #include "backend/common/pool.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
@@ -79,6 +80,9 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+
+  this->checkpoint = new SimpleCheckpoint();
+  //TODO delete later
 }
 
 /**
