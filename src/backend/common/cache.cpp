@@ -20,8 +20,8 @@ namespace peloton {
 /** @brief the constructor, nothing fancy here
  */
 template <class Key, class Value>
-Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
-    : capacity_(capacitry), value_deleter_(deleter) {}
+Cache<Key, Value>::Cache(size_type capacity, ValueDeleter deleter)
+    : capacity_(capacity), value_deleter_(deleter) {}
 
 /* @brief find a value cached with key
  *
