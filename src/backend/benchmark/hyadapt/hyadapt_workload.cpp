@@ -1821,9 +1821,9 @@ void RunVersionExperiment() {
 
   // Create a version chain
   oid_t block_id = 0;
-  header->SetPrevItemPointer(0, INVALID_ITEMPOINTER);
+  header->SetNextItemPointer(0, INVALID_ITEMPOINTER);
   for(oid_t tuple_itr = 1; tuple_itr < tuple_count; tuple_itr++) {
-    header->SetPrevItemPointer(tuple_itr, ItemPointer(block_id, tuple_itr -1));
+    header->SetNextItemPointer(tuple_itr, ItemPointer(block_id, tuple_itr - 1));
   }
 
   start = std::chrono::system_clock::now();
@@ -1834,10 +1834,10 @@ void RunVersionExperiment() {
     oid_t prev_tuple_offset = starting_tuple_offset;
     std::cout << "Offset : " << starting_tuple_offset << "\n";
 
-    auto prev_item_pointer = header->GetPrevItemPointer(starting_tuple_offset);
+    auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while(prev_item_pointer.block != INVALID_OID) {
       prev_tuple_offset = prev_item_pointer.offset;
-      prev_item_pointer = header->GetPrevItemPointer(prev_tuple_offset);
+      prev_item_pointer = header->GetNextItemPointer(prev_tuple_offset);
     }
 
     end = std::chrono::system_clock::now();

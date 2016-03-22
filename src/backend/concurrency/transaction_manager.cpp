@@ -136,7 +136,7 @@ namespace peloton {
         // TODO: atomic execution.
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
-        tile_group_header->GetPrevItemPointer(tuple_slot);
+                tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
         manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -170,7 +170,7 @@ namespace peloton {
         // TODO: atomic execution.
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
-        tile_group_header->GetPrevItemPointer(tuple_slot);
+                tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
         manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -200,7 +200,7 @@ namespace peloton {
           current_txn->GetTransactionId());
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
-        tile_group_header->GetPrevItemPointer(tuple_slot);
+                tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
         manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -221,7 +221,7 @@ namespace peloton {
           current_txn->GetTransactionId());
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
-        tile_group_header->GetPrevItemPointer(tuple_slot);
+                tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
         manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetTransactionId(new_version.offset,

@@ -134,7 +134,7 @@ bool DeleteExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple, false);
 
-      tile_group_header->SetPrevItemPointer(physical_tuple_id, location);
+      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
       tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
 
       if (location.block == INVALID_OID) {
