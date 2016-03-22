@@ -19,176 +19,225 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 
 namespace peloton {
-namespace concurrency {
+  namespace concurrency {
 
-// Current transaction for the backend thread
-thread_local Transaction *current_txn;
+  // Current transaction for the backend thread
+    thread_local Transaction *current_txn;
 
-TransactionManager::TransactionManager() {
-  next_txn_id = START_TXN_ID;
-  next_cid = START_CID;
-}
+    TransactionManager::TransactionManager() {
+      next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
+      next_cid_ = ATOMIC_VAR_INIT(START_CID);
+    }
 
-TransactionManager::~TransactionManager() {}
+    TransactionManager::~TransactionManager() {}
 
-TransactionManager &TransactionManager::GetInstance() {
-  static TransactionManager txn_manager;
-  return txn_manager;
-}
+    TransactionManager &TransactionManager::GetInstance() {
+      static TransactionManager txn_manager;
+      return txn_manager;
+    }
 
-Transaction *TransactionManager::BeginTransaction() {
-  Transaction *txn = new Transaction(GetNextTransactionId(), GetNextCommitId());
-  current_txn = txn;
-  return txn;
-}
+      // Visibility check
+    bool TransactionManager::IsVisible(const txn_id_t tuple_txn_id, const cid_t tuple_begin_cid, const cid_t tuple_end_cid) {
+      if (tuple_txn_id == INVALID_TXN_ID) {
+          // the tuple is not available.
+        return false;
+      }
+      bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
-void TransactionManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
-
-  auto &manager = catalog::Manager::GetInstance();
-
-  // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
-
-  // validate read set.
-  auto read_tuples = current_txn->GetReadTuples();
-  for (auto entry : read_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto tuple_slot : entry.second) {
-      if (tile_group_header->GetTransactionId(tuple_slot) ==
-          current_txn->GetTransactionId()) {
-        // the version is owned by the transaction.
-        continue;
-      } else {
-        if (tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-          // the version is still visible.
-          continue;
+        // there are exactly two versions that can be owned by a transaction.
+      if (own == true) {
+        if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+          assert(tuple_end_cid == MAX_CID);
+            // the only version that is visible is the newly inserted one.
+          return true;
+        } else {
+            // the older version is not visible.
+          return false;
         }
       }
-      // otherwise, validation fails. abort transaction.
-      AbortTransaction();
-      return;
+      else {
+        bool activated = (current_txn->GetStartCommitId() >= tuple_begin_cid);
+        bool invalidated = (current_txn->GetStartCommitId() >= tuple_end_cid);
+        if (tuple_txn_id != INITIAL_TXN_ID) {
+            // if the tuple is owned by other transactions.
+          if (tuple_begin_cid == MAX_CID) {
+              // currently, we do not handle cascading abort. so never read an uncommitted version.
+            return false;
+          } else {
+              // the older version may be visible.
+            if (activated && !invalidated) {
+              return true;
+            } else{
+              return false;
+            }
+          }
+        } else {
+            // if the tuple is not owned by any transaction.
+          if (activated && !invalidated) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+      }
     }
-  }
 
-  auto written_tuples = current_txn->GetWrittenTuples();
-  // install all updates.
-  for (auto entry : written_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto tuple_slot : entry.second) {
-      // TODO: atomic execution.
-      tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
-      ItemPointer new_version =
-          tile_group_header->GetPrevItemPointer(tuple_slot);
-      auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
-      new_tile_group_header->SetBeginCommitId(new_version.offset,
-                                              end_commit_id);
-      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-      tile_group_header->ReleaseTupleSlot(tuple_slot,
-                                          current_txn->GetTransactionId());
+
+    Transaction *TransactionManager::BeginTransaction() {
+      Transaction *txn = new Transaction(GetNextTransactionId(), GetNextCommitId());
+      current_txn = txn;
+      return txn;
     }
-  }
 
-  // commit insert set.
-  auto inserted_tuples = current_txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    for (auto tuple_slot : entry.second) {
-      tile_group->CommitInsertedTuple(tuple_slot, current_txn->txn_id,
-                                      end_commit_id);
+    void TransactionManager::CommitTransaction() {
+      LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+
+      auto &manager = catalog::Manager::GetInstance();
+
+    // generate transaction id.
+      cid_t end_commit_id = GetNextCommitId();
+
+    // validate read set.
+      auto read_tuples = current_txn->GetReadTuples();
+      for (auto entry : read_tuples) {
+        oid_t tile_group_id = entry.first;
+        auto tile_group = manager.GetTileGroup(tile_group_id);
+        auto tile_group_header = tile_group->GetHeader();
+        for (auto tuple_slot : entry.second) {
+          if (tile_group_header->GetTransactionId(tuple_slot) ==
+            current_txn->GetTransactionId()) {
+          // the version is owned by the transaction.
+            continue;
+        } else {
+          if (tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
+            // the version is still visible.
+            continue;
+          }
+        }
+        // otherwise, validation fails. abort transaction.
+        AbortTransaction();
+        return;
+      }
     }
-  }
 
-  // commit delete set.
-  auto deleted_tuples = current_txn->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto tuple_slot : entry.second) {
-      // TODO: atomic execution.
-      tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
-      ItemPointer new_version =
-          tile_group_header->GetPrevItemPointer(tuple_slot);
-      auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
-      new_tile_group_header->SetBeginCommitId(new_version.offset,
-                                              end_commit_id);
-      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-      tile_group_header->ReleaseDeleteTupleSlot(
+    auto written_tuples = current_txn->GetWrittenTuples();
+    // install all updates.
+    for (auto entry : written_tuples) {
+      oid_t tile_group_id = entry.first;
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group_header = tile_group->GetHeader();
+      for (auto tuple_slot : entry.second) {
+        // TODO: atomic execution.
+        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+        ItemPointer new_version =
+        tile_group_header->GetPrevItemPointer(tuple_slot);
+        auto new_tile_group_header =
+        manager.GetTileGroup(new_version.block)->GetHeader();
+        new_tile_group_header->SetTransactionId(new_version.offset,
+          current_txn->GetTransactionId());
+        new_tile_group_header->SetBeginCommitId(new_version.offset,
+          end_commit_id);
+        new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+        tile_group_header->UnlockVisibleTupleSlot(tuple_slot,
+          current_txn->GetTransactionId());
+      }
+    }
+
+    // commit insert set.
+    auto inserted_tuples = current_txn->GetInsertedTuples();
+    for (auto entry : inserted_tuples) {
+      oid_t tile_group_id = entry.first;
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      for (auto tuple_slot : entry.second) {
+        tile_group->CommitInsertedTuple(tuple_slot, current_txn->txn_id,
+          end_commit_id);
+      }
+    }
+
+    // commit delete set.
+    auto deleted_tuples = current_txn->GetDeletedTuples();
+    for (auto entry : deleted_tuples) {
+      oid_t tile_group_id = entry.first;
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group_header = tile_group->GetHeader();
+      for (auto tuple_slot : entry.second) {
+        // TODO: atomic execution.
+        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+        ItemPointer new_version =
+        tile_group_header->GetPrevItemPointer(tuple_slot);
+        auto new_tile_group_header =
+        manager.GetTileGroup(new_version.block)->GetHeader();
+        new_tile_group_header->SetTransactionId(new_version.offset,
+          current_txn->GetTransactionId());
+        new_tile_group_header->SetBeginCommitId(new_version.offset,
+          end_commit_id);
+        new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+        tile_group_header->UnlockInvisibleTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
+      }
     }
-  }
-  delete current_txn;
-}
-
-void TransactionManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
-  auto &manager = catalog::Manager::GetInstance();
-  auto written_tuples = current_txn->GetWrittenTuples();
-
-  // recover write set.
-  for (auto entry : written_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto tuple_slot : entry.second) {
-      tile_group_header->ReleaseTupleSlot(tuple_slot,
-                                          current_txn->GetTransactionId());
-      tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
-      ItemPointer new_version =
-          tile_group_header->GetPrevItemPointer(tuple_slot);
-      auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              INVALID_TXN_ID);
-      new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
-      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-    }
+    delete current_txn;
   }
 
-  // recover delete set.
-  auto deleted_tuples = current_txn->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto tuple_slot : entry.second) {
-      tile_group_header->ReleaseTupleSlot(tuple_slot,
-                                          current_txn->GetTransactionId());
-      tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
-      ItemPointer new_version =
-          tile_group_header->GetPrevItemPointer(tuple_slot);
-      auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              INVALID_TXN_ID);
-      new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
-      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+  void TransactionManager::AbortTransaction() {
+    LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+    auto &manager = catalog::Manager::GetInstance();
+    auto written_tuples = current_txn->GetWrittenTuples();
+
+    // recover write set.
+    for (auto entry : written_tuples) {
+      oid_t tile_group_id = entry.first;
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group_header = tile_group->GetHeader();
+      for (auto tuple_slot : entry.second) {
+        tile_group_header->UnlockVisibleTupleSlot(tuple_slot,
+          current_txn->GetTransactionId());
+        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+        ItemPointer new_version =
+        tile_group_header->GetPrevItemPointer(tuple_slot);
+        auto new_tile_group_header =
+        manager.GetTileGroup(new_version.block)->GetHeader();
+        new_tile_group_header->SetTransactionId(new_version.offset,
+          INVALID_TXN_ID);
+        new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+        new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+      }
     }
+
+    // recover delete set.
+    auto deleted_tuples = current_txn->GetDeletedTuples();
+    for (auto entry : deleted_tuples) {
+      oid_t tile_group_id = entry.first;
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group_header = tile_group->GetHeader();
+      for (auto tuple_slot : entry.second) {
+        tile_group_header->UnlockVisibleTupleSlot(tuple_slot,
+          current_txn->GetTransactionId());
+        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+        ItemPointer new_version =
+        tile_group_header->GetPrevItemPointer(tuple_slot);
+        auto new_tile_group_header =
+        manager.GetTileGroup(new_version.block)->GetHeader();
+        new_tile_group_header->SetTransactionId(new_version.offset,
+          INVALID_TXN_ID);
+        new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+        new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+      }
+    }
+
+    delete current_txn;
   }
 
-  delete current_txn;
-}
+  void TransactionManager::ResetStates() {
+    next_txn_id_ = START_TXN_ID;
+    next_cid_ = START_CID;
+  }
 
-void TransactionManager::ResetStates() {
-  next_txn_id = START_TXN_ID;
-  next_cid = START_CID;
-}
-
-}  // End storage namespace
-}  // End peloton namespace
+  }  // End storage namespace
+  }  // End peloton namespace

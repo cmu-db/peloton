@@ -111,31 +111,32 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
+    auto &transaction_manager = concurrency::TransactionManager::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
 
-      storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+      auto tile_group_header = tile_group->GetHeader();
 
       auto transaction_ = executor_context_->GetTransaction();
-      txn_id_t txn_id = transaction_->GetTransactionId();
-      cid_t start_cid = transaction_->GetStartCommitId();
+      //txn_id_t txn_id = transaction_->GetTransactionId();
+      //cid_t start_cid = transaction_->GetStartCommitId();
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
       // Print tile group visibility
       // tile_group_header->PrintVisibility(txn_id, commit_id);
 
-      // Construct logical tile.
-      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-      logical_tile->AddColumns(tile_group, column_ids_);
-
       // Construct position list by looping through tile group
       // and applying the predicate.
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
+        txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+        cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+        cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
         // check transaction visibility
-        if (tile_group_header->IsVisible(tuple_id, txn_id, start_cid) == false) {
+        if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid) == false) {
           continue;
         }
 
@@ -154,12 +155,20 @@ bool SeqScanExecutor::DExecute() {
         }
       }
 
+      // Don't return empty tiles
+      if (position_list.size() == 0) {
+        continue;
+      }
+
+      // Construct logical tile.
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
 
       // Don't return empty tiles
-      if (0 == logical_tile->GetTupleCount()) {
-        continue;
-      }
+//      if (0 == logical_tile->GetTupleCount()) {
+//        continue;
+//      }
 
       SetOutput(logical_tile.release());
       return true;

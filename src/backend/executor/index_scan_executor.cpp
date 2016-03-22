@@ -183,10 +183,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
-  auto transaction_ = executor_context_->GetTransaction();
-  txn_id_t txn_id = transaction_->GetTransactionId();
-  cid_t commit_id = transaction_->GetStartCommitId();
+  auto transaction = executor_context_->GetTransaction();
+  //txn_id_t txn_id = transaction_->GetTransactionId();
+  //cid_t commit_id = transaction_->GetStartCommitId();
 
+  auto &transaction_manager = concurrency::TransactionManager::GetInstance();
   std::vector<ItemPointer> visible_items;
 
   for (auto tuple_location : tuple_locations) {
@@ -197,10 +198,13 @@ bool IndexScanExecutor::ExecIndexLookup() {
     auto tuple_id = tuple_location.offset;
 
     while (true) {
-      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
+      txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+      cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+      cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+      if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
         ItemPointer visible_item(tile_group_id, tuple_id);
         visible_items.push_back(visible_item);
-        transaction_->RecordRead(visible_item);
+        transaction->RecordRead(visible_item);
         break;
       } else {
         ItemPointer next_item = tile_group_header->GetPrevItemPointer(tuple_id);
