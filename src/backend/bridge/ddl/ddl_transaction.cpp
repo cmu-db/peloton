@@ -31,7 +31,7 @@ namespace bridge {
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLTransaction::ExecTransactionStmt(TransactionStmt *stmt) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   switch (stmt->kind) {
     case TRANS_STMT_BEGIN:

@@ -108,7 +108,7 @@ void LoadTable() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));

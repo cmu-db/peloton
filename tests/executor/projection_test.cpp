@@ -60,7 +60,7 @@ TEST_F(ProjectionTests, BasicTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -120,7 +120,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -188,7 +188,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(

@@ -112,7 +112,7 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -141,12 +141,12 @@ bool SeqScanExecutor::DExecute() {
           continue;
         }
 
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                             tuple_id);
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
           transaction_->RecordRead(ItemPointer(tile_group->GetTileGroupId(), tuple_id));
         } else {
+          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                               tuple_id);
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {

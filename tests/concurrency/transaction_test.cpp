@@ -42,7 +42,7 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   LaunchParallelTest(8, TransactionTest, &txn_manager);
 

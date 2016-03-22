@@ -100,7 +100,7 @@ TEST_F(OrderByTests, IntAscTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -150,7 +150,7 @@ TEST_F(OrderByTests, IntDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -200,7 +200,7 @@ TEST_F(OrderByTests, StringDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -250,7 +250,7 @@ TEST_F(OrderByTests, IntAscStringDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -302,7 +302,7 @@ TEST_F(OrderByTests, StringDescIntAscTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
