@@ -224,7 +224,7 @@ void ExecutorTestsUtil::PopulateTiles(
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
@@ -347,7 +347,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(txn, table,
                                    tuple_count * DEFAULT_TILEGROUP_COUNT,

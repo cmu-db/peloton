@@ -250,7 +250,7 @@ TEST_F(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
                             column_ids);
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -276,7 +276,7 @@ TEST_F(SeqScanTests, NonLeafNodePredicateTest) {
   std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
   // Set up executor and its child.
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

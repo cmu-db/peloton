@@ -10,4 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include "backend/concurrency/optimistic_transaction_manager.h"
+
+namespace peloton {
+  namespace concurrency {
+    class TransactionManagerFactory {
+    public:
+      static TransactionManager &GetInstance() {
+        return OptimisticTransactionManager::GetInstance();
+      }
+    };
+  }
+}

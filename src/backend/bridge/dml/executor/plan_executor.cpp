@@ -55,7 +55,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   bool single_statement_txn = false;
   List *slots = NULL;
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = peloton::concurrency::current_txn;
   // This happens for single statement queries in PG
   if (txn == nullptr) {
