@@ -355,6 +355,19 @@ enum ExpressionType {
 // Storage Backend Types
 //===--------------------------------------------------------------------===//
 
+enum ConcurrencyType {
+    CONCURRENCY_TYPE_OCC = 0, // optimistic
+    CONCURRENCY_TYPE_2PL = 1, // pessimistic
+    CONCURRENCY_TYPE_TO = 2, // timestamp ordering
+    CONCURRENCY_TYPE_SSI = 3 // serializable snapshot isolation
+};
+
+enum IsolationLevelType {
+    ISOLATION_LEVEL_TYPE_FULL = 0, // full serializability
+    ISOLATION_LEVEL_TYPE_SNAPSHOT = 1, // snapshot isolation
+    ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2 // repeatable read
+};
+
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 

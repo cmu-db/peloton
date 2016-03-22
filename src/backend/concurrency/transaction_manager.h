@@ -17,41 +17,51 @@
 
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
-
+#include "backend/concurrency/transaction.h"
 
 namespace peloton {
-    namespace concurrency {
+namespace concurrency {
 
-        class Transaction;
+//class Transaction;
 
-        extern thread_local Transaction *current_txn;
+extern thread_local Transaction *current_txn;
 
-        class TransactionManager {
-        public:
-            TransactionManager();
-            ~TransactionManager();
+class TransactionManager {
+ public:
+  TransactionManager() {
+    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid_ = ATOMIC_VAR_INIT(START_CID);
+  }
 
-            static TransactionManager &GetInstance();
+  virtual ~TransactionManager() {}
 
-            txn_id_t GetNextTransactionId(){
-                return next_txn_id++;
-            }
+  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-            cid_t GetNextCommitId(){
-                return next_cid++;
-            }
+  cid_t GetNextCommitId() { return next_cid_++; }
 
-            Transaction *BeginTransaction();
+  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid) = 0;
 
-            void CommitTransaction();
+  Transaction *BeginTransaction() {
+    Transaction *txn =
+        new Transaction(GetNextTransactionId(), GetNextCommitId());
+    current_txn = txn;
+    return txn;
+  }
 
-            void AbortTransaction();
+  virtual void CommitTransaction() = 0;
 
-            void ResetStates();
+  virtual void AbortTransaction() = 0;
 
-        private:
-            std::atomic<txn_id_t> next_txn_id;
-            std::atomic<cid_t> next_cid;
-        };
-    }  // End storage namespace
+  void ResetStates() {
+    next_txn_id_ = START_TXN_ID;
+    next_cid_ = START_CID;
+  }
+
+ private:
+  std::atomic<txn_id_t> next_txn_id_;
+  std::atomic<cid_t> next_cid_;
+};
+}  // End storage namespace
 }  // End peloton namespace

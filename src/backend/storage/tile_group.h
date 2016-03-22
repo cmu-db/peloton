@@ -118,6 +118,8 @@ class TileGroup : public Printable {
   // Count of tuples that are active w.r.t. this transaction id
   oid_t GetActiveTupleCount(txn_id_t txn_id) const;
 
+  oid_t GetActiveTupleCount() const;
+
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
 
   TileGroupHeader *GetHeader() const { return tile_group_header; }

@@ -26,6 +26,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -88,7 +89,7 @@ DataTable::~DataTable() {
  * Check if the locations contains at least one visible entry to the transaction
  */
 bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-                          const concurrency::Transaction *transaction) {
+                          const concurrency::Transaction *transaction __attribute__((unused))) {
   auto &manager = catalog::Manager::GetInstance();
 
   for (auto loc : locations) {
@@ -98,10 +99,12 @@ bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto header = tile_group->GetHeader();
 
-    auto transaction_id = transaction->GetTransactionId();
-    auto start_commit_id = transaction->GetStartCommitId();
-    bool visible =
-        header->IsVisible(tuple_offset, transaction_id, start_commit_id);
+    txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
+    cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
+    cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
+    auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    
+    bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
 
     if (visible) return true;
   }

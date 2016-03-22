@@ -22,19 +22,19 @@
 namespace peloton {
 namespace concurrency {
 
-void Transaction::RecordRead(ItemPointer location) {
+void Transaction::RecordRead(const ItemPointer &location) {
   read_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordWrite(ItemPointer location) {
+void Transaction::RecordWrite(const ItemPointer &location) {
   written_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordInsert(ItemPointer location) {
+void Transaction::RecordInsert(const ItemPointer &location) {
   inserted_tuples[location.block].push_back(location.offset);
 }
 
-void Transaction::RecordDelete(ItemPointer location) {
+void Transaction::RecordDelete(const ItemPointer &location) {
   deleted_tuples[location.block].push_back(location.offset);
 }
 
@@ -61,7 +61,7 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-const std::string Transaction::GetInfo() const{
+const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id

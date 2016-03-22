@@ -24,6 +24,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/exception.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/tile_group.h"
@@ -223,7 +224,7 @@ void ExecutorTestsUtil::PopulateTiles(
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
@@ -346,7 +347,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(txn, table,
                                    tuple_count * DEFAULT_TILEGROUP_COUNT,

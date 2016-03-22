@@ -24,6 +24,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/expression/constant_value_expression.h"
@@ -107,7 +108,7 @@ void LoadTable() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));

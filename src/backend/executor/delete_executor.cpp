@@ -119,7 +119,7 @@ bool DeleteExecutor::DExecute() {
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
       // if the tuple is not owned by any transaction and is visible to current transdaction.
       
-      if (tile_group_header->LatchTupleSlot(physical_tuple_id, tid) == false){
+      if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false){
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
@@ -134,7 +134,7 @@ bool DeleteExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(transaction_, new_tuple, false);
 
-      tile_group_header->SetPrevItemPointer(physical_tuple_id, location);
+      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
       tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
 
       if (location.block == INVALID_OID) {
