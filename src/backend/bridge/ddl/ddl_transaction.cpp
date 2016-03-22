@@ -15,7 +15,7 @@
 
 #include "backend/bridge/ddl/ddl_transaction.h"
 #include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction.h"
 
 namespace peloton {
@@ -31,7 +31,7 @@ namespace bridge {
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLTransaction::ExecTransactionStmt(TransactionStmt *stmt) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   switch (stmt->kind) {
     case TRANS_STMT_BEGIN:

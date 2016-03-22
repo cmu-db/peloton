@@ -37,7 +37,7 @@ class AbstractScanExecutor : public AbstractExecutor {
  protected:
   bool DInit();
 
-  bool DExecute() = 0;
+  virtual bool DExecute() = 0;
 
  protected:
   //===--------------------------------------------------------------------===//

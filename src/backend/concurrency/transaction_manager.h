@@ -17,43 +17,51 @@
 
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
-
+#include "backend/concurrency/transaction.h"
 
 namespace peloton {
-  namespace concurrency {
+namespace concurrency {
 
-    class Transaction;
+//class Transaction;
 
-    extern thread_local Transaction *current_txn;
+extern thread_local Transaction *current_txn;
 
-    class TransactionManager {
-    public:
-      TransactionManager();
-      ~TransactionManager();
+class TransactionManager {
+ public:
+  TransactionManager() {
+    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid_ = ATOMIC_VAR_INIT(START_CID);
+  }
 
-      static TransactionManager &GetInstance();
+  virtual ~TransactionManager() {}
 
-      txn_id_t GetNextTransactionId(){
-        return next_txn_id_++;
-      }
+  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-      cid_t GetNextCommitId(){
-        return next_cid_++;
-      }
+  cid_t GetNextCommitId() { return next_cid_++; }
 
-      bool IsVisible(const txn_id_t &tuple_txn_id, const cid_t &tuple_begin_cid, const cid_t &tuple_end_cid);
+  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid) = 0;
 
-      Transaction *BeginTransaction();
+  Transaction *BeginTransaction() {
+    Transaction *txn =
+        new Transaction(GetNextTransactionId(), GetNextCommitId());
+    current_txn = txn;
+    return txn;
+  }
 
-      void CommitTransaction();
+  virtual void CommitTransaction() = 0;
 
-      void AbortTransaction();
+  virtual void AbortTransaction() = 0;
 
-      void ResetStates();
+  void ResetStates() {
+    next_txn_id_ = START_TXN_ID;
+    next_cid_ = START_CID;
+  }
 
-    private:
-      std::atomic<txn_id_t> next_txn_id_;
-      std::atomic<cid_t> next_cid_;
-    };
-      }  // End storage namespace
-  }  // End peloton namespace
+ private:
+  std::atomic<txn_id_t> next_txn_id_;
+  std::atomic<cid_t> next_cid_;
+};
+}  // End storage namespace
+}  // End peloton namespace

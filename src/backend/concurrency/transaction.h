@@ -21,7 +21,6 @@
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
-#include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -31,7 +30,6 @@ namespace concurrency {
 //===--------------------------------------------------------------------===//
 
 class Transaction : public Printable {
-  friend class TransactionManager;
 
   Transaction(Transaction const &) = delete;
 

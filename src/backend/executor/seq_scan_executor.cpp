@@ -25,6 +25,7 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -111,7 +112,7 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager = concurrency::TransactionManager::GetInstance();
+    auto &transaction_manager = concurrency::OptimisticTransactionManager::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =

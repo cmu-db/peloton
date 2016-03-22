@@ -23,6 +23,7 @@
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -59,7 +60,7 @@ TEST_F(ProjectionTests, BasicTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -119,7 +120,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -187,7 +188,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(

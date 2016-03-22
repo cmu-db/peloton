@@ -35,6 +35,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/table_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -82,7 +83,7 @@ std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -103,7 +104,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
 }
 
 void UpdateTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -154,7 +155,7 @@ void UpdateTuple(storage::DataTable *table) {
 }
 
 void DeleteTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -193,7 +194,7 @@ void DeleteTuple(storage::DataTable *table) {
 }
 
 TEST_F(MutateTests, StressTests) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -290,7 +291,7 @@ TEST_F(MutateTests, StressTests) {
 
 // Insert a logical tile into a table
 TEST_F(MutateTests, InsertTest) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
