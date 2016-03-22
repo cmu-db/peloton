@@ -387,7 +387,7 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
 
   inline size_t operator()(IntsKey<KeySize> const &p) const {
     size_t seed = 0;
-    for (int ii = 0; ii < KeySize; ii++) {
+    for (size_t ii = 0; ii < KeySize; ii++) {
       boost::hash_combine(seed, p.data[ii]);
     }
     return seed;
