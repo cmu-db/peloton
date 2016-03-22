@@ -139,7 +139,7 @@ class TileGroupHeader : public Printable {
                       delete_commit_offset));
   }
 
-  inline ItemPointer GetPrevItemPointer(const oid_t &tuple_slot_id) const {
+  inline ItemPointer GetNextItemPointer(const oid_t &tuple_slot_id) const {
     return *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
                       pointer_offset));
   }
@@ -171,7 +171,7 @@ class TileGroupHeader : public Printable {
                 delete_commit_offset)) = commit;
   }
 
-  inline void SetPrevItemPointer(const oid_t &tuple_slot_id,
+  inline void SetNextItemPointer(const oid_t &tuple_slot_id,
                                  const ItemPointer &item) const {
     *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
                       pointer_offset)) = item;
@@ -301,10 +301,8 @@ class TileGroupHeader : public Printable {
 
 
  // *  -----------------------------------------------------------------------------
- // *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- // *--
- // *  |InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (16 bytes)
- // *| lock bit (1 byte)
+ // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
+ // *  | InsertCommit (1 byte) | DeleteCommit (1 byte) | NextItemPointer (16 bytes)
 
 
  private:

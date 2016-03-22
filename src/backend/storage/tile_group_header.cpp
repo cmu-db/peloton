@@ -45,7 +45,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type, const int &tup
     SetEndCommitId(tuple_slot_id, MAX_CID);
     SetInsertCommit(tuple_slot_id, false);
     SetDeleteCommit(tuple_slot_id, false);
-    SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+    SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
 }
 
@@ -109,7 +109,7 @@ const std::string TileGroupHeader::GetInfo() const {
       os << "X";
 
     peloton::ItemPointer location =
-        GetPrevItemPointer(header_itr);
+            GetNextItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]\n";
   }
@@ -177,7 +177,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     else
       os << "X";
 
-    peloton::ItemPointer location = GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location = GetNextItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]";  //<<
 

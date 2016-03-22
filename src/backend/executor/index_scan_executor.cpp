@@ -207,7 +207,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
         transaction->RecordRead(visible_item);
         break;
       } else {
-        ItemPointer next_item = tile_group_header->GetPrevItemPointer(tuple_id);
+        ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
         if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
           break;
         }
