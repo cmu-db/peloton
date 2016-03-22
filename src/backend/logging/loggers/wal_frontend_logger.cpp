@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -63,7 +62,7 @@ storage::DataTable *GetTable(TupleRecord tupleRecord);
 WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   logging_type = LOGGING_TYPE_DRAM_NVM;
 
-  LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
+  /*LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
 
   // open log file and file descriptor
   // we open it in append + binary mode
@@ -76,13 +75,16 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   log_file_fd = fileno(log_file);
   if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
-  }
+  }*/
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
 
+  // TODO delete later
   this->checkpoint = new SimpleCheckpoint();
-  //TODO delete later
+
+  // abj1 adding code here!
+  this->InitLogFilesList();
 }
 
 /**
@@ -112,6 +114,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
            log_file);
   }
+  // LOG_INFO("log_file_fd is %d", log_file_fd);
 
   // Then, flush
   int ret = fflush(log_file);
@@ -138,6 +141,11 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     for (auto backend_logger : backend_loggers) {
       backend_logger->Commit();
     }
+  }
+
+  // now decide whether we need to create a new log file!
+  if (FileSwitchCondIsTrue(fsync_count)) {
+    this->CreateNewLogFile();
   }
 }
 
@@ -303,7 +311,7 @@ void WriteAheadFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
  * @param source
  */
 void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination,
-                                     concurrency::Transaction *source) {
+                                          concurrency::Transaction *source) {
   // This is the local transaction
   auto inserted_tuples = source->GetInsertedTuples();
   // Record the inserts in recovery txn
@@ -406,7 +414,8 @@ void WriteAheadFrontendLogger::AbortActiveTransactions() {
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
+void WriteAheadFrontendLogger::InsertTuple(
+    concurrency::Transaction *recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
 
   // Check for torn log write
@@ -469,7 +478,8 @@ void WriteAheadFrontendLogger::InsertTuple(concurrency::Transaction *recovery_tx
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_txn) {
+void WriteAheadFrontendLogger::DeleteTuple(
+    concurrency::Transaction *recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_DELETE);
 
   // Check for torn log write
@@ -503,7 +513,8 @@ void WriteAheadFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_tx
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::UpdateTuple(concurrency::Transaction *recovery_txn) {
+void WriteAheadFrontendLogger::UpdateTuple(
+    concurrency::Transaction *recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_UPDATE);
 
   // Check for torn log write
