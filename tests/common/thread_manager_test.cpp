@@ -37,23 +37,13 @@ TEST_F(ThreadManagerTests, BasicTest) {
 }
 */
 
-TEST_F(ThreadManagerTests, BasicTest) {
+TEST_F(ThreadManagerTests, BasicTest1) {
 
-  auto& server_thread_manager1 = ThreadManager::GetServerThreadPool();
-  auto& server_thread_manager2 = ThreadManager::GetServerThreadPool();
+  auto& thread_manager1 = ThreadManager::GetInstance();
+  auto& thread_manager2 = ThreadManager::GetInstance();
 
-  bool status = (&server_thread_manager1 == &server_thread_manager2);
+  bool status = (&thread_manager1 == &thread_manager2);
   EXPECT_EQ(status, true);
-
-  auto& client_thread_manager1 = ThreadManager::GetClientThreadPool();
-  auto& client_thread_manager2 = ThreadManager::GetClientThreadPool();
-
-  status = (&client_thread_manager1 == &client_thread_manager2);
-  EXPECT_EQ(status, true);
-
-  status = (&server_thread_manager1 == &client_thread_manager2);
-  EXPECT_EQ(status, false);
-
 }
 
 }  // End test namespace

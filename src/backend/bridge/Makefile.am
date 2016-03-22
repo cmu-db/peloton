@@ -43,7 +43,6 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_sort.cpp \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
 			   backend/bridge/dml/mapper/mapper_unique.cpp \
-			   backend/bridge/dml/mapper/mapper_result.cpp \
 			   backend/bridge/dml/mapper/dml_utils.cpp \
 			   backend/bridge/dml/tuple/tuple_transformer.cpp \
 			   backend/bridge/dml/executor/plan_executor.cpp \
