@@ -20,38 +20,40 @@
 
 
 namespace peloton {
-    namespace concurrency {
+  namespace concurrency {
 
-        class Transaction;
+    class Transaction;
 
-        extern thread_local Transaction *current_txn;
+    extern thread_local Transaction *current_txn;
 
-        class TransactionManager {
-        public:
-            TransactionManager();
-            ~TransactionManager();
+    class TransactionManager {
+    public:
+      TransactionManager();
+      ~TransactionManager();
 
-            static TransactionManager &GetInstance();
+      static TransactionManager &GetInstance();
 
-            txn_id_t GetNextTransactionId(){
-                return next_txn_id++;
-            }
+      txn_id_t GetNextTransactionId(){
+        return next_txn_id_++;
+      }
 
-            cid_t GetNextCommitId(){
-                return next_cid++;
-            }
+      cid_t GetNextCommitId(){
+        return next_cid_++;
+      }
 
-            Transaction *BeginTransaction();
+      bool IsVisible(const txn_id_t tuple_txn_id, const cid_t tuple_begin_cid, const cid_t tuple_end_cid);
 
-            void CommitTransaction();
+      Transaction *BeginTransaction();
 
-            void AbortTransaction();
+      void CommitTransaction();
 
-            void ResetStates();
+      void AbortTransaction();
 
-        private:
-            std::atomic<txn_id_t> next_txn_id;
-            std::atomic<cid_t> next_cid;
-        };
-    }  // End storage namespace
-}  // End peloton namespace
+      void ResetStates();
+
+    private:
+      std::atomic<txn_id_t> next_txn_id_;
+      std::atomic<cid_t> next_cid_;
+    };
+      }  // End storage namespace
+  }  // End peloton namespace

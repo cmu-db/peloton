@@ -119,7 +119,7 @@ bool DeleteExecutor::DExecute() {
             tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID) {
       // if the tuple is not owned by any transaction and is visible to current transdaction.
       
-      if (tile_group_header->LatchTupleSlot(physical_tuple_id, tid) == false){
+      if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false){
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
