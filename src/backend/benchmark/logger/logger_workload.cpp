@@ -174,7 +174,7 @@ void ResetSystem() {
   manager.SetNextOid(0);
   manager.ClearTileGroup();
 
-  auto& txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.ResetStates();
 }
 
@@ -381,7 +381,7 @@ std::vector<ItemPointer> InsertTuples(
     bool committed) {
   std::vector<ItemPointer> locations;
 
-  auto& txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   for (auto tuple : tuples) {
     auto txn = txn_manager.BeginTransaction();
@@ -425,7 +425,7 @@ void DeleteTuples(storage::DataTable* table,
                   const std::vector<ItemPointer>& locations,
                   bool committed) {
   for (auto delete_location : locations) {
-    auto& txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
     bool status = table->DeleteTuple(txn, delete_location);
@@ -471,7 +471,7 @@ std::vector<ItemPointer> UpdateTuples(
     auto tuple = tuples[tuple_itr];
     tuple_itr++;
 
-    auto& txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
     bool status = table->DeleteTuple(txn, delete_location);

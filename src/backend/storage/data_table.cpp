@@ -102,7 +102,7 @@ bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
-    auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     
     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
 

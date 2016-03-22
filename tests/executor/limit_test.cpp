@@ -81,7 +81,7 @@ TEST_F(LimitTests, NonLeafLimitOffsetTest) {
       .WillOnce(Return(true));  // even no need to call the child for 3rd time
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -126,7 +126,7 @@ TEST_F(LimitTests, NonLeafSkipAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -170,7 +170,7 @@ TEST_F(LimitTests, NonLeafReturnAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -215,7 +215,7 @@ TEST_F(LimitTests, NonLeafHugeLimitTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
