@@ -81,7 +81,7 @@ libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpeloton_la_LDFLAGS = -levent -lprotobuf
+libpeloton_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads
 
 ######################################################################
 # LIBPELOTONPG

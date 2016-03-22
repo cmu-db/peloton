@@ -110,9 +110,7 @@ AbstractExpression *SubqueryComparisonFactory(
         static_cast<QuantifierType>(obj.valueForKey("QUANTIFIER").asInt());
   }
   SubqueryExpression *l_subquery = dynamic_cast<SubqueryExpression *>(l);
-
   SubqueryExpression *r_subquery = dynamic_cast<SubqueryExpression *>(r);
-
   if (l_subquery != NULL && r_subquery != NULL) {
     switch (c) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
