@@ -42,6 +42,9 @@ class LogicalTileFactory {
   static LogicalTile *WrapTileGroup(
       const std::shared_ptr<storage::TileGroup> &tile_group,
       txn_id_t txn_id);
+
+  static LogicalTile *WrapTileGroup(
+      const std::shared_ptr<storage::TileGroup> &tile_group);
 };
 
 }  // namespace executor

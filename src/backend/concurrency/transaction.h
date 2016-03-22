@@ -21,7 +21,6 @@
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
-#include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -31,7 +30,6 @@ namespace concurrency {
 //===--------------------------------------------------------------------===//
 
 class Transaction : public Printable {
-  friend class TransactionManager;
 
   Transaction(Transaction const &) = delete;
 
@@ -69,16 +67,16 @@ class Transaction : public Printable {
   inline cid_t GetEndCommitId() const { return end_cid; }
 
   // record read set
-  void RecordRead(ItemPointer location);
+  void RecordRead(const ItemPointer &location);
 
   // record write set
-  void RecordWrite(ItemPointer location);
+  void RecordWrite(const ItemPointer &location);
 
   // record insert set
-  void RecordInsert(ItemPointer location);
+  void RecordInsert(const ItemPointer &location);
 
   // record delete set
-  void RecordDelete(ItemPointer location);
+  void RecordDelete(const ItemPointer &location);
 
   const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
 
