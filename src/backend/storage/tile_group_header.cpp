@@ -21,7 +21,7 @@
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(BackendType backend_type, int tuple_count)
+TileGroupHeader::TileGroupHeader(const BackendType &backend_type, const int &tuple_count)
     : backend_type(backend_type),
       data(nullptr),
       num_tuple_slots(tuple_count),
@@ -198,7 +198,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   std::cout << os.str().c_str();
 }
 
-oid_t TileGroupHeader::GetActiveTupleCount(txn_id_t txn_id) {
+oid_t TileGroupHeader::GetActiveTupleCount(const txn_id_t &txn_id) {
   oid_t active_tuple_slots = 0;
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   // FIXME: this is a bug
@@ -209,6 +209,24 @@ oid_t TileGroupHeader::GetActiveTupleCount(txn_id_t txn_id) {
       active_tuple_slots++;
     }
   }
+
+  return active_tuple_slots;
+}
+
+oid_t TileGroupHeader::GetActiveTupleCount() {
+  oid_t active_tuple_slots = 0;
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  
+  for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+       tuple_slot_id++) {
+    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
+    cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
+    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
+    if (txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+      active_tuple_slots++;
+    }
+  }
+  
   return active_tuple_slots;
 }
 

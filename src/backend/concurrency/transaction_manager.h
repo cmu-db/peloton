@@ -41,7 +41,7 @@ namespace peloton {
         return next_cid_++;
       }
 
-      bool IsVisible(const txn_id_t tuple_txn_id, const cid_t tuple_begin_cid, const cid_t tuple_end_cid);
+      bool IsVisible(const txn_id_t &tuple_txn_id, const cid_t &tuple_begin_cid, const cid_t &tuple_end_cid);
 
       Transaction *BeginTransaction();
 
