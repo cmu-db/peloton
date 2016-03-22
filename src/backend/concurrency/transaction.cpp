@@ -61,7 +61,7 @@ void Transaction::ResetState(void) {
   deleted_tuples.clear();
 }
 
-const std::string Transaction::GetInfo() const{
+const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
   os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id

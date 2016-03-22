@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "harness.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction.h"
 
 namespace peloton {
@@ -42,7 +42,7 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   LaunchParallelTest(8, TransactionTest, &txn_manager);
 

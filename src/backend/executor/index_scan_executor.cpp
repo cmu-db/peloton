@@ -26,6 +26,7 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 
@@ -187,7 +188,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
   //txn_id_t txn_id = transaction_->GetTransactionId();
   //cid_t commit_id = transaction_->GetStartCommitId();
 
-  auto &transaction_manager = concurrency::TransactionManager::GetInstance();
+  auto &transaction_manager = concurrency::OptimisticTransactionManager::GetInstance();
   std::vector<ItemPointer> visible_items;
 
   for (auto tuple_location : tuple_locations) {

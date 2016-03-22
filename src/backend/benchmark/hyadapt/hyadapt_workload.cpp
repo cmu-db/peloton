@@ -32,6 +32,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
@@ -237,7 +238,7 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
 void RunDirectTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -337,7 +338,7 @@ void RunDirectTest() {
 void RunAggregateTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -492,7 +493,7 @@ void RunAggregateTest() {
 void RunArithmeticTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -633,7 +634,7 @@ void RunArithmeticTest() {
 void RunJoinTest() {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -737,7 +738,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
                    int peloton_num_group) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -837,7 +838,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
 }
 
 void RunInsertTest() {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -893,7 +894,7 @@ void RunInsertTest() {
 
 void RunUpdateTest() {
   const int lower_bound = GetLowerBound();
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -2006,7 +2007,7 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
 void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   const int lower_bound = GetLowerBound();
   const bool is_inlined = true;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 

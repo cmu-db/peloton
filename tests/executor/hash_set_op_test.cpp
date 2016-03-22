@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/hash_set_op_executor.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -82,7 +83,7 @@ TEST_F(HashSetOptTests, ExceptTest) {
 
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
@@ -157,7 +158,7 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
 
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
@@ -249,7 +250,7 @@ TEST_F(HashSetOptTests, IntersectTest) {
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
   size_t tile_size = 10;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
@@ -322,7 +323,7 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
 
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
