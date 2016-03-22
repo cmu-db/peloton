@@ -42,7 +42,7 @@ namespace peloton {
     }
 
       // Visibility check
-    bool TransactionManager::IsVisible(const txn_id_t tuple_txn_id, const cid_t tuple_begin_cid, const cid_t tuple_end_cid) {
+    bool TransactionManager::IsVisible(const txn_id_t &tuple_txn_id, const cid_t &tuple_begin_cid, const cid_t &tuple_end_cid) {
       if (tuple_txn_id == INVALID_TXN_ID) {
           // the tuple is not available.
         return false;
