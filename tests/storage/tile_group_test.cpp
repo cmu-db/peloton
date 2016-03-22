@@ -103,7 +103,7 @@ TEST_F(TileGroupTests, BasicTest) {
 
   // TRANSACTION
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetStartCommitId();
@@ -136,7 +136,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   cid_t commit_id = txn->GetStartCommitId();
@@ -283,7 +283,7 @@ TEST_F(TileGroupTests, MVCCInsert) {
 
   oid_t tuple_slot_id = INVALID_OID;
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id1 = txn->GetTransactionId();
   cid_t cid1 = txn->GetStartCommitId();
@@ -380,7 +380,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
       BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       tile_group_header, *schema, nullptr, tuple_count);
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id1 = txn->GetTransactionId();
   oid_t tuple_slot_id = INVALID_OID;

@@ -112,7 +112,7 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
