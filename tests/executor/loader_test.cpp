@@ -81,56 +81,57 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
   oid_t tuple_count = tilegroup_count_per_loader * DEFAULT_TUPLES_PER_TILEGROUP;
 
+  // Start a txn for each insert
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<storage::Tuple> tuple(
+          ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool));
+
+  std::unique_ptr<executor::ExecutorContext> context(
+          new executor::ExecutorContext(txn));
+
+  auto project_info = MakeProjectInfoFromTuple(tuple.get());
+
+  planner::InsertPlan node(table, project_info);
+
   // Insert the desired # of tuples
   for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-    std::unique_ptr<storage::Tuple> tuple(
-        ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool));
-
-    // Start a txn for each insert
-    auto txn = txn_manager.BeginTransaction();
-    std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn));
-
-    auto project_info = MakeProjectInfoFromTuple(tuple.get());
-
-    planner::InsertPlan node(table, project_info);
-    executor::InsertExecutor executor(&node, context.get());
-    executor.Execute();
-
-    txn_manager.CommitTransaction();
+      executor::InsertExecutor executor(&node, context.get());
+      executor.Execute();
   }
+
+  txn_manager.CommitTransaction();
 
 }
 
 TEST_F(LoaderTests, LoadingTest) {
-  // We are going to simply load tile groups concurrently in this test
-  oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
-  bool build_indexes = true;
+    // We are going to simply load tile groups concurrently in this test
+    oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+    bool build_indexes = false;
 
-  // Control the scale
-  oid_t loader_threads_count = 2;
-  oid_t tilegroup_count_per_loader = 10;
+    // Control the scale
+    oid_t loader_threads_count = 2;
+    oid_t tilegroup_count_per_loader = 10;
 
-  // Each tuple size ~40 B.
-  oid_t tuple_size = 40;
+    // Each tuple size ~40 B.
+    oid_t tuple_size = 41;
 
-  std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
+    std::unique_ptr<storage::DataTable> data_table(
+            ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
 
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-  LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(), testing_pool,
-                     tilegroup_count_per_loader);
+    LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(), testing_pool,
+            tilegroup_count_per_loader);
 
-  auto expected_tile_group_count = loader_threads_count *
-      tilegroup_count_per_loader;
-  auto bytes_to_megabytes_converter = (1024 * 1024);
+    auto expected_tile_group_count = loader_threads_count *
+        tilegroup_count_per_loader;
+    auto bytes_to_megabytes_converter = (1024 * 1024);
 
-  EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
+    EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-  printf("Dataset size : %lu MB \n",
-           (expected_tile_group_count * tuples_per_tilegroup * tuple_size)/
-           bytes_to_megabytes_converter);
+    printf("Dataset size : %lu MB \n",
+            (expected_tile_group_count * tuples_per_tilegroup * tuple_size)/
+            bytes_to_megabytes_converter);
 
 }
 
