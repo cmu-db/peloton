@@ -3,8 +3,24 @@
 
 // TODO find way to interact with postgres / peloton?
 
-SET
-insert into test (k, d) values ('$key', '$value') on conflict (k) do update set d = excluded.d;
+// prepared statements
+// execute only once
+int setup() {
+CREATE TABLE test ( k VARCHAR(40) PRIMARY KEY, d VARCHAR(400) );
 
-GET
-select d from test where k = '$key';
+DEALLOCATE SET;
+PREPARE SET (text, text) AS
+  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
+
+DEALLOCATE GET;
+PREPARE GET (text) AS
+  SELECT d FROM TEST WHERE k = $1;
+}
+
+int get(std::string &key, std::string &value) {
+  EXECUTE SET (,)
+}
+
+int get(std::string &key, std::string &value) {
+  EXECUTE SET (,)
+}
