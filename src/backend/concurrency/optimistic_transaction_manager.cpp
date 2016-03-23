@@ -248,7 +248,7 @@ void OptimisticTransactionManager::AbortTransaction() {
   }
 
   delete current_txn;
-  current_txn = null_ptr;
+  current_txn = nullptr;
 }
 
 }  // End storage namespace
