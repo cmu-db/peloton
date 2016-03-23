@@ -109,7 +109,6 @@ bool IndexScanExecutor::DExecute() {
     auto status = ExecIndexLookup();
     if (status == false) return false;
   }
-
   // Already performed the index lookup
   assert(done_);
 
@@ -204,23 +203,22 @@ bool IndexScanExecutor::ExecIndexLookup() {
       }
     }
   }
-
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
-    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
-
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuples.first);
 
+    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
     logical_tile->AddPositionList(std::move(tuples.second));
-    logical_tile->ProjectColumns(full_column_ids_, column_ids_);
-
+    if (column_ids_.size() != 0) {
+      logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+    }
+    
     // Print tile group visibility
     // tile_group_header->PrintVisibility(txn_id, commit_id);
-
-    result_.push_back(logical_tile);
+    result_.push_back(logical_tile.release());
   }
 
   done_ = true;
