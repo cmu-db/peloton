@@ -158,18 +158,18 @@ bool DeleteExecutor::DExecute() {
       transaction_->RecordDelete(tile_group_id, physical_tuple_id);
 
       // Logging
-      {
-        auto &log_manager = logging::LogManager::GetInstance();
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
 
-        if (log_manager.IsInLoggingMode()) {
-          auto logger = log_manager.GetBackendLogger();
-          auto record = logger->GetTupleRecord(
-              LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
-              target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //         LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
+      //         target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
 
-          logger->Log(record);
-        }
-      }
+      //     logger->Log(record);
+      //   }
+      // }
       delete new_tuple;
 
     } else {
