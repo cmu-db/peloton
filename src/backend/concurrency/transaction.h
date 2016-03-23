@@ -67,16 +67,24 @@ class Transaction : public Printable {
   inline cid_t GetEndCommitId() const { return end_cid; }
 
   // record read set
-  void RecordRead(const ItemPointer &location);
+  void RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   // record write set
-  void RecordWrite(const ItemPointer &location);
+  void RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   // record insert set
-  void RecordInsert(const ItemPointer &location);
+  void RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   // record delete set
-  void RecordDelete(const ItemPointer &location);
+  void RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  void RecordRead(const ItemPointer &);
+
+  void RecordWrite(const ItemPointer &);
+
+  void RecordInsert(const ItemPointer &);
+
+  void RecordDelete(const ItemPointer &);
 
   const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
 

@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/empty_transaction_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -17,25 +17,18 @@
 namespace peloton {
 namespace concurrency {
 
-class OptimisticTransactionManager : public TransactionManager {
+// for performance measurement only.
+class EmptyTransactionManager : public TransactionManager {
  public:
-  OptimisticTransactionManager() {}
+  EmptyTransactionManager() {}
 
-  virtual ~OptimisticTransactionManager() {}
+  virtual ~EmptyTransactionManager() {}
 
-  static OptimisticTransactionManager &GetInstance();
+  static EmptyTransactionManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
-
-  virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  virtual bool RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual void CommitTransaction();
 
