@@ -19,6 +19,7 @@
 #include <memory>
 
 #define DEFAULT_CACHE_SIZE 100
+#define DEFAULT_CACHE_INSERT_THRESHOLD 3
 
 namespace peloton {
 template <class Key, class Value>
@@ -56,6 +57,7 @@ class Cache {
   typedef std::pair<ValuePtr, typename KeyList::iterator> IndexedValue;
 
   typedef std::unordered_map<Key, IndexedValue> Map;
+  typedef std::unordered_map<Key, size_t> CountMap;
   typedef size_t size_type;
 
  public:
@@ -65,7 +67,8 @@ class Cache {
   Cache &operator=(Cache &&) = delete;
 
   explicit Cache(size_type capacity = DEFAULT_CACHE_SIZE,
-                 ValueDeleter deleter = std::default_delete<Value>());
+                 ValueDeleter deleter = std::default_delete<Value>(),
+                 size_t insert_threshold = DEFAULT_CACHE_INSERT_THRESHOLD);
 
   class iterator : public std::iterator<std::input_iterator_tag, ValuePtr> {
     friend class Cache;
@@ -100,8 +103,10 @@ class Cache {
  private:
   Map map_;
   KeyList list_;
+  CountMap counts_;
   size_type capacity_;
   ValueDeleter value_deleter_;
+  size_t insert_threshold_;
 };
 
 /** @brief cache iterator constructor
