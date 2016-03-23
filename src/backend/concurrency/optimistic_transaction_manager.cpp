@@ -154,7 +154,7 @@ void OptimisticTransactionManager::CommitTransaction() {
       COMPILER_MEMORY_FENCE;
 
       new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
+                                              INITIAL_TXN_ID);
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
     }
@@ -162,6 +162,7 @@ void OptimisticTransactionManager::CommitTransaction() {
 
   // commit insert set.
   auto inserted_tuples = current_txn->GetInsertedTuples();
+  size_t insert_count = 0;
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -193,7 +194,7 @@ void OptimisticTransactionManager::CommitTransaction() {
       COMPILER_MEMORY_FENCE;
 
       new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
+                                              INVALID_TXN_ID);
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
     }
