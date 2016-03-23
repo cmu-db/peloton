@@ -79,6 +79,26 @@ bool OptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
+bool OptimisticTransactionManager::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  current_txn->RecordRead(tile_group_id, tuple_id);
+  return true;
+}
+
+bool OptimisticTransactionManager::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  current_txn->RecordWrite(tile_group_id, tuple_id);
+  return true;
+}
+
+bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  current_txn->RecordInsert(tile_group_id, tuple_id);
+  return true;
+}
+
+bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  current_txn->RecordDelete(tile_group_id, tuple_id);
+  return true;
+}
+
 void OptimisticTransactionManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
@@ -99,8 +119,10 @@ void OptimisticTransactionManager::CommitTransaction() {
         // the version is owned by the transaction.
         continue;
       } else {
-        if (tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-          // the version is still visible.
+        if (tile_group_header->GetTransactionId(tuple_slot) == INITIAL_TXN_ID && 
+          tile_group_header->GetBeginCommitId(tuple_slot) <= end_commit_id &&
+          tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
+          // the version is not locked and still visible.
           continue;
         }
       }
@@ -117,18 +139,23 @@ void OptimisticTransactionManager::CommitTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      // TODO: atomic execution.
+      // we must guarantee that, at any time point, only one version is visible.
+
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
       ItemPointer new_version =
           tile_group_header->GetNextItemPointer(tuple_slot);
+      
       auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
       new_tile_group_header->SetBeginCommitId(new_version.offset,
                                               end_commit_id);
       new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-      tile_group_header->UnlockVisibleTupleSlot(
+
+      COMPILER_MEMORY_FENCE;
+
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              current_txn->GetTransactionId());
+      tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
     }
   }
@@ -151,18 +178,23 @@ void OptimisticTransactionManager::CommitTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      // TODO: atomic execution.
+      // we must guarantee that, at any time point, only one version is visible.
+
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
       ItemPointer new_version =
           tile_group_header->GetNextItemPointer(tuple_slot);
+
       auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
-      new_tile_group_header->SetTransactionId(new_version.offset,
-                                              current_txn->GetTransactionId());
       new_tile_group_header->SetBeginCommitId(new_version.offset,
                                               end_commit_id);
       new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-      tile_group_header->UnlockInvisibleTupleSlot(
+
+      COMPILER_MEMORY_FENCE;
+
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              current_txn->GetTransactionId());
+      tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
     }
   }
@@ -180,7 +212,7 @@ void OptimisticTransactionManager::AbortTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      tile_group_header->UnlockVisibleTupleSlot(
+      tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
       tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
       ItemPointer new_version =
@@ -201,7 +233,7 @@ void OptimisticTransactionManager::AbortTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      tile_group_header->UnlockVisibleTupleSlot(
+      tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
       tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
       ItemPointer new_version =

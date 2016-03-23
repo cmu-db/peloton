@@ -147,7 +147,7 @@ bool DeleteExecutor::DExecute() {
       executor_context_->num_processed += 1;  // deleted one
 
       ItemPointer delete_location(tile_group_id, physical_tuple_id);
-      transaction_->RecordDelete(delete_location);
+      transaction_->RecordDelete(tile_group_id, physical_tuple_id);
     
       // Logging
       {
