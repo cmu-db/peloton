@@ -200,7 +200,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
 oid_t TileGroupHeader::GetActiveTupleCount(const txn_id_t &txn_id) {
   oid_t active_tuple_slots = 0;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // FIXME: this is a bug
   cid_t last_cid = txn_manager.GetNextCommitId();
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
@@ -215,7 +215,7 @@ oid_t TileGroupHeader::GetActiveTupleCount(const txn_id_t &txn_id) {
 
 oid_t TileGroupHeader::GetActiveTupleCount() {
   oid_t active_tuple_slots = 0;
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {

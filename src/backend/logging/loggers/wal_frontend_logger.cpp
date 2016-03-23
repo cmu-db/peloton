@@ -154,7 +154,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
     bool reached_end_of_file = false;
 
     // Start the recovery transaction
-    auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     // Although we call BeginTransaction here, recovery txn will not be
     // recoreded in log file since we are in recovery mode

@@ -43,7 +43,7 @@ uint64_t TestingHarness::GetThreadId() {
 }
 
 txn_id_t TestingHarness::GetNextTransactionId() {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   txn_manager.CommitTransaction();
