@@ -258,7 +258,7 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
       return true;
     } else {
       LOG_INFO("Delete failed: not deletable");
-      tile_group_header->UnlockVisibleTupleSlot(tuple_slot_id, transaction_id);
+      tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id);
       return false;
     }
   } else if (tile_group_header->GetTransactionId(tuple_slot_id) ==
@@ -283,7 +283,7 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
 void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
                                     txn_id_t transaction_id, cid_t commit_id) {
   // set the begin commit id to persist insert
-  if (tile_group_header->UnlockVisibleTupleSlot(tuple_slot_id, transaction_id)) {
+  if (tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
   }
 }
@@ -291,7 +291,7 @@ void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
 void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
                                    cid_t commit_id) {
   // set the end commit id to persist delete
-  if (tile_group_header->UnlockVisibleTupleSlot(tuple_slot_id, transaction_id)) {
+  if (tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id)) {
     tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
   }
 }
@@ -309,7 +309,7 @@ void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
 void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id,
                                   txn_id_t transaction_id) {
   // undo deletion
-  tile_group_header->UnlockVisibleTupleSlot(tuple_slot_id, transaction_id);
+  tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id);
 }
 
 // Sets the tile id and column id w.r.t that tile corresponding to
