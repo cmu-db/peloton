@@ -140,7 +140,6 @@ void OptimisticTransactionManager::CommitTransaction() {
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
       // we must guarantee that, at any time point, only one version is visible.
-
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
       ItemPointer new_version =
           tile_group_header->GetNextItemPointer(tuple_slot);
@@ -162,7 +161,6 @@ void OptimisticTransactionManager::CommitTransaction() {
 
   // commit insert set.
   auto inserted_tuples = current_txn->GetInsertedTuples();
-  size_t insert_count = 0;
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -200,6 +198,7 @@ void OptimisticTransactionManager::CommitTransaction() {
     }
   }
   delete current_txn;
+  current_txn = nullptr;
 }
 
 void OptimisticTransactionManager::AbortTransaction() {
@@ -249,6 +248,7 @@ void OptimisticTransactionManager::AbortTransaction() {
   }
 
   delete current_txn;
+  current_txn = null_ptr;
 }
 
 }  // End storage namespace
