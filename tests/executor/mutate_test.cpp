@@ -116,7 +116,8 @@ void UpdateTuple(storage::DataTable *table) {
 
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
-  target_list.emplace_back(2, expression::ExpressionUtil::ConstantValueFactory(update_val));
+  target_list.emplace_back(
+      2, expression::ExpressionUtil::ConstantValueFactory(update_val));
   std::cout << target_list.at(0).first << std::endl;
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
@@ -192,7 +193,7 @@ void DeleteTuple(storage::DataTable *table) {
 
   txn_manager.CommitTransaction();
 }
-/*
+
 TEST_F(MutateTests, StressTests) {
   auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -346,9 +347,8 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
-*/
 TEST_F(MutateTests, DeleteTest) {
-// We are going to insert a tile group into a table in this test
+  // We are going to insert a tile group into a table in this test
 
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
@@ -359,25 +359,21 @@ TEST_F(MutateTests, DeleteTest) {
   auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-    new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
   // Seq scan
   std::vector<oid_t> column_ids = {0};
   planner::SeqScanPlan seq_scan_node(table, nullptr, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
   EXPECT_TRUE(seq_scan_executor.Init());
 
-
   auto tuple_cnt = 0;
-  auto execution_cnt = 0;
-  while(seq_scan_executor.Execute()){
-    execution_cnt++;
+  while (seq_scan_executor.Execute()) {
     std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      seq_scan_executor.GetOutput());
-
+        seq_scan_executor.GetOutput());
     tuple_cnt += result_logical_tile->GetTupleCount();
   }
-  printf("%d %d %f\n", tuple_cnt, execution_cnt, table->GetNumberOfTuples());
   txn_manager.CommitTransaction();
+  EXPECT_EQ(tuple_cnt, 6);
   delete table;
 }
 
