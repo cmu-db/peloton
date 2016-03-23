@@ -131,6 +131,7 @@ void OptimisticTransactionManager::CommitTransaction() {
       return;
     }
   }
+  //////////////////////////////////////////////////////////
 
   auto written_tuples = current_txn->GetWrittenTuples();
   // install all updates.
@@ -156,6 +157,19 @@ void OptimisticTransactionManager::CommitTransaction() {
                                               INITIAL_TXN_ID);
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
+
+      // Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), location, old_location, new_tuple);
+
+      //     logger->Log(record);
+      //   }
+      // }
     }
   }
 
@@ -168,6 +182,18 @@ void OptimisticTransactionManager::CommitTransaction() {
       tile_group->CommitInsertedTuple(
           tuple_slot, current_txn->GetTransactionId(), end_commit_id);
     }
+      // Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), location, old_location, new_tuple);
+
+      //     logger->Log(record);
+      //   }
+      // }
   }
 
   // commit delete set.
@@ -195,6 +221,19 @@ void OptimisticTransactionManager::CommitTransaction() {
                                               INVALID_TXN_ID);
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
+
+      // Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), location, old_location, new_tuple);
+
+      //     logger->Log(record);
+      //   }
+      // }
     }
   }
   delete current_txn;
@@ -248,7 +287,7 @@ void OptimisticTransactionManager::AbortTransaction() {
   }
 
   delete current_txn;
-  current_txn = null_ptr;
+  current_txn = nullptr;
 }
 
 }  // End storage namespace
