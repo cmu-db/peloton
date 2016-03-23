@@ -70,7 +70,7 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -135,7 +135,7 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

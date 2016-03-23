@@ -192,22 +192,10 @@ class TileGroupHeader : public Printable {
     }
   }
 
-  inline bool UnlockVisibleTupleSlot(const oid_t &tuple_slot_id,
+  inline bool UnlockTupleSlot(const oid_t &tuple_slot_id,
                                      const txn_id_t &transaction_id) {
     txn_id_t *txn_id = (txn_id_t *)(data + (tuple_slot_id * header_entry_size));
     if (!atomic_cas(txn_id, transaction_id, INITIAL_TXN_ID)) {
-      LOG_INFO("Release failed, expecting a deleted own insert: %lu",
-               GetTransactionId(tuple_slot_id));
-      assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-      return false;
-    }
-    return true;
-  }
-
-  inline bool UnlockInvisibleTupleSlot(const oid_t &tuple_slot_id,
-                                       const txn_id_t &transaction_id) {
-    txn_id_t *txn_id = (txn_id_t *)(data + (tuple_slot_id * header_entry_size));
-    if (!atomic_cas(txn_id, transaction_id, INVALID_TXN_ID)) {
       LOG_INFO("Release failed, expecting a deleted own insert: %lu",
                GetTransactionId(tuple_slot_id));
       assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);

@@ -4,11 +4,11 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/pessimistic_transaction_manager.h
+// Identification: src/backend/concurrency/empty_transaction_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
-//===-----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -17,13 +17,14 @@
 namespace peloton {
 namespace concurrency {
 
-class PessimisticTransactionManager : public TransactionManager {
+// for performance measurement only.
+class EmptyTransactionManager : public TransactionManager {
  public:
-  PessimisticTransactionManager() {}
+  EmptyTransactionManager() {}
 
-  virtual ~PessimisticTransactionManager() {}
+  virtual ~EmptyTransactionManager() {}
 
-  static PessimisticTransactionManager &GetInstance();
+  static EmptyTransactionManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,

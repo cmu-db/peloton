@@ -46,19 +46,15 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   bool ExecIndexLookup();
 
-  void ExecProjection();
-
-  void ExecPredication();
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
 
   /** @brief Result of index scan. */
-  std::vector<LogicalTile *> result;
+  std::vector<LogicalTile *> result_;
 
   /** @brief Result itr */
-  oid_t result_itr = INVALID_OID;
+  oid_t result_itr_ = INVALID_OID;
 
   /** @brief Computed the result */
   bool done_ = false;
@@ -84,7 +80,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   std::vector<oid_t> full_column_ids_;
 
-  bool key_ready = false;
+  bool key_ready_ = false;
 };
 
 }  // namespace executor

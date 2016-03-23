@@ -78,8 +78,8 @@ bool UpdateExecutor::DExecute() {
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-  auto transaction_ = executor_context_->GetTransaction();
   auto tile_group_id = tile_group->GetTileGroupId();
+  auto transaction_ = executor_context_->GetTransaction();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -90,15 +90,14 @@ bool UpdateExecutor::DExecute() {
     txn_id_t tid = transaction_->GetTransactionId();
 
     if (tile_group_header->GetTransactionId(physical_tuple_id) == tid){
+
       // if the thread is the owner of the tuple, then directly update in place.
       storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
-
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
                                                                physical_tuple_id);
       // Execute the projections
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
-
       tile_group->CopyTuple(tid, new_tuple, physical_tuple_id);
 
       // TODO: Logging
@@ -149,7 +148,7 @@ bool UpdateExecutor::DExecute() {
       executor_context_->num_processed += 1;  // updated one
 
       ItemPointer old_location(tile_group_id, physical_tuple_id);
-      transaction_->RecordWrite(old_location);
+      transaction_->RecordWrite(tile_group_id, physical_tuple_id);
 
       // Logging
       {
