@@ -83,7 +83,7 @@ std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -104,7 +104,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
 }
 
 void UpdateTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -155,7 +155,7 @@ void UpdateTuple(storage::DataTable *table) {
 }
 
 void DeleteTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -188,13 +188,13 @@ void DeleteTuple(storage::DataTable *table) {
 
   EXPECT_TRUE(delete_executor.Init());
   EXPECT_TRUE(delete_executor.Execute());
-  EXPECT_TRUE(delete_executor.Execute());
+  // EXPECT_TRUE(delete_executor.Execute());
 
   txn_manager.CommitTransaction();
 }
-
+/*
 TEST_F(MutateTests, StressTests) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -287,11 +287,12 @@ TEST_F(MutateTests, StressTests) {
   delete key_schema;
 
   delete table;
+  tuple_id = 0;
 }
 
 // Insert a logical tile into a table
 TEST_F(MutateTests, InsertTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
@@ -343,6 +344,41 @@ TEST_F(MutateTests, InsertTest) {
 
   // We have inserted all the tuples in this logical tile
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
+}
+
+*/
+TEST_F(MutateTests, DeleteTest) {
+// We are going to insert a tile group into a table in this test
+
+  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  LaunchParallelTest(1, InsertTuple, table, testing_pool);
+  LaunchParallelTest(1, DeleteTuple, table);
+
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+    new executor::ExecutorContext(txn));
+  // Seq scan
+  std::vector<oid_t> column_ids = {0};
+  planner::SeqScanPlan seq_scan_node(table, nullptr, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  EXPECT_TRUE(seq_scan_executor.Init());
+
+
+  auto tuple_cnt = 0;
+  auto execution_cnt = 0;
+  while(seq_scan_executor.Execute()){
+    execution_cnt++;
+    std::unique_ptr<executor::LogicalTile> result_logical_tile(
+      seq_scan_executor.GetOutput());
+
+    tuple_cnt += result_logical_tile->GetTupleCount();
+  }
+  printf("%d %d %f\n", tuple_cnt, execution_cnt, table->GetNumberOfTuples());
+  txn_manager.CommitTransaction();
+  delete table;
 }
 
 }  // namespace test
