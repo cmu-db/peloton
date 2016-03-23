@@ -151,17 +151,17 @@ bool UpdateExecutor::DExecute() {
       transaction_->RecordWrite(tile_group_id, physical_tuple_id);
 
       // Logging
-      {
-        auto &log_manager = logging::LogManager::GetInstance();
-        if (log_manager.IsInLoggingMode()) {
-          auto logger = log_manager.GetBackendLogger();
-          auto record = logger->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-            target_table_->GetOid(), location, old_location, new_tuple);
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), location, old_location, new_tuple);
 
-          logger->Log(record);
-        }
-      }
+      //     logger->Log(record);
+      //   }
+      // }
       delete new_tuple;
 
     } else{
