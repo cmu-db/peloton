@@ -22,6 +22,22 @@
 namespace peloton {
 namespace concurrency {
 
+void Transaction::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  read_tuples[tile_group_id].push_back(tuple_id);
+}
+
+void Transaction::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  written_tuples[tile_group_id].push_back(tuple_id);
+}
+
+void Transaction::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  inserted_tuples[tile_group_id].push_back(tuple_id);
+}
+
+void Transaction::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  deleted_tuples[tile_group_id].push_back(tuple_id);
+}
+
 void Transaction::RecordRead(const ItemPointer &location) {
   read_tuples[location.block].push_back(location.offset);
 }

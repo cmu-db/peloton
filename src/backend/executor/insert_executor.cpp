@@ -97,7 +97,7 @@ bool InsertExecutor::DExecute() {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location);
+      transaction_->RecordInsert(location.block, location.offset);
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -137,7 +137,7 @@ bool InsertExecutor::DExecute() {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location);
+      transaction_->RecordInsert(location.block, location.offset);
 
       // Logging
       {

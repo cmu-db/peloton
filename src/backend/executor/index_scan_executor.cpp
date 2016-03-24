@@ -159,11 +159,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
-  auto transaction = executor_context_->GetTransaction();
 
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::vector<ItemPointer> visible_tuples;
-
+  
+  std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  // for every tuple that is found in the index.
   for (auto tuple_location : tuple_locations) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
@@ -175,22 +175,25 @@ bool IndexScanExecutor::ExecIndexLookup() {
       txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
       cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
       cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+      // if the tuple is visible.
       if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
-        ItemPointer visible_tuple(tile_group_id, tuple_id);
+        
+        // perform predicate evaluation.
         if (predicate_ == nullptr) {
-          visible_tuples.push_back(visible_tuple);
-          transaction->RecordRead(visible_tuple);
+          visible_tuples[tile_group_id].push_back(tuple_id);
+          transaction_manager.RecordRead(tile_group_id, tuple_id);
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
           auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples.push_back(visible_tuple);
-            transaction->RecordRead(visible_tuple);
+            visible_tuples[tile_group_id].push_back(tuple_id);
+            transaction_manager.RecordRead(tile_group_id, tuple_id);
           }
         }
         break;
       } else {
         ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
+        // if there is no next tuple.
         if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
           break;
         }
@@ -202,21 +205,16 @@ bool IndexScanExecutor::ExecIndexLookup() {
     }
   }
 
-  // Get the list of blocks
-  std::map<oid_t, std::vector<oid_t>> blocks;
-  for (auto visible_tuple : visible_tuples) {
-    blocks[visible_tuple.block].push_back(visible_tuple.offset);
-  }
   // Construct a logical tile for each block
-  for (auto block : blocks) {
+  for (auto tuples : visible_tuples) {
     LogicalTile *logical_tile = LogicalTileFactory::GetTile();
 
     auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(block.first);
+    auto tile_group = manager.GetTileGroup(tuples.first);
 
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
-    logical_tile->AddPositionList(std::move(block.second));
+    logical_tile->AddPositionList(std::move(tuples.second));
     logical_tile->ProjectColumns(full_column_ids_, column_ids_);
 
     // Print tile group visibility

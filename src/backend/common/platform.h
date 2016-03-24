@@ -29,6 +29,8 @@ inline bool atomic_cas(T *object, T old_value, T new_value) {
   return __sync_bool_compare_and_swap(object, old_value, new_value);
 }
 
+#define COMPILER_MEMORY_FENCE asm volatile("" ::: "memory")
+
 //===--------------------------------------------------------------------===//
 // Reader/Writer lock
 //===--------------------------------------------------------------------===//
