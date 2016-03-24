@@ -25,10 +25,13 @@
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-				 TupleDesc typeinfo);
-static void printtup(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_20(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
+				 TupleDesc typeinfo, MemcachedState *mc_state = nullptr);
+static void printtup(TupleTableSlot *slot, DestReceiver *self,
+										 MemcachedState *mc_state = nullptr);
+static void printtup_20(TupleTableSlot *slot, DestReceiver *self,
+												MemcachedState *mc_state = nullptr);
+static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self,
+																 MemcachedState *mc_state = nullptr);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -122,8 +125,10 @@ SetRemoteDestReceiverParams(DestReceiver *self, Portal portal)
 }
 
 static void
-printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
+								 MemcachedState *mc_state)
 {
+	printf("Print Startup Reached:%p", mc_state);
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
 
@@ -300,8 +305,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  * ----------------
  */
 static void
-printtup(TupleTableSlot *slot, DestReceiver *self)
+printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
+	printf("REACHED PRINTTUP:%p", mc_state);
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
@@ -383,7 +389,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_20(TupleTableSlot *slot, DestReceiver *self)
+printtup_20(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
@@ -510,7 +516,8 @@ printatt(unsigned attributeId,
  * ----------------
  */
 void
-debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
+debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
+						 MemcachedState *mc_state)
 {
 	int			natts = typeinfo->natts;
 	Form_pg_attribute *attinfo = typeinfo->attrs;
@@ -529,7 +536,7 @@ debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * ----------------
  */
 void
-debugtup(TupleTableSlot *slot, DestReceiver *self)
+debugtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
@@ -565,7 +572,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
+printtup_internal_20(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;

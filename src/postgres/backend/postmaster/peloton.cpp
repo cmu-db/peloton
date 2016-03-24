@@ -74,7 +74,8 @@ static void peloton_process_status(const peloton_status& status, PlanState *plan
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
-                                DestReceiver *dest);
+                                DestReceiver *dest,
+                                MemcachedState *mc_state = nullptr);
 
 static void __attribute__((unused)) peloton_test_config();
 
@@ -170,7 +171,8 @@ peloton_dml(PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
             TupleDesc tuple_desc,
-            const char *prepStmtName) {
+            const char *prepStmtName,
+            MemcachedState *mc_state) {
   peloton_status status;
 
   // Get the parameter list
@@ -223,7 +225,7 @@ peloton_dml(PlanState *planstate,
   peloton_process_status(status, planstate);
 
   // Send output to dest
-  peloton_send_output(status, sendTuples, dest);
+  peloton_send_output(status, sendTuples, dest, mc_state);
 
 }
 
@@ -266,7 +268,8 @@ peloton_process_status(const peloton_status& status, PlanState *planstate) {
 void
 peloton_send_output(const peloton_status& status,
                     bool sendTuples,
-                    DestReceiver *dest) {
+                    DestReceiver *dest,
+                    MemcachedState *mc_state) {
   TupleTableSlot *slot;
 
   // Go over any result slots
@@ -289,7 +292,7 @@ peloton_send_output(const peloton_status& status,
        * practice, this is probably always the case at this point.)
        */
       if (sendTuples)
-        (*dest->receiveSlot) (slot, dest);
+        (*dest->receiveSlot) (slot, dest, mc_state);
 
       /*
        * Free the underlying heap_tuple
