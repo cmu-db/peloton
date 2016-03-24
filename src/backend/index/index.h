@@ -116,11 +116,11 @@ class Index : public Printable {
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
+                           ItemPointer &location) = 0;
 
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
+                           const ItemPointer &location) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
