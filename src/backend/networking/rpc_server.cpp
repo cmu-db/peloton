@@ -12,6 +12,7 @@
 
 #include "backend/networking/rpc_server.h"
 #include "backend/networking/rpc_controller.h"
+#include "backend/networking/connection_manager.h"
 #include "backend/common/logger.h"
 #include "backend/common/thread_manager.h"
 
@@ -27,11 +28,8 @@ namespace networking {
 RpcServer::RpcServer(const int port) :
     listener_(port) {
 
-    /* for testing the rpc performance
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    start_time_ = start.tv_usec;
-    */
+    // We have listener here, so we also have event base
+    ConnectionManager::GetInstance().ResterRpcServer(this);
 }
 
 RpcServer::~RpcServer() {
@@ -114,6 +112,11 @@ RpcMethod* RpcServer::FindMethod(uint64_t opcode) {
     RpcMethod *rpc_method = iter->second;
 
     return rpc_method;
+}
+
+// get listener
+Listener* RpcServer::GetListener() {
+    return &listener_;
 }
 
 }  // namespace networking

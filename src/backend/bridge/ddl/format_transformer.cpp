@@ -44,6 +44,7 @@ PelotonValueFormat FormatTransformer::TransformValueFormat(
       peloton_column_length = 65535;
       break;
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
     case VALUE_TYPE_TIMESTAMP:
       peloton_column_length = 8;

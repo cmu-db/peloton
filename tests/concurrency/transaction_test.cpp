@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "harness.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction.h"
 
 namespace peloton {
@@ -28,7 +28,6 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 
   for (oid_t txn_itr = 1; txn_itr <= 1000; txn_itr++) {
     txn_manager->BeginTransaction();
-
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
@@ -43,11 +42,11 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   LaunchParallelTest(8, TransactionTest, &txn_manager);
 
-  std::cout << "Last Commit Id :: " << txn_manager.GetLastCommitId() << "\n";
+  std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
 }
 
 }  // End test namespace

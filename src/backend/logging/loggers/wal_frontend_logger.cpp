@@ -17,6 +17,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/pool.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/logging/records/transaction_record.h"
@@ -167,7 +168,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
     bool reached_end_of_file = false;
 
     // Start the recovery transaction
-    auto &txn_manager = concurrency::TransactionManager::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     // Although we call BeginTransaction here, recovery txn will not be
     // recoreded in log file since we are in recovery mode

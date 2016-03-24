@@ -97,7 +97,7 @@ bool InsertExecutor::DExecute() {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location);
+      transaction_->RecordInsert(location.block, location.offset);
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -137,22 +137,22 @@ bool InsertExecutor::DExecute() {
         transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location);
+      transaction_->RecordInsert(location.block, location.offset);
 
       // Logging
-      {
-        auto &log_manager = logging::LogManager::GetInstance();
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
 
-        if (log_manager.IsInLoggingMode()) {
-          auto logger = log_manager.GetBackendLogger();
-          auto record = logger->GetTupleRecord(
-              LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
-              target_table_->GetOid(), location, INVALID_ITEMPOINTER,
-              tuple.get());
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //         LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
+      //         target_table_->GetOid(), location, INVALID_ITEMPOINTER,
+      //         tuple.get());
 
-          logger->Log(record);
-        }
-      }
+      //     logger->Log(record);
+      //   }
+      // }
     }
 
     executor_context_->num_processed += 1;  // insert one

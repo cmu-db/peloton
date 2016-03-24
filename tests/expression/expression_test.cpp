@@ -416,6 +416,8 @@ TEST_F(ExpressionTest, SimpleCase) {
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(1));
   expression::ConstantValueExpression *const_val_exp_2 =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(2));
+  expression::ConstantValueExpression *const_val_exp_3 =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(3));
 
   expression::ComparisonExpression<expression::CmpEq> *case_when_cond =
       new expression::ComparisonExpression<expression::CmpEq>(
@@ -430,7 +432,7 @@ TEST_F(ExpressionTest, SimpleCase) {
   clauses.push_back(case_when_clause);
 
   expression::CaseExpression *case_expression = new expression::CaseExpression(
-      VALUE_TYPE_INTEGER, clauses, const_val_exp_2);
+      VALUE_TYPE_INTEGER, clauses, const_val_exp_3);
   // TUPLE
 
   std::vector<catalog::Column> columns;
@@ -450,7 +452,7 @@ TEST_F(ExpressionTest, SimpleCase) {
 
   Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
 
-  // Test with A = 20, should get 100
+  // Test with A = 1, should get 2
   EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 2);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(2), nullptr);
@@ -458,8 +460,8 @@ TEST_F(ExpressionTest, SimpleCase) {
 
   result = case_expression->Evaluate(tuple, nullptr, nullptr);
 
-  // Test with A = 10, should get 0
-  EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 2);
+  // Test with A = 2, should get 3
+  EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 3);
 
   delete case_expression;
   delete schema;
