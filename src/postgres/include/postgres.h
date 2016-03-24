@@ -47,6 +47,7 @@
 #include "c.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
+#include <string>
 
 /* ----------------------------------------------------------------
  *				Section 1:	variable-length datatypes (TOAST support)
@@ -167,7 +168,7 @@ typedef struct
 
 /* state struct used by memcached benchamrk */
 struct MemcachedState {
-	char *result;
+	std::string result;
 	/* add memcached return status */
 
 };
