@@ -57,6 +57,7 @@ txn_id_t TransactionManager::GetNextTransactionId() {
 }
 
 // Begin a new transaction
+//TODO BEGIN TXN record should be logged at txn commit
 Transaction *TransactionManager::BeginTransaction() {
   Transaction *next_txn =
       new Transaction(GetNextTransactionId(), GetLastCommitId());

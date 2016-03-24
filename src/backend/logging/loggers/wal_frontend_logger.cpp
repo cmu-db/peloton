@@ -82,6 +82,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
 
   // TODO delete later
   this->checkpoint = new SimpleCheckpoint();
+  this->checkpoint->Init();
 
   // abj1 adding code here!
   this->InitLogFilesList();
