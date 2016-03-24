@@ -683,6 +683,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
 
+static const int INVALID_FILE_DESCRIPTOR = -1;
+
 // ------------------------------------------------------------------
 // Tuple serialization formats
 // ------------------------------------------------------------------
