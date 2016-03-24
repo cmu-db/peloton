@@ -159,7 +159,7 @@ AC_SUBST([DEBUG_CPPFLAGS])
 
 # ensure the library to check for is covered by the LIBS variable
 OLD_LIBS=$LIBS
-LIBS="$LIBS -lpmem"
+LIBS="$LIBS -lpmem -ljemalloc"
 
 # try to link the function 'pmem_is_pmem' out of library pmem
 AC_MSG_CHECKING([whether the nvml library can be linked])
