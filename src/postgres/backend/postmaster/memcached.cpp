@@ -5,7 +5,8 @@
 int setup() {
 
 std::string setup = "
-CREATE TABLE test ( k VARCHAR(40) PRIMARY KEY, d VARCHAR(400) );
+DROP TABLE test;
+CREATE TABLE test ( k VARCHAR(40) PRIMARY KEY, v VARCHAR(400) );
 
 DEALLOCATE GET;
 PREPARE GET (text) AS
@@ -13,40 +14,35 @@ PREPARE GET (text) AS
 
 DEALLOCATE SET;
 PREPARE SET (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
+  INSERT INTO test (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = excluded.v;
 
 DEALLOCATE ADD;
 PREPARE ADD (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
+  INSERT INTO test (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = excluded.v;
 
 DEALLOCATE REPLACE;
 PREPARE REPLACE (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
+  UPDATE test SET v = $2 WHERE k=$1;
 
 DEALLOCATE APPEND;
 PREPARE APPEND (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
-  UPDATE test SET col=CONCAT('$2',col) WHERE key=$1;
+  UPDATE test SET v=CONCAT(v,$2) WHERE k=$1;
 
 DEALLOCATE PREPEND;
 PREPARE PREPEND (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
+  UPDATE test SET v=CONCAT($2,v) WHERE k=$1;
 
 DEALLOCATE INCR;
 PREPARE INCR (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
 
 DEALLOCATE DECR;
 PREPARE DECR (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
 
 DEALLOCATE DELETE;
 PREPARE DELETE (text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
 
 DEALLOCATE CAS;
 PREPARE CAS (text, text, text) AS
-  INSERT INTO test (k, d) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET d = excluded.d;
 "
 }
 
