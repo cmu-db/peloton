@@ -40,7 +40,9 @@ AbstractExpression::AbstractExpression(ExpressionType type,
 
 AbstractExpression::~AbstractExpression() {
   delete m_left;
+  m_left = nullptr;
   delete m_right;
+  m_right = nullptr;
 }
 
 bool AbstractExpression::HasParameter() const {
