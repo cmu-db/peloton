@@ -42,9 +42,9 @@ class BWTreeIndex : public Index {
 
   ~BWTreeIndex();
 
-  bool InsertEntry(const storage::Tuple *key, const ItemPointer location);
+  bool InsertEntry(const storage::Tuple *key, ItemPointer &location);
 
-  bool DeleteEntry(const storage::Tuple *key, const ItemPointer location);
+  bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
