@@ -27,13 +27,6 @@ class RpcServer {
 
   typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
 
-  /*
-  typedef struct RecvItem {
-    RpcMethod*                  method;
-    google::protobuf::Message*  request;
-  } QueueItem;
-  */
-
 public:
   RpcServer(const int port);
   ~RpcServer();
@@ -47,8 +40,8 @@ public:
   // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);
 
-  // for testing the rpc performance
-  //long start_time_;
+  // get listener
+  Listener* GetListener();
 
 private:
 

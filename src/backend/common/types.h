@@ -147,7 +147,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
   POSTGRES_VALUE_TYPE_INTEGER = 23,
   POSTGRES_VALUE_TYPE_BIGINT = 20,
-
+  POSTGRES_VALUE_TYPE_REAL = 700,
   POSTGRES_VALUE_TYPE_DOUBLE = 701,
 
   POSTGRES_VALUE_TYPE_TEXT = 25,
@@ -161,16 +161,11 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
-  POSTGRES_VALUE_TYPE_TEXT_ARRAY =
-      1009,  // TEXTARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT2_ARRAY =
-      1005,  // INT2ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT4_ARRAY =
-      1007,  // INT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_OID_ARRAY =
-      1028,  // OIDARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY =
-      1021,  // FLOADT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
 
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
@@ -187,6 +182,7 @@ enum ValueType {
   VALUE_TYPE_SMALLINT = 4,    // 2 bytes int
   VALUE_TYPE_INTEGER = 5,     // 4 bytes int
   VALUE_TYPE_BIGINT = 6,      // 8 bytes int
+  VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
@@ -359,6 +355,19 @@ enum ExpressionType {
 // Storage Backend Types
 //===--------------------------------------------------------------------===//
 
+enum ConcurrencyType {
+    CONCURRENCY_TYPE_OCC = 0, // optimistic
+    CONCURRENCY_TYPE_2PL = 1, // pessimistic
+    CONCURRENCY_TYPE_TO = 2, // timestamp ordering
+    CONCURRENCY_TYPE_SSI = 3 // serializable snapshot isolation
+};
+
+enum IsolationLevelType {
+    ISOLATION_LEVEL_TYPE_FULL = 0, // full serializability
+    ISOLATION_LEVEL_TYPE_SNAPSHOT = 1, // snapshot isolation
+    ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2 // repeatable read
+};
+
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
@@ -373,8 +382,9 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1,  // btree
-  INDEX_TYPE_BWTREE = 2  // bwtree
+  INDEX_TYPE_BTREE = 1,   // btree
+  INDEX_TYPE_BWTREE = 2,  // bwtree
+  INDEX_TYPE_HASH = 3     // hash
 };
 
 enum IndexConstraintType {

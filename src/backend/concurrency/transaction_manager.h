@@ -13,99 +13,63 @@
 #pragma once
 
 #include <atomic>
-#include <cassert>
-#include <vector>
-#include <map>
-#include <mutex>
+#include <unordered_map>
 
+#include "backend/common/platform.h"
 #include "backend/common/types.h"
+#include "backend/concurrency/transaction.h"
 
 namespace peloton {
 namespace concurrency {
 
-typedef unsigned int TransactionId;
-
-class Transaction;
+//class Transaction;
 
 extern thread_local Transaction *current_txn;
 
-//===--------------------------------------------------------------------===//
-// Transaction Manager
-//===--------------------------------------------------------------------===//
-
 class TransactionManager {
  public:
-  TransactionManager();
+  TransactionManager() {
+    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid_ = ATOMIC_VAR_INIT(START_CID);
+  }
 
-  ~TransactionManager();
+  virtual ~TransactionManager() {}
 
-  // Get next transaction id
-  txn_id_t GetNextTransactionId();
+  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-  // Get last commit id for visibility checks
-  cid_t GetLastCommitId() { return last_cid; }
+  cid_t GetNextCommitId() { return next_cid_++; }
 
-  //===--------------------------------------------------------------------===//
-  // Transaction processing
-  //===--------------------------------------------------------------------===//
+  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid) = 0;
 
-  static TransactionManager &GetInstance();
+  virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  // Begin a new transaction
-  Transaction *BeginTransaction();
+  virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  // Get entry in transaction table
-  //Transaction *GetTransaction(txn_id_t txn_id);
+  virtual bool RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  // End the transaction
-  void EndTransaction(Transaction *txn, bool sync = true);
+  virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  // Get the list of current transactions
-  //std::vector<Transaction *> GetCurrentTransactions();
+  Transaction *BeginTransaction() {
+    Transaction *txn =
+        new Transaction(GetNextTransactionId(), GetNextCommitId());
+    current_txn = txn;
+    return txn;
+  }
 
-  // validity checks
-  //bool IsValid(txn_id_t txn_id);
+  virtual void CommitTransaction() = 0;
 
-  // used by recovery testing
-  void ResetStates(void);
+  virtual void AbortTransaction() = 0;
 
-  // COMMIT
-
-  void BeginCommitPhase(Transaction *txn);
-
-  void CommitModifications(Transaction *txn, bool sync = true);
-
-  void CommitPendingTransactions(std::vector<Transaction *> &txns,
-                                 Transaction *txn);
-
-  std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
-
-  void CommitTransaction(bool sync = true);
-
-  // ABORT
-
-  void AbortTransaction();
+  void ResetStates() {
+    next_txn_id_ = START_TXN_ID;
+    next_cid_ = START_CID;
+  }
 
  private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  std::atomic<txn_id_t> next_txn_id;
-
-  std::atomic<cid_t> next_cid;
-
-  cid_t last_cid __attribute__((aligned(16)));
-
-  Transaction *last_txn;
-
-  // Table tracking all active transactions
-  // Our transaction id -> our transaction
-  // Sync access with txn_table_mutex
-  std::map<txn_id_t, Transaction *> txn_table;
-
-  std::mutex txn_table_mutex;
+  std::atomic<txn_id_t> next_txn_id_;
+  std::atomic<cid_t> next_cid_;
 };
-
-}  // End concurrency namespace
+}  // End storage namespace
 }  // End peloton namespace

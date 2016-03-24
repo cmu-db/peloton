@@ -15,6 +15,7 @@
 
 #include "tcp_address.h"
 #include "backend/common/cast.h"
+#include "backend/common/logger.h"
 #include "backend/common/exception.h"
 
 #include <netdb.h>
@@ -31,10 +32,26 @@ namespace networking {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
+NetworkAddress::NetworkAddress(const NetworkAddress& addr) {
+    ip_address_ = addr.ip_address_;
+    port_ = addr.port_;
+}
+NetworkAddress::NetworkAddress(const sockaddr_in& addrin) {
+    ip_address_ = addrin.sin_addr.s_addr;
+    port_ = addrin.sin_port;
+}
+NetworkAddress::NetworkAddress(const sockaddr& addr) {
+    const sockaddr_in* addrin = reinterpret_cast<const sockaddr_in*>(&addr);
+
+    ip_address_ = addrin->sin_addr.s_addr;
+    port_ = addrin->sin_port;
+}
+
 NetworkAddress::NetworkAddress(const std::string& address) {
     bool re = Parse(address);
     if(re == false) {
-      throw Exception("Could not parse address \n");
+        LOG_ERROR("Could not parse address");
+        throw Exception("Could not parse address\n");
     }
 }
 

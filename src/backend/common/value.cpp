@@ -151,6 +151,7 @@ Value Value::CastAs(ValueType type) const {
       return CastAsBigInt();
     case VALUE_TYPE_TIMESTAMP:
       return CastAsTimestamp();
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return CastAsDouble();
     case VALUE_TYPE_VARCHAR:
@@ -279,6 +280,7 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
         retval.tagAsNull();
       }
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       if ((retval.GetDouble() = *reinterpret_cast<const double *>(storage)) <=
           DOUBLE_NULL) {
@@ -515,6 +517,7 @@ const std::string Value::GetInfo() const {
     case VALUE_TYPE_TIMESTAMP:
       buffer << GetBigInt();
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       buffer << GetDouble();
       break;
@@ -1088,6 +1091,9 @@ Value Value::GetMinValue(ValueType type) {
       break;
     case (VALUE_TYPE_BIGINT):
       return GetBigIntValue(PELOTON_INT64_MIN);
+      break;
+    case VALUE_TYPE_REAL:
+      return GetDoubleValue(-FLT_MAX);
       break;
     case (VALUE_TYPE_DOUBLE):
       return GetDoubleValue(-DBL_MAX);

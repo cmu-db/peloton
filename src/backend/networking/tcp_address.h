@@ -24,6 +24,9 @@ namespace networking {
 class NetworkAddress {
 public:
     NetworkAddress() : ip_address_(0), port_(0) {}
+    NetworkAddress(const NetworkAddress& addr);
+    NetworkAddress(const sockaddr_in& addrin);
+    NetworkAddress(const sockaddr& addr);
     NetworkAddress(const std::string& address);
 
     // Returns true if the address is parsed successfully.
@@ -34,6 +37,13 @@ public:
     }
 
     bool operator==(const sockaddr_in& other) const;
+
+    bool operator<( const NetworkAddress& other) const {
+        if ( ip_address_ == other.ip_address_ ) {
+            return port_ < other.port_;
+        }
+        return ip_address_ < other.ip_address_;
+    }
 
     /** Returns IP:port as a string. */
     std::string ToString() const;

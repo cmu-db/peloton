@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// dml_utils.h
+// ddl_utils.h
 //
-// Identification: src/backend/bridge/dml/mapper/dml_utils.h
+// Identification: src/backend/bridge/ddl/ddl_utils.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

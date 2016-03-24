@@ -42,6 +42,7 @@ inline Value Value::CallUnary<FUNC_ABS>() const {
     case VALUE_TYPE_BIGINT:
       retval.GetBigInt() = std::abs(GetBigInt());
       break;
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       retval.GetDouble() = std::abs(GetDouble());
       break;

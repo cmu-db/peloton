@@ -14,7 +14,7 @@
 #include "backend/expression/expression_util.h"
 #include "backend/common/value_factory.h"
 
-#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/constant_value_expression.h"  // added by michael for test
 
 namespace peloton {
 namespace expression {
