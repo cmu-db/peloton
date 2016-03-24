@@ -28,10 +28,14 @@ class CaseExpression : public AbstractExpression {
         case_type(vt) {}
 
   ~CaseExpression() {
-    for (auto clause : clauses)
+    for (auto clause : clauses) {
       delete clause;
-    if (default_result != nullptr)
+      clause = nullptr;
+    }
+    if (default_result != nullptr) {
       delete default_result;
+      default_result = nullptr;
+    }
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
