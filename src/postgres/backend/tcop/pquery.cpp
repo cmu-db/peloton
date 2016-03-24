@@ -992,7 +992,7 @@ static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 
   slot = MakeSingleTupleTableSlot(portal->tupDesc);
 
-  (*dest->rStartup)(dest, CMD_SELECT, portal->tupDesc);
+  (*dest->rStartup)(dest, CMD_SELECT, portal->tupDesc, nullptr);
 
   if (ScanDirectionIsNoMovement(direction)) {
     /* do nothing except start/stop the destination */
@@ -1012,7 +1012,7 @@ static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
       if (!ok)
         break;
 
-      (*dest->receiveSlot)(slot, dest);
+      (*dest->receiveSlot)(slot, dest, nullptr);
 
       ExecClearTuple(slot);
 
