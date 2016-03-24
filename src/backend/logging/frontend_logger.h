@@ -82,7 +82,7 @@ class FrontendLogger : public Logger {
   size_t fsync_count = 0;
 
   // checkpoint
-  Checkpoint *checkpoint;
+  Checkpoint &checkpoint;
 };
 
 }  // namespace logging

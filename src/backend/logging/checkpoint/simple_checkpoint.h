@@ -28,11 +28,11 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint() { ; }
-  void Init() {
-    std::thread t(&SimpleCheckpoint::DoCheckpoint, this);
-    t.detach();
-  }
+  SimpleCheckpoint() {}
+
+  static SimpleCheckpoint &GetInstance();
+
+  void Init();
 
   void DoCheckpoint();
 
