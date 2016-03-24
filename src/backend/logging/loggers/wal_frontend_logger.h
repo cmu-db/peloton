@@ -134,9 +134,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   bool FileSwitchCondIsTrue(__attribute__((unused)) int fsync_count) {
     // TODO have a good heuristic here
-    return false;
+    // return false;
 
-    // return (fsync_count % 10000) == 0;
+    return (fsync_count % 10000) == 0;
   }
 
  private:
