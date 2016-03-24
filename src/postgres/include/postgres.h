@@ -167,18 +167,10 @@ typedef struct
 
 /* state struct used by memcached benchamrk */
 struct MemcachedState {
-	bool active;
 	char *result;
 	/* add memcached return status */
 
-	inline MemcachedState(bool active = true) {
-		this->active = active;
-	}
 };
-
-inline MemcachedState inactive_memcached_state(){
-	return MemcachedState(false);
-}
 
 /*
  * Bit layouts for varlena headers on big-endian machines:

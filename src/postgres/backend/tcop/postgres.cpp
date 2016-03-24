@@ -810,8 +810,7 @@ List *pg_plan_queries(List *querytrees, int cursorOptions,
  * Execute a "simple Query" protocol message.
  */
 static void exec_simple_query(const char *query_string,
-                              const MemcachedState& mc_state =
-                              inactive_memcached_state()) {
+                              MemcachedState* mc_state = nullptr) {
   CommandDest dest = whereToSendOutput;
   MemoryContext oldcontext;
   List *parsetree_list;
@@ -4323,8 +4322,11 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
           exec_replication_command(query_string);
         else {
           // memcached version
-          MemcachedState state;
-          exec_simple_query(query_string, state);
+          auto mc_state = new MemcachedState();
+          exec_simple_query(query_string, mc_state);
+
+          //do stuff with mc_state
+          delete mc_state;
         }
 
         send_ready_for_query = true;
