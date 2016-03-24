@@ -51,7 +51,7 @@ template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
                KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
-                                                const ItemPointer location) {
+                                                ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -73,7 +73,7 @@ template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
                KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key,
-                                                const ItemPointer location) {
+                                                const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
   LOG_DEBUG("location block: %lu offset: %lu", location.block, location.offset);
