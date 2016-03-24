@@ -2,6 +2,8 @@
 // setup prepared statements
 // GET, SET, ADD, REPLACE, DELETE, CAS, INCR, DECR, APPEND, PREPEND
 // FLUSH_ALL, STATS, VERSION, VERBOSITY not implemented
+// TODO directly return response from sql as defined in Memcached protocol
+// TODO CAS semantic: gets -> unique_cas_token
 int setup() {
 
 std::string setup = "
@@ -33,16 +35,20 @@ PREPARE PREPEND (text, text) AS
   UPDATE test SET v=CONCAT($2,v) WHERE k=$1;
 
 DEALLOCATE INCR;
-PREPARE INCR (text, text) AS
+PREPARE INCR (text) AS
+  UPDATE test SET v=CAST(v as int)+1 WHERE k=$1;
 
 DEALLOCATE DECR;
-PREPARE DECR (text, text) AS
+PREPARE DECR (text) AS
+  UPDATE test SET v=CAST(v as int)+1 WHERE k=$1;
 
 DEALLOCATE DELETE;
-PREPARE DELETE (text, text) AS
+PREPARE DELETE (text) AS
+  DELETE FROM test WHERE k=$1;
 
 DEALLOCATE CAS;
 PREPARE CAS (text, text, text) AS
+  UPDATE test SET v = case when v = '' then 'Y' else 'N' end;
 "
 }
 
