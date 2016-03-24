@@ -21,7 +21,12 @@ script:
     # bootstrap
     - ./bootstrap
     - cd build
-    # build
+    ## BUILD #2 : WITH DEBUGGING DISABLED
     - ../configure CXXFLAGS="-O0"
     - make
     - make check
+    ## BUILD #2 : WITH DEBUGGING ENABLED
+    - make clean
+    - ../configure CXXFLAGS="-O0" --enable-debug
+    - make
+    # no make check

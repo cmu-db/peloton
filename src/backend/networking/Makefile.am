@@ -32,7 +32,8 @@ networking_FILES = \
 				backend/networking/peloton_service.cpp \
 				backend/networking/tcp_listener.cpp \
 				backend/networking/tcp_connection.cpp \
-				backend/networking/tcp_address.cpp
+				backend/networking/tcp_address.cpp \
+				backend/networking/connection_manager.cpp
 
 networking_INCLUDES = \
                   -I$(srcdir)/networking

@@ -16,7 +16,7 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/executors.h"
 #include "backend/executor/executor_context.h"
 #include "backend/storage/tuple_iterator.h"
@@ -55,7 +55,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   bool single_statement_txn = false;
   List *slots = NULL;
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = peloton::concurrency::current_txn;
   // This happens for single statement queries in PG
   if (txn == nullptr) {

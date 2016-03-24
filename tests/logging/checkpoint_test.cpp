@@ -12,6 +12,7 @@
 
 #include "harness.h"
 #include "backend/logging/checkpoint.h"
+#include "backend/logging/checkpoint/simple_checkpoint.h"
 
 namespace peloton {
 namespace test {
@@ -22,7 +23,10 @@ namespace test {
 
 class CheckpointTests : public PelotonTest {};
 
-TEST_F(CheckpointTests, BasicTest) { peloton::logging::Checkpoint checkpoint; }
+TEST_F(CheckpointTests, BasicTest) {
+  // logging::Checkpoint &checkpoint =
+  // logging::CheckpointFactory::GetInstance();
+}
 
 }  // End test namespace
 }  // End peloton namespace

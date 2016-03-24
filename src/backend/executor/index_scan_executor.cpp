@@ -25,7 +25,10 @@
 #include "backend/index/index.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/manager.h"
 
 namespace peloton {
 namespace executor {
@@ -59,7 +62,7 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   assert(index_ != nullptr);
 
-  result_itr = START_OID;
+  result_itr_ = START_OID;
   done_ = false;
 
   column_ids_ = node.GetColumnIds();
@@ -72,7 +75,7 @@ bool IndexScanExecutor::DInit() {
   if (runtime_keys_.size() != 0) {
     assert(runtime_keys_.size() == values_.size());
 
-    if (!key_ready) {
+    if (!key_ready_) {
       values_.clear();
 
       for (auto expr : runtime_keys_) {
@@ -81,7 +84,7 @@ bool IndexScanExecutor::DInit() {
         values_.push_back(value);
       }
 
-      key_ready = true;
+      key_ready_ = true;
     }
   }
 
@@ -105,49 +108,23 @@ bool IndexScanExecutor::DExecute() {
   if (!done_) {
     auto status = ExecIndexLookup();
     if (status == false) return false;
-    ExecPredication();
-    ExecProjection();
   }
-
   // Already performed the index lookup
   assert(done_);
 
-  while (result_itr < result.size()) {  // Avoid returning empty tiles
-    if (result[result_itr]->GetTupleCount() == 0) {
-      result_itr++;
+  while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
+    if (result_[result_itr_]->GetTupleCount() == 0) {
+      result_itr_++;
       continue;
     } else {
-      SetOutput(result[result_itr]);
-      result_itr++;
+      SetOutput(result_[result_itr_]);
+      result_itr_++;
       return true;
     }
 
   }  // end while
 
   return false;
-}
-
-void IndexScanExecutor::ExecPredication() {
-  if (nullptr == predicate_) return;
-  unsigned int removed_count = 0;
-  for (auto tile : result) {
-    for (auto tuple_id : *tile) {
-      expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
-      if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
-        removed_count++;
-        tile->RemoveVisibility(tuple_id);
-      }
-    }
-  }
-  LOG_INFO("predicate removed %d row", removed_count);
-}
-
-void IndexScanExecutor::ExecProjection() {
-  if (column_ids_.size() == 0) return;
-
-  for (auto tile : result) {
-    tile->ProjectColumns(full_column_ids_, column_ids_);
-  }
 }
 
 bool IndexScanExecutor::ExecIndexLookup() {
@@ -182,17 +159,71 @@ bool IndexScanExecutor::ExecIndexLookup() {
 
   if (tuple_locations.size() == 0) return false;
 
-  auto transaction_ = executor_context_->GetTransaction();
-  txn_id_t txn_id = transaction_->GetTransactionId();
-  cid_t commit_id = transaction_->GetLastCommitId();
+  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  
+  std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  // for every tuple that is found in the index.
+  for (auto tuple_location : tuple_locations) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto tile_group_header = tile_group.get()->GetHeader();
+    auto tile_group_id = tuple_location.block;
+    auto tuple_id = tuple_location.offset;
 
-  // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
-                                              txn_id, commit_id);
+    while (true) {
+      txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+      cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+      cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+      // if the tuple is visible.
+      if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+        
+        // perform predicate evaluation.
+        if (predicate_ == nullptr) {
+          visible_tuples[tile_group_id].push_back(tuple_id);
+          transaction_manager.RecordRead(tile_group_id, tuple_id);
+        } else {
+          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          if (eval == true) {
+            visible_tuples[tile_group_id].push_back(tuple_id);
+            transaction_manager.RecordRead(tile_group_id, tuple_id);
+          }
+        }
+        break;
+      } else {
+        ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
+        // if there is no next tuple.
+        if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
+          break;
+        }
+        tile_group_id = next_item.block;
+        tuple_id = next_item.offset;
+        tile_group = manager.GetTileGroup(tile_group_id);
+        tile_group_header = tile_group.get()->GetHeader();
+      }
+    }
+  }
+  // Construct a logical tile for each block
+  for (auto tuples : visible_tuples) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuples.first);
+
+    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, full_column_ids_);
+    logical_tile->AddPositionList(std::move(tuples.second));
+    if (column_ids_.size() != 0) {
+      logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+    }
+    
+    // Print tile group visibility
+    // tile_group_header->PrintVisibility(txn_id, commit_id);
+    result_.push_back(logical_tile.release());
+  }
 
   done_ = true;
 
-  LOG_TRACE("Result tiles : %lu", result.size());
+  LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
 }

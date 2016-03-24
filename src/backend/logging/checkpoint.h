@@ -24,6 +24,7 @@ class Checkpoint {
  public:
   virtual ~Checkpoint(void){};
   virtual void DoCheckpoint() = 0;
+  virtual void Init() = 0;
 
  protected:
 };

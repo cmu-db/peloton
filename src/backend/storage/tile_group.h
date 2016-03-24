@@ -73,6 +73,9 @@ class TileGroup : public Printable {
   // Operations
   //===--------------------------------------------------------------------===//
 
+  // copy tuple in place.
+  void CopyTuple(txn_id_t transaction_id, const Tuple *tuple, oid_t tuple_slot_id);
+
   // insert tuple at next available slot in tile if a slot exists
   oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
@@ -114,6 +117,8 @@ class TileGroup : public Printable {
 
   // Count of tuples that are active w.r.t. this transaction id
   oid_t GetActiveTupleCount(txn_id_t txn_id) const;
+
+  oid_t GetActiveTupleCount() const;
 
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
 

@@ -37,6 +37,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
@@ -120,7 +121,7 @@ void ExecuteTileGroupTest() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();

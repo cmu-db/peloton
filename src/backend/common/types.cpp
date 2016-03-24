@@ -59,6 +59,7 @@ bool IsIntegralType(ValueType type) {
     case (VALUE_TYPE_BIGINT):
       return true;
       break;
+    case (VALUE_TYPE_REAL):
     case (VALUE_TYPE_DOUBLE):
     case (VALUE_TYPE_VARCHAR):
     case (VALUE_TYPE_VARBINARY):
@@ -86,6 +87,7 @@ Value GetRandomValue(ValueType type) {
       return ValueFactory::GetIntegerValue(rand() % (1 << 31));
     case VALUE_TYPE_BIGINT:
       return ValueFactory::GetBigIntValue(rand());
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return ValueFactory::GetDoubleValue((rand() % 10000) /
                                           (double)(rand() % 10000));
@@ -128,6 +130,7 @@ std::size_t GetTypeSize(ValueType type) {
       return 4;
     case (VALUE_TYPE_BIGINT):
       return 8;
+    case (VALUE_TYPE_REAL):
     case (VALUE_TYPE_DOUBLE):
       return 8;
     case (VALUE_TYPE_VARCHAR):
@@ -198,6 +201,8 @@ std::string ValueTypeToString(ValueType type) {
       return "INTEGER";
     case VALUE_TYPE_BIGINT:
       return "BIGINT";
+    case VALUE_TYPE_REAL:
+      return "REAL";
     case VALUE_TYPE_DOUBLE:
       return "DOUBLE";
     case VALUE_TYPE_VARCHAR:
@@ -651,6 +656,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_BWTREE: {
       return "BWTREE";
     }
+    case INDEX_TYPE_HASH: {
+      return "HASH";
+    }
   }
   return "INVALID";
 }
@@ -1056,6 +1064,9 @@ ValueType PostgresValueTypeToPelotonValueType(
       break;
 
     /* DOUBLE */
+    case POSTGRES_VALUE_TYPE_REAL:
+      valueType = VALUE_TYPE_REAL;
+      break;
     case POSTGRES_VALUE_TYPE_DOUBLE:
       valueType = VALUE_TYPE_DOUBLE;
       break;

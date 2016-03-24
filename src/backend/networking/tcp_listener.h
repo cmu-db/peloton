@@ -22,7 +22,7 @@
 
 namespace peloton {
 namespace networking {
-
+class Connection;
 class Listener {
 public:
 
@@ -34,10 +34,10 @@ public:
     int GetPort() const { return port_; }
 
     // The listenner event is in the listen_base_
-    event_base* GetEventBase() const { return listen_base_; }
+    struct event_base* GetEventBase() const { return listen_base_; }
 
     // listener is a evconnlistener type which is a libevent type
-    evconnlistener* GetListener() const { return listener_; }
+    struct evconnlistener* GetListener() const { return listener_; }
 
     // Begin listening
     void Run(void* arg);
@@ -56,10 +56,10 @@ private:
     int port_;
 
     // The listenner event is in the listen_base_
-    event_base* listen_base_;
+    struct event_base* listen_base_;
 
     // listener is a evconnlistener type which is a libevent type
-    evconnlistener* listener_;
+    struct evconnlistener* listener_;
 };
 
 

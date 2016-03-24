@@ -15,6 +15,7 @@
 #include "backend/networking/rpc_channel.h"
 #include "backend/networking/rpc_controller.h"
 #include "backend/networking/tcp_connection.h"
+#include "backend/networking/connection_manager.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
 
@@ -35,85 +36,82 @@ RpcChannel::~RpcChannel() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//                 Request message structure:
-// --Header:  message length (Opcode + request),         uint32_t (4bytes)
+//                  Request message structure:
+// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
+// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
 // --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
-// --Request: the serialization result of protobuf       Header-8
+// --Content: the serialization result of protobuf       Header-8-2
 //
-// TODO: We did not add checksum code in this version
-////////////////////////////////////////////////////////////////////////////////
+// TODO: We did not add checksum code in this version     ///////////////
 
 /*
- * Channel is only use by protobuf rpc client. So the this method is sending request msg
+ * Channel is only invoked by protobuf rpc client. So this method is sending request msg
  */
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                             google::protobuf::RpcController* controller,
                             const google::protobuf::Message* request,
                             __attribute__((unused)) google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
-  assert(response != nullptr);
 
-  if (controller->Failed()) {
-      std::string error = controller->ErrorText();
-      LOG_TRACE( "RpcChannel with controller failed:%s ", error.c_str() );
-  }
-
-  // run call back function
+  assert(request != nullptr);
+  /*  run call back function */
   if (done != NULL) {
      done->Run();
   }
 
-  // Get the rpc function name
+  /* Get the rpc function name */
   std::string methodname = std::string( method->full_name() );
   std::hash<std::string> string_hash_fn;
 
-  // Get the hashcode for the rpc function name
-  // we use unit64_t because we should specify the exact length
+  /*  Set the type */
+  uint16_t type = MSG_TYPE_REQ;
+
+  /*  Get the hashcode for the rpc function name */
+  /*  we use unit64_t because we should specify the exact length */
   uint64_t opcode = string_hash_fn(methodname);
 
-  // prepare the sending buf
-  uint32_t msg_len = request->ByteSize() + sizeof(opcode);
+  /* prepare the sending buf */
+  uint32_t msg_len = request->ByteSize() + OPCODELEN + TYPELEN;
 
-  // total length of the message: header length (4bytes) + message length (8bytes + ...)
+  /* total length of the message: header length (4bytes) + message length (8bytes + ...) */
   assert(HEADERLEN == sizeof(msg_len));
-  char buf[sizeof(msg_len) + msg_len];
+  char buf[HEADERLEN + msg_len];
 
-  // copy the header into the buf
+  /* copy the header into the buf */
   memcpy(buf, &msg_len, sizeof(msg_len));
 
-  // copy the hashcode into the buf, following the header
+  /* copy the type into the buf, following the header */
+  assert(TYPELEN == sizeof(type));
+  memcpy(buf + HEADERLEN, &type, TYPELEN);
+
+  /*  copy the hashcode into the buf, following the type */
   assert(OPCODELEN == sizeof(opcode));
-  memcpy(buf + sizeof(msg_len), &opcode, sizeof(opcode));
+  memcpy(buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
-  // call protobuf to serialize the request message into sending buf
-  request->SerializeToArray(buf + sizeof(msg_len) + sizeof(opcode), request->ByteSize());
+  /*  call protobuf to serialize the request message into sending buf */
+  request->SerializeToArray(buf + + HEADERLEN + TYPELEN + OPCODELEN, request->ByteSize());
 
-  // crate a connection to prcess the rpc send and recv
-  std::shared_ptr<Connection> conn(new Connection(-1, NULL));
+  /*
+   * GET a connection to process the rpc send and recv. If there is a associated connection
+   * it will be returned. If not, a new connection will be created and connect to server
+   */
+  Connection* conn = ConnectionManager::GetInstance().CreateConn(addr_);
 
-  // Client connection must set method name
-  conn->SetMethodName(methodname);
+  /* Connect to server with given address */
+  if ( conn == NULL ) {
+      LOG_TRACE("Can't get connection");
 
-  // write data into sending buffer, when using libevent we don't need loop send
+      // rpc client use this info to decide whether re-send the message
+      controller->SetFailed("Connect Error");
+
+      return;
+  }
+
+  /* write data into sending buffer, when using libevent we don't need loop send */
   if ( conn->AddToWriteBuffer(buf, sizeof(buf)) == false ) {
       LOG_TRACE("Write data Error");
       return;
   }
-
-  // Connect to server with given address
-  if ( conn->Connect(addr_) == false ) {
-      LOG_TRACE("Connect Error");
-      return;
-  }
-
-  // prepaere workers_thread to send and recv data
-  std::function<void()> worker_conn =
-          std::bind(&Connection::Dispatch, conn);
-
-  // add workers to thread pool to send and recv data
-  //ThreadManager::GetInstance().AddTask(worker_conn);
-  //RpcClient::client_threads_.AddTask(worker_conn);
-  ThreadManager::GetClientThreadPool().AddTask(worker_conn);
 }
 
 void RpcChannel::Close() {
