@@ -395,7 +395,7 @@ static void LogChildExit(int lev, const char *procname, int pid,
                          int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-static void BackendRun(Port *port) pg_attribute_noreturn();
+static void BackendRun(Port *port, bool is_memcached) pg_attribute_noreturn();
 static void ExitPostmaster(int status);
 static int ServerLoop(void);
 static int BackendStartup(Port *port, bool is_memcached);
@@ -1692,7 +1692,7 @@ static int ServerLoop(void) {
         // check memcached port as well
         if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
           Port *port = ConnCreate(MemcachedListenSocket[i]);
-          if(port){
+          if (port) {
             BackendStartup(port, true);
           }
         }
@@ -1819,6 +1819,16 @@ static int initMasks(fd_set *rmask) {
 
   for (i = 0; i < MAXLISTEN; i++) {
     int fd = ListenSocket[i];
+
+    if (fd == PGINVALID_SOCKET) break;
+    FD_SET(fd, rmask);
+
+    if (fd > maxsock) maxsock = fd;
+  }
+
+  // do the same for memcached sockets
+  for (i = 0; i < MAXLISTEN; i++) {
+    int fd = MemcachedListenSocket[i];
 
     if (fd == PGINVALID_SOCKET) break;
     FD_SET(fd, rmask);
@@ -3581,7 +3591,8 @@ static bool save_backend_variables(BackendParameters *param, Port *port);
 static void restore_backend_variables(BackendParameters *param, Port *port);
 
 // TODO: Peloton Changes
-static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
+static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
+                        bool is_memcached) {
   // free(bn);
 
   IsBackend = true;
@@ -3627,11 +3638,11 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param) {
   elog(DEBUG3, "SMem and Semaphores created :: TID : %d", thread_id);
 
   /* And run the backend */
-  BackendRun(port);
+  BackendRun(port, is_memcached);
 }
 
 // TODO: Peloton Changes
-static void LaunchBackendTask(Backend *bn, Port *port) {
+static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
   static unsigned long tmpBackendFileNum = 0;
   char tmpfilename[MAXPGPATH];
   BackendParameters *param =
@@ -3641,7 +3652,7 @@ static void LaunchBackendTask(Backend *bn, Port *port) {
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(),
        GetBackendThreadId());
-  std::thread backend(BackendTask, bn, port, param);
+  std::thread backend(BackendTask, bn, port, param, is_memcached);
   backend.detach();
   return;
 }
@@ -3700,7 +3711,7 @@ static int BackendStartup(Port *port, bool is_memcached) {
   pid = 0;
   // std::thread backend(BackendTask, bn, port);
   // backend.detach();
-  LaunchBackendTask(bn, port);  // new thread created
+  LaunchBackendTask(bn, port, is_memcached);  // new thread created
 
 #endif /* EXEC_BACKEND */
 
@@ -3941,7 +3952,7 @@ static void BackendInitialize(Port *port) {
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-static void BackendRun(Port *port) {
+static void BackendRun(Port *port, bool is_memcached) {
   char **av;
   int maxac;
   int ac;
@@ -3999,7 +4010,12 @@ static void BackendRun(Port *port) {
    */
   MemoryContextSwitchTo(TopMemoryContext);
 
-  PostgresMain(ac, av, port->database_name, port->user_name);
+  if (!is_memcached)
+    // normal postgres sql workflow
+    PostgresMain(ac, av, port->database_name, port->user_name);
+  else
+    // memcached workflow
+    MemcachedMain(ac, av, port->database_name, port->user_name);
 }
 
 #ifdef EXEC_BACKEND

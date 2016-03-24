@@ -40,4 +40,4 @@ stylecheck:
 	clang-format-3.6 --style=file ./src/postgres/backend/postmaster/postmaster.cpp | diff ./src/postgres/backend/postmaster/postmaster.cpp -
 style:
 	clang-format-3.6 --style=file -i ./src/postgres/backend/postmaster/postmaster.cpp
-
+	clang-format-3.6 --style=file -i ./src/postgres/backend/tcop/postgres.cpp

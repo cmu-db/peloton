@@ -35,7 +35,7 @@ extern void PortalSetResultFormat(Portal portal, int nFormats,
 
 extern bool PortalRun(Portal portal, long count, bool isTopLevel,
 		  DestReceiver *dest, DestReceiver *altdest,
-		  char *completionTag);
+		  char *completionTag, const MemcachedState& mc_state = inactive_memcached_state());
 
 extern long PortalRunFetch(Portal portal,
 			   FetchDirection fdirection,
