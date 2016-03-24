@@ -27,7 +27,6 @@ class TransactionTests : public PelotonTest {};
 // schedule->results
 void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
                      storage::DataTable *table, TransactionSchedule *schedule) {
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   // Sleep for the first operation, this gives the opportunity to schedule
   // the start time of a txn
   int last_time = schedule->times[0];
@@ -44,21 +43,6 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
     txn_op_t op = schedule->operations[i].op;
     int id = schedule->operations[i].id;
     int value = schedule->operations[i].value;
-    std::unique_ptr<storage::Tuple> tuple;
-    std::unique_ptr<storage::Tuple> key;
-
-    if (op == TXN_OP_DELETE || op == TXN_OP_UPDATE || op == TXN_OP_READ) {
-      key = std::unique_ptr<storage::Tuple>(
-          new storage::Tuple(table->GetIndex(0)->GetKeySchema(), true));
-      key->SetValue(0, ValueFactory::GetIntegerValue(id), testing_pool);
-    }
-
-    if (op == TXN_OP_INSERT || op == TXN_OP_UPDATE) {
-      tuple = std::unique_ptr<storage::Tuple>(
-          new storage::Tuple(table->GetSchema(), true));
-      tuple->SetValue(0, ValueFactory::GetIntegerValue(id), testing_pool);
-      tuple->SetValue(1, ValueFactory::GetIntegerValue(value), testing_pool);
-    }
 
     // Execute the operation
     switch (op) {
@@ -73,17 +57,16 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
         break;
       }
       case TXN_OP_DELETE: {
-        auto index = table->GetIndex(0);
-        auto location = index->ScanKey(key.get())[0];
-        table->DeleteTuple(transaction, location);
+        TransactionTestsUtil::ExecuteDelete(transaction, table, id);
         break;
       }
       case TXN_OP_UPDATE: {
-        // Update is a delete + insert
-        auto index = table->GetIndex(0);
-        auto location = index->ScanKey(key.get())[0];
-        table->DeleteTuple(transaction, location);
-        table->InsertTuple(transaction, tuple.get());
+        TransactionTestsUtil::ExecuteUpdate(transaction, table, id, value);
+        break;
+      }
+      case TXN_OP_ABORT: {
+        // Assert last operation
+        assert(i == (int)schedule->operations.size() - 1);
         break;
       }
       case TXN_OP_NOTHING: {
@@ -92,14 +75,17 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
       }
     }
   }
-  txn_manager->CommitTransaction();
+  if (schedule->operations.rbegin()->op == TXN_OP_ABORT)
+    txn_manager->AbortTransaction();
+  else
+    txn_manager->CommitTransaction();
 }
 
 void ThreadExecuteSchedule(concurrency::TransactionManager *txn_manager,
                            storage::DataTable *table,
-                           std::vector<TransactionSchedule *> schedules) {
-  uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
-  auto schedule = schedules[thread_id];
+                           TransactionSchedules *schedules) {
+  int next_schedule = schedules->next_sched.fetch_add(1);
+  auto schedule = schedules->schedules[next_schedule];
   ExecuteSchedule(txn_manager, table, schedule);
 }
 
@@ -129,26 +115,35 @@ TEST_F(TransactionTests, TransactionTest) {
   std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
 }
 
-//TEST_F(TransactionTests, AbortTest)
-//{
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  std::unique_ptr<storage::DataTable> table(TransactionTestsUtil::CreateTable());
-//  std::vector<TransactionSchedule *> schedules;
-//  TransactionSchedule schedule1;
-//  TransactionSchedule schedule2;
-//  // Schedule one thread to write and abort, another thread to read afterwards
-//}
+TEST_F(TransactionTests, AbortTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+  TransactionSchedules schedules;
+  TransactionSchedule schedule1;
+  TransactionSchedule schedule2;
+  // Schedule one thread to update and abort, another thread to read afterwards
+  schedule1.AddUpdate(0, 1000, 0);
+  schedule1.AddAbort(500);
+  schedule2.AddRead(0, 1000);
+  schedules.AddSchedule(&schedule1);
+  schedules.AddSchedule(&schedule2);
+  LaunchParallelTest(2, ThreadExecuteSchedule, &txn_manager, table.get(),
+                     &schedules);
+
+  EXPECT_EQ(schedule2.results[0], 0);
+}
 
 TEST_F(TransactionTests, SnapshotIsolationTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(TransactionTestsUtil::CreateTable());
-  std::vector<TransactionSchedule> schedules;
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
   TransactionSchedule schedule1;
   //  TransactionSchedule schedule2;
   //  TransactionSchedule schedule3;
 
-  schedule1.AddInsert(0, 1, 0);
-  schedule1.AddRead(0, 0);
+  schedule1.AddInsert(1, 1, 0);
+  schedule1.AddRead(1, 0);
   ExecuteSchedule(&txn_manager, table.get(), &schedule1);
   EXPECT_EQ(1, schedule1.results[0]);
 }
