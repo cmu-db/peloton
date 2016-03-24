@@ -24,8 +24,8 @@ namespace test {
 class CheckpointTests : public PelotonTest {};
 
 TEST_F(CheckpointTests, BasicTest) {
-  logging::Checkpoint *checkpoint = new logging::SimpleCheckpoint();
-  delete checkpoint;
+  // logging::Checkpoint &checkpoint =
+  // logging::CheckpointFactory::GetInstance();
 }
 
 }  // End test namespace

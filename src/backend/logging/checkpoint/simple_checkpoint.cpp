@@ -13,6 +13,7 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/logging/log_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/executor/executors.h"
@@ -31,6 +32,20 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
+
+SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
+  static SimpleCheckpoint simple_checkpoint;
+  return simple_checkpoint;
+}
+
+void SimpleCheckpoint::Init() {
+  // TODO check configuration
+  if (true) {
+    std::thread checkpoint_thread(&SimpleCheckpoint::DoCheckpoint, this);
+    checkpoint_thread.detach();
+  }
+}
+
 void SimpleCheckpoint::DoCheckpoint() {
   sleep(30);
 
@@ -38,7 +53,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   //======= construct  scan =============================================
 
   // build executor context
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // TODO should not use begin txn. Not ended?
   auto txn = txn_manager.BeginTransaction();
   assert(txn);
