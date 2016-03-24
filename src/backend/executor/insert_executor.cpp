@@ -15,6 +15,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/common/pool.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
@@ -62,7 +63,9 @@ bool InsertExecutor::DExecute() {
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table_);
 
+  // TODO: use transaction manager instead of transaction
   auto transaction_ = executor_context_->GetTransaction();
+  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
@@ -94,10 +97,12 @@ bool InsertExecutor::DExecute() {
       peloton::ItemPointer location =
           target_table_->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
-        transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location.block, location.offset);
+      // transaction_->RecordInsert(location.block, location.offset);
+      transaction_manager.RecordInsert(location.block, location.offset);
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -134,10 +139,12 @@ bool InsertExecutor::DExecute() {
 
       if (location.block == INVALID_OID) {
         LOG_INFO("Failed to Insert. Set txn failure.");
-        transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_->RecordInsert(location.block, location.offset);
+      // transaction_->RecordInsert(location.block, location.offset);
+      transaction_manager.RecordInsert(location.block, location.offset);
 
       // Logging
       // {
