@@ -31,7 +31,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::~BTreeIndex()
 
 template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::InsertEntry(
-    const storage::Tuple *key, const ItemPointer location) {
+    const storage::Tuple *key, ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -49,7 +49,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::InsertEn
 
 template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
 bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::DeleteEntry(
-    const storage::Tuple *key, const ItemPointer location) {
+    const storage::Tuple *key, const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
