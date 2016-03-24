@@ -174,7 +174,13 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
     switch (op) {
       case TXN_OP_INSERT: {
         LOG_TRACE("Execute Insert");
-        table->InsertTuple(transaction, tuple.get());
+        auto location = table->InsertTuple(transaction, tuple.get());
+        if (location.block == INVALID_OID) {
+          // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+          txn_manager->SetTransactionResult(peloton::Result::RESULT_FAILURE);
+        }
+        // transaction_->RecordInsert(location.block, location.offset);
+        txn_manager->RecordInsert(location.block, location.offset);
         break;
       }
       case TXN_OP_READ: {
