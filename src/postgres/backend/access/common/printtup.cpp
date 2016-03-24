@@ -128,7 +128,6 @@ static void
 printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
 								 MemcachedState *mc_state)
 {
-	printf("Print Startup Reached:%p", mc_state);
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
 
@@ -161,9 +160,10 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
 
 	/*
 	 * If we are supposed to emit row descriptions, then send the tuple
-	 * descriptor of the tuples.
+	 * descriptor of the tuples. Don't print if we are memcached.
+	 *
 	 */
-	if (myState->sendDescrip)
+	if (myState->sendDescrip && mc_state == nullptr)
 		SendRowDescriptionMessage(typeinfo,
 								  FetchPortalTargetList(portal),
 								  portal->formats);
@@ -307,7 +307,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 static void
 printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
-	printf("REACHED PRINTTUP:%p", mc_state);
+	// printf("\n\nREACHED PRINTTUP:%p\n\n", mc_state);
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
@@ -327,10 +327,15 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 
 	/*
 	 * Prepare a DataRow message (note buffer is in per-row context)
+	 *
+	 * Note: do this if we are not memcached
 	 */
-	pq_beginmessage(&buf, 'D');
+	if (!mc_state) {
+		pq_beginmessage(&buf, 'D');
 
-	pq_sendint(&buf, natts, 2);
+		pq_sendint(&buf, natts, 2);
+	}
+
 
 	/*
 	 * send the attributes of this tuple
@@ -342,7 +347,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 
 		if (slot->tts_isnull[i])
 		{
-			pq_sendint(&buf, -1, 4);
+			if(!mc_state)
+				pq_sendint(&buf, -1, 4);
 			continue;
 		}
 
@@ -363,21 +369,30 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 			char	   *outputstr;
 
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			// comma delimit output
+			if (mc_state)
+				mc_state->result += outputstr + ',';
+			else
+				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 		}
 		else
 		{
 			/* Binary output */
 			bytea	   *outputbytes;
 
-			outputbytes = SendFunctionCall(&thisState->finfo, attr);
-			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
-			pq_sendbytes(&buf, VARDATA(outputbytes),
-						 VARSIZE(outputbytes) - VARHDRSZ);
+			// TODO: ignore binary data for memcached for now
+			if (!mc_state) {
+				outputbytes = SendFunctionCall(&thisState->finfo, attr);
+				pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+				pq_sendbytes(&buf, VARDATA(outputbytes),
+										 VARSIZE(outputbytes) - VARHDRSZ);
+			}
 		}
 	}
 
-	pq_endmessage(&buf);
+	// flush only if we are not memcached
+	if (!mc_state)
+		pq_endmessage(&buf);
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);

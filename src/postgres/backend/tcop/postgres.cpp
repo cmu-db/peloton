@@ -4325,6 +4325,7 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
           auto mc_state = new MemcachedState();
           exec_simple_query(query_string, mc_state);
 
+          printf("\n\n QUERY RESULT: %s\n", mc_state->result.c_str());
           //do stuff with mc_state
           delete mc_state;
         }
