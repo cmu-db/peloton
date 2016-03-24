@@ -13,6 +13,8 @@
 #pragma once
 
 #include "backend/logging/checkpoint.h"
+#include "backend/logging/log_record.h"
+
 #include <thread>
 
 namespace peloton {
@@ -32,11 +34,24 @@ class SimpleCheckpoint : public Checkpoint {
 
   static SimpleCheckpoint &GetInstance();
 
+  // Inherited functions
   void Init();
-
   void DoCheckpoint();
+  void DoRecovery();
+
+  // Internal functions
+  void CreateCheckpointFile();
+  void Persist();
 
  private:
+  std::vector<LogRecord *> records_;
+
+  FILE *checkpoint_file_ = nullptr;
+
+  int checkpoint_file_fd_ = INVALID_FILE_DESCRIPTOR;
+
+  // Default checkpoint interval is 20 seconds
+  int64_t checkpoint_interval_ = 20;
 };
 
 }  // namespace logging
