@@ -14,6 +14,7 @@
 
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/log_file.h"
+#include <dirent.h>
 
 namespace peloton {
 
@@ -67,11 +68,27 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   void InitLogFilesList() {
     // TODO: handle case where this may be just a database restart instead of
     // fresh start
+    DIR *dirp;
+    struct dirent *file;
+    std::string base_name = "peloton_log_";
+
+    LOG_INFO("Trying to read log directory");
+
+    dirp = opendir(".");
+    if (dirp == NULL) LOG_INFO("Opendir failed: %s", strerror(errno));
+    // TODO use this data to populate in memory data structures
+    while ((file = readdir(dirp)) != NULL) {
+      if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
+        // found a log file!
+        LOG_INFO("Found a log file with name %s", file->d_name);
+      }
+    }
+
     this->log_file_counter_ = 0;
-    this->CreateNewLogFile();
+    this->CreateNewLogFile(false);
   }
 
-  void CreateNewLogFile() {
+  void CreateNewLogFile(bool close_old_file) {
     int new_file_num = log_file_counter_;
     LOG_INFO("new_file_num is %d", new_file_num);
     std::string new_file_name;
@@ -97,7 +114,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
     LogFile *new_log_file_object =
         new LogFile(log_file, new_file_name, log_file_fd);
 
-    if (new_file_num != 0) {  // must close last opened file
+    if (close_old_file) {  // must close last opened file
       int file_list_size = this->log_files_.size();
 
       if (file_list_size != 0) {
@@ -115,10 +132,11 @@ class WriteAheadFrontendLogger : public FrontendLogger {
     LOG_INFO("log_file_counter is %d", log_file_counter_);
   }
 
-  bool FileSwitchCondIsTrue(int fsync_count) {
-    // return false;
+  bool FileSwitchCondIsTrue(__attribute__((unused)) int fsync_count) {
+    // TODO have a good heuristic here
+    return false;
 
-    return (fsync_count % 10000) == 0;
+    // return (fsync_count % 10000) == 0;
   }
 
  private:

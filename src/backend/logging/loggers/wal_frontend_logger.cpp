@@ -145,7 +145,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
   // now decide whether we need to create a new log file!
   if (FileSwitchCondIsTrue(fsync_count)) {
-    this->CreateNewLogFile();
+    this->CreateNewLogFile(true);
   }
 }
 
@@ -159,6 +159,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 void WriteAheadFrontendLogger::DoRecovery() {
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
+  // TODO handle case where we may have to recover from multiple Log files!
 
   // Go over the log size if needed
   if (log_file_size > 0) {
