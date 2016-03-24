@@ -38,7 +38,7 @@ static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
                            DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
-                            DestReceiver *dest);
+                            DestReceiver *dest, const MemcachedState& state = inactive_memcached_state());
 static void PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
                              DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal, bool isTopLevel, DestReceiver *dest,
@@ -631,7 +631,7 @@ void PortalSetResultFormat(Portal portal, int nFormats, int16 *formats) {
  * suspended due to exhaustion of the count parameter.
  */
 bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
-               DestReceiver *altdest, char *completionTag) {
+               DestReceiver *altdest, char *completionTag, const MemcachedState& state) {
   bool result;
   uint32 nprocessed;
   ResourceOwner saveTopTransactionResourceOwner;
@@ -699,7 +699,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
         case PORTAL_ONE_RETURNING:
         case PORTAL_ONE_MOD_WITH:
         case PORTAL_UTIL_SELECT:
-
+          // printf("\nSELECT-LIKE QUERY\n");
           /*
            * If we have not yet run the command, do so, storing its
            * results in the portal's tuplestore.  But we don't do that
@@ -736,6 +736,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
           break;
 
         case PORTAL_MULTI_QUERY:
+          // printf("\nMULTI QUERY\n");
           PortalRunMulti(portal, isTopLevel, dest, altdest, completionTag);
 
           /* Prevent portal's commands from being re-executed */
@@ -809,7 +810,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
  * Returns number of rows processed (suitable for use in result tag)
  */
 static long PortalRunSelect(Portal portal, bool forward, long count,
-                            DestReceiver *dest) {
+                            DestReceiver *dest, const MemcachedState& state) {
   QueryDesc *queryDesc;
   ScanDirection direction;
   uint32 nprocessed;
