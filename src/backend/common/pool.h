@@ -25,7 +25,7 @@
 
 namespace peloton {
 
-static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024;  // 1 MB
+static const size_t TEMP_POOL_CHUNK_SIZE = 512;  // 512 B
 
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap

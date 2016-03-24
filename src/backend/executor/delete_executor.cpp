@@ -18,11 +18,14 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/planner/delete_plan.h"
 #include "backend/catalog/manager.h"
+#include "backend/expression/container_tuple.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 namespace executor {
@@ -75,6 +78,7 @@ bool DeleteExecutor::DExecute() {
 
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
@@ -92,34 +96,88 @@ bool DeleteExecutor::DExecute() {
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
-    peloton::ItemPointer delete_location(tile_group_id, physical_tuple_id);
+    txn_id_t tid = transaction_->GetTransactionId();
+    if (tile_group_header->GetTransactionId(physical_tuple_id) == tid) {
+      // if the thread is the owner of the tuple, then directly update in place.
+      tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
 
-    // Logging
-    {
-      auto &log_manager = logging::LogManager::GetInstance();
+      // TODO: Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
 
-      if (log_manager.IsInLoggingMode()) {
-        auto logger = log_manager.GetBackendLogger();
-        auto record = logger->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
-            target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //       LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
+      //       target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
 
-        logger->Log(record);
+      //     logger->Log(record);
+      //   }
+      // }
+
+    } else if (tile_group_header->GetTransactionId(physical_tuple_id) ==
+                   INITIAL_TXN_ID &&
+               tile_group_header->GetEndCommitId(physical_tuple_id) ==
+                   MAX_CID) {
+      // if the tuple is not owned by any transaction and is visible to current
+      // transdaction.
+
+      if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false) {
+        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        transaction_->SetResult(Result::RESULT_FAILURE);
+        return false;
       }
-    }
+      // if it is the latest version and not locked by other threads, then
+      // insert a new version.
+      storage::Tuple *new_tuple =
+          new storage::Tuple(target_table_->GetSchema(), true);
 
-    // try to delete the tuple
-    // this might fail due to a concurrent operation that has latched the tuple
-    bool status = target_table_->DeleteTuple(transaction_, delete_location);
+      // Make a copy of the original tuple and allocate a new tuple
+      expression::ContainerTuple<storage::TileGroup> old_tuple(
+          tile_group, physical_tuple_id);
 
-    if (status == false) {
-      LOG_INFO("Fail to delete. Set txn failure");
-      transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+      // finally insert updated tuple into the table
+      ItemPointer location =
+          target_table_->InsertVersion(transaction_, new_tuple, false);
+
+      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
+      auto new_tile_group_header =
+          target_table_->GetTileGroupById(location.block)->GetHeader();
+      new_tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
+
+      if (location.block == INVALID_OID) {
+        delete new_tuple;
+        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        transaction_->SetResult(Result::RESULT_FAILURE);
+        return false;
+      }
+
+      executor_context_->num_processed += 1;  // deleted one
+
+      ItemPointer delete_location(tile_group_id, physical_tuple_id);
+      transaction_->RecordDelete(tile_group_id, physical_tuple_id);
+
+      // Logging
+      // {
+      //   auto &log_manager = logging::LogManager::GetInstance();
+
+      //   if (log_manager.IsInLoggingMode()) {
+      //     auto logger = log_manager.GetBackendLogger();
+      //     auto record = logger->GetTupleRecord(
+      //         LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
+      //         target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
+
+      //     logger->Log(record);
+      //   }
+      // }
+      delete new_tuple;
+
+    } else {
+      // transaction should be aborted as we cannot update the latest version.
+      LOG_INFO("Fail to update tuple. Set txn failure.");
+      transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
-
-    executor_context_->num_processed += 1;  // deleted one
-    transaction_->RecordDelete(delete_location);
   }
 
   return true;

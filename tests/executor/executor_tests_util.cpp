@@ -24,6 +24,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/exception.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/storage/tile_group.h"
@@ -223,11 +224,11 @@ void ExecutorTestsUtil::PopulateTiles(
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
-  const cid_t commit_id = txn->GetCommitId();
+  const cid_t commit_id = txn->GetStartCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
@@ -346,7 +347,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(txn, table,
                                    tuple_count * DEFAULT_TILEGROUP_COUNT,

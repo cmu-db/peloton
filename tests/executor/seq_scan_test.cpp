@@ -22,6 +22,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
@@ -249,7 +250,7 @@ TEST_F(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
                             column_ids);
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -275,7 +276,7 @@ TEST_F(SeqScanTests, NonLeafNodePredicateTest) {
   std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
   // Set up executor and its child.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

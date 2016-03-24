@@ -11,28 +11,33 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/thread_manager.h"
+#include <cassert>
 
 #define NUM_THREAD 10
+
+// for test
+int xthread = 1;
+#include <iostream>
+// end test
 
 namespace peloton {
 
 // global singleton
-/*
 ThreadManager &ThreadManager::GetInstance(void) {
   static ThreadManager thread_manager(NUM_THREAD);
   return thread_manager;
 }
-*/
 
-ThreadManager &ThreadManager::GetServerThreadPool(void) {
-  static ThreadManager server_thread_pool(NUM_THREAD);
-  return server_thread_pool;
-}
 
-ThreadManager &ThreadManager::GetClientThreadPool(void) {
-  static ThreadManager client_thread_pool(NUM_THREAD);
-  return client_thread_pool;
-}
+//ThreadManager &ThreadManager::GetServerThreadPool(void) {
+//  static ThreadManager server_thread_pool(NUM_THREAD);
+//  return server_thread_pool;
+//}
+//
+//ThreadManager &ThreadManager::GetClientThreadPool(void) {
+//  static ThreadManager client_thread_pool(NUM_THREAD);
+//  return client_thread_pool;
+//}
 
 ThreadManager::ThreadManager(int threads) :
     terminate_(false) {
@@ -105,6 +110,129 @@ void ThreadManager::Invoke() {
             task_pool_.pop();
         }
         // end scope
+
+        // Execute the task.
+        task();
+
+    } // end while
+}
+
+//===--------------------------------------------------------------------===//
+// Thread Pool implemented using pthread. The functionality is similar
+// wtih thread manager, but mutex and cond are wrappered. We probably
+// combine this with thread manager in the future
+//===--------------------------------------------------------------------===//
+
+// global singleton
+ThreadPool &ThreadPool::GetInstance(void) {
+  static ThreadPool thread_pool(NUM_THREAD);
+  return thread_pool;
+}
+
+//ThreadPool &ThreadPool::GetServerThreadPool(void) {
+//  static ThreadPool server_thread_pool(NUM_THREAD);
+//  return server_thread_pool;
+//}
+//
+//ThreadPool &ThreadPool::GetClientThreadPool(void) {
+//  static ThreadPool client_thread_pool(NUM_THREAD);
+//  return client_thread_pool;
+//}
+
+ThreadPool::ThreadPool(int threads) :
+    cond_ (&mutex_),
+    terminate_(false) {
+
+    // Create number of required threads and add them to the thread pool vector.
+    for(int i = 0; i < threads; i++) {
+        pthread_t threadx;
+        pthread_create(&threadx, NULL, ThreadPool::InvokeEntry, static_cast<void *>(this));
+        thread_pool_.emplace_back(threadx);
+    }
+}
+
+ThreadPool::~ThreadPool() {
+
+    // Put lock on task mutex.
+    mutex_.Lock();
+
+    if (!terminate_) {
+        // Set termination flag to true.
+        terminate_ = true;
+    }
+
+    mutex_.UnLock();
+
+    // Wake up all threads.
+    cond_.Broadcast();
+
+    // Join all threads.
+//    for (pthread_t &thread : thread_pool_) {
+//        pthread_join(thread, NULL);
+//    }
+
+}
+
+void ThreadPool::AddTask(std::function<void()> f) {
+
+    // Put unique lock on task mutex.
+    mutex_.Lock();
+
+    // Push task into queue.
+    task_pool_.push(f);
+
+    // unlock
+    mutex_.UnLock();
+
+    // Wake up one thread.
+    cond_.Signal();
+
+}
+
+/*
+ * @Param args
+ *                      ThreadPool instance
+ */
+void* ThreadPool::InvokeEntry(void* self) {
+    ((ThreadPool *)self)->Invoke();
+
+    pthread_exit((void *)0);
+    return NULL;
+}
+
+void ThreadPool::Invoke() {
+
+    std::cout << "thread: " << xthread << std::endl;
+    xthread++;
+
+    std::function<void()> task;
+
+    while(true) {
+
+        // Put the lock on task mutex.
+        mutex_.Lock();
+
+        // wait will "atomically" unlock the mutex,
+        // allowing others access to the condition variable (for signalling)
+        while (task_pool_.empty() && terminate_ == false) {
+            cond_.Wait();
+        }
+
+        // If termination signal received and queue is empty then exit else continue clearing the queue.
+        if (terminate_ && task_pool_.empty()) {
+            return;
+        }
+
+        // if running here, task_pool must not be empty
+        assert(!task_pool_.empty());
+
+        // Get next task in the queue.
+        task = task_pool_.front();
+
+        // Remove it from the queue.
+        task_pool_.pop();
+
+        mutex_.UnLock();
 
         // Execute the task.
         task();

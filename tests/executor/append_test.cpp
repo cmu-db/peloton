@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/append_executor.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -78,7 +79,7 @@ TEST_F(AppendTests, AppendTwoTest) {
       .WillOnce(Return(false));
 
   size_t tile_size = 10;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
