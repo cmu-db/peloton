@@ -30,6 +30,8 @@ class CaseExpression : public AbstractExpression {
   ~CaseExpression() {
     for (auto clause : clauses)
       delete clause;
+    if (default_result != nullptr)
+      delete default_result;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
