@@ -107,8 +107,8 @@ class DataTable : public AbstractTable {
                           const Tuple *tuple);
 
   // delete the tuple at given location
-  bool DeleteTuple(const concurrency::Transaction *transaction,
-                   ItemPointer location);
+  // bool DeleteTuple(const concurrency::Transaction *transaction,
+  //                  ItemPointer location);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
