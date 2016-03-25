@@ -124,7 +124,7 @@ void LoadTable() {
       tuple.SetValue(col_itr, value, pool.get());
     }
 
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);

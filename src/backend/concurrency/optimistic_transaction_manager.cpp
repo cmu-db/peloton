@@ -256,8 +256,8 @@ void OptimisticTransactionManager::CommitTransaction() {
       // }
     }
   }
-  delete current_txn;
-  current_txn = nullptr;
+  // delete current_txn;
+  // current_txn = nullptr;
 }
 
 void OptimisticTransactionManager::AbortTransaction() {
@@ -306,8 +306,8 @@ void OptimisticTransactionManager::AbortTransaction() {
     }
   }
 
-  delete current_txn;
-  current_txn = nullptr;
+  // delete current_txn;
+  // current_txn = nullptr;
 }
 
 }  // End storage namespace

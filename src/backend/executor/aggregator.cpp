@@ -131,8 +131,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   LOG_TRACE("Tuple to Output :");
   LOG_TRACE("GROUP TUPLE :: %s", tuple->GetInfo().c_str());
 
-  auto location =
-      output_table->InsertTuple(econtext->GetTransaction(), tuple.get());
+  auto location = output_table->InsertTuple(tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
     return false;
