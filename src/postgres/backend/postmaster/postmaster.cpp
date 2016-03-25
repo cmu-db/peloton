@@ -3600,6 +3600,7 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
   // if we are memcached, directly launch memcached main
   if (is_memcached) {
     MemcachedMain(port);
+    return;
   }
   MemoryContextInit();
   // MemoryContextSwitchTo(TopMemoryContext);
@@ -3938,7 +3939,7 @@ static void BackendInitialize(Port *port) {
    * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
    * already did any appropriate error reporting.
    */
-  if (status != STATUS_OK) proc_exit(0);
+   if (status != STATUS_OK) proc_exit(0);
 
   /*
    * Now that we have the user and database name, we can set the process
