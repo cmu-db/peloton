@@ -84,43 +84,41 @@ class DataTable : public AbstractTable {
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema, std::string table_name, oid_t database_oid,
-            oid_t table_oid, size_t tuples_per_tilegroup, bool own_schema,
-            bool adapt_table);
+  DataTable(catalog::Schema *schema, const std::string &table_name, const oid_t &database_oid,
+            const oid_t &table_oid, const size_t &tuples_per_tilegroup, const bool own_schema,
+            const bool adapt_table);
 
   ~DataTable();
 
   //===--------------------------------------------------------------------===//
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
-
-  ItemPointer InsertVersion(const concurrency::Transaction *transaction,
-                            const Tuple *tuple, bool check_constraint = true);
+  // insert version in table
+  ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table
-  ItemPointer InsertTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple);
+  ItemPointer InsertTuple(const Tuple *tuple);
 
   // delete the tuple at given location
-  bool DeleteTuple(const concurrency::Transaction *transaction,
-                   ItemPointer location);
+  // bool DeleteTuple(const concurrency::Transaction *transaction,
+  //                  ItemPointer location);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
 
   // coerce into adding a new tile group with a tile group id
-  oid_t AddTileGroupWithOid(oid_t tile_group_id);
+  oid_t AddTileGroupWithOid(const oid_t &tile_group_id);
 
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
-      oid_t tile_group_offset) const;
+      const oid_t &tile_group_offset) const;
 
   // ID is the global identifier in the entire DBMS
   std::shared_ptr<storage::TileGroup> GetTileGroupById(
-      oid_t tile_group_id) const;
+      const oid_t &tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
@@ -133,11 +131,11 @@ class DataTable : public AbstractTable {
 
   void AddIndex(index::Index *index);
 
-  index::Index *GetIndexWithOid(const oid_t index_oid) const;
+  index::Index *GetIndexWithOid(const oid_t &index_oid) const;
 
-  void DropIndexWithOid(const oid_t index_oid);
+  void DropIndexWithOid(const oid_t &index_oid);
 
-  index::Index *GetIndex(const oid_t index_offset) const;
+  index::Index *GetIndex(const oid_t &index_offset) const;
 
   oid_t GetIndexCount() const;
 
@@ -147,9 +145,9 @@ class DataTable : public AbstractTable {
 
   void AddForeignKey(catalog::ForeignKey *key);
 
-  catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
+  catalog::ForeignKey *GetForeignKey(const oid_t &key_offset) const;
 
-  void DropForeignKey(const oid_t key_offset);
+  void DropForeignKey(const oid_t &key_offset);
 
   oid_t GetForeignKeyCount() const;
 
@@ -157,17 +155,17 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(oid_t tile_group_offset, double theta);
+  storage::TileGroup *TransformTileGroup(const oid_t &tile_group_offset, const double &theta);
 
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void IncreaseNumberOfTuplesBy(const float amount);
+  void IncreaseNumberOfTuplesBy(const float &amount);
 
-  void DecreaseNumberOfTuplesBy(const float amount);
+  void DecreaseNumberOfTuplesBy(const float &amount);
 
-  void SetNumberOfTuples(const float num_tuples);
+  void SetNumberOfTuples(const float &num_tuples);
 
   float GetNumberOfTuples() const;
 
@@ -195,8 +193,8 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  column_map_type GetStaticColumnMap(std::string table_name,
-                                     oid_t column_count);
+  column_map_type GetStaticColumnMap(const std::string &table_name,
+                                     const oid_t &column_count);
 
   std::map<oid_t, oid_t> GetColumnMapStats();
 
@@ -213,8 +211,7 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
-                           const storage::Tuple *tuple, bool check_constraint = true);
+  ItemPointer GetTupleSlot(const storage::Tuple *tuple, bool check_constraint = true);
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
@@ -227,8 +224,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // try to insert into the indices
-  bool InsertInIndexes(const concurrency::Transaction *transaction,
-                       const storage::Tuple *tuple, ItemPointer location);
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
   /** @return True if it's a same-key update and it's successful */
   bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location);
