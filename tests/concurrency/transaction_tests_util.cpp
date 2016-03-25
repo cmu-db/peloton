@@ -205,5 +205,36 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   EXPECT_TRUE(update_executor.Init());
   return update_executor.Execute();
 }
+
+bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
+                                       std::vector<int> &results,
+                                       storage::DataTable *table, int id) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(transaction));
+
+  // Predicate, WHERE `id`>=id1
+  auto tup_val_exp = new expression::TupleValueExpression(0, 0);
+  auto const_val_exp = new expression::ConstantValueExpression(
+      ValueFactory::GetIntegerValue(id));
+
+  auto predicate = new expression::ComparisonExpression<expression::CmpGte>(
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tup_val_exp, const_val_exp);
+
+  // Seq scan
+  std::vector<oid_t> column_ids = {0, 1};
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  EXPECT_TRUE(seq_scan_executor.Init());
+  if (seq_scan_executor.Execute() == false) return false;
+
+  std::unique_ptr<executor::LogicalTile> result_tile(
+      seq_scan_executor.GetOutput());
+
+  for (size_t i = 0; i < result_tile->GetTupleCount(); i++) {
+    results.push_back(result_tile->GetValue(i, 1).GetIntegerForTestsOnly());
+  }
+  return true;
+}
 }
 }
