@@ -9,4 +9,5 @@ check_PROGRAMS += \
 
 transaction_test_SOURCES = \
 						   concurrency/transaction_test.cpp \
+						   concurrency/transaction_tests_util.cpp \
 						   harness.cpp
