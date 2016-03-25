@@ -128,33 +128,58 @@ void DirtyWriteTest() {
       TransactionTestsUtil::CreateTable());
   TransactionSchedules schedules;
 
-  // 0 ms       T1 updates (0, ?) to (0, 1)
-  // 500 ms     T2 updates (0, ?) to (0, 2), and commits
-  // 1000 ms    T1 commits
-  // 1500 ms    T3 reads (0, ?) and commits
+  {
+    // 0 ms       T1 updates (0, ?) to (0, 1)
+    // 500 ms     T2 updates (0, ?) to (0, 2), and commits
+    // 1000 ms    T1 commits
 
-  TransactionSchedule schedule1;
-  TransactionSchedule schedule2;
-  TransactionSchedule schedule3;
-  schedule1.AddUpdate(0, 1, 0);
-  schedule2.AddUpdate(0, 2, 500);
-  schedule1.AddDoNothing(1000);
-  schedule3.AddRead(0, 1500);
+    TransactionSchedule schedule1;
+    TransactionSchedule schedule2;
+    schedule1.AddUpdate(0, 1, 0);
+    schedule2.AddUpdate(0, 2, 500);
+    schedule1.AddDoNothing(1000);
 
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  schedules.AddSchedule(&schedule3);
+    schedules.AddSchedule(&schedule1);
+    schedules.AddSchedule(&schedule2);
 
-  LaunchParallelTest(3, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
+    LaunchParallelTest(2, ThreadExecuteSchedule, &txn_manager, table.get(),
+                       &schedules);
 
-  // T1 and T2 can't both succeed
-  EXPECT_FALSE(schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_SUCCESS);
-  // T3 should succeed
-  EXPECT_EQ(RESULT_SUCCESS, schedule3.txn_result);
-  // For MVCC, actually one and only one T should succeed?
-  EXPECT_TRUE((schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_ABORTED) ||
+    // T1 and T2 can't both succeed
+    EXPECT_FALSE(schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_SUCCESS);
+    // For MVCC, actually one and only one T should succeed?
+    EXPECT_TRUE((schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_ABORTED) ||
                 (schedule1.txn_result == RESULT_ABORTED && schedule2.txn_result == RESULT_SUCCESS));
+    schedules.clear();
+  }
+
+  {
+    // 0 ms       T1 updates (0, ?) to (0, 1)
+    // 500 ms     T2 updates (0, ?) to (0, 2)
+    // 1000 ms    T1 commits
+    // 1500 ms    T2 commits
+
+    TransactionSchedule schedule1;
+    TransactionSchedule schedule2;
+    schedule1.AddUpdate(0, 1, 0);
+    schedule2.AddUpdate(0, 2, 500);
+    schedule1.AddDoNothing(1000);
+    schedule2.AddDoNothing(1500);
+
+    schedules.AddSchedule(&schedule1);
+    schedules.AddSchedule(&schedule2);
+
+    LaunchParallelTest(2, ThreadExecuteSchedule, &txn_manager, table.get(),
+                       &schedules);
+
+    // T1 and T2 can't both succeed
+    EXPECT_FALSE(schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_SUCCESS);
+    // For MVCC, actually one and only one T should succeed?
+    EXPECT_TRUE((schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_ABORTED) ||
+                (schedule1.txn_result == RESULT_ABORTED && schedule2.txn_result == RESULT_SUCCESS));
+    schedules.clear();
+  }
+
 }
 
 void DirtyReadTest() {
