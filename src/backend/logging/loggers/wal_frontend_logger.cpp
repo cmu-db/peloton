@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/wal_frontend_logger.cpp
+ * /peloton/src/backend/logging/loggers/wal_frontend_logger.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,12 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
+
+  // TODO check if checkpoint is enabled
+  if (false) {
+    this->checkpoint.DoRecovery();
+  }
+
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
   // TODO handle case where we may have to recover from multiple Log files!
