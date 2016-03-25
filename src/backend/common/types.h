@@ -30,7 +30,7 @@ enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
   // Based on write ahead logging
-  LOGGING_TYPE_DRAM_NVM = 10,
+  LOGGING_TYPE_DRAM_NVM = 1,
   LOGGING_TYPE_DRAM_SSD = 11,
   LOGGING_TYPE_DRAM_HDD = 12,
 
