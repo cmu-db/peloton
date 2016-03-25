@@ -37,7 +37,9 @@ class SimpleCheckpoint : public Checkpoint {
 
   // Inherited functions
   void Init();
+
   void DoCheckpoint();
+
   bool DoRecovery();
 
   // Internal functions
@@ -46,6 +48,7 @@ class SimpleCheckpoint : public Checkpoint {
   bool Execute(executor::AbstractExecutor *scan_executor,
                concurrency::Transaction *txn, storage::DataTable *target_table,
                oid_t database_oid);
+
   void CreateCheckpointFile();
 
   void Persist();

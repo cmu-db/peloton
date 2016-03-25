@@ -33,7 +33,7 @@
 #include "backend/common/types.h"
 
 // configuration for testing
-// extern int64_t peloton_checkpoint_interval;
+extern CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace logging {
@@ -71,8 +71,8 @@ SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
 }
 
 void SimpleCheckpoint::Init() {
-  // TODO check configuration
-  if (true) {
+
+  if (peloton_checkpoint_mode == CHECKPOINT_TYPE_NORMAL) {
     std::thread checkpoint_thread(&SimpleCheckpoint::DoCheckpoint, this);
     checkpoint_thread.detach();
   }
@@ -85,7 +85,6 @@ void SimpleCheckpoint::DoCheckpoint() {
   logger_ = log_manager.GetBackendLogger();
 
   while (true) {
-    sleep(checkpoint_interval_);
 
     // build executor context
     std::unique_ptr<concurrency::Transaction> txn(
@@ -141,7 +140,9 @@ void SimpleCheckpoint::DoCheckpoint() {
       CreateCheckpointFile();
       Persist();
     }
-  };
+
+    sleep(checkpoint_interval_);
+  }
 }
 
 bool SimpleCheckpoint::DoRecovery() {
@@ -227,7 +228,7 @@ void SimpleCheckpoint::InsertTuple() {
     // TODO: We need to abort on failure!
   } else {
     // txn->RecordInsert(target_location);
-    table->IncreaseNumberOfTuplesBy(1);
+    table->SetNumberOfTuples(table->GetNumberOfTuples() + 1);
   }
   delete tuple;
 }
