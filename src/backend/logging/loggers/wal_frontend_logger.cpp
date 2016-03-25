@@ -87,6 +87,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
 
   // abj1 adding code here!
   this->InitLogFilesList();
+  this->log_file_fd = -1;  // this is a restart or a new start
 }
 
 /**
@@ -107,18 +108,9 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   delete recovery_pool;
 }
 
-/**
- * @brief flush all the log records to the file
- */
-void WriteAheadFrontendLogger::FlushLogRecords(void) {
-  // First, write all the record in the queue
-  for (auto record : global_queue) {
-    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
-           log_file);
-  }
-  // LOG_INFO("log_file_fd is %d", log_file_fd);
-
-  // Then, flush
+void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
+  // First, flush
+  if (log_file_fd == -1) return;
   int ret = fflush(log_file);
   if (ret != 0) {
     LOG_ERROR("Error occured in fflush(%d)", ret);
@@ -130,6 +122,25 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   if (ret != 0) {
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
+}
+/**
+ * @brief flush all the log records to the file
+ */
+void WriteAheadFrontendLogger::FlushLogRecords(void) {
+  // First, write all the record in the queue
+  if (global_queue.size() != 0 && this->log_file_fd == -1) {
+    this->CreateNewLogFile(false);
+  }
+  for (auto record : global_queue) {
+    if (this->FileSwitchCondIsTrue()) {
+      fflush_and_sync(log_file, log_file_fd, fsync_count);
+      this->CreateNewLogFile(true);
+    }
+    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+           log_file);
+  }
+
+  fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
   for (auto record : global_queue) {
@@ -143,11 +154,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     for (auto backend_logger : backend_loggers) {
       backend_logger->Commit();
     }
-  }
-
-  // now decide whether we need to create a new log file!
-  if (FileSwitchCondIsTrue()) {
-    this->CreateNewLogFile(true);
   }
 }
 
@@ -164,6 +170,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
     this->checkpoint.DoRecovery();
   }
 
+  // TODO implement recovery from multiple log files
+  if (log_file_fd == -1) return;
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
   // TODO handle case where we may have to recover from multiple Log files!
@@ -799,8 +807,6 @@ int extract_number_from_filename(const char *name) {
   return 0;
 }
 void WriteAheadFrontendLogger::InitLogFilesList() {
-  // TODO: handle case where this may be just a database restart instead of
-  // fresh start
   struct dirent **list;
   int n;
 
@@ -832,8 +838,6 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   } else {
     this->log_file_counter_ = 0;
   }
-
-  this->CreateNewLogFile(false);
 }
 
 void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
@@ -881,9 +885,9 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
 }
 
 bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
-  // TODO have a good heuristic here
-  // return false;
   struct stat stat_buf;
+  if (this->log_file_fd == -1) return false;
+
   fstat(this->log_file_fd, &stat_buf);
   return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
 }
