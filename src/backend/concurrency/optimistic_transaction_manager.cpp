@@ -79,6 +79,17 @@ bool OptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
+bool OptimisticTransactionManager::IsOwner(const txn_id_t &tuple_txn_id) {
+  return tuple_txn_id == current_txn->GetTransactionId();
+}
+
+// if the tuple is not owned by any transaction and is visible to current transdaction.
+bool OptimisticTransactionManager::IsAccessable(const txn_id_t &tuple_txn_id,
+                                             const cid_t &tuple_begin_cid __attribute__((unused)),
+                                             const cid_t &tuple_end_cid) {
+    return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
+};
+
 bool OptimisticTransactionManager::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
@@ -312,10 +323,9 @@ Result OptimisticTransactionManager::AbortTransaction() {
     }
   }
 
-  Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
-  return ret;
+  return Result::RESULT_ABORTED;
 }
 
 }  // End storage namespace
