@@ -159,7 +159,10 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  */
 void WriteAheadFrontendLogger::DoRecovery() {
 
-  this->checkpoint.DoRecovery();
+  // TODO check if checkpoint is enabled
+  if (false) {
+    this->checkpoint.DoRecovery();
+  }
 
   // Set log file size
   log_file_size = GetLogFileSize(log_file_fd);
