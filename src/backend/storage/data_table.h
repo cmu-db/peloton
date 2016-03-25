@@ -96,14 +96,12 @@ class DataTable : public AbstractTable {
 
   // insert version in table
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
-  ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table
   ItemPointer InsertTuple(const Tuple *tuple);
 
 
   // insert version in table
-  ItemPointer InsertVersion(const concurrency::Transaction *transaction,
-                            const Tuple *tuple, bool check_constraint = true);
+  ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table
   ItemPointer InsertTuple(const concurrency::Transaction *transaction,
                           const Tuple *tuple);
@@ -221,8 +219,7 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
-                           const storage::Tuple *tuple, bool check_constraint = true);
+  ItemPointer GetTupleSlot(const storage::Tuple *tuple, bool check_constraint = true);
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();

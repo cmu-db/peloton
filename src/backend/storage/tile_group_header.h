@@ -88,7 +88,7 @@ class TileGroupHeader : public Printable {
   /**
    * Used by logging
    */
-  bool GetEmptyTupleSlot(oid_t tuple_slot_id) {
+  bool GetEmptyTupleSlot(const oid_t &tuple_slot_id) {
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
