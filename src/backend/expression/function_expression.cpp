@@ -275,6 +275,10 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
         ret = new UnaryFunctionExpression<FUNC_SINCE_EPOCH_MICROSECOND>(
             (*arguments)[0]);
         break;
+      case FUNC_TO_TIMESTAMP_DAY:
+        ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_DAY>(
+            (*arguments)[0]);
+        break;
       case FUNC_TO_TIMESTAMP_SECOND:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_SECOND>(
             (*arguments)[0]);

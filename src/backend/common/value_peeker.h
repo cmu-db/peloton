@@ -70,6 +70,11 @@ class ValuePeeker {
     return value.GetBigInt();
   }
 
+  static inline int32_t PeekDate(const Value &value) {
+    assert(value.GetValueType() == VALUE_TYPE_DATE);
+    return value.GetDate();
+  }
+
   static inline int64_t PeekTimestamp(const Value &value) {
     assert(value.GetValueType() == VALUE_TYPE_TIMESTAMP);
     return value.GetTimestamp();

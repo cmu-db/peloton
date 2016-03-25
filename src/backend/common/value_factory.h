@@ -42,6 +42,10 @@ class ValueFactory {
     return Value::GetBigIntValue(value);
   }
 
+  static inline Value GetDateValue(int64_t value) {
+    return Value::GetDateValue(value);
+  }
+
   static inline Value GetTimestampValue(int64_t value) {
     return Value::GetTimestampValue(value);
   }

@@ -613,6 +613,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
+    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP:
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 
