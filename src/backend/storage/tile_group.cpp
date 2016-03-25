@@ -247,6 +247,55 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
+/**
+ * Grab specific slot and fill in the tuple
+ * Used by checkpoint recovery
+ * Returns slot where inserted (INVALID_ID if not inserted)
+ */
+oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
+                             const Tuple *tuple) {
+  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
+
+  // No more slots
+  if (status == false) return INVALID_OID;
+
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+            tile_group_id, tuple_slot_id, num_tuple_slots);
+
+  oid_t tile_column_count;
+  oid_t column_itr = 0;
+
+  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+    const catalog::Schema &schema = tile_schemas[tile_itr];
+    tile_column_count = schema.GetColumnCount();
+
+    storage::Tile *tile = GetTile(tile_itr);
+    assert(tile);
+    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
+    assert(tile_tuple_location);
+
+    // NOTE:: Only a tuple wrapper
+    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+
+    for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
+         tile_column_itr++) {
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
+                          tile->GetPool());
+      column_itr++;
+    }
+  }
+
+  // Set MVCC info
+  tile_group_header->SetTransactionId(tuple_slot_id, INITIAL_TXN_ID);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, 0);
+  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+  tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+
+  return tuple_slot_id;
+}
+
 // delete tuple at given slot if it is neither already locked nor deleted in
 // future.
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,

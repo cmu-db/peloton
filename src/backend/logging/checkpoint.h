@@ -30,7 +30,7 @@ class Checkpoint {
   virtual ~Checkpoint(void) {}
   virtual void DoCheckpoint() = 0;
   virtual void Init() = 0;
-  virtual void DoRecovery() = 0;
+  virtual bool DoRecovery() = 0;
 
  protected:
   std::unique_ptr<VarlenPool> pool;
