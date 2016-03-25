@@ -57,7 +57,15 @@ class TransactionManager {
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetOwnerDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetOwnerUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   void SetTransactionResult(const Result result) { current_txn->SetResult(result); }
 
