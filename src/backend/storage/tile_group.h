@@ -84,6 +84,9 @@ class TileGroup : public Printable {
   oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
                     const Tuple *tuple);
 
+  oid_t InsertTupleFromCheckpoint(oid_t tuple_slot_id,
+                    const Tuple *tuple);
+
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
                    cid_t last_cid);
