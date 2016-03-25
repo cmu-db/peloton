@@ -149,7 +149,7 @@ void TileGroup::CopyTuple(txn_id_t transaction_id, const Tuple *tuple, oid_t tup
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
-oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
+oid_t TileGroup::InsertTuple(__attribute__((unused)) txn_id_t transaction_id, const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
@@ -184,16 +184,16 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
     }
   }
 
-  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
-
-  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
-  tile_group_header->SetInsertCommit(tuple_slot_id, false);
-  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+//  // Set MVCC info
+//  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+//  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+//  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+//
+//  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+//  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+//  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+//  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+//  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
 
   return tuple_slot_id;
 }
