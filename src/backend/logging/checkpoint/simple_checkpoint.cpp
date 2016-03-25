@@ -12,7 +12,6 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
-#include "backend/logging/log_manager.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
@@ -24,7 +23,6 @@
 #include "backend/storage/database.h"
 
 #include "backend/common/logger.h"
-
 #include "backend/common/types.h"
 
 // configuration for testing
@@ -52,25 +50,23 @@ void SimpleCheckpoint::Init() {
 
 void SimpleCheckpoint::DoCheckpoint() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &log_manager = LogManager::GetInstance();
+  logger_ = log_manager.GetBackendLogger();
 
   while (true) {
     sleep(checkpoint_interval_);
-    //======= construct  scan =============================================
+
     // build executor context
     std::unique_ptr<concurrency::Transaction> txn(
         txn_manager.BeginTransaction());
     assert(txn);
     assert(txn.get());
-
     LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
-    LOG_TRACE("Building the executor tree");
+
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext(
             txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
-
-    auto &log_manager = LogManager::GetInstance();
-
-    auto checkpoint_pool = executor_context->GetExecutorContextPool();
+    LOG_TRACE("Building the executor tree");
 
     auto &catalog_manager = catalog::Manager::GetInstance();
     auto database_count = catalog_manager.GetDatabaseCount();
@@ -83,9 +79,8 @@ void SimpleCheckpoint::DoCheckpoint() {
       auto database_oid = database->GetOid();
       for (oid_t table_idx = 0; table_idx < table_count && !failure;
            table_idx++) {
-        /* Grab the target table */
+        /* Get the target table */
         storage::DataTable *target_table = database->GetTable(table_idx);
-
         assert(target_table);
         LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
                  table_idx, target_table->GetName().c_str());
@@ -94,70 +89,19 @@ void SimpleCheckpoint::DoCheckpoint() {
         assert(schema);
         expression::AbstractExpression *predicate = nullptr;
         std::vector<oid_t> column_ids;
-        column_ids.resize(target_table->GetSchema()->GetColumnCount());
+        column_ids.resize(schema->GetColumnCount());
         std::iota(column_ids.begin(), column_ids.end(), 0);
 
         /* Construct the Peloton plan node */
+        LOG_TRACE("Initializing the executor tree");
         std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
             new planner::SeqScanPlan(target_table, predicate, column_ids));
-
-        std::unique_ptr<executor::AbstractExecutor> scan_executor(
+        std::unique_ptr<executor::SeqScanExecutor> scan_executor(
             new executor::SeqScanExecutor(scan_plan_node.get(),
                                           executor_context.get()));
-
-        LOG_TRACE("Initializing the executor tree");
-
-        // Initialize the seq scan executor
-        auto status = scan_executor->Init();
-
-        // Abort and cleanup
-        if (status == false) {
-          failure = true;
+        if (!Execute(scan_executor.get(), txn.get(), target_table,
+                     database_oid)) {
           break;
-        }
-        LOG_TRACE("Running the seq scan executor");
-        auto logger = log_manager.GetBackendLogger();
-
-        //======= execute  scan =============================================
-        // Execute seq scan until we get result tiles
-        for (;;) {
-          status = scan_executor->Execute();
-
-          // Stop
-          if (status == false) {
-            break;
-          }
-
-          std::unique_ptr<executor::LogicalTile> logical_tile(
-              scan_executor->GetOutput());
-          auto tile_group_id = logical_tile->GetColumnInfo(0)
-                                   .base_tile->GetTileGroup()
-                                   ->GetTileGroupId();
-
-          // Go over the logical tile
-          for (oid_t tuple_id : *logical_tile) {
-            expression::ContainerTuple<executor::LogicalTile> cur_tuple(
-                logical_tile.get(), tuple_id);
-            // Logging
-            {
-              // construct a physical tuple from the logical tuple
-              std::unique_ptr<storage::Tuple> tuple(
-                  new storage::Tuple(schema, true));
-              for (auto column_id : column_ids) {
-                tuple->SetValue(column_id, cur_tuple.GetValue(column_id),
-                                checkpoint_pool);
-              }
-              ItemPointer location(tile_group_id, tuple_id);
-              auto record = logger->GetTupleRecord(
-                  LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
-                  target_table->GetOid(), location, INVALID_ITEMPOINTER,
-                  tuple.get(), database_oid);
-              assert(record);
-              CopySerializeOutput output_buffer;
-              record->Serialize(output_buffer);
-              records_.push_back(record);
-            }
-          }
         }
       }
     }
@@ -170,6 +114,68 @@ void SimpleCheckpoint::DoCheckpoint() {
 }
 
 void SimpleCheckpoint::DoRecovery() {}
+
+bool SimpleCheckpoint::Execute(executor::SeqScanExecutor *scan_executor,
+                               concurrency::Transaction *txn,
+                               storage::DataTable *target_table,
+                               oid_t database_oid) {
+  // Prepare columns
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids;
+  column_ids.resize(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+
+  // Initialize the seq scan executor
+  auto status = scan_executor->Init();
+  // Abort and cleanup
+  if (status == false) {
+    return false;
+  }
+  LOG_TRACE("Running the seq scan executor");
+
+  // Execute seq scan until we get result tiles
+  for (;;) {
+    status = scan_executor->Execute();
+    // Stop
+    if (status == false) {
+      return true;
+    }
+
+    // Retrieve a logical tile
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        scan_executor->GetOutput());
+    auto tile_group_id = logical_tile->GetColumnInfo(0)
+                             .base_tile->GetTileGroup()
+                             ->GetTileGroupId();
+
+    // Go over the logical tile
+    for (oid_t tuple_id : *logical_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(
+          logical_tile.get(), tuple_id);
+
+      // Logging
+      {
+        // construct a physical tuple from the logical tuple
+        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+        for (auto column_id : column_ids) {
+          tuple->SetValue(column_id, cur_tuple.GetValue(column_id),
+                          this->pool.get());
+        }
+        ItemPointer location(tile_group_id, tuple_id);
+        assert(logger_);
+        auto record = logger_->GetTupleRecord(
+            LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
+            target_table->GetOid(), location, INVALID_ITEMPOINTER, tuple.get(),
+            database_oid);
+        assert(record);
+        CopySerializeOutput output_buffer;
+        record->Serialize(output_buffer);
+        records_.push_back(record);
+      }
+    }
+  }
+  return true;
+}
 
 void SimpleCheckpoint::CreateCheckpointFile() {
   // open checkpoint file and file descriptor
