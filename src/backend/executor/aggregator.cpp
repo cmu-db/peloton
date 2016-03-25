@@ -16,6 +16,7 @@
 #include "backend/executor/executor_context.h"
 #include "backend/common/logger.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -135,6 +136,8 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
     return false;
+  } else {
+    concurrency::TransactionManagerFactory::GetInstance().SetVisibilityForCurrentTxn(location.block, location.offset);
   }
 
   return true;
