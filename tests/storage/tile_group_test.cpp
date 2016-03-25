@@ -140,7 +140,7 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group, catalog::Sc
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   // txn_id_t txn_id = txn->GetTransactionId();
   // cid_t commit_id = txn->GetStartCommitId();
   auto pool = tile_group->GetTilePool(1);
@@ -389,7 +389,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
       tile_group_header, *schema, nullptr, tuple_count);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   // txn_id_t txn_id1 = txn->GetTransactionId();
   oid_t tuple_slot_id = INVALID_OID;
   auto pool = tile->GetPool();
