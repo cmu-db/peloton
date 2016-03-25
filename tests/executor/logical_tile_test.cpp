@@ -66,7 +66,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   // txn_id_t txn_id = txn->GetTransactionId();
 
   auto tuple_id1 = tile_group->InsertTuple(&tuple1);

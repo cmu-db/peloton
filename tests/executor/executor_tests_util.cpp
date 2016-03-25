@@ -228,7 +228,7 @@ void ExecutorTestsUtil::PopulateTiles(
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  // auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   // const txn_id_t txn_id = txn->GetTransactionId();
   // const cid_t commit_id = txn->GetStartCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
