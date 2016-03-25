@@ -180,13 +180,13 @@ bool IndexScanExecutor::ExecIndexLookup() {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
-          transaction_manager.RecordRead(tile_group_id, tuple_id);
+          transaction_manager.PerformRead(tile_group_id, tuple_id);
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
           auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tile_group_id].push_back(tuple_id);
-            transaction_manager.RecordRead(tile_group_id, tuple_id);
+            transaction_manager.PerformRead(tile_group_id, tuple_id);
           }
         }
         break;
