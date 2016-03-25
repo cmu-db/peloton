@@ -43,8 +43,8 @@ bool peloton_fsm;
 namespace peloton {
 namespace storage {
 
-bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-                          const concurrency::Transaction *transaction);
+// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
+//                           const concurrency::Transaction *transaction);
 
 DataTable::DataTable(catalog::Schema *schema, std::string table_name,
                      oid_t database_oid, oid_t table_oid,
@@ -88,29 +88,29 @@ DataTable::~DataTable() {
 /**
  * Check if the locations contains at least one visible entry to the transaction
  */
-bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-                          const concurrency::Transaction *transaction __attribute__((unused))) {
-  auto &manager = catalog::Manager::GetInstance();
+// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
+//                           const concurrency::Transaction *transaction __attribute__((unused))) {
+//   auto &manager = catalog::Manager::GetInstance();
 
-  for (auto loc : locations) {
-    oid_t tile_group_id = loc.block;
-    oid_t tuple_offset = loc.offset;
+//   for (auto loc : locations) {
+//     oid_t tile_group_id = loc.block;
+//     oid_t tuple_offset = loc.offset;
 
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto header = tile_group->GetHeader();
+//     auto tile_group = manager.GetTileGroup(tile_group_id);
+//     auto header = tile_group->GetHeader();
 
-    txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
-    cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
-    cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
+//     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
+//     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
+//     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     
-    bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
+//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
 
-    if (visible) return true;
-  }
+//     if (visible) return true;
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 //===--------------------------------------------------------------------===//
 // TUPLE HELPER OPERATIONS
@@ -187,33 +187,6 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_cons
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple __attribute__((unused))) {
-  // First, do integrity checks and claim a slot
-//  ItemPointer location = GetTupleSlot(transaction, tuple);
-//  if (location.block == INVALID_OID) {
-//    LOG_WARN("Failed to get tuple slot.");
-//    return INVALID_ITEMPOINTER;
-//  }
-//
-//  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
-//
-//  // Index checks and updates
-//  if (InsertInIndexes(transaction, tuple, location) == false) {
-//    LOG_WARN("Index constraint violated");
-//    return INVALID_ITEMPOINTER;
-//  }
-//
-//  // Increase the table's number of tuples by 1
-//  IncreaseNumberOfTuplesBy(1);
-//  // Increase the indexes' number of tuples by 1 as well
-//  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
-
-  return ItemPointer();
-}
-
-
-
 ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, bool check_constraint) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(tuple, check_constraint);
@@ -228,7 +201,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, bool check_con
   return location;
 }
 
-ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
+ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction __attribute__((unused)),
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(tuple);
@@ -240,7 +213,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   LOG_INFO("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
-  if (InsertInIndexes(transaction, tuple, location) == false) {
+  if (InsertInIndexes(tuple, location) == false) {
     LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
@@ -262,9 +235,8 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
-                                const storage::Tuple *tuple,
-                                ItemPointer location) {
+ // TODO: this function MUST be rewritten!!! --Yingjun
+bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   int index_count = GetIndexCount();
 
   // (A) Check existence for primary/unique indexes
@@ -279,12 +251,12 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        auto locations = index->ScanKey(key.get());
-        auto exist_visible = ContainsVisibleEntry(locations, transaction);
-        if (exist_visible) {
-          LOG_WARN("A visible index entry exists.");
-          return false;
-        }
+        //auto locations = index->ScanKey(key.get());
+        //auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        // if (exist_visible) {
+        //   LOG_WARN("A visible index entry exists.");
+        //   return false;
+        // }
       } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:

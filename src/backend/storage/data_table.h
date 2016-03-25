@@ -93,18 +93,10 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
-
-  // insert version in table
-  ItemPointer InsertEmptyVersion(const Tuple *tuple);
-  // insert tuple in table
-  ItemPointer InsertTuple(const Tuple *tuple);
-
-
   // insert version in table
   ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table
-  ItemPointer InsertTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple);
+  ItemPointer InsertTuple(const concurrency::Transaction *transaction, const Tuple *tuple);
 
   // delete the tuple at given location
   // bool DeleteTuple(const concurrency::Transaction *transaction,
@@ -232,8 +224,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // try to insert into the indices
-  bool InsertInIndexes(const concurrency::Transaction *transaction,
-                       const storage::Tuple *tuple, ItemPointer location);
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
   /** @return True if it's a same-key update and it's successful */
   bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location);
