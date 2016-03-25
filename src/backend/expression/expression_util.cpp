@@ -550,6 +550,9 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
     case (EXPRESSION_TYPE_EXTRACT):
       ret = new ExtractExpression(first, second);
       break;
+    case (EXPRESSION_TYPE_DATE_TO_TIMESTAMP):
+      ret = new DateToTimestampExpression(first);
+      break;
     case (EXPRESSION_TYPE_OPERATOR_CONCAT):
       throw ExpressionException("Concat operator not yet supported.");
 

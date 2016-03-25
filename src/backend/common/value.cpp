@@ -149,6 +149,8 @@ Value Value::CastAs(ValueType type) const {
       return CastAsInteger();
     case VALUE_TYPE_BIGINT:
       return CastAsBigInt();
+    case VALUE_TYPE_DATE:
+      return CastAsInteger();
     case VALUE_TYPE_TIMESTAMP:
       return CastAsTimestamp();
     case VALUE_TYPE_REAL:
@@ -260,9 +262,9 @@ char *Value::AllocateValueStorage(int32_t length, VarlenPool *varlen_pool) {
 }
 
 /**
- * Initialize an Value of the specified type from the tuple
- * storage area provided. If this is an Object type then the third
- * argument indicates whether the object is stored in the tuple inline.
+ * Initialize a Value of the specified type from the tuple storage area
+ * provided. If this is an Object type then the third argument indicates
+ * whether the object is stored in the tuple inline.
  */
 Value Value::InitFromTupleStorage(const void *storage, ValueType type,
                                   bool isInlined) {
@@ -362,6 +364,12 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       retval.SetCleanUp(false);
       break;
     }
+    case VALUE_TYPE_DATE:
+      if ((retval.GetDate() =
+               *reinterpret_cast<const int32_t *>(storage)) == INT32_NULL) {
+        retval.tagAsNull();
+      }
+      break;
     case VALUE_TYPE_TIMESTAMP:
       if ((retval.GetTimestamp() =
                *reinterpret_cast<const int64_t *>(storage)) == INT64_NULL) {
@@ -510,6 +518,7 @@ const std::string Value::GetInfo() const {
     case VALUE_TYPE_SMALLINT:
       buffer << GetSmallInt();
       break;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       buffer << GetInteger();
       break;
@@ -1079,42 +1088,33 @@ std::ostream &operator<<(std::ostream &os, const Value &value) {
 
 Value Value::GetMinValue(ValueType type) {
   switch (type) {
-    case (VALUE_TYPE_TINYINT):
+    case VALUE_TYPE_TINYINT:
       return GetTinyIntValue(PELOTON_INT8_MIN);
-      break;
-    case (VALUE_TYPE_SMALLINT):
+    case VALUE_TYPE_SMALLINT:
       return GetSmallIntValue(PELOTON_INT16_MIN);
-      break;
-    case (VALUE_TYPE_INTEGER):
+    case VALUE_TYPE_INTEGER:
       return GetIntegerValue(PELOTON_INT32_MIN);
-      break;
-      break;
-    case (VALUE_TYPE_BIGINT):
+    case VALUE_TYPE_BIGINT:
       return GetBigIntValue(PELOTON_INT64_MIN);
-      break;
     case VALUE_TYPE_REAL:
       return GetDoubleValue(-FLT_MAX);
-      break;
-    case (VALUE_TYPE_DOUBLE):
+    case VALUE_TYPE_DOUBLE:
       return GetDoubleValue(-DBL_MAX);
-      break;
-    case (VALUE_TYPE_VARCHAR):
+    case VALUE_TYPE_VARCHAR:
       return GetTempStringValue("\0", 1);
-      break;
-    case (VALUE_TYPE_TIMESTAMP):
+    case VALUE_TYPE_DATE:
+      return GetIntegerValue(PELOTON_INT32_MIN);
+    case VALUE_TYPE_TIMESTAMP:
       return GetTimestampValue(PELOTON_INT64_MIN);
-      break;
-    case (VALUE_TYPE_DECIMAL):
+    case VALUE_TYPE_DECIMAL:
       return GetDecimalValue(DECIMAL_MIN);
-      break;
-    case (VALUE_TYPE_BOOLEAN):
+    case VALUE_TYPE_BOOLEAN:
       return GetFalse();
-      break;
 
-    case (VALUE_TYPE_INVALID):
-    case (VALUE_TYPE_NULL):
-    case (VALUE_TYPE_ADDRESS):
-    case (VALUE_TYPE_VARBINARY):
+    case VALUE_TYPE_INVALID:
+    case VALUE_TYPE_NULL:
+    case VALUE_TYPE_ADDRESS:
+    case VALUE_TYPE_VARBINARY:
     default: {
       throw UnknownTypeException((int)type, "Can't get min value for type");
     }

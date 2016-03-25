@@ -158,6 +158,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_VARCHAR = 1015,
   POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
 
+  POSTGRES_VALUE_TYPE_DATE = 1082,
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
@@ -185,6 +186,7 @@ enum ValueType {
   VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
+  VALUE_TYPE_DATE = 10,       // 4 bytes int
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
   VALUE_TYPE_DECIMAL = 22,    // decimal(p,s)
   VALUE_TYPE_BOOLEAN =
@@ -335,6 +337,7 @@ enum ExpressionType {
   // Date operators
   // -----------------------------
   EXPRESSION_TYPE_EXTRACT = 600,
+  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
