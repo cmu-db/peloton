@@ -94,12 +94,37 @@ void DirtyWriteTest() {
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    // T1 updates (0, ?) to (0, 1)
-    // T2 updates (0, ?) to (0, 2)
-    // T1 commits
-    // T2 commits
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddUpdate(1, 0, 2);
+    // T0 delete (0, ?)
+    // T1 update (0, ?) to (0, 3)
+    // T0 commit
+    // T1 commit
+    scheduler.AddDelete(0, 0);
+    scheduler.AddUpdate(1, 0, 3);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+    auto &schedules = scheduler.schedules;
+
+    // T1 and T2 can't both succeed
+    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_SUCCESS);
+    // For MVCC, actually one and only one T should succeed?
+    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_ABORTED) ||
+                (schedules[0].txn_result == RESULT_ABORTED &&
+                 schedules[1].txn_result == RESULT_SUCCESS));
+    schedules.clear();
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    // T0 delete (1, ?)
+    // T1 delete (1, ?)
+    // T0 commit
+    // T1 commit
+    scheduler.AddDelete(0, 1);
+    scheduler.AddDelete(1, 1);
     scheduler.AddCommit(0);
     scheduler.AddCommit(1);
 
@@ -158,6 +183,24 @@ void DirtyReadTest() {
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
     EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
   }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+
+    // T0 delete (0, ?)
+    // T1 read (0, ?)
+    // T0 commit
+    // T1 commit
+    scheduler.AddDelete(0, 0);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+  }
 }
 
 void FuzzyReadTest() {
@@ -199,6 +242,22 @@ void FuzzyReadTest() {
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
   }
 
+  {
+    // T0 read 0
+    // T1 delete 0
+    // T0 commit
+    // T1 commit
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddDelete(1, 0);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+  }
 }
 
 void PhantomTest() {
@@ -232,29 +291,28 @@ void PhantomTest() {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    LaunchParallelTest(8, TransactionTest, &txn_manager);
+  LaunchParallelTest(8, TransactionTest, &txn_manager);
 
-    std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() <<
-    "\n";
+  std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
 }
 
 TEST_F(TransactionTests, AbortTest) {
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
 
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      scheduler.AddUpdate(0, 0, 100);
-      scheduler.AddRead(1, 0);
-      scheduler.AddAbort(0);
-      scheduler.AddCommit(1);
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.AddUpdate(0, 0, 100);
+  scheduler.AddRead(1, 0);
+  scheduler.AddAbort(0);
+  scheduler.AddCommit(1);
 
-      scheduler.Run();
+  scheduler.Run();
 
-      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+  EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
 }
 
 TEST_F(TransactionTests, SerializableTest) {
