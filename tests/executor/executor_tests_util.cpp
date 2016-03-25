@@ -115,7 +115,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  *
  * @return Pointer to tile group.
  */
-storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
+  std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
 
@@ -137,14 +137,13 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
+    std::shared_ptr<storage::TileGroup> tile_group_ptr(storage::TileGroupFactory::GetTileGroup(
       INVALID_OID, INVALID_OID,
       TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-      column_map, tuple_count);
+      column_map, tuple_count));
 
-  std::shared_ptr<storage::TileGroup> tile_group_ptr(tile_group);
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group_ptr);
-  return tile_group;
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(), tile_group_ptr);
+  return tile_group_ptr;
 }
 
 /**
@@ -229,8 +228,8 @@ void ExecutorTestsUtil::PopulateTiles(
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  auto txn = txn_manager.BeginTransaction();
-  const txn_id_t txn_id = txn->GetTransactionId();
+  txn_manager.BeginTransaction();
+  // const txn_id_t txn_id = txn->GetTransactionId();
   // const cid_t commit_id = txn->GetStartCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
@@ -246,7 +245,7 @@ void ExecutorTestsUtil::PopulateTiles(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
+    oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
 //    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
   }
