@@ -6,7 +6,8 @@ namespace peloton {
 namespace memcached {
 
 class QueryParser {
-
+    QueryParser();
+    ~QueryParser() {};
 };
 
 } // end memcached namespace
