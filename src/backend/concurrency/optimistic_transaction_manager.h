@@ -35,13 +35,13 @@ class OptimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id);
 

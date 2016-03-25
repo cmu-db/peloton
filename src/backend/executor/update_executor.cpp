@@ -169,7 +169,7 @@ bool UpdateExecutor::DExecute() {
 
       executor_context_->num_processed += 1;  // updated one
 
-      transaction_manager.RecordWrite(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformWrite(tile_group_id, physical_tuple_id);
 
       // Logging
       // {
