@@ -1,10 +1,13 @@
-##Makefile.am-- Process this file with automake to produce Makefile.in
+## Makefile.am -- Process this file with automake to produce Makefile.in
 
-    ######################################################################
-#COMMON
-    ######################################################################
+######################################################################
+# COMMON
+######################################################################
 
-    check_PROGRAMS += transaction_test
+check_PROGRAMS += \
+		transaction_test
 
-    transaction_test_SOURCES = concurrency / transaction_test.cpp concurrency /
-                               transaction_tests_util.cpp harness.cpp
+transaction_test_SOURCES = \
+						   concurrency/transaction_test.cpp \
+						   concurrency/transaction_tests_util.cpp \
+						   harness.cpp
