@@ -385,7 +385,7 @@ std::vector<ItemPointer> InsertTuples(
 
   for (auto tuple : tuples) {
     auto txn = txn_manager.BeginTransaction();
-    ItemPointer location = table->InsertTuple(txn, tuple);
+    ItemPointer location = table->InsertTuple(tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
       std::cout << "Insert failed \n";

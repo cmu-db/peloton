@@ -96,7 +96,7 @@ class DataTable : public AbstractTable {
   // insert version in table
   ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table
-  ItemPointer InsertTuple(const concurrency::Transaction *transaction, const Tuple *tuple);
+  ItemPointer InsertTuple(const Tuple *tuple);
 
   // delete the tuple at given location
   // bool DeleteTuple(const concurrency::Transaction *transaction,

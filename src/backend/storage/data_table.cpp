@@ -201,8 +201,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, bool check_con
   return location;
 }
 
-ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction __attribute__((unused)),
-                                   const storage::Tuple *tuple) {
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(tuple);
   if (location.block == INVALID_OID) {
