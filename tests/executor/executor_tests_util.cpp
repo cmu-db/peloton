@@ -142,6 +142,8 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
       TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
       column_map, tuple_count);
 
+  std::shared_ptr<storage::TileGroup> tile_group_ptr(tile_group);
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group_ptr);
   return tile_group;
 }
 
@@ -203,7 +205,8 @@ void ExecutorTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     ItemPointer tuple_slot_id = table->InsertTuple(transaction, &tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    transaction->RecordInsert(tuple_slot_id);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    txn_manager.RecordInsert(tuple_slot_id.block, tuple_slot_id.offset);
   }
 
 }
@@ -228,7 +231,7 @@ void ExecutorTestsUtil::PopulateTiles(
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
-  const cid_t commit_id = txn->GetStartCommitId();
+  // const cid_t commit_id = txn->GetStartCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
@@ -244,7 +247,8 @@ void ExecutorTestsUtil::PopulateTiles(
     tuple.SetValue(3, string_value, testing_pool);
 
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
-    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
+    txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
+//    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
   }
 
   txn_manager.CommitTransaction();
