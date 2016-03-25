@@ -74,13 +74,14 @@ class TileGroup : public Printable {
   //===--------------------------------------------------------------------===//
 
   // copy tuple in place.
-  void CopyTuple(txn_id_t transaction_id, const Tuple *tuple, oid_t tuple_slot_id);
+  void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);
 
   // insert tuple at next available slot in tile if a slot exists
   oid_t InsertTuple(const Tuple *tuple);
 
   // insert tuple at specific tuple slot
   // used by recovery mode
+  // TODO: logging team: remove the transaction_id parameter.
   oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
                     const Tuple *tuple);
 

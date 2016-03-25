@@ -43,6 +43,12 @@ class TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid) = 0;
 
+  virtual bool IsOwner(const txn_id_t &tuple_txn_id) = 0;
+
+  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid) = 0;
+
   virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
