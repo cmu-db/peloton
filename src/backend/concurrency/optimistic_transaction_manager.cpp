@@ -90,24 +90,23 @@ bool OptimisticTransactionManager::IsAccessable(const txn_id_t &tuple_txn_id,
     return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 };
 
-bool OptimisticTransactionManager::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool OptimisticTransactionManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
 }
 
-bool OptimisticTransactionManager::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool OptimisticTransactionManager::PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
   current_txn->RecordWrite(tile_group_id, tuple_id);
   return true;
 }
 
-
-bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool OptimisticTransactionManager::PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
   SetVisibilityForCurrentTxn(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
 
-bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool OptimisticTransactionManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
   current_txn->RecordDelete(tile_group_id, tuple_id);
   return true;
 }
