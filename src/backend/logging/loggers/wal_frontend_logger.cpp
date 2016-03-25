@@ -29,6 +29,7 @@
 #include "backend/storage/tuple.h"
 #include "backend/common/logger.h"
 
+#define LOG_FILE_SWITCH_LIMIT (1024 * 1024)
 namespace peloton {
 namespace logging {
 
@@ -145,7 +146,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   // now decide whether we need to create a new log file!
-  if (FileSwitchCondIsTrue(fsync_count)) {
+  if (FileSwitchCondIsTrue()) {
     this->CreateNewLogFile(true);
   }
 }
@@ -158,7 +159,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
-
   // TODO check if checkpoint is enabled
   if (false) {
     this->checkpoint.DoRecovery();
@@ -880,12 +880,12 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   LOG_INFO("log_file_counter is %d", log_file_counter_);
 }
 
-bool WriteAheadFrontendLogger::FileSwitchCondIsTrue(
-    __attribute__((unused)) int fsync_count) {
+bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
   // TODO have a good heuristic here
   // return false;
-
-  return (fsync_count % 10000) == 0;
+  struct stat stat_buf;
+  fstat(this->log_file_fd, &stat_buf);
+  return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
 }
 
 }  // namespace logging

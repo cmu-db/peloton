@@ -69,7 +69,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void CreateNewLogFile(bool);
 
-  bool FileSwitchCondIsTrue(int);
+  bool FileSwitchCondIsTrue();
 
  private:
   std::string GetLogFileName(void);
