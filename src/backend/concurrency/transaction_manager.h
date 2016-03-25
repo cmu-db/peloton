@@ -60,7 +60,7 @@ class TransactionManager {
     return txn;
   }
 
-  virtual void CommitTransaction() = 0;
+  virtual bool CommitTransaction() = 0;
 
   virtual void AbortTransaction() = 0;
 

@@ -114,7 +114,7 @@ bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, cons
   return true;
 }
 
-void OptimisticTransactionManager::CommitTransaction() {
+bool OptimisticTransactionManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -143,7 +143,7 @@ void OptimisticTransactionManager::CommitTransaction() {
       }
       // otherwise, validation fails. abort transaction.
       AbortTransaction();
-      return;
+      return false;
     }
   }
   //////////////////////////////////////////////////////////
@@ -253,6 +253,8 @@ void OptimisticTransactionManager::CommitTransaction() {
   }
   delete current_txn;
   current_txn = nullptr;
+
+  return true;
 }
 
 void OptimisticTransactionManager::AbortTransaction() {

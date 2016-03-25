@@ -29,7 +29,7 @@ class PessimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual void CommitTransaction();
+  virtual bool CommitTransaction();
 
   virtual void AbortTransaction();
 
