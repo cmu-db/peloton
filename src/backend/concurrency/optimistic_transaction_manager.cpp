@@ -90,6 +90,21 @@ bool OptimisticTransactionManager::RecordWrite(const oid_t &tile_group_id, const
 }
 
 bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_id, false);
+  tile_group_header->SetDeleteCommit(tuple_id, false);
+
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
