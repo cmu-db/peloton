@@ -85,7 +85,6 @@ bool DeleteExecutor::DExecute() {
   auto transaction = executor_context_->GetTransaction();
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-
   LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
            source_tile->GetTupleCount());
 
@@ -106,16 +105,18 @@ bool DeleteExecutor::DExecute() {
     if (transaction_manager.IsOwner(tuple_txn_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
+      transaction_manager.SetOwnerDeleteVisibility(tile_group_id, physical_tuple_id);
        // Set MVCC info
-      assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
-      assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
-      assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
+      // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
+      // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
+      // assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
 
-      tile_group_header->SetTransactionId(physical_tuple_id, tid);
-      tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
-      tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
-      tile_group_header->SetInsertCommit(physical_tuple_id, false);
-      tile_group_header->SetDeleteCommit(physical_tuple_id, false);
+      // tile_group_header->SetTransactionId(physical_tuple_id, tid);
+      // tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
+      // tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
+      
+      //tile_group_header->SetInsertCommit(physical_tuple_id, false);
+      //tile_group_header->SetDeleteCommit(physical_tuple_id, false);
 
       // TODO: Logging
       // {
@@ -163,13 +164,13 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-
+      transaction_manager.SetDeleteVisibility(location.block, location.offset);      
       tile_group_header->SetNextItemPointer(physical_tuple_id, location);
 
-      auto new_tile_group_header =
-          target_table_->GetTileGroupById(location.block)->GetHeader();
+      //auto new_tile_group_header =
+      //    target_table_->GetTileGroupById(location.block)->GetHeader();
 
-      new_tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
+      //new_tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
 
       executor_context_->num_processed += 1;  // deleted one
 
