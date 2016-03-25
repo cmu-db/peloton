@@ -94,12 +94,10 @@ TEST_F(CheckpointTests, BasicTest) {
   ExecutorTestsUtil::PopulateTable(txn, table.get(),
                                    tile_group_size * table_tile_group_count,
                                    false, false, false);
-
   txn_manager.CommitTransaction();
 
-  std::vector<std::unique_ptr<executor::LogicalTile>> table_logical_tile_ptrs;
-
   // Wrap the input tables with logical tiles
+  std::vector<std::unique_ptr<executor::LogicalTile>> table_logical_tile_ptrs;
   for (size_t table_tile_group_itr = 0;
        table_tile_group_itr < table_tile_group_count; table_tile_group_itr++) {
     std::unique_ptr<executor::LogicalTile> table_logical_tile(
@@ -122,7 +120,11 @@ TEST_F(CheckpointTests, BasicTest) {
   auto checkpoint_txn = txn_manager.BeginTransaction();
   simple_checkpoint.Execute(&table_scan_executor, checkpoint_txn, table.get(),
                             1);
-  EXPECT_EQ(simple_checkpoint.records_.size(), 16);
+  auto records = simple_checkpoint.records_;
+  EXPECT_EQ(records.size(),
+            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count + 1);
+  EXPECT_EQ(records[records.size() - 1]->GetType(),
+            LOGRECORD_TYPE_TRANSACTION_COMMIT);
 }
 
 }  // End test namespace
