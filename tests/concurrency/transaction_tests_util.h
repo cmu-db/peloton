@@ -124,8 +124,7 @@ class TransactionThread {
       while (!go) {
         std::chrono::milliseconds sleep_time(1);
         std::this_thread::sleep_for(sleep_time);
-      }
-        ;
+      };
       ExecuteNext();
       if (cur_seq == (int)schedule->operations.size()) {
         go = false;
@@ -146,8 +145,7 @@ class TransactionThread {
     int id = schedule->operations[cur_seq].id;
     int value = schedule->operations[cur_seq].value;
 
-    if (cur_seq == 0)
-      txn = txn_manager->BeginTransaction();
+    if (cur_seq == 0) txn = txn_manager->BeginTransaction();
 
     // Execute the operation
     switch (op) {

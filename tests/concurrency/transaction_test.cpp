@@ -95,25 +95,45 @@ void DirtyWriteTest() {
 }
 
 void DirtyReadTest() {
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
 
-    {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
 
-      // T1 updates (0, ?) to (0, 1)
-      // T2 reads (0, ?)
-      // T1 commit
-      // T2 commit
-      scheduler.AddUpdate(0, 0, 1);
-      scheduler.AddRead(1, 0);
-      scheduler.AddCommit(0);
-      scheduler.AddCommit(1);
+    // T1 updates (0, ?) to (0, 1)
+    // T2 reads (0, ?)
+    // T1 commit
+    // T2 commit
+    scheduler.AddUpdate(0, 0, 1);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
 
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
-    }
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+
+    // T1 updates (0, ?) to (0, 1)
+    // T2 reads (0, ?)
+    // T2 commit
+    // T1 commit
+    scheduler.AddUpdate(0, 0, 1);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(1);
+    scheduler.AddCommit(0);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+  }
 }
 
 void FuzzyReadTest() {
@@ -232,8 +252,8 @@ TEST_F(TransactionTests, AbortTest) {
 }
 
 TEST_F(TransactionTests, SerializableTest) {
-    DirtyWriteTest();
-  //  DirtyReadTest();
+  //    DirtyWriteTest();
+  DirtyReadTest();
   //  FuzzyReadTest();
   //  PhantomTes();
 }
