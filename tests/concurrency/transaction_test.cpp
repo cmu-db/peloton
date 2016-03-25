@@ -107,14 +107,14 @@ void ThreadExecuteSchedule(concurrency::TransactionManager *txn_manager,
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
-  for (oid_t txn_itr = 1; txn_itr <= 100; txn_itr++) {
+  for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
     txn_manager->BeginTransaction();
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
     }
 
-    if (txn_itr % 50 != 0) {
+    if (txn_itr % 25 != 0) {
       txn_manager->CommitTransaction();
     } else {
       txn_manager->AbortTransaction();
@@ -128,15 +128,17 @@ void DirtyWriteTest() {
       TransactionTestsUtil::CreateTable());
   TransactionSchedules schedules;
 
-  // Update (0, ?) to (0, 1) at 0 ms, commit at 1000 ms
+  // 0 ms       T1 updates (0, ?) to (0, 1)
+  // 500 ms     T2 updates (0, ?) to (0, 2), and commits
+  // 1000 ms    T1 commits
+  // 1500 ms    T3 reads (0, ?) and commits
+
   TransactionSchedule schedule1;
-  schedule1.AddUpdate(0, 1, 0);
-  schedule1.AddDoNothing(1000);
-  // Update (0, ?) to (0, 2) at 500 ms
   TransactionSchedule schedule2;
-  schedule2.AddUpdate(0, 2, 500);
-  // Read (0, ?) at 1500 ms, should read 1
   TransactionSchedule schedule3;
+  schedule1.AddUpdate(0, 1, 0);
+  schedule2.AddUpdate(0, 2, 500);
+  schedule1.AddDoNothing(1000);
   schedule3.AddRead(0, 1500);
 
   schedules.AddSchedule(&schedule1);
@@ -146,9 +148,13 @@ void DirtyWriteTest() {
   LaunchParallelTest(3, ThreadExecuteSchedule, &txn_manager, table.get(),
                      &schedules);
 
-  EXPECT_EQ(1, schedule3.results[0]);
-  // When to use RESULT_FAILURE, when RESULT_ABORTED
-  EXPECT_EQ(RESULT_ABORTED, schedule2.txn_result);
+  // T1 and T2 can't both succeed
+  EXPECT_FALSE(schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_SUCCESS);
+  // T3 should succeed
+  EXPECT_EQ(RESULT_SUCCESS, schedule3.txn_result);
+  // For MVCC, actually one and only one T should succeed?
+  EXPECT_TRUE((schedule1.txn_result == RESULT_SUCCESS && schedule2.txn_result == RESULT_ABORTED) ||
+                (schedule1.txn_result == RESULT_ABORTED && schedule2.txn_result == RESULT_SUCCESS));
 }
 
 void DirtyReadTest() {
@@ -158,6 +164,9 @@ void DirtyReadTest() {
 
   TransactionSchedules schedules;
 
+  // 0 ms         T1 updates (0, ?) to (0, 1)
+  // 500 ms       T2 reads (0, ?)
+  // 1000 ms      T1 commits
   // Insert (1, 1) at 500 ms, commit at 1500 ms
   TransactionSchedule schedule1;
   schedule1.AddInsert(10, 1, 500);
@@ -227,7 +236,7 @@ void PhantomTest() {
       TransactionTestsUtil::CreateTable());
 
   TransactionSchedules schedules;
-  // Begin Scan for id>=1 at 0 ms, Insert (5, 0) at 500 ms, Commit at 1000 ms,
+  // Begin Scan for id>=0 at 0 ms, Insert (5, 0) at 500 ms, Commit at 1000 ms,
   // should fail
   TransactionSchedule schedule1;
   schedule1.AddScan(0, 0);
@@ -240,16 +249,30 @@ void PhantomTest() {
   TransactionSchedule schedule4;
   schedule4.AddScan(0, 0);
 
+  // Begin scan for id>=0 at 1500 ms, Delete (5, 0) at 2000 ms, Commit at 2500 ms.
+  // Should have missing value.
+  TransactionSchedule schedule5;
+  TransactionSchedule schedule6;
+  schedule5.AddScan(0, 1500);
+  schedule6.AddDelete(5, 2000);
+  schedule5.AddDoNothing(2500);
+
   schedules.AddSchedule(&schedule1);
   schedules.AddSchedule(&schedule2);
   schedules.AddSchedule(&schedule3);
   schedules.AddSchedule(&schedule4);
+  schedules.AddSchedule(&schedule5);
+  schedules.AddSchedule(&schedule6);
 
-  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
+  LaunchParallelTest(6, ThreadExecuteSchedule, &txn_manager, table.get(),
                      &schedules);
 
   EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
-  EXPECT_EQ(RESULT_SUCCESS, schedule1.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule2.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule3.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule4.txn_result);
+  EXPECT_EQ(RESULT_ABORTED, schedule5.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule6.txn_result);
   EXPECT_EQ(11, schedule3.results.size());
   EXPECT_EQ(10, schedule4.results.size());
 }
@@ -279,13 +302,14 @@ TEST_F(TransactionTests, AbortTest) {
                      &schedules);
 
   EXPECT_EQ(schedule2.results[0], 0);
+
 }
 
 TEST_F(TransactionTests, SerializableTest) {
   DirtyWriteTest();
   DirtyReadTest();
   FuzzyReadTest();
-//  PhantomTest();
+//  PhantomTes();
 }
 
 }  // End test namespace
