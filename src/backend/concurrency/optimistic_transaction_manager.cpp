@@ -89,7 +89,19 @@ bool OptimisticTransactionManager::RecordWrite(const oid_t &tile_group_id, const
   return true;
 }
 
+
 bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  SetVisibilityForCurrentTxn(tile_group_id, tuple_id);
+  current_txn->RecordInsert(tile_group_id, tuple_id);
+  return true;
+}
+
+bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  current_txn->RecordDelete(tile_group_id, tuple_id);
+  return true;
+}
+
+void OptimisticTransactionManager::SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -104,14 +116,6 @@ bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, cons
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
   tile_group_header->SetInsertCommit(tuple_id, false);
   tile_group_header->SetDeleteCommit(tuple_id, false);
-
-  current_txn->RecordInsert(tile_group_id, tuple_id);
-  return true;
-}
-
-bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  current_txn->RecordDelete(tile_group_id, tuple_id);
-  return true;
 }
 
 Result OptimisticTransactionManager::CommitTransaction() {
