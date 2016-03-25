@@ -137,40 +137,44 @@ void DirtyReadTest() {
 }
 
 void FuzzyReadTest() {
-  //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  //  std::unique_ptr<storage::DataTable> table(
-  //      TransactionTestsUtil::CreateTable());
-  //
-  //  TransactionSchedules schedules;
-  //
-  //  // T1 Read at 0 ms, T2 update at 500 ms, T1 commit at 1000 ms, T1 should
-  //  fail
-  //  TransactionSchedule schedule1;
-  //  schedule1.AddRead(0, 0);
-  //  schedule1.AddDoNothing(1000);
-  //  TransactionSchedule schedule2;
-  //  schedule2.AddUpdate(0, 1, 500);
-  //
-  //  // T1 Read at 0 ms, T2 delete at 500 ms, T1 commit at 1000 ms, T1 should
-  //  fail
-  //  TransactionSchedule schedule3;
-  //  schedule3.AddRead(1, 0);
-  //  schedule3.AddDoNothing(1000);
-  //  TransactionSchedule schedule4;
-  //  schedule4.AddDelete(1, 500);
-  //
-  //  schedules.AddSchedule(&schedule1);
-  //  schedules.AddSchedule(&schedule2);
-  //  schedules.AddSchedule(&schedule3);
-  //  schedules.AddSchedule(&schedule4);
-  //
-  //  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
-  //                     &schedules);
-  //
-  //  EXPECT_EQ(RESULT_SUCCESS, schedule2.txn_result);
-  //  EXPECT_EQ(RESULT_SUCCESS, schedule4.txn_result);
-  //  EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
-  //  EXPECT_EQ(RESULT_ABORTED, schedule3.txn_result);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+
+  {
+    // T0 read 0
+    // T1 update (0, 0) to (0, 1)
+    // T1 commit
+    // T0 commit
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddUpdate(1, 0, 1);
+    scheduler.AddCommit(1);
+    scheduler.AddCommit(0);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+  }
+
+  {
+    // T0 read 0
+    // T1 update (0, 0) to (0, 1)
+    // T0 commit
+    // T1 commit
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddUpdate(1, 0, 1);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+  }
+
 }
 
 void PhantomTest() {
@@ -252,9 +256,9 @@ TEST_F(TransactionTests, AbortTest) {
 }
 
 TEST_F(TransactionTests, SerializableTest) {
-  //    DirtyWriteTest();
+  DirtyWriteTest();
   DirtyReadTest();
-  //  FuzzyReadTest();
+  FuzzyReadTest();
   //  PhantomTes();
 }
 
