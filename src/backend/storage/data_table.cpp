@@ -46,10 +46,10 @@ namespace storage {
 // bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
 //                           const concurrency::Transaction *transaction);
 
-DataTable::DataTable(catalog::Schema *schema, std::string table_name,
-                     oid_t database_oid, oid_t table_oid,
-                     size_t tuples_per_tilegroup, bool own_schema,
-                     bool adapt_table)
+DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
+                     const oid_t &database_oid, const oid_t &table_oid,
+                     const size_t &tuples_per_tilegroup, const bool own_schema,
+                     const bool adapt_table)
     : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
       tuples_per_tilegroup(tuples_per_tilegroup),
       adapt_table(adapt_table) {
@@ -329,7 +329,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
-void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
+void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
   number_of_tuples += amount;
   dirty = true;
 }
@@ -338,7 +338,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
  * @brief Decrease the number of tuples in this table
  * @param amount amount to decrease
  */
-void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
+void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
   number_of_tuples -= amount;
   dirty = true;
 }
@@ -347,7 +347,7 @@ void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
  * @brief Set the number of tuples in this table
  * @param num_tuples number of tuples
  */
-void DataTable::SetNumberOfTuples(const float num_tuples) {
+void DataTable::SetNumberOfTuples(const float &num_tuples) {
   number_of_tuples = num_tuples;
   dirty = true;
 }
@@ -490,7 +490,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id) {
+oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
   assert(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
@@ -541,14 +541,14 @@ size_t DataTable::GetTileGroupCount() const {
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
-    oid_t tile_group_offset) const {
+    const oid_t &tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
   auto tile_group_id = tile_groups[tile_group_offset];
   return GetTileGroupById(tile_group_id);
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
-    oid_t tile_group_id) const {
+    const oid_t &tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
   return manager.GetTileGroup(tile_group_id);
 }
@@ -601,14 +601,14 @@ void DataTable::AddIndex(index::Index *index) {
   }
 }
 
-index::Index *DataTable::GetIndexWithOid(const oid_t index_oid) const {
+index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
   for (auto index : indexes)
     if (index->GetOid() == index_oid) return index;
 
   return nullptr;
 }
 
-void DataTable::DropIndexWithOid(const oid_t index_id) {
+void DataTable::DropIndexWithOid(const oid_t &index_id) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -624,7 +624,7 @@ void DataTable::DropIndexWithOid(const oid_t index_id) {
   }
 }
 
-index::Index *DataTable::GetIndex(const oid_t index_offset) const {
+index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
   assert(index_offset < indexes.size());
   auto index = indexes.at(index_offset);
   return index;
@@ -652,13 +652,13 @@ void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   }
 }
 
-catalog::ForeignKey *DataTable::GetForeignKey(const oid_t key_offset) const {
+catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
   catalog::ForeignKey *key = nullptr;
   key = foreign_keys.at(key_offset);
   return key;
 }
 
-void DataTable::DropForeignKey(const oid_t key_offset) {
+void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
     assert(key_offset < foreign_keys.size());
@@ -743,8 +743,8 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   *new_header = *header;
 }
 
-storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_offset,
-                                                  double theta) {
+storage::TileGroup *DataTable::TransformTileGroup(const oid_t &tile_group_offset,
+                                                  const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
     LOG_ERROR("Tile group offset not found in table : %lu ",
@@ -844,8 +844,8 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type DataTable::GetStaticColumnMap(std::string table_name,
-                                              oid_t column_count) {
+column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
+                                              const oid_t &column_count) {
   column_map_type column_map;
 
   // HYADAPT
