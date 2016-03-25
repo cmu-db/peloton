@@ -151,7 +151,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(concurrency::Transaction *transaction,
+void ExecutorTestsUtil::PopulateTable(__attribute__((unused)) concurrency::Transaction *transaction,
                                       storage::DataTable *table, int num_rows,
                                       bool mutate, bool random, bool group_by) {
   // Random values
@@ -201,7 +201,7 @@ void ExecutorTestsUtil::PopulateTable(concurrency::Transaction *transaction,
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    ItemPointer tuple_slot_id = table->InsertTuple(transaction, &tuple);
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
