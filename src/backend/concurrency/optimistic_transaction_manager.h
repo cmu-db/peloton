@@ -37,9 +37,9 @@ class OptimisticTransactionManager : public TransactionManager {
 
   virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void CommitTransaction();
+  virtual Result CommitTransaction();
 
-  virtual void AbortTransaction();
+  virtual Result AbortTransaction();
 
 };
 }
