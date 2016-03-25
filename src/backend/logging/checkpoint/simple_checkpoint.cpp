@@ -10,8 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
+#include <dirent.h>
+#include <sys/stat.h>
+
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
+#include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/logging/records/tuple_record.h"
+#include "backend/logging/records/transaction_record.h"
+#include "backend/logging/log_record.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
@@ -30,11 +37,34 @@
 
 namespace peloton {
 namespace logging {
+//===--------------------------------------------------------------------===//
+// Utility functions
+//===--------------------------------------------------------------------===//
+
+size_t GetLogFileSize(int log_file_fd);
+
+bool IsFileTruncated(FILE *log_file, size_t size_to_read, size_t log_file_size);
+
+size_t GetNextFrameSize(FILE *log_file, size_t log_file_size);
+
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
+
+// bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE
+// *log_file,
+//                                 size_t log_file_size);
+
+bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
+                           size_t log_file_size);
+
+storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
+                                    FILE *log_file, size_t log_file_size);
+
+// Wrappers
+storage::DataTable *GetTable(TupleRecord tupleRecord);
 
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
-
 SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
   static SimpleCheckpoint simple_checkpoint;
   return simple_checkpoint;
@@ -49,6 +79,7 @@ void SimpleCheckpoint::Init() {
 }
 
 void SimpleCheckpoint::DoCheckpoint() {
+  sleep(checkpoint_interval_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &log_manager = LogManager::GetInstance();
   logger_ = log_manager.GetBackendLogger();
@@ -113,7 +144,93 @@ void SimpleCheckpoint::DoCheckpoint() {
   };
 }
 
-void SimpleCheckpoint::DoRecovery() {}
+bool SimpleCheckpoint::DoRecovery() {
+  // open log file and file descriptor
+  // we open it in read + binary mode
+  std::string file_name = "peloton_checkpoint.log";
+  checkpoint_file_ = fopen(file_name.c_str(), "rb");
+
+  if (checkpoint_file_ == NULL) {
+    LOG_ERROR("Checkpoint File is NULL");
+    return false;
+  }
+
+  // also, get the descriptor
+  checkpoint_file_fd_ = fileno(checkpoint_file_);
+  if (checkpoint_file_fd_ == INVALID_FILE_DESCRIPTOR) {
+    LOG_ERROR("checkpoint_file_fd_ is -1");
+    return false;
+  }
+
+  checkpoint_file_size_ = GetLogFileSize(checkpoint_file_fd_);
+  assert(checkpoint_file_size_ > 0);
+  while (true) {
+    auto record_type =
+        GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
+    if (record_type == LOGRECORD_TYPE_WAL_TUPLE_INSERT) {
+      InsertTuple();
+    } else if (record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+      break;
+    }
+  }
+
+  // After finishing recovery, set the next oid with maximum oid
+  // observed during the recovery
+  auto &manager = catalog::Manager::GetInstance();
+  manager.SetNextOid(max_oid_);
+
+  return true;
+}
+
+void SimpleCheckpoint::InsertTuple() {
+  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+
+  // Check for torn log write
+  if (ReadTupleRecordHeader(tuple_record, checkpoint_file_,
+                            checkpoint_file_size_) == false) {
+    LOG_ERROR("Could not read tuple record header.");
+    return;
+  }
+
+  auto table = GetTable(tuple_record);
+
+  // Read off the tuple record body from the log
+  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool.get(),
+                                   checkpoint_file_, checkpoint_file_size_);
+
+  // Check for torn log write
+  if (tuple == nullptr) {
+    return;
+  }
+
+  auto target_location = tuple_record.GetInsertLocation();
+  auto tile_group_id = target_location.block;
+  auto tuple_slot = target_location.offset;
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+
+  // Create new tile group if table doesn't already have that tile group
+  if (tile_group == nullptr) {
+    table->AddTileGroupWithOid(tile_group_id);
+    tile_group = manager.GetTileGroup(tile_group_id);
+    if (max_oid_ < tile_group_id) {
+      max_oid_ = tile_group_id;
+    }
+  }
+
+  // Do the insert!
+  auto inserted_tuple_slot =
+      tile_group->InsertTupleFromCheckpoint(tuple_slot, tuple);
+
+  if (inserted_tuple_slot == INVALID_OID) {
+    // TODO: We need to abort on failure!
+  } else {
+    // txn->RecordInsert(target_location);
+    table->IncreaseNumberOfTuplesBy(1);
+  }
+  delete tuple;
+}
 
 bool SimpleCheckpoint::Execute(executor::SeqScanExecutor *scan_executor,
                                concurrency::Transaction *txn,
@@ -138,7 +255,7 @@ bool SimpleCheckpoint::Execute(executor::SeqScanExecutor *scan_executor,
     status = scan_executor->Execute();
     // Stop
     if (status == false) {
-      return true;
+      break;
     }
 
     // Retrieve a logical tile
@@ -174,6 +291,10 @@ bool SimpleCheckpoint::Execute(executor::SeqScanExecutor *scan_executor,
       }
     }
   }
+  LogRecord *record = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+  CopySerializeOutput output_buffer;
+  record->Serialize(output_buffer);
+  records_.push_back(record);
   return true;
 }
 
@@ -182,7 +303,7 @@ void SimpleCheckpoint::CreateCheckpointFile() {
   // we open it in append + binary mode
 
   // TODO multiple versions of checkpoint
-  std::string file_name = "checkpoint.log";
+  std::string file_name = "peloton_checkpoint.log";
   checkpoint_file_ = fopen(file_name.c_str(), "ab+");
   if (checkpoint_file_ == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
