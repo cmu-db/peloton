@@ -141,7 +141,7 @@ bool UpdateExecutor::DExecute() {
       
       if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false){
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
-        transaction->SetResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
 
@@ -156,19 +156,20 @@ bool UpdateExecutor::DExecute() {
 
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(new_tuple);
-      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
 
       if (location.block == INVALID_OID) {
         delete new_tuple;
         new_tuple = nullptr;
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
-        transaction->SetResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
 
+      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
+
       executor_context_->num_processed += 1;  // updated one
 
-      transaction->RecordWrite(tile_group_id, physical_tuple_id);
+      transaction_manager.RecordWrite(tile_group_id, physical_tuple_id);
 
       // Logging
       // {
@@ -188,7 +189,7 @@ bool UpdateExecutor::DExecute() {
     } else{
       // transaction should be aborted as we cannot update the latest version.
       LOG_INFO("Fail to update tuple. Set txn failure.");
-      transaction->SetResult(Result::RESULT_FAILURE);
+      transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     }
   }
