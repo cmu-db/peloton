@@ -89,24 +89,6 @@ class TileGroup : public Printable {
                    cid_t last_cid);
 
   //===--------------------------------------------------------------------===//
-  // Transaction Processing
-  //===--------------------------------------------------------------------===//
-
-  // commit the inserted tuple
-  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id,
-                           txn_id_t transaction_id);
-
-  // commit the deleted tuple
-  void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
-                          cid_t commit_id);
-
-  // abort the inserted tuple
-  void AbortInsertedTuple(oid_t tuple_slot_id);
-
-  // abort the deleted tuple
-  void AbortDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id);
-
-  //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 

@@ -94,6 +94,14 @@ class DataTable : public AbstractTable {
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
 
+  // insert version in table
+  ItemPointer InsertEmptyVersion(const Tuple *tuple);
+  ItemPointer InsertVersion(const Tuple *tuple, bool check_constraint = true);
+  // insert tuple in table
+  ItemPointer InsertTuple(const Tuple *tuple);
+
+
+  // insert version in table
   ItemPointer InsertVersion(const concurrency::Transaction *transaction,
                             const Tuple *tuple, bool check_constraint = true);
   // insert tuple in table

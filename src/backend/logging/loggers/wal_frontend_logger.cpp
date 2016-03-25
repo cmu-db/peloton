@@ -364,9 +364,9 @@ void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
 
-    for (auto tuple_slot : entry.second) {
-      tile_group.get()->AbortInsertedTuple(tuple_slot);
-    }
+    // for (auto tuple_slot : entry.second) {
+    //   tile_group.get()->AbortInsertedTuple(tuple_slot);
+    // }
   }
 
   // Record the aborted deletes in recovery txn
@@ -375,9 +375,9 @@ void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
 
-    for (auto tuple_slot : entry.second) {
-      tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
-    }
+    // for (auto tuple_slot : entry.second) {
+    //   tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
+    // }
   }
 
   // Clear inserted/deleted tuples from txn, just in case
