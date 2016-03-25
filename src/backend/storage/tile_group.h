@@ -85,8 +85,8 @@ class TileGroup : public Printable {
                     const Tuple *tuple);
 
   // delete tuple at given slot if it is not already locked
-  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
-                   cid_t last_cid);
+  // bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+  //                  cid_t last_cid);
 
   //===--------------------------------------------------------------------===//
   // Utilities

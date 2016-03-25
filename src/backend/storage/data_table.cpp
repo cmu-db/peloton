@@ -324,30 +324,30 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
  * NB: location.block should be the tile_group's \b ID, not \b offset.
  * @return True on success, false on failure.
  */
-bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
-                            ItemPointer location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+// bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
+//                             ItemPointer location) {
+//   oid_t tile_group_id = location.block;
+//   oid_t tuple_id = location.offset;
 
-  auto tile_group = GetTileGroupById(tile_group_id);
-  txn_id_t transaction_id = transaction->GetTransactionId();
-  cid_t last_cid = transaction->GetStartCommitId();
+//   auto tile_group = GetTileGroupById(tile_group_id);
+//   txn_id_t transaction_id = transaction->GetTransactionId();
+//   cid_t last_cid = transaction->GetStartCommitId();
 
-  // Delete slot in underlying tile group
-  auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
-  if (status == false) {
-    LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
-             tile_group_id, transaction_id);
-    return false;
-  }
+//   // Delete slot in underlying tile group
+//   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
+//   if (status == false) {
+//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
+//              tile_group_id, transaction_id);
+//     return false;
+//   }
 
-  LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
-            location.offset);
-  // Decrease the table's number of tuples by 1
-  DecreaseNumberOfTuplesBy(1);
+//   LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
+//             location.offset);
+//   // Decrease the table's number of tuples by 1
+//   DecreaseNumberOfTuplesBy(1);
 
-  return true;
-}
+//   return true;
+// }
 
 //===--------------------------------------------------------------------===//
 // STATS
