@@ -12,6 +12,7 @@
 
 #include <utility>
 #include <vector>
+#include <backend/concurrency/transaction_manager_factory.h>
 
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
@@ -153,7 +154,9 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(transaction, tuple.get());
+      auto location = output_table->InsertTuple(tuple.get());
+      assert(location.block != INVALID_OID);
+      concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(location.block, location.offset);
     } else {
       done = true;
       return false;

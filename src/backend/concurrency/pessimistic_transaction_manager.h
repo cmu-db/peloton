@@ -29,9 +29,25 @@ class PessimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual void CommitTransaction();
+  virtual bool IsOwner(const txn_id_t &tuple_txn_id);
 
-  virtual void AbortTransaction();
+  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid);
+
+  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual Result CommitTransaction();
+
+  virtual Result AbortTransaction();
 
 };
 }

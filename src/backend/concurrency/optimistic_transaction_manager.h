@@ -29,17 +29,33 @@ class OptimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool IsOwner(const txn_id_t &tuple_txn_id);
 
-  virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid);
 
-  virtual bool RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void CommitTransaction();
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void AbortTransaction();
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetOwnerDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetOwnerUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual Result CommitTransaction();
+
+  virtual Result AbortTransaction();
 
 };
 }
