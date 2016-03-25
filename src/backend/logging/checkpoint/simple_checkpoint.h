@@ -38,15 +38,19 @@ class SimpleCheckpoint : public Checkpoint {
   // Inherited functions
   void Init();
   void DoCheckpoint();
-  void DoRecovery();
+  bool DoRecovery();
 
   // Internal functions
+  void InsertTuple();
 
-  bool Execute(executor::SeqScanExecutor *scan_executor,
+  bool Execute(executor::AbstractExecutor *scan_executor,
                concurrency::Transaction *txn, storage::DataTable *target_table,
                oid_t database_oid);
   void CreateCheckpointFile();
+
   void Persist();
+
+  void SetLogger(BackendLogger *logger);
 
  private:
   std::vector<LogRecord *> records_;
@@ -55,10 +59,17 @@ class SimpleCheckpoint : public Checkpoint {
 
   int checkpoint_file_fd_ = INVALID_FILE_DESCRIPTOR;
 
-  // Default checkpoint interval is 20 seconds
-  int64_t checkpoint_interval_ = 20;
+  // Size of the checkpoint file
+  size_t checkpoint_file_size_ = 0;
+
+  // Default checkpoint interval
+  int64_t checkpoint_interval_ = 10;
 
   BackendLogger *logger_ = nullptr;
+
+  // Keep tracking max oid for setting next_oid in manager
+  // For active processing after recovery
+  oid_t max_oid_ = 0;
 };
 
 }  // namespace logging

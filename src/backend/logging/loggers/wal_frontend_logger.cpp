@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/wal_frontend_logger.cpp
+ * /peloton/src/backend/logging/loggers/wal_frontend_logger.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "backend/storage/tuple.h"
 #include "backend/common/logger.h"
 
+#define LOG_FILE_SWITCH_LIMIT (1024 * 1024)
 namespace peloton {
 namespace logging {
 
@@ -86,6 +87,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
 
   // abj1 adding code here!
   this->InitLogFilesList();
+  this->log_file_fd = -1;  // this is a restart or a new start
 }
 
 /**
@@ -106,18 +108,9 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   delete recovery_pool;
 }
 
-/**
- * @brief flush all the log records to the file
- */
-void WriteAheadFrontendLogger::FlushLogRecords(void) {
-  // First, write all the record in the queue
-  for (auto record : global_queue) {
-    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
-           log_file);
-  }
-  // LOG_INFO("log_file_fd is %d", log_file_fd);
-
-  // Then, flush
+void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
+  // First, flush
+  if (log_file_fd == -1) return;
   int ret = fflush(log_file);
   if (ret != 0) {
     LOG_ERROR("Error occured in fflush(%d)", ret);
@@ -129,6 +122,25 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   if (ret != 0) {
     LOG_ERROR("Error occured in fsync(%d)", ret);
   }
+}
+/**
+ * @brief flush all the log records to the file
+ */
+void WriteAheadFrontendLogger::FlushLogRecords(void) {
+  // First, write all the record in the queue
+  if (global_queue.size() != 0 && this->log_file_fd == -1) {
+    this->CreateNewLogFile(false);
+  }
+  for (auto record : global_queue) {
+    if (this->FileSwitchCondIsTrue()) {
+      fflush_and_sync(log_file, log_file_fd, fsync_count);
+      this->CreateNewLogFile(true);
+    }
+    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+           log_file);
+  }
+
+  fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
   for (auto record : global_queue) {
@@ -143,11 +155,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       backend_logger->Commit();
     }
   }
-
-  // now decide whether we need to create a new log file!
-  if (FileSwitchCondIsTrue(fsync_count)) {
-    this->CreateNewLogFile(true);
-  }
 }
 
 //===--------------------------------------------------------------------===//
@@ -158,9 +165,19 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
+  // TODO check if checkpoint is enabled
+  if (false) {
+    this->checkpoint.DoRecovery();
+  }
+
+  log_file_cursor_ = 0;
+  // TODO implement recovery from multiple log files
+  if (log_file_fd == -1) return;
+
   // Set log file size
-  log_file_size = GetLogFileSize(log_file_fd);
+  // log_file_size = GetLogFileSize(log_file_fd);
   // TODO handle case where we may have to recover from multiple Log files!
+  this->OpenNextLogFile();
 
   // Go over the log size if needed
   if (log_file_size > 0) {
@@ -667,6 +684,22 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   // Otherwise, read the log record type
   int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
   if (ret <= 0) {
+    /* TODO uncomment and fix
+       OpenNextLogFile();
+       if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
+
+       if (IsFileTruncated(log_file, 1, log_file_size)) {
+       LOG_ERROR("Log file is truncated");
+       return LOGRECORD_TYPE_INVALID;
+       }
+       ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+       if (ret <= 0)
+       {
+       LOG_ERROR("Could not read from log file");
+       return LOGRECORD_TYPE_INVALID;
+       }
+    */
+
     LOG_ERROR("Could not read from log file");
     return LOGRECORD_TYPE_INVALID;
   }
@@ -782,28 +815,48 @@ std::string WriteAheadFrontendLogger::GetLogFileName(void) {
   return log_manager.GetLogFileName();
 }
 
+int extract_number_from_filename(const char *name) {
+  std::string str(name);
+  size_t start_index = str.find_first_of("0123456789");
+  if (start_index != std::string::npos) {
+    int end_index = str.find_first_not_of("0123456789", start_index);
+    return atoi(str.substr(start_index, end_index - start_index).c_str());
+  }
+  LOG_ERROR("The last found log file doesn't have a version number.");
+  return 0;
+}
 void WriteAheadFrontendLogger::InitLogFilesList() {
-  // TODO: handle case where this may be just a database restart instead of
-  // fresh start
-  DIR *dirp;
-  struct dirent *file;
+  struct dirent **list;
+  int n;
+
+  // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
 
   LOG_INFO("Trying to read log directory");
 
-  dirp = opendir(".");
-  if (dirp == nullptr) LOG_INFO("Opendir failed: %s", "hello world");
-  // TODO use this data to populate in memory data structures
-  while ((file = readdir(dirp)) != NULL) {
-    if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
-      // found a log file!
-      LOG_INFO("Found a log file with name %s", file->d_name);
-      // populate data structure here
+  n = scandir(".", &list, 0, alphasort);
+  if (n < 0) {
+    LOG_INFO("Scandir failed: Errno: %d, error: %s", errno, strerror(errno));
+  }
+  for (int i = 0; i < n; i++) {
+    if (strncmp(list[i]->d_name, base_name.c_str(), base_name.length()) == 0) {
+      LOG_INFO("Found a log file with name %s", list[i]->d_name);
+      LogFile *new_log_file = new LogFile(NULL, list[i]->d_name, -1);
+      this->log_files_.push_back(new_log_file);
     }
   }
 
-  this->log_file_counter_ = 0;
-  this->CreateNewLogFile(false);
+  int num_log_files;
+  num_log_files = this->log_files_.size();
+
+  if (num_log_files) {
+    int max_num = extract_number_from_filename(
+        this->log_files_[num_log_files - 1]->log_file_name_.c_str());
+    LOG_INFO("Got maximum log file version as %d", max_num);
+    this->log_file_counter_ = ++max_num;
+  } else {
+    this->log_file_counter_ = 0;
+  }
 }
 
 void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
@@ -850,12 +903,46 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   LOG_INFO("log_file_counter is %d", log_file_counter_);
 }
 
-bool WriteAheadFrontendLogger::FileSwitchCondIsTrue(
-    __attribute__((unused)) int fsync_count) {
-  // TODO have a good heuristic here
-  // return false;
+bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
+  struct stat stat_buf;
+  if (this->log_file_fd == -1) return false;
 
-  return (fsync_count % 10000) == 0;
+  fstat(this->log_file_fd, &stat_buf);
+  return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
+}
+
+void WriteAheadFrontendLogger::OpenNextLogFile() {
+  if (this->log_files_.size() == 0) {  // no log files, fresh start
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+  }
+
+  if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+  }
+
+  if (this->log_file_cursor_ != 0)  // close old file
+    fclose(log_file);
+
+  // open the next file
+  this->log_file = fopen(
+      this->log_files_[this->log_file_cursor_]->log_file_name_.c_str(), "rb");
+
+  if (this->log_file == NULL) {
+    LOG_ERROR("Couldn't open next log file");
+  }
+
+  this->log_file_fd = fileno(this->log_file);
+
+  struct stat stat_buf;
+
+  fstat(this->log_file_fd, &stat_buf);
+  this->log_file_size = stat_buf.st_size;
+
+  this->log_file_cursor_++;
 }
 
 }  // namespace logging

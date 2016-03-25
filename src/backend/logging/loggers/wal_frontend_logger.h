@@ -69,7 +69,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void CreateNewLogFile(bool);
 
-  bool FileSwitchCondIsTrue(int);
+  bool FileSwitchCondIsTrue();
+
+  void OpenNextLogFile();
 
  private:
   std::string GetLogFileName(void);
@@ -99,6 +101,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   std::vector<LogFile *> log_files_;
 
   int log_file_counter_;
+
+  int log_file_cursor_;
 };
 
 }  // namespace logging
