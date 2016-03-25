@@ -13,6 +13,7 @@
 #include "optimistic_transaction_manager.h"
 
 #include "backend/common/platform.h"
+#include "backend/logging/log_record.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
@@ -20,6 +21,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 
@@ -134,6 +136,12 @@ void OptimisticTransactionManager::CommitTransaction() {
   //////////////////////////////////////////////////////////
 
   auto written_tuples = current_txn->GetWrittenTuples();
+  auto &log_manager = logging::LogManager::GetInstance();
+  if (log_manager.IsInLoggingMode()) {
+	   auto logger = log_manager.GetBackendLogger();
+	   auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, end_commit_id);
+	   logger->Log(record);
+	 }
   // install all updates.
   for (auto entry : written_tuples) {
     oid_t tile_group_id = entry.first;
@@ -158,18 +166,17 @@ void OptimisticTransactionManager::CommitTransaction() {
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
 
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-      //       target_table_->GetOid(), location, old_location, new_tuple);
-
-      //     logger->Log(record);
-      //   }
-      // }
+		 if (log_manager.IsInLoggingMode()) {
+		   auto logger = log_manager.GetBackendLogger();
+		   ItemPointer old_version(tile_group_id, tuple_slot);
+		   auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
+		   // TODO assumes in row store for now
+		   auto new_tuple = new_tuple_tile_group->GetTile(0)->GetTupleLocation(new_version.offset);
+		   auto record = logger->GetTupleRecord(
+			 LOGRECORD_TYPE_TUPLE_UPDATE, end_commit_id,
+			 tile_group->GetTableId(), new_version, old_version, new_tuple);
+		   logger->Log(record);
+		 }
     }
   }
 
@@ -181,19 +188,18 @@ void OptimisticTransactionManager::CommitTransaction() {
     for (auto tuple_slot : entry.second) {
       tile_group->CommitInsertedTuple(
           tuple_slot, current_txn->GetTransactionId(), end_commit_id);
+      if (log_manager.IsInLoggingMode()) {
+       auto logger = log_manager.GetBackendLogger();
+	   auto new_tuple_tile_group = manager.GetTileGroup(tile_group_id);
+	   // TODO assumes in row store for now
+	   ItemPointer new_version(tile_group_id, tuple_slot);
+	   auto new_tuple = new_tuple_tile_group->GetTile(0)->GetTupleLocation(tuple_slot);
+	   auto record = logger->GetTupleRecord(
+		 LOGRECORD_TYPE_TUPLE_INSERT, end_commit_id,
+		 tile_group->GetTableId(), new_version, INVALID_ITEMPOINTER, new_tuple);
+	     logger->Log(record);
+	 }
     }
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-      //       target_table_->GetOid(), location, old_location, new_tuple);
-
-      //     logger->Log(record);
-      //   }
-      // }
   }
 
   // commit delete set.
@@ -222,20 +228,21 @@ void OptimisticTransactionManager::CommitTransaction() {
       tile_group_header->UnlockTupleSlot(
           tuple_slot, current_txn->GetTransactionId());
 
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-      //       target_table_->GetOid(), location, old_location, new_tuple);
-
-      //     logger->Log(record);
-      //   }
-      // }
+      if (log_manager.IsInLoggingMode()) {
+             auto logger = log_manager.GetBackendLogger();
+           ItemPointer removed(tile_group_id, tuple_slot);
+      	   auto record = logger->GetTupleRecord(
+      		 LOGRECORD_TYPE_TUPLE_DELETE, end_commit_id,
+			 tile_group->GetTableId(), INVALID_ITEMPOINTER, removed);
+      	     logger->Log(record);
+      	 }
     }
   }
+  if (log_manager.IsInLoggingMode()) {
+  	   auto logger = log_manager.GetBackendLogger();
+  	   auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, end_commit_id);
+  	   logger->Log(record);
+  	 }
   delete current_txn;
   current_txn = nullptr;
 }
