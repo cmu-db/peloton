@@ -153,7 +153,7 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(transaction, tuple.get());
+      output_table->InsertTuple(tuple.get());
     } else {
       done = true;
       return false;

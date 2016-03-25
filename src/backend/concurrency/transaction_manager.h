@@ -60,9 +60,9 @@ class TransactionManager {
     return txn;
   }
 
-  virtual bool CommitTransaction() = 0;
+  virtual Result CommitTransaction() = 0;
 
-  virtual void AbortTransaction() = 0;
+  virtual Result AbortTransaction() = 0;
 
   void ResetStates() {
     next_txn_id_ = START_TXN_ID;
