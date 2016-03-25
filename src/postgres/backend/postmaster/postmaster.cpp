@@ -395,7 +395,7 @@ static void LogChildExit(int lev, const char *procname, int pid,
                          int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-static void BackendRun(Port *port, bool is_memcached) pg_attribute_noreturn();
+static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status);
 static int ServerLoop(void);
 static int BackendStartup(Port *port, bool is_memcached);
@@ -3597,6 +3597,10 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
 
   IsBackend = true;
 
+  // if we are memcached, directly launch memcached main
+  if (is_memcached) {
+    MemcachedMain(port);
+  }
   MemoryContextInit();
   // MemoryContextSwitchTo(TopMemoryContext);
   restore_backend_variables(param, port);
@@ -3638,17 +3642,22 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
   elog(DEBUG3, "SMem and Semaphores created :: TID : %d", thread_id);
 
   /* And run the backend */
-  BackendRun(port, is_memcached);
+  BackendRun(port);
 }
 
 // TODO: Peloton Changes
 static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
   static unsigned long tmpBackendFileNum = 0;
   char tmpfilename[MAXPGPATH];
-  BackendParameters *param =
-      (BackendParameters *)malloc(sizeof(BackendParameters));
+  BackendParameters *param = nullptr;
 
-  save_backend_variables(param, port);
+  // save backend variables if we are not memcached
+  if (!is_memcached) {
+    param =
+        (BackendParameters *)malloc(sizeof(BackendParameters));
+
+    save_backend_variables(param, port);
+  }
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(),
        GetBackendThreadId());
@@ -3665,42 +3674,52 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
 static int BackendStartup(Port *port, bool is_memcached) {
-  Backend *bn; /* for backend cleanup */
+  Backend *bn = nullptr; /* for backend cleanup */
   pid_t pid;
 
   /*
    * Create backend data structure.  Better before the fork() so we can
    * handle failure cleanly.
+   *
+   * Note: don't allocate backend if we are memcached
+   *
    */
-  bn = (Backend *)malloc(sizeof(Backend));
-  if (!bn) {
-    ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
-    return STATUS_ERROR;
-  }
 
-  /*
-   * Compute the cancel key that will be assigned to this backend. The
-   * backend will have its own copy in the forked-off process' value of
-   * MyCancelKey, so that it can transmit the key to the frontend.
-   */
-  MyCancelKey = PostmasterRandom();
-  bn->cancel_key = MyCancelKey;
+  if (!is_memcached) {
+    bn = (Backend *) malloc(sizeof(Backend));
+    if (!bn) {
+      ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
+      return STATUS_ERROR;
+    }
+
+    /*
+     * Compute the cancel key that will be assigned to this backend. The
+     * backend will have its own copy in the forked-off process' value of
+     * MyCancelKey, so that it can transmit the key to the frontend.
+     */
+    MyCancelKey = PostmasterRandom();
+    bn->cancel_key = MyCancelKey;
+  }
 
   /* Pass down canAcceptConnections state */
   port->canAcceptConnections = canAcceptConnections();
-  bn->dead_end = (port->canAcceptConnections != CAC_OK &&
-                  port->canAcceptConnections != CAC_WAITBACKUP);
 
-  /*
-   * Unless it's a dead_end child, assign it a child slot number
-   */
-  if (!bn->dead_end)
-    bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
-  else
-    bn->child_slot = 0;
+  if (!is_memcached) {
+    bn->dead_end = (port->canAcceptConnections != CAC_OK &&
+                    port->canAcceptConnections != CAC_WAITBACKUP);
 
-  /* Hasn't asked to be notified about any bgworkers yet */
-  bn->bgworker_notify = false;
+    /*
+     * Unless it's a dead_end child, assign it a child slot number
+     */
+    if (!bn->dead_end)
+      bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
+    else
+      bn->child_slot = 0;
+
+    /* Hasn't asked to be notified about any bgworkers yet */
+    bn->bgworker_notify = false;
+  }
+
 
 #ifdef EXEC_BACKEND
   pid = backend_forkexec(port);
@@ -3715,34 +3734,36 @@ static int BackendStartup(Port *port, bool is_memcached) {
 
 #endif /* EXEC_BACKEND */
 
-  if (pid < 0) {
-    /* in parent, fork failed */
-    int save_errno = errno;
+  if (!is_memcached) {
+    if (pid < 0) {
+      /* in parent, fork failed */
+      int save_errno = errno;
 
-    if (!bn->dead_end) (void)ReleasePostmasterChildSlot(bn->child_slot);
-    free(bn);
-    errno = save_errno;
-    ereport(LOG, (errmsg("could not fork new___ process for connection: %m")));
-    report_fork_failure_to_client(port, save_errno);
-    return STATUS_ERROR;
+      if (!bn->dead_end) (void)ReleasePostmasterChildSlot(bn->child_slot);
+      free(bn);
+      errno = save_errno;
+      ereport(LOG, (errmsg("could not fork new___ process for connection: %m")));
+      report_fork_failure_to_client(port, save_errno);
+      return STATUS_ERROR;
+    }
+
+    /* in parent, successful fork */
+    ereport(DEBUG2, (errmsg_internal("forked new___ backend, pid=%d socket=%d",
+                                     (int)pid, (int)port->sock)));
+
+    /*
+		 * Everything's been successful, it's safe to add this backend to our list
+		 * of backends.
+		 */
+    bn->pid = pid;
+    bn->bkend_type = BACKEND_TYPE_NORMAL; /* Can change later to WALSND */
+    dlist_push_head(&BackendList, &bn->elem);
+
+    // TODO: peloton changes
+    //#ifdef EXEC_BACKEND
+    if (!bn->dead_end) ShmemBackendArrayAdd(bn);
+    //#endif
   }
-
-  /* in parent, successful fork */
-  ereport(DEBUG2, (errmsg_internal("forked new___ backend, pid=%d socket=%d",
-                                   (int)pid, (int)port->sock)));
-
-  /*
-   * Everything's been successful, it's safe to add this backend to our list
-   * of backends.
-   */
-  bn->pid = pid;
-  bn->bkend_type = BACKEND_TYPE_NORMAL; /* Can change later to WALSND */
-  dlist_push_head(&BackendList, &bn->elem);
-
-  // TODO: peloton changes
-  //#ifdef EXEC_BACKEND
-  if (!bn->dead_end) ShmemBackendArrayAdd(bn);
-  //#endif
 
   return STATUS_OK;
 }
@@ -3952,7 +3973,7 @@ static void BackendInitialize(Port *port) {
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-static void BackendRun(Port *port, bool is_memcached) {
+static void BackendRun(Port *port) {
   char **av;
   int maxac;
   int ac;
@@ -4010,12 +4031,8 @@ static void BackendRun(Port *port, bool is_memcached) {
    */
   MemoryContextSwitchTo(TopMemoryContext);
 
-  if (!is_memcached)
-    // normal postgres sql workflow
-    PostgresMain(ac, av, port->database_name, port->user_name);
-  else
-    // memcached workflow
-    MemcachedMain(ac, av, port->database_name, port->user_name);
+  // normal postgres sql workflow
+  PostgresMain(ac, av, port->database_name, port->user_name);
 }
 
 #ifdef EXEC_BACKEND

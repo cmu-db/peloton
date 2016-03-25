@@ -48,6 +48,9 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include <string>
+#include <sys/socket.h>
+
+#define MC_SOCK_BUFFER_SIZE_BYTES 8192
 
 /* ----------------------------------------------------------------
  *				Section 1:	variable-length datatypes (TOAST support)
@@ -171,8 +174,40 @@ struct MemcachedState {
 	std::string result;
 	/* add memcached return status */
 
-	inline MemcachedState() : result("") {}
+};
 
+/* wrapper over pgsocket used for memcached */
+struct MemcachedSocket {
+private:
+	Port *port;
+	size_t buf_ptr;
+	size_t buf_size;
+	std::string buffer;
+public:
+	inline MemcachedSocket(Port *port) :
+			port(port), buf_ptr(0), buf_size(0),
+			buffer(MC_SOCK_BUFFER_SIZE_BYTES, 0)
+	{}
+
+	inline void close_socket() {
+		for (;;) {
+			int status = close(port->sock);
+			if (status < 0) {
+				// failed close
+				if (errno == EINTR) {
+					// interrupted, try closing again
+					continue;
+				}
+			}
+			return;
+		}
+	}
+
+	bool refill_buffer();
+
+	// store a line in buffer into new_line, return false
+	// if read failed
+	bool read_line(std::string &new_line);
 };
 
 /*
