@@ -80,9 +80,9 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
       }
     }
   }
-  schedule->txn_result = true;
+
   if (schedule->operations.rbegin()->op == TXN_OP_ABORT)
-    txn_manager->AbortTransaction();
+    schedule->txn_result = txn_manager->AbortTransaction();
   else {
     schedule->txn_result = txn_manager->CommitTransaction();
   }
@@ -142,7 +142,7 @@ void DirtyWriteTest() {
 
   EXPECT_EQ(1, schedule3.results[0]);
   // When to use RESULT_FAILURE, when RESULT_ABORTED
-  EXPECT_EQ(false, schedule2.txn_result);
+  EXPECT_EQ(RESULT_ABORTED, schedule2.txn_result);
 }
 
 void DirtyReadTest() {
@@ -209,10 +209,10 @@ void FuzzyReadTest() {
   LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
                      &schedules);
 
-  EXPECT_EQ(true, schedule2.txn_result);
-  EXPECT_EQ(true, schedule4.txn_result);
-  EXPECT_EQ(false, schedule1.txn_result);
-  EXPECT_EQ(false, schedule3.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule2.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule4.txn_result);
+  EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
+  EXPECT_EQ(RESULT_ABORTED, schedule3.txn_result);
 }
 
 TEST_F(TransactionTests, TransactionTest) {
