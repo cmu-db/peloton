@@ -122,9 +122,10 @@ TEST_F(CheckpointTests, BasicTest) {
                             1);
   auto records = simple_checkpoint.records_;
   EXPECT_EQ(records.size(),
-            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count + 1);
-  EXPECT_EQ(records[records.size() - 1]->GetType(),
-            LOGRECORD_TYPE_TRANSACTION_COMMIT);
+            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
+  for (unsigned int i = 0; i < records.size(); i++) {
+    EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+  }
 }
 
 }  // End test namespace

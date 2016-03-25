@@ -137,11 +137,17 @@ void SimpleCheckpoint::DoCheckpoint() {
     }
 
     if (records_.size() > 0) {
+	  LogRecord *record = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+	  CopySerializeOutput output_buffer;
+	  record->Serialize(output_buffer);
+	  records_.push_back(record);
+
       CreateCheckpointFile();
       Persist();
     }
 
     sleep(checkpoint_interval_);
+    return;
   }
 }
 
@@ -172,6 +178,9 @@ bool SimpleCheckpoint::DoRecovery() {
       InsertTuple();
     } else if (record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
       break;
+    } else {
+    	LOG_ERROR("Invalid checkpoint entry");
+    	break;
     }
   }
 
@@ -201,6 +210,7 @@ void SimpleCheckpoint::InsertTuple() {
 
   // Check for torn log write
   if (tuple == nullptr) {
+	LOG_ERROR("Torn checkpoint write.");
     return;
   }
 
@@ -282,20 +292,17 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         ItemPointer location(tile_group_id, tuple_id);
         assert(logger_);
         auto record = logger_->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
+        		LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
             target_table->GetOid(), location, INVALID_ITEMPOINTER, tuple.get(),
             database_oid);
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
+        LOG_INFO("Insert a new record for checkpoint");
         records_.push_back(record);
       }
     }
   }
-  LogRecord *record = new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-  CopySerializeOutput output_buffer;
-  record->Serialize(output_buffer);
-  records_.push_back(record);
   return true;
 }
 
@@ -322,6 +329,8 @@ void SimpleCheckpoint::Persist() {
   assert(checkpoint_file_);
   assert(records_.size() > 0);
   assert(checkpoint_file_fd_ != INVALID_FILE_DESCRIPTOR);
+
+  LOG_INFO("Persisting %lu checkpoint entries", records_.size());
   // First, write all the record in the queue
   for (auto record : records_) {
     assert(record);

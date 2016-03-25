@@ -66,7 +66,7 @@ class SimpleCheckpoint : public Checkpoint {
   size_t checkpoint_file_size_ = 0;
 
   // Default checkpoint interval
-  int64_t checkpoint_interval_ = 10;
+  int64_t checkpoint_interval_ = 15;
 
   BackendLogger *logger_ = nullptr;
 
