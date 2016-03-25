@@ -67,7 +67,7 @@ class AbstractExecutor {
   void SetContext(Value value, uint32_t flag) {
     executor_context_->SetParams(value);
     executor_context_->SetParamsExec(flag);
-   }
+  }
 
   // Clear the context
   void ClearContext() { executor_context_->ClearParams(); }
