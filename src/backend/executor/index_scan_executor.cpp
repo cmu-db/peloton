@@ -176,7 +176,6 @@ bool IndexScanExecutor::ExecIndexLookup() {
       cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
       // if the tuple is visible.
       if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
-        
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
@@ -193,7 +192,8 @@ bool IndexScanExecutor::ExecIndexLookup() {
       } else {
         ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
         // if there is no next tuple.
-        if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
+        if (next_item.IsNull() == true) {
+        //if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
           break;
         }
         tile_group_id = next_item.block;
