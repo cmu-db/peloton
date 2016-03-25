@@ -41,7 +41,7 @@ class LogicalTileTests : public PelotonTest {};
 
 TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   // Create tuple schema from tile schemas.
@@ -69,9 +69,13 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
 
-  tile_group->InsertTuple(txn_id, &tuple1);
-  tile_group->InsertTuple(txn_id, &tuple2);
-  tile_group->InsertTuple(txn_id, &tuple1);
+  auto tuple_id1 = tile_group->InsertTuple(txn_id, &tuple1);
+  auto tuple_id2 = tile_group->InsertTuple(txn_id, &tuple2);
+  auto tuple_id3 = tile_group->InsertTuple(txn_id, &tuple1);
+
+  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_id1);
+  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_id2);
+  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_id3);
 
   txn_manager.CommitTransaction();
 
