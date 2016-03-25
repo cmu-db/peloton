@@ -59,6 +59,7 @@ storage::DataTable *GetTable(TupleRecord tupleRecord);
 /**
  * @brief Open logfile and file descriptor
  */
+
 WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   logging_type = LOGGING_TYPE_DRAM_NVM;
 
@@ -782,6 +783,82 @@ storage::DataTable *GetTable(TupleRecord tuple_record) {
 std::string WriteAheadFrontendLogger::GetLogFileName(void) {
   auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
+}
+
+void WriteAheadFrontendLogger::InitLogFilesList() {
+  // TODO: handle case where this may be just a database restart instead of
+  // fresh start
+  DIR *dirp;
+  struct dirent *file;
+  std::string base_name = "peloton_log_";
+
+  LOG_INFO("Trying to read log directory");
+
+  dirp = opendir(".");
+  if (dirp == nullptr) LOG_INFO("Opendir failed: %s", "hello world");
+  // TODO use this data to populate in memory data structures
+  while ((file = readdir(dirp)) != NULL) {
+    if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
+      // found a log file!
+      LOG_INFO("Found a log file with name %s", file->d_name);
+      // populate data structure here
+    }
+  }
+
+  this->log_file_counter_ = 0;
+  this->CreateNewLogFile(false);
+}
+
+void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
+  int new_file_num = log_file_counter_;
+  LOG_INFO("new_file_num is %d", new_file_num);
+  std::string new_file_name;
+
+  new_file_name = "peloton_log_" + std::to_string(new_file_num) + ".log";
+
+  FILE *log_file = fopen(new_file_name.c_str(), "wb");
+  if (log_file == NULL) {
+    LOG_ERROR("log_file is NULL");
+  }
+
+  this->log_file = log_file;
+
+  int log_file_fd = fileno(log_file);
+
+  if (log_file_fd == -1) {
+    LOG_ERROR("log_file_fd is -1");
+  }
+
+  this->log_file_fd = log_file_fd;
+  LOG_INFO("log_file_fd of newly created file is %d", this->log_file_fd);
+
+  LogFile *new_log_file_object =
+      new LogFile(log_file, new_file_name, log_file_fd);
+
+  if (close_old_file) {  // must close last opened file
+    int file_list_size = this->log_files_.size();
+
+    if (file_list_size != 0) {
+      this->log_files_[file_list_size - 1]->log_file_size_ =
+          this->log_file_size;
+      fclose(this->log_files_[file_list_size - 1]->log_file_);
+      this->log_files_[file_list_size - 1]->log_file_fd_ = -1;  // invalidate
+      // TODO set max commit_id here!
+    }
+  }
+
+  this->log_files_.push_back(new_log_file_object);
+
+  log_file_counter_++;  // finally, increment log_file_counter_
+  LOG_INFO("log_file_counter is %d", log_file_counter_);
+}
+
+bool WriteAheadFrontendLogger::FileSwitchCondIsTrue(
+    __attribute__((unused)) int fsync_count) {
+  // TODO have a good heuristic here
+  // return false;
+
+  return (fsync_count % 10000) == 0;
 }
 
 }  // namespace logging
