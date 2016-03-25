@@ -114,7 +114,7 @@ bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, cons
   return true;
 }
 
-bool OptimisticTransactionManager::CommitTransaction() {
+Result OptimisticTransactionManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -142,8 +142,7 @@ bool OptimisticTransactionManager::CommitTransaction() {
         }
       }
       // otherwise, validation fails. abort transaction.
-      AbortTransaction();
-      return false;
+      return AbortTransaction();
     }
   }
   //////////////////////////////////////////////////////////
@@ -256,13 +255,14 @@ bool OptimisticTransactionManager::CommitTransaction() {
       // }
     }
   }
+  Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
 
-  return true;
+  return ret;
 }
 
-void OptimisticTransactionManager::AbortTransaction() {
+Result OptimisticTransactionManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
   auto written_tuples = current_txn->GetWrittenTuples();
@@ -308,8 +308,10 @@ void OptimisticTransactionManager::AbortTransaction() {
     }
   }
 
+  Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
+  return ret;
 }
 
 }  // End storage namespace

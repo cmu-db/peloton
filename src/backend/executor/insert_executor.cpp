@@ -63,8 +63,8 @@ bool InsertExecutor::DExecute() {
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table);
 
-  // TODO: use transaction manager instead of transaction
-  auto transaction_ = executor_context_->GetTransaction();
+  // TODO: use transaction manager instead of transaction. DONE!!
+  //auto transaction_ = executor_context_->GetTransaction();
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
@@ -95,7 +95,7 @@ bool InsertExecutor::DExecute() {
                         executor_pool);
 
       peloton::ItemPointer location =
-          target_table->InsertTuple(transaction_, tuple.get());
+          target_table->InsertTuple(tuple.get());
       if (location.block == INVALID_OID) {
         // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
@@ -133,7 +133,7 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // Carry out insertion
       ItemPointer location =
-          target_table->InsertTuple(transaction_, tuple.get());
+          target_table->InsertTuple(tuple.get());
       LOG_INFO("Inserted into location: %lu, %lu", location.block,
                location.offset);
 
