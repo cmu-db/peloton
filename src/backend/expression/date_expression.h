@@ -181,8 +181,9 @@ const std::string ExtractExpression::SECOND_STR = "second";
 //===--------------------------------------------------------------------===//
 class DateToTimestampExpression : public AbstractExpression {
  public:
-  DateToTimestampExpression(AbstractExpression* date_expr)
-      : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, date_expr, nullptr) {
+  DateToTimestampExpression(AbstractExpression *date_expr)
+      : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, date_expr,
+                           nullptr) {
     assert(GetLeft() != nullptr);
     assert(GetRight() == nullptr);
   }
