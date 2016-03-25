@@ -48,6 +48,10 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 42,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL  = 1,
+};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//

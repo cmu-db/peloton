@@ -29,6 +29,8 @@
 #include "backend/storage/tuple.h"
 #include "backend/common/logger.h"
 
+extern CheckpointType peloton_checkpoint_mode;
+
 #define LOG_FILE_SWITCH_LIMIT (1024 * 1024)
 namespace peloton {
 namespace logging {
@@ -165,8 +167,8 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
-  // TODO check if checkpoint is enabled
-  if (false) {
+
+  if (peloton_checkpoint_mode == CHECKPOINT_TYPE_NORMAL) {
     this->checkpoint.DoRecovery();
   }
 
