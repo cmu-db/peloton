@@ -242,6 +242,7 @@ void OptimisticTransactionManager::CommitTransaction() {
   	   auto logger = log_manager.GetBackendLogger();
   	   auto record = new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, end_commit_id);
   	   logger->Log(record);
+  	   logger->WaitForFlushing();
   	 }
   delete current_txn;
   current_txn = nullptr;
