@@ -140,26 +140,19 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
                               std::string(tuple->GetInfo()));
     return false;
   }
-
   return true;
 }
 
-ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple, bool check_constraint) {
+ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
-  
     return INVALID_ITEMPOINTER;
-
   }
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
-  auto transaction_id = transaction->GetTransactionId();
-
-  LOG_TRACE("DataTable :: transaction_id %lu \n", transaction_id);
 
   while (tuple_slot == INVALID_OID) {
     // First, figure out last tile group
@@ -173,7 +166,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
 
-    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    tuple_slot = tile_group->InsertTuple(tuple);
     tile_group_id = tile_group->GetTileGroupId();
 
     if (tuple_slot == INVALID_OID) {
@@ -194,20 +187,6 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple __attribute__((unused)),
-                                     bool check_constraint __attribute__((unused))) {
-  // First, do integrity checks and claim a slot
-//  ItemPointer location = GetTupleSlot(transaction, tuple, check_constraint);
-//  if (location.block == INVALID_OID) {
-//    LOG_WARN("Failed to get tuple slot.");
-//    return INVALID_ITEMPOINTER;
-//  }
-//
-//  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
-//
-//  IncreaseNumberOfTuplesBy(1);
-  return ItemPointer();
-}
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple __attribute__((unused))) {
   // First, do integrity checks and claim a slot
@@ -235,10 +214,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple __attribute__((un
 
 
 
-ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple, bool check_constraint) {
+ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, bool check_constraint) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple, check_constraint);
+  ItemPointer location = GetTupleSlot(tuple, check_constraint);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -253,7 +231,7 @@ ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
+  ItemPointer location = GetTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
