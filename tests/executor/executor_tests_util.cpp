@@ -228,8 +228,8 @@ void ExecutorTestsUtil::PopulateTiles(
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  auto txn = txn_manager.BeginTransaction();
-  const txn_id_t txn_id = txn->GetTransactionId();
+  // auto txn = txn_manager.BeginTransaction();
+  // const txn_id_t txn_id = txn->GetTransactionId();
   // const cid_t commit_id = txn->GetStartCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
@@ -245,7 +245,7 @@ void ExecutorTestsUtil::PopulateTiles(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
+    oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
 //    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
   }
