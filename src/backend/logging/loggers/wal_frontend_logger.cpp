@@ -782,27 +782,51 @@ std::string WriteAheadFrontendLogger::GetLogFileName(void) {
   return log_manager.GetLogFileName();
 }
 
+int extract_number_from_filename(const char *name) {
+  std::string str(name);
+  size_t start_index = str.find_first_of("0123456789");
+  if (start_index != std::string::npos) {
+    int end_index = str.find_first_not_of("0123456789", start_index);
+    return atoi(str.substr(start_index, end_index - start_index).c_str());
+  }
+  LOG_ERROR("The last found log file doesn't have a version number.");
+  return 0;
+}
 void WriteAheadFrontendLogger::InitLogFilesList() {
   // TODO: handle case where this may be just a database restart instead of
   // fresh start
-  DIR *dirp;
-  struct dirent *file;
+  struct dirent **list;
+  int n;
+
+  // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
 
   LOG_INFO("Trying to read log directory");
 
-  dirp = opendir(".");
-  if (dirp == nullptr) LOG_INFO("Opendir failed: %s", "hello world");
-  // TODO use this data to populate in memory data structures
-  while ((file = readdir(dirp)) != NULL) {
-    if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
-      // found a log file!
-      LOG_INFO("Found a log file with name %s", file->d_name);
-      // populate data structure here
+  n = scandir(".", &list, 0, alphasort);
+  if (n < 0) {
+    LOG_INFO("Scandir failed: Errno: %d, error: %s", errno, strerror(errno));
+  }
+  for (int i = 0; i < n; i++) {
+    if (strncmp(list[i]->d_name, base_name.c_str(), base_name.length()) == 0) {
+      LOG_INFO("Found a log file with name %s", list[i]->d_name);
+      LogFile *new_log_file = new LogFile(NULL, list[i]->d_name, -1);
+      this->log_files_.push_back(new_log_file);
     }
   }
 
-  this->log_file_counter_ = 0;
+  int num_log_files;
+  num_log_files = this->log_files_.size();
+
+  if (num_log_files) {
+    int max_num = extract_number_from_filename(
+        this->log_files_[num_log_files - 1]->log_file_name_.c_str());
+    LOG_INFO("Got maximum log file version as %d", max_num);
+    this->log_file_counter_ = ++max_num;
+  } else {
+    this->log_file_counter_ = 0;
+  }
+
   this->CreateNewLogFile(false);
 }
 
