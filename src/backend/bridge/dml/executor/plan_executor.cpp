@@ -134,14 +134,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        txn_manager.CommitTransaction();
+        p_status.m_result = txn_manager.CommitTransaction();
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-        txn_manager.AbortTransaction();
+        p_status.m_result = txn_manager.AbortTransaction();
     }
   }
   // clean up executor tree
@@ -150,9 +150,9 @@ cleanup:
   // Clean executor context
   delete executor_context;
 
-  p_status.m_result = txn->GetResult();
+  //p_status.m_result = txn->GetResult();
 
-  txn_manager.EndTransaction();
+  //txn_manager.EndTransaction();
   
   return p_status;
 }

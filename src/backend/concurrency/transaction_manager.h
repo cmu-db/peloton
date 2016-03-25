@@ -60,14 +60,9 @@ class TransactionManager {
     return txn;
   }
 
-  void EndTransaction() {
-    delete current_txn;
-    current_txn = nullptr;
-  }
+  virtual Result CommitTransaction() = 0;
 
-  virtual void CommitTransaction() = 0;
-
-  virtual void AbortTransaction() = 0;
+  virtual Result AbortTransaction() = 0;
 
   void ResetStates() {
     next_txn_id_ = START_TXN_ID;
