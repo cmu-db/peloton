@@ -131,12 +131,12 @@ void UpdateTuple(storage::DataTable *table) {
 
   // Predicate
 
-  // WHERE ATTR_0 < 60
+  // WHERE ATTR_0 < 70
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(60));
+          ValueFactory::GetIntegerValue(70));
   auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, tup_val_exp, const_val_exp);
 
@@ -150,7 +150,8 @@ void UpdateTuple(storage::DataTable *table) {
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());
-  EXPECT_TRUE(update_executor.Execute());
+  while (update_executor.Execute())
+    ;
 
   txn_manager.CommitTransaction();
 }
@@ -217,7 +218,8 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor.Execute();
-  } catch (ConstraintException &ce) {
+  }
+  catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -231,7 +233,8 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  } catch (ConstraintException &ce) {
+  }
+  catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -318,9 +321,8 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
+      Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
@@ -375,6 +377,61 @@ TEST_F(MutateTests, DeleteTest) {
   txn_manager.CommitTransaction();
   EXPECT_EQ(tuple_cnt, 6);
   delete table;
+  tuple_id = 0;
+}
+
+int SeqScanCount(storage::DataTable *table,
+                 const std::vector<oid_t> &column_ids,
+                 expression::AbstractExpression *predicate) {
+  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  EXPECT_TRUE(seq_scan_executor.Init());
+  auto tuple_cnt = 0;
+
+  while (seq_scan_executor.Execute()) {
+    std::unique_ptr<executor::LogicalTile> result_logical_tile(
+        seq_scan_executor.GetOutput());
+    tuple_cnt += result_logical_tile->GetTupleCount();
+  }
+
+  txn_manager.CommitTransaction();
+
+  return tuple_cnt;
+}
+
+TEST_F(MutateTests, UpdateTest) {
+  // We are going to insert a tile group into a table in this test
+  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  LaunchParallelTest(1, InsertTuple, table, testing_pool);
+  LaunchParallelTest(1, UpdateTuple, table);
+
+  // Seq scan to check number
+  std::vector<oid_t> column_ids = {0};
+  auto tuple_cnt = SeqScanCount(table, column_ids, nullptr);
+  EXPECT_EQ(tuple_cnt, 10);
+
+  expression::TupleValueExpression *tup_val_exp =
+      new expression::TupleValueExpression(2, 2);
+  expression::ConstantValueExpression *const_val_exp =
+      new expression::ConstantValueExpression(
+          ValueFactory::GetDoubleValue(23.5));
+
+  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+
+  tuple_cnt = SeqScanCount(table, column_ids, predicate);
+  EXPECT_EQ(tuple_cnt, 6);
+
+  delete table;
+  tuple_id = 0;
 }
 
 }  // namespace test
