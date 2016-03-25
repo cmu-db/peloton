@@ -170,11 +170,14 @@ void WriteAheadFrontendLogger::DoRecovery() {
     this->checkpoint.DoRecovery();
   }
 
+  log_file_cursor_ = 0;
   // TODO implement recovery from multiple log files
   if (log_file_fd == -1) return;
+
   // Set log file size
-  log_file_size = GetLogFileSize(log_file_fd);
+  // log_file_size = GetLogFileSize(log_file_fd);
   // TODO handle case where we may have to recover from multiple Log files!
+  this->OpenNextLogFile();
 
   // Go over the log size if needed
   if (log_file_size > 0) {
@@ -681,6 +684,22 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   // Otherwise, read the log record type
   int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
   if (ret <= 0) {
+    /* TODO uncomment and fix
+       OpenNextLogFile();
+       if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
+
+       if (IsFileTruncated(log_file, 1, log_file_size)) {
+       LOG_ERROR("Log file is truncated");
+       return LOGRECORD_TYPE_INVALID;
+       }
+       ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+       if (ret <= 0)
+       {
+       LOG_ERROR("Could not read from log file");
+       return LOGRECORD_TYPE_INVALID;
+       }
+    */
+
     LOG_ERROR("Could not read from log file");
     return LOGRECORD_TYPE_INVALID;
   }
@@ -890,6 +909,40 @@ bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
 
   fstat(this->log_file_fd, &stat_buf);
   return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
+}
+
+void WriteAheadFrontendLogger::OpenNextLogFile() {
+  if (this->log_files_.size() == 0) {  // no log files, fresh start
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+  }
+
+  if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+  }
+
+  if (this->log_file_cursor_ != 0)  // close old file
+    fclose(log_file);
+
+  // open the next file
+  this->log_file = fopen(
+      this->log_files_[this->log_file_cursor_]->log_file_name_.c_str(), "rb");
+
+  if (this->log_file == NULL) {
+    LOG_ERROR("Couldn't open next log file");
+  }
+
+  this->log_file_fd = fileno(this->log_file);
+
+  struct stat stat_buf;
+
+  fstat(this->log_file_fd, &stat_buf);
+  this->log_file_size = stat_buf.st_size;
+
+  this->log_file_cursor_++;
 }
 
 }  // namespace logging
