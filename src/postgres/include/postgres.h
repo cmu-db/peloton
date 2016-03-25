@@ -171,6 +171,8 @@ struct MemcachedState {
 	std::string result;
 	/* add memcached return status */
 
+	inline MemcachedState() : result("") {}
+
 };
 
 /*

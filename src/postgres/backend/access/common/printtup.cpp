@@ -371,7 +371,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
 			// comma delimit output
 			if (mc_state)
-				mc_state->result += outputstr + ',';
+				mc_state->result += outputstr + std::string(",");
 			else
 				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 		}
