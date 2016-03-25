@@ -232,7 +232,7 @@ void SimpleCheckpoint::InsertTuple() {
   delete tuple;
 }
 
-bool SimpleCheckpoint::Execute(executor::SeqScanExecutor *scan_executor,
+bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
                                concurrency::Transaction *txn,
                                storage::DataTable *target_table,
                                oid_t database_oid) {
@@ -348,6 +348,8 @@ void SimpleCheckpoint::Persist() {
   }
   records_.clear();
 }
+
+void SimpleCheckpoint::SetLogger(BackendLogger *logger) { logger_ = logger; }
 
 }  // namespace logging
 }  // namespace peloton

@@ -42,11 +42,15 @@ class SimpleCheckpoint : public Checkpoint {
 
   // Internal functions
   void InsertTuple();
-  bool Execute(executor::SeqScanExecutor *scan_executor,
+
+  bool Execute(executor::AbstractExecutor *scan_executor,
                concurrency::Transaction *txn, storage::DataTable *target_table,
                oid_t database_oid);
   void CreateCheckpointFile();
+
   void Persist();
+
+  void SetLogger(BackendLogger *logger);
 
  private:
   std::vector<LogRecord *> records_;
@@ -58,8 +62,8 @@ class SimpleCheckpoint : public Checkpoint {
   // Size of the checkpoint file
   size_t checkpoint_file_size_ = 0;
 
-  // Default checkpoint interval is 20 seconds
-  int64_t checkpoint_interval_ = 20;
+  // Default checkpoint interval
+  int64_t checkpoint_interval_ = 10;
 
   BackendLogger *logger_ = nullptr;
 
