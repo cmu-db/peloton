@@ -194,6 +194,46 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
+ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple __attribute__((unused)),
+                                     bool check_constraint __attribute__((unused))) {
+  // First, do integrity checks and claim a slot
+//  ItemPointer location = GetTupleSlot(transaction, tuple, check_constraint);
+//  if (location.block == INVALID_OID) {
+//    LOG_WARN("Failed to get tuple slot.");
+//    return INVALID_ITEMPOINTER;
+//  }
+//
+//  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+//
+//  IncreaseNumberOfTuplesBy(1);
+  return ItemPointer();
+}
+
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple __attribute__((unused))) {
+  // First, do integrity checks and claim a slot
+//  ItemPointer location = GetTupleSlot(transaction, tuple);
+//  if (location.block == INVALID_OID) {
+//    LOG_WARN("Failed to get tuple slot.");
+//    return INVALID_ITEMPOINTER;
+//  }
+//
+//  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+//
+//  // Index checks and updates
+//  if (InsertInIndexes(transaction, tuple, location) == false) {
+//    LOG_WARN("Index constraint violated");
+//    return INVALID_ITEMPOINTER;
+//  }
+//
+//  // Increase the table's number of tuples by 1
+//  IncreaseNumberOfTuplesBy(1);
+//  // Increase the indexes' number of tuples by 1 as well
+//  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+
+  return ItemPointer();
+}
+
+
 
 ItemPointer DataTable::InsertVersion(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple, bool check_constraint) {

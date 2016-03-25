@@ -280,38 +280,6 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
   }
 }
 
-void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
-                                    txn_id_t transaction_id, cid_t commit_id) {
-  // set the begin commit id to persist insert
-  if (tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id)) {
-    tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
-  }
-}
-
-void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
-                                   cid_t commit_id) {
-  // set the end commit id to persist delete
-  if (tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id)) {
-    tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
-  }
-}
-/**
- * It is either a insert or a self-deleted insert
- */
-void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
-  tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-
-  // undo insert (we don't reset MVCC info currently)
-  // TODO: can reclaim tuple here ?
-  // ReclaimTuple(tuple_slot_id);
-}
-
-void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id,
-                                  txn_id_t transaction_id) {
-  // undo deletion
-  tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id);
-}
-
 // Sets the tile id and column id w.r.t that tile corresponding to
 // the specified tile group column id.
 void TileGroup::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,

@@ -193,9 +193,14 @@ void OptimisticTransactionManager::CommitTransaction() {
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      tile_group->CommitInsertedTuple(
-          tuple_slot, current_txn->GetTransactionId(), end_commit_id);
+      // set the begin commit id to persist insert
+      if (tile_group_header->UnlockTupleSlot(tuple_slot, current_txn->GetTransactionId())) {
+        tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
+      }
+      //tile_group->CommitInsertedTuple(
+      //    tuple_slot, current_txn->GetTransactionId(), end_commit_id);
     }
       // Logging
       // {

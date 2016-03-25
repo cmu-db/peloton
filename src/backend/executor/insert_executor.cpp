@@ -59,9 +59,9 @@ bool InsertExecutor::DExecute() {
   assert(executor_context_ != nullptr);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
-  storage::DataTable *target_table_ = node.GetTable();
+  storage::DataTable *target_table = node.GetTable();
   oid_t bulk_insert_count = node.GetBulkInsertCount();
-  assert(target_table_);
+  assert(target_table);
 
   // TODO: use transaction manager instead of transaction
   auto transaction_ = executor_context_->GetTransaction();
@@ -78,7 +78,7 @@ bool InsertExecutor::DExecute() {
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
     assert(logical_tile.get() != nullptr);
-    auto target_table_schema = target_table_->GetSchema();
+    auto target_table_schema = target_table->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
 
     std::unique_ptr<storage::Tuple> tuple(
@@ -95,7 +95,7 @@ bool InsertExecutor::DExecute() {
                         executor_pool);
 
       peloton::ItemPointer location =
-          target_table_->InsertTuple(transaction_, tuple.get());
+          target_table->InsertTuple(transaction_, tuple.get());
       if (location.block == INVALID_OID) {
         // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
@@ -115,7 +115,7 @@ bool InsertExecutor::DExecute() {
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
-    auto schema = target_table_->GetSchema();
+    auto schema = target_table->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
@@ -133,7 +133,7 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // Carry out insertion
       ItemPointer location =
-          target_table_->InsertTuple(transaction_, tuple.get());
+          target_table->InsertTuple(transaction_, tuple.get());
       LOG_INFO("Inserted into location: %lu, %lu", location.block,
                location.offset);
 
