@@ -132,8 +132,7 @@ bool InsertExecutor::DExecute() {
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // Carry out insertion
-      ItemPointer location =
-          target_table->InsertTuple(tuple.get());
+      ItemPointer location = target_table->InsertTuple(tuple.get());
       LOG_INFO("Inserted into location: %lu, %lu", location.block,
                location.offset);
 
