@@ -14,6 +14,7 @@
 
 #include "backend/logging/checkpoint.h"
 #include "backend/logging/log_record.h"
+#include "backend/executor/seq_scan_executor.h"
 
 #include <thread>
 
@@ -30,7 +31,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint() {}
+  SimpleCheckpoint() : Checkpoint() {}
 
   static SimpleCheckpoint &GetInstance();
 
@@ -40,6 +41,10 @@ class SimpleCheckpoint : public Checkpoint {
   void DoRecovery();
 
   // Internal functions
+
+  bool Execute(executor::SeqScanExecutor *scan_executor,
+               concurrency::Transaction *txn, storage::DataTable *target_table,
+               oid_t database_oid);
   void CreateCheckpointFile();
   void Persist();
 
@@ -52,6 +57,8 @@ class SimpleCheckpoint : public Checkpoint {
 
   // Default checkpoint interval is 20 seconds
   int64_t checkpoint_interval_ = 20;
+
+  BackendLogger *logger_ = nullptr;
 };
 
 }  // namespace logging
