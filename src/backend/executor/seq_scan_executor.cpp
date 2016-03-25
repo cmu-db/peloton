@@ -141,7 +141,7 @@ bool SeqScanExecutor::DExecute() {
         // if the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
-          transaction_manager.RecordRead(tile_group->GetTileGroupId(), tuple_id);
+          transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                                tuple_id);
@@ -149,7 +149,7 @@ bool SeqScanExecutor::DExecute() {
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             position_list.push_back(tuple_id);
-            transaction_manager.RecordRead(tile_group->GetTileGroupId(), tuple_id);
+            transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
           }
         }
       }

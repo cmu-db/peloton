@@ -173,7 +173,7 @@ bool DeleteExecutor::DExecute() {
 
       executor_context_->num_processed += 1;  // deleted one
 
-      transaction_manager.RecordDelete(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
 
       // Logging
       // {
