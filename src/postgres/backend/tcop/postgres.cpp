@@ -3860,8 +3860,93 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
   } /* end of input-reading loop */
 }
 
-void MemcachedMain(int argc, char *argv[], const char *dbname,
-                   const char *username) {
+
+/* Memcached socket function implementations */
+bool MemcachedSocket::refill_buffer() {
+
+  ssize_t bytes_read;
+
+  // check if bytes are leftover from before
+  if (buf_ptr > 0) {
+    // buf ptr not at head
+    if (buf_size > buf_ptr) {
+      // buffer has bytes left,
+      // move them to the head of the buffer
+      // TODO: Stackoverflow response
+    }
+
+  }
+
+  // return explicitly
+  for (;;) {
+    //  try to fill the available space in the buffer
+    bytes_read = read(port->sock, &buffer[buf_ptr],
+                      MC_SOCK_BUFFER_SIZE_BYTES - buf_size );
+
+    if (bytes_read < 0 ) {
+      if ( errno == EINTR) {
+        // interrupts are OK
+        continue;
+      }
+
+      // otherwise, report error
+      ereport(COMMERROR,
+              (errcode_for_socket_access(),
+                  errmsg("could not receive data from client: %m")));
+      // close the socket
+      close_socket();
+      return false;
+    }
+
+    if (bytes_read == 0) {
+      // EOF, close and return
+      close_socket();
+      return false;
+    }
+
+    // read success, update buffer size
+    buf_size += bytes_read;
+
+    // read from beginning of buffer
+    buf_ptr = 0;
+    return true;
+  }
+}
+
+bool MemcachedSocket::read_line(std::string &new_line) {
+  std::string rn = "\r\n";
+  for (;;) {
+    // check if buffer has been exhausted
+    if (buf_ptr >= buf_size) {
+      if(!refill_buffer()) {
+        // failure, propagate
+        return false;
+      }
+    }
+
+    // search the buffer for \r\n
+    auto pos = buffer.find(rn, buf_ptr);
+    if ( pos == std::string::npos ) {
+      // no \r\n found, concat buf to new_line and continue
+      // start from current location, go till end
+      new_line += buffer.substr(buf_ptr, buf_size);
+      // update buf ptr
+      buf_ptr = buf_size;
+      // continue till we hit \r\n
+      continue;
+    } else {
+      // update new line till '\r'
+      new_line += buffer.substr(buf_ptr, pos);
+
+      // update buf ptr location to after \r\n
+      buf_ptr = pos+2;
+
+      return true;
+    }
+  }
+}
+
+void MemcachedMain(Port *port) {
   int firstchar;
   StringInfoData input_message;
   sigjmp_buf local_sigjmp_buf;
