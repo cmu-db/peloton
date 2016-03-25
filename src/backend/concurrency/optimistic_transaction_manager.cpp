@@ -262,6 +262,7 @@ Result OptimisticTransactionManager::CommitTransaction() {
   Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
+
   return ret;
 }
 
