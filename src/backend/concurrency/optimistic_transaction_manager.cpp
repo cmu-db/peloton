@@ -79,6 +79,17 @@ bool OptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
+bool OptimisticTransactionManager::IsOwner(const txn_id_t &tuple_txn_id) {
+  return tuple_txn_id == current_txn->GetTransactionId();
+}
+
+// if the tuple is not owned by any transaction and is visible to current transdaction.
+bool OptimisticTransactionManager::IsAccessable(const txn_id_t &tuple_txn_id,
+                                             const cid_t &tuple_begin_cid __attribute__((unused)),
+                                             const cid_t &tuple_end_cid) {
+    return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
+};
+
 bool OptimisticTransactionManager::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
@@ -89,7 +100,9 @@ bool OptimisticTransactionManager::RecordWrite(const oid_t &tile_group_id, const
   return true;
 }
 
+
 bool OptimisticTransactionManager::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  SetVisibilityForCurrentTxn(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
@@ -99,7 +112,24 @@ bool OptimisticTransactionManager::RecordDelete(const oid_t &tile_group_id, cons
   return true;
 }
 
-void OptimisticTransactionManager::CommitTransaction() {
+void OptimisticTransactionManager::SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetInsertCommit(tuple_id, false);
+  tile_group_header->SetDeleteCommit(tuple_id, false);
+}
+
+Result OptimisticTransactionManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -127,8 +157,7 @@ void OptimisticTransactionManager::CommitTransaction() {
         }
       }
       // otherwise, validation fails. abort transaction.
-      AbortTransaction();
-      return;
+      return AbortTransaction();
     }
   }
   //////////////////////////////////////////////////////////
@@ -178,9 +207,14 @@ void OptimisticTransactionManager::CommitTransaction() {
   for (auto entry : inserted_tuples) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
-      tile_group->CommitInsertedTuple(
-          tuple_slot, current_txn->GetTransactionId(), end_commit_id);
+      // set the begin commit id to persist insert
+      if (tile_group_header->UnlockTupleSlot(tuple_slot, current_txn->GetTransactionId())) {
+        tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
+      }
+      //tile_group->CommitInsertedTuple(
+      //    tuple_slot, current_txn->GetTransactionId(), end_commit_id);
     }
       // Logging
       // {
@@ -236,11 +270,14 @@ void OptimisticTransactionManager::CommitTransaction() {
       // }
     }
   }
+  Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
+
+  return ret;
 }
 
-void OptimisticTransactionManager::AbortTransaction() {
+Result OptimisticTransactionManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
   auto written_tuples = current_txn->GetWrittenTuples();
@@ -288,6 +325,7 @@ void OptimisticTransactionManager::AbortTransaction() {
 
   delete current_txn;
   current_txn = nullptr;
+  return Result::RESULT_ABORTED;
 }
 
 }  // End storage namespace

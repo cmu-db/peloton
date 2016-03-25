@@ -29,6 +29,12 @@ class OptimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
+  virtual bool IsOwner(const txn_id_t &tuple_txn_id);
+
+  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid);
+
   virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -37,9 +43,11 @@ class OptimisticTransactionManager : public TransactionManager {
 
   virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void CommitTransaction();
+  virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void AbortTransaction();
+  virtual Result CommitTransaction();
+
+  virtual Result AbortTransaction();
 
 };
 }
