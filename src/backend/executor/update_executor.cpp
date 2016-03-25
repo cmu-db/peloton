@@ -98,7 +98,19 @@ bool UpdateExecutor::DExecute() {
                                                                physical_tuple_id);
       // Execute the projections
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
-      tile_group->CopyTuple(tid, new_tuple, physical_tuple_id);
+      tile_group->CopyTuple(new_tuple, physical_tuple_id);
+
+
+       // Set MVCC info
+      assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
+      assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
+      assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
+
+      tile_group_header->SetTransactionId(physical_tuple_id, tid);
+      tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
+      tile_group_header->SetEndCommitId(physical_tuple_id, MAX_CID);
+      tile_group_header->SetInsertCommit(physical_tuple_id, false);
+      tile_group_header->SetDeleteCommit(physical_tuple_id, false);
 
       // TODO: Logging
       // {
