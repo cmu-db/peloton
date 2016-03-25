@@ -65,7 +65,9 @@ storage::DataTable *TransactionTestsUtil::CreateTable() {
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ExecuteInsert(txn, table, 0, 0);
+  for (int i = 0; i < 10; i++) {
+    ExecuteInsert(txn, table, i, 0);
+  }
   txn_manager.CommitTransaction();
 
   return table;
