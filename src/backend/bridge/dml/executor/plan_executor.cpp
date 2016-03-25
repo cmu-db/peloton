@@ -151,6 +151,9 @@ cleanup:
   delete executor_context;
 
   p_status.m_result = txn->GetResult();
+
+  txn_manager.EndTransaction();
+  
   return p_status;
 }
 
