@@ -57,7 +57,7 @@ class ExecutorTestsUtil {
    * @brief Creates a basic tile group with allocated but not populated
    *        tuples.
    */
-  static storage::TileGroup *CreateTileGroup(
+  static std::shared_ptr<storage::TileGroup> CreateTileGroup(
       int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
   /** @brief Creates a basic table with allocated but not populated tuples */

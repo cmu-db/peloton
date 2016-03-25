@@ -109,6 +109,11 @@ struct TransactionSchedules {
   void AddSchedule(TransactionSchedule *schedule) {
     schedules.push_back(schedule);
   }
+  void clear() {
+    schedules.clear();
+    next_sched.store(0);
+  }
+  size_t size() { return schedules.size(); }
 };
 
 class TransactionTestsUtil {
