@@ -106,7 +106,7 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
       tile_group->CopyTuple(new_tuple, physical_tuple_id);
 
-      transaction_manager.SetOwnerUpdateVisibility(tile_group_id, physical_tuple_id);
+      transaction_manager.SetUpdateVisibility(tile_group_id, physical_tuple_id);
        // Set MVCC info
       // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
       // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
