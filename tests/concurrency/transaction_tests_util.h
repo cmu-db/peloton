@@ -57,8 +57,9 @@ enum txn_op_t {
   TXN_OP_INSERT,
   TXN_OP_UPDATE,
   TXN_OP_DELETE,
+  TXN_OP_SCAN,
   TXN_OP_ABORT,
-  TXN_OP_NOTHING
+  TXN_OP_NOTHING,
 };
 
 struct TransactionOperation {
@@ -92,6 +93,10 @@ struct TransactionSchedule {
   }
   void AddUpdate(int id, int value, int time) {
     operations.emplace_back(TXN_OP_UPDATE, id, value);
+    times.push_back(time);
+  }
+  void AddScan(int id, int time) {
+    operations.emplace_back(TXN_OP_SCAN, id, 0);
     times.push_back(time);
   }
   void AddAbort(int time) {
@@ -131,6 +136,9 @@ class TransactionTestsUtil {
                             storage::DataTable *table, int id);
   static bool ExecuteUpdate(concurrency::Transaction *transaction,
                             storage::DataTable *table, int id, int value);
+  static bool ExecuteScan(concurrency::Transaction *transaction,
+                          std::vector<int> &results, storage::DataTable *table,
+                          int id);
 
  private:
   static planner::ProjectInfo *MakeProjectInfoFromTuple(

@@ -67,6 +67,12 @@ void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
         TransactionTestsUtil::ExecuteUpdate(transaction, table, id, value);
         break;
       }
+      case TXN_OP_SCAN: {
+        LOG_TRACE("Execute Scan");
+        TransactionTestsUtil::ExecuteScan(transaction, schedule->results, table,
+                                          id);
+        break;
+      }
       case TXN_OP_ABORT: {
         LOG_TRACE("Abort");
         // Assert last operation
@@ -215,6 +221,39 @@ void FuzzyReadTest() {
   EXPECT_EQ(RESULT_ABORTED, schedule3.txn_result);
 }
 
+void PhantomTest() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+
+  TransactionSchedules schedules;
+  // Begin Scan for id>=1 at 0 ms, Insert (5, 0) at 500 ms, Commit at 1000 ms,
+  // should fail
+  TransactionSchedule schedule1;
+  schedule1.AddScan(0, 0);
+  schedule1.AddDoNothing(1000);
+  TransactionSchedule schedule2;
+  schedule2.AddInsert(5, 0, 500);
+  // Another txn scan again, should see the new val
+  TransactionSchedule schedule3;
+  schedule3.AddScan(0, 1500);
+  TransactionSchedule schedule4;
+  schedule4.AddScan(0, 0);
+
+  schedules.AddSchedule(&schedule1);
+  schedules.AddSchedule(&schedule2);
+  schedules.AddSchedule(&schedule3);
+  schedules.AddSchedule(&schedule4);
+
+  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
+                     &schedules);
+
+  EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
+  EXPECT_EQ(RESULT_SUCCESS, schedule1.txn_result);
+  EXPECT_EQ(11, schedule3.results.size());
+  EXPECT_EQ(10, schedule4.results.size());
+}
+
 TEST_F(TransactionTests, TransactionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -246,7 +285,7 @@ TEST_F(TransactionTests, SerializableTest) {
   DirtyWriteTest();
   DirtyReadTest();
   FuzzyReadTest();
-  // PhantomTest();
+  PhantomTest();
 }
 
 }  // End test namespace
