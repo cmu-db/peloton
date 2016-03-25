@@ -51,6 +51,8 @@ class TransactionManager {
 
   virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
+  void SetTransactionResult(const Result result) { current_txn->SetResult(result); }
+
   Transaction *BeginTransaction() {
     Transaction *txn =
         new Transaction(GetNextTransactionId(), GetNextCommitId());
