@@ -105,7 +105,7 @@ bool DeleteExecutor::DExecute() {
     if (transaction_manager.IsOwner(tuple_txn_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
-      transaction_manager.SetOwnerDeleteVisibility(tile_group_id, physical_tuple_id);
+      transaction_manager.SetDeleteVisibility(tile_group_id, physical_tuple_id);
        // Set MVCC info
       // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
       // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
