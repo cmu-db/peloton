@@ -60,13 +60,13 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[1].txn_result == RESULT_SUCCESS &&
-                 schedules[2].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[1].txn_result == RESULT_SUCCESS &&
-                 schedules[2].txn_result == RESULT_ABORTED) ||
-                (schedules[1].txn_result == RESULT_ABORTED &&
-                 schedules[2].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_ABORTED) ||
+                (schedules[0].txn_result == RESULT_ABORTED &&
+                 schedules[1].txn_result == RESULT_SUCCESS));
   }
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -83,53 +83,37 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[1].txn_result == RESULT_SUCCESS &&
-                 schedules[2].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[1].txn_result == RESULT_SUCCESS &&
-                 schedules[2].txn_result == RESULT_ABORTED) ||
-                (schedules[1].txn_result == RESULT_ABORTED &&
-                 schedules[2].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
+                 schedules[1].txn_result == RESULT_ABORTED) ||
+                (schedules[0].txn_result == RESULT_ABORTED &&
+                 schedules[1].txn_result == RESULT_SUCCESS));
     schedules.clear();
   }
 }
 
 void DirtyReadTest() {
-  //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  //  std::unique_ptr<storage::DataTable> table(
-  //      TransactionTestsUtil::CreateTable());
-  //
-  //  TransactionSchedules schedules;
-  //
-  //  // 0 ms         T1 updates (0, ?) to (0, 1)
-  //  // 500 ms       T2 reads (0, ?)
-  //  // 1000 ms      T1 commits
-  //  // Insert (1, 1) at 500 ms, commit at 1500 ms
-  //  TransactionSchedule schedule1;
-  //  schedule1.AddInsert(10, 1, 500);
-  //  schedule1.AddDoNothing(1500);
-  //  // Start transaction at 0 ms, but read at 2000 ms, should read nothing
-  //  TransactionSchedule schedule2;
-  //  schedule2.AddDoNothing(0);
-  //  schedule2.AddRead(10, 2000);
-  //  // Read 1 at 1000 ms, should not read the uncommitted version
-  //  TransactionSchedule schedule3;
-  //  schedule3.AddRead(10, 1000);
-  //  // Read 1 at 2000 ms, should read the committed version
-  //  TransactionSchedule schedule4;
-  //  schedule4.AddRead(10, 2000);
-  //
-  //  schedules.AddSchedule(&schedule1);
-  //  schedules.AddSchedule(&schedule2);
-  //  schedules.AddSchedule(&schedule3);
-  //  schedules.AddSchedule(&schedule4);
-  //
-  //  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
-  //                     &schedules);
-  //
-  //  EXPECT_EQ(-1, schedule2.results[0]);
-  //  EXPECT_EQ(-1, schedule3.results[0]);
-  //  EXPECT_EQ(1, schedule4.results[0]);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+
+      // T1 updates (0, ?) to (0, 1)
+      // T2 reads (0, ?)
+      // T1 commit
+      // T2 commit
+      scheduler.AddUpdate(0, 0, 1);
+      scheduler.AddRead(1, 0);
+      scheduler.AddCommit(0);
+      scheduler.AddCommit(1);
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+    }
 }
 
 void FuzzyReadTest() {
@@ -248,7 +232,7 @@ TEST_F(TransactionTests, AbortTest) {
 }
 
 TEST_F(TransactionTests, SerializableTest) {
-  //  DirtyWriteTest();
+    DirtyWriteTest();
   //  DirtyReadTest();
   //  FuzzyReadTest();
   //  PhantomTes();

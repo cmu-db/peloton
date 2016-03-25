@@ -236,5 +236,6 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
   }
   return true;
 }
+
 }
 }

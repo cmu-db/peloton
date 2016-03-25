@@ -60,7 +60,6 @@ enum txn_op_t {
   TXN_OP_DELETE,
   TXN_OP_SCAN,
   TXN_OP_ABORT,
-  TXN_OP_BEGIN,
   TXN_OP_COMMIT
 };
 
@@ -117,16 +116,28 @@ class TransactionThread {
         table(table_),
         cur_seq(0),
         go(false) {
-    std::thread thread(&TransactionThread::RunLoop, this);
-    thread.detach();
+    LOG_TRACE("Thread has %d ops", (int)sched->operations.size());
   }
 
   void RunLoop() {
-    while (!go) {
+    while (true) {
+      while (!go) {
+        std::chrono::milliseconds sleep_time(1);
+        std::this_thread::sleep_for(sleep_time);
+      }
+        ;
       ExecuteNext();
+      if (cur_seq == (int)schedule->operations.size()) {
+        go = false;
+        return;
+      }
       go = false;
-      if (cur_seq == (int)schedule->operations.size()) break;
     }
+  }
+
+  void Run() {
+    std::thread thread(&TransactionThread::RunLoop, this);
+    thread.detach();
   }
 
   void ExecuteNext() {
@@ -134,6 +145,9 @@ class TransactionThread {
     txn_op_t op = schedule->operations[cur_seq].op;
     int id = schedule->operations[cur_seq].id;
     int value = schedule->operations[cur_seq].value;
+
+    if (cur_seq == 0)
+      txn = txn_manager->BeginTransaction();
 
     // Execute the operation
     switch (op) {
@@ -170,18 +184,15 @@ class TransactionThread {
         schedule->txn_result = txn_manager->AbortTransaction();
         break;
       }
-      case TXN_OP_BEGIN: {
-        assert(cur_seq == 0);
-        txn = txn_manager->BeginTransaction();
-        break;
-      }
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction();
+        break;
       }
     }
 
     cur_seq++;
   }
+
   TransactionSchedule *schedule;
   concurrency::TransactionManager *txn_manager;
   storage::DataTable *table;
@@ -204,10 +215,17 @@ class TransactionScheduler {
     for (int i = 0; i < (int)schedules.size(); i++) {
       tthreads.emplace_back(&schedules[i], table, txn_manager);
     }
+    for (int i = 0; i < (int)schedules.size(); i++) {
+      tthreads[i].Run();
+    }
     for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-      tthreads[itr->first].go = true;
-      while (tthreads[itr->first].go)
-        ;
+      LOG_TRACE("Execute %d", (int)itr->second);
+      tthreads[itr->second].go = true;
+      while (tthreads[itr->second].go) {
+        std::chrono::milliseconds sleep_time(1);
+        std::this_thread::sleep_for(sleep_time);
+      }
+      LOG_TRACE("Done %d", (int)itr->second);
     }
   }
 
@@ -238,11 +256,6 @@ class TransactionScheduler {
 
   void AddCommit(int txn_id) {
     schedules[txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
-    sequence[time++] = txn_id;
-  }
-
-  void AddBegin(int txn_id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_BEGIN, 0, 0);
     sequence[time++] = txn_id;
   }
 
