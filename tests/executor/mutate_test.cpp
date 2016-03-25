@@ -419,7 +419,7 @@ TEST_F(MutateTests, UpdateTest) {
   EXPECT_EQ(tuple_cnt, 10);
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(2, 2);
+      new expression::TupleValueExpression(0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetDoubleValue(23.5));
