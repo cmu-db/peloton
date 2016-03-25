@@ -77,6 +77,7 @@ struct TransactionSchedule {
   std::vector<TransactionOperation> operations;
   std::vector<int> times;
   std::vector<int> results;
+  bool txn_result;
   void AddInsert(int id, int value, int time) {
     operations.emplace_back(TXN_OP_INSERT, id, value);
     times.push_back(time);
