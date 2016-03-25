@@ -37,6 +37,8 @@ class OptimisticTransactionManager : public TransactionManager {
 
   virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
+  virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id);
+
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
