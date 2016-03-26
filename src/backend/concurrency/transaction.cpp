@@ -24,7 +24,7 @@ namespace concurrency {
 
 void Transaction::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) == rw_set.at(tile_group_id).end()) {
+    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
     //RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     assert(rw_set.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
                    rw_set.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
@@ -36,7 +36,7 @@ void Transaction::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) 
 
 void Transaction::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) == rw_set.at(tile_group_id).end()) {
+    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
     RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     if (type == RW_TYPE_READ) {
       type = RW_TYPE_UPDATE;
@@ -60,7 +60,7 @@ void Transaction::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id)
 
 void Transaction::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) == rw_set.at(tile_group_id).end()) {
+    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
     //RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     assert(false);
   } else {
@@ -70,7 +70,7 @@ void Transaction::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id
 
 void Transaction::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) == rw_set.at(tile_group_id).end()) {
+    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
     RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     if (type == RW_TYPE_READ) {
       type = RW_TYPE_DELETE;
