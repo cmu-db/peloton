@@ -299,29 +299,29 @@ void WriteAheadFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
  * @param destination
  * @param source
  */
-void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination,
-                                     concurrency::Transaction *source) {
-  // This is the local transaction
-  auto inserted_tuples = source->GetInsertedTuples();
-  // Record the inserts in recovery txn
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    for (auto tuple_slot : entry.second) {
-      destination->RecordInsert(ItemPointer(tile_group_id, tuple_slot));
-    }
-  }
+void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination __attribute__((unused)),
+                                     concurrency::Transaction *source __attribute__((unused))) {
+  // // This is the local transaction
+  // auto inserted_tuples = source->GetInsertedTuples();
+  // // Record the inserts in recovery txn
+  // for (auto entry : inserted_tuples) {
+  //   oid_t tile_group_id = entry.first;
+  //   for (auto tuple_slot : entry.second) {
+  //     destination->RecordInsert(ItemPointer(tile_group_id, tuple_slot));
+  //   }
+  // }
 
-  // Record the deletes in recovery txn
-  auto deleted_tuples = source->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    oid_t tile_group_id = entry.first;
-    for (auto tuple_slot : entry.second) {
-      destination->RecordDelete(ItemPointer(tile_group_id, tuple_slot));
-    }
-  }
+  // // Record the deletes in recovery txn
+  // auto deleted_tuples = source->GetDeletedTuples();
+  // for (auto entry : deleted_tuples) {
+  //   oid_t tile_group_id = entry.first;
+  //   for (auto tuple_slot : entry.second) {
+  //     destination->RecordDelete(ItemPointer(tile_group_id, tuple_slot));
+  //   }
+  // }
 
   // Clear inserted/deleted tuples from txn, just in case
-  source->ResetState();
+  //source->ResetState();
 }
 
 /**
@@ -353,35 +353,35 @@ void WriteAheadFrontendLogger::AbortTuplesFromRecoveryTable() {
  * @brief Abort tuples inside txn
  * @param txn
  */
-void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
+void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn __attribute__((unused))) {
   LOG_INFO("Abort txd id %d object in table", (int)txn->GetTransactionId());
 
-  auto &manager = catalog::Manager::GetInstance();
+  //auto &manager = catalog::Manager::GetInstance();
 
   // Record the aborted inserts in recovery txn
-  auto inserted_tuples = txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
+  // auto inserted_tuples = txn->GetInsertedTuples();
+  // for (auto entry : inserted_tuples) {
+  //   oid_t tile_group_id = entry.first;
+  //   auto tile_group = manager.GetTileGroup(tile_group_id);
 
-    // for (auto tuple_slot : entry.second) {
-    //   tile_group.get()->AbortInsertedTuple(tuple_slot);
-    // }
-  }
+  //   // for (auto tuple_slot : entry.second) {
+  //   //   tile_group.get()->AbortInsertedTuple(tuple_slot);
+  //   // }
+  // }
 
-  // Record the aborted deletes in recovery txn
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : txn->GetDeletedTuples()) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
+  // // Record the aborted deletes in recovery txn
+  // auto deleted_tuples = txn->GetDeletedTuples();
+  // for (auto entry : txn->GetDeletedTuples()) {
+  //   oid_t tile_group_id = entry.first;
+  //   auto tile_group = manager.GetTileGroup(tile_group_id);
 
-    // for (auto tuple_slot : entry.second) {
-    //   tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
-    // }
-  }
+  //   // for (auto tuple_slot : entry.second) {
+  //   //   tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
+  //   // }
+  // }
 
   // Clear inserted/deleted tuples from txn, just in case
-  txn->ResetState();
+  //txn->ResetState();
 }
 
 /**
