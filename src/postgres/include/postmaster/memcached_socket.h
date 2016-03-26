@@ -3,9 +3,11 @@
 //
 
 #ifndef MEMCACHED_SOCKET_H
-#define MEMACAHED_SOCKET_H
+#define MEMCACHED_SOCKET_H
 
 #include "../libpq/libpq-be.h"
+
+#define MC_SOCK_BUFFER_SIZE_BYTES 8
 
 // memcached db login credentials
 extern char *memcached_dbname;

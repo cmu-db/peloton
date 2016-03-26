@@ -3866,20 +3866,16 @@ bool MemcachedSocket::refill_buffer() {
 
   ssize_t bytes_read;
 
-  // check if bytes are leftover from before
-  if (buf_ptr > 0) {
-    // buf ptr not at head
-    if (buf_size > buf_ptr) {
-      // buffer has bytes left,
-      // move them to the head of the buffer
-      memmove(&buffer[0], &buffer[buf_ptr],
-              buf_size - buf_ptr);
-      buf_size -= buf_ptr;
-    } else {
-      // our buffer is to be emptied
-      buf_ptr = buf_size = 0;
-    }
+  // our buffer is to be emptied
+  buf_ptr = buf_size = 0;
 
+  /* edge case where buffer ends with \r,
+   * move it to head
+   */
+  if (buffer.back() == '\r') {
+    buffer[0] = '\r';
+    buf_ptr = 1;
+    buf_size = 1;
   }
 
   // return explicitly
@@ -3909,7 +3905,7 @@ bool MemcachedSocket::refill_buffer() {
     // read success, update buffer size
     buf_size += bytes_read;
 
-    // read from beginning of buffer
+    // reset buffer ptr, to cover special case
     buf_ptr = 0;
     return true;
   }
@@ -3920,28 +3916,41 @@ bool MemcachedSocket::read_line(std::string &new_line) {
   for (;;) {
     // check if buffer has been exhausted
     if (buf_ptr >= buf_size) {
+      printf("\n Refilling Buffer \n");
       if(!refill_buffer()) {
         // failure, propagate
         return false;
       }
+
+      printf("\n New Buffer: %s", buffer.c_str());
     }
 
+    // printf("start buf_ptr:%zu, buf_size:%zu\n", buf_ptr, buf_size);
     // search the buffer for \r\n
     auto pos = buffer.find(rn, buf_ptr);
     if ( pos == std::string::npos ) {
       // no \r\n found, concat buf to new_line and continue
       // start from current location, go till end
-      new_line += buffer.substr(buf_ptr, buf_size);
+      size_t substr_size = buf_size-buf_ptr;
+      // edge case, last char \r? ignore it temporarily
+      if (buffer.back() == '\r') {
+        substr_size--;
+      }
+      new_line += buffer.substr(buf_ptr, substr_size);
       // update buf ptr
       buf_ptr = buf_size;
       // continue till we hit \r\n
       continue;
     } else {
+      // printf("Substring:%s (NL)\n", buffer.substr(buf_ptr, pos).c_str());
       // update new line till '\r'
-      new_line += buffer.substr(buf_ptr, pos);
+      new_line += buffer.substr(buf_ptr, pos-buf_ptr);
 
+      // printf("buf_ptr: %zu, pos: pos-2 char:%c\n", buffer[pos-2]);
       // update buf ptr location to after \r\n
       buf_ptr = pos+2;
+
+      // printf("New line: %s, Post read, buf_ptr:%zu, buf_size:%zu\n", new_line.c_str(), buf_ptr, buf_size);
 
       return true;
     }
@@ -4266,6 +4275,8 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
   /*
    * Non-error queries loop here.
    */
+
+  int i = 0;
   for (;;) {
     /*
      * (1) check for any other interesting events that happened while we
@@ -4287,8 +4298,6 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       // close the socket
       mc_sock.close_socket();
 
-      free(memcached_dbname);
-      free(memcached_username);
       proc_exit(0);
       return;
     }
@@ -4300,9 +4309,9 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     // TODo: check when to erase
     query_line.clear();
     if(mc_sock.read_line(query_line)) {
-      printf("\nRead line: %s\n", query_line.c_str());
+      printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
     } else {
-      printf("\nRead line failed\n");
+      printf("\nRead line failed, terminating thread\n");
       // terminate the thread
       terminate = true;
     }

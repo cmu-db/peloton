@@ -51,8 +51,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define MC_SOCK_BUFFER_SIZE_BYTES 8192
-
 /* ----------------------------------------------------------------
  *				Section 1:	variable-length datatypes (TOAST support)
  * ----------------------------------------------------------------
