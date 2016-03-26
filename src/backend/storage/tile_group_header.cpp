@@ -43,9 +43,10 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type, const int &tup
     SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     SetBeginCommitId(tuple_slot_id, MAX_CID);
     SetEndCommitId(tuple_slot_id, MAX_CID);
-    SetInsertCommit(tuple_slot_id, false);
-    SetDeleteCommit(tuple_slot_id, false);
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+
+    SetInsertCommit(tuple_slot_id, false); // unused
+    SetDeleteCommit(tuple_slot_id, false); // unused
   }
 }
 

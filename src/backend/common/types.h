@@ -752,6 +752,10 @@ struct ItemPointer {
   ItemPointer() : block(INVALID_OID), offset(INVALID_OID) {}
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
+
+  bool IsNull() {
+    return (block == INVALID_OID && offset == INVALID_OID);
+  }
 };
 
 extern ItemPointer INVALID_ITEMPOINTER;

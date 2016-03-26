@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/ssi_transaction_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class OptimisticTransactionManager : public TransactionManager {
+class SsiTransactionManager : public TransactionManager {
  public:
-  OptimisticTransactionManager() {}
+  SsiTransactionManager() {}
 
-  virtual ~OptimisticTransactionManager() {}
+  virtual ~SsiTransactionManager() {}
 
-  static OptimisticTransactionManager &GetInstance();
+  static SsiTransactionManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,

@@ -18,6 +18,9 @@
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace concurrency {
@@ -43,21 +46,25 @@ class TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid) = 0;
 
-  virtual bool IsOwner(const txn_id_t &tuple_txn_id) = 0;
+  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid) = 0;
+  virtual bool IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) = 0;
 
-  virtual bool RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  virtual bool RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location) = 0;
 
-  virtual bool RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual bool AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) = 0;
 
-  virtual bool RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location) = 0;
+
+  virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   void SetTransactionResult(const Result result) { current_txn->SetResult(result); }
 
