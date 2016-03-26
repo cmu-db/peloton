@@ -24,8 +24,8 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 std::vector<ConcurrencyType> TEST_TYPES = {
-    // CONCURRENCY_TYPE_OCC,
-    CONCURRENCY_TYPE_2PL
+    CONCURRENCY_TYPE_OCC
+    // CONCURRENCY_TYPE_2PL
 };
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
