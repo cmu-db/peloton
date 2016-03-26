@@ -23,6 +23,9 @@
 #include "boost/date_time/posix_time/ptime.hpp"
 #include "boost/date_time/posix_time/conversion.hpp"
 
+// The number of microseconds in a day
+static const int64_t MICROS_PER_DAY = 86400000000;
+
 static const boost::posix_time::ptime EPOCH(boost::gregorian::date(2000, 1, 1));
 static const int64_t GREGORIAN_EPOCH =
     -12212553600000000;  // 1583-01-01 00:00:00
@@ -267,6 +270,20 @@ inline Value Value::CallUnary<FUNC_SINCE_EPOCH_MICROSECOND>() const {
   }
   int64_t epoch_micros = GetTimestamp();
   return GetBigIntValue(epoch_micros);
+}
+
+/** implement the timestamp TO_TIMESTAMP from DAYs function **/
+template<>
+inline Value Value::CallUnary<FUNC_TO_TIMESTAMP_DAY>() const {
+  if (IsNull()) {
+    return *this;
+  }
+  int64_t days = CastAsBigIntAndGetValue();
+  int64_t micros = days * MICROS_PER_DAY;
+  if (micros / MICROS_PER_DAY != days) {
+    // This is an overflow error!
+  }
+  return GetTimestampValue(micros);
 }
 
 /** implement the timestamp TO_TIMESTAMP from SECONDs function **/
