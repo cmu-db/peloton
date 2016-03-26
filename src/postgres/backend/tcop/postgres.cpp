@@ -3893,7 +3893,7 @@ bool MemcachedSocket::refill_buffer() {
       // otherwise, report error
       ereport(COMMERROR,
               (errcode_for_socket_access(),
-                  errmsg("could not receive data from client: %m")));
+                  errmsg("MC_SOCKET: could not receive data from client: %m")));
       return false;
     }
 
@@ -3916,13 +3916,13 @@ bool MemcachedSocket::read_line(std::string &new_line) {
   for (;;) {
     // check if buffer has been exhausted
     if (buf_ptr >= buf_size) {
-      printf("\n Refilling Buffer \n");
+      // printf("\n Refilling Buffer \n");
       if(!refill_buffer()) {
         // failure, propagate
         return false;
       }
 
-      printf("\n New Buffer: %s", buffer.c_str());
+      // printf("\n New Buffer: %s", buffer.c_str());
     }
 
     // printf("start buf_ptr:%zu, buf_size:%zu\n", buf_ptr, buf_size);
@@ -3954,6 +3954,32 @@ bool MemcachedSocket::read_line(std::string &new_line) {
 
       return true;
     }
+  }
+}
+
+bool MemcachedSocket::write_response(const std::string &response) {
+  ssize_t result;
+  for (;;) {
+    result = write(port->sock, &response[0], response.size());
+    if (result < 0) {
+      if (errno == EINTR) {
+        // interrupts are ok, try again
+        continue;
+      } else {
+        // fatal errors
+        return false;
+      }
+    }
+
+    // weird edge case?
+    if (result == 0 && response.size() !=0) {
+      // fatal
+      return false;
+    }
+
+
+    // we are ok
+    return true;
   }
 }
 
@@ -4310,6 +4336,12 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     query_line.clear();
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
+
+      // echo response
+      if(!mc_sock.write_response(query_line+"\r\n")) {
+        printf("\nWrite line failed, terminating thread\n");
+        terminate = true;
+      }
     } else {
       printf("\nRead line failed, terminating thread\n");
       // terminate the thread

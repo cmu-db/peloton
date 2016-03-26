@@ -7,7 +7,7 @@
 
 #include "../libpq/libpq-be.h"
 
-#define MC_SOCK_BUFFER_SIZE_BYTES 8
+#define MC_SOCK_BUFFER_SIZE_BYTES 8192
 
 // memcached db login credentials
 extern char *memcached_dbname;
@@ -40,11 +40,19 @@ public:
     }
   }
 
+  // refill read buffer once it has been read completely
   bool refill_buffer();
 
   // store a line in buffer into new_line, return false
   // if read failed
   bool read_line(std::string &new_line);
+
+  /* write the entire, well-formed, response for a query,
+   * indicate success or failure
+   */
+  bool write_response(const std::string &response);
+
+
 };
 
 #endif
