@@ -24,6 +24,7 @@
 #include "nodes/plannodes.h"
 #include "storage/procsignal.h"
 #include "utils/guc.h"
+#include "libpq/libpq-be.h"
 
 
 /* Required daylight between max_stack_depth and the kernel limit, in bytes */
@@ -78,9 +79,7 @@ extern void PostgresMain(int argc, char *argv[],
 extern void PostgresMain(int argc, char *argv[],
 												 const char *dbname,
 												 const char *username) pg_attribute_noreturn();
-extern void MemcachedMain(int argc, char *argv[],
-												 const char *dbname,
-												 const char *username) pg_attribute_noreturn();
+extern void MemcachedMain(int argc, char *argv[], Port *port);
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);

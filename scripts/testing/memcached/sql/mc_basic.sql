@@ -28,3 +28,5 @@ INSERT INTO Persons
 VALUES ('3', 'san3', 'sid3', 'centr3e', 'pefeitrwt');
 
 SELECT * FROM Persons;
+
+SELECT * FROM Persons WHERE personid=1;

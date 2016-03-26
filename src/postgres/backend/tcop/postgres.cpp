@@ -42,9 +42,9 @@
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
-#include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
+#include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "optimizer/planner.h"
@@ -80,6 +80,9 @@
 
 // TODO: Peloton Changes
 #include "backend/logging/log_manager.h"
+
+// TODO: Memcached Changes
+#include "postmaster/memcached.h"
 
 /* ----------------
  *		global variables
@@ -202,6 +205,9 @@ static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
+
+// memcached helpers
+static void parse_select_result_cols(StringInfoData *buf, std::string& result);
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
@@ -3305,7 +3311,6 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
   //#else
   //  InitProcess();
   //#endif
-
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
@@ -3419,7 +3424,6 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
    * unblock in AbortTransaction() because the latter is only called if we
    * were inside a transaction.
    */
-
   if (sigsetjmp(local_sigjmp_buf, 1) != 0) {
     /*
      * NOTE: if you are tempted to add more code in this if-block,
@@ -3860,12 +3864,139 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
   } /* end of input-reading loop */
 }
 
-void MemcachedMain(int argc, char *argv[], const char *dbname,
-                   const char *username) {
-  int firstchar;
-  StringInfoData input_message;
+/* Memcached socket function implementations */
+bool MemcachedSocket::refill_buffer() {
+
+  ssize_t bytes_read;
+
+  // our buffer is to be emptied
+  buf_ptr = buf_size = 0;
+
+  /* edge case where buffer ends with \r,
+   * move it to head
+   */
+  if (buffer.back() == '\r') {
+    buffer[0] = '\r';
+    buf_ptr = 1;
+    buf_size = 1;
+  }
+
+  // return explicitly
+  for (;;) {
+    //  try to fill the available space in the buffer
+    bytes_read = read(port->sock, &buffer[buf_ptr],
+                      MC_SOCK_BUFFER_SIZE_BYTES - buf_size );
+
+    if (bytes_read < 0 ) {
+      if ( errno == EINTR) {
+        // interrupts are OK
+        continue;
+      }
+
+      // otherwise, report error
+      ereport(COMMERROR,
+              (errcode_for_socket_access(),
+                  errmsg("MC_SOCKET: could not receive data from client: %m")));
+      return false;
+    }
+
+    if (bytes_read == 0) {
+      // EOF, close and return
+      return false;
+    }
+
+    // read success, update buffer size
+    buf_size += bytes_read;
+
+    // reset buffer ptr, to cover special case
+    buf_ptr = 0;
+    return true;
+  }
+}
+
+bool MemcachedSocket::read_line(std::string &new_line) {
+  std::string rn = "\r\n";
+  for (;;) {
+    // check if buffer has been exhausted
+    if (buf_ptr >= buf_size) {
+      // printf("\n Refilling Buffer \n");
+      if(!refill_buffer()) {
+        // failure, propagate
+        return false;
+      }
+
+      // printf("\n New Buffer: %s", buffer.c_str());
+    }
+
+    // printf("start buf_ptr:%zu, buf_size:%zu\n", buf_ptr, buf_size);
+    // search the buffer for \r\n
+    auto pos = buffer.find(rn, buf_ptr);
+    if ( pos == std::string::npos ) {
+      // no \r\n found, concat buf to new_line and continue
+      // start from current location, go till end
+      size_t substr_size = buf_size-buf_ptr;
+      // edge case, last char \r? ignore it temporarily
+      if (buffer.back() == '\r') {
+        substr_size--;
+      }
+      new_line += buffer.substr(buf_ptr, substr_size);
+      // update buf ptr
+      buf_ptr = buf_size;
+      // continue till we hit \r\n
+      continue;
+    } else {
+      // printf("Substring:%s (NL)\n", buffer.substr(buf_ptr, pos).c_str());
+      // update new line till '\r'
+      new_line += buffer.substr(buf_ptr, pos-buf_ptr);
+
+      // printf("buf_ptr: %zu, pos: pos-2 char:%c\n", buffer[pos-2]);
+      // update buf ptr location to after \r\n
+      buf_ptr = pos+2;
+
+      // printf("New line: %s, Post read, buf_ptr:%zu, buf_size:%zu\n", new_line.c_str(), buf_ptr, buf_size);
+
+      return true;
+    }
+  }
+}
+
+bool MemcachedSocket::write_response(const std::string &response) {
+  ssize_t result;
+  for (;;) {
+    result = write(port->sock, &response[0], response.size());
+    if (result < 0) {
+      if (errno == EINTR) {
+        // interrupts are ok, try again
+        continue;
+      } else {
+        // fatal errors
+        return false;
+      }
+    }
+
+    // weird edge case?
+    if (result == 0 && response.size() !=0) {
+      // fatal
+      return false;
+    }
+
+
+    // we are ok
+    return true;
+  }
+}
+
+void MemcachedMain(int argc, char *argv[], Port *port) {
+  // don't terminate yet
+  bool terminate = false;
+  auto mc_sock = MemcachedSocket(port);
+  std::string query_line, query_result;
+
   sigjmp_buf local_sigjmp_buf;
   volatile bool send_ready_for_query = true;
+
+  const char *dbname = port->database_name;
+  const char *username = port->user_name;
 
   /* Initialize startup process environment if necessary. */
   if (!IsUnderPostmaster) InitStandaloneProcess(argv[0]);
@@ -3888,7 +4019,7 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
     if (dbname == NULL)
       ereport(FATAL,
               (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-               errmsg("%s: no database nor user name specified", progname)));
+                  errmsg("%s: no database nor user name specified", progname)));
   }
 
   /* Acquire configuration parameters, unless inherited from postmaster */
@@ -3998,7 +4129,6 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
   //#else
   //  InitProcess();
   //#endif
-
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
@@ -4059,24 +4189,6 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
   process_session_preload_libraries();
 
   /*
-   * Send this backend's cancellation info to the frontend.
-   */
-  if (whereToSendOutput == DestRemote &&
-      PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2) {
-    StringInfoData buf;
-
-    pq_beginmessage(&buf, 'K');
-    pq_sendint(&buf, (int32)MyProcPid, sizeof(int32));
-    pq_sendint(&buf, (int32)MyCancelKey, sizeof(int32));
-    pq_endmessage(&buf);
-    /* Need not flush since ReadyForQuery will do it. */
-  }
-
-  /* Welcome banner for standalone case */
-  if (whereToSendOutput == DestDebug)
-    printf("\nPostgreSQL stand-alone backend %s\n", PG_VERSION);
-
-  /*
    * Create the memory context we will use in the main loop.
    *
    * MessageContext is reset once per iteration of the main loop, ie, upon
@@ -4112,7 +4224,6 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
    * unblock in AbortTransaction() because the latter is only called if we
    * were inside a transaction.
    */
-
   if (sigsetjmp(local_sigjmp_buf, 1) != 0) {
     /*
      * NOTE: if you are tempted to add more code in this if-block,
@@ -4145,8 +4256,8 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
     /* Not reading from the client anymore. */
     DoingCommandRead = false;
 
-    /* Make sure libpq is in a good state */
-    pq_comm_reset();
+    //    /* Make sure libpq is in a good state */
+    //    pq_comm_reset();
 
     /* Report the error to the client and/or server log */
     EmitErrorReport();
@@ -4180,29 +4291,8 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
     MemoryContextSwitchTo(TopMemoryContext);
     FlushErrorState();
 
-    /*
-     * If we were handling an extended-query-protocol message, initiate
-     * skip till next Sync.  This also causes us not to issue
-     * ReadyForQuery (until we get Sync).
-     */
-    if (doing_extended_query_message) ignore_till_sync = true;
-
     /* We don't have a transaction command open anymore */
     xact_started = false;
-
-    /*
-     * If an error occurred while we were reading a message from the
-     * client, we have potentially lost track of where the previous
-     * message ends and the next one begins.  Even though we have
-     * otherwise recovered from the error, we cannot safely read any more
-     * messages from the client, so there isn't much we can do with the
-     * connection anymore.
-     */
-    if (pq_is_reading_msg())
-      ereport(
-          FATAL,
-          (errcode(ERRCODE_PROTOCOL_VIOLATION),
-           errmsg("terminating connection because protocol sync was lost")));
 
     /* Now we can allow interrupts again */
     RESUME_INTERRUPTS();
@@ -4211,89 +4301,14 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
   /* We can now handle ereport(ERROR) */
   PG_exception_stack = &local_sigjmp_buf;
 
-  if (!ignore_till_sync)
-    send_ready_for_query = true; /* initially, or after error */
-
   /*
    * Non-error queries loop here.
    */
+
+  int i = 0;
   for (;;) {
     /*
-     * At top of loop, reset extended-query-message flag, so that any
-     * errors encountered in "idle" state don't provoke skip.
-     */
-    doing_extended_query_message = false;
-
-    /*
-     * Release storage left over from prior query cycle, and create a new___
-     * query input buffer in the cleared MessageContext.
-     */
-    MemoryContextSwitchTo(MessageContext);
-    MemoryContextResetAndDeleteChildren(MessageContext);
-    // MemoryContextStats(TopSharedMemoryContext);
-    // MemoryContextStats(TopMemoryContext);
-
-    initStringInfo(&input_message);
-
-    /*
-     * (1) If we've reached idle state, tell the frontend we're ready for
-     * a new query.
-     *
-     * Note: this includes fflush()'ing the last of the prior output.
-     *
-     * This is also a good time to send collected statistics to the
-     * collector, and to update the PS stats display.  We avoid doing
-     * those every time through the message loop because it'd slow down
-     * processing of batched messages, and because we don't want to report
-     * uncommitted updates (that confuses autovacuum).  The notification
-     * processor wants a call too, if we are not in a transaction block.
-     */
-    if (send_ready_for_query) {
-      if (IsAbortedTransactionBlockState()) {
-        set_ps_display("idle in transaction (aborted)", false);
-        pgstat_report_activity(STATE_IDLEINTRANSACTION_ABORTED, NULL);
-      } else if (IsTransactionOrTransactionBlock()) {
-        set_ps_display("idle in transaction", false);
-        pgstat_report_activity(STATE_IDLEINTRANSACTION, NULL);
-      } else {
-        ProcessCompletedNotifies();
-        pgstat_report_stat(false);
-
-        set_ps_display("idle", false);
-        pgstat_report_activity(STATE_IDLE, NULL);
-      }
-
-      ReadyForQuery(whereToSendOutput);
-      send_ready_for_query = false;
-    }
-
-    /*
-     * (2) Allow asynchronous signals to be executed immediately if they
-     * come in while we are waiting for client input. (This must be
-     * conditional since we don't want, say, reads on behalf of COPY FROM
-     * STDIN doing the same thing.)
-     */
-    DoingCommandRead = true;
-
-    /*
-     * (3) read a command (loop blocks here)
-     */
-    firstchar = ReadCommand(&input_message);
-
-    /*
-     * (4) disable async signal conditions again.
-     *
-     * Query cancel is supposed to be a no-op when there is no query in
-     * progress, so if a query cancel arrived while we were idle, just
-     * reset QueryCancelPending. ProcessInterrupts() has that effect when
-     * it's called when DoingCommandRead is set, so check for interrupts
-     * before resetting DoingCommandRead.
-     */
-    CHECK_FOR_INTERRUPTS();
-    DoingCommandRead = false;
-
-    /*
-     * (5) check for any other interesting events that happened while we
+     * (1) check for any other interesting events that happened while we
      * slept.
      */
     if (got_SIGHUP) {
@@ -4301,120 +4316,77 @@ void MemcachedMain(int argc, char *argv[], const char *dbname,
       ProcessConfigFile(PGC_SIGHUP);
     }
 
+    /* check if we need to terminate */
+    if (terminate) {
+      // TODO: Peloton Changes
+      if (IsPostmasterEnvironment == true) {
+        MemoryContextDelete(MessageContext);
+        MemoryContextDelete(CacheMemoryContext);
+      }
+
+      // close the socket
+      mc_sock.close_socket();
+
+      proc_exit(0);
+      return;
+    }
+
     /*
-     * (6) process the command.  But ignore it if we're skipping till
+     * (2) process the command.  But ignore it if we're skipping till
      * Sync.
      */
-    if (ignore_till_sync && firstchar != EOF) continue;
+    // TODO: check when to erase
+    query_line.clear();
+    query_result.clear();
 
-    switch (firstchar) {
-      case 'Q': /* simple query */
-      {
-        const char *query_string;
-
-        /* Set statement_timestamp() */
-        SetCurrentStatementStartTimestamp();
-
-        query_string = pq_getmsgstring(&input_message);
-        pq_getmsgend(&input_message);
-
-        if (am_walsender)
-          exec_replication_command(query_string);
-        else {
-          // memcached version
-          auto mc_state = new MemcachedState();
-          exec_simple_query(query_string, mc_state);
-
-          printf("\n\n QUERY RESULT: %s\n", mc_state->result.c_str());
-          //do stuff with mc_state
-          delete mc_state;
-        }
-
-        send_ready_for_query = true;
-      } break;
-
-      case 'C': /* close */
-      {
-        int close_type;
-        const char *close_target;
-
-        forbidden_in_wal_sender(firstchar);
-
-        close_type = pq_getmsgbyte(&input_message);
-        close_target = pq_getmsgstring(&input_message);
-        pq_getmsgend(&input_message);
-
-        switch (close_type) {
-          case 'S':
-            if (close_target[0] != '\0')
-              DropPreparedStatement(close_target, false);
-            else {
-              /* special-case the unnamed statement */
-              drop_unnamed_stmt();
-            }
-            break;
-          case 'P': {
-            Portal portal;
-
-            portal = GetPortalByName(close_target);
-            if (PortalIsValid(portal)) PortalDrop(portal, false);
-          } break;
-          default:
-            ereport(ERROR,
-                    (errcode(ERRCODE_PROTOCOL_VIOLATION),
-                     errmsg("invalid CLOSE message subtype %d", close_type)));
-            break;
-        }
-
-        if (whereToSendOutput == DestRemote)
-          pq_putemptymessage('3'); /* CloseComplete */
-      } break;
-
-      /*
-       * 'X' means that the frontend is closing down the socket. EOF
-       * means unexpected loss of frontend connection. Either way,
-       * perform normal shutdown.
-       */
-      case 'X':
-      case EOF:
-
-        // TODO: Peloton Changes
-        if (IsPostmasterEnvironment == true) {
-          MemoryContextDelete(MessageContext);
-          MemoryContextDelete(CacheMemoryContext);
-        }
-
-        /*
-         * Reset whereToSendOutput to prevent ereport from attempting
-         * to send any more messages to client.
-         */
-        if (whereToSendOutput == DestRemote) whereToSendOutput = DestNone;
-
-        /*
-         * NOTE: if you are tempted to add more code here, DON'T!
-         * Whatever you had in mind to do should be set up as an
-         * on_proc_exit or on_shmem_exit callback, instead. Otherwise
-         * it will fail to be called during other backend-shutdown
-         * scenarios.
-         */
-        proc_exit(0);
-
-      case 'd': /* copy data */
-      case 'c': /* copy done */
-      case 'f': /* copy fail */
-
-        /*
-         * Accept but ignore these messages, per protocol spec; we
-         * probably got here because a COPY failed, and the frontend
-         * is still sending data.
-         */
-        break;
-
-      default:
-        ereport(FATAL, (errcode(ERRCODE_PROTOCOL_VIOLATION),
-                        errmsg("invalid frontend message type %d", firstchar)));
+    if(mc_sock.read_line(query_line)) {
+      printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
+      auto mc_state = new MemcachedState();
+      exec_simple_query(query_line.c_str(), mc_state);
+      // echo response
+      parse_select_result_cols(&mc_state->result, query_result);
+      // printf("\nMC_RESULT:%s\n",query_result.c_str());
+      if(!mc_sock.write_response(query_result+"\r\n")) {
+        printf("\nWrite line failed, terminating thread\n");
+        terminate = true;
+      }
+      // clear the result data
+      pfree(mc_state->result.data);
+      delete mc_state;
+    } else {
+      printf("\nRead line failed, terminating thread\n");
+      // terminate the thread
+      terminate = true;
     }
+
   } /* end of input-reading loop */
+}
+
+/* Print all the attribute values for query result
+ * in StringInfoData format
+ */
+static void parse_select_result_cols(StringInfoData *buf, std::string& result) {
+  //  printf("Reached\n");
+  //  for (int i=0; i< buf->len; i++){
+  //    printf("%d\t", buf->data[i]);
+  //  }
+  //  printf("\n");
+  // base 2 int, 16 bits
+  buf->cursor = 0;
+  buf->len = 2;
+  int nattrs = pq_getmsgint(buf, 2);
+  // printf("\nnattrs:%d\n", nattrs);
+  int col_length;
+  for (int i=0; i < nattrs; i++) {
+      buf->len += 4;
+      col_length = pq_getmsgint(buf, 4);
+      // printf("\nresult:%d\n", col_length);
+
+      buf->len += col_length;
+      result += pq_getmsgbytes(buf, col_length);
+      result += "\t";
+      // printf("\nresult:%s\n", result.c_str());
+  }
 }
 
 /*
