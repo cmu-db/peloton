@@ -4610,6 +4610,10 @@ static void ExitPostmaster(int status) {
    * MUST		-- vadim 05-10-1999
    */
 
+  // free memcached db data
+  free(memcached_dbname);
+  free(memcached_username);
+
   proc_exit(status);
 }
 
