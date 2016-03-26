@@ -339,7 +339,7 @@ Result PessimisticTransactionManager::CommitTransaction() {
   Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
-
+  released_rdlock.clear();
   return ret;
 }
 
@@ -401,6 +401,8 @@ Result PessimisticTransactionManager::AbortTransaction() {
 
   delete current_txn;
   current_txn = nullptr;
+
+  released_rdlock.clear();
   return Result::RESULT_ABORTED;
 }
 
