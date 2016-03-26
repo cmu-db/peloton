@@ -136,7 +136,7 @@
 //#endif
 
 // TODO: Memcached Changes
-#include "postmaster/memcached_socket.h"
+#include "postmaster/memcached.h"
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
