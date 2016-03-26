@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace concurrency {
@@ -29,19 +30,19 @@ class OptimisticTransactionManager : public TransactionManager {
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual bool IsOwner(const txn_id_t &tuple_txn_id);
+  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid);
+  virtual bool IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id);
+
+  virtual bool AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location);
 
   virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
 
