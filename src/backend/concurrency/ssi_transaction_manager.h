@@ -32,28 +32,34 @@ class SsiTransactionManager : public TransactionManager {
 
   virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsAccessable(storage::TileGroup *tile_group,
+                            const oid_t &tuple_id);
 
-  virtual bool AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id);
+  virtual bool AcquireTuple(storage::TileGroup *tile_group,
+                            const oid_t &physical_tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location);
+  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id,
+                            const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id, const ItemPointer &new_location);
+  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+                             const ItemPointer &new_location);
 
-  virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void SetDeleteVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
 
-  virtual void SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void SetUpdateVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
-
 };
 }
 }

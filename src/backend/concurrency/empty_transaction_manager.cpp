@@ -20,9 +20,12 @@
 // }
 
 // // Visibility check
-// bool EmptyTransactionManager::IsVisible(const txn_id_t &tuple_txn_id __attribute__((unused)),
-//                                               const cid_t &tuple_begin_cid __attribute__((unused)),
-//                                               const cid_t &tuple_end_cid __attribute__((unused))) {
+// bool EmptyTransactionManager::IsVisible(const txn_id_t &tuple_txn_id
+// __attribute__((unused)),
+//                                               const cid_t &tuple_begin_cid
+//                                               __attribute__((unused)),
+//                                               const cid_t &tuple_end_cid
+//                                               __attribute__((unused))) {
 //   return true;
 // }
 

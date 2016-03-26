@@ -22,21 +22,25 @@
 namespace peloton {
 namespace concurrency {
 
-void Transaction::RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
-    //RWType &type = rw_set.at(tile_group_id).at(tuple_id);
+void Transaction::RecordRead(const oid_t &tile_group_id,
+                             const oid_t &tuple_id) {
+  if (rw_set.find(tile_group_id) != rw_set.end() &&
+      rw_set.at(tile_group_id).find(tuple_id) !=
+          rw_set.at(tile_group_id).end()) {
+    // RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     assert(rw_set.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
-                   rw_set.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
+           rw_set.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
     return;
   } else {
     rw_set[tile_group_id][tuple_id] = RW_TYPE_READ;
   }
 }
 
-void Transaction::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
+void Transaction::RecordWrite(const oid_t &tile_group_id,
+                              const oid_t &tuple_id) {
+  if (rw_set.find(tile_group_id) != rw_set.end() &&
+      rw_set.at(tile_group_id).find(tuple_id) !=
+          rw_set.at(tile_group_id).end()) {
     RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     if (type == RW_TYPE_READ) {
       type = RW_TYPE_UPDATE;
@@ -58,19 +62,23 @@ void Transaction::RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id)
   }
 }
 
-void Transaction::RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
-    //RWType &type = rw_set.at(tile_group_id).at(tuple_id);
+void Transaction::RecordInsert(const oid_t &tile_group_id,
+                               const oid_t &tuple_id) {
+  if (rw_set.find(tile_group_id) != rw_set.end() &&
+      rw_set.at(tile_group_id).find(tuple_id) !=
+          rw_set.at(tile_group_id).end()) {
+    // RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     assert(false);
   } else {
     rw_set[tile_group_id][tuple_id] = RW_TYPE_INSERT;
   }
 }
 
-void Transaction::RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  if (rw_set.find(tile_group_id) != rw_set.end() && 
-    rw_set.at(tile_group_id).find(tuple_id) != rw_set.at(tile_group_id).end()) {
+void Transaction::RecordDelete(const oid_t &tile_group_id,
+                               const oid_t &tuple_id) {
+  if (rw_set.find(tile_group_id) != rw_set.end() &&
+      rw_set.at(tile_group_id).find(tuple_id) !=
+          rw_set.at(tile_group_id).end()) {
     RWType &type = rw_set.at(tile_group_id).at(tuple_id);
     if (type == RW_TYPE_READ) {
       type = RW_TYPE_DELETE;
@@ -132,9 +140,9 @@ const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
 
 void Transaction::ResetState(void) {
   rw_set.clear();
-//  written_tuples.clear();
-//  inserted_tuples.clear();
-//  deleted_tuples.clear();
+  //  written_tuples.clear();
+  //  inserted_tuples.clear();
+  //  deleted_tuples.clear();
 }
 
 const std::string Transaction::GetInfo() const {

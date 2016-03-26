@@ -20,7 +20,7 @@ namespace concurrency {
 class TransactionManagerFactory {
  public:
   static TransactionManager &GetInstance(
-      ConcurrencyType concurrency_type = CONCURRENCY_TYPE_OCC) {
+      ConcurrencyType concurrency_type = CONCURRENCY_TYPE_2PL) {
     switch (concurrency_type) {
       case CONCURRENCY_TYPE_OCC:
         return OptimisticTransactionManager::GetInstance();
