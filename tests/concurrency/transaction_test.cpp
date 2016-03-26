@@ -410,8 +410,8 @@ TEST_F(TransactionTests, SerializableTest) {
     DirtyWriteTest(test_type);
     DirtyReadTest(test_type);
     FuzzyReadTest(test_type);
-    // WriteSkewTest(test_type);
-    // ReadSkewTest(test_type);
+    WriteSkewTest(test_type);
+    ReadSkewTest(test_type);
     //  PhantomTes();
   }
 }
