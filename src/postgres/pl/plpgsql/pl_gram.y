@@ -397,22 +397,22 @@ opt_semi		:
 
 pl_block		: decl_sect K_BEGIN proc_sect exception_sect K_END opt_label
 					{
-						PLpgSQL_stmt_block *new;
+						PLpgSQL_stmt_block *new_block;
 
-						new = palloc0(sizeof(PLpgSQL_stmt_block));
+						new_block = (PLpgSQL_stmt_block*) palloc0(sizeof(PLpgSQL_stmt_block));
 
-						new->cmd_type	= PLPGSQL_STMT_BLOCK;
-						new->lineno		= plpgsql_location_to_lineno(@2);
-						new->label		= $1.label;
-						new->n_initvars = $1.n_initvars;
-						new->initvarnos = $1.initvarnos;
-						new->body		= $3;
-						new->exceptions	= $4;
+						new_block->cmd_type	= PLPGSQL_STMT_BLOCK;
+						new_block->lineno		= plpgsql_location_to_lineno(@2);
+						new_block->label		= $1.label;
+						new_block->n_initvars = $1.n_initvars;
+						new_block->initvarnos = $1.initvarnos;
+						new_block->body		= $3;
+						new_block->exceptions	= $4;
 
 						check_labels($1.label, $6, @6);
 						plpgsql_ns_pop();
 
-						$$ = (PLpgSQL_stmt *)new;
+						$$ = (PLpgSQL_stmt *)new_block;
 					}
 				;
 
@@ -539,7 +539,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 					{ plpgsql_ns_push($1.name, PLPGSQL_LABEL_OTHER); }
 				  decl_cursor_args decl_is_for decl_cursor_query
 					{
-						PLpgSQL_var *new;
+						PLpgSQL_var *new_var;
 						PLpgSQL_expr *curname_def;
 						char		buf[1024];
 						char		*cp1;
@@ -548,7 +548,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 						/* pop local namespace for cursor args */
 						plpgsql_ns_pop();
 
-						new = (PLpgSQL_var *)
+						new_var = (PLpgSQL_var *)
 							plpgsql_build_variable($1.name, $1.lineno,
 												   plpgsql_build_datatype(REFCURSOROID,
 																		  -1,
@@ -559,7 +559,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 
 						curname_def->dtype = PLPGSQL_DTYPE_EXPR;
 						strcpy(buf, "SELECT ");
-						cp1 = new->refname;
+						cp1 = new_var->refname;
 						cp2 = buf + strlen(buf);
 						/*
 						 * Don't trust standard_conforming_strings here;
@@ -576,14 +576,14 @@ decl_statement	: decl_varname decl_const decl_datatype decl_collate decl_notnull
 						}
 						strcpy(cp2, "'::pg_catalog.refcursor");
 						curname_def->query = pstrdup(buf);
-						new->default_val = curname_def;
+						new_var->default_val = curname_def;
 
 						new->cursor_explicit_expr = $7;
 						if ($5 == NULL)
-							new->cursor_explicit_argrow = -1;
+							new_var->cursor_explicit_argrow = -1;
 						else
-							new->cursor_explicit_argrow = $5->dno;
-						new->cursor_options = CURSOR_OPT_FAST_PLAN | $2;
+							new_var->cursor_explicit_argrow = $5->dno;
+						new_var->cursor_options = CURSOR_OPT_FAST_PLAN | $2;
 					}
 				;
 
@@ -613,24 +613,24 @@ decl_cursor_args :
 					}
 				| '(' decl_cursor_arglist ')'
 					{
-						PLpgSQL_row *new;
+						PLpgSQL_row *new_row;
 						int i;
 						ListCell *l;
 
-						new = palloc0(sizeof(PLpgSQL_row));
-						new->dtype = PLPGSQL_DTYPE_ROW;
-						new->lineno = plpgsql_location_to_lineno(@1);
-						new->rowtupdesc = NULL;
-						new->nfields = list_length($2);
-						new->fieldnames = palloc(new->nfields * sizeof(char *));
-						new->varnos = palloc(new->nfields * sizeof(int));
+						new_row = palloc0(sizeof(PLpgSQL_row));
+						new_row->dtype = PLPGSQL_DTYPE_ROW;
+						new_row->lineno = plpgsql_location_to_lineno(@1);
+						new_row->rowtupdesc = NULL;
+						new_row->nfields = list_length($2);
+						new_row->fieldnames = palloc(new->nfields * sizeof(char *));
+						new_row->varnos = palloc(new->nfields * sizeof(int));
 
 						i = 0;
 						foreach (l, $2)
 						{
 							PLpgSQL_variable *arg = (PLpgSQL_variable *) lfirst(l);
-							new->fieldnames[i] = arg->refname;
-							new->varnos[i] = arg->dno;
+							new_row->fieldnames[i] = arg->refname;
+							new_row->varnos[i] = arg->dno;
 							i++;
 						}
 						list_free($2);

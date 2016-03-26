@@ -739,7 +739,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		int			dims[1];
 		int			lbs[1];
 
-		elems = palloc(sizeof(Datum) * nelems);
+		elems = (Datum) palloc(sizeof(Datum) * nelems);
 		for (i = 0; i < nelems; i++)
 			elems[i] = CStringGetTextDatum(trigdata->tg_trigger->tgargs[i]);
 		dims[0] = nelems;

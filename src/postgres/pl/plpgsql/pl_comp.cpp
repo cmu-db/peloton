@@ -1453,16 +1453,16 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						 * datum whether it is or not --- any error will be
 						 * detected later.
 						 */
-						PLpgSQL_recfield *new;
+						PLpgSQL_recfield *new_rec;
 
-						new = palloc(sizeof(PLpgSQL_recfield));
-						new->dtype = PLPGSQL_DTYPE_RECFIELD;
-						new->fieldname = pstrdup(word2);
-						new->recparentno = ns->itemno;
+						new_rec = palloc(sizeof(PLpgSQL_recfield));
+						new_rec->dtype = PLPGSQL_DTYPE_RECFIELD;
+						new_rec->fieldname = pstrdup(word2);
+						new_rec->recparentno = ns->itemno;
 
-						plpgsql_adddatum((PLpgSQL_datum *) new);
+						plpgsql_adddatum((PLpgSQL_datum *) new_rec);
 
-						wdatum->datum = (PLpgSQL_datum *) new;
+						wdatum->datum = (PLpgSQL_datum *) new_rec;
 					}
 					else
 					{
@@ -2001,8 +2001,8 @@ build_row_from_class(Oid classOid)
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->rowtupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
 	row->nfields = classStruct->relnatts;
-	row->fieldnames = palloc(sizeof(char *) * row->nfields);
-	row->varnos = palloc(sizeof(int) * row->nfields);
+	row->fieldnames = (char**) palloc(sizeof(char *) * row->nfields);
+	row->varnos = (int*) palloc(sizeof(int) * row->nfields);
 
 	for (i = 0; i < row->nfields; i++)
 	{

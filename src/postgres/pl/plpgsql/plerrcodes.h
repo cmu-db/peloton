@@ -184,9 +184,9 @@
 	"invalid_tablesample_argument", ERRCODE_INVALID_TABLESAMPLE_ARGUMENT
 },
 
-{
-	"invalid_tablesample_repeat", ERRCODE_INVALID_TABLESAMPLE_REPEAT
-},
+//{
+//	"invalid_tablesample_repeat", ERRCODE_INVALID_TABLESAMPLE_REPEAT
+//},
 
 {
 	"invalid_time_zone_displacement_value", ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE
