@@ -75,6 +75,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
 
+  void TruncateLog(int);
+
  private:
   std::string GetLogFileName(void);
 

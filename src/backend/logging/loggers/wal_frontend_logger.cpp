@@ -995,5 +995,22 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   LOG_INFO("Cursor is now %d", (int)this->log_file_cursor_);
 }
 
+void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
+  int return_val;
+
+  for (int i = 0; i < (int)this->log_files_.size(); i++) {
+    if (max_commit_id >= this->log_files_[i]->max_commit_id_) {
+      return_val = remove(this->log_files_[i]->log_file_name_.c_str());
+      if (return_val != 0) {
+        LOG_ERROR("Couldn't delete log file: %s",
+                  this->log_files_[i]->log_file_name_.c_str());
+      }
+      // remove entry from list anyway
+      this->log_files_.erase(this->log_files_.begin() + i);
+      i--;  // update cursor
+    }
+  }
+}
+
 }  // namespace logging
 }  // namespace peloton
