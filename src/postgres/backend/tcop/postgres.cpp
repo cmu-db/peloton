@@ -82,7 +82,7 @@
 #include "backend/logging/log_manager.h"
 
 // TODO: Memcached Changes
-#include "postmaster/memcached_socket.h"
+#include "postmaster/memcached.h"
 
 /* ----------------
  *		global variables
@@ -205,6 +205,9 @@ static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
+
+// memcached helpers
+static void parse_select_result_cols(StringInfoData *buf, std::string& result);
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
@@ -3987,7 +3990,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
   // don't terminate yet
   bool terminate = false;
   auto mc_sock = MemcachedSocket(port);
-  std::string query_line;
+  std::string query_line, query_result;
 
   sigjmp_buf local_sigjmp_buf;
   volatile bool send_ready_for_query = true;
@@ -4334,17 +4337,21 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
      */
     // TODO: check when to erase
     query_line.clear();
+    query_result.clear();
+
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
       auto mc_state = new MemcachedState();
       exec_simple_query(query_line.c_str(), mc_state);
       // echo response
-      // mc_state->result = query_line;
-      // printf("\nMC_RESULT:%s\n",mc_state->result.c_str());
-      if(!mc_sock.write_response(mc_state->result+"\r\n")) {
+      parse_select_result_cols(&mc_state->result, query_result);
+      // printf("\nMC_RESULT:%s\n",query_result.c_str());
+      if(!mc_sock.write_response(query_result+"\r\n")) {
         printf("\nWrite line failed, terminating thread\n");
         terminate = true;
       }
+      // clear the result data
+      pfree(mc_state->result.data);
       delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
@@ -4352,20 +4359,34 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       terminate = true;
     }
 
-    //    const char *query_string;
-    //
-    //    /* Set statement_timestamp() */
-    //    SetCurrentStatementStartTimestamp();
-    //
-    //    // memcached version
-    //    auto mc_state = new MemcachedState();
-    //    exec_simple_query(query_string, mc_state);
-    //
-    //    printf("\n\n QUERY RESULT: %s\n", mc_state->result.c_str());
-    //    //do stuff with mc_state
-    //    delete mc_state;
-
   } /* end of input-reading loop */
+}
+
+/* Print all the attribute values for query result
+ * in StringInfoData format
+ */
+static void parse_select_result_cols(StringInfoData *buf, std::string& result) {
+  //  printf("Reached\n");
+  //  for (int i=0; i< buf->len; i++){
+  //    printf("%d\t", buf->data[i]);
+  //  }
+  //  printf("\n");
+  // base 2 int, 16 bits
+  buf->cursor = 0;
+  buf->len = 2;
+  int nattrs = pq_getmsgint(buf, 2);
+  // printf("\nnattrs:%d\n", nattrs);
+  int col_length;
+  for (int i=0; i < nattrs; i++) {
+      buf->len += 4;
+      col_length = pq_getmsgint(buf, 4);
+      // printf("\nresult:%d\n", col_length);
+
+      buf->len += col_length;
+      result += pq_getmsgbytes(buf, col_length);
+      result += "\t";
+      // printf("\nresult:%s\n", result.c_str());
+  }
 }
 
 /*
