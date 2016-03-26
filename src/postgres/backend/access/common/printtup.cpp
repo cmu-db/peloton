@@ -26,8 +26,6 @@
 
 static void printtup_startup(DestReceiver *self, int operation,
 				 TupleDesc typeinfo, MemcachedState *mc_state = nullptr);
-static void printtup(TupleTableSlot *slot, DestReceiver *self,
-										 MemcachedState *mc_state = nullptr);
 static void printtup_20(TupleTableSlot *slot, DestReceiver *self,
 												MemcachedState *mc_state = nullptr);
 static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self,
@@ -304,10 +302,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  *		printtup --- print a tuple in protocol 3.0
  * ----------------
  */
-static void
+void
 printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
-	// printf("\n\nREACHED PRINTTUP:%p\n\n", mc_state);
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;

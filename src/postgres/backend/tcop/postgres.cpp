@@ -4336,15 +4336,16 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     query_line.clear();
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
-      //      auto mc_state = new MemcachedState();
-      //      // exec_simple_query(query_line.c_str(), mc_state);
-      //      // echo response
-      //      mc_state->result = query_line;
-      //      if(!mc_sock.write_response(mc_state->result+"\r\n")) {
-      //        printf("\nWrite line failed, terminating thread\n");
-      //        terminate = true;
-      //      }
-      //      delete mc_state;
+      auto mc_state = new MemcachedState();
+      exec_simple_query(query_line.c_str(), mc_state);
+      // echo response
+      // mc_state->result = query_line;
+      // printf("\nMC_RESULT:%s\n",mc_state->result.c_str());
+      if(!mc_sock.write_response(mc_state->result+"\r\n")) {
+        printf("\nWrite line failed, terminating thread\n");
+        terminate = true;
+      }
+      delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
       // terminate the thread
