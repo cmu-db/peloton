@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_PLPGSQL_YY_Y_TAB_H_INCLUDED
-# define YY_PLPGSQL_YY_Y_TAB_H_INCLUDED
+#ifndef YY_PLPGSQL_YY_PL_GRAM_H_INCLUDED
+# define YY_PLPGSQL_YY_PL_GRAM_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -165,125 +165,6 @@ extern int plpgsql_yydebug;
     K_WHILE = 375
   };
 #endif
-/* Tokens.  */
-#define IDENT 258
-#define FCONST 259
-#define SCONST 260
-#define BCONST 261
-#define XCONST 262
-#define Op 263
-#define ICONST 264
-#define PARAM 265
-#define TYPECAST 266
-#define DOT_DOT 267
-#define COLON_EQUALS 268
-#define EQUALS_GREATER 269
-#define LESS_EQUALS 270
-#define GREATER_EQUALS 271
-#define NOT_EQUALS 272
-#define T_WORD 273
-#define T_CWORD 274
-#define T_DATUM 275
-#define LESS_LESS 276
-#define GREATER_GREATER 277
-#define K_ABSOLUTE 278
-#define K_ALIAS 279
-#define K_ALL 280
-#define K_ARRAY 281
-#define K_ASSERT 282
-#define K_BACKWARD 283
-#define K_BEGIN 284
-#define K_BY 285
-#define K_CASE 286
-#define K_CLOSE 287
-#define K_COLLATE 288
-#define K_COLUMN 289
-#define K_COLUMN_NAME 290
-#define K_CONSTANT 291
-#define K_CONSTRAINT 292
-#define K_CONSTRAINT_NAME 293
-#define K_CONTINUE 294
-#define K_CURRENT 295
-#define K_CURSOR 296
-#define K_DATATYPE 297
-#define K_DEBUG 298
-#define K_DECLARE 299
-#define K_DEFAULT 300
-#define K_DETAIL 301
-#define K_DIAGNOSTICS 302
-#define K_DUMP 303
-#define K_ELSE 304
-#define K_ELSIF 305
-#define K_END 306
-#define K_ERRCODE 307
-#define K_ERROR 308
-#define K_EXCEPTION 309
-#define K_EXECUTE 310
-#define K_EXIT 311
-#define K_FETCH 312
-#define K_FIRST 313
-#define K_FOR 314
-#define K_FOREACH 315
-#define K_FORWARD 316
-#define K_FROM 317
-#define K_GET 318
-#define K_HINT 319
-#define K_IF 320
-#define K_IN 321
-#define K_INFO 322
-#define K_INSERT 323
-#define K_INTO 324
-#define K_IS 325
-#define K_LAST 326
-#define K_LOG 327
-#define K_LOOP 328
-#define K_MESSAGE 329
-#define K_MESSAGE_TEXT 330
-#define K_MOVE 331
-#define K_NEXT 332
-#define K_NO 333
-#define K_NOT 334
-#define K_NOTICE 335
-#define K_NULL 336
-#define K_OPEN 337
-#define K_OPTION 338
-#define K_OR 339
-#define K_PERFORM 340
-#define K_PG_CONTEXT 341
-#define K_PG_DATATYPE_NAME 342
-#define K_PG_EXCEPTION_CONTEXT 343
-#define K_PG_EXCEPTION_DETAIL 344
-#define K_PG_EXCEPTION_HINT 345
-#define K_PRINT_STRICT_PARAMS 346
-#define K_PRIOR 347
-#define K_QUERY 348
-#define K_RAISE 349
-#define K_RELATIVE 350
-#define K_RESULT_OID 351
-#define K_RETURN 352
-#define K_RETURNED_SQLSTATE 353
-#define K_REVERSE 354
-#define K_ROW_COUNT 355
-#define K_ROWTYPE 356
-#define K_SCHEMA 357
-#define K_SCHEMA_NAME 358
-#define K_SCROLL 359
-#define K_SLICE 360
-#define K_SQLSTATE 361
-#define K_STACKED 362
-#define K_STRICT 363
-#define K_TABLE 364
-#define K_TABLE_NAME 365
-#define K_THEN 366
-#define K_TO 367
-#define K_TYPE 368
-#define K_USE_COLUMN 369
-#define K_USE_VARIABLE 370
-#define K_USING 371
-#define K_VARIABLE_CONFLICT 372
-#define K_WARNING 373
-#define K_WHEN 374
-#define K_WHILE 375
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -342,7 +223,7 @@ union YYSTYPE
 		PLpgSQL_stmt_fetch		*fetch;
 		PLpgSQL_case_when		*casewhen;
 
-#line 346 "y.tab.h" /* yacc.c:1909  */
+#line 227 "pl_gram.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -367,4 +248,4 @@ extern YYSTYPE plpgsql_yylval;
 extern YYLTYPE plpgsql_yylloc;
 int plpgsql_yyparse (void);
 
-#endif /* !YY_PLPGSQL_YY_Y_TAB_H_INCLUDED  */
+#endif /* !YY_PLPGSQL_YY_PL_GRAM_H_INCLUDED  */
