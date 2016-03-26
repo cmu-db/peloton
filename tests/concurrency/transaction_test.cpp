@@ -290,6 +290,44 @@ void PhantomTest() {
   }
 }
 
+void WriteSkewTest() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddUpdate(0, 1, 1);
+    scheduler.AddRead(1, 0);
+    scheduler.AddUpdate(1, 1, 2);
+    scheduler.AddCommit(0);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+
+    // Can't all success
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddUpdate(0, 1, 1);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(0);
+    scheduler.AddUpdate(1, 1, 2);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+
+    // First txn should success
+    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                RESULT_ABORTED == scheduler.schedules[1].txn_result);
+  }
+}
+
 TEST_F(TransactionTests, TransactionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -319,6 +357,7 @@ TEST_F(TransactionTests, SerializableTest) {
   DirtyWriteTest();
   DirtyReadTest();
   FuzzyReadTest();
+  WriteSkewTest();
   //  PhantomTes();
 }
 
