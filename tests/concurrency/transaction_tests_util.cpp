@@ -120,7 +120,8 @@ expression::ComparisonExpression<expression::CmpEq>
 }
 
 bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
-                                      storage::DataTable *table, int id, int &result) {
+                                       storage::DataTable *table, int id,
+                                       int &result) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
