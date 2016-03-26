@@ -24,7 +24,11 @@ public:
   inline MemcachedSocket(Port *port) :
       port(port), buf_ptr(0), buf_size(0),
       buffer(MC_SOCK_BUFFER_SIZE_BYTES, 0)
-  {}
+  {
+    // make the socket blocking
+    int opts = fcntl(port->sock,F_GETFL);
+    fcntl(port->sock,F_SETFL, (long) opts & ~O_NONBLOCK);
+  }
 
   inline void close_socket() {
     for (;;) {
