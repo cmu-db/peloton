@@ -12,6 +12,7 @@
 
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <algorithm>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -200,34 +201,42 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+          LOG_INFO("Got Type as TXN_BEGIN");
           AddTransactionToRecoveryTable();
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_END:
+          LOG_INFO("Got Type as TXN_END");
           RemoveTransactionFromRecoveryTable();
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+          LOG_INFO("Got Type as TXN_COMMIT");
           MoveCommittedTuplesToRecoveryTxn(recovery_txn);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_ABORT:
+          LOG_INFO("Got Type as TXN_ABORT");
           AbortTuplesFromRecoveryTable();
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+          LOG_INFO("Got Type as TXN_INSERT");
           InsertTuple(recovery_txn);
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+          LOG_INFO("Got Type as TXN_DELETE");
           DeleteTuple(recovery_txn);
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+          LOG_INFO("Got Type as TXN_UPDATE");
           UpdateTuple(recovery_txn);
           break;
 
         default:
+          LOG_INFO("Got Type as TXN_INVALID");
           reached_end_of_file = true;
           break;
       }
@@ -708,6 +717,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
     FILE *log_file, size_t log_file_size) {
   char buffer;
 
+  LOG_INFO("File is at position %d", (int)ftell(log_file));
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
     LOG_ERROR("Log file is truncated");
@@ -860,29 +870,47 @@ int extract_number_from_filename(const char *name) {
   LOG_ERROR("The last found log file doesn't have a version number.");
   return 0;
 }
-void WriteAheadFrontendLogger::InitLogFilesList() {
-  struct dirent **list;
-  int n;
 
+bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
+  return left->log_number_ < right->log_number_;
+}
+
+void WriteAheadFrontendLogger::InitLogFilesList() {
+  struct dirent *file;
+  DIR *dirp;
   // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
 
   LOG_INFO("Trying to read log directory");
 
-  n = scandir(".", &list, 0, alphasort);
-  if (n < 0) {
-    LOG_INFO("Scandir failed: Errno: %d, error: %s", errno, strerror(errno));
+  dirp = opendir(".");
+  if (dirp == nullptr) {
+    LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
-  for (int i = 0; i < n; i++) {
+  /*for (int i = 0; i < n; i++) {
     if (strncmp(list[i]->d_name, base_name.c_str(), base_name.length()) == 0) {
       LOG_INFO("Found a log file with name %s", list[i]->d_name);
       LogFile *new_log_file = new LogFile(NULL, list[i]->d_name, -1);
+      this->log_files_.push_back(new_log_file);
+    }*/
+
+  while ((file = readdir(dirp)) != NULL) {
+    if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
+      // found a log file!
+      LOG_INFO("Found a log file with name %s", file->d_name);
+
+      LogFile *new_log_file = new LogFile(
+          NULL, file->d_name, -1, extract_number_from_filename(file->d_name));
       this->log_files_.push_back(new_log_file);
     }
   }
 
   int num_log_files;
   num_log_files = this->log_files_.size();
+
+  LOG_INFO("The number of log files found: %d", num_log_files);
+  std::sort(this->log_files_.begin(), this->log_files_.end(),
+            CompareByLogNumber);
 
   if (num_log_files) {
     int max_num = extract_number_from_filename(
@@ -918,7 +946,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   LOG_INFO("log_file_fd of newly created file is %d", this->log_file_fd);
 
   LogFile *new_log_file_object =
-      new LogFile(log_file, new_file_name, log_file_fd);
+      new LogFile(log_file, new_file_name, log_file_fd, new_file_num);
 
   if (close_old_file) {  // must close last opened file
     int file_list_size = this->log_files_.size();
