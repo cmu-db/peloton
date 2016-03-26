@@ -23,7 +23,7 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-#define TEST_TYPE CONCURRENCY_TYPE_2PL
+#define TEST_TYPE CONCURRENCY_TYPE_OCC
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -387,7 +387,7 @@ TEST_F(TransactionTests, AbortTest) {
 
     scheduler.Run();
     EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
     EXPECT_EQ(-1, scheduler.schedules[1].results[0]); 
   }
 }
