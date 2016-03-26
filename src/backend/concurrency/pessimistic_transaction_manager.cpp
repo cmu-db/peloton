@@ -254,6 +254,17 @@ Result PessimisticTransactionManager::AbortTransaction() {
     }
   }
 
+  for (auto entry : current_txn->GetInsertedTuples()) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_id : entry.second) {
+      tile_group_header->SetTransactionId(tuple_id, INVALID_TXN_ID);
+      tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+      tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+    }
+  }
+
   delete current_txn;
   current_txn = nullptr;
   return Result::RESULT_ABORTED;
