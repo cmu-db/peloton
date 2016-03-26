@@ -24,9 +24,8 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OCC
-    // CONCURRENCY_TYPE_2PL
-};
+    // CONCURRENCY_TYPE_OCC
+    CONCURRENCY_TYPE_2PL};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -169,8 +168,8 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   {
@@ -187,8 +186,8 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   {
@@ -205,8 +204,8 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[1].txn_result);
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
 
@@ -229,8 +228,9 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    LOG_TRACE("%lu", scheduler.schedules.size());
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   {
@@ -246,8 +246,8 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   {
@@ -262,9 +262,8 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
     scheduler.AddCommit(1);
 
     scheduler.Run();
-
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
 

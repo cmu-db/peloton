@@ -17,9 +17,15 @@
 namespace peloton {
 namespace concurrency {
 
+extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
+    released_rdlock;
+
 class PessimisticTransactionManager : public TransactionManager {
  public:
-  PessimisticTransactionManager() {}
+  PessimisticTransactionManager() {
+    released_rdlock =
+        std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>();
+  }
 
   virtual ~PessimisticTransactionManager() {}
 
@@ -62,8 +68,8 @@ class PessimisticTransactionManager : public TransactionManager {
   virtual Result AbortTransaction();
 
  private:
-  #define READ_COUNT_MASK 0xFF
-  #define TXNID_MASK      0x00FFFFFFFFFFFFFF
+#define READ_COUNT_MASK 0xFF
+#define TXNID_MASK 0x00FFFFFFFFFFFFFF
   inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
     return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
   }
