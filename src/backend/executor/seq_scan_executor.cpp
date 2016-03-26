@@ -134,22 +134,19 @@ bool SeqScanExecutor::DExecute() {
         cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid) == false) {
-          continue;
-        }
-
-        // if the tuple is visible, then perform predicate evaluation.
-        if (predicate_ == nullptr) {
-          position_list.push_back(tuple_id);
-          transaction_manager.RecordRead(tile_group->GetTileGroupId(), tuple_id);
-        } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                               tuple_id);
-          auto eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if (eval == true) {
+        if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+          // if the tuple is visible, then perform predicate evaluation.
+          if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-            transaction_manager.RecordRead(tile_group->GetTileGroupId(), tuple_id);
+            transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
+          } else {
+            expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                               tuple_id);
+            auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+            if (eval == true) {
+              position_list.push_back(tuple_id);
+              transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
+            }
           }
         }
       }

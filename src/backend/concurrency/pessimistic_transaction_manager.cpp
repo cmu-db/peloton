@@ -26,8 +26,48 @@
 //   return true;
 // }
 
-// void PessimisticTransactionManager::CommitTransaction() { delete current_txn; }
+// bool PessimisticTransactionManager::IsOwner(const txn_id_t &tuple_txn_id __attribute__((unused))) {
+//   return true;
+// }
 
-// void PessimisticTransactionManager::AbortTransaction() { delete current_txn; }
+// bool PessimisticTransactionManager::IsAccessable(const txn_id_t &tuple_txn_id __attribute__((unused)),
+//                          const cid_t &tuple_begin_cid __attribute__((unused)),
+//                          const cid_t &tuple_end_cid __attribute__((unused))) {
+//   return true;
+// }
+
+// bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+//   // acquire read lock.
+//   current_txn->RecordRead(tile_group_id, tuple_id);
+//   return true;
+// }
+
+// bool PessimisticTransactionManager::PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id) {
+//   // acquire write lock.
+//   current_txn->RecordWrite(tile_group_id, tuple_id);
+//   return true;
+// }
+
+// bool PessimisticTransactionManager::PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+//   current_txn->RecordInsert(tile_group_id, tuple_id);
+//   return true;
+// }
+
+// bool PessimisticTransactionManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+//   current_txn->RecordDelete(tile_group_id, tuple_id);
+//   return true;
+// }
+
+// Result PessimisticTransactionManager::CommitTransaction() { 
+//   delete current_txn; 
+//   current_txn = nullptr;
+//   return Result::RESULT_ABORTED;
+// }
+
+// Result PessimisticTransactionManager::AbortTransaction() { 
+//   delete current_txn; 
+//   current_txn = nullptr;
+//   return Result::RESULT_ABORTED;
+// }
 // }
 // }

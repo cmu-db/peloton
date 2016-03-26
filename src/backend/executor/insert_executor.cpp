@@ -102,7 +102,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
       // transaction_->RecordInsert(location.block, location.offset);
-      transaction_manager.RecordInsert(location.block, location.offset);
+      transaction_manager.PerformInsert(location.block, location.offset);
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -139,11 +139,11 @@ bool InsertExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         LOG_INFO("Failed to Insert. Set txn failure.");
         // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
-        transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
       // transaction_->RecordInsert(location.block, location.offset);
-      transaction_manager.RecordInsert(location.block, location.offset);
+      transaction_manager.PerformInsert(location.block, location.offset);
 
       // Logging
       // {
