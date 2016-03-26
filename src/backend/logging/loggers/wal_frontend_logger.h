@@ -73,6 +73,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void OpenNextLogFile();
 
+  LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
+
  private:
   std::string GetLogFileName(void);
 
