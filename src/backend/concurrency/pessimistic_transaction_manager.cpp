@@ -79,7 +79,30 @@ bool PessimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-void PessimisticTransactionManager::ReleaseReadLock(__attribute__((unused)) storage::TileGroupHeader *tile_group_header, __attribute__((unused)) const oid_t &tuple_id){
+bool PessimisticTransactionManager::ReleaseReadLock(storage::TileGroup *tile_group, const oid_t &tuple_id){
+  auto tile_group_header = tile_group->GetHeader();
+  auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
+  if(EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID){
+    return false;
+  }
+
+  // No writer
+  // Decrease read count
+  while (true) {
+    assert(EXTRACT_READ_COUNT(old_txn_id) != 0);
+    auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
+    auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
+    auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, old_txn_id, &old_txn_id);
+    if (!res) {
+      // Assert there's no other writer
+      assert(EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID);
+    } else {
+      break;
+    }
+  }
+
+  return true;
 }
 
 bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &tuple_id) {
@@ -207,10 +230,113 @@ bool PessimisticTransactionManager::PerformDelete(const oid_t &tile_group_id, co
 }
 
 Result PessimisticTransactionManager::CommitTransaction() {
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
-  delete current_txn; 
+  auto &manager = catalog::Manager::GetInstance();
+
+  // generate transaction id.
+  cid_t end_commit_id = GetNextCommitId();
+
+  // commit read set.
+  auto read_tuples = current_txn->GetReadTuples();
+  for (auto entry : read_tuples) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    for (auto tuple_slot : entry.second) {
+      ReleaseReadLock(tile_group.get(), tuple_slot);
+    }
+  }
+  //////////////////////////////////////////////////////////
+
+  auto written_tuples = current_txn->GetWrittenTuples();
+  // install all updates.
+  for (auto entry : written_tuples) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_slot : entry.second) {
+      // we must guarantee that, at any time point, only one version is visible.
+      tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+      ItemPointer new_version =
+        tile_group_header->GetNextItemPointer(tuple_slot);
+
+      auto new_tile_group = manager.GetTileGroup(new_version.block);
+      auto new_tile_group_header = new_tile_group->GetHeader();
+      new_tile_group_header->SetBeginCommitId(new_version.offset,
+                                              end_commit_id);
+      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+
+      COMPILER_MEMORY_FENCE;
+
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              INITIAL_TXN_ID);
+      tile_group_header->UnlockTupleSlot(
+        tuple_slot, current_txn->GetTransactionId());
+
+    }
+  }
+
+  // commit insert set.
+  auto inserted_tuples = current_txn->GetInsertedTuples();
+  for (auto entry : inserted_tuples) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_slot : entry.second) {
+      // set the begin commit id to persist insert
+      if (tile_group_header->UnlockTupleSlot(tuple_slot, current_txn->GetTransactionId())) {
+        tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
+      }
+      //tile_group->CommitInsertedTuple(
+      //    tuple_slot, current_txn->GetTransactionId(), end_commit_id);
+    }
+    // Logging
+    // {
+    //   auto &log_manager = logging::LogManager::GetInstance();
+    //   if (log_manager.IsInLoggingMode()) {
+    //     auto logger = log_manager.GetBackendLogger();
+    //     auto record = logger->GetTupleRecord(
+    //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
+    //       target_table_->GetOid(), location, old_location, new_tuple);
+
+    //     logger->Log(record);
+    //   }
+    // }
+  }
+
+  // commit delete set.
+  auto deleted_tuples = current_txn->GetDeletedTuples();
+  for (auto entry : deleted_tuples) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_slot : entry.second) {
+      // we must guarantee that, at any time point, only one version is visible.
+
+      tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+      ItemPointer new_version =
+        tile_group_header->GetNextItemPointer(tuple_slot);
+
+      auto new_tile_group_header =
+        manager.GetTileGroup(new_version.block)->GetHeader();
+      new_tile_group_header->SetBeginCommitId(new_version.offset,
+                                              end_commit_id);
+      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+
+      COMPILER_MEMORY_FENCE;
+
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              INVALID_TXN_ID);
+      tile_group_header->UnlockTupleSlot(
+        tuple_slot, current_txn->GetTransactionId());
+
+    }
+  }
+  Result ret = current_txn->GetResult();
+  delete current_txn;
   current_txn = nullptr;
-  return Result::RESULT_ABORTED;
+
+  return ret;
 }
 
 Result PessimisticTransactionManager::AbortTransaction() { 
