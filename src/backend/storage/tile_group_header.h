@@ -40,7 +40,7 @@ namespace storage {
  *
  * 	-----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) | ContentType (1 byte) |
+ *  | NextItemPointer (16 bytes) |
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte) 
  * 	-----------------------------------------------------------------------------
  *
@@ -134,12 +134,6 @@ class TileGroupHeader : public Printable {
     return *((ItemPointer *)(TUPLE_HEADER_LOCATION + pointer_offset));
   }
 
-  inline bool GetContentType(const oid_t &tuple_slot_id) const {
-    // if return true, then it is a transaction id.
-    // if return false, then it is a reader counter.
-    return *((bool *)(TUPLE_HEADER_LOCATION + content_type_offset));
-  }
-
   inline bool GetInsertCommit(const oid_t &tuple_slot_id) const {
     return *((bool *)(TUPLE_HEADER_LOCATION + insert_commit_offset));
   }
@@ -165,12 +159,6 @@ class TileGroupHeader : public Printable {
   inline void SetNextItemPointer(const oid_t &tuple_slot_id,
                                  const ItemPointer &item) const {
     *((ItemPointer *)(TUPLE_HEADER_LOCATION + pointer_offset)) = item;
-  }
-
-  inline void SetContentType(const oid_t &tuple_slot_id, const bool type) const {
-    // if true, then it is a transaction id.
-    // if false, then it is a reader counter.
-    *((bool *)(TUPLE_HEADER_LOCATION + content_type_offset)) = type;
   }
 
   inline void SetInsertCommit(const oid_t &tuple_slot_id, const bool commit) const {
@@ -305,8 +293,7 @@ class TileGroupHeader : public Printable {
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
   static const size_t pointer_offset = end_cid_offset + sizeof(cid_t);
-  static const size_t content_type_offset = pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset = content_type_offset + sizeof(bool);
+  static const size_t insert_commit_offset = pointer_offset + sizeof(ItemPointer);
   static const size_t delete_commit_offset = insert_commit_offset + sizeof(bool);
 
   //===--------------------------------------------------------------------===//
