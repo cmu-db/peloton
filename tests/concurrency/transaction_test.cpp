@@ -379,6 +379,7 @@ TEST_F(TransactionTests, SerializableTest) {
   DirtyReadTest();
   FuzzyReadTest();
   WriteSkewTest();
+  ReadSkewTest();
   //  PhantomTes();
 }
 
