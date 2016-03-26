@@ -78,7 +78,6 @@ void SimpleCheckpoint::Init() {
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
     return;
   }
-  InitVersionNumber();
   std::thread checkpoint_thread(&SimpleCheckpoint::DoCheckpoint, this);
   checkpoint_thread.detach();
 }
@@ -95,9 +94,11 @@ void SimpleCheckpoint::DoCheckpoint() {
     // build executor context
     std::unique_ptr<concurrency::Transaction> txn(
         txn_manager.BeginTransaction());
+    start_commit_id = txn->GetStartCommitId();
     assert(txn);
     assert(txn.get());
-    LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
+    LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
+              start_commit_id);
 
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext(
@@ -107,6 +108,14 @@ void SimpleCheckpoint::DoCheckpoint() {
     auto &catalog_manager = catalog::Manager::GetInstance();
     auto database_count = catalog_manager.GetDatabaseCount();
     bool failure = false;
+
+    // Add txn begin record
+    // TODO include commit id in record
+    // LogRecord *begin_record =
+    //    new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
+    // CopySerializeOutput begin_output_buffer;
+    // begin_record->Serialize(begin_output_buffer);
+    // records_.push_back(begin_record);
 
     for (oid_t database_idx = 0; database_idx < database_count && !failure;
          database_idx++) {
@@ -141,12 +150,14 @@ void SimpleCheckpoint::DoCheckpoint() {
         }
       }
     }
+    // if anything other than begin record is added
+    // TODO change to 1
     if (records_.size() > 0) {
-      LogRecord *record =
+      LogRecord *commit_record =
           new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-      CopySerializeOutput output_buffer;
-      record->Serialize(output_buffer);
-      records_.push_back(record);
+      CopySerializeOutput commit_output_buffer;
+      commit_record->Serialize(commit_output_buffer);
+      records_.push_back(commit_record);
 
       CreateFile();
       Persist();
@@ -160,8 +171,10 @@ void SimpleCheckpoint::DoCheckpoint() {
 bool SimpleCheckpoint::DoRecovery() {
   // open log file and file descriptor
   // we open it in read + binary mode
-  // TODO check checkpoint_version
-  std::string file_name = "peloton_checkpoint.log";
+  if (checkpoint_version < 0) {
+    return false;
+  }
+  std::string file_name = ConcatFileName(checkpoint_version);
   checkpoint_file_ = fopen(file_name.c_str(), "rb");
 
   if (checkpoint_file_ == NULL) {
@@ -178,16 +191,26 @@ bool SimpleCheckpoint::DoRecovery() {
 
   checkpoint_file_size_ = GetLogFileSize(checkpoint_file_fd_);
   assert(checkpoint_file_size_ > 0);
-  while (true) {
+  bool should_stop = false;
+  while (!should_stop) {
     auto record_type =
         GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
-    if (record_type == LOGRECORD_TYPE_WAL_TUPLE_INSERT) {
-      InsertTuple();
-    } else if (record_type == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-      break;
-    } else {
-      LOG_ERROR("Invalid checkpoint entry");
-      break;
+    switch (record_type) {
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+        LOG_INFO("Read checkpoint insert entry");
+        InsertTuple();
+        break;
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+        should_stop = true;
+        break;
+      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+        // TODO also check txn begin record
+        LOG_INFO("Read checkpoint begin entry");
+        break;
+      default:
+        LOG_ERROR("Invalid checkpoint entry");
+        should_stop = true;
+        break;
     }
   }
 
@@ -337,7 +360,8 @@ void SimpleCheckpoint::CreateFile() {
 // Only called when checkpoint has actual contents
 void SimpleCheckpoint::Persist() {
   assert(checkpoint_file_);
-  assert(records_.size() > 0);
+  // TODO change to 2
+  assert(records_.size() > 1);
   assert(checkpoint_file_fd_ != INVALID_FILE_DESCRIPTOR);
 
   LOG_INFO("Persisting %lu checkpoint entries", records_.size());
@@ -372,10 +396,13 @@ void SimpleCheckpoint::Cleanup() {
   // Remove previous version
   auto previous_version = ConcatFileName(checkpoint_version - 1).c_str();
   if (remove(previous_version) != 0) {
-	  LOG_INFO("Failed to remove file %s", previous_version);
+    LOG_INFO("Failed to remove file %s", previous_version);
   }
-  //TODO remove previous logs
-
+  // Truncate logs
+  auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
+  assert(frontend_logger);
+  reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
+      ->TruncateLog(start_commit_id);
 }
 
 void SimpleCheckpoint::InitVersionNumber() {
@@ -401,7 +428,7 @@ void SimpleCheckpoint::InitVersionNumber() {
       }
     }
   }
-  LOG_INFO("Next checkpoint version is: %d", checkpoint_version);
+  LOG_INFO("set checkpoint version to: %d", checkpoint_version);
 }
 
 }  // namespace logging
