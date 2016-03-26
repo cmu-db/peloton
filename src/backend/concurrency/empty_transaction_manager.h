@@ -33,7 +33,6 @@ class EmptyTransactionManager : public TransactionManager {
   virtual bool CommitTransaction();
 
   virtual void AbortTransaction();
-
 };
 }
 }

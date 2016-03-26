@@ -119,8 +119,9 @@ expression::ComparisonExpression<expression::CmpEq>
   return predicate;
 }
 
-int TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
-                                      storage::DataTable *table, int id) {
+bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
+                                       storage::DataTable *table, int id,
+                                       int &result) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -133,18 +134,23 @@ int TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   EXPECT_TRUE(seq_scan_executor.Init());
-  if (seq_scan_executor.Execute() == false) return -1;
+  if (seq_scan_executor.Execute() == false) {
+    result = -1;
+    return false;
+  }
 
   std::unique_ptr<executor::LogicalTile> result_tile(
       seq_scan_executor.GetOutput());
 
   // Read nothing
   if (result_tile->GetTupleCount() == 0)
-    return -1;
+    result = -1;
   else {
     EXPECT_EQ(1, result_tile->GetTupleCount());
-    return result_tile->GetValue(0, 1).GetIntegerForTestsOnly();
+    result = result_tile->GetValue(0, 1).GetIntegerForTestsOnly();
   }
+
+  return true;
 }
 bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
                                          storage::DataTable *table, int id) {

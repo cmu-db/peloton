@@ -174,6 +174,17 @@ class TileGroupHeader : public Printable {
     return ((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
+  inline bool CASTxnId(const oid_t &tuple_slot_id,
+    const txn_id_t &new_txn_id,
+    txn_id_t expected,
+    txn_id_t *old_value) {
+
+    txn_id_t *txn_idp = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    *old_value = __sync_val_compare_and_swap(txn_idp, expected, new_txn_id);
+
+    return *old_value == expected;
+  }
+
   inline bool LockTupleSlot(const oid_t &tuple_slot_id,
                             const txn_id_t &transaction_id) {
     txn_id_t *txn_id = (txn_id_t *)(TUPLE_HEADER_LOCATION);

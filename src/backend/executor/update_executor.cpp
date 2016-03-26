@@ -161,7 +161,7 @@ bool UpdateExecutor::DExecute() {
       // }
       delete new_tuple;
       new_tuple = nullptr;
-    } else{
+    } else {
       // transaction should be aborted as we cannot update the latest version.
       LOG_INFO("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
