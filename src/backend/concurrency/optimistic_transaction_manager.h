@@ -43,7 +43,11 @@ class OptimisticTransactionManager : public TransactionManager {
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetVisibilityForCurrentTxn(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
 
