@@ -71,8 +71,8 @@ class TransactionTestsUtil {
   static storage::DataTable *CreateTable();
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
-  static int ExecuteRead(concurrency::Transaction *txn,
-                         storage::DataTable *table, int id);
+  static bool ExecuteRead(concurrency::Transaction *txn,
+                          storage::DataTable *table, int id, int &result);
   static bool ExecuteDelete(concurrency::Transaction *txn,
                             storage::DataTable *table, int id);
   static bool ExecuteUpdate(concurrency::Transaction *txn,
@@ -101,9 +101,10 @@ struct TransactionOperation {
 
 // The schedule for transaction execution
 struct TransactionSchedule {
+  Result txn_result;
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
-  Result txn_result;
+  TransactionSchedule() : txn_result(RESULT_FAILURE) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -146,39 +147,51 @@ class TransactionThread {
     int value = schedule->operations[cur_seq].value;
 
     if (cur_seq == 0) txn = txn_manager->BeginTransaction();
+    if (schedule->txn_result == RESULT_ABORTED) {
+      cur_seq++;
+      return;
+    }
+
+    cur_seq++;
+    bool execute_result = true;
 
     // Execute the operation
     switch (op) {
       case TXN_OP_INSERT: {
         LOG_TRACE("Execute Insert");
-        TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
+        execute_result =
+            TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
         break;
       }
       case TXN_OP_READ: {
         LOG_TRACE("Execute Read");
-        int result = TransactionTestsUtil::ExecuteRead(txn, table, id);
+        int result;
+        execute_result =
+            TransactionTestsUtil::ExecuteRead(txn, table, id, result);
         schedule->results.push_back(result);
         break;
       }
       case TXN_OP_DELETE: {
         LOG_TRACE("Execute Delete");
-        TransactionTestsUtil::ExecuteDelete(txn, table, id);
+        execute_result = TransactionTestsUtil::ExecuteDelete(txn, table, id);
         break;
       }
       case TXN_OP_UPDATE: {
         LOG_TRACE("Execute Update");
-        TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
+        execute_result =
+            TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
         break;
       }
       case TXN_OP_SCAN: {
         LOG_TRACE("Execute Scan");
-        TransactionTestsUtil::ExecuteScan(txn, schedule->results, table, id);
+        execute_result = TransactionTestsUtil::ExecuteScan(
+            txn, schedule->results, table, id);
         break;
       }
       case TXN_OP_ABORT: {
         LOG_TRACE("Abort");
         // Assert last operation
-        assert(cur_seq == (int)schedule->operations.size() - 1);
+        assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction();
         break;
       }
@@ -188,7 +201,12 @@ class TransactionThread {
       }
     }
 
-    cur_seq++;
+    if (execute_result == false && txn->GetResult() == RESULT_FAILURE) {
+      txn_manager->AbortTransaction();
+      txn = NULL;
+      LOG_TRACE("ABORT NOW");
+      schedule->txn_result = RESULT_ABORTED;
+    }
   }
 
   TransactionSchedule *schedule;
