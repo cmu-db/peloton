@@ -998,7 +998,8 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
   int return_val;
 
-  for (int i = 0; i < (int)this->log_files_.size(); i++) {
+  // delete stale log files except the one currently being used
+  for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
     if (max_commit_id >= this->log_files_[i]->max_commit_id_) {
       return_val = remove(this->log_files_[i]->log_file_name_.c_str());
       if (return_val != 0) {
