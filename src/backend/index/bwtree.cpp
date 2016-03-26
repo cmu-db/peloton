@@ -13,5 +13,9 @@
 #include "backend/index/bwtree.h"
 
 namespace peloton {
-namespace index {}
-}
+namespace index {
+
+// Add your function definitions here
+
+}  // End index namespace
+}  // End peloton namespace
