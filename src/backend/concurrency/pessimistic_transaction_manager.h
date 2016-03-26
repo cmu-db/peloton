@@ -64,7 +64,7 @@ private:
     return (txn_id >> 56) & 0xff;
   }
 
-  void ReleaseReadLock(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id);
+  bool ReleaseReadLock(storage::TileGroup *tile_group, const oid_t &tuple_id);
 };
 }
 }
