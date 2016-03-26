@@ -34,11 +34,10 @@ enum RWType {
   RW_TYPE_UPDATE,
   RW_TYPE_INSERT,
   RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL // delete after insert.
+  RW_TYPE_INS_DEL  // delete after insert.
 };
 
 class Transaction : public Printable {
-
   Transaction(Transaction const &) = delete;
 
  public:
