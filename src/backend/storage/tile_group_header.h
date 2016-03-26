@@ -179,7 +179,7 @@ class TileGroupHeader : public Printable {
     txn_id_t expected,
     txn_id_t *old_value) {
 
-    txn_id_t *txn_idp = (txn_id_t *)(data+(tuple_slot_id*header_entry_size));
+    txn_id_t *txn_idp = (txn_id_t *)(TUPLE_HEADER_LOCATION);
     *old_value = __sync_val_compare_and_swap(txn_idp, expected, new_txn_id);
 
     return *old_value == expected;
