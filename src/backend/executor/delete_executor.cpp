@@ -78,11 +78,9 @@ bool DeleteExecutor::DExecute() {
 
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
-//  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
-//  auto transaction = executor_context_->GetTransaction();
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
@@ -97,47 +95,13 @@ bool DeleteExecutor::DExecute() {
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
-//    txn_id_t tid = transaction->GetTransactionId();
-//    txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(physical_tuple_id);
-//    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(physical_tuple_id);
-//    cid_t tuple_end_cid = tile_group_header->GetEndCommitId(physical_tuple_id);
-
     if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
       transaction_manager.SetDeleteVisibility(tile_group_id, physical_tuple_id);
-       // Set MVCC info
-      // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
-      // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
-      // assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
-
-      // tile_group_header->SetTransactionId(physical_tuple_id, tid);
-      // tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
-      // tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
-      
-      //tile_group_header->SetInsertCommit(physical_tuple_id, false);
-      //tile_group_header->SetDeleteCommit(physical_tuple_id, false);
-
-      // TODO: Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_DELETE, transaction->GetTransactionId(),
-      //       target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
-
-      //     logger->Log(record);
-      //   }
-      // }
 
     } 
     else if (transaction_manager.IsAccessable(tile_group, physical_tuple_id) == true) {
-    // else if (tile_group_header->GetTransactionId(physical_tuple_id) ==
-    //                INITIAL_TXN_ID &&
-    //            tile_group_header->GetEndCommitId(physical_tuple_id) ==
-    //                MAX_CID) {
       // if the tuple is not owned by any transaction and is visible to current
       // transdaction.
 
@@ -162,32 +126,11 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-//      transaction_manager.SetDeleteVisibility(location.block, location.offset);
-//      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
-
-      //auto new_tile_group_header =
-      //    target_table_->GetTileGroupById(location.block)->GetHeader();
-
-      //new_tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
-
-      executor_context_->num_processed += 1;  // deleted one
 
       transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
 
-      // Logging
-      // {
-      // ItemPointer delete_location(tile_group_id, physical_tuple_id);
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //         LOGRECORD_TYPE_TUPLE_DELETE, transaction->GetTransactionId(),
-      //         target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
-
-      //     logger->Log(record);
-      //   }
-      // }
+      executor_context_->num_processed += 1;  // deleted one
+      
       delete new_tuple;
       new_tuple = nullptr;
     } else {
