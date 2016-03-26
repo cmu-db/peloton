@@ -3192,8 +3192,6 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
    */
   process_postgres_switches(argc, argv, PGC_POSTMASTER, &dbname);
 
-  dbname = "foo";
-  username = "postgres";
   /* Must have gotten a database name, or have a default (the username) */
   if (dbname == NULL) {
     dbname = username;
@@ -3310,7 +3308,6 @@ void PostgresMain(int argc, char *argv[], const char *dbname,
   //#else
   //  InitProcess();
   //#endif
-
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
@@ -3951,13 +3948,20 @@ bool MemcachedSocket::read_line(std::string &new_line) {
   }
 }
 
-void MemcachedMain(Port *port) {
-  sigjmp_buf local_sigjmp_buf;
-
-  /* create a memcached socket */
-  MemcachedSocket mc_sock(port);
-
+void MemcachedMain(int argc, char *argv[], Port *port) {
+  // don't terminate yet
   bool terminate = false;
+  auto mc_sock = MemcachedSocket(port);
+  std::string query_line;
+
+  sigjmp_buf local_sigjmp_buf;
+  volatile bool send_ready_for_query = true;
+
+  const char *dbname = port->database_name;
+  const char *username = port->user_name;
+
+  /* Initialize startup process environment if necessary. */
+  if (!IsUnderPostmaster) InitStandaloneProcess(argv[0]);
 
   SetProcessingMode(InitProcessing);
 
@@ -3965,6 +3969,20 @@ void MemcachedMain(Port *port) {
    * Set default values for command-line options.
    */
   if (!IsUnderPostmaster) InitializeGUCOptions();
+
+  /*
+   * Parse command-line options.
+   */
+  process_postgres_switches(argc, argv, PGC_POSTMASTER, &dbname);
+
+  /* Must have gotten a database name, or have a default (the username) */
+  if (dbname == NULL) {
+    dbname = username;
+    if (dbname == NULL)
+      ereport(FATAL,
+              (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                  errmsg("%s: no database nor user name specified", progname)));
+  }
 
   /* Acquire configuration parameters, unless inherited from postmaster */
   if (!IsUnderPostmaster) {
@@ -4073,7 +4091,6 @@ void MemcachedMain(Port *port) {
   //#else
   //  InitProcess();
   //#endif
-
   /* We need to allow SIGINT, etc during the initial transaction */
   PG_SETMASK(&UnBlockSig);
 
@@ -4088,7 +4105,7 @@ void MemcachedMain(Port *port) {
    * it inside InitPostgres() instead.  In particular, anything that
    * involves database access should be there, not here.
    */
-  //  InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
+  InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
   // TODO: Peloton Changes
   if (IsBackend == true) {
@@ -4169,7 +4186,6 @@ void MemcachedMain(Port *port) {
    * unblock in AbortTransaction() because the latter is only called if we
    * were inside a transaction.
    */
-
   if (sigsetjmp(local_sigjmp_buf, 1) != 0) {
     /*
      * NOTE: if you are tempted to add more code in this if-block,
@@ -4198,6 +4214,15 @@ void MemcachedMain(Port *port) {
      */
     disable_all_timeouts(false);
     QueryCancelPending = false; /* second to avoid race condition */
+
+    /* Not reading from the client anymore. */
+    DoingCommandRead = false;
+
+    //    /* Make sure libpq is in a good state */
+    //    pq_comm_reset();
+
+    /* Report the error to the client and/or server log */
+    EmitErrorReport();
 
     /*
      * Make sure debug_query_string gets reset before we possibly clobber
@@ -4238,35 +4263,12 @@ void MemcachedMain(Port *port) {
   /* We can now handle ereport(ERROR) */
   PG_exception_stack = &local_sigjmp_buf;
 
-  // memcached query line
-  std::string query_line;
-
   /*
    * Non-error queries loop here.
    */
   for (;;) {
     /*
-     * (1) Allow asynchronous signals to be executed immediately if they
-     * come in while we are waiting for client input. (This must be
-     * conditional since we don't want, say, reads on behalf of COPY FROM
-     * STDIN doing the same thing.)
-     */
-    DoingCommandRead = true;
-
-    /*
-     * (2) disable async signal conditions again.
-     *
-     * Query cancel is supposed to be a no-op when there is no query in
-     * progress, so if a query cancel arrived while we were idle, just
-     * reset QueryCancelPending. ProcessInterrupts() has that effect when
-     * it's called when DoingCommandRead is set, so check for interrupts
-     * before resetting DoingCommandRead.
-     */
-    CHECK_FOR_INTERRUPTS();
-    DoingCommandRead = false;
-
-    /*
-     * (3) check for any other interesting events that happened while we
+     * (1) check for any other interesting events that happened while we
      * slept.
      */
     if (got_SIGHUP) {
@@ -4285,12 +4287,14 @@ void MemcachedMain(Port *port) {
       // close the socket
       mc_sock.close_socket();
 
+      free(memcached_dbname);
+      free(memcached_username);
       proc_exit(0);
       return;
     }
 
     /*
-     * (4) process the command.  But ignore it if we're skipping till
+     * (2) process the command.  But ignore it if we're skipping till
      * Sync.
      */
     // TODo: check when to erase

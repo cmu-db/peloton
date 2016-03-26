@@ -2,7 +2,14 @@
 // Created by siddharth on 25/3/16.
 //
 
+#ifndef MEMCACHED_SOCKET_H
+#define MEMACAHED_SOCKET_H
+
 #include "../libpq/libpq-be.h"
+
+// memcached db login credentials
+extern char *memcached_dbname;
+extern char *memcached_username;
 
 /* wrapper over pgsocket used for memcached */
 struct MemcachedSocket {
@@ -37,3 +44,5 @@ public:
   // if read failed
   bool read_line(std::string &new_line);
 };
+
+#endif
