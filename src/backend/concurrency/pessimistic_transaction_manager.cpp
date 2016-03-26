@@ -274,7 +274,9 @@ Result PessimisticTransactionManager::CommitTransaction() {
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
-          assert(ret == true);
+          if (ret == false) {
+            assert(false);
+          }
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -362,7 +364,9 @@ Result PessimisticTransactionManager::AbortTransaction() {
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
-          assert(ret == true);
+          if (ret == false) {
+            assert(false);
+          }
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
