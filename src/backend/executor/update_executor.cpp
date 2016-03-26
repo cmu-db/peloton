@@ -106,16 +106,18 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
       tile_group->CopyTuple(new_tuple, physical_tuple_id);
 
+      transaction_manager.SetUpdateVisibility(tile_group_id, physical_tuple_id);
        // Set MVCC info
-      assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
-      assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
-      assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
+      // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
+      // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
+      // assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
 
-      tile_group_header->SetTransactionId(physical_tuple_id, tid);
-      tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
-      tile_group_header->SetEndCommitId(physical_tuple_id, MAX_CID);
-      tile_group_header->SetInsertCommit(physical_tuple_id, false);
-      tile_group_header->SetDeleteCommit(physical_tuple_id, false);
+      // tile_group_header->SetTransactionId(physical_tuple_id, tid);
+      // tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
+      // tile_group_header->SetEndCommitId(physical_tuple_id, MAX_CID);
+      
+      //tile_group_header->SetInsertCommit(physical_tuple_id, false);
+      //tile_group_header->SetDeleteCommit(physical_tuple_id, false);
 
       // TODO: Logging
       // {
@@ -141,7 +143,7 @@ bool UpdateExecutor::DExecute() {
       
       if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false){
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
-        transaction->SetResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
 
@@ -156,19 +158,20 @@ bool UpdateExecutor::DExecute() {
 
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(new_tuple);
-      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
 
-      if (location.block == INVALID_OID) {
+      if (location.IsNull() == true) {
         delete new_tuple;
         new_tuple = nullptr;
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
-        transaction->SetResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
+      transaction_manager.SetUpdateVisibility(location.block, location.offset);
+      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
 
       executor_context_->num_processed += 1;  // updated one
 
-      transaction->RecordWrite(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformWrite(tile_group_id, physical_tuple_id);
 
       // Logging
       // {
@@ -188,7 +191,7 @@ bool UpdateExecutor::DExecute() {
     } else{
       // transaction should be aborted as we cannot update the latest version.
       LOG_INFO("Fail to update tuple. Set txn failure.");
-      transaction->SetResult(Result::RESULT_FAILURE);
+      transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     }
   }

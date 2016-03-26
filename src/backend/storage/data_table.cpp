@@ -187,9 +187,23 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_cons
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, bool check_constraint) {
+ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(tuple, check_constraint);
+  ItemPointer location = GetTupleSlot(tuple, false);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+
+  IncreaseNumberOfTuplesBy(1);
+  return location;
+}
+
+ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
