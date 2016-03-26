@@ -79,6 +79,9 @@ bool PessimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
+void PessimisticTransactionManager::ReleaseReadLock(__attribute__((unused)) storage::TileGroupHeader *tile_group_header, __attribute__((unused)) const oid_t &tuple_id){
+}
+
 bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &tuple_id) {
   // acquire write lock.
   if (IsOwner(tile_group, tuple_id))
