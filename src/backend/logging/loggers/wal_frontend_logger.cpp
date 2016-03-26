@@ -975,6 +975,10 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+    return;
   } else {
     LOG_INFO("Opened new log file for recovery");
   }
