@@ -33,7 +33,7 @@ include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
-
+include $(srcdir)/postgres/pl/Makefile.am
 include $(top_srcdir)/third_party/Makefile.am
 
 bin_PROGRAMS = \
@@ -92,6 +92,7 @@ libpelotonpg_la_SOURCES = \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES) \
+			$(postgres_pl_FILES) \
 			$(third_party_FILES)
 
 libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
@@ -107,7 +108,7 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
 			  -Wno-sign-compare -Wno-write-strings \
 			  -msse4.2
-			  
+
 libpelotonpg_la_LDFLAGS = -lprotobuf
 
 ######################################################################
@@ -115,7 +116,7 @@ libpelotonpg_la_LDFLAGS = -lprotobuf
 ######################################################################
 
 peloton_SOURCES = backend/main/main.cpp
-peloton_LDFLAGS = 
+peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
 peloton_LDADD = libpelotonpg.la libpeloton.la
