@@ -135,6 +135,8 @@
 #include "storage/spin.h"
 //#endif
 
+// TODO: Memcached Changes
+#include "postmaster/memcached.h"
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
@@ -266,6 +268,8 @@ static int Shutdown = NoShutdown;
 static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
+char *memcached_dbname = strdup("postgres");
+char *memcached_username = strdup("siddharth");
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
@@ -394,8 +398,8 @@ static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname, int pid,
                          int exitstatus);
 static void PostmasterStateMachine(void);
-static void BackendInitialize(Port *port);
-static void BackendRun(Port *port, bool is_memcached) pg_attribute_noreturn();
+static void BackendInitialize(Port *port, bool is_memcached);
+static void BackendRun(Port *port, bool is_memcached);
 static void ExitPostmaster(int status);
 static int ServerLoop(void);
 static int BackendStartup(Port *port, bool is_memcached);
@@ -3626,7 +3630,7 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
   // ClosePostmasterPorts(false);
   /* Perform additional initialization and collect startup packet */
   int thread_id = GetBackendThreadId();
-  BackendInitialize(port);
+  BackendInitialize(port, is_memcached);
 
   InitShmemAccess(AnonymousShmem);  // TRICKY! NOT UsedShmemSegAddr
   elog(DEBUG3, "ShmemAccess Initialized :: TID : %d", thread_id);
@@ -3645,7 +3649,11 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
 static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
   static unsigned long tmpBackendFileNum = 0;
   char tmpfilename[MAXPGPATH];
-  BackendParameters *param =
+  BackendParameters *param = nullptr;
+
+  // save backend variables if we are not memcached
+
+  param =
       (BackendParameters *)malloc(sizeof(BackendParameters));
 
   save_backend_variables(param, port);
@@ -3665,14 +3673,18 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
 static int BackendStartup(Port *port, bool is_memcached) {
-  Backend *bn; /* for backend cleanup */
+  Backend *bn = nullptr; /* for backend cleanup */
   pid_t pid;
 
   /*
    * Create backend data structure.  Better before the fork() so we can
    * handle failure cleanly.
+   *
+   * Note: don't allocate backend if we are memcached
+   *
    */
-  bn = (Backend *)malloc(sizeof(Backend));
+
+  bn = (Backend *) malloc(sizeof(Backend));
   if (!bn) {
     ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
     return STATUS_ERROR;
@@ -3686,8 +3698,10 @@ static int BackendStartup(Port *port, bool is_memcached) {
   MyCancelKey = PostmasterRandom();
   bn->cancel_key = MyCancelKey;
 
+
   /* Pass down canAcceptConnections state */
   port->canAcceptConnections = canAcceptConnections();
+
   bn->dead_end = (port->canAcceptConnections != CAC_OK &&
                   port->canAcceptConnections != CAC_WAITBACKUP);
 
@@ -3701,6 +3715,7 @@ static int BackendStartup(Port *port, bool is_memcached) {
 
   /* Hasn't asked to be notified about any bgworkers yet */
   bn->bgworker_notify = false;
+
 
 #ifdef EXEC_BACKEND
   pid = backend_forkexec(port);
@@ -3782,7 +3797,7 @@ static void report_fork_failure_to_client(Port *port, int errnum) {
  * In the EXEC_BACKEND case, we are physically attached to shared memory
  * but have not yet set up most of our local pointers to shmem structures.
  */
-static void BackendInitialize(Port *port) {
+static void BackendInitialize(Port *port, bool is_memcached) {
   int status;
   int ret;
   char remote_host[NI_MAXHOST];
@@ -3911,13 +3926,22 @@ static void BackendInitialize(Port *port) {
    * Receive the startup packet (which might turn out to be a cancel request
    * packet).
    */
-  status = ProcessStartupPacket(port, false);
 
-  /*
-   * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
-   * already did any appropriate error reporting.
-   */
-  if (status != STATUS_OK) proc_exit(0);
+  // we don't speak wire protocol if we are memcached, skip
+  if (!is_memcached) {
+    status = ProcessStartupPacket(port, false);
+
+    /*
+		 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
+		 * already did any appropriate error reporting.
+		 */
+    if (status != STATUS_OK) proc_exit(0);
+  } else {
+    // memcached credentials
+    port->database_name = memcached_dbname;
+    port->user_name = memcached_username;
+  }
+
 
   /*
    * Now that we have the user and database name, we can set the process
@@ -4010,12 +4034,11 @@ static void BackendRun(Port *port, bool is_memcached) {
    */
   MemoryContextSwitchTo(TopMemoryContext);
 
+  // normal postgres sql workflow
   if (!is_memcached)
-    // normal postgres sql workflow
     PostgresMain(ac, av, port->database_name, port->user_name);
   else
-    // memcached workflow
-    MemcachedMain(ac, av, port->database_name, port->user_name);
+    MemcachedMain(ac, av, port);
 }
 
 #ifdef EXEC_BACKEND
@@ -4586,6 +4609,10 @@ static void ExitPostmaster(int status) {
    *
    * MUST		-- vadim 05-10-1999
    */
+
+  // free memcached db data
+  free(memcached_dbname);
+  free(memcached_username);
 
   proc_exit(status);
 }

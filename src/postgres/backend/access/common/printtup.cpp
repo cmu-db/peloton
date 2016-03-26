@@ -26,8 +26,6 @@
 
 static void printtup_startup(DestReceiver *self, int operation,
 				 TupleDesc typeinfo, MemcachedState *mc_state = nullptr);
-static void printtup(TupleTableSlot *slot, DestReceiver *self,
-										 MemcachedState *mc_state = nullptr);
 static void printtup_20(TupleTableSlot *slot, DestReceiver *self,
 												MemcachedState *mc_state = nullptr);
 static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self,
@@ -304,10 +302,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  *		printtup --- print a tuple in protocol 3.0
  * ----------------
  */
-static void
+void
 printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 {
-	// printf("\n\nREACHED PRINTTUP:%p\n\n", mc_state);
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
@@ -330,11 +327,10 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 	 *
 	 * Note: do this if we are not memcached
 	 */
-	if (!mc_state) {
-		pq_beginmessage(&buf, 'D');
 
-		pq_sendint(&buf, natts, 2);
-	}
+	pq_beginmessage(&buf, 'D');
+
+	pq_sendint(&buf, natts, 2);
 
 
 	/*
@@ -347,8 +343,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 
 		if (slot->tts_isnull[i])
 		{
-			if(!mc_state)
-				pq_sendint(&buf, -1, 4);
+			pq_sendint(&buf, -1, 4);
 			continue;
 		}
 
@@ -370,10 +365,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
 			// comma delimit output
-			if (mc_state)
-				mc_state->result += outputstr + std::string(",");
-			else
-				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 		}
 		else
 		{
@@ -381,18 +373,25 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 			bytea	   *outputbytes;
 
 			// TODO: ignore binary data for memcached for now
-			if (!mc_state) {
-				outputbytes = SendFunctionCall(&thisState->finfo, attr);
-				pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
-				pq_sendbytes(&buf, VARDATA(outputbytes),
-										 VARSIZE(outputbytes) - VARHDRSZ);
-			}
+			outputbytes = SendFunctionCall(&thisState->finfo, attr);
+			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendbytes(&buf, VARDATA(outputbytes),
+									 VARSIZE(outputbytes) - VARHDRSZ);
 		}
 	}
 
 	// flush only if we are not memcached
-	if (!mc_state)
+	if (!mc_state) {
+		// otherwise, send string value of message up
 		pq_endmessage(&buf);
+	}
+	else {
+		// copy buf in result
+		mc_state->result.cursor = buf.cursor;
+		mc_state->result.data = buf.data;
+		mc_state->result.len = buf.len;
+		mc_state->result.maxlen = buf.maxlen;
+	}
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);

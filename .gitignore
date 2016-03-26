@@ -168,3 +168,4 @@ third_party/logcabin/
 *.txt
 handin*
 CMakeLists.txt
+!tests/mc_client.py
