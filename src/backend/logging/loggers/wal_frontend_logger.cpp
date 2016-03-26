@@ -33,6 +33,7 @@
 extern CheckpointType peloton_checkpoint_mode;
 
 #define LOG_FILE_SWITCH_LIMIT (1024 * 1024)
+
 namespace peloton {
 namespace logging {
 
@@ -59,6 +60,9 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 // Wrappers
 storage::DataTable *GetTable(TupleRecord tupleRecord);
+
+int ExtractNumberFromFileName(const char *name);
+
 
 /**
  * @brief Open logfile and file descriptor
@@ -870,6 +874,9 @@ int extract_number_from_filename(const char *name) {
   LOG_ERROR("The last found log file doesn't have a version number.");
   return 0;
 }
+int ExtractNumberFromFileName(const char *name) {
+	return extract_number_from_filename(name);
+}
 
 bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
   return left->log_number_ < right->log_number_;
@@ -913,6 +920,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
             CompareByLogNumber);
 
   if (num_log_files) {
+	// @abj please follow CamelCase convention for function name :)
     int max_num = extract_number_from_filename(
         this->log_files_[num_log_files - 1]->log_file_name_.c_str());
     LOG_INFO("Got maximum log file version as %d", max_num);
