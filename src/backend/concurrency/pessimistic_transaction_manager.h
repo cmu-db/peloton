@@ -63,6 +63,8 @@ private:
   inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
     return (txn_id >> 56) & 0xff;
   }
+
+  void ReleaseReadLock(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id);
 };
 }
 }
