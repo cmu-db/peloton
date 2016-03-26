@@ -122,27 +122,8 @@ const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
   return rw_set;
 }
 
-// const std::map<oid_t, std::vector<oid_t>> &Transaction::GetReadTuples() {
-//   return rw_set;
-// }
-
-// const std::map<oid_t, std::vector<oid_t>> &Transaction::GetWrittenTuples() {
-//   return written_tuples;
-// }
-
-// const std::map<oid_t, std::vector<oid_t>> &Transaction::GetInsertedTuples() {
-//   return inserted_tuples;
-// }
-
-// const std::map<oid_t, std::vector<oid_t>> &Transaction::GetDeletedTuples() {
-//   return deleted_tuples;
-// }
-
 void Transaction::ResetState(void) {
   rw_set.clear();
-  //  written_tuples.clear();
-  //  inserted_tuples.clear();
-  //  deleted_tuples.clear();
 }
 
 const std::string Transaction::GetInfo() const {
