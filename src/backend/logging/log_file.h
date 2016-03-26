@@ -23,7 +23,6 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class LogFile {
- private:
  public:
   LogFile(FILE *log_file, std::string log_file_name, int log_file_fd,
           int log_number)
@@ -36,6 +35,21 @@ class LogFile {
 
   virtual ~LogFile(void){};
 
+  void SetMaxCommitId(int);
+
+  int GetMaxCommitId();
+
+  int GetLogNumber();
+
+  std::string GetLogFileName();
+
+  void SetLogFileSize(int);
+
+  FILE *GetFilePtr();
+
+  void SetLogFileFD(int);
+
+ private:
   FILE *log_file_;
   std::string log_file_name_;
   int max_commit_id_;  // we may not need this later..
