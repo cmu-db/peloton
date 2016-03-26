@@ -63,7 +63,6 @@ storage::DataTable *GetTable(TupleRecord tupleRecord);
 
 int ExtractNumberFromFileName(const char *name);
 
-
 /**
  * @brief Open logfile and file descriptor
  */
@@ -875,11 +874,11 @@ int extract_number_from_filename(const char *name) {
   return 0;
 }
 int ExtractNumberFromFileName(const char *name) {
-	return extract_number_from_filename(name);
+  return extract_number_from_filename(name);
 }
 
 bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
-  return left->log_number_ < right->log_number_;
+  return left->GetLogNumber() < right->GetLogNumber();
 }
 
 void WriteAheadFrontendLogger::InitLogFilesList() {
@@ -916,13 +915,22 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   num_log_files = this->log_files_.size();
 
   LOG_INFO("The number of log files found: %d", num_log_files);
+
   std::sort(this->log_files_.begin(), this->log_files_.end(),
             CompareByLogNumber);
 
+  /*LOG_INFO("After sorting, the list of log files looks like this:");
+
+  for (int i = 0; i < num_log_files; i++) {
+    LOG_INFO("Name: %s, Number: %d, Size: %d, FD: %d",
+  this->log_files_[i]->log_file_name_.c_str(), this->log_files_[i]->log_number_,
+  this->log_files_[i]->log_file_size_, this->log_files_[i]->log_file_fd_);
+  }*/
+
   if (num_log_files) {
-	// @abj please follow CamelCase convention for function name :)
+    // @abj please follow CamelCase convention for function name :)
     int max_num = extract_number_from_filename(
-        this->log_files_[num_log_files - 1]->log_file_name_.c_str());
+        this->log_files_[num_log_files - 1]->GetLogFileName().c_str());
     LOG_INFO("Got maximum log file version as %d", max_num);
     this->log_file_counter_ = ++max_num;
   } else {
@@ -960,10 +968,9 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
     int file_list_size = this->log_files_.size();
 
     if (file_list_size != 0) {
-      this->log_files_[file_list_size - 1]->log_file_size_ =
-          this->log_file_size;
-      fclose(this->log_files_[file_list_size - 1]->log_file_);
-      this->log_files_[file_list_size - 1]->log_file_fd_ = -1;  // invalidate
+      this->log_files_[file_list_size - 1]->SetLogFileSize(this->log_file_size);
+      fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
+      this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
       // TODO set max commit_id here!
     }
   }
@@ -1007,7 +1014,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   // open the next file
   this->log_file = fopen(
-      this->log_files_[this->log_file_cursor_]->log_file_name_.c_str(), "rb");
+      this->log_files_[this->log_file_cursor_]->GetLogFileName().c_str(), "rb");
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
@@ -1036,11 +1043,11 @@ void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
 
   // delete stale log files except the one currently being used
   for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
-    if (max_commit_id >= this->log_files_[i]->max_commit_id_) {
-      return_val = remove(this->log_files_[i]->log_file_name_.c_str());
+    if (max_commit_id >= this->log_files_[i]->GetMaxCommitId()) {
+      return_val = remove(this->log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s",
-                  this->log_files_[i]->log_file_name_.c_str());
+                  this->log_files_[i]->GetLogFileName().c_str());
       }
       // remove entry from list anyway
       this->log_files_.erase(this->log_files_.begin() + i);
