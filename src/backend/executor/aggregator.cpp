@@ -137,7 +137,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
     LOG_ERROR("Failed to insert tuple ");
     return false;
   } else {
-    concurrency::TransactionManagerFactory::GetInstance().SetVisibilityForCurrentTxn(location.block, location.offset);
+    concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(location.block, location.offset);
   }
 
   return true;
