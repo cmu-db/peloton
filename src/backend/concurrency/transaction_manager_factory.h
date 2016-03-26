@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+a//===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
 //
@@ -20,7 +20,7 @@ namespace concurrency {
 class TransactionManagerFactory {
  public:
   static TransactionManager &GetInstance(
-      ConcurrencyType concurrency_type = CONCURRENCY_TYPE_2PL) {
+      ConcurrencyType concurrency_type = CONCURRENCY_TYPE_OCC) {
     switch (concurrency_type) {
       case CONCURRENCY_TYPE_OCC:
         return OptimisticTransactionManager::GetInstance();
