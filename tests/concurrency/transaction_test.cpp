@@ -364,16 +364,32 @@ TEST_F(TransactionTests, AbortTest) {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
-  TransactionScheduler scheduler(2, table.get(), &txn_manager);
-  scheduler.AddUpdate(0, 0, 100);
-  scheduler.AddRead(1, 0);
-  scheduler.AddAbort(0);
-  scheduler.AddCommit(1);
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddUpdate(0, 0, 100);
+    scheduler.AddAbort(0);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(1);
 
-  scheduler.Run();
+    scheduler.Run();
 
-  EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-  EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddInsert(0, 100, 0);
+    scheduler.AddAbort(0);
+    scheduler.AddRead(1, 100);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(-1, scheduler.schedules[1].results[0]); 
+  }
 }
 
 TEST_F(TransactionTests, SerializableTest) {
