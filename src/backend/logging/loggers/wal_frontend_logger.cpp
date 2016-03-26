@@ -46,8 +46,6 @@ bool IsFileTruncated(FILE *log_file, size_t size_to_read, size_t log_file_size);
 
 size_t GetNextFrameSize(FILE *log_file, size_t log_file_size);
 
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
-
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
                                  size_t log_file_size);
 
@@ -56,6 +54,8 @@ bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
 
 storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
                                     FILE *log_file, size_t log_file_size);
+
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 // Wrappers
 storage::DataTable *GetTable(TupleRecord tupleRecord);
@@ -177,7 +177,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
   log_file_cursor_ = 0;
   // TODO implement recovery from multiple log files
-  if (log_file_fd == -1) return;
+  // if (log_file_fd == -1) return;
 
   // Set log file size
   // log_file_size = GetLogFileSize(log_file_fd);
@@ -199,7 +199,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
     while (reached_end_of_file == false) {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
-      auto record_type = GetNextLogRecordType(log_file, log_file_size);
+      auto record_type =
+          this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
 
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
@@ -684,6 +685,7 @@ size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
  * @return log record type otherwise return invalid log record type,
  * which menas there is no more log in the log file
  */
+
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   char buffer;
 
@@ -696,24 +698,49 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   // Otherwise, read the log record type
   int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
   if (ret <= 0) {
-    /* TODO uncomment and fix
-       OpenNextLogFile();
-       if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
-
-       if (IsFileTruncated(log_file, 1, log_file_size)) {
-       LOG_ERROR("Log file is truncated");
-       return LOGRECORD_TYPE_INVALID;
-       }
-       ret = fread((void *)&buffer, 1, sizeof(char), log_file);
-       if (ret <= 0)
-       {
-       LOG_ERROR("Could not read from log file");
-       return LOGRECORD_TYPE_INVALID;
-       }
-    */
-
     LOG_ERROR("Could not read from log file");
     return LOGRECORD_TYPE_INVALID;
+  }
+
+  CopySerializeInputBE input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+
+  return log_record_type;
+}
+
+LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
+    FILE *log_file, size_t log_file_size) {
+  char buffer;
+
+  // Check if the log record type is broken
+  if (IsFileTruncated(log_file, 1, log_file_size)) {
+    LOG_ERROR("Log file is truncated");
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  LOG_INFO("Inside GetNextLogRecordForRecovery");
+  // Otherwise, read the log record type
+  int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+  if (ret <= 0) {
+    LOG_INFO("Failed an fread. Call OpenNextLogFile");
+    this->OpenNextLogFile();
+    if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
+
+    LOG_INFO("Open succeeded. log_file_fd is %d", (int)log_file_fd);
+
+    if (IsFileTruncated(log_file, 1, log_file_size)) {
+      LOG_ERROR("Log file is truncated");
+      return LOGRECORD_TYPE_INVALID;
+    }
+    LOG_INFO("File is not truncated.");
+    ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+    if (ret <= 0) {
+      LOG_ERROR("Could not read from log file");
+      return LOGRECORD_TYPE_INVALID;
+    }
+    LOG_INFO("fread succeeded.");
+  } else {
+    LOG_INFO("fread succeeded.");
   }
 
   CopySerializeInputBE input(&buffer, sizeof(char));
@@ -931,19 +958,26 @@ bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
 
 void WriteAheadFrontendLogger::OpenNextLogFile() {
   if (this->log_files_.size() == 0) {  // no log files, fresh start
+    LOG_INFO("Size of log files list is 0.");
     this->log_file_fd = -1;
     this->log_file = NULL;
     this->log_file_size = 0;
+    return;
   }
 
   if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
+    LOG_INFO("Cursor has reached the end. No more log files to read from.");
     this->log_file_fd = -1;
     this->log_file = NULL;
     this->log_file_size = 0;
+    return;
   }
 
   if (this->log_file_cursor_ != 0)  // close old file
+  {
+    LOG_INFO("Closing last opened file");
     fclose(log_file);
+  }
 
   // open the next file
   this->log_file = fopen(
@@ -951,9 +985,16 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
+    this->log_file_fd = -1;
+    this->log_file = NULL;
+    this->log_file_size = 0;
+    return;
+  } else {
+    LOG_INFO("Opened new log file for recovery");
   }
 
   this->log_file_fd = fileno(this->log_file);
+  LOG_INFO("FD of opened file is %d", (int)this->log_file_fd);
 
   struct stat stat_buf;
 
@@ -961,6 +1002,25 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   this->log_file_size = stat_buf.st_size;
 
   this->log_file_cursor_++;
+  LOG_INFO("Cursor is now %d", (int)this->log_file_cursor_);
+}
+
+void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
+  int return_val;
+
+  // delete stale log files except the one currently being used
+  for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
+    if (max_commit_id >= this->log_files_[i]->max_commit_id_) {
+      return_val = remove(this->log_files_[i]->log_file_name_.c_str());
+      if (return_val != 0) {
+        LOG_ERROR("Couldn't delete log file: %s",
+                  this->log_files_[i]->log_file_name_.c_str());
+      }
+      // remove entry from list anyway
+      this->log_files_.erase(this->log_files_.begin() + i);
+      i--;  // update cursor
+    }
+  }
 }
 
 }  // namespace logging
