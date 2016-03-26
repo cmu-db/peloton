@@ -4332,16 +4332,19 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
      * (2) process the command.  But ignore it if we're skipping till
      * Sync.
      */
-    // TODo: check when to erase
+    // TODO: check when to erase
     query_line.clear();
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
-
-      // echo response
-      if(!mc_sock.write_response(query_line+"\r\n")) {
-        printf("\nWrite line failed, terminating thread\n");
-        terminate = true;
-      }
+      //      auto mc_state = new MemcachedState();
+      //      // exec_simple_query(query_line.c_str(), mc_state);
+      //      // echo response
+      //      mc_state->result = query_line;
+      //      if(!mc_sock.write_response(mc_state->result+"\r\n")) {
+      //        printf("\nWrite line failed, terminating thread\n");
+      //        terminate = true;
+      //      }
+      //      delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
       // terminate the thread
