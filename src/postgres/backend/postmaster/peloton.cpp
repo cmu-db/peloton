@@ -62,6 +62,9 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
+// for memcached support
+#include "access/printtup.h"
+
 /* ----------
  * Logging Flag
  * ----------
@@ -291,7 +294,13 @@ peloton_send_output(const peloton_status& status,
        * If we are supposed to send the tuple somewhere, do so. (In
        * practice, this is probably always the case at this point.)
        */
-      if (sendTuples)
+
+      // for memcached, directly call printtup
+      if (sendTuples && mc_state) {
+        printtup(slot, dest, mc_state);
+      }
+      else if (sendTuples)
+        // otherwise use dest fp
         (*dest->receiveSlot) (slot, dest, mc_state);
 
       /*

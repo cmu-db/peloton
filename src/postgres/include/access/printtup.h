@@ -35,4 +35,7 @@ extern void spi_dest_startup(DestReceiver *self, int operation,
 extern void spi_printtup(TupleTableSlot *slot, DestReceiver *self,
 												 MemcachedState *mc_state = nullptr);
 
+extern void printtup(TupleTableSlot *slot, DestReceiver *self,
+										 MemcachedState *mc_state = nullptr);
+
 #endif   /* PRINTTUP_H */
