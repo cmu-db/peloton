@@ -80,8 +80,12 @@ bool PessimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
 
 bool PessimisticTransactionManager::ReleaseReadLock(
     storage::TileGroup *tile_group, const oid_t &tuple_id) {
+
+
   auto tile_group_header = tile_group->GetHeader();
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
+  LOG_INFO("ReleaseReadLock on %lx", old_txn_id);
 
   if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
     return false;
@@ -108,6 +112,7 @@ bool PessimisticTransactionManager::ReleaseReadLock(
 
 bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
                                                  const oid_t &tuple_id) {
+  LOG_INFO("AcquireTuple");
   // acquire write lock.
   if (IsOwner(tile_group, tuple_id)) return true;
 
@@ -127,7 +132,7 @@ bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
   if (res) {
     return true;
   } else {
-    LOG_INFO("Fail to insert new tuple. Set txn failure.");
+    LOG_INFO("Fail to acquire write lock. Set txn failure.");
     // TODO: Don't set txn result here
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
@@ -146,6 +151,7 @@ bool PessimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  // FIXME: actually when read count is 0 this tuple is not accessable
   return EXTRACT_TXNID(tuple_txn_id) == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
