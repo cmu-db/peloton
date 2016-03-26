@@ -23,6 +23,8 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
+#define TEST_TYPE CONCURRENCY_TYPE_2PL
+
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
@@ -42,7 +44,7 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 }
 
 void DirtyWriteTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -144,7 +146,7 @@ void DirtyWriteTest() {
 }
 
 void DirtyReadTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -204,7 +206,7 @@ void DirtyReadTest() {
 }
 
 void FuzzyReadTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -261,7 +263,7 @@ void FuzzyReadTest() {
 }
 
 void PhantomTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -291,7 +293,7 @@ void PhantomTest() {
 }
 
 void WriteSkewTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -329,7 +331,7 @@ void WriteSkewTest() {
 }
 
 void ReadSkewTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -350,7 +352,7 @@ void ReadSkewTest() {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
 
   LaunchParallelTest(8, TransactionTest, &txn_manager);
 
@@ -358,20 +360,36 @@ TEST_F(TransactionTests, TransactionTest) {
 }
 
 TEST_F(TransactionTests, AbortTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
-  TransactionScheduler scheduler(2, table.get(), &txn_manager);
-  scheduler.AddUpdate(0, 0, 100);
-  scheduler.AddRead(1, 0);
-  scheduler.AddAbort(0);
-  scheduler.AddCommit(1);
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddUpdate(0, 0, 100);
+    scheduler.AddAbort(0);
+    scheduler.AddRead(1, 0);
+    scheduler.AddCommit(1);
 
-  scheduler.Run();
+    scheduler.Run();
 
-  EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-  EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddInsert(0, 100, 0);
+    scheduler.AddAbort(0);
+    scheduler.AddRead(1, 100);
+    scheduler.AddCommit(1);
+
+    scheduler.Run();
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(-1, scheduler.schedules[1].results[0]); 
+  }
 }
 
 TEST_F(TransactionTests, SerializableTest) {
