@@ -79,7 +79,8 @@ bool PessimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-void PessimisticTransactionManager::ReleaseReadLock(__attribute__((unused)) storage::TileGroupHeader *tile_group_header, __attribute__((unused)) const oid_t &tuple_id){
+bool PessimisticTransactionManager::ReleaseReadLock(__attribute__((unused)) storage::TileGroup *tile_group, __attribute__((unused)) const oid_t &tuple_id) {
+  return false;
 }
 
 bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &tuple_id) {
@@ -91,27 +92,13 @@ bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   // No writer
-  // Decrease read count
-  if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
-    while (true) {
-      auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
-      auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
-      auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, old_txn_id, &old_txn_id);
-      if (!res) {
-        // Assert there's no other writer
-        assert(EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID);
-      } else {
-        break;
-      }
-    }
-  } else {
-    // Has other writer
-    return false;
-  }
+  auto res = ReleaseReadLock(tile_group, tuple_id);
+  // Must success
+  assert(res);
 
   // Try get write lock
   auto new_txn_id = current_txn->GetTransactionId();
-  auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, INITIAL_TXN_ID, &old_txn_id);
+   res = tile_group_header->CASTxnId(tuple_id, new_txn_id, INITIAL_TXN_ID, &old_txn_id);
 
   if (res) {
     return true;
@@ -142,13 +129,6 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id, cons
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  // If I am the owner, return directly
-  if (IsOwner(tile_group.get(), tuple_id)) {
-    current_txn->RecordRead(tile_group_id, tuple_id);
-    return true;
-  }
-
-  // I'm not owner
   // acquire read lock.
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
@@ -225,8 +205,56 @@ Result PessimisticTransactionManager::CommitTransaction() {
   return Result::RESULT_ABORTED;
 }
 
-Result PessimisticTransactionManager::AbortTransaction() { 
-  delete current_txn; 
+Result PessimisticTransactionManager::AbortTransaction() {
+  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  auto &manager = catalog::Manager::GetInstance();
+
+  // Release read locks on read set.
+  for (auto entry : current_txn->GetReadTuples()) {
+    for (auto tuple_id : entry.second) {
+      oid_t tile_group_id = entry.first;
+      ReleaseReadLock(manager.GetTileGroup(tile_group_id).get(), tuple_id);
+    }
+  }
+
+  // Recover write and delete set
+  for (auto entry : current_txn->GetDeletedTuples()) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_id : entry.second) {
+      tile_group_header->UnlockTupleSlot(tuple_id, current_txn->GetTransactionId());
+      tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+      ItemPointer new_version =
+          tile_group_header->GetNextItemPointer(tuple_id);
+      auto new_tile_group_header =
+          manager.GetTileGroup(new_version.block)->GetHeader();
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              INVALID_TXN_ID);
+      new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+    }
+  }
+
+  for (auto entry : current_txn->GetWrittenTuples()) {
+    oid_t tile_group_id = entry.first;
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto tuple_id : entry.second) {
+      tile_group_header->UnlockTupleSlot(tuple_id, current_txn->GetTransactionId());
+      tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+      ItemPointer new_version =
+          tile_group_header->GetNextItemPointer(tuple_id);
+      auto new_tile_group_header =
+          manager.GetTileGroup(new_version.block)->GetHeader();
+      new_tile_group_header->SetTransactionId(new_version.offset,
+                                              INVALID_TXN_ID);
+      new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
+      new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+    }
+  }
+
+  delete current_txn;
   current_txn = nullptr;
   return Result::RESULT_ABORTED;
 }
