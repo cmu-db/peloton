@@ -193,15 +193,17 @@ class TransactionThread {
         // Assert last operation
         assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction();
+        txn = NULL;
         break;
       }
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction();
+        txn = NULL;
         break;
       }
     }
 
-    if (txn->GetResult() == RESULT_FAILURE) {
+    if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
       LOG_TRACE("ABORT NOW, Executor returns %s", execute_result ? "true" : "false");
