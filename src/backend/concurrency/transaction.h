@@ -95,14 +95,6 @@ class Transaction : public Printable {
 
   const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
 
-  // const std::map<oid_t, std::vector<oid_t>> &GetReadTuples();
-
-  // const std::map<oid_t, std::vector<oid_t>> &GetWrittenTuples();
-
-  // const std::map<oid_t, std::vector<oid_t>> &GetInsertedTuples();
-
-  // const std::map<oid_t, std::vector<oid_t>> &GetDeletedTuples();
-
   // reset inserted tuples and deleted tuples
   // used by recovery (logging)
   void ResetState(void);
@@ -143,18 +135,6 @@ class Transaction : public Printable {
 
   // cid context
   Transaction *next __attribute__((aligned(16)));
-
-  // // read tuples
-  // std::map<oid_t, std::vector<oid_t>> read_tuples;
-
-  // // written tuples
-  // std::map<oid_t, std::vector<oid_t>> written_tuples;
-
-  // // inserted tuples
-  // std::map<oid_t, std::vector<oid_t>> inserted_tuples;
-
-  // // deleted tuples
-  // std::map<oid_t, std::vector<oid_t>> deleted_tuples;
 
   std::map<oid_t, std::map<oid_t, RWType>> rw_set;
 
