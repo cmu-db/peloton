@@ -262,8 +262,17 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     } break;
 
+    // In Postgres, dates are 4-byte values representing the number of days
+    // since the year 2000. We retain those semantics in Peloton.
+    case POSTGRES_VALUE_TYPE_DATE: {
+      int32_t date = DatumGetInt32(datum);
+      LOG_TRACE("PG date: %d", date);
+      value = ValueFactory::GetDateValue(date);
+    } break;
+
     case POSTGRES_VALUE_TYPE_TIMESTAMPS: {
       long int timestamp = DatumGetInt64(datum);
+      LOG_TRACE("PG timestamp: %ld", timestamp);
       value = ValueFactory::GetTimestampValue(timestamp);
     } break;
 
@@ -321,11 +330,13 @@ Datum TupleTransformer::GetDatum(Value value) {
       LOG_TRACE("%ld", bigint);
       datum = Int64GetDatum(bigint);
     } break;
+
     case VALUE_TYPE_REAL: {
       float real = float(ValuePeeker::PeekDouble(value));
       LOG_TRACE("%f", real);
       datum = Float4GetDatum(real);
     } break;
+
     case VALUE_TYPE_DOUBLE: {
       double double_precision = ValuePeeker::PeekDouble(value);
       LOG_TRACE("%f", double_precision);
@@ -343,6 +354,12 @@ Datum TupleTransformer::GetDatum(Value value) {
         // we should use PG functions that take explicit length.
         datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
       }
+    } break;
+
+    case VALUE_TYPE_DATE: {
+      int32_t date = ValuePeeker::PeekDate(value);
+      LOG_TRACE("Date: %d", date);
+      datum = Int32GetDatum(date);
     } break;
 
     case VALUE_TYPE_TIMESTAMP: {
