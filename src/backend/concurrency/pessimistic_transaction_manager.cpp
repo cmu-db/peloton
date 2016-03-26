@@ -273,7 +273,8 @@ Result PessimisticTransactionManager::CommitTransaction() {
         if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
-          assert(ReleaseReadLock(tile_group.get(), tuple_slot));
+          bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
+          assert(ret == true);
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -360,7 +361,8 @@ Result PessimisticTransactionManager::AbortTransaction() {
         if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
-          assert(ReleaseReadLock(tile_group.get(), tuple_slot));
+          bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
+          assert(ret == true);
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {

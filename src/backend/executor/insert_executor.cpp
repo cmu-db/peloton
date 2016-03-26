@@ -63,8 +63,6 @@ bool InsertExecutor::DExecute() {
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table);
 
-  // TODO: use transaction manager instead of transaction. DONE!!
-  //auto transaction_ = executor_context_->GetTransaction();
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
@@ -97,11 +95,9 @@ bool InsertExecutor::DExecute() {
       peloton::ItemPointer location =
           target_table->InsertTuple(tuple.get());
       if (location.block == INVALID_OID) {
-        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      // transaction_->RecordInsert(location.block, location.offset);
       transaction_manager.PerformInsert(location.block, location.offset);
 
       executor_context_->num_processed += 1;  // insert one
@@ -138,27 +134,10 @@ bool InsertExecutor::DExecute() {
 
       if (location.block == INVALID_OID) {
         LOG_INFO("Failed to Insert. Set txn failure.");
-        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      // transaction_->RecordInsert(location.block, location.offset);
       transaction_manager.PerformInsert(location.block, location.offset);
-
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //         LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
-      //         target_table_->GetOid(), location, INVALID_ITEMPOINTER,
-      //         tuple.get());
-
-      //     logger->Log(record);
-      //   }
-      // }
     }
 
     executor_context_->num_processed += 1;  // insert one
