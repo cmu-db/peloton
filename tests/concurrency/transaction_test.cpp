@@ -328,6 +328,27 @@ void WriteSkewTest() {
   }
 }
 
+void ReadSkewTest() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.AddRead(0, 0);
+    scheduler.AddUpdate(1, 0, 1);
+    scheduler.AddUpdate(1, 1, 1);
+    scheduler.AddCommit(1);
+    scheduler.AddRead(0, 1);
+    scheduler.AddCommit(0);
+
+    scheduler.Run();
+
+    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+  }
+}
+
 TEST_F(TransactionTests, TransactionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
