@@ -135,6 +135,8 @@
 #include "storage/spin.h"
 //#endif
 
+// TODO: Memcached Changes
+#include "postmaster/memcached_socket.h"
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
@@ -266,6 +268,8 @@ static int Shutdown = NoShutdown;
 static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
+char *memcached_dbname = strdup("postgres");
+char *memcached_username = strdup("siddharth");
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
@@ -394,8 +398,8 @@ static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname, int pid,
                          int exitstatus);
 static void PostmasterStateMachine(void);
-static void BackendInitialize(Port *port);
-static void BackendRun(Port *port) pg_attribute_noreturn();
+static void BackendInitialize(Port *port, bool is_memcached);
+static void BackendRun(Port *port, bool is_memcached);
 static void ExitPostmaster(int status);
 static int ServerLoop(void);
 static int BackendStartup(Port *port, bool is_memcached);
@@ -3597,11 +3601,6 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
 
   IsBackend = true;
 
-  // if we are memcached, directly launch memcached main
-  if (is_memcached) {
-    MemcachedMain(port);
-    return;
-  }
   MemoryContextInit();
   // MemoryContextSwitchTo(TopMemoryContext);
   restore_backend_variables(param, port);
@@ -3631,7 +3630,7 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
   // ClosePostmasterPorts(false);
   /* Perform additional initialization and collect startup packet */
   int thread_id = GetBackendThreadId();
-  BackendInitialize(port);
+  BackendInitialize(port, is_memcached);
 
   InitShmemAccess(AnonymousShmem);  // TRICKY! NOT UsedShmemSegAddr
   elog(DEBUG3, "ShmemAccess Initialized :: TID : %d", thread_id);
@@ -3643,7 +3642,7 @@ static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
   elog(DEBUG3, "SMem and Semaphores created :: TID : %d", thread_id);
 
   /* And run the backend */
-  BackendRun(port);
+  BackendRun(port, is_memcached);
 }
 
 // TODO: Peloton Changes
@@ -3653,12 +3652,11 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
   BackendParameters *param = nullptr;
 
   // save backend variables if we are not memcached
-  if (!is_memcached) {
-    param =
-        (BackendParameters *)malloc(sizeof(BackendParameters));
 
-    save_backend_variables(param, port);
-  }
+  param =
+      (BackendParameters *)malloc(sizeof(BackendParameters));
+
+  save_backend_variables(param, port);
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(),
        GetBackendThreadId());
@@ -3686,40 +3684,37 @@ static int BackendStartup(Port *port, bool is_memcached) {
    *
    */
 
-  if (!is_memcached) {
-    bn = (Backend *) malloc(sizeof(Backend));
-    if (!bn) {
-      ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
-      return STATUS_ERROR;
-    }
-
-    /*
-     * Compute the cancel key that will be assigned to this backend. The
-     * backend will have its own copy in the forked-off process' value of
-     * MyCancelKey, so that it can transmit the key to the frontend.
-     */
-    MyCancelKey = PostmasterRandom();
-    bn->cancel_key = MyCancelKey;
+  bn = (Backend *) malloc(sizeof(Backend));
+  if (!bn) {
+    ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
+    return STATUS_ERROR;
   }
+
+  /*
+   * Compute the cancel key that will be assigned to this backend. The
+   * backend will have its own copy in the forked-off process' value of
+   * MyCancelKey, so that it can transmit the key to the frontend.
+   */
+  MyCancelKey = PostmasterRandom();
+  bn->cancel_key = MyCancelKey;
+
 
   /* Pass down canAcceptConnections state */
   port->canAcceptConnections = canAcceptConnections();
 
-  if (!is_memcached) {
-    bn->dead_end = (port->canAcceptConnections != CAC_OK &&
-                    port->canAcceptConnections != CAC_WAITBACKUP);
+  bn->dead_end = (port->canAcceptConnections != CAC_OK &&
+                  port->canAcceptConnections != CAC_WAITBACKUP);
 
-    /*
-     * Unless it's a dead_end child, assign it a child slot number
-     */
-    if (!bn->dead_end)
-      bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
-    else
-      bn->child_slot = 0;
+  /*
+   * Unless it's a dead_end child, assign it a child slot number
+   */
+  if (!bn->dead_end)
+    bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
+  else
+    bn->child_slot = 0;
 
-    /* Hasn't asked to be notified about any bgworkers yet */
-    bn->bgworker_notify = false;
-  }
+  /* Hasn't asked to be notified about any bgworkers yet */
+  bn->bgworker_notify = false;
 
 
 #ifdef EXEC_BACKEND
@@ -3735,36 +3730,34 @@ static int BackendStartup(Port *port, bool is_memcached) {
 
 #endif /* EXEC_BACKEND */
 
-  if (!is_memcached) {
-    if (pid < 0) {
-      /* in parent, fork failed */
-      int save_errno = errno;
+  if (pid < 0) {
+    /* in parent, fork failed */
+    int save_errno = errno;
 
-      if (!bn->dead_end) (void)ReleasePostmasterChildSlot(bn->child_slot);
-      free(bn);
-      errno = save_errno;
-      ereport(LOG, (errmsg("could not fork new___ process for connection: %m")));
-      report_fork_failure_to_client(port, save_errno);
-      return STATUS_ERROR;
-    }
-
-    /* in parent, successful fork */
-    ereport(DEBUG2, (errmsg_internal("forked new___ backend, pid=%d socket=%d",
-                                     (int)pid, (int)port->sock)));
-
-    /*
-		 * Everything's been successful, it's safe to add this backend to our list
-		 * of backends.
-		 */
-    bn->pid = pid;
-    bn->bkend_type = BACKEND_TYPE_NORMAL; /* Can change later to WALSND */
-    dlist_push_head(&BackendList, &bn->elem);
-
-    // TODO: peloton changes
-    //#ifdef EXEC_BACKEND
-    if (!bn->dead_end) ShmemBackendArrayAdd(bn);
-    //#endif
+    if (!bn->dead_end) (void)ReleasePostmasterChildSlot(bn->child_slot);
+    free(bn);
+    errno = save_errno;
+    ereport(LOG, (errmsg("could not fork new___ process for connection: %m")));
+    report_fork_failure_to_client(port, save_errno);
+    return STATUS_ERROR;
   }
+
+  /* in parent, successful fork */
+  ereport(DEBUG2, (errmsg_internal("forked new___ backend, pid=%d socket=%d",
+                                   (int)pid, (int)port->sock)));
+
+  /*
+   * Everything's been successful, it's safe to add this backend to our list
+   * of backends.
+   */
+  bn->pid = pid;
+  bn->bkend_type = BACKEND_TYPE_NORMAL; /* Can change later to WALSND */
+  dlist_push_head(&BackendList, &bn->elem);
+
+  // TODO: peloton changes
+  //#ifdef EXEC_BACKEND
+  if (!bn->dead_end) ShmemBackendArrayAdd(bn);
+  //#endif
 
   return STATUS_OK;
 }
@@ -3804,7 +3797,7 @@ static void report_fork_failure_to_client(Port *port, int errnum) {
  * In the EXEC_BACKEND case, we are physically attached to shared memory
  * but have not yet set up most of our local pointers to shmem structures.
  */
-static void BackendInitialize(Port *port) {
+static void BackendInitialize(Port *port, bool is_memcached) {
   int status;
   int ret;
   char remote_host[NI_MAXHOST];
@@ -3933,13 +3926,22 @@ static void BackendInitialize(Port *port) {
    * Receive the startup packet (which might turn out to be a cancel request
    * packet).
    */
-  status = ProcessStartupPacket(port, false);
 
-  /*
-   * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
-   * already did any appropriate error reporting.
-   */
-   if (status != STATUS_OK) proc_exit(0);
+  // we don't speak wire protocol if we are memcached, skip
+  if (!is_memcached) {
+    status = ProcessStartupPacket(port, false);
+
+    /*
+		 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
+		 * already did any appropriate error reporting.
+		 */
+    if (status != STATUS_OK) proc_exit(0);
+  } else {
+    // memcached credentials
+    port->database_name = memcached_dbname;
+    port->user_name = memcached_username;
+  }
+
 
   /*
    * Now that we have the user and database name, we can set the process
@@ -3974,7 +3976,7 @@ static void BackendInitialize(Port *port) {
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-static void BackendRun(Port *port) {
+static void BackendRun(Port *port, bool is_memcached) {
   char **av;
   int maxac;
   int ac;
@@ -4033,7 +4035,10 @@ static void BackendRun(Port *port) {
   MemoryContextSwitchTo(TopMemoryContext);
 
   // normal postgres sql workflow
-  PostgresMain(ac, av, port->database_name, port->user_name);
+  if (!is_memcached)
+    PostgresMain(ac, av, port->database_name, port->user_name);
+  else
+    MemcachedMain(ac, av, port);
 }
 
 #ifdef EXEC_BACKEND

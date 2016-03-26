@@ -79,7 +79,7 @@ extern void PostgresMain(int argc, char *argv[],
 extern void PostgresMain(int argc, char *argv[],
 												 const char *dbname,
 												 const char *username) pg_attribute_noreturn();
-extern void MemcachedMain(Port *port);
+extern void MemcachedMain(int argc, char *argv[], Port *port);
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
