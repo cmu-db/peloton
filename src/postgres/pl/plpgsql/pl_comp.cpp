@@ -978,31 +978,31 @@ static void
 add_dummy_return(PLpgSQL_function *function)
 {
 	/*
-	 * If the outer block has an EXCEPTION clause, we need to make a new outer
+	 * If the outer block has an EXCEPTION clause, we need to make a new___ outer
 	 * block, since the added RETURN shouldn't act like it is inside the
 	 * EXCEPTION clause.
 	 */
 	if (function->action->exceptions != NULL)
 	{
-		PLpgSQL_stmt_block *new;
+		PLpgSQL_stmt_block *new___;
 
-		new = palloc0(sizeof(PLpgSQL_stmt_block));
-		new->cmd_type = PLPGSQL_STMT_BLOCK;
-		new->body = list_make1(function->action);
+		new___ = palloc0(sizeof(PLpgSQL_stmt_block));
+		new___->cmd_type = PLPGSQL_STMT_BLOCK;
+		new___->body = list_make1(function->action);
 
-		function->action = new;
+		function->action = new___;
 	}
 	if (function->action->body == NIL ||
 		((PLpgSQL_stmt *) llast(function->action->body))->cmd_type != PLPGSQL_STMT_RETURN)
 	{
-		PLpgSQL_stmt_return *new;
+		PLpgSQL_stmt_return *new___;
 
-		new = palloc0(sizeof(PLpgSQL_stmt_return));
-		new->cmd_type = PLPGSQL_STMT_RETURN;
-		new->expr = NULL;
-		new->retvarno = function->out_param_varno;
+		new___ = palloc0(sizeof(PLpgSQL_stmt_return));
+		new___->cmd_type = PLPGSQL_STMT_RETURN;
+		new___->expr = NULL;
+		new___->retvarno = function->out_param_varno;
 
-		function->action->body = lappend(function->action->body, new);
+		function->action->body = lappend(function->action->body, new___);
 	}
 }
 
@@ -1453,16 +1453,16 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						 * datum whether it is or not --- any error will be
 						 * detected later.
 						 */
-						PLpgSQL_recfield *new_rec;
+						PLpgSQL_recfield *new___;
 
-						new_rec = palloc(sizeof(PLpgSQL_recfield));
-						new_rec->dtype = PLPGSQL_DTYPE_RECFIELD;
-						new_rec->fieldname = pstrdup(word2);
-						new_rec->recparentno = ns->itemno;
+						new___ = palloc(sizeof(PLpgSQL_recfield));
+						new___->dtype = PLPGSQL_DTYPE_RECFIELD;
+						new___->fieldname = pstrdup(word2);
+						new___->recparentno = ns->itemno;
 
-						plpgsql_adddatum((PLpgSQL_datum *) new_rec);
+						plpgsql_adddatum((PLpgSQL_datum *) new___);
 
-						wdatum->datum = (PLpgSQL_datum *) new_rec;
+						wdatum->datum = (PLpgSQL_datum *) new___;
 					}
 					else
 					{
@@ -1564,16 +1564,16 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 						 * words 1/2 are a record name, so third word could be
 						 * a field in this record.
 						 */
-						PLpgSQL_recfield *new;
+						PLpgSQL_recfield *new___;
 
-						new = palloc(sizeof(PLpgSQL_recfield));
-						new->dtype = PLPGSQL_DTYPE_RECFIELD;
-						new->fieldname = pstrdup(word3);
-						new->recparentno = ns->itemno;
+						new___ = palloc(sizeof(PLpgSQL_recfield));
+						new___->dtype = PLPGSQL_DTYPE_RECFIELD;
+						new___->fieldname = pstrdup(word3);
+						new___->recparentno = ns->itemno;
 
-						plpgsql_adddatum((PLpgSQL_datum *) new);
+						plpgsql_adddatum((PLpgSQL_datum *) new___);
 
-						wdatum->datum = (PLpgSQL_datum *) new;
+						wdatum->datum = (PLpgSQL_datum *) new___;
 						wdatum->ident = NULL;
 						wdatum->quoted = false; /* not used */
 						wdatum->idents = idents;
@@ -2256,7 +2256,7 @@ PLpgSQL_condition *
 plpgsql_parse_err_condition(char *condname)
 {
 	int			i;
-	PLpgSQL_condition *new;
+	PLpgSQL_condition *new___;
 	PLpgSQL_condition *prev;
 
 	/*
@@ -2270,11 +2270,11 @@ plpgsql_parse_err_condition(char *condname)
 	 */
 	if (strcmp(condname, "others") == 0)
 	{
-		new = palloc(sizeof(PLpgSQL_condition));
-		new->sqlerrstate = 0;
-		new->condname = condname;
-		new->next = NULL;
-		return new;
+		new___ = palloc(sizeof(PLpgSQL_condition));
+		new___->sqlerrstate = 0;
+		new___->condname = condname;
+		new___->next = NULL;
+		return new___;
 	}
 
 	prev = NULL;
@@ -2282,11 +2282,11 @@ plpgsql_parse_err_condition(char *condname)
 	{
 		if (strcmp(condname, exception_label_map[i].label) == 0)
 		{
-			new = palloc(sizeof(PLpgSQL_condition));
-			new->sqlerrstate = exception_label_map[i].sqlerrstate;
-			new->condname = condname;
-			new->next = prev;
-			prev = new;
+			new___ = palloc(sizeof(PLpgSQL_condition));
+			new___->sqlerrstate = exception_label_map[i].sqlerrstate;
+			new___->condname = condname;
+			new___->next = prev;
+			prev = new___;
 		}
 	}
 
@@ -2321,7 +2321,7 @@ plpgsql_start_datums(void)
  * ----------
  */
 void
-plpgsql_adddatum(PLpgSQL_datum *new)
+plpgsql_adddatum(PLpgSQL_datum *new___)
 {
 	if (plpgsql_nDatums == datums_alloc)
 	{
@@ -2329,8 +2329,8 @@ plpgsql_adddatum(PLpgSQL_datum *new)
 		plpgsql_Datums = repalloc(plpgsql_Datums, sizeof(PLpgSQL_datum *) * datums_alloc);
 	}
 
-	new->dno = plpgsql_nDatums;
-	plpgsql_Datums[plpgsql_nDatums++] = new;
+	new___->dno = plpgsql_nDatums;
+	plpgsql_Datums[plpgsql_nDatums++] = new___;
 }
 
 /* ----------

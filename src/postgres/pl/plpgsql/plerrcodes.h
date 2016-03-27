@@ -184,9 +184,9 @@
 	"invalid_tablesample_argument", ERRCODE_INVALID_TABLESAMPLE_ARGUMENT
 },
 
-//{
-//	"invalid_tablesample_repeat", ERRCODE_INVALID_TABLESAMPLE_REPEAT
-//},
+{
+	"invalid_tablesample_repeat", ERRCODE_INVALID_TABLESAMPLE_REPEAT
+},
 
 {
 	"invalid_time_zone_displacement_value", ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE
@@ -350,6 +350,10 @@
 
 {
 	"in_failed_sql_transaction", ERRCODE_IN_FAILED_SQL_TRANSACTION
+},
+
+{
+	"idle_in_transaction_session_timeout", ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT
 },
 
 {

@@ -589,7 +589,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	int			i;
 	int			rc;
 	PLpgSQL_var *var;
-	PLpgSQL_rec *rec_new,
+	PLpgSQL_rec *new___,
 			   *rec_old;
 	HeapTuple	rettup;
 
@@ -622,10 +622,10 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
 	 * which should parse regardless of the current trigger type.
 	 */
-	rec_new = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
-	rec_new->freetup = false;
-	rec_new->tupdesc = trigdata->tg_relation->rd_att;
-	rec_new->freetupdesc = false;
+	new___ = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
+	new___->freetup = false;
+	new___->tupdesc = trigdata->tg_relation->rd_att;
+	new___->freetupdesc = false;
 	rec_old = (PLpgSQL_rec *) (estate.datums[func->old_varno]);
 	rec_old->freetup = false;
 	rec_old->tupdesc = trigdata->tg_relation->rd_att;
@@ -636,22 +636,22 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		/*
 		 * Per-statement triggers don't use OLD/NEW variables
 		 */
-		rec_new->tup = NULL;
+		new___->tup = NULL;
 		rec_old->tup = NULL;
 	}
 	else if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 	{
-		rec_new->tup = trigdata->tg_trigtuple;
+		new___->tup = trigdata->tg_trigtuple;
 		rec_old->tup = NULL;
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		rec_new->tup = trigdata->tg_newtuple;
+		new___->tup = trigdata->tg_newtuple;
 		rec_old->tup = trigdata->tg_trigtuple;
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 	{
-		rec_new->tup = NULL;
+		new___->tup = NULL;
 		rec_old->tup = trigdata->tg_trigtuple;
 	}
 	else
@@ -994,29 +994,29 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 	{
 		case PLPGSQL_DTYPE_VAR:
 			{
-				PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
+				PLpgSQL_var *new___ = palloc(sizeof(PLpgSQL_var));
 
-				memcpy(new, datum, sizeof(PLpgSQL_var));
+				memcpy(new___, datum, sizeof(PLpgSQL_var));
 				/* should be preset to null/non-freeable */
-				Assert(new->isnull);
-				Assert(!new->freeval);
+				Assert(new___->isnull);
+				Assert(!new___->freeval);
 
-				result = (PLpgSQL_datum *) new;
+				result = (PLpgSQL_datum *) new___;
 			}
 			break;
 
 		case PLPGSQL_DTYPE_REC:
 			{
-				PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
+				PLpgSQL_rec *new___ = palloc(sizeof(PLpgSQL_rec));
 
-				memcpy(new, datum, sizeof(PLpgSQL_rec));
+				memcpy(new___, datum, sizeof(PLpgSQL_rec));
 				/* should be preset to null/non-freeable */
-				Assert(new->tup == NULL);
-				Assert(new->tupdesc == NULL);
-				Assert(!new->freetup);
-				Assert(!new->freetupdesc);
+				Assert(new___->tup == NULL);
+				Assert(new___->tupdesc == NULL);
+				Assert(!new___->freetup);
+				Assert(!new___->freetupdesc);
 
-				result = (PLpgSQL_datum *) new;
+				result = (PLpgSQL_datum *) new___;
 			}
 			break;
 
