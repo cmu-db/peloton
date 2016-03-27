@@ -43,7 +43,7 @@ class SimpleCheckpoint : public Checkpoint {
   bool DoRecovery();
 
   // Internal functions
-  void InsertTuple();
+  void InsertTuple(cid_t commit_id);
 
   bool Execute(executor::AbstractExecutor *scan_executor,
                concurrency::Transaction *txn, storage::DataTable *target_table,

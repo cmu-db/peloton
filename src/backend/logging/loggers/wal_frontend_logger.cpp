@@ -285,7 +285,9 @@ void WriteAheadFrontendLogger::DoRecovery() {
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
     auto &manager = catalog::Manager::GetInstance();
-    manager.SetNextOid(max_oid);
+    if (max_oid > manager.GetNextOid()){
+      manager.SetNextOid(max_oid);
+    }
 
     concurrency::TransactionManagerFactory::GetInstance().SetNextCid(max_cid);
   }
