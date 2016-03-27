@@ -206,13 +206,9 @@ class TransactionThread {
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
-      if (execute_result == true) {
-      LOG_TRACE("ABORT NOW, Executor returns %s",
-                execute_result ? "true" : "false");
-      } else {
-      LOG_TRACE("ABORT NOW, Executor returns %s",
-                execute_result ? "true" : "false");
-      }
+      LOG_TRACE("ABORT NOW");
+      if (execute_result == false)
+        LOG_TRACE("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }

@@ -98,7 +98,11 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
         return false;
       }
-      transaction_manager.PerformInsert(location.block, location.offset);
+      auto res = transaction_manager.PerformInsert(location.block, location.offset);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -137,7 +141,11 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      transaction_manager.PerformInsert(location.block, location.offset);
+      auto res = transaction_manager.PerformInsert(location.block, location.offset);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
     }
 
     executor_context_->num_processed += 1;  // insert one
