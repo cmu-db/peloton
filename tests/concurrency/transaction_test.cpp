@@ -24,8 +24,9 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 std::vector<ConcurrencyType> TEST_TYPES = {
-    // CONCURRENCY_TYPE_OCC
-    CONCURRENCY_TYPE_2PL};
+    CONCURRENCY_TYPE_OCC
+    // CONCURRENCY_TYPE_2PL
+};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -229,7 +230,7 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
     scheduler.Run();
 
     LOG_TRACE("%lu", scheduler.schedules.size());
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
@@ -246,7 +247,7 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
@@ -262,7 +263,7 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
     scheduler.AddCommit(1);
 
     scheduler.Run();
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
@@ -277,24 +278,35 @@ void PhantomTest(ConcurrencyType TEST_TYPE) {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.AddScan(0, 0);
     scheduler.AddInsert(1, 5, 0);
+    scheduler.AddScan(0, 0);
     scheduler.AddCommit(1);
     scheduler.AddCommit(0);
 
     scheduler.Run();
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+    size_t original_tuple_count = 10;
+    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS && 
+      scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+      // Should scan no more tuples
+      EXPECT_TRUE(scheduler.schedules[0].results.size() == original_tuple_count*2);
+    }
   }
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.AddScan(0, 0);
     scheduler.AddDelete(1, 4);
+    scheduler.AddScan(0, 0);
     scheduler.AddCommit(1);
     scheduler.AddCommit(0);
 
     scheduler.Run();
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+
+    size_t original_tuple_count = 11;
+    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS && 
+      scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+      // Should scan no less tuples
+      EXPECT_TRUE(scheduler.schedules[0].results.size() == original_tuple_count*2);
+    }
   }
 }
 
@@ -353,8 +365,10 @@ void ReadSkewTest(ConcurrencyType test_type) {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      EXPECT_TRUE(scheduler.schedules[0].results[0] == scheduler.schedules[0].results[1]);
+    }
   }
 }
 
@@ -411,7 +425,7 @@ TEST_F(TransactionTests, SerializableTest) {
     FuzzyReadTest(test_type);
     WriteSkewTest(test_type);
     ReadSkewTest(test_type);
-    //  PhantomTes();
+    PhantomTest(test_type);
   }
 }
 
