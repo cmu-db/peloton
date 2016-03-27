@@ -43,15 +43,15 @@ class Transaction : public Printable {
  public:
   Transaction()
       : txn_id(INVALID_TXN_ID),
-        start_cid(INVALID_CID),
+        begin_cid(INVALID_CID),
         end_cid(INVALID_CID),
         ref_count(BASE_REF_COUNT),
         waiting_to_commit(false),
         next(nullptr) {}
 
-  Transaction(txn_id_t txn_id, cid_t start_cid)
+  Transaction(txn_id_t txn_id, cid_t begin_cid)
       : txn_id(txn_id),
-        start_cid(start_cid),
+        begin_cid(begin_cid),
         end_cid(INVALID_CID),
         ref_count(BASE_REF_COUNT),
         waiting_to_commit(false),
@@ -69,7 +69,7 @@ class Transaction : public Printable {
 
   inline txn_id_t GetTransactionId() const { return txn_id; }
 
-  inline cid_t GetStartCommitId() const { return start_cid; }
+  inline cid_t GetBeginCommitId() const { return begin_cid; }
 
   inline cid_t GetEndCommitId() const { return end_cid; }
 
@@ -122,7 +122,7 @@ class Transaction : public Printable {
   txn_id_t txn_id;
 
   // start commit id
-  cid_t start_cid;
+  cid_t begin_cid;
 
   // end commit id
   cid_t end_cid;
