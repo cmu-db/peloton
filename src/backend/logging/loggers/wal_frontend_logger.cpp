@@ -256,7 +256,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
       if (!reached_end_of_file){
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-<<<<<<< HEAD
           StartTransactionRecovery(commit_id);
           break;
 
@@ -269,40 +268,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
           recovery_txn_table[tuple_record->GetTransactionId()].push_back(tuple_record);
-=======
-          LOG_INFO("Got Type as TXN_BEGIN");
-          AddTransactionToRecoveryTable();
-          break;
-
-        case LOGRECORD_TYPE_TRANSACTION_END:
-          LOG_INFO("Got Type as TXN_END");
-          RemoveTransactionFromRecoveryTable();
-          break;
-
-        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          LOG_INFO("Got Type as TXN_COMMIT");
-          MoveCommittedTuplesToRecoveryTxn(recovery_txn);
-          break;
-
-        case LOGRECORD_TYPE_TRANSACTION_ABORT:
-          LOG_INFO("Got Type as TXN_ABORT");
-          AbortTuplesFromRecoveryTable();
-          break;
-
-        case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-          LOG_INFO("Got Type as TXN_INSERT");
-          InsertTuple(recovery_txn);
-          break;
-
-        case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-          LOG_INFO("Got Type as TXN_DELETE");
-          DeleteTuple(recovery_txn);
-          break;
-
-        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-          LOG_INFO("Got Type as TXN_UPDATE");
-          UpdateTuple(recovery_txn);
->>>>>>> 65e1834b171c2577ff9dfc5bd237ca2e754c7092
           break;
 
         default:
@@ -321,6 +286,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
     // observed during the recovery
     auto &manager = catalog::Manager::GetInstance();
     manager.SetNextOid(max_oid);
+
+    concurrency::TransactionManagerFactory::GetInstance().SetNextCid(max_cid);
   }
 }
 
@@ -368,12 +335,13 @@ void WriteAheadFrontendLogger::CommitTransactionRecovery(cid_t commit_id) {
     }
     delete curr;
   }
+  max_cid = commit_id + 1;
   recovery_txn_table.erase(commit_id);
 }
 
-void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_id, oid_t tile_group_id, oid_t tuple_slot, storage::Tuple* tuple){
+void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_id, const ItemPointer &insert_loc, storage::Tuple* tuple){
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
+  auto tile_group = manager.GetTileGroup(insert_loc.block);
   storage::Database *db =
         manager.GetDatabaseWithOid(db_id);
   assert(db);
@@ -381,20 +349,57 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_
   auto table = db->GetTableWithOid(table_id);
   assert(table);
   if (tile_group == nullptr) {
-    table->AddTileGroupWithOid(tile_group_id);
-    tile_group = manager.GetTileGroup(tile_group_id);
-    if (max_tg < tile_group_id) {
-	max_tg = tile_group_id;
+    table->AddTileGroupWithOid(insert_loc.block);
+    tile_group = manager.GetTileGroup(insert_loc.block);
+    if (max_tg < insert_loc.block) {
+	max_tg = insert_loc.block;
     }
   }
 
-  tile_group->InsertTupleFromRecovery(commit_id, tuple_slot, tuple);
+  tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   delete tuple;
 }
 
-//void DeleteTupleHelper(oid_t db_id, oid_t table_id, oid_t tile_group_id, oid_t tuple_slot, ItemPointer delete_pos){
-//
-//}
+void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_id, const ItemPointer &delete_loc){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(delete_loc.block);
+  storage::Database *db =
+	manager.GetDatabaseWithOid(db_id);
+  assert(db);
+
+  auto table = db->GetTableWithOid(table_id);
+  assert(table);
+  if (tile_group == nullptr) {
+    table->AddTileGroupWithOid(delete_loc.block);
+    tile_group = manager.GetTileGroup(delete_loc.block);
+    if (max_tg < delete_loc.block) {
+      max_tg = delete_loc.block;
+    }
+  }
+
+  tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
+}
+
+void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_id, const ItemPointer &remove_loc,const ItemPointer &insert_loc, storage::Tuple *tuple){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(remove_loc.block);
+  storage::Database *db =
+	manager.GetDatabaseWithOid(db_id);
+  assert(db);
+
+  auto table = db->GetTableWithOid(table_id);
+  assert(table);
+  if (tile_group == nullptr) {
+    table->AddTileGroupWithOid(remove_loc.block);
+    tile_group = manager.GetTileGroup(remove_loc.block);
+    if (max_tg < remove_loc.block) {
+      max_tg = remove_loc.block;
+    }
+  }
+  InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple);
+
+  tile_group->UpdateTupleFromRecovery(commit_id, remove_loc.offset, insert_loc);
+}
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
@@ -402,48 +407,15 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_
  */
 void WriteAheadFrontendLogger::InsertTuple(
     TupleRecord *record) {
-
-  auto target_location = record->GetInsertLocation();
-  auto tile_group_id = target_location.block;
-  auto tuple_slot = target_location.offset;
-  InsertTupleHelper(max_oid, record->GetTransactionId(), record->GetDatabaseOid(), record->GetTableId(), tile_group_id, tuple_slot, record->GetTuple());
-
+  InsertTupleHelper(max_oid, record->GetTransactionId(), record->GetDatabaseOid(), record->GetTableId(), record->GetInsertLocation(), record->GetTuple());
 }
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *) {
-  // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_DELETE);
-
-//   // Check for torn log write
-//   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
-//   {
-//     return;
-//   }
-//
-//   auto txn_id = tuple_record.GetTransactionId();
-//   if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-//     LOG_TRACE("Delete txd id %d not found in recovery txn table",
-//     (int)txn_id);
-//     return;
-//   }
-
-  // auto table = GetTable(tuple_record);
-
-  // ItemPointer delete_location = tuple_record.GetDeleteLocation();
-
-  // // Try to delete the tuple
-  // bool status = table->DeleteTuple(recovery_txn, delete_location);
-  // if (status == false) {
-  //   // TODO: We need to abort on failure !
-  //   recovery_txn->SetResult(Result::RESULT_FAILURE);
-  //   return;
-  // }
-
-  // auto txn = recovery_txn_table.at(txn_id);
-  // txn->RecordDelete(delete_location);
+void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *record) {
+  DeleteTupleHelper(max_oid, record->GetTransactionId(), record->GetDatabaseOid(), record->GetTableId(), record->GetDeleteLocation());
 }
 
 /**
@@ -452,70 +424,8 @@ void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *) {
  */
 
 void WriteAheadFrontendLogger::UpdateTuple(
-    TupleRecord *) {
-  // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_UPDATE);
-
-  // // Check for torn log write
-  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
-  // {
-  //   return;
-  // }
-
-  // auto txn_id = tuple_record.GetTransactionId();
-  // if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-  //   LOG_TRACE("Update txd id %d not found in recovery txn table",
-  //   (int)txn_id);
-  //   return;
-  // }
-
-  // auto txn = recovery_txn_table.at(txn_id);
-
-  // auto table = GetTable(tuple_record);
-
-  // auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool,
-  // log_file,
-  //                                  log_file_size);
-
-  // // Check for torn log write
-  // if (tuple == nullptr) {
-  //   return;
-  // }
-
-  // // First, redo the delete
-  // ItemPointer delete_location = tuple_record.GetDeleteLocation();
-
-  // bool status = table->DeleteTuple(recovery_txn, delete_location);
-  // if (status == false) {
-  //   recovery_txn->SetResult(Result::RESULT_FAILURE);
-  // } else {
-  //   txn->RecordDelete(delete_location);
-
-  //   auto target_location = tuple_record.GetInsertLocation();
-  //   auto tile_group_id = target_location.block;
-  //   auto tuple_slot = target_location.offset;
-  //   auto &manager = catalog::Manager::GetInstance();
-  //   auto tile_group = manager.GetTileGroup(tile_group_id);
-
-  //   // Create new tile group if table doesn't already have that tile group
-  //   if (tile_group == nullptr) {
-  //     table->AddTileGroupWithOid(tile_group_id);
-  //     tile_group = manager.GetTileGroup(tile_group_id);
-  //     if (max_oid < tile_group_id) {
-  //       max_oid = tile_group_id;
-  //     }
-  //   }
-
-  //   // Do the insert !
-  //   auto inserted_tuple_slot = tile_group->InsertTuple(
-  //       recovery_txn->GetTransactionId(), tuple_slot, tuple);
-  //   if (inserted_tuple_slot == INVALID_OID) {
-  //     recovery_txn->SetResult(Result::RESULT_FAILURE);
-  //   } else {
-  //     txn->RecordInsert(target_location);
-  //   }
-  // }
-
-  // delete tuple;
+    TupleRecord *record) {
+  UpdateTupleHelper(max_oid, record->GetTransactionId(), record->GetDatabaseOid(), record->GetTableId(), record->GetDeleteLocation(), record->GetInsertLocation(), record->GetTuple());
 }
 
 //===--------------------------------------------------------------------===//
