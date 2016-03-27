@@ -352,7 +352,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
-	function->resolve_option = plpgsql_variable_conflict;
+	function->resolve_option = static_cast<PLpgSQL_resolve_option>(plpgsql_variable_conflict);
 	function->print_strict_params = plpgsql_print_strict_params;
 	/* only promote extra warnings and errors at CREATE FUNCTION time */
 	function->extra_warnings = forValidator ? plpgsql_extra_warnings : 0;
@@ -840,7 +840,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_input_collation = InvalidOid;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
-	function->resolve_option = plpgsql_variable_conflict;
+	function->resolve_option = static_cast<PLpgSQL_resolve_option>(plpgsql_variable_conflict);
 	function->print_strict_params = plpgsql_print_strict_params;
 
 	/*
@@ -986,7 +986,7 @@ add_dummy_return(PLpgSQL_function *function)
 	{
 		PLpgSQL_stmt_block *new___;
 
-		new___ = palloc0(sizeof(PLpgSQL_stmt_block));
+		new___ = (PLpgSQL_stmt_block*) palloc0(sizeof(PLpgSQL_stmt_block));
 		new___->cmd_type = PLPGSQL_STMT_BLOCK;
 		new___->body = list_make1(function->action);
 
@@ -997,7 +997,7 @@ add_dummy_return(PLpgSQL_function *function)
 	{
 		PLpgSQL_stmt_return *new___;
 
-		new___ = palloc0(sizeof(PLpgSQL_stmt_return));
+		new___ = (PLpgSQL_stmt_return*) palloc0(sizeof(PLpgSQL_stmt_return));
 		new___->cmd_type = PLPGSQL_STMT_RETURN;
 		new___->expr = NULL;
 		new___->retvarno = function->out_param_varno;
@@ -1455,7 +1455,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						 */
 						PLpgSQL_recfield *new___;
 
-						new___ = palloc(sizeof(PLpgSQL_recfield));
+						new___ = (PLpgSQL_recfield*) palloc(sizeof(PLpgSQL_recfield));
 						new___->dtype = PLPGSQL_DTYPE_RECFIELD;
 						new___->fieldname = pstrdup(word2);
 						new___->recparentno = ns->itemno;
@@ -1566,7 +1566,7 @@ plpgsql_parse_tripword(char *word1, char *word2, char *word3,
 						 */
 						PLpgSQL_recfield *new___;
 
-						new___ = palloc(sizeof(PLpgSQL_recfield));
+						new___ = (PLpgSQL_recfield*) palloc(sizeof(PLpgSQL_recfield));
 						new___->dtype = PLPGSQL_DTYPE_RECFIELD;
 						new___->fieldname = pstrdup(word3);
 						new___->recparentno = ns->itemno;
@@ -1873,7 +1873,7 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 				/* Ordinary scalar datatype */
 				PLpgSQL_var *var;
 
-				var = palloc0(sizeof(PLpgSQL_var));
+				var = (PLpgSQL_var*) palloc0(sizeof(PLpgSQL_var));
 				var->dtype = PLPGSQL_DTYPE_VAR;
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
@@ -1945,7 +1945,7 @@ plpgsql_build_record(const char *refname, int lineno, bool add2namespace)
 {
 	PLpgSQL_rec *rec;
 
-	rec = palloc0(sizeof(PLpgSQL_rec));
+	rec = (PLpgSQL_rec*) palloc0(sizeof(PLpgSQL_rec));
 	rec->dtype = PLPGSQL_DTYPE_REC;
 	rec->refname = pstrdup(refname);
 	rec->lineno = lineno;
@@ -1997,7 +1997,7 @@ build_row_from_class(Oid classOid)
 	 * Create a row datum entry and all the required variables that it will
 	 * point to.
 	 */
-	row = palloc0(sizeof(PLpgSQL_row));
+	row = (PLpgSQL_row*) palloc0(sizeof(PLpgSQL_row));
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->rowtupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
 	row->nfields = classStruct->relnatts;
@@ -2064,12 +2064,12 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 	PLpgSQL_row *row;
 	int			i;
 
-	row = palloc0(sizeof(PLpgSQL_row));
+	row = (PLpgSQL_row*) palloc0(sizeof(PLpgSQL_row));
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->rowtupdesc = CreateTemplateTupleDesc(numvars, false);
 	row->nfields = numvars;
-	row->fieldnames = palloc(numvars * sizeof(char *));
-	row->varnos = palloc(numvars * sizeof(int));
+	row->fieldnames = (char**) palloc(numvars * sizeof(char *));
+	row->varnos = (int*) palloc(numvars * sizeof(int));
 
 	for (i = 0; i < numvars; i++)
 	{
@@ -2270,7 +2270,7 @@ plpgsql_parse_err_condition(char *condname)
 	 */
 	if (strcmp(condname, "others") == 0)
 	{
-		new___ = palloc(sizeof(PLpgSQL_condition));
+		new___ = (PLpgSQL_condition*) palloc(sizeof(PLpgSQL_condition));
 		new___->sqlerrstate = 0;
 		new___->condname = condname;
 		new___->next = NULL;
@@ -2282,7 +2282,7 @@ plpgsql_parse_err_condition(char *condname)
 	{
 		if (strcmp(condname, exception_label_map[i].label) == 0)
 		{
-			new___ = palloc(sizeof(PLpgSQL_condition));
+			new___ = (PLpgSQL_condition*) palloc(sizeof(PLpgSQL_condition));
 			new___->sqlerrstate = exception_label_map[i].sqlerrstate;
 			new___->condname = condname;
 			new___->next = prev;
@@ -2309,7 +2309,7 @@ plpgsql_start_datums(void)
 	datums_alloc = 128;
 	plpgsql_nDatums = 0;
 	/* This is short-lived, so needn't allocate in function's cxt */
-	plpgsql_Datums = MemoryContextAlloc(plpgsql_compile_tmp_cxt,
+	plpgsql_Datums = (PLpgSQL_datum**) MemoryContextAlloc(plpgsql_compile_tmp_cxt,
 									 sizeof(PLpgSQL_datum *) * datums_alloc);
 	/* datums_last tracks what's been seen by plpgsql_add_initdatums() */
 	datums_last = 0;
@@ -2326,7 +2326,7 @@ plpgsql_adddatum(PLpgSQL_datum *new___)
 	if (plpgsql_nDatums == datums_alloc)
 	{
 		datums_alloc *= 2;
-		plpgsql_Datums = repalloc(plpgsql_Datums, sizeof(PLpgSQL_datum *) * datums_alloc);
+		plpgsql_Datums = (PLpgSQL_datum**) repalloc(plpgsql_Datums, sizeof(PLpgSQL_datum *) * datums_alloc);
 	}
 
 	new___->dno = plpgsql_nDatums;
@@ -2347,7 +2347,7 @@ plpgsql_finish_datums(PLpgSQL_function *function)
 	int			i;
 
 	function->ndatums = plpgsql_nDatums;
-	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
+	function->datums = (PLpgSQL_datum**) palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
 	{
 		function->datums[i] = plpgsql_Datums[i];

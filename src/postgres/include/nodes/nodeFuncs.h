@@ -41,39 +41,39 @@ extern void exprSetInputCollation(Node *expr, Oid inputcollation);
 extern int	exprLocation(const Node *expr);
 
 typedef bool (*expression_tree_walker_fptr) (Node *, void *);
-extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change function pointer to contain two arguments */
 											   void *context);
 
 typedef Node * (*expression_tree_mutator_fptr) (Node *, void *);
-extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change function pointer to contain two arguments */
 												 void *context);
 
 typedef bool (*query_tree_walker_fptr) (Node *, void *);
-extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change function pointer to contain two arguments */
 										  void *context, int flags);
 
 typedef Node * (*query_tree_mutator_fptr) (Node *, void *);
-extern Query *query_tree_mutator(Query *query, Node *(*mutator) (Node *, void *), /* Peloton porting: change functioin pointer to contain two arguments */
+extern Query *query_tree_mutator(Query *query, Node *(*mutator) (Node *, void *), /* Peloton porting: change function pointer to contain two arguments */
 											 void *context, int flags);
 
 typedef bool (*range_table_walker_fptr) (Node *, void *);
-extern bool range_table_walker(List *rtable, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+extern bool range_table_walker(List *rtable, bool (*walker) (Node *, void *),   /* Peloton porting: change function pointer to contain two arguments */
 										   void *context, int flags);
 
 typedef Node * (*range_table_mutator_fptr) (Node *, void *);
-extern List *range_table_mutator(List *rtable, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+extern List *range_table_mutator(List *rtable, Node *(*mutator) (Node *, void *),  /* Peloton porting: change function pointer to contain two arguments */
 											 void *context, int flags);
 
 typedef bool (*query_or_expression_tree_walker_fptr) (Node *, void *);
-extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (Node*, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (Node*, void *),  /* Peloton porting: change function pointer to contain two arguments */
 												   void *context, int flags);
 
 typedef Node * (*query_or_expression_tree_mutator_fptr) (Node *, void *);
-extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *), /* Peloton porting: change functioin pointer to contain two arguments */
+extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *), /* Peloton porting: change function pointer to contain two arguments */
 												   void *context, int flags);
 
 typedef bool (*raw_expression_tree_walker_fptr) (Node *, void *);
-extern bool raw_expression_tree_walker(Node *node, bool (*walker) (Node *, void *), /* Peloton porting: change functioin pointer to contain two arguments */
+extern bool raw_expression_tree_walker(Node *node, bool (*walker) (Node *, void *), /* Peloton porting: change function pointer to contain two arguments */
 												   void *context);
 
 #endif   /* NODEFUNCS_H */
