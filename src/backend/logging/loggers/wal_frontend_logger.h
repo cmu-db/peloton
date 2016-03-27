@@ -13,8 +13,10 @@
 #pragma once
 
 #include "backend/logging/frontend_logger.h"
+#include "backend/logging/records/tuple_record.h"
 #include "backend/logging/log_file.h"
 #include <dirent.h>
+#include <vector>
 
 namespace peloton {
 
@@ -25,6 +27,7 @@ class Transaction;
 }
 
 namespace logging {
+
 
 //===--------------------------------------------------------------------===//
 // Write Ahead Frontend Logger
@@ -44,26 +47,17 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void DoRecovery(void);
 
-  void AddTransactionToRecoveryTable(void);
+  void StartTransactionRecovery(cid_t commit_id);
 
-  void RemoveTransactionFromRecoveryTable(void);
+  void CommitTransactionRecovery(cid_t commit_id);
 
-  void MoveCommittedTuplesToRecoveryTxn(concurrency::Transaction *recovery_txn);
+  void InsertTuple(TupleRecord *recovery_txn);
 
-  void AbortTuplesFromRecoveryTable(void);
+  void DeleteTuple(TupleRecord *recovery_txn);
 
-  void MoveTuples(concurrency::Transaction *destination,
-                  concurrency::Transaction *source);
-
-  void InsertTuple(concurrency::Transaction *recovery_txn);
-
-  void DeleteTuple(concurrency::Transaction *recovery_txn);
-
-  void UpdateTuple(concurrency::Transaction *recovery_txn);
+  void UpdateTuple(TupleRecord *recovery_txn);
 
   void AbortActiveTransactions();
-
-  void AbortTuples(concurrency::Transaction *txn);
 
   void InitLogFilesList();
 
@@ -92,7 +86,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   size_t log_file_size;
 
   // Txn table during recovery
-  std::map<txn_id_t, concurrency::Transaction *> recovery_txn_table;
+  std::map<txn_id_t, std::vector<TupleRecord *>> recovery_txn_table;
 
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery

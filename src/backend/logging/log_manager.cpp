@@ -122,7 +122,7 @@ bool LogManager::EndLogging() {
 // Utility Functions
 //===--------------------------------------------------------------------===//
 
-void LogManager::LogStartTransaction(oid_t commit_id){
+void LogManager::LogBeginTransaction(cid_t commit_id){
   if (this->IsInLoggingMode()) {
 	auto logger = this->GetBackendLogger();
 	auto record = new TransactionRecord(
@@ -131,7 +131,7 @@ void LogManager::LogStartTransaction(oid_t commit_id){
   }
 }
 
-void LogManager::LogUpdate(concurrency::Transaction* curr_txn, oid_t commit_id, ItemPointer &old_version, ItemPointer &new_version){
+void LogManager::LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version){
   if (this->IsInLoggingMode()) {
     auto executor_context = new executor::ExecutorContext(curr_txn);
       auto executor_pool = executor_context->GetExecutorContextPool();
@@ -156,7 +156,7 @@ void LogManager::LogUpdate(concurrency::Transaction* curr_txn, oid_t commit_id, 
   }
 }
 
-void LogManager::LogInsert(concurrency::Transaction* curr_txn, oid_t commit_id, ItemPointer &new_location){
+void LogManager::LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location){
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -183,7 +183,7 @@ void LogManager::LogInsert(concurrency::Transaction* curr_txn, oid_t commit_id, 
   }
 }
 
-void LogManager::LogDelete(oid_t commit_id, ItemPointer &delete_location){
+void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location){
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -196,11 +196,11 @@ void LogManager::LogDelete(oid_t commit_id, ItemPointer &delete_location){
 
 }
 
-void LogManager::LogCommitTransaction(oid_t commit_id){
+void LogManager::LogCommitTransaction(cid_t commit_id){
 	if (this->IsInLoggingMode()) {
 		auto logger = this->GetBackendLogger();
 		auto record = new TransactionRecord(
-			LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
+			LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
 		logger->Log(record);
 		logger->WaitForFlushing();
 	  }

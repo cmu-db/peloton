@@ -248,7 +248,7 @@ Result OptimisticTransactionManager::CommitTransaction() {
 
   auto written_tuples = current_txn->GetWrittenTuples();
   auto &log_manager = logging::LogManager::GetInstance();
-  log_manager.LogCommitTransaction(end_commit_id);
+  log_manager.LogBeginTransaction(end_commit_id);
   // install all updates.
   for (auto entry : written_tuples) {
     oid_t tile_group_id = entry.first;

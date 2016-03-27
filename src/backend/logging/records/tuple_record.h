@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/logging/log_record.h"
+#include "backend/storage/tuple.h"
 #include "backend/common/serializer.h"
 
 namespace peloton {
@@ -25,24 +26,24 @@ namespace logging {
 class TupleRecord : public LogRecord {
  public:
   TupleRecord(LogRecordType log_record_type)
-      : LogRecord(log_record_type, INVALID_TXN_ID) {
+      : LogRecord(log_record_type, INVALID_CID) {
     db_oid = INVALID_OID;
     table_oid = INVALID_OID;
 
     data = nullptr;
   }
 
-  TupleRecord(LogRecordType log_record_type, const txn_id_t txn_id,
+  TupleRecord(LogRecordType log_record_type, const cid_t cid,
               oid_t table_oid, ItemPointer insert_location,
               ItemPointer delete_location, const void *data = nullptr,
               oid_t _db_oid = INVALID_OID)
-      : LogRecord(log_record_type, txn_id),
+      : LogRecord(log_record_type, cid),
         table_oid(table_oid),
         insert_location(insert_location),
         delete_location(delete_location),
         data(data),
         db_oid(_db_oid) {
-    assert(txn_id);
+    assert(cid);
     assert(table_oid);
 
     if (db_oid == INVALID_OID) {
@@ -78,6 +79,10 @@ class TupleRecord : public LogRecord {
 
   ItemPointer GetDeleteLocation(void) const { return delete_location; }
 
+  void SetTuple(storage::Tuple *tuple);
+
+  storage::Tuple *GetTuple();
+
   static size_t GetTupleRecordSize(void);
 
   void Print(void);
@@ -98,6 +103,9 @@ class TupleRecord : public LogRecord {
 
   // message
   const void *data;
+
+  // tuple (for deserialize
+  storage::Tuple *tuple = nullptr;
 
   // database id
   oid_t db_oid;
