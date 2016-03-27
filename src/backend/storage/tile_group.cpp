@@ -205,6 +205,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
  */
 oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                              const Tuple *tuple) {
+  if (tile_group_header->GetBeginCommitId(tuple_slot_id) > commit_id){
+      return tuple_slot_id;
+  }
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
@@ -244,6 +247,28 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   tile_group_header->SetDeleteCommit(tuple_slot_id, false);
   tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
+  return tuple_slot_id;
+}
+
+oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id){
+  // Set MVCC info
+  tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
+  tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+  tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+  return tuple_slot_id;
+}
+
+oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, ItemPointer new_location){
+  // Set MVCC info
+  tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
+  tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
+  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+  tile_group_header->SetNextItemPointer(tuple_slot_id, new_location);
   return tuple_slot_id;
 }
 

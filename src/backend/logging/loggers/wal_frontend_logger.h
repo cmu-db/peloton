@@ -92,6 +92,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   // For active processing after recovery
   oid_t max_oid = 0;
 
+  cid_t max_cid = 0;
+
   // pool for allocating non-inlined values
   VarlenPool *recovery_pool;
 
