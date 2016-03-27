@@ -44,10 +44,6 @@ storage::Database* ycsb_database;
 
 storage::DataTable* user_table;
 
-static const oid_t ycsb_database_oid = 100;
-
-static const oid_t user_table_oid = 1001;
-
 static const oid_t ycsb_field_length = 100;
 
 void CreateYCSBDatabase() {
@@ -108,7 +104,7 @@ void CreateYCSBDatabase() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", YCSB_TABLE_PKEY_INDEX_OID, INDEX_TYPE_BTREE,
+      "primary_index", user_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema, key_schema, unique);
 

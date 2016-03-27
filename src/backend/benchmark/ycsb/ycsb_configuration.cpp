@@ -38,7 +38,7 @@ static struct option opts[] = {
     {"update_ratio", optional_argument, NULL, 'u'},
     {NULL, 0, NULL, 0}};
 
-static void ValidateScaleFactor(const configuration &state) {
+void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
     std::cout << "Invalid scalefactor :: " << state.scale_factor << std::endl;
     exit(EXIT_FAILURE);
@@ -48,7 +48,7 @@ static void ValidateScaleFactor(const configuration &state) {
       << " : " << state.scale_factor << std::endl;
 }
 
-static void ValidateColumnCount(const configuration &state) {
+void ValidateColumnCount(const configuration &state) {
   if (state.column_count <= 0) {
     std::cout << "Invalid attribute_count :: " << state.column_count
         << std::endl;
@@ -59,7 +59,7 @@ static void ValidateColumnCount(const configuration &state) {
       << " : " << state.column_count << std::endl;
 }
 
-static void ValidateUpdateRatio(const configuration &state) {
+void ValidateUpdateRatio(const configuration &state) {
   if (state.update_ratio < 0 || state.update_ratio > 1) {
     std::cout << "Invalid update_ratio :: " << state.update_ratio << std::endl;
     exit(EXIT_FAILURE);

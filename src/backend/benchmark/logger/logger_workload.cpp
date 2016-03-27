@@ -33,13 +33,6 @@
 
 namespace peloton {
 namespace benchmark {
-
-namespace ycsb {
-
-configuration state;
-
-} // namespace ycsb
-
 namespace logger {
 
 //===--------------------------------------------------------------------===//
@@ -63,8 +56,7 @@ size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
 	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.logging_type << " " << state.column_count << " "
-			<< state.tuple_count << " " << state.backend_count << " "
+	std::cout << state.logging_type << " " << state.backend_count << " "
 			<< state.wait_timeout << " :: ";
 	std::cout << value << "\n";
 
@@ -81,8 +73,6 @@ static void WriteOutput(double value) {
 	std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
 
 	out << state.logging_type << " ";
-	out << state.column_count << " ";
-	out << state.tuple_count << " ";
 	out << state.backend_count << " ";
 	out << state.wait_timeout << " ";
 	out << value << "\n";
@@ -183,8 +173,6 @@ void DoRecovery(std::string file_name) {
 	// Reset the log file if exists
 	log_file.close();
 
-	ycsb::ParseArguments(0, nullptr, ycsb::state);
-
 	ycsb::CreateYCSBDatabase();
 
 	// start a thread for logging
@@ -193,8 +181,6 @@ void DoRecovery(std::string file_name) {
 		LOG_ERROR("another logging thread is running now");
 		return;
 	}
-
-	std::cout << "YCSB Table " << ycsb::user_table->GetTileGroupCount();
 
 	//===--------------------------------------------------------------------===//
 	// RECOVERY
@@ -230,8 +216,6 @@ void DoRecovery(std::string file_name) {
 		LOG_ERROR("Failed to terminate logging thread");
 	}
 
-	std::cout << "YCSB Table " << ycsb::user_table->GetTileGroupCount();
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -239,8 +223,6 @@ void DoRecovery(std::string file_name) {
 //===--------------------------------------------------------------------===//
 
 void BuildLog() {
-
-	ycsb::ParseArguments(0, nullptr, ycsb::state);
 
 	ycsb::CreateYCSBDatabase();
 
