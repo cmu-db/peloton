@@ -151,7 +151,7 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
@@ -169,7 +169,7 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 
@@ -187,7 +187,8 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
+    // FIXME: both can success as long as T1 reads the original value
+    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 }

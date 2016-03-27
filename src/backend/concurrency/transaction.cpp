@@ -36,7 +36,7 @@ void Transaction::RecordRead(const oid_t &tile_group_id,
   }
 }
 
-void Transaction::RecordWrite(const oid_t &tile_group_id,
+void Transaction::RecordUpdate(const oid_t &tile_group_id,
                               const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() &&
       rw_set.at(tile_group_id).find(tuple_id) !=
@@ -58,6 +58,7 @@ void Transaction::RecordWrite(const oid_t &tile_group_id,
     }
     assert(false);
   } else {
+    assert(false);
     rw_set[tile_group_id][tuple_id] = RW_TYPE_UPDATE;
   }
 }
@@ -106,8 +107,8 @@ void Transaction::RecordRead(const ItemPointer &location) {
   RecordRead(location.block, location.offset);
 }
 
-void Transaction::RecordWrite(const ItemPointer &location) {
-  RecordWrite(location.block, location.offset);
+void Transaction::RecordUpdate(const ItemPointer &location) {
+  RecordUpdate(location.block, location.offset);
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
