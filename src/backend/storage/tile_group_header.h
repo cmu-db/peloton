@@ -291,7 +291,7 @@ class TileGroupHeader : public Printable {
 
  //*  -----------------------------------------------------------------------------
  //*  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- //*  | NextItemPointer (16 bytes) | ContentType (1 byte) |
+ //*  | NextItemPointer (16 bytes) |
  //*  | InsertCommit (1 byte) | DeleteCommit (1 byte) 
  //*  -----------------------------------------------------------------------------
 
@@ -299,7 +299,7 @@ class TileGroupHeader : public Printable {
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
                                           sizeof(ItemPointer) +
-                                          3 * sizeof(bool);
+                                          2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);

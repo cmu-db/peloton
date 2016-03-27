@@ -56,8 +56,8 @@ bool PessimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
       return false;
     }
   } else {
-    bool activated = (current_txn->GetStartCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetStartCommitId() >= tuple_end_cid);
+    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
     if (EXTRACT_TXNID(tuple_txn_id) != EXTRACT_TXNID(INITIAL_TXN_ID)) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
@@ -136,9 +136,8 @@ bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
   if (res) {
     return true;
   } else {
-    LOG_INFO("Fail to acquire write lock. Set txn failure.");
-    // TODO: Don't set txn result here
-    SetTransactionResult(Result::RESULT_FAILURE);
+    // LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    // SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
 }
@@ -155,6 +154,7 @@ bool PessimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  LOG_INFO("IsAccessable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
   // FIXME: actually when read count is 0 this tuple is not accessable
   return EXTRACT_TXNID(tuple_txn_id) == INITIAL_TXN_ID &&
          tuple_end_cid == MAX_CID;
@@ -191,7 +191,7 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
       }
     }
   } else {
-    SetTransactionResult(RESULT_FAILURE);
+    // SetTransactionResult(RESULT_FAILURE);
     return false;
   }
 
@@ -220,7 +220,7 @@ bool PessimisticTransactionManager::PerformUpdate(
     return true;
   } else {
     // AcquireTuple may have changed the txn's result
-    SetTransactionResult(RESULT_FAILURE);
+    // SetTransactionResult(RESULT_FAILURE);
     return false;
   }
 }
@@ -366,6 +366,7 @@ Result PessimisticTransactionManager::AbortTransaction() {
         if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
+
           bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
           if (ret == false) {
             assert(false);
