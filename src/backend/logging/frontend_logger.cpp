@@ -32,9 +32,6 @@ FrontendLogger::FrontendLogger() {
 }
 
 FrontendLogger::~FrontendLogger() {
-  for (auto backend_logger : backend_loggers) {
-    delete backend_logger;
-  }
 }
 
 /** * @brief Return the frontend logger based on logging type

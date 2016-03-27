@@ -147,7 +147,8 @@ bool InsertExecutor::DExecute() {
           auto logger = log_manager.GetBackendLogger();
           auto record = logger->GetTupleRecord(
               LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
-              target_table_->GetOid(), location, INVALID_ITEMPOINTER,
+              target_table_->GetOid(), target_table_->GetDatabaseOid(),
+			  location, INVALID_ITEMPOINTER,
               tuple.get());
 
           logger->Log(record);

@@ -29,7 +29,10 @@ logger_SOURCES =  \
 					backend/benchmark/logger/logger.cpp \
                     backend/benchmark/logger/logger_configuration.cpp \
                     backend/benchmark/logger/logger_workload.cpp \
-                    backend/benchmark/logger/logger_loader.cpp
+                    backend/benchmark/logger/logger_loader.cpp \
+                    backend/benchmark/ycsb/ycsb_configuration.cpp \
+                    backend/benchmark/ycsb/ycsb_workload.cpp \
+                    backend/benchmark/ycsb/ycsb_loader.cpp
 
 logger_LDFLAGS =
 logger_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \

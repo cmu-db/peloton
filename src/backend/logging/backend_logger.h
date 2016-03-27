@@ -63,11 +63,12 @@ class BackendLogger : public Logger {
 
   // Construct a log record with tuple information
   virtual LogRecord *GetTupleRecord(LogRecordType log_record_type,
-                                    txn_id_t txn_id, oid_t table_oid,
+                                    txn_id_t txn_id,
+									oid_t table_oid,
+									oid_t db_oid,
                                     ItemPointer insert_location,
                                     ItemPointer delete_location,
-                                    void *data = nullptr,
-                                    oid_t db_oid = INVALID_OID) = 0;
+                                    void *data = nullptr) = 0;
 
  protected:
   bool IsWaitingForFlushing(void);

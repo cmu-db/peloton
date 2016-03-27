@@ -27,22 +27,30 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/expression/constant_value_expression.h"
+#include "backend/expression/expression_util.h"
 #include "backend/index/index_factory.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-storage::DataTable* ycsb_table;
+storage::Database* ycsb_database;
+
+storage::DataTable* user_table;
+
+static const oid_t ycsb_database_oid = 100;
+
+static const oid_t user_table_oid = 1001;
 
 static const oid_t ycsb_field_length = 100;
 
-void CreateUserTable() {
+void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
 
@@ -69,18 +77,26 @@ void CreateUserTable() {
   /////////////////////////////////////////////////////////
 
   // Clean up
-  delete ycsb_table;
+  delete ycsb_database;
+  ycsb_database = nullptr;
+  user_table = nullptr;
+
+  auto& manager = catalog::Manager::GetInstance();
+  ycsb_database = new storage::Database(ycsb_database_oid);
+  manager.AddDatabase(ycsb_database);
 
   bool own_schema = true;
   bool adapt_table = false;
-  ycsb_table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  user_table = storage::TableFactory::GetDataTable(
+		  ycsb_database_oid, user_table_oid, table_schema, table_name,
+		  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+
+  ycsb_database->AddTable(user_table);
 
   // Primary index on user key
   std::vector<oid_t> key_attrs;
 
-  auto tuple_schema = ycsb_table->GetSchema();
+  auto tuple_schema = user_table->GetSchema();
   catalog::Schema *key_schema;
   index::IndexMetadata *index_metadata;
   bool unique;
@@ -97,15 +113,33 @@ void CreateUserTable() {
       tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-  ycsb_table->AddIndex(pkey_index);
+  user_table->AddIndex(pkey_index);
 
 }
 
-void LoadUserTable() {
+/**
+ * Cook a ProjectInfo object from a tuple.
+ * Simply use a ConstantValueExpression for each attribute.
+ */
+planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple& tuple) {
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+
+  for (oid_t col_id = START_OID; col_id < tuple.GetColumnCount(); col_id++) {
+    auto value = tuple.GetValue(col_id);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
+    target_list.emplace_back(col_id, expression);
+  }
+
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
+}
+
+void LoadYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
-  auto table_schema = ycsb_table->GetSchema();
+  auto table_schema = user_table->GetSchema();
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -116,6 +150,8 @@ void LoadUserTable() {
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
@@ -129,10 +165,11 @@ void LoadUserTable() {
       tuple.SetValue(col_itr, field_value, pool.get());
     }
 
-    ItemPointer tuple_slot_id = ycsb_table->InsertTuple(txn, &tuple);
-    assert(tuple_slot_id.block != INVALID_OID);
-    assert(tuple_slot_id.offset != INVALID_OID);
-    txn->RecordInsert(tuple_slot_id);
+    auto project_info = MakeProjectInfoFromTuple(tuple);
+
+    planner::InsertPlan node(user_table, project_info);
+    executor::InsertExecutor executor(&node, context.get());
+    executor.Execute();
   }
 
   txn_manager.CommitTransaction(txn);

@@ -102,7 +102,8 @@ bool DeleteExecutor::DExecute() {
         auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_DELETE, transaction_->GetTransactionId(),
-            target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
+            target_table_->GetOid(), target_table_->GetDatabaseOid(),
+			INVALID_ITEMPOINTER, delete_location);
 
         logger->Log(record);
       }

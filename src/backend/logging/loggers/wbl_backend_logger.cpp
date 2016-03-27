@@ -43,9 +43,10 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
 LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_type,
                                                 txn_id_t txn_id,
                                                 oid_t table_oid,
+												oid_t db_oid,
                                                 ItemPointer insert_location,
                                                 ItemPointer delete_location,
-                                                void *data, oid_t db_oid) {
+                                                void *data) {
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {

@@ -74,10 +74,10 @@ int orig_scale_factor;
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
-  state.scale_factor = 10;
-  state.transactions = 100;
+  state.scale_factor = 1;
+  state.transactions = 10000;
   state.column_count = 10;
-  state.update_ratio = 0;
+  state.update_ratio = 0.5;
 
   // Parse args
   while (1) {

@@ -125,7 +125,8 @@ bool UpdateExecutor::DExecute() {
         auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-            target_table_->GetOid(), location, delete_location, new_tuple);
+            target_table_->GetOid(), target_table_->GetDatabaseOid(),
+			location, delete_location, new_tuple);
 
         logger->Log(record);
       }
