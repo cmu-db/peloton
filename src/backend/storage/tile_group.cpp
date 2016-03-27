@@ -203,7 +203,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
  * Used by recovery
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
-oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                              const Tuple *tuple) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
@@ -237,12 +237,12 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
   }
 
   // Set MVCC info
-  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetTransactionId(tuple_slot_id, INITIAL_TXN_ID);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetInsertCommit(tuple_slot_id, false);
   tile_group_header->SetDeleteCommit(tuple_slot_id, false);
-          tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+  tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
   return tuple_slot_id;
 }

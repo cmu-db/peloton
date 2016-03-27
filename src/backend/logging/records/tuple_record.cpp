@@ -75,7 +75,7 @@ void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
 
   output.WriteLong(db_oid);
   output.WriteLong(table_oid);
-  output.WriteLong(txn_id);
+  output.WriteLong(cid);
   output.WriteLong(insert_location.block);
   output.WriteLong(insert_location.offset);
   output.WriteLong(delete_location.block);
@@ -95,8 +95,8 @@ void TupleRecord::DeserializeHeader(CopySerializeInputBE &input) {
   assert(db_oid);
   table_oid = (oid_t)(input.ReadLong());
   assert(table_oid);
-  txn_id = (txn_id_t)(input.ReadLong());
-  assert(txn_id);
+  cid = (txn_id_t)(input.ReadLong());
+  assert(cid);
   insert_location.block = (oid_t)(input.ReadLong());
   insert_location.offset = (oid_t)(input.ReadLong());
   delete_location.block = (oid_t)(input.ReadLong());
@@ -109,6 +109,14 @@ size_t TupleRecord::GetTupleRecordSize(void) {
   // insert_location + delete_location
   return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) +
       sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
+}
+
+void TupleRecord::SetTuple(storage::Tuple *tuple){
+  this->tuple = tuple;
+}
+
+storage::Tuple *TupleRecord::GetTuple(){
+  return tuple;
 }
 
 // just for debugging

@@ -184,47 +184,86 @@ void WriteAheadFrontendLogger::DoRecovery() {
   if (log_file_size > 0) {
     bool reached_end_of_file = false;
 
-    // Start the recovery transaction
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-    // Although we call BeginTransaction here, recovery txn will not be
-    // recoreded in log file since we are in recovery mode
-    auto recovery_txn = txn_manager.BeginTransaction();
-
     // Go over each log record in the log file
     while (reached_end_of_file == false) {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
       auto record_type =
           this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
+      cid_t commit_id;
+      TupleRecord *tuple_record;
+      switch (record_type) {
+	case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+	case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+	  {
+	  // Check for torn log write
+	  TransactionRecord txn_rec(record_type);
+	  if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
+	      false) {
+	    return;
+	  }
+	  commit_id = txn_rec.GetTransactionId();
+	  break;
+	  }
+	  case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+	  case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+	    {
+	  tuple_record = new TupleRecord(record_type);
+	  // Check for torn log write
+	  if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) == false) {
+	    LOG_ERROR("Could not read tuple record header.");
+	    return;
+	  }
 
+	  auto cid = tuple_record->GetTransactionId();
+	  if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+	    LOG_ERROR("Insert txd id %d not found in recovery txn table", (int)cid);
+	    return;
+	  }
+
+	  auto table = GetTable(*tuple_record);
+
+	  // Read off the tuple record body from the log
+	  tuple_record->SetTuple(ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file,
+					   log_file_size));
+	  break;
+	  }
+	  case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+	    {
+	    tuple_record = new TupleRecord(record_type);
+	    // Check for torn log write
+	      if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) == false)
+	      {
+	        return;
+	      }
+
+	      auto cid = tuple_record->GetTransactionId();
+	      if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+	        LOG_TRACE("Delete txd id %d not found in recovery txn table",
+	        (int)cid);
+	        return;
+	      }
+	      break;
+	    }
+	  default:
+	    reached_end_of_file = true;
+	    break;
+      }
+      if (!reached_end_of_file){
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          AddTransactionToRecoveryTable();
+          StartTransactionRecovery(commit_id);
           break;
 
-        case LOGRECORD_TYPE_TRANSACTION_END:
-          RemoveTransactionFromRecoveryTable();
-          break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          MoveCommittedTuplesToRecoveryTxn(recovery_txn);
-          break;
-
-        case LOGRECORD_TYPE_TRANSACTION_ABORT:
-          AbortTuplesFromRecoveryTable();
+          CommitTransactionRecovery(commit_id);
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-          InsertTuple(recovery_txn);
-          break;
-
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-          DeleteTuple(recovery_txn);
-          break;
-
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-          UpdateTuple(recovery_txn);
+          recovery_txn_table[tuple_record->GetTransactionId()].push_back(tuple_record);
           break;
 
         default:
@@ -232,9 +271,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
           break;
       }
     }
+    }
 
-    // Commit the recovery transaction
-    txn_manager.CommitTransaction();
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
@@ -249,51 +287,21 @@ void WriteAheadFrontendLogger::DoRecovery() {
 /**
  * @brief Add new txn to recovery table
  */
-void WriteAheadFrontendLogger::AddTransactionToRecoveryTable() {
-  // read transaction information from the log file
-  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_BEGIN);
-
-  // Check for torn log write
-  if (ReadTransactionRecordHeader(txn_record, log_file, log_file_size) ==
-      false) {
-    return;
+void WriteAheadFrontendLogger::AbortActiveTransactions(){
+  for(auto it = recovery_txn_table.begin() ; it != recovery_txn_table.end(); it++){
+      for(auto it2 = it->second.begin(); it2 != it->second.end(); it2++){
+	  delete *it2;
+      }
   }
-
-  auto txn_id = txn_record.GetTransactionId();
-
-  // create the new txn object and added it into recovery recovery_txn_table
-  concurrency::Transaction *txn =
-      new concurrency::Transaction(txn_id, INVALID_CID);
-  recovery_txn_table.insert(std::make_pair(txn_id, txn));
-  LOG_TRACE("Added txd id %d object in table", (int)txn_id);
+  recovery_txn_table.clear();
 }
 
 /**
- * @brief Remove txn from recovery table
+ * @brief Add new txn to recovery table
  */
-void WriteAheadFrontendLogger::RemoveTransactionFromRecoveryTable() {
-  // read transaction information from the log file
-  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_END);
-
-  // Check for torn log write
-  if (ReadTransactionRecordHeader(txn_record, log_file, log_file_size) ==
-      false) {
-    return;
-  }
-
-  auto txn_id = txn_record.GetTransactionId();
-
-  // remove txn from recovery txn table
-  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
-    auto txn = recovery_txn_table.at(txn_id);
-    recovery_txn_table.erase(txn_id);
-
-    // drop the txn as well
-    delete txn;
-    LOG_TRACE("Erase txd id %d object in table", (int)txn_id);
-  } else {
-    LOG_TRACE("Erase txd id %d not found in recovery txn table", (int)txn_id);
-  }
+void WriteAheadFrontendLogger::StartTransactionRecovery(cid_t commit_id) {
+  std::vector<TupleRecord*> tuple_recs;
+  recovery_txn_table[commit_id] = tuple_recs;
 }
 
 /**
@@ -301,221 +309,86 @@ void WriteAheadFrontendLogger::RemoveTransactionFromRecoveryTable() {
  * them later
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
-    concurrency::Transaction *recovery_txn) {
-  // read transaction information from the log file
-  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_COMMIT);
-
-  // Check for torn log write
-  if (ReadTransactionRecordHeader(txn_record, log_file, log_file_size) ==
-      false) {
-    return;
-  }
-
-  // Get info about the transaction from recovery table
-  auto txn_id = txn_record.GetTransactionId();
-  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
-    auto txn = recovery_txn_table.at(txn_id);
-    // Copy inserted/deleted tuples to recovery transaction
-    MoveTuples(recovery_txn, txn);
-
-    LOG_TRACE("Commit txd id %d object in table", (int)txn_id);
-  } else {
-    LOG_TRACE("Commit txd id %d not found in recovery txn table", (int)txn_id);
-  }
-}
-
-/**
- * @brief Move Tuples from log record-based local transaction to recovery
- * transaction
- * @param destination
- * @param source
- */
-void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination,
-                                          concurrency::Transaction *source) {
-  // This is the local transaction
-  auto inserted_tuples = source->GetInsertedTuples();
-  // Record the inserts in recovery txn
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    for (auto tuple_slot : entry.second) {
-      destination->RecordInsert(ItemPointer(tile_group_id, tuple_slot));
+void WriteAheadFrontendLogger::CommitTransactionRecovery(cid_t commit_id) {
+  std::vector<TupleRecord*> &tuple_records = recovery_txn_table[commit_id];
+  for(auto it = tuple_records.begin(); it != tuple_records.end(); it++){
+    TupleRecord* curr = *it;
+    switch(curr->GetType()){
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+	InsertTuple(curr);
+	break;
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+	UpdateTuple(curr);
+	break;
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+	DeleteTuple(curr);
+	break;
+      default:
+	continue;
     }
+    delete curr;
   }
-
-  // Record the deletes in recovery txn
-  auto deleted_tuples = source->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    oid_t tile_group_id = entry.first;
-    for (auto tuple_slot : entry.second) {
-      destination->RecordDelete(ItemPointer(tile_group_id, tuple_slot));
-    }
-  }
-
-  // Clear inserted/deleted tuples from txn, just in case
-  source->ResetState();
+  recovery_txn_table.erase(commit_id);
 }
 
-/**
- * @brief abort tuple
- */
-void WriteAheadFrontendLogger::AbortTuplesFromRecoveryTable() {
-  // read transaction information from the log file
-  TransactionRecord txn_record(LOGRECORD_TYPE_TRANSACTION_ABORT);
-
-  // Check for torn log write
-  if (ReadTransactionRecordHeader(txn_record, log_file, log_file_size) ==
-      false) {
-    return;
-  }
-
-  auto txn_id = txn_record.GetTransactionId();
-
-  // Get info about the transaction from recovery table
-  if (recovery_txn_table.find(txn_id) != recovery_txn_table.end()) {
-    auto txn = recovery_txn_table.at(txn_id);
-    AbortTuples(txn);
-    LOG_INFO("Abort txd id %d object in table", (int)txn_id);
-  } else {
-    LOG_INFO("Abort txd id %d not found in recovery txn table", (int)txn_id);
-  }
-}
-
-/**
- * @brief Abort tuples inside txn
- * @param txn
- */
-void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn) {
-  LOG_INFO("Abort txd id %d object in table", (int)txn->GetTransactionId());
-
+void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id, oid_t table_id, oid_t tile_group_id, oid_t tuple_slot, storage::Tuple* tuple){
   auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+  storage::Database *db =
+        manager.GetDatabaseWithOid(db_id);
+  assert(db);
 
-  // Record the aborted inserts in recovery txn
-  auto inserted_tuples = txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-
-    // for (auto tuple_slot : entry.second) {
-    //   tile_group.get()->AbortInsertedTuple(tuple_slot);
-    // }
+  auto table = db->GetTableWithOid(table_id);
+  assert(table);
+  if (tile_group == nullptr) {
+    table->AddTileGroupWithOid(tile_group_id);
+    tile_group = manager.GetTileGroup(tile_group_id);
+    if (max_tg < tile_group_id) {
+	max_tg = tile_group_id;
+    }
   }
 
-  // Record the aborted deletes in recovery txn
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : txn->GetDeletedTuples()) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-
-    // for (auto tuple_slot : entry.second) {
-    //   tile_group.get()->AbortDeletedTuple(tuple_slot,
-    //   txn->GetTransactionId());
-    // }
-  }
-
-  // Clear inserted/deleted tuples from txn, just in case
-  txn->ResetState();
+  tile_group->InsertTupleFromRecovery(commit_id, tuple_slot, tuple);
+  delete tuple;
 }
 
-/**
- * @brief Abort tuples inside txn table
- */
-void WriteAheadFrontendLogger::AbortActiveTransactions() {
-  // Clean up the recovery table to ignore active transactions
-  for (auto active_txn_entry : recovery_txn_table) {
-    // clean up the transaction
-    auto active_txn = active_txn_entry.second;
-    AbortTuples(active_txn);
-    delete active_txn;
-  }
-
-  recovery_txn_table.clear();
-}
+//void DeleteTupleHelper(oid_t db_id, oid_t table_id, oid_t tile_group_id, oid_t tuple_slot, ItemPointer delete_pos){
+//
+//}
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
 void WriteAheadFrontendLogger::InsertTuple(
-    concurrency::Transaction *recovery_txn) {
-  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+    TupleRecord *record) {
 
-  // Check for torn log write
-  if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
-    LOG_ERROR("Could not read tuple record header.");
-    return;
-  }
-
-  auto txn_id = tuple_record.GetTransactionId();
-  if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-    LOG_ERROR("Insert txd id %d not found in recovery txn table", (int)txn_id);
-    return;
-  }
-
-  auto table = GetTable(tuple_record);
-
-  // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file,
-                                   log_file_size);
-
-  // Check for torn log write
-  if (tuple == nullptr) {
-    return;
-  }
-
-  auto target_location = tuple_record.GetInsertLocation();
+  auto target_location = record->GetInsertLocation();
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
+  InsertTupleHelper(max_oid, record->GetTransactionId(), record->GetDatabaseOid(), record->GetTableId(), tile_group_id, tuple_slot, record->GetTuple());
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-
-  auto txn = recovery_txn_table.at(txn_id);
-
-  // Create new tile group if table doesn't already have that tile group
-  if (tile_group == nullptr) {
-    table->AddTileGroupWithOid(tile_group_id);
-    tile_group = manager.GetTileGroup(tile_group_id);
-    if (max_oid < tile_group_id) {
-      max_oid = tile_group_id;
-    }
-  }
-
-  // Do the insert !
-  auto inserted_tuple_slot = tile_group->InsertTuple(
-      recovery_txn->GetTransactionId(), tuple_slot, tuple);
-
-  if (inserted_tuple_slot == INVALID_OID) {
-    // TODO: We need to abort on failure !
-    recovery_txn->SetResult(Result::RESULT_FAILURE);
-  } else {
-    txn->RecordInsert(target_location);
-    table->IncreaseNumberOfTuplesBy(1);
-  }
-
-  delete tuple;
 }
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::DeleteTuple(
-    concurrency::Transaction *recovery_txn __attribute__((unused))) {
+void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *) {
   // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_DELETE);
 
-  // // Check for torn log write
-  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
-  // {
-  //   return;
-  // }
-
-  // auto txn_id = tuple_record.GetTransactionId();
-  // if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-  //   LOG_TRACE("Delete txd id %d not found in recovery txn table",
-  //   (int)txn_id);
-  //   return;
-  // }
+//   // Check for torn log write
+//   if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
+//   {
+//     return;
+//   }
+//
+//   auto txn_id = tuple_record.GetTransactionId();
+//   if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
+//     LOG_TRACE("Delete txd id %d not found in recovery txn table",
+//     (int)txn_id);
+//     return;
+//   }
 
   // auto table = GetTable(tuple_record);
 
@@ -539,7 +412,7 @@ void WriteAheadFrontendLogger::DeleteTuple(
  */
 
 void WriteAheadFrontendLogger::UpdateTuple(
-    concurrency::Transaction *recovery_txn __attribute__((unused))) {
+    TupleRecord *) {
   // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_UPDATE);
 
   // // Check for torn log write

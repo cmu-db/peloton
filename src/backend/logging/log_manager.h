@@ -109,11 +109,11 @@ class LogManager {
 
   FrontendLogger *GetFrontendLogger();
 
-  void LogStartTransaction(oid_t commit_id);
+  void LogBeginTransaction(oid_t commit_id);
 
-  void LogUpdate(concurrency::Transaction* curr_txn, oid_t commit_id, ItemPointer &old_version, ItemPointer &new_version);
+  void LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version);
 
-  void LogInsert(concurrency::Transaction* curr_txn, oid_t commit_id, ItemPointer &new_location);
+  void LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location);
 
   void LogDelete(oid_t commit_id, ItemPointer &delete_location);
 

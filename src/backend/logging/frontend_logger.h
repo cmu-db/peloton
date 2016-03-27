@@ -62,6 +62,8 @@ class FrontendLogger : public Logger {
     return fsync_count;
   }
 
+  void ReplayLog(const char *, size_t len);
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;

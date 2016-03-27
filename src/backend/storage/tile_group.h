@@ -81,8 +81,7 @@ class TileGroup : public Printable {
 
   // insert tuple at specific tuple slot
   // used by recovery mode
-  // TODO: logging team: remove the transaction_id parameter.
-  oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+  oid_t InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                     const Tuple *tuple);
 
   oid_t InsertTupleFromCheckpoint(oid_t tuple_slot_id,
