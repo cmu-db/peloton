@@ -214,7 +214,7 @@ static void exec_assign_value(PLpgSQL_execstate *estate,
 				  Oid valtype, int32 valtypmod);
 static void exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_datum *datum,
-				Oid *typeid,
+				Oid *typeid___,
 				int32 *typetypmod,
 				Datum *value,
 				bool *isnull);
@@ -739,7 +739,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		int			dims[1];
 		int			lbs[1];
 
-		elems = (Datum) palloc(sizeof(Datum) * nelems);
+		elems = (Datum*) palloc(sizeof(Datum) * nelems);
 		for (i = 0; i < nelems; i++)
 			elems[i] = CStringGetTextDatum(trigdata->tg_trigger->tgargs[i]);
 		dims[0] = nelems;
@@ -994,7 +994,7 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 	{
 		case PLPGSQL_DTYPE_VAR:
 			{
-				PLpgSQL_var *new___ = palloc(sizeof(PLpgSQL_var));
+				PLpgSQL_var *new___ = (PLpgSQL_var*) palloc(sizeof(PLpgSQL_var));
 
 				memcpy(new___, datum, sizeof(PLpgSQL_var));
 				/* should be preset to null/non-freeable */
@@ -1007,7 +1007,7 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 
 		case PLPGSQL_DTYPE_REC:
 			{
-				PLpgSQL_rec *new___ = palloc(sizeof(PLpgSQL_rec));
+				PLpgSQL_rec *new___ = (PLpgSQL_rec*) palloc(sizeof(PLpgSQL_rec));
 
 				memcpy(new___, datum, sizeof(PLpgSQL_rec));
 				/* should be preset to null/non-freeable */
@@ -1601,7 +1601,7 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 		{
 			case PLPGSQL_GETDIAG_ROW_COUNT:
 				exec_assign_value(estate, var,
-								  UInt64GetDatum(estate->eval_processed),
+								  UInt32GetDatum(estate->eval_processed),
 								  false, INT8OID, -1);
 				break;
 
@@ -3210,13 +3210,13 @@ exec_stmt_assert(PLpgSQL_execstate *estate, PLpgSQL_stmt_assert *stmt)
 		if (stmt->message != NULL)
 		{
 			Datum		val;
-			Oid			typeid;
+			Oid			typeid___;
 			int32		typmod;
 
 			val = exec_eval_expr(estate, stmt->message,
-								 &isnull, &typeid, &typmod);
+								 &isnull, &typeid___, &typmod);
 			if (!isnull)
-				message = convert_value_to_string(estate, val, typeid);
+				message = convert_value_to_string(estate, val, typeid___);
 			/* we mustn't do exec_eval_cleanup here */
 		}
 
@@ -3275,7 +3275,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 
 	estate->found_varno = func->found_varno;
 	estate->ndatums = func->ndatums;
-	estate->datums = palloc(sizeof(PLpgSQL_datum *) * estate->ndatums);
+	estate->datums = (PLpgSQL_datum**) palloc(sizeof(PLpgSQL_datum *) * estate->ndatums);
 	/* caller is expected to fill the datums array */
 
 	/* initialize ParamListInfo with one entry per datum, all invalid */
@@ -4402,9 +4402,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * the attributes except the one we want to replace, use the
 				 * value that's in the old tuple.
 				 */
-				values = palloc(sizeof(Datum) * natts);
-				nulls = palloc(sizeof(bool) * natts);
-				replaces = palloc(sizeof(bool) * natts);
+				values = (Datum*) palloc(sizeof(Datum) * natts);
+				nulls = (bool*) palloc(sizeof(bool) * natts);
+				replaces = (bool*) palloc(sizeof(bool) * natts);
 
 				memset(replaces, false, sizeof(bool) * natts);
 				replaces[fno] = true;
@@ -4660,7 +4660,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 static void
 exec_eval_datum(PLpgSQL_execstate *estate,
 				PLpgSQL_datum *datum,
-				Oid *typeid,
+				Oid *typeid___,
 				int32 *typetypmod,
 				Datum *value,
 				bool *isnull)
@@ -4673,7 +4673,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-				*typeid = var->datatype->typoid;
+				*typeid___ = var->datatype->typoid;
 				*typetypmod = var->datatype->atttypmod;
 				*value = var->value;
 				*isnull = var->isnull;
@@ -4693,7 +4693,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				tup = make_tuple_from_row(estate, row, row->rowtupdesc);
 				if (tup == NULL)	/* should not happen */
 					elog(ERROR, "row not compatible with its own tupdesc");
-				*typeid = row->rowtupdesc->tdtypeid;
+				*typeid___ = row->rowtupdesc->tdtypeid;
 				*typetypmod = row->rowtupdesc->tdtypmod;
 				*value = HeapTupleGetDatum(tup);
 				*isnull = false;
@@ -4716,7 +4716,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				BlessTupleDesc(rec->tupdesc);
 
 				oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
-				*typeid = rec->tupdesc->tdtypeid;
+				*typeid___ = rec->tupdesc->tdtypeid;
 				*typetypmod = rec->tupdesc->tdtypmod;
 				*value = heap_copy_tuple_as_datum(rec->tup, rec->tupdesc);
 				*isnull = false;
@@ -4743,7 +4743,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
-				*typeid = SPI_gettypeid(rec->tupdesc, fno);
+				*typeid___ = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
 					*typetypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
 				else
@@ -4769,7 +4769,7 @@ Oid
 plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 					PLpgSQL_datum *datum)
 {
-	Oid			typeid;
+	Oid			typeid___;
 
 	switch (datum->dtype)
 	{
@@ -4777,7 +4777,7 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-				typeid = var->datatype->typoid;
+				typeid___ = var->datatype->typoid;
 				break;
 			}
 
@@ -4789,7 +4789,7 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 					elog(ERROR, "row variable has no tupdesc");
 				/* Make sure we have a valid type/typmod setting */
 				BlessTupleDesc(row->rowtupdesc);
-				typeid = row->rowtupdesc->tdtypeid;
+				typeid___ = row->rowtupdesc->tdtypeid;
 				break;
 			}
 
@@ -4805,7 +4805,7 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
 				/* Make sure we have a valid type/typmod setting */
 				BlessTupleDesc(rec->tupdesc);
-				typeid = rec->tupdesc->tdtypeid;
+				typeid___ = rec->tupdesc->tdtypeid;
 				break;
 			}
 
@@ -4828,17 +4828,17 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
-				typeid = SPI_gettypeid(rec->tupdesc, fno);
+				typeid___ = SPI_gettypeid(rec->tupdesc, fno);
 				break;
 			}
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			typeid = InvalidOid;	/* keep compiler quiet */
+			typeid___ = InvalidOid;	/* keep compiler quiet */
 			break;
 	}
 
-	return typeid;
+	return typeid___;
 }
 
 /*
@@ -4850,7 +4850,7 @@ plpgsql_exec_get_datum_type(PLpgSQL_execstate *estate,
 void
 plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 						 PLpgSQL_datum *datum,
-						 Oid *typeid, int32 *typmod, Oid *collation)
+						 Oid *typeid___, int32 *typmod, Oid *collation)
 {
 	switch (datum->dtype)
 	{
@@ -4858,7 +4858,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_var *var = (PLpgSQL_var *) datum;
 
-				*typeid = var->datatype->typoid;
+				*typeid___ = var->datatype->typoid;
 				*typmod = var->datatype->atttypmod;
 				*collation = var->datatype->collation;
 				break;
@@ -4872,7 +4872,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 					elog(ERROR, "row variable has no tupdesc");
 				/* Make sure we have a valid type/typmod setting */
 				BlessTupleDesc(row->rowtupdesc);
-				*typeid = row->rowtupdesc->tdtypeid;
+				*typeid___ = row->rowtupdesc->tdtypeid;
 				/* do NOT return the mutable typmod of a RECORD variable */
 				*typmod = -1;
 				/* composite types are never collatable */
@@ -4892,7 +4892,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
 				/* Make sure we have a valid type/typmod setting */
 				BlessTupleDesc(rec->tupdesc);
-				*typeid = rec->tupdesc->tdtypeid;
+				*typeid___ = rec->tupdesc->tdtypeid;
 				/* do NOT return the mutable typmod of a RECORD variable */
 				*typmod = -1;
 				/* composite types are never collatable */
@@ -4919,7 +4919,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
-				*typeid = SPI_gettypeid(rec->tupdesc, fno);
+				*typeid___ = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
 					*typmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
 				else
@@ -4933,7 +4933,7 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-			*typeid = InvalidOid;		/* keep compiler quiet */
+			*typeid___ = InvalidOid;		/* keep compiler quiet */
 			*typmod = -1;
 			*collation = InvalidOid;
 			break;
@@ -6236,7 +6236,7 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 			/* Now copy the tree into cast_hash_context */
 			MemoryContextSwitchTo(estate->cast_hash_context);
 
-			cast_expr = copyObject(cast_expr);
+			cast_expr = (Node *) copyObject(cast_expr);
 		}
 
 		MemoryContextSwitchTo(oldcontext);
@@ -6525,7 +6525,7 @@ exec_simple_check_node(Node *node)
 
 				foreach(l, expr)
 				{
-					if (!exec_simple_check_node(lfirst(l)))
+					if (!exec_simple_check_node((Node*)lfirst(l)))
 						return FALSE;
 				}
 
@@ -6811,8 +6811,8 @@ contains_target_param(Node *node, int *target_dno)
 			return true;
 		return false;
 	}
-	return expression_tree_walker(node, contains_target_param,
-								  (void *) target_dno);
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(contains_target_param),
+								  (int *) target_dno);
 }
 
 /* ----------
