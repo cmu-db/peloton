@@ -12,6 +12,7 @@
 
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <algorithm>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -32,6 +33,7 @@
 extern CheckpointType peloton_checkpoint_mode;
 
 #define LOG_FILE_SWITCH_LIMIT (1024 * 1024)
+
 namespace peloton {
 namespace logging {
 
@@ -58,6 +60,8 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 // Wrappers
 storage::DataTable *GetTable(TupleRecord tupleRecord);
+
+int ExtractNumberFromFileName(const char *name);
 
 /**
  * @brief Open logfile and file descriptor
@@ -252,6 +256,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       if (!reached_end_of_file){
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+<<<<<<< HEAD
           StartTransactionRecovery(commit_id);
           break;
 
@@ -264,9 +269,44 @@ void WriteAheadFrontendLogger::DoRecovery() {
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
           recovery_txn_table[tuple_record->GetTransactionId()].push_back(tuple_record);
+=======
+          LOG_INFO("Got Type as TXN_BEGIN");
+          AddTransactionToRecoveryTable();
+          break;
+
+        case LOGRECORD_TYPE_TRANSACTION_END:
+          LOG_INFO("Got Type as TXN_END");
+          RemoveTransactionFromRecoveryTable();
+          break;
+
+        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+          LOG_INFO("Got Type as TXN_COMMIT");
+          MoveCommittedTuplesToRecoveryTxn(recovery_txn);
+          break;
+
+        case LOGRECORD_TYPE_TRANSACTION_ABORT:
+          LOG_INFO("Got Type as TXN_ABORT");
+          AbortTuplesFromRecoveryTable();
+          break;
+
+        case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+          LOG_INFO("Got Type as TXN_INSERT");
+          InsertTuple(recovery_txn);
+          break;
+
+        case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+          LOG_INFO("Got Type as TXN_DELETE");
+          DeleteTuple(recovery_txn);
+          break;
+
+        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+          LOG_INFO("Got Type as TXN_UPDATE");
+          UpdateTuple(recovery_txn);
+>>>>>>> 65e1834b171c2577ff9dfc5bd237ca2e754c7092
           break;
 
         default:
+          LOG_INFO("Got Type as TXN_INVALID");
           reached_end_of_file = true;
           break;
       }
@@ -581,6 +621,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
     FILE *log_file, size_t log_file_size) {
   char buffer;
 
+  LOG_INFO("File is at position %d", (int)ftell(log_file));
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
     LOG_ERROR("Log file is truncated");
@@ -733,23 +774,40 @@ int extract_number_from_filename(const char *name) {
   LOG_ERROR("The last found log file doesn't have a version number.");
   return 0;
 }
-void WriteAheadFrontendLogger::InitLogFilesList() {
-  struct dirent **list;
-  int n;
+int ExtractNumberFromFileName(const char *name) {
+  return extract_number_from_filename(name);
+}
 
+bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
+  return left->GetLogNumber() < right->GetLogNumber();
+}
+
+void WriteAheadFrontendLogger::InitLogFilesList() {
+  struct dirent *file;
+  DIR *dirp;
   // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
 
   LOG_INFO("Trying to read log directory");
 
-  n = scandir(".", &list, 0, alphasort);
-  if (n < 0) {
-    LOG_INFO("Scandir failed: Errno: %d, error: %s", errno, strerror(errno));
+  dirp = opendir(".");
+  if (dirp == nullptr) {
+    LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
-  for (int i = 0; i < n; i++) {
+  /*for (int i = 0; i < n; i++) {
     if (strncmp(list[i]->d_name, base_name.c_str(), base_name.length()) == 0) {
       LOG_INFO("Found a log file with name %s", list[i]->d_name);
       LogFile *new_log_file = new LogFile(NULL, list[i]->d_name, -1);
+      this->log_files_.push_back(new_log_file);
+    }*/
+
+  while ((file = readdir(dirp)) != NULL) {
+    if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
+      // found a log file!
+      LOG_INFO("Found a log file with name %s", file->d_name);
+
+      LogFile *new_log_file = new LogFile(
+          NULL, file->d_name, -1, extract_number_from_filename(file->d_name));
       this->log_files_.push_back(new_log_file);
     }
   }
@@ -757,9 +815,23 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   int num_log_files;
   num_log_files = this->log_files_.size();
 
+  LOG_INFO("The number of log files found: %d", num_log_files);
+
+  std::sort(this->log_files_.begin(), this->log_files_.end(),
+            CompareByLogNumber);
+
+  /*LOG_INFO("After sorting, the list of log files looks like this:");
+
+  for (int i = 0; i < num_log_files; i++) {
+    LOG_INFO("Name: %s, Number: %d, Size: %d, FD: %d",
+  this->log_files_[i]->log_file_name_.c_str(), this->log_files_[i]->log_number_,
+  this->log_files_[i]->log_file_size_, this->log_files_[i]->log_file_fd_);
+  }*/
+
   if (num_log_files) {
+    // @abj please follow CamelCase convention for function name :)
     int max_num = extract_number_from_filename(
-        this->log_files_[num_log_files - 1]->log_file_name_.c_str());
+        this->log_files_[num_log_files - 1]->GetLogFileName().c_str());
     LOG_INFO("Got maximum log file version as %d", max_num);
     this->log_file_counter_ = ++max_num;
   } else {
@@ -791,16 +863,15 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   LOG_INFO("log_file_fd of newly created file is %d", this->log_file_fd);
 
   LogFile *new_log_file_object =
-      new LogFile(log_file, new_file_name, log_file_fd);
+      new LogFile(log_file, new_file_name, log_file_fd, new_file_num);
 
   if (close_old_file) {  // must close last opened file
     int file_list_size = this->log_files_.size();
 
     if (file_list_size != 0) {
-      this->log_files_[file_list_size - 1]->log_file_size_ =
-          this->log_file_size;
-      fclose(this->log_files_[file_list_size - 1]->log_file_);
-      this->log_files_[file_list_size - 1]->log_file_fd_ = -1;  // invalidate
+      this->log_files_[file_list_size - 1]->SetLogFileSize(this->log_file_size);
+      fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
+      this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
       // TODO set max commit_id here!
     }
   }
@@ -844,7 +915,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   // open the next file
   this->log_file = fopen(
-      this->log_files_[this->log_file_cursor_]->log_file_name_.c_str(), "rb");
+      this->log_files_[this->log_file_cursor_]->GetLogFileName().c_str(), "rb");
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
@@ -871,12 +942,13 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
   int return_val;
 
-  for (int i = 0; i < (int)this->log_files_.size(); i++) {
-    if (max_commit_id >= this->log_files_[i]->max_commit_id_) {
-      return_val = remove(this->log_files_[i]->log_file_name_.c_str());
+  // delete stale log files except the one currently being used
+  for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
+    if (max_commit_id >= this->log_files_[i]->GetMaxCommitId()) {
+      return_val = remove(this->log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s",
-                  this->log_files_[i]->log_file_name_.c_str());
+                  this->log_files_[i]->GetLogFileName().c_str());
       }
       // remove entry from list anyway
       this->log_files_.erase(this->log_files_.begin() + i);

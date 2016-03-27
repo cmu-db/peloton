@@ -22,7 +22,6 @@
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
 
-#define private public
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 
 using ::testing::NotNull;
@@ -33,7 +32,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Planner Tests
+// Checkpoint Tests
 //===--------------------------------------------------------------------===//
 
 class CheckpointTests : public PelotonTest {};
@@ -120,7 +119,7 @@ TEST_F(CheckpointTests, BasicTest) {
   auto checkpoint_txn = txn_manager.BeginTransaction();
   simple_checkpoint.Execute(&table_scan_executor, checkpoint_txn, table.get(),
                             1);
-  auto records = simple_checkpoint.records_;
+  auto records = simple_checkpoint.GetRecords();
   EXPECT_EQ(records.size(),
             TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
   for (unsigned int i = 0; i < records.size(); i++) {
