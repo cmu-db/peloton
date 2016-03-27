@@ -98,8 +98,8 @@ bool OptimisticTransactionManager::AcquireTuple(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->LockTupleSlot(physical_tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to insert new tuple. Set txn failure.");
-    SetTransactionResult(Result::RESULT_FAILURE);
+    // LOG_INFO("Fail to insert new tuple. Set txn failure.");
+    // SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
   return true;

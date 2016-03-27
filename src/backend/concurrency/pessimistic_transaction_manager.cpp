@@ -136,9 +136,8 @@ bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
   if (res) {
     return true;
   } else {
-    LOG_INFO("Fail to acquire write lock. Set txn failure.");
-    // TODO: Don't set txn result here
-    SetTransactionResult(Result::RESULT_FAILURE);
+    // LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    // SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
 }
@@ -191,7 +190,7 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
       }
     }
   } else {
-    SetTransactionResult(RESULT_FAILURE);
+    // SetTransactionResult(RESULT_FAILURE);
     return false;
   }
 
@@ -220,7 +219,7 @@ bool PessimisticTransactionManager::PerformWrite(
     return true;
   } else {
     // AcquireTuple may have changed the txn's result
-    SetTransactionResult(RESULT_FAILURE);
+    // SetTransactionResult(RESULT_FAILURE);
     return false;
   }
 }
