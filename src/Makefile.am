@@ -43,6 +43,7 @@ bin_PROGRAMS = \
 
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
+lib_LTLIBRARIES += libplpgsql.la
 
 DEFAULT_INCLUDES =
 
@@ -92,7 +93,6 @@ libpelotonpg_la_SOURCES = \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES) \
-			$(postgres_pl_FILES) \
 			$(third_party_FILES)
 
 libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
@@ -111,6 +111,33 @@ libpelotonpg_la_CXXFLAGS = $(AM_CXXFLAGS) \
 
 libpelotonpg_la_LDFLAGS = -lprotobuf
 
+
+
+######################################################################
+# LIBPLPGSQL
+######################################################################
+
+libplpgsql_la_SOURCES = \
+			$(postgres_plpgsql_FILES)
+
+libplpgsql_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 $(third_party_INCLUDES)
+
+libplpgsql_la_CXXFLAGS = $(AM_CXXFLAGS) \
+			  -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
+			  -Wno-sign-compare -Wno-write-strings \
+			  -msse4.2
+
+libplpgsql_la_LDFLAGS = -lprotobuf
+
+
+
 ######################################################################
 # PELOTON
 ######################################################################
@@ -119,6 +146,6 @@ peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 
-peloton_LDADD = libpelotonpg.la libpeloton.la
+peloton_LDADD = libpelotonpg.la libpeloton.la libplpgsql.la
 
 
