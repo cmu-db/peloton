@@ -193,7 +193,6 @@ bool IndexScanExecutor::ExecIndexLookup() {
         ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
         // if there is no next tuple.
         if (next_item.IsNull() == true) {
-        //if (next_item.block == INVALID_OID && next_item.offset == INVALID_OID) {
           break;
         }
         tile_group_id = next_item.block;
