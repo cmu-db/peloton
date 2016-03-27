@@ -35,9 +35,10 @@ class WriteBehindBackendLogger : public BackendLogger {
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
-                            oid_t table_oid, ItemPointer insert_location,
-                            ItemPointer delete_location, void *data = nullptr,
-                            oid_t db_oid = INVALID_OID);
+                            oid_t table_oid,
+							oid_t db_oid,
+							ItemPointer insert_location,
+                            ItemPointer delete_location, void *data = nullptr);
 
  private:
   WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }

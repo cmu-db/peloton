@@ -27,9 +27,9 @@ configuration state;
 void RunBenchmark() {
 
   // Create and load the user table
-  CreateUserTable();
+  CreateYCSBDatabase();
 
-  LoadUserTable();
+  LoadYCSBDatabase();
 
   // Run the workload
   RunWorkload();
