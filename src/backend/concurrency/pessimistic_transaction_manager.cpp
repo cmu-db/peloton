@@ -200,7 +200,7 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
   return true;
 }
 
-bool PessimisticTransactionManager::PerformWrite(
+bool PessimisticTransactionManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   LOG_INFO("Performing Write");
@@ -216,7 +216,7 @@ bool PessimisticTransactionManager::PerformWrite(
   if (res) {
     SetUpdateVisibility(new_location.block, new_location.offset);
     tile_group_header->SetNextItemPointer(tuple_id, new_location);
-    current_txn->RecordWrite(tile_group_id, tuple_id);
+    current_txn->RecordUpdate(tile_group_id, tuple_id);
     return true;
   } else {
     // AcquireTuple may have changed the txn's result
@@ -296,9 +296,10 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
-        tile_group_header->UnlockTupleSlot(tuple_slot,
-                                           current_txn->GetTransactionId());
+        tile_group_header->SetTransactionId(tuple_slot,
+                                           INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
+
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -313,28 +314,30 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->UnlockTupleSlot(tuple_slot,
-                                           current_txn->GetTransactionId());
+        tile_group_header->SetTransactionId(tuple_slot,
+                                           INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
+
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
-        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
+        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         COMPILER_MEMORY_FENCE;
 
-        tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
-        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
-        // set the begin commit id to persist insert
-        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
-
-        COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
+        // set the begin commit id to persist insert
+        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
       }
     }
   }
@@ -369,38 +372,54 @@ Result PessimisticTransactionManager::AbortTransaction() {
           }
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
-        tile_group_header->UnlockTupleSlot(tuple_slot,
-                                           current_txn->GetTransactionId());
+      } 
+      else if (tuple_entry.second == RW_TYPE_UPDATE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
-        new_tile_group_header->SetTransactionId(new_version.offset,
-                                                INVALID_TXN_ID);
         new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
-      } else if (tuple_entry.second == RW_TYPE_DELETE) {
-        tile_group_header->UnlockTupleSlot(tuple_slot,
-                                           current_txn->GetTransactionId());
+
+        COMPILER_MEMORY_FENCE;
+
+        new_tile_group_header->SetTransactionId(new_version.offset,
+                                                INVALID_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot,
+                                           INITIAL_TXN_ID);
+
+      } 
+      else if (tuple_entry.second == RW_TYPE_DELETE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
-        new_tile_group_header->SetTransactionId(new_version.offset,
-                                                INVALID_TXN_ID);
         new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
+        new_tile_group_header->SetTransactionId(new_version.offset,
+                                                INVALID_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot,
+                                           INITIAL_TXN_ID);
+        
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
+        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
+        tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
       }
     }
   }
