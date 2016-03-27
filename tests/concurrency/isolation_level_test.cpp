@@ -28,9 +28,9 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
     // CONCURRENCY_TYPE_2PL
 };
 
-void DirtyWriteTest(ConcurrencyType test_type) {
+void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(test_type);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -131,9 +131,9 @@ void DirtyWriteTest(ConcurrencyType test_type) {
   }
 }
 
-void DirtyReadTest(ConcurrencyType TEST_TYPE) {
+void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -193,9 +193,9 @@ void DirtyReadTest(ConcurrencyType TEST_TYPE) {
   }
 }
 
-void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
+void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -251,9 +251,9 @@ void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
   }
 }
 
-void PhantomTest(ConcurrencyType TEST_TYPE) {
+void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -293,9 +293,9 @@ void PhantomTest(ConcurrencyType TEST_TYPE) {
   }
 }
 
-void WriteSkewTest(ConcurrencyType TEST_TYPE) {
+void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -332,9 +332,9 @@ void WriteSkewTest(ConcurrencyType TEST_TYPE) {
   }
 }
 
-void ReadSkewTest(ConcurrencyType test_type) {
+void ReadSkewTest(ConcurrencyType test_type __attribute__((unused))) {
   auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(test_type);
+      concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
   {
