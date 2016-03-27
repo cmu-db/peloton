@@ -55,7 +55,7 @@ class TransactionManager {
   virtual bool PerformRead(const oid_t &tile_group_id,
                            const oid_t &tuple_id) = 0;
 
-  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
                             const ItemPointer &new_location) = 0;
 
   virtual bool AcquireTuple(storage::TileGroup *tile_group,
@@ -67,13 +67,13 @@ class TransactionManager {
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location) = 0;
 
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id) = 0;
+
   virtual void SetDeleteVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id) = 0;
-
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   void SetTransactionResult(const Result result) {
