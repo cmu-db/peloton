@@ -1,10 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# POSTGRES_PLPGSQL
+# POSTGRES_PL
 ######################################################################
 
-postgres_pl_FILES = \
+postgres_plpgsql_FILES = \
 							postgres/pl/plpgsql/pl_comp.cpp \
 							postgres/pl/plpgsql/pl_exec.cpp \
 							postgres/pl/plpgsql/pl_funcs.cpp \
@@ -12,6 +12,6 @@ postgres_pl_FILES = \
 							postgres/pl/plpgsql/pl_handler.cpp \
 							postgres/pl/plpgsql/pl_scanner.cpp
 
-postgres_pl_INCLUDES = \
+postgres_plpgsql_INCLUDES = \
 							 -I$(srcdir)/postgres/include \
 							 -I$(srcdir)/postgres/backenkd
