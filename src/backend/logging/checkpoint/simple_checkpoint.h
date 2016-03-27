@@ -31,7 +31,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint() : Checkpoint() {}
+  SimpleCheckpoint() : Checkpoint() { InitVersionNumber(); }
 
   static SimpleCheckpoint &GetInstance();
 
@@ -49,13 +49,20 @@ class SimpleCheckpoint : public Checkpoint {
                concurrency::Transaction *txn, storage::DataTable *target_table,
                oid_t database_oid);
 
-  void CreateCheckpointFile();
+  // Getters and Setters
+  void SetLogger(BackendLogger *logger);
+
+  std::vector<LogRecord *> GetRecords();
+
+ private:
+  void CreateFile();
 
   void Persist();
 
-  void SetLogger(BackendLogger *logger);
+  void Cleanup();
 
- private:
+  void InitVersionNumber();
+
   std::vector<LogRecord *> records_;
 
   FILE *checkpoint_file_ = nullptr;
@@ -73,6 +80,9 @@ class SimpleCheckpoint : public Checkpoint {
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
   oid_t max_oid_ = 0;
+
+  // commit id of current checkpoint
+  cid_t start_commit_id = 0;
 };
 
 }  // namespace logging
