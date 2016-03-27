@@ -215,7 +215,7 @@ void RunRead() {
 			ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 	values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-	auto ycsb_pkey_index = user_table->GetIndexWithOid(YCSB_TABLE_PKEY_INDEX_OID);
+	auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
 	planner::IndexScanPlan::IndexScanDesc index_scan_desc(
 			ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -297,7 +297,7 @@ void RunUpdate() {
 			ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 	values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-	auto ycsb_pkey_index = user_table->GetIndexWithOid(YCSB_TABLE_PKEY_INDEX_OID);
+	auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
 	planner::IndexScanPlan::IndexScanDesc index_scan_desc(
 			ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
