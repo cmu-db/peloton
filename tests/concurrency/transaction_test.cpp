@@ -79,7 +79,7 @@ TEST_F(TransactionTests, AbortTest) {
 
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      scheduler.AddInsert(0, 100, 0);
+      //scheduler.AddInsert(0, 100, 0);
       scheduler.AddAbort(0);
       scheduler.AddRead(1, 100);
       scheduler.AddCommit(1);

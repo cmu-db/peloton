@@ -130,11 +130,7 @@ bool UpdateExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformWrite(tile_group_id, physical_tuple_id, location);
-      if(!res){
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
+      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id, location);
 
       executor_context_->num_processed += 1;  // updated one
 

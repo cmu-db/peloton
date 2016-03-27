@@ -77,7 +77,7 @@ class Transaction : public Printable {
   void RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   // record write set
-  void RecordWrite(const oid_t &tile_group_id, const oid_t &tuple_id);
+  void RecordUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   // record insert set
   void RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -87,7 +87,7 @@ class Transaction : public Printable {
 
   void RecordRead(const ItemPointer &);
 
-  void RecordWrite(const ItemPointer &);
+  void RecordUpdate(const ItemPointer &);
 
   void RecordInsert(const ItemPointer &);
 
