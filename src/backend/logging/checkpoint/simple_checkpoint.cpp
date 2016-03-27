@@ -53,9 +53,8 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 int ExtractNumberFromFileName(const char *name);
 
-// bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE
-// *log_file,
-//                                 size_t log_file_size);
+bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
+                                 size_t log_file_size);
 
 bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
                            size_t log_file_size);
@@ -110,12 +109,11 @@ void SimpleCheckpoint::DoCheckpoint() {
     bool failure = false;
 
     // Add txn begin record
-    // TODO include commit id in record
-    // LogRecord *begin_record =
-    //    new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN);
-    // CopySerializeOutput begin_output_buffer;
-    // begin_record->Serialize(begin_output_buffer);
-    // records_.push_back(begin_record);
+    LogRecord *begin_record = new TransactionRecord(
+        LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id);
+    CopySerializeOutput begin_output_buffer;
+    begin_record->Serialize(begin_output_buffer);
+    records_.push_back(begin_record);
 
     for (oid_t database_idx = 0; database_idx < database_count && !failure;
          database_idx++) {
@@ -151,10 +149,9 @@ void SimpleCheckpoint::DoCheckpoint() {
       }
     }
     // if anything other than begin record is added
-    // TODO change to 1
-    if (records_.size() > 0) {
-      LogRecord *commit_record =
-          new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT);
+    if (records_.size() > 1) {
+      LogRecord *commit_record = new TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id);
       CopySerializeOutput commit_output_buffer;
       commit_record->Serialize(commit_output_buffer);
       records_.push_back(commit_record);
@@ -192,37 +189,51 @@ bool SimpleCheckpoint::DoRecovery() {
   checkpoint_file_size_ = GetLogFileSize(checkpoint_file_fd_);
   assert(checkpoint_file_size_ > 0);
   bool should_stop = false;
+  cid_t commit_id = 0;
   while (!should_stop) {
     auto record_type =
         GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
     switch (record_type) {
-      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
         LOG_INFO("Read checkpoint insert entry");
-        InsertTuple();
+        InsertTuple(commit_id);
         break;
-      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      }
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
         should_stop = true;
         break;
-      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        // TODO also check txn begin record
+      }
+      case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
         LOG_INFO("Read checkpoint begin entry");
+        TransactionRecord txn_rec(record_type);
+        if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
+                                        checkpoint_file_size_) == false) {
+          LOG_ERROR("Failed to read checkpoint begin entry");
+          return false;
+        }
+        commit_id = txn_rec.GetTransactionId();
         break;
-      default:
+      }
+      default: {
         LOG_ERROR("Invalid checkpoint entry");
         should_stop = true;
         break;
+      }
     }
   }
 
   // After finishing recovery, set the next oid with maximum oid
   // observed during the recovery
   auto &manager = catalog::Manager::GetInstance();
-  manager.SetNextOid(max_oid_);
+  if (max_oid_ > manager.GetNextOid()) {
+    manager.SetNextOid(max_oid_);
+  }
 
+  concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
   return true;
 }
 
-void SimpleCheckpoint::InsertTuple() {
+void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
 
   // Check for torn log write
@@ -262,7 +273,7 @@ void SimpleCheckpoint::InsertTuple() {
 
   // Do the insert!
   auto inserted_tuple_slot =
-      tile_group->InsertTupleFromCheckpoint(tuple_slot, tuple);
+      tile_group->InsertTupleFromCheckpoint(tuple_slot, tuple, commit_id);
 
   if (inserted_tuple_slot == INVALID_OID) {
     // TODO: We need to abort on failure!
@@ -360,8 +371,7 @@ void SimpleCheckpoint::CreateFile() {
 // Only called when checkpoint has actual contents
 void SimpleCheckpoint::Persist() {
   assert(checkpoint_file_);
-  // TODO change to 2
-  assert(records_.size() > 1);
+  assert(records_.size() > 2);
   assert(checkpoint_file_fd_ != INVALID_FILE_DESCRIPTOR);
 
   LOG_INFO("Persisting %lu checkpoint entries", records_.size());
