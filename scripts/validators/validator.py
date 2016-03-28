@@ -67,7 +67,8 @@ def validate_file(file_path):
 		for validator_pattern in VALIDATOR_PATTERNS:
 			# Check for patterns one at a time
 			if re.search(validator_pattern, line):
-				print(line)
+				LOG.info("Invalid pattern -- " + validator_pattern + " -- found in : " + file_path)
+				LOG.info("Line :: " + line)				
 				return False
 			
 	file.close()
@@ -83,7 +84,6 @@ def validate_dir(dir_path):
 			if file_path.endswith(".h") or file_path.endswith(".cpp"):
 				status = validate_file(file_path)
 				if status == False:
-					LOG.info("Invalid pattern found in : " + file_path)
 					return False
 
 			#END IF
@@ -106,7 +106,8 @@ if __name__ == '__main__':
 
 		status = validate_dir(dir)
 		if status == False:
+			LOG.info("Validation not successful")
 			sys.exit(EXIT_FAILURE)
 
-	LOG.info("Finished successful validation")
+	LOG.info("Validation successful")
 	sys.exit(EXIT_SUCCESS)
