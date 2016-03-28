@@ -99,7 +99,6 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_BPCHAR2: {
       ArrayType *arr = DatumGetArrayTypeP(datum);
       int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      Oid arr_type = ARR_ELEMTYPE(arr);
       Datum *elems;
 
       // The element type should be POSTGRES_VALUE_TYPE_BPCHAR
@@ -118,7 +117,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       for (int it = 0; it < nelems; ++it) {
         char *pText = TextDatumGetCString(elems[it]);
         std::string str(pText);
-        std::cout << pText << arr_type << str;
+        LOG_TRACE("%s %lu", pText, ARR_ELEMTYPE(arr));
         VarlenPool *data_pool = nullptr;
         LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
         Value val = ValueFactory::GetStringValue(str, data_pool);
@@ -152,8 +151,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
       ArrayType *arr = DatumGetArrayTypeP(datum);
       int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      Oid arr_type = ARR_ELEMTYPE(arr);
-      Datum *elems;
+      Datum *elems = nullptr;
       int i;
       if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
           ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
@@ -170,7 +168,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       for (i = 0; i < nelems; ++i) {
         char *pText = TextDatumGetCString(elems[i]);
         std::string str(pText);
-        std::cout << pText << arr_type << str;
+        LOG_TRACE("%s %lu", pText, ARR_ELEMTYPE(arr));
         VarlenPool *data_pool = nullptr;
         LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
         Value val = ValueFactory::GetStringValue(str, data_pool);
