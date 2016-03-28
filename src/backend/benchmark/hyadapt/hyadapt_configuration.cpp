@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
-
 #include <iomanip>
 #include <algorithm>
+
+#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace benchmark {
@@ -62,29 +63,21 @@ void GenerateSequence(oid_t column_count) {
 
 static void ValidateOperator(const configuration &state) {
   if (state.operator_type < 1 || state.operator_type > 4) {
-    std::cout << "Invalid operator type :: " << state.operator_type << "\n";
+	LOG_ERROR("Invalid operator type :: %d \n", state.operator_type);
     exit(EXIT_FAILURE);
   } else {
     switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "DIRECT" << std::endl;
+    	LOG_INFO("%20s : DIRECT \n", "operator_type ");
         break;
       case OPERATOR_TYPE_AGGREGATE:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "AGGREGATE" << std::endl;
+      	LOG_INFO("%20s : AGGREGATE \n", "operator_type ");
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "ARITHMETIC" << std::endl;
+        LOG_INFO("%20s : ARITHMETIC \n", "operator_type ");
         break;
       case OPERATOR_TYPE_JOIN:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "JOIN" << std::endl;
+        LOG_INFO("%20s : JOIN \n", "operator_type ");
         break;
       default:
         break;
@@ -94,7 +87,7 @@ static void ValidateOperator(const configuration &state) {
 
 static void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-    std::cout << "Invalid scalefactor :: " << state.scale_factor << std::endl;
+	LOG_ERROR("Invalid scalefactor :: %d \n", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
@@ -104,24 +97,18 @@ static void ValidateScaleFactor(const configuration &state) {
 
 static void ValidateLayout(const configuration &state) {
   if (state.layout_mode < 0 || state.layout_mode > 2) {
-    std::cout << "Invalid layout :: " << state.layout_mode << "\n";
+	LOG_ERROR("Invalid layout :: %d \n", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
       case LAYOUT_ROW:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "ROW" << std::endl;
+      	LOG_INFO("%20s : ROW \n", "layout ");
         break;
       case LAYOUT_COLUMN:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "COLUMN" << std::endl;
+        LOG_INFO("%20s : COLUMN \n", "layout ");
         break;
       case LAYOUT_HYBRID:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "HYBRID" << std::endl;
+        LOG_INFO("%20s : HYBRID \n", "layout ");
         break;
       default:
         break;
@@ -131,12 +118,11 @@ static void ValidateLayout(const configuration &state) {
 
 static void ValidateProjectivity(const configuration &state) {
   if (state.projectivity < 0 || state.projectivity > 1) {
-    std::cout << "Invalid projectivity :: " << state.projectivity << std::endl;
+	LOG_ERROR("Invalid projectivity :: %lf \n", state.projectivity);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "projectivity "
-            << " : " << state.projectivity << std::endl;
+  LOG_INFO("%20s : %lf \n", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {

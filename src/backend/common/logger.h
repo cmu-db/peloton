@@ -43,8 +43,10 @@ namespace peloton {
 #define LOG_TIME_MILLISECONDS 1
 
 // Compile time debugging level option
-// Defaults to LOG_LEVEL_INFO
+// Defaults to LOG_LEVEL_INFO if not already defined
+#ifndef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_INFO
+#endif
 
 // Disable logging if requested
 #ifdef NDEBUG
