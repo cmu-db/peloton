@@ -15,9 +15,9 @@ import sys
 ## CONFIGURATION
 ## ==============================================
 
-#absolute path to peloton directory is calculated from current directory
-#directory structure: peloton/scripts/formatting/<this_file>
-#PELOTON_DIR needs to be redefined if the directory structure is changed
+# NOTE: absolute path to peloton directory is calculated from current directory
+# directory structure: peloton/scripts/formatting/<this_file>
+# PELOTON_DIR needs to be redefined if the directory structure is changed
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
 
@@ -31,7 +31,7 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
-CLANG_FORMAT = "clang-format-3.3"
+CLANG_FORMAT = "clang-format-3.6"
 
 ## ==============================================
 ## 			HEADER CONFIGURATION
@@ -40,13 +40,13 @@ CLANG_FORMAT = "clang-format-3.3"
 #header framework, dynamic information will be added inside function
 header_comment_line_1 = "//===----------------------------------------------------------------------===//\n"
 header_comment_line_1 += "//\n"
-header_comment_line_1 += "//                         PelotonDB\n"
+header_comment_line_1 += "//                         Peloton\n"
 header_comment_line_2  = "//\n"
 header_comment_line_3  = "// "
 header_comment_line_4  = "//\n"
 header_comment_line_5  = "// Identification: "
 header_comment_line_6  = "//\n"
-header_comment_line_7  = "// Copyright (c) 2015, Carnegie Mellon University Database Group\n"
+header_comment_line_7  = "// Copyright (c) 2015-16, Carnegie Mellon University Database Group\n"
 header_comment_line_8  = "//\n"
 header_comment_line_9  = "//===----------------------------------------------------------------------===//\n\n\n"
 
@@ -169,7 +169,27 @@ if __name__ == '__main__':
 	elif args.dir_name:
 		LOG.info("Scanning directory " + ''.join(args.dir_name))
 		format_dir(args.dir_name, args.add_header, args.strip_header, args.clang_format_code)
-	# BY DEFAULT, WE SCAN THE DEFAULT DIRS
+	# BY DEFAULT, WE SCAN THE DEFAULT DIRS AND FIX THEM
 	else:
+		LOG.info("Default scan")		
 		for dir in DEFAULT_DIRS:
+			LOG.info("Scanning : " + dir + "\n\n")
+
+			LOG.info("Stripping headers : " + dir)			
+			args.add_header = False
+			args.strip_header = True
+			args.clang_format_code = False
 			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
+			
+			LOG.info("Adding headers : " + dir)			
+			args.add_header = True
+			args.strip_header = False
+			args.clang_format_code = False
+			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
+
+			LOG.info("Formatting code : " + dir)			
+			args.add_header = False
+			args.strip_header = False
+			args.clang_format_code = True
+			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
+

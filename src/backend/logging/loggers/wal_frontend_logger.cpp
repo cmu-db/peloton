@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * wal_frontend_logger.cpp
@@ -9,7 +45,6 @@
  *
  *-------------------------------------------------------------------------
  */
-
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -299,8 +334,10 @@ void WriteAheadFrontendLogger::MoveCommittedTuplesToRecoveryTxn(
  * @param destination
  * @param source
  */
-void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination __attribute__((unused)),
-                                     concurrency::Transaction *source __attribute__((unused))) {
+void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination
+                                          __attribute__((unused)),
+                                          concurrency::Transaction *source
+                                          __attribute__((unused))) {
   // // This is the local transaction
   // auto inserted_tuples = source->GetInsertedTuples();
   // // Record the inserts in recovery txn
@@ -321,7 +358,7 @@ void WriteAheadFrontendLogger::MoveTuples(concurrency::Transaction *destination 
   // }
 
   // Clear inserted/deleted tuples from txn, just in case
-  //source->ResetState();
+  // source->ResetState();
 }
 
 /**
@@ -353,10 +390,11 @@ void WriteAheadFrontendLogger::AbortTuplesFromRecoveryTable() {
  * @brief Abort tuples inside txn
  * @param txn
  */
-void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn __attribute__((unused))) {
+void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn
+                                           __attribute__((unused))) {
   LOG_INFO("Abort txd id %d object in table", (int)txn->GetTransactionId());
 
-  //auto &manager = catalog::Manager::GetInstance();
+  // auto &manager = catalog::Manager::GetInstance();
 
   // Record the aborted inserts in recovery txn
   // auto inserted_tuples = txn->GetInsertedTuples();
@@ -376,12 +414,13 @@ void WriteAheadFrontendLogger::AbortTuples(concurrency::Transaction *txn __attri
   //   auto tile_group = manager.GetTileGroup(tile_group_id);
 
   //   // for (auto tuple_slot : entry.second) {
-  //   //   tile_group.get()->AbortDeletedTuple(tuple_slot, txn->GetTransactionId());
+  //   //   tile_group.get()->AbortDeletedTuple(tuple_slot,
+  //   txn->GetTransactionId());
   //   // }
   // }
 
   // Clear inserted/deleted tuples from txn, just in case
-  //txn->ResetState();
+  // txn->ResetState();
 }
 
 /**
@@ -403,7 +442,8 @@ void WriteAheadFrontendLogger::AbortActiveTransactions() {
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::InsertTuple(concurrency::Transaction *recovery_txn) {
+void WriteAheadFrontendLogger::InsertTuple(
+    concurrency::Transaction *recovery_txn) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
 
   // Check for torn log write
@@ -466,17 +506,20 @@ void WriteAheadFrontendLogger::InsertTuple(concurrency::Transaction *recovery_tx
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_txn __attribute__((unused))) {
+void WriteAheadFrontendLogger::DeleteTuple(
+    concurrency::Transaction *recovery_txn __attribute__((unused))) {
   // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_DELETE);
 
   // // Check for torn log write
-  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
+  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
+  // {
   //   return;
   // }
 
   // auto txn_id = tuple_record.GetTransactionId();
   // if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-  //   LOG_TRACE("Delete txd id %d not found in recovery txn table", (int)txn_id);
+  //   LOG_TRACE("Delete txd id %d not found in recovery txn table",
+  //   (int)txn_id);
   //   return;
   // }
 
@@ -500,17 +543,20 @@ void WriteAheadFrontendLogger::DeleteTuple(concurrency::Transaction *recovery_tx
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void WriteAheadFrontendLogger::UpdateTuple(concurrency::Transaction *recovery_txn __attribute__((unused))) {
+void WriteAheadFrontendLogger::UpdateTuple(
+    concurrency::Transaction *recovery_txn __attribute__((unused))) {
   // TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_UPDATE);
 
   // // Check for torn log write
-  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false) {
+  // if (ReadTupleRecordHeader(tuple_record, log_file, log_file_size) == false)
+  // {
   //   return;
   // }
 
   // auto txn_id = tuple_record.GetTransactionId();
   // if (recovery_txn_table.find(txn_id) == recovery_txn_table.end()) {
-  //   LOG_TRACE("Update txd id %d not found in recovery txn table", (int)txn_id);
+  //   LOG_TRACE("Update txd id %d not found in recovery txn table",
+  //   (int)txn_id);
   //   return;
   // }
 
@@ -518,7 +564,8 @@ void WriteAheadFrontendLogger::UpdateTuple(concurrency::Transaction *recovery_tx
 
   // auto table = GetTable(tuple_record);
 
-  // auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file,
+  // auto tuple = ReadTupleRecordBody(table->GetSchema(), recovery_pool,
+  // log_file,
   //                                  log_file_size);
 
   // // Check for torn log write

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // printable.h
 //
 // Identification: src/backend/common/printable.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,7 +29,6 @@ class Printable {
 
   // Get a string representation for debugging
   friend std::ostream &operator<<(std::ostream &os, const Printable &printable);
-
 };
 
 }  // namespace peloton

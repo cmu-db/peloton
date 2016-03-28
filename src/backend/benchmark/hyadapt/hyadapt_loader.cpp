@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// loader.cpp
+// hyadapt_loader.cpp
 //
-// Identification: benchmark/hyadapt/loader.cpp
+// Identification: src/backend/benchmark/hyadapt/hyadapt_loader.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

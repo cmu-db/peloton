@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expression_test.cpp
 //
 // Identification: tests/expression/expression_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -426,7 +426,6 @@ TEST_F(ExpressionTest, SimpleCase) {
   expression::OperatorCaseWhenExpression *case_when_clause =
       new expression::OperatorCaseWhenExpression(
           VALUE_TYPE_INTEGER, case_when_cond, const_val_exp_2);
-
 
   std::vector<expression::AbstractExpression *> clauses;
   clauses.push_back(case_when_clause);

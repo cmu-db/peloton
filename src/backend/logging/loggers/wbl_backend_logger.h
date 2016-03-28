@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_backend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_backend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_backend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_backend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_backend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_backend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * wbl_backend_logger.h
@@ -24,7 +60,8 @@ namespace logging {
 class WriteBehindBackendLogger : public BackendLogger {
  public:
   WriteBehindBackendLogger(const WriteBehindBackendLogger &) = delete;
-  WriteBehindBackendLogger &operator=(const WriteBehindBackendLogger &) = delete;
+  WriteBehindBackendLogger &operator=(const WriteBehindBackendLogger &) =
+      delete;
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 

@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// frontend_logger.h
+//
+// Identification: src/backend/logging/frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// frontend_logger.h
+//
+// Identification: src/backend/logging/frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// frontend_logger.h
+//
+// Identification: src/backend/logging/frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * frontendlogger.h
@@ -55,9 +91,7 @@ class FrontendLogger : public Logger {
   // Restore database
   virtual void DoRecovery(void) = 0;
 
-  size_t GetFsyncCount() const {
-    return fsync_count;
-  }
+  size_t GetFsyncCount() const { return fsync_count; }
 
  protected:
   // Associated backend loggers

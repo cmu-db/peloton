@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // order_by_test.cpp
 //
 // Identification: tests/executor/order_by_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -106,8 +106,7 @@ TEST_F(OrderByTests, IntAscTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -156,8 +155,7 @@ TEST_F(OrderByTests, IntDescTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -206,8 +204,7 @@ TEST_F(OrderByTests, StringDescTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -308,8 +305,7 @@ TEST_F(OrderByTests, StringDescIntAscTest) {
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 

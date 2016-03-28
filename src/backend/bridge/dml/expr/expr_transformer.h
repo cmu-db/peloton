@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expr_transformer.h
 //
 // Identification: src/backend/bridge/dml/expr/expr_transformer.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -58,7 +58,8 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformRelabelType(
       const ExprState *es);
   static expression::AbstractExpression *TransformRelabelType(
-  		const Expr *es); // added by Michael for IN: where TITLE in (). Here TITLE is varchar(20)
+      const Expr *es);  // added by Michael for IN: where TITLE in (). Here
+                        // TITLE is varchar(20)
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
 

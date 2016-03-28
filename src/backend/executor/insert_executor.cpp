@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // insert_executor.cpp
 //
 // Identification: src/backend/executor/insert_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,7 +63,8 @@ bool InsertExecutor::DExecute() {
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table);
 
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
@@ -92,10 +93,10 @@ bool InsertExecutor::DExecute() {
         tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
                         executor_pool);
 
-      peloton::ItemPointer location =
-          target_table->InsertTuple(tuple.get());
+      peloton::ItemPointer location = target_table->InsertTuple(tuple.get());
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(
+            peloton::Result::RESULT_FAILURE);
         return false;
       }
       transaction_manager.PerformInsert(location.block, location.offset);

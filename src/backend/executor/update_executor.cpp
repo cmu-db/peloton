@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // update_executor.cpp
 //
 // Identification: src/backend/executor/update_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -79,7 +79,8 @@ bool UpdateExecutor::DExecute() {
   storage::TileGroup *tile_group = tile->GetTileGroup();
   auto tile_group_id = tile_group->GetTileGroupId();
 
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -89,35 +90,42 @@ bool UpdateExecutor::DExecute() {
 
     if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
-      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      storage::Tuple *new_tuple =
+          new storage::Tuple(target_table_->GetSchema(), true);
       // Make a copy of the original tuple and allocate a new tuple
-      expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                               physical_tuple_id);
+      expression::ContainerTuple<storage::TileGroup> old_tuple(
+          tile_group, physical_tuple_id);
       // Execute the projections
-      project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+      project_info_->Evaluate(new_tuple, &old_tuple, nullptr,
+                              executor_context_);
       tile_group->CopyTuple(new_tuple, physical_tuple_id);
 
       transaction_manager.SetUpdateVisibility(tile_group_id, physical_tuple_id);
       delete new_tuple;
       new_tuple = nullptr;
 
-    } 
-    else if (transaction_manager.IsAccessable(tile_group, physical_tuple_id) == true) {
-      // if the tuple is not owned by any transaction and is visible to current transdaction.
+    } else if (transaction_manager.IsAccessable(tile_group,
+                                                physical_tuple_id) == true) {
+      // if the tuple is not owned by any transaction and is visible to current
+      // transdaction.
 
-      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) ==
+          false) {
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      // if it is the latest version and not locked by other threads, then insert a new version.
-      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      // if it is the latest version and not locked by other threads, then
+      // insert a new version.
+      storage::Tuple *new_tuple =
+          new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
-      expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
-                                                               physical_tuple_id);
+      expression::ContainerTuple<storage::TileGroup> old_tuple(
+          tile_group, physical_tuple_id);
       // Execute the projections
-      project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
+      project_info_->Evaluate(new_tuple, &old_tuple, nullptr,
+                              executor_context_);
 
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(new_tuple);
@@ -130,7 +138,8 @@ bool UpdateExecutor::DExecute() {
         return false;
       }
 
-      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id, location);
+      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id,
+                                        location);
 
       executor_context_->num_processed += 1;  // updated one
 

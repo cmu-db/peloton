@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.cpp
+//
+// Identification: src/backend/logging/log_manager.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.cpp
+//
+// Identification: src/backend/logging/log_manager.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.cpp
+//
+// Identification: src/backend/logging/log_manager.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * logmanager.cpp
@@ -81,7 +117,7 @@ void LogManager::WaitForMode(LoggingStatus logging_status_, bool is_equal) {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
 
     while ((!is_equal && logging_status == logging_status_) ||
-        (is_equal && logging_status != logging_status_)) {
+           (is_equal && logging_status != logging_status_)) {
       logging_status_cv.wait(wait_lock);
     }
   }

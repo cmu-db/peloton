@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// string_functions.h
+// date_expression.h
 //
-// Identification: src/backend/expression/string_functions.h
+// Identification: src/backend/expression/date_expression.h
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

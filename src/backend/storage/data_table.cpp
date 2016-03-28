@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // data_table.cpp
 //
 // Identification: src/backend/storage/data_table.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -89,7 +89,8 @@ DataTable::~DataTable() {
  * Check if the locations contains at least one visible entry to the transaction
  */
 // bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-//                           const concurrency::Transaction *transaction __attribute__((unused))) {
+//                           const concurrency::Transaction *transaction
+//                           __attribute__((unused))) {
 //   auto &manager = catalog::Manager::GetInstance();
 
 //   for (auto loc : locations) {
@@ -102,9 +103,11 @@ DataTable::~DataTable() {
 //     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
 //     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
 //     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
-//     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    
-//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
+//     auto &txn_manager =
+//     concurrency::TransactionManagerFactory::GetInstance();
+
+//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
+//     tuple_end_cid);
 
 //     if (visible) return true;
 //   }
@@ -143,7 +146,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   return true;
 }
 
-ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_constraint) {
+ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
+                                    bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
@@ -248,8 +252,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
- // TODO: this function MUST be rewritten!!! --Yingjun
-bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
+// TODO: this function MUST be rewritten!!! --Yingjun
+bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
+                                ItemPointer location) {
   int index_count = GetIndexCount();
 
   // (A) Check existence for primary/unique indexes
@@ -264,8 +269,8 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        //auto locations = index->ScanKey(key.get());
-        //auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        // auto locations = index->ScanKey(key.get());
+        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
         // if (exist_visible) {
         //   LOG_WARN("A visible index entry exists.");
         //   return false;
@@ -321,7 +326,8 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
 //   // Delete slot in underlying tile group
 //   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
 //   if (status == false) {
-//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
+//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu
+//     ",
 //              tile_group_id, transaction_id);
 //     return false;
 //   }
@@ -756,12 +762,11 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   *new_header = *header;
 }
 
-storage::TileGroup *DataTable::TransformTileGroup(const oid_t &tile_group_offset,
-                                                  const double &theta) {
+storage::TileGroup *DataTable::TransformTileGroup(
+    const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu ",
-              tile_group_offset);
+    LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
     return nullptr;
   }
 
