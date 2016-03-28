@@ -103,9 +103,7 @@ enum JOIN_TEST_TYPE {
 TEST_F(JoinTests, BasicTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
-    // Execute the join test
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
   }
 }
@@ -113,8 +111,7 @@ TEST_F(JoinTests, BasicTest) {
 TEST_F(JoinTests, EmptyTablesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
   }
 }
@@ -122,11 +119,10 @@ TEST_F(JoinTests, EmptyTablesTest) {
 TEST_F(JoinTests, JoinTypesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
+      LOG_INFO("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, BASIC_TEST);
     }
@@ -136,11 +132,10 @@ TEST_F(JoinTests, JoinTypesTest) {
 TEST_F(JoinTests, ComplicatedTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
+      LOG_INFO("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, COMPLICATED_TEST);
     }
@@ -150,11 +145,10 @@ TEST_F(JoinTests, ComplicatedTest) {
 TEST_F(JoinTests, LeftTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
+      LOG_INFO("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, LEFT_TABLE_EMPTY);
     }
@@ -164,11 +158,10 @@ TEST_F(JoinTests, LeftTableEmptyTest) {
 TEST_F(JoinTests, RightTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-              << "\n";
+    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      std::cout << "JOIN TYPE :: " << join_type << "\n";
+      LOG_INFO("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, RIGHT_TABLE_EMPTY);
     }
@@ -181,18 +174,14 @@ TEST_F(JoinTests, JoinPredicateTest) {
   // Go over all join test types
   for (oid_t join_test_type = 0; join_test_type < join_test_types;
        join_test_type++) {
-    std::cout << "JOIN TEST_F ------------------------ :: "
-              << std::to_string(join_test_type) << "\n";
+    LOG_INFO("JOIN TEST_F ------------------------ :: %lu", join_test_type);
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {
-      std::cout << "JOIN ALGORITHM :: " << PlanNodeTypeToString(join_algorithm)
-                << "\n";
-
+      LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
       // Go over all join types
       for (auto join_type : join_types) {
-        std::cout << "JOIN TYPE :: " << join_type << "\n";
-
+        LOG_INFO("JOIN TYPE :: %d", join_type);
         // Execute the join test
         ExecuteJoinTest(join_algorithm, join_type, join_test_type);
       }
@@ -241,9 +230,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
   txn_manager.CommitTransaction();
 
-  // std::cout << (*left_table);
-
-  // std::cout << (*right_table);
+  LOG_TRACE("%s", left_table->GetInfo().c_str());
+  LOG_TRACE("%s", right_table->GetInfo().c_str());
 
   if (join_test_type == COMPLICATED_TEST) {
     // Modify some values in left and right tables for complicated test
@@ -404,7 +392,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          // std::cout << (*result_logical_tile);
+          LOG_TRACE("%s", result_logical_tile->GetInfo().c_str());
         }
       }
 
@@ -438,7 +426,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          // std::cout << (*result_logical_tile);
+          LOG_TRACE("%s", result_logical_tile->GetInfo().c_str());
         }
       }
 
@@ -484,7 +472,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          // std::cout << (*result_logical_tile);
+          LOG_TRACE("%s", result_logical_tile->GetInfo().c_str());
         }
       }
 

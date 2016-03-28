@@ -537,7 +537,6 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   /* FIXME This should pass */
   //  EXPECT_GE(3, result_tile->GetTupleCount());
-  //  std::cout << *result_tile;
 }
 
 TEST_F(AggregateTests, HashCountDistinctGroupByTest) {

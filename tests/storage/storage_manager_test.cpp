@@ -36,7 +36,7 @@ TEST_F(StorageManagerTests, BasicTest) {
   size_t rounds = 100;
 
   for (auto backend_type : backend_types) {
-    std::cout << "Backend :: " << backend_type << "\n";
+    LOG_INFO("Backend :: %d", backend_type);
 
     for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
       // Allocate

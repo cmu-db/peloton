@@ -365,7 +365,7 @@ TEST_F(TransactionTests, TransactionTest) {
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
 
-    std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
+    LOG_INFO("next Commit Id :: %lu", txn_manager.GetNextCommitId());
   }
 }
 
