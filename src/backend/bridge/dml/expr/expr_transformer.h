@@ -39,8 +39,6 @@ class ExprTransformer {
   static std::vector<std::unique_ptr<const expression::AbstractExpression>>
   TransformExprList(const ExprState *expr_state);
 
-  static bool CleanExprTree(expression::AbstractExpression *root);
-
  private:
   /*
    * This set of TransformYYY methods should transform an PG ExprState tree

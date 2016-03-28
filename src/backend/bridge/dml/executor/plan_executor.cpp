@@ -67,12 +67,12 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  auto executor_context = BuildExecutorContext(param_list, txn);
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      BuildExecutorContext(param_list, txn));
 
   // Build the executor tree
-
-  executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, executor_context);
+  std::unique_ptr<executor::AbstractExecutor> executor_tree(
+      BuildExecutorTree(nullptr, plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -144,15 +144,9 @@ cleanup:
         p_status.m_result = txn_manager.AbortTransaction();
     }
   }
+
   // clean up executor tree
-  CleanExecutorTree(executor_tree);
-
-  // Clean executor context
-  delete executor_context;
-
-  // p_status.m_result = txn->GetResult();
-
-  // txn_manager.EndTransaction();
+  CleanExecutorTree(executor_tree.get());
 
   return p_status;
 }
@@ -300,9 +294,6 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   for (auto child : children) {
     CleanExecutorTree(child);
   }
-
-  // Cleanup self
-  delete root;
 }
 
 }  // namespace bridge
