@@ -23,9 +23,8 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-std::vector<ConcurrencyType> TEST_TYPES = {
-    // CONCURRENCY_TYPE_OCC
-    CONCURRENCY_TYPE_2PL};
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
+                                                  CONCURRENCY_TYPE_2PL};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -45,323 +44,10 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
   }
 }
 
-void DirtyWriteTest(ConcurrencyType test_type) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(test_type);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    // T1 updates (0, ?) to (0, 1)
-    // T2 updates (0, ?) to (0, 2)
-    // T1 commits
-    // T2 commits
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddUpdate(1, 0, 2);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-    auto &schedules = scheduler.schedules;
-
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
-    schedules.clear();
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddUpdate(1, 0, 2);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-    auto &schedules = scheduler.schedules;
-
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    // T0 delete (0, ?)
-    // T1 update (0, ?) to (0, 3)
-    // T0 commit
-    // T1 commit
-    scheduler.AddDelete(0, 0);
-    scheduler.AddUpdate(1, 0, 3);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-    auto &schedules = scheduler.schedules;
-
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
-    schedules.clear();
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    // T0 delete (1, ?)
-    // T1 delete (1, ?)
-    // T0 commit
-    // T1 commit
-    scheduler.AddDelete(0, 1);
-    scheduler.AddDelete(1, 1);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-    auto &schedules = scheduler.schedules;
-
-    // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
-    // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
-    schedules.clear();
-  }
-}
-
-void DirtyReadTest(ConcurrencyType TEST_TYPE) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-
-    // T1 updates (0, ?) to (0, 1)
-    // T2 reads (0, ?)
-    // T1 commit
-    // T2 commit
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-
-    // T1 updates (0, ?) to (0, 1)
-    // T2 reads (0, ?)
-    // T2 commit
-    // T1 commit
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-
-    // T0 delete (0, ?)
-    // T1 read (0, ?)
-    // T0 commit
-    // T1 commit
-    scheduler.AddDelete(0, 0);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_ABORTED == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-}
-
-void FuzzyReadTest(ConcurrencyType TEST_TYPE) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  {
-    // T0 read 0
-    // T1 update (0, 0) to (0, 1)
-    // T1 commit
-    // T0 commit
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-
-    LOG_TRACE("%lu", scheduler.schedules.size());
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    // T0 read 0
-    // T1 update (0, 0) to (0, 1)
-    // T0 commit
-    // T1 commit
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    // T0 read 0
-    // T1 delete 0
-    // T0 commit
-    // T1 commit
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddDelete(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-}
-
-void PhantomTest(ConcurrencyType TEST_TYPE) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddScan(0, 0);
-    // scheduler.AddInsert(1, 5, 0);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddScan(0, 0);
-    scheduler.AddDelete(1, 4);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-    EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
-  }
-}
-
-void WriteSkewTest(ConcurrencyType TEST_TYPE) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(TEST_TYPE);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(0, 1, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddUpdate(1, 1, 2);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-
-    // Can't all success
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(0, 1, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddUpdate(1, 1, 2);
-    scheduler.AddCommit(1);
-
-    scheduler.Run();
-
-    // First txn should success
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                RESULT_ABORTED == scheduler.schedules[1].txn_result);
-  }
-}
-
-void ReadSkewTest(ConcurrencyType test_type) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance(test_type);
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddUpdate(1, 1, 1);
-    scheduler.AddCommit(1);
-    scheduler.AddRead(0, 1);
-    scheduler.AddCommit(0);
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-}
-
 TEST_F(TransactionTests, TransactionTest) {
   for (auto test_type : TEST_TYPES) {
-    auto &txn_manager =
-        concurrency::TransactionManagerFactory::GetInstance(test_type);
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
 
@@ -369,18 +55,119 @@ TEST_F(TransactionTests, TransactionTest) {
   }
 }
 
+TEST_F(TransactionTests, SingleTransactionTest) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    // read, read, read, read, update, read, read not exist
+    // another txn read
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(100);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[3]);
+      EXPECT_EQ(1, scheduler.schedules[0].results[4]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[5]);
+      EXPECT_EQ(1, scheduler.schedules[1].results[0]);
+    }
+
+    // update, update, update, update, read
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Update(0, 2);
+      scheduler.Txn(0).Update(0, 3);
+      scheduler.Txn(0).Update(0, 4);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(4, scheduler.schedules[0].results[0]);
+    }
+
+    // delete not exist, delete exist, read deleted, update deleted,
+    // read deleted, insert back, update inserted, read newly updated
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+
+      scheduler.Txn(0).Delete(100);
+      scheduler.Txn(0).Delete(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Insert(0, 2);
+      scheduler.Txn(0).Update(0, 3);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(3, scheduler.schedules[0].results[2]);
+    }
+
+    // insert, delete inserted, read deleted, insert again, delete again
+    // read deleted, insert again, read inserted, update inserted, read updated
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+
+      scheduler.Txn(0).Insert(1000, 0);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 1);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 2);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Update(1000, 3);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(2, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(3, scheduler.schedules[0].results[3]);
+    }
+  }
+}
+
 TEST_F(TransactionTests, AbortTest) {
   for (auto test_type : TEST_TYPES) {
-    auto &txn_manager =
-        concurrency::TransactionManagerFactory::GetInstance(test_type);
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
         TransactionTestsUtil::CreateTable());
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      scheduler.AddUpdate(0, 0, 100);
-      scheduler.AddAbort(0);
-      scheduler.AddRead(1, 0);
-      scheduler.AddCommit(1);
+      scheduler.Txn(0).Update(0, 100);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
 
       scheduler.Run();
 
@@ -391,27 +178,16 @@ TEST_F(TransactionTests, AbortTest) {
 
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      // scheduler.AddInsert(0, 100, 0);
-      scheduler.AddAbort(0);
-      scheduler.AddRead(1, 100);
-      scheduler.AddCommit(1);
+      scheduler.Txn(0).Insert(100, 0);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(100);
+      scheduler.Txn(1).Commit();
 
       scheduler.Run();
       EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
       EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(-1, scheduler.schedules[1].results[0]);
     }
-  }
-}
-
-TEST_F(TransactionTests, SerializableTest) {
-  for (auto test_type : TEST_TYPES) {
-    DirtyWriteTest(test_type);
-    DirtyReadTest(test_type);
-    FuzzyReadTest(test_type);
-    WriteSkewTest(test_type);
-    ReadSkewTest(test_type);
-    //  PhantomTes();
   }
 }
 

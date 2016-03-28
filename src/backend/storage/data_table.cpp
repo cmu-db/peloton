@@ -321,7 +321,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
 //   auto tile_group = GetTileGroupById(tile_group_id);
 //   txn_id_t transaction_id = transaction->GetTransactionId();
-//   cid_t last_cid = transaction->GetStartCommitId();
+//   cid_t last_cid = transaction->GetBeginCommitId();
 
 //   // Delete slot in underlying tile group
 //   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);

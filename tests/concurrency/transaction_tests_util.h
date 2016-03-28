@@ -60,8 +60,11 @@ enum txn_op_t {
   TXN_OP_DELETE,
   TXN_OP_SCAN,
   TXN_OP_ABORT,
-  TXN_OP_COMMIT
+  TXN_OP_COMMIT,
+  TXN_OP_READ_STORE
 };
+
+#define TXN_STORED_VALUE      -10000
 
 class TransactionTestsUtil {
  public:
@@ -104,7 +107,8 @@ struct TransactionSchedule {
   Result txn_result;
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
-  TransactionSchedule() : txn_result(RESULT_FAILURE) {}
+  int stored_value;
+  TransactionSchedule() : txn_result(RESULT_FAILURE), stored_value(0) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -145,6 +149,11 @@ class TransactionThread {
     txn_op_t op = schedule->operations[cur_seq].op;
     int id = schedule->operations[cur_seq].id;
     int value = schedule->operations[cur_seq].value;
+
+    if (id == TXN_STORED_VALUE)
+      id = schedule->stored_value;
+    if (value == TXN_STORED_VALUE)
+      value = schedule->stored_value;
 
     if (cur_seq == 0) txn = txn_manager->BeginTransaction();
     if (schedule->txn_result == RESULT_ABORTED) {
@@ -201,18 +210,21 @@ class TransactionThread {
         txn = NULL;
         break;
       }
+      case TXN_OP_READ_STORE: {
+        int result;
+        execute_result =
+            TransactionTestsUtil::ExecuteRead(txn, table, id, result);
+        schedule->results.push_back(result);
+        schedule->stored_value = result + value;
+        break;
+      }
     }
 
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
-      if (execute_result == true) {
-        LOG_TRACE("ABORT NOW, Executor returns %s",
-                  execute_result ? "true" : "false");
-      } else {
-        LOG_TRACE("ABORT NOW, Executor returns %s",
-                  execute_result ? "true" : "false");
-      }
+      LOG_TRACE("ABORT NOW");
+      if (execute_result == false) LOG_TRACE("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }
@@ -253,37 +265,47 @@ class TransactionScheduler {
     }
   }
 
-  void AddInsert(int txn_id, int id, int value) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_INSERT, id, value);
-    sequence[time++] = txn_id;
-  }
-  void AddRead(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_READ, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddDelete(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddUpdate(int txn_id, int id, int value) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value);
-    sequence[time++] = txn_id;
-  }
-  void AddScan(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddAbort(int txn_id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_ABORT, 0, 0);
-    sequence[time++] = txn_id;
+  TransactionScheduler &Txn(int txn_id) {
+    assert(txn_id < (int)schedules.size());
+    cur_txn_id = txn_id;
+    return *this;
   }
 
-  void AddCommit(int txn_id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
-    sequence[time++] = txn_id;
+  void Insert(int id, int value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_INSERT, id, value);
+    sequence[time++] = cur_txn_id;
   }
-
-  void clear() { schedules.clear(); }
+  void Read(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Delete(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Update(int id, int value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value);
+    sequence[time++] = cur_txn_id;
+  }
+  void Scan(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Abort() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_ABORT, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Commit() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  // ReadStore will store the (result of read + modify) to the schedule, the 
+  // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
+  // to a schedule. See usage in isolation_level_test SIAnomalyTest.
+  void ReadStore(int id, int modify) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id, modify);
+    sequence[time++] = cur_txn_id;
+  }
 
   concurrency::TransactionManager *txn_manager;
   storage::DataTable *table;
@@ -291,6 +313,7 @@ class TransactionScheduler {
   std::vector<TransactionSchedule> schedules;
   std::vector<TransactionThread> tthreads;
   std::map<int, int> sequence;
+  int cur_txn_id;
 };
 }
 }
