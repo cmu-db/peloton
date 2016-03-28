@@ -55,6 +55,33 @@ TEST_F(TransactionTests, TransactionTest) {
   }
 }
 
+TEST_F(TransactionTests, SingleTransactionTest) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    // read, read, read, read
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[3]);
+    }
+   
+  }
+}
+
 TEST_F(TransactionTests, AbortTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
@@ -77,9 +104,9 @@ TEST_F(TransactionTests, AbortTest) {
 
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      // scheduler.AddInsert(0, 100, 0);
+      scheduler.Txn(0).Insert(100, 0);
       scheduler.Txn(0).Abort();
-      scheduler.Txn(1).Read(1);
+      scheduler.Txn(1).Read(100);
       scheduler.Txn(1).Commit();
 
       scheduler.Run();
