@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// compa.Ison_expression.h
+// comparison_expression.h
 //
-// Identification: src/backend/expression/compa.Ison_expression.h
+// Identification: src/backend/expression/comparison_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

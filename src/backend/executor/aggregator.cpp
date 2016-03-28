@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregator.cpp
 //
 // Identification: src/backend/executor/aggregator.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -137,7 +137,8 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
     LOG_ERROR("Failed to insert tuple ");
     return false;
   } else {
-    concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(location.block, location.offset);
+    concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(
+        location.block, location.offset);
   }
 
   return true;

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // storage_manager_test.cpp
 //
-// Identification: tests/common/storage_manager_test.cpp
+// Identification: tests/storage/storage_manager_test.cpp
 //
-// Copyright (c) 201CACHE_SIZE, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

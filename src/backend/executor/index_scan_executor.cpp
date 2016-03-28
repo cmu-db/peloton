@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index_scan_executor.cpp
 //
 // Identification: src/backend/executor/index_scan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -136,14 +136,14 @@ bool IndexScanExecutor::ExecIndexLookup() {
    * in this case, the params is the results of the outer plan
    * We can add more cases in future
    */
-  //TODO: we probably need to add more for other cases in future
+  // TODO: we probably need to add more for other cases in future
   if (executor_context_->GetParamsExec() == 1) {
-	  values_.clear();
-	  std::vector<Value> vecValue = executor_context_->GetParams();
+    values_.clear();
+    std::vector<Value> vecValue = executor_context_->GetParams();
 
-	  for (auto val : vecValue) {
-	        values_.push_back(val);
-	  }
+    for (auto val : vecValue) {
+      values_.push_back(val);
+    }
   }
 
   std::vector<ItemPointer> tuple_locations;
@@ -159,8 +159,9 @@ bool IndexScanExecutor::ExecIndexLookup() {
 
   if (tuple_locations.size() == 0) return false;
 
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
-  
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location : tuple_locations) {
@@ -175,14 +176,17 @@ bool IndexScanExecutor::ExecIndexLookup() {
       cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
       cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
       // if the tuple is visible.
-      if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+      if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
+                                        tuple_end_cid)) {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
           transaction_manager.PerformRead(tile_group_id, tuple_id);
         } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_id);
-          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                               tuple_id);
+          auto eval =
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tile_group_id].push_back(tuple_id);
             transaction_manager.PerformRead(tile_group_id, tuple_id);
@@ -214,7 +218,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
     if (column_ids_.size() != 0) {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
-    
+
     // Print tile group visibility
     // tile_group_header->PrintVisibility(txn_id, commit_id);
     result_.push_back(logical_tile.release());

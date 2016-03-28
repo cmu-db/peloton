@@ -1,15 +1,14 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.cpp
+// logger_workload.cpp
 //
-// Identification: benchmark/logger/workload.cpp
+// Identification: src/backend/benchmark/logger/logger_workload.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <thread>
 #include <chrono>
@@ -64,15 +63,15 @@ size_t GetLogFileSize();
 static void WriteOutput(double value) {
   std::cout << "----------------------------------------------------------\n";
   std::cout << state.logging_type << " " << state.column_count << " "
-      << state.tuple_count << " " << state.backend_count << " "
-      << state.wait_timeout << " :: ";
+            << state.tuple_count << " " << state.backend_count << " "
+            << state.wait_timeout << " :: ";
   std::cout << value << "\n";
 
-  auto &storage_manager = storage::StorageManager::GetInstance();
+  auto& storage_manager = storage::StorageManager::GetInstance();
   auto& log_manager = logging::LogManager::GetInstance();
   auto frontend_logger = log_manager.GetFrontendLogger();
   auto fsync_count = 0;
-  if(frontend_logger != nullptr){
+  if (frontend_logger != nullptr) {
     fsync_count = frontend_logger->GetFsyncCount();
   }
 
@@ -126,8 +125,7 @@ bool PrepareLogFile(std::string file_name) {
 
   // INVALID MODE
   if (peloton_logging_mode == LOGGING_TYPE_INVALID) {
-    BuildLog(LOGGING_TESTS_DATABASE_OID,
-             LOGGING_TESTS_TABLE_OID);
+    BuildLog(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 
     return true;
   }
@@ -151,8 +149,7 @@ bool PrepareLogFile(std::string file_name) {
   log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
 
   // Build the log
-  BuildLog(LOGGING_TESTS_DATABASE_OID,
-           LOGGING_TESTS_TABLE_OID);
+  BuildLog(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 
   //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
   if (log_manager.EndLogging()) {
@@ -192,8 +189,7 @@ void DoRecovery(std::string file_name) {
   // Reset the log file if exists
   log_file.close();
 
-  CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID,
-                         LOGGING_TESTS_TABLE_OID);
+  CreateDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
@@ -233,8 +229,8 @@ void DoRecovery(std::string file_name) {
   // Check the tuple count if needed
   if (state.check_tuple_count) {
     oid_t total_expected = 0;
-    CheckTupleCount(LOGGING_TESTS_DATABASE_OID,
-                    LOGGING_TESTS_TABLE_OID, total_expected);
+    CheckTupleCount(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID,
+                    total_expected);
   }
 
   // Check the next oid
@@ -245,12 +241,10 @@ void DoRecovery(std::string file_name) {
   } else {
     LOG_ERROR("Failed to terminate logging thread");
   }
-  DropDatabaseAndTable(LOGGING_TESTS_DATABASE_OID,
-                       LOGGING_TESTS_TABLE_OID);
+  DropDatabaseAndTable(LOGGING_TESTS_DATABASE_OID, LOGGING_TESTS_TABLE_OID);
 }
 
-void CheckTupleCount(oid_t db_oid, oid_t table_oid,
-                     oid_t expected) {
+void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected) {
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(db_oid);
   auto table = db->GetTableWithOid(table_oid);
@@ -259,13 +253,13 @@ void CheckTupleCount(oid_t db_oid, oid_t table_oid,
 
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     auto tile_group = table->GetTileGroup(tile_group_itr);
     active_tuple_count += tile_group->GetActiveTupleCount(INVALID_TXN_ID);
   }
 
   // check # of active tuples
-  if(expected != active_tuple_count) {
+  if (expected != active_tuple_count) {
     throw Exception("Tuple count does not match \n");
   }
 }
@@ -422,10 +416,12 @@ std::vector<ItemPointer> InsertTuples(
 }
 
 void DeleteTuples(storage::DataTable* table __attribute__((unused)),
-                  const std::vector<ItemPointer>& locations __attribute__((unused)),
+                  const std::vector<ItemPointer>& locations
+                  __attribute__((unused)),
                   bool committed __attribute__((unused))) {
   // for (auto delete_location : locations) {
-  //   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  //   auto& txn_manager =
+  //   concurrency::TransactionManagerFactory::GetInstance();
   //   auto txn = txn_manager.BeginTransaction();
 
   //   bool status = table->DeleteTuple(txn, delete_location);
@@ -462,7 +458,8 @@ void DeleteTuples(storage::DataTable* table __attribute__((unused)),
 std::vector<ItemPointer> UpdateTuples(
     storage::DataTable* table __attribute__((unused)),
     const std::vector<ItemPointer>& deleted_locations __attribute__((unused)),
-    const std::vector<storage::Tuple*>& tuples __attribute__((unused)), bool committed __attribute__((unused))) {
+    const std::vector<storage::Tuple*>& tuples __attribute__((unused)),
+    bool committed __attribute__((unused))) {
   // // Inserted locations
   std::vector<ItemPointer> inserted_locations;
 
@@ -471,7 +468,8 @@ std::vector<ItemPointer> UpdateTuples(
   //   auto tuple = tuples[tuple_itr];
   //   tuple_itr++;
 
-  //   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  //   auto& txn_manager =
+  //   concurrency::TransactionManagerFactory::GetInstance();
   //   auto txn = txn_manager.BeginTransaction();
 
   //   bool status = table->DeleteTuple(txn, delete_location);
@@ -531,8 +529,7 @@ void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid) {
   db->AddTable(table);
 }
 
-storage::DataTable* CreateUserTable(oid_t db_oid,
-                                    oid_t table_oid) {
+storage::DataTable* CreateUserTable(oid_t db_oid, oid_t table_oid) {
   auto column_infos = CreateSchema();
 
   bool own_schema = true;
@@ -576,8 +573,9 @@ std::vector<catalog::Column> CreateSchema() {
   return columns;
 }
 
-std::vector<storage::Tuple*> CreateTuples(
-    catalog::Schema* schema, oid_t num_of_tuples, VarlenPool* pool) {
+std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema,
+                                          oid_t num_of_tuples,
+                                          VarlenPool* pool) {
   std::vector<storage::Tuple*> tuples;
   const bool allocate = true;
   const size_t string_length = 100;
@@ -610,9 +608,7 @@ void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid) {
   bridge::DDLDatabase::DropDatabase(db_oid);
 }
 
-void DropDatabase(oid_t db_oid) {
-  bridge::DDLDatabase::DropDatabase(db_oid);
-}
+void DropDatabase(oid_t db_oid) { bridge::DDLDatabase::DropDatabase(db_oid); }
 
 size_t GetLogFileSize() {
   struct stat log_stats;

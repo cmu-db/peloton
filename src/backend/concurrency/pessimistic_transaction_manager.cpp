@@ -1,15 +1,14 @@
-// //===----------------------------------------------------------------------===//
-// //
-// //                         PelotonDB
-// //
-// // transaction_manager.cpp
-// //
-// // Identification:
-// src/backend/concurrency/pessimistic_transaction_manager.cpp
-// //
-// // Copyright (c) 2015, Carnegie Mellon University Database Group
-// //
-// //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pessimistic_transaction_manager.cpp
+//
+// Identification: src/backend/concurrency/pessimistic_transaction_manager.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "pessimistic_transaction_manager.h"
 
@@ -88,7 +87,7 @@ bool PessimisticTransactionManager::ReleaseReadLock(
   auto tile_group_header = tile_group->GetHeader();
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
-  LOG_INFO("ReleaseReadLock on %lx", old_txn_id);
+  LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
 
   if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
     assert(false);
@@ -115,7 +114,7 @@ bool PessimisticTransactionManager::ReleaseReadLock(
 
 bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
                                                  const oid_t &tuple_id) {
-  LOG_INFO("AcquireTuple");
+  LOG_TRACE("AcquireTuple");
   // acquire write lock.
   if (IsOwner(tile_group, tuple_id)) return true;
 
@@ -136,7 +135,7 @@ bool PessimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group,
   if (res) {
     return true;
   } else {
-    LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    LOG_TRACE("Fail to acquire write lock. Set txn failure.");
     // TODO: Don't set txn result here
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
@@ -162,7 +161,7 @@ bool PessimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
 
 bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
                                                 const oid_t &tuple_id) {
-  LOG_INFO("Perform read");
+  LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -174,13 +173,13 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
   // No one is holding the write lock
   if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
-    LOG_INFO("No one holding the lock");
+    LOG_TRACE("No one holding the lock");
     while (true) {
-      LOG_INFO("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
+      LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
       auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
       // Try add read count
       auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
-      LOG_INFO("New txn id %lx", new_txn_id);
+      LOG_TRACE("New txn id %lx", new_txn_id);
       auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, old_txn_id,
                                              &old_txn_id);
       if (!res) {
@@ -203,7 +202,7 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
 bool PessimisticTransactionManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
-  LOG_INFO("Performing Write");
+  LOG_TRACE("Performing Write");
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -227,7 +226,7 @@ bool PessimisticTransactionManager::PerformUpdate(
 
 bool PessimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
                                                   const oid_t &tuple_id) {
-  LOG_INFO("Perform insert");
+  LOG_TRACE("Perform insert");
   SetInsertVisibility(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
@@ -236,7 +235,7 @@ bool PessimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
 bool PessimisticTransactionManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
-  LOG_INFO("Performing Delete");
+  LOG_TRACE("Performing Delete");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -253,7 +252,7 @@ bool PessimisticTransactionManager::PerformDelete(
 }
 
 Result PessimisticTransactionManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -296,10 +295,8 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -314,10 +311,8 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
@@ -350,7 +345,7 @@ Result PessimisticTransactionManager::CommitTransaction() {
 }
 
 Result PessimisticTransactionManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -372,8 +367,7 @@ Result PessimisticTransactionManager::AbortTransaction() {
           }
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
-      } 
-      else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -386,11 +380,9 @@ Result PessimisticTransactionManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-      } 
-      else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RW_TYPE_DELETE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -403,9 +395,8 @@ Result PessimisticTransactionManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
-        
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);

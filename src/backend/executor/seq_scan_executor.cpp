@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // seq_scan_executor.cpp
 //
 // Identification: src/backend/executor/seq_scan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -112,7 +112,8 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto &transaction_manager =
+        concurrency::TransactionManagerFactory::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -134,20 +135,24 @@ bool SeqScanExecutor::DExecute() {
         cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+        if (transaction_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
+                                          tuple_end_cid)) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
             // FIXME: PerformRead might fail, should return false here as
-            transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
+            transaction_manager.PerformRead(tile_group->GetTileGroupId(),
+                                            tuple_id);
           } else {
-            expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                               tuple_id);
-            auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+            expression::ContainerTuple<storage::TileGroup> tuple(
+                tile_group.get(), tuple_id);
+            auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                            .IsTrue();
             if (eval == true) {
               position_list.push_back(tuple_id);
               // FIXME: PerformRead might fail, should return false here as
-              transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
+              transaction_manager.PerformRead(tile_group->GetTileGroupId(),
+                                              tuple_id);
             }
           }
         }

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// index_test.cpp
+// transaction_tests_util.h
 //
-// Identification: tests/index/index_test.cpp
+// Identification: tests/concurrency/transaction_tests_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -207,11 +207,11 @@ class TransactionThread {
       txn_manager->AbortTransaction();
       txn = NULL;
       if (execute_result == true) {
-      LOG_TRACE("ABORT NOW, Executor returns %s",
-                execute_result ? "true" : "false");
+        LOG_TRACE("ABORT NOW, Executor returns %s",
+                  execute_result ? "true" : "false");
       } else {
-      LOG_TRACE("ABORT NOW, Executor returns %s",
-                execute_result ? "true" : "false");
+        LOG_TRACE("ABORT NOW, Executor returns %s",
+                  execute_result ? "true" : "false");
       }
       schedule->txn_result = RESULT_ABORTED;
     }

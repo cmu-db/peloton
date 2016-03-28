@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rpc_server.h
 //
 // Identification: src/backend/networking/rpc_server.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,10 +24,9 @@ namespace peloton {
 namespace networking {
 
 class RpcServer {
-
   typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
 
-public:
+ public:
   RpcServer(const int port);
   ~RpcServer();
 
@@ -35,7 +34,7 @@ public:
   void Start();
 
   // register service
-  bool RegisterService(google::protobuf::Service *service);
+  bool RegisterService(google::protobuf::Service* service);
 
   // find a rpcmethod
   RpcMethod* FindMethod(uint64_t opcode);
@@ -43,8 +42,7 @@ public:
   // get listener
   Listener* GetListener();
 
-private:
-
+ private:
   // remove all services. It is only invoked by destroy constructor
   void RemoveService();
 
@@ -53,11 +51,11 @@ private:
     std::cout << "This is server backcall" << std::endl;
   }
 
-  RpcMethodMap   rpc_method_map_;
+  RpcMethodMap rpc_method_map_;
 
   Listener listener_;
 
-//  MessageQueue<RecvItem>   recv_queue_;
+  //  MessageQueue<RecvItem>   recv_queue_;
 };
 
 }  // namespace networking

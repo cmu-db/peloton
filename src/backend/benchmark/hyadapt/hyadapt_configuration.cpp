@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// hyadapt_configuration.cpp
 //
-// Identification: benchmark/hyadapt/configuration.cpp
+// Identification: src/backend/benchmark/hyadapt/hyadapt_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,6 @@
 
 #include <iomanip>
 #include <algorithm>
-
 
 namespace peloton {
 namespace benchmark {

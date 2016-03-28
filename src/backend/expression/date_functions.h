@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // date_functions.h
 //
 // Identification: src/backend/expression/date_functions.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -273,7 +273,7 @@ inline Value Value::CallUnary<FUNC_SINCE_EPOCH_MICROSECOND>() const {
 }
 
 /** implement the timestamp TO_TIMESTAMP from DAYs function **/
-template<>
+template <>
 inline Value Value::CallUnary<FUNC_TO_TIMESTAMP_DAY>() const {
   if (IsNull()) {
     return *this;
