@@ -81,7 +81,7 @@ bool OptimisticTransactionManager::IsOwner(storage::TileGroup *tile_group, const
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// if the tuple is not owned by any transaction and is visible to current transdaction.
+// if the tuple is not owned by any transaction and is visible to current transaction.
 bool OptimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
     auto tile_group_header = tile_group->GetHeader();
     auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -315,8 +315,8 @@ Result OptimisticTransactionManager::CommitTransaction() {
   }
 
   Result ret = current_txn->GetResult();
-  delete current_txn;
-  current_txn = nullptr;
+
+  EndTransaction();
 
   return ret;
 }
@@ -384,8 +384,7 @@ Result OptimisticTransactionManager::AbortTransaction() {
     }
   }
 
-  delete current_txn;
-  current_txn = nullptr;
+  EndTransaction();
   return Result::RESULT_ABORTED;
 }
 

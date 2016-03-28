@@ -103,7 +103,7 @@ bool UpdateExecutor::DExecute() {
 
     } 
     else if (transaction_manager.IsAccessable(tile_group, physical_tuple_id) == true) {
-      // if the tuple is not owned by any transaction and is visible to current transdaction.
+      // if the tuple is not owned by any transaction and is visible to current transaction.
 
       if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
         LOG_INFO("Fail to insert new tuple. Set txn failure.");
