@@ -103,7 +103,7 @@ bool DeleteExecutor::DExecute() {
     } 
     else if (transaction_manager.IsAccessable(tile_group, physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
-      // transdaction.
+      // transaction.
 
       if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);

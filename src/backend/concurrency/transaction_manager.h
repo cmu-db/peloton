@@ -80,11 +80,16 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  Transaction *BeginTransaction() {
+  virtual Transaction *BeginTransaction() {
     Transaction *txn =
         new Transaction(GetNextTransactionId(), GetNextCommitId());
     current_txn = txn;
     return txn;
+  }
+
+  virtual void EndTransaction() {
+    delete current_txn;
+    current_txn = nullptr;
   }
 
   virtual Result CommitTransaction() = 0;

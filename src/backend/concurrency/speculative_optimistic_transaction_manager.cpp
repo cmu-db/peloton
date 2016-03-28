@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimistic_transaction_manager.h"
+#include "speculative_optimistic_transaction_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -36,11 +36,14 @@ bool SpeculativeOptimisticTransactionManager::IsVisible(const txn_id_t &tuple_tx
     // the tuple is not available.
     return false;
   }
-  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  auto current_txn_id = current_txn->GetTransactionId();
+  auto txn_begin_cid = current_txn->GetBeginCommitId();
+  bool own = (current_txn_id == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   if (own == true) {
-    if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+    if (tuple_end_cid != INVALID_CID) {
+      assert(tuple_begin_cid == txn_begin_cid);
       assert(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
@@ -49,29 +52,14 @@ bool SpeculativeOptimisticTransactionManager::IsVisible(const txn_id_t &tuple_tx
       return false;
     }
   } else {
-    bool activated = (current_txn->GetStartCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetStartCommitId() >= tuple_end_cid);
-    if (tuple_txn_id != INITIAL_TXN_ID) {
-      // if the tuple is owned by other transactions.
-      if (tuple_begin_cid == MAX_CID) {
-        // currently, we do not handle cascading abort. so never read an
-        // uncommitted version.
-        return false;
-      } else {
-        // the older version may be visible.
-        if (activated && !invalidated) {
-          return true;
-        } else {
-          return false;
-        }
-      }
+    bool activated = (txn_begin_cid >= tuple_begin_cid);
+    bool invalidated = (txn_begin_cid >= tuple_end_cid);
+
+    // check visibility.
+    if (activated && !invalidated) {
+      return true;
     } else {
-      // if the tuple is not owned by any transaction.
-      if (activated && !invalidated) {
-        return true;
-      } else {
-        return false;
-      }
+      return false;
     }
   }
 }
@@ -81,12 +69,12 @@ bool SpeculativeOptimisticTransactionManager::IsOwner(storage::TileGroup *tile_g
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// if the tuple is not owned by any transaction and is visible to current transdaction.
+// if the tuple is not owned by any transaction and is visible to current transaction.
 bool SpeculativeOptimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    auto tile_group_header = tile_group->GetHeader();
-    auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-    auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-    return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
+  auto tile_group_header = tile_group->GetHeader();
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
 bool SpeculativeOptimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
@@ -102,6 +90,21 @@ bool SpeculativeOptimisticTransactionManager::AcquireTuple(storage::TileGroup *t
 }
 
 bool SpeculativeOptimisticTransactionManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  auto current_txn_id = current_txn->GetTransactionId();
+  // if the tuple is owned by other transaction, then register dependency.
+  if (tuple_txn_id != INITIAL_TXN_ID && tuple_txn_id != INVALID_TXN_ID && tuple_txn_id != current_txn_id) {
+    // if this dependency has not been registered before.
+    if (current_txn->CheckDependency(tuple_txn_id) == true) {
+      // if registration succeeded.
+      if (RegisterDependency(tuple_txn_id, current_txn_id) == true) {
+        // record this dependency locally.
+        current_txn->RecordDependency(tuple_txn_id);
+      }
+    }
+  }
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
 }
@@ -111,10 +114,10 @@ bool SpeculativeOptimisticTransactionManager::PerformInsert(const oid_t &tile_gr
   auto tile_group_header = 
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
-  assert(tile_group_header->SetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->SetEndCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
   
   tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
 
@@ -130,7 +133,7 @@ bool SpeculativeOptimisticTransactionManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -164,7 +167,7 @@ bool SpeculativeOptimisticTransactionManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();  
@@ -173,7 +176,7 @@ bool SpeculativeOptimisticTransactionManager::PerformDelete(
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
 
-  assert(new_tile_group_header->SetBeginCommitId(new_location.offset) == MAX_CID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) == MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
   
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
@@ -199,7 +202,7 @@ void SpeculativeOptimisticTransactionManager::SetDeleteVisibility(const oid_t &t
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -219,7 +222,7 @@ void SpeculativeOptimisticTransactionManager::SetUpdateVisibility(const oid_t &t
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -240,7 +243,7 @@ void SpeculativeOptimisticTransactionManager::SetInsertVisibility(const oid_t &t
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetStartCommitId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   // Set MVCC info
   assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
@@ -372,8 +375,8 @@ Result SpeculativeOptimisticTransactionManager::CommitTransaction() {
   }
 
   Result ret = current_txn->GetResult();
-  delete current_txn;
-  current_txn = nullptr;
+
+  EndTransaction();
 
   return ret;
 }
@@ -441,8 +444,8 @@ Result SpeculativeOptimisticTransactionManager::AbortTransaction() {
     }
   }
 
-  delete current_txn;
-  current_txn = nullptr;
+  EndTransaction();
+
   return Result::RESULT_ABORTED;
 }
 

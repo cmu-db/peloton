@@ -57,9 +57,47 @@ class SpeculativeOptimisticTransactionManager : public TransactionManager {
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
+  virtual Transaction *BeginTransaction() {
+    Transaction * txn = TransactionManager::BeginTransaction();
+    {
+      std::lock_guard<std::mutex> lock(running_txns_mutex_);
+      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
+      running_txns_[txn->GetTransactionId()] = txn;
+    }
+    return txn;
+  }
+
+  virtual void EndTransaction() {
+    {
+      std::lock_guard<std::mutex> lock(running_txns_mutex_);
+      assert(running_txns_.find(current_txn->GetTransactionId()) != running_txns_.end());
+      running_txns_.erase(current_txn->GetTransactionId());
+    }
+    TransactionManager::EndTransaction();
+  }
+
+  bool RegisterDependency(const txn_id_t &depend_txn_id, const txn_id_t &current_txn_id) {
+    {
+      std::lock_guard<std::mutex> lock(running_txns_mutex_);
+      if (running_txns_.find(depend_txn_id) == running_txns_.end()) {
+        return false;
+      } else{
+        Transaction *txn = running_txns_.at(depend_txn_id);
+        txn->RegisterDependency(current_txn_id);
+        return true;
+      }
+    }
+  }
+
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
+
+  private:
+    // should be changed to libcuckoo.
+    std::mutex running_txns_mutex_;
+    std::unordered_map<txn_id_t, Transaction*> running_txns_;
+
 };
 }
 }
