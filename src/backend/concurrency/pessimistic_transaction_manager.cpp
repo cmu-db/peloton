@@ -166,7 +166,17 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  if (IsOwner(tile_group.get(), tuple_id)) return true;
+  auto &rw_set = current_txn->GetRWSet();
+  auto tuple_map = rw_set.find(tile_group_id);
+  if (tuple_map != rw_set.end()) {
+    if (tuple_map->second.find(tuple_id) != tuple_map->second.end()) {
+      // It was already accessed, don't acquire read lock again
+      return true;
+    }
+  }
+
+  if (IsOwner(tile_group.get(), tuple_id))
+    return true;
 
   // Try to acquire read lock.
 
@@ -202,7 +212,7 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
 bool PessimisticTransactionManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
-  LOG_TRACE("Performing Write");
+  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
