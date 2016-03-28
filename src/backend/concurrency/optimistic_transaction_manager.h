@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.h
+// optimistic_transaction_manager.h
 //
 // Identification: src/backend/concurrency/optimistic_transaction_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,7 +41,7 @@ class OptimisticTransactionManager : public TransactionManager {
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
+                             const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 

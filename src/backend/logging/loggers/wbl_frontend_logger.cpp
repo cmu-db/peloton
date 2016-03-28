@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * wbl_frontend_logger.cpp
@@ -9,7 +45,6 @@
  *
  *-------------------------------------------------------------------------
  */
-
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -251,7 +286,8 @@ void WriteBehindFrontendLogger::WriteTransactionLogRecord(
   }
 }
 
-std::set<storage::TileGroupHeader *> WriteBehindFrontendLogger::ToggleCommitMarks(
+std::set<storage::TileGroupHeader *>
+WriteBehindFrontendLogger::ToggleCommitMarks(
     std::vector<txn_id_t> committed_txn_list) {
   // Headers modified
   std::set<storage::TileGroupHeader *> tile_group_headers;

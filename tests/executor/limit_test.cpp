@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // limit_test.cpp
 //
 // Identification: tests/executor/limit_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -86,8 +86,7 @@ TEST_F(LimitTests, NonLeafLimitOffsetTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 
@@ -175,8 +174,7 @@ TEST_F(LimitTests, NonLeafReturnAllTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 
@@ -221,8 +219,7 @@ TEST_F(LimitTests, NonLeafHugeLimitTest) {
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 

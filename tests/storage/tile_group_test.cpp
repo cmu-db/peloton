@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_test.cpp
 //
 // Identification: tests/storage/tile_group_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -82,9 +82,13 @@ TEST_F(TileGroupTests, BasicTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map, 4));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, 4));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   // TUPLES
 
@@ -135,7 +139,8 @@ TEST_F(TileGroupTests, BasicTest) {
   delete schema2;
 }
 
-void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group, catalog::Schema *schema) {
+void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
+                     catalog::Schema *schema) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
@@ -211,10 +216,13 @@ TEST_F(TileGroupTests, StressTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map,
-      10000));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, 10000));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -227,7 +235,7 @@ TEST_F(TileGroupTests, StressTest) {
   delete schema;
 }
 
-//TEST_F(TileGroupTests, MVCCInsert) {
+// TEST_F(TileGroupTests, MVCCInsert) {
 //  std::vector<catalog::Column> columns;
 //  std::vector<std::string> tile_column_names;
 //  std::vector<std::vector<std::string>> column_names;
@@ -274,9 +282,13 @@ TEST_F(TileGroupTests, StressTest) {
 //  column_map[2] = std::make_pair(1, 0);
 //  column_map[3] = std::make_pair(1, 1);
 //
-//  std::shared_ptr<storage::TileGroup> tile_group = storage::TileGroupFactory::GetTileGroup(
-//      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map, 3);
-//  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+//  std::shared_ptr<storage::TileGroup> tile_group =
+//  storage::TileGroupFactory::GetTileGroup(
+//      INVALID_OID, INVALID_OID,
+//      TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+//      column_map, 3);
+//  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+//  tile_group);
 //
 //  storage::Tuple *tuple = new storage::Tuple(schema, true);
 //  auto pool = tile_group->GetTilePool(1);
@@ -377,10 +389,13 @@ TEST_F(TileGroupTests, TileCopyTest) {
     column_map[col_itr] = std::make_pair(0, col_itr);
   }
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map,
-      tuple_count));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, tuple_count));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 

@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_record_pool.cpp
+//
+// Identification: src/backend/logging/records/log_record_pool.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "log_record_pool.h"
 
 namespace peloton {

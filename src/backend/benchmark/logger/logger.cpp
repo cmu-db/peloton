@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logger.cpp
 //
-// Identification: benchmark/logger/logger.cpp
+// Identification: src/backend/benchmark/logger/logger.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,7 +37,6 @@ configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
-
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
   peloton_data_file_size = state.data_file_size;
@@ -77,7 +76,6 @@ void RunBenchmark() {
 
     // No recovery
   }
-
 }
 
 }  // namespace logger
@@ -85,7 +83,6 @@ void RunBenchmark() {
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-
   peloton::benchmark::logger::ParseArguments(argc, argv,
                                              peloton::benchmark::logger::state);
 

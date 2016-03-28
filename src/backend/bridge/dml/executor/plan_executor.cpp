@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // plan_executor.cpp
 //
 // Identification: src/backend/bridge/dml/executor/plan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -150,10 +150,10 @@ cleanup:
   // Clean executor context
   delete executor_context;
 
-  //p_status.m_result = txn->GetResult();
+  // p_status.m_result = txn->GetResult();
 
-  //txn_manager.EndTransaction();
-  
+  // txn_manager.EndTransaction();
+
   return p_status;
 }
 

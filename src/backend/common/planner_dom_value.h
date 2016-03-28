@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// planner_dom_value.h
+//
+// Identification: src/backend/common/planner_dom_value.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// planner_dom_value.h
+//
+// Identification: src/backend/common/planner_dom_value.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// planner_dom_value.h
+//
+// Identification: src/backend/common/planner_dom_value.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /* This file is part of VoltDB.
  * Copyright (C) 2008-2015 VoltDB Inc.
  *

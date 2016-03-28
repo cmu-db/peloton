@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// mapper_merge_join.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_merge_join.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// mapper_merge_join.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_merge_join.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// mapper_merge_join.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_merge_join.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * mapper_merge_join.cpp

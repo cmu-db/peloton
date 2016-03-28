@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.h
+//
+// Identification: src/backend/logging/log_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.h
+//
+// Identification: src/backend/logging/log_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.h
+//
+// Identification: src/backend/logging/log_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * logmanager.h

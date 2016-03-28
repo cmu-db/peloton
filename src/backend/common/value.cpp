@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // value.cpp
 //
 // Identification: src/backend/common/value.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -365,8 +365,8 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       break;
     }
     case VALUE_TYPE_DATE:
-      if ((retval.GetDate() =
-               *reinterpret_cast<const int32_t *>(storage)) == INT32_NULL) {
+      if ((retval.GetDate() = *reinterpret_cast<const int32_t *>(storage)) ==
+          INT32_NULL) {
         retval.tagAsNull();
       }
       break;

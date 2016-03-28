@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_backend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_backend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_backend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * wal_backend_logger.cpp
@@ -39,11 +75,10 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   }
 }
 
-LogRecord *WriteAheadBackendLogger::GetTupleRecord(LogRecordType log_record_type,
-                                              txn_id_t txn_id, oid_t table_oid,
-                                              ItemPointer insert_location,
-                                              ItemPointer delete_location,
-                                              void *data, oid_t db_oid) {
+LogRecord *WriteAheadBackendLogger::GetTupleRecord(
+    LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
+    ItemPointer insert_location, ItemPointer delete_location, void *data,
+    oid_t db_oid) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {

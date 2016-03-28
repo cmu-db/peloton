@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction_test.cpp
 //
 // Identification: tests/concurrency/transaction_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,9 +24,8 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 std::vector<ConcurrencyType> TEST_TYPES = {
-    //CONCURRENCY_TYPE_OCC
-    CONCURRENCY_TYPE_2PL
-  };
+    // CONCURRENCY_TYPE_OCC
+    CONCURRENCY_TYPE_2PL};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -277,7 +276,7 @@ void PhantomTest(ConcurrencyType TEST_TYPE) {
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.AddScan(0, 0);
-    //scheduler.AddInsert(1, 5, 0);
+    // scheduler.AddInsert(1, 5, 0);
     scheduler.AddCommit(1);
     scheduler.AddCommit(0);
 
@@ -392,7 +391,7 @@ TEST_F(TransactionTests, AbortTest) {
 
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      //scheduler.AddInsert(0, 100, 0);
+      // scheduler.AddInsert(0, 100, 0);
       scheduler.AddAbort(0);
       scheduler.AddRead(1, 100);
       scheduler.AddCommit(1);

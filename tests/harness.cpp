@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // harness.cpp
 //
 // Identification: tests/harness.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -43,7 +43,7 @@ uint64_t TestingHarness::GetThreadId() {
 }
 
 txn_id_t TestingHarness::GetNextTransactionId() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   txn_manager.CommitTransaction();

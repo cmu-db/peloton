@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// hash_join_executor.h
+//
+// Identification: src/backend/executor/hash_join_executor.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// hash_join_executor.h
+//
+// Identification: src/backend/executor/hash_join_executor.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// hash_join_executor.h
+//
+// Identification: src/backend/executor/hash_join_executor.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * hash_join.h
@@ -46,7 +82,6 @@ class HashJoinExecutor : public AbstractJoinExecutor {
   // logical tile iterators
   size_t left_logical_tile_itr_ = 0;
   size_t right_logical_tile_itr_ = 0;
-
 };
 
 }  // namespace executor

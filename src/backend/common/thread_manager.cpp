@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // thread_manager.cpp
 //
 // Identification: src/backend/common/thread_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,93 +28,89 @@ ThreadManager &ThreadManager::GetInstance(void) {
   return thread_manager;
 }
 
-
-//ThreadManager &ThreadManager::GetServerThreadPool(void) {
+// ThreadManager &ThreadManager::GetServerThreadPool(void) {
 //  static ThreadManager server_thread_pool(NUM_THREAD);
 //  return server_thread_pool;
 //}
 //
-//ThreadManager &ThreadManager::GetClientThreadPool(void) {
+// ThreadManager &ThreadManager::GetClientThreadPool(void) {
 //  static ThreadManager client_thread_pool(NUM_THREAD);
 //  return client_thread_pool;
 //}
 
-ThreadManager::ThreadManager(int threads) :
-    terminate_(false) {
-
-    // Create number of required threads and add them to the thread pool vector.
-    for(int i = 0; i < threads; i++) {
-        thread_pool_.emplace_back(std::thread(&ThreadManager::Invoke, this));
-    }
+ThreadManager::ThreadManager(int threads) : terminate_(false) {
+  // Create number of required threads and add them to the thread pool vector.
+  for (int i = 0; i < threads; i++) {
+    thread_pool_.emplace_back(std::thread(&ThreadManager::Invoke, this));
+  }
 }
 
 ThreadManager::~ThreadManager() {
+  if (!terminate_) {
+    // Scope based locking.
+    {
+      // Put unique lock on task mutex.
+      std::unique_lock<std::mutex> lock(thread_pool_mutex_);
 
-    if (!terminate_) {
-        // Scope based locking.
-        {
-            // Put unique lock on task mutex.
-            std::unique_lock < std::mutex > lock(thread_pool_mutex_);
+      // Set termination flag to true.
+      terminate_ = true;
+    }
 
-            // Set termination flag to true.
-            terminate_ = true;
-        }
+    // Wake up all threads.
+    condition_.notify_all();
 
-        // Wake up all threads.
-        condition_.notify_all();
-
-        // Join all threads.
-        for (std::thread &thread : thread_pool_) {
-            thread.join();
-        }
-    } // end if
+    // Join all threads.
+    for (std::thread &thread : thread_pool_) {
+      thread.join();
+    }
+  }  // end if
 }
 
 void ThreadManager::AddTask(std::function<void()> f) {
+  // Scope based locking.
+  {
+    // Put unique lock on task mutex.
+    std::unique_lock<std::mutex> lock(thread_pool_mutex_);
 
-    // Scope based locking.
-    {
-        // Put unique lock on task mutex.
-        std::unique_lock<std::mutex> lock(thread_pool_mutex_);
+    // Push task into queue.
+    task_pool_.push(f);
+  }
 
-        // Push task into queue.
-        task_pool_.push(f);
-    }
-
-    // Wake up one thread.
-    condition_.notify_one();
+  // Wake up one thread.
+  condition_.notify_one();
 }
 
 void ThreadManager::Invoke() {
+  std::function<void()> task;
 
-    std::function<void()> task;
+  while (true) {
+    // Scope based locking.
+    {
+      // Put unique lock on task mutex.
+      std::unique_lock<std::mutex> lock(thread_pool_mutex_);
 
-    while(true) {
-        // Scope based locking.
-        {
-            // Put unique lock on task mutex.
-            std::unique_lock<std::mutex> lock(thread_pool_mutex_);
+      // Wait until queue is not empty or termination signal is sent.
+      condition_.wait(lock,
+                      [this] { return !task_pool_.empty() || terminate_; });
 
-            // Wait until queue is not empty or termination signal is sent.
-            condition_.wait(lock, [this]{ return !task_pool_.empty() || terminate_; });
+      // If termination signal received and queue is empty then exit else
+      // continue clearing the queue.
+      if (terminate_ && task_pool_.empty()) {
+        return;
+      }
 
-            // If termination signal received and queue is empty then exit else continue clearing the queue.
-            if (terminate_ && task_pool_.empty()) {
-                return;
-            }
+      // Get next task in the queue.
+      task = task_pool_.front();
 
-            // Get next task in the queue.
-            task = task_pool_.front();
+      // Remove it from the queue.
+      task_pool_.pop();
+    }
+    // end scope
 
-            // Remove it from the queue.
-            task_pool_.pop();
-        }
-        // end scope
+    // Execute the task.
+    task();
 
-        // Execute the task.
-        task();
-
-    } // end while
+  }  // end while
 }
 
 //===--------------------------------------------------------------------===//
@@ -129,115 +125,108 @@ ThreadPool &ThreadPool::GetInstance(void) {
   return thread_pool;
 }
 
-//ThreadPool &ThreadPool::GetServerThreadPool(void) {
+// ThreadPool &ThreadPool::GetServerThreadPool(void) {
 //  static ThreadPool server_thread_pool(NUM_THREAD);
 //  return server_thread_pool;
 //}
 //
-//ThreadPool &ThreadPool::GetClientThreadPool(void) {
+// ThreadPool &ThreadPool::GetClientThreadPool(void) {
 //  static ThreadPool client_thread_pool(NUM_THREAD);
 //  return client_thread_pool;
 //}
 
-ThreadPool::ThreadPool(int threads) :
-    cond_ (&mutex_),
-    terminate_(false) {
-
-    // Create number of required threads and add them to the thread pool vector.
-    for(int i = 0; i < threads; i++) {
-        pthread_t threadx;
-        pthread_create(&threadx, NULL, ThreadPool::InvokeEntry, static_cast<void *>(this));
-        thread_pool_.emplace_back(threadx);
-    }
+ThreadPool::ThreadPool(int threads) : cond_(&mutex_), terminate_(false) {
+  // Create number of required threads and add them to the thread pool vector.
+  for (int i = 0; i < threads; i++) {
+    pthread_t threadx;
+    pthread_create(&threadx, NULL, ThreadPool::InvokeEntry,
+                   static_cast<void *>(this));
+    thread_pool_.emplace_back(threadx);
+  }
 }
 
 ThreadPool::~ThreadPool() {
+  // Put lock on task mutex.
+  mutex_.Lock();
 
-    // Put lock on task mutex.
-    mutex_.Lock();
+  if (!terminate_) {
+    // Set termination flag to true.
+    terminate_ = true;
+  }
 
-    if (!terminate_) {
-        // Set termination flag to true.
-        terminate_ = true;
-    }
+  mutex_.UnLock();
 
-    mutex_.UnLock();
+  // Wake up all threads.
+  cond_.Broadcast();
 
-    // Wake up all threads.
-    cond_.Broadcast();
-
-    // Join all threads.
-//    for (pthread_t &thread : thread_pool_) {
-//        pthread_join(thread, NULL);
-//    }
-
+  // Join all threads.
+  //    for (pthread_t &thread : thread_pool_) {
+  //        pthread_join(thread, NULL);
+  //    }
 }
 
 void ThreadPool::AddTask(std::function<void()> f) {
+  // Put unique lock on task mutex.
+  mutex_.Lock();
 
-    // Put unique lock on task mutex.
-    mutex_.Lock();
+  // Push task into queue.
+  task_pool_.push(f);
 
-    // Push task into queue.
-    task_pool_.push(f);
+  // unlock
+  mutex_.UnLock();
 
-    // unlock
-    mutex_.UnLock();
-
-    // Wake up one thread.
-    cond_.Signal();
-
+  // Wake up one thread.
+  cond_.Signal();
 }
 
 /*
  * @Param args
  *                      ThreadPool instance
  */
-void* ThreadPool::InvokeEntry(void* self) {
-    ((ThreadPool *)self)->Invoke();
+void *ThreadPool::InvokeEntry(void *self) {
+  ((ThreadPool *)self)->Invoke();
 
-    pthread_exit((void *)0);
-    return NULL;
+  pthread_exit((void *)0);
+  return NULL;
 }
 
 void ThreadPool::Invoke() {
+  std::cout << "thread: " << xthread << std::endl;
+  xthread++;
 
-    std::cout << "thread: " << xthread << std::endl;
-    xthread++;
+  std::function<void()> task;
 
-    std::function<void()> task;
+  while (true) {
+    // Put the lock on task mutex.
+    mutex_.Lock();
 
-    while(true) {
+    // wait will "atomically" unlock the mutex,
+    // allowing others access to the condition variable (for signalling)
+    while (task_pool_.empty() && terminate_ == false) {
+      cond_.Wait();
+    }
 
-        // Put the lock on task mutex.
-        mutex_.Lock();
+    // If termination signal received and queue is empty then exit else continue
+    // clearing the queue.
+    if (terminate_ && task_pool_.empty()) {
+      return;
+    }
 
-        // wait will "atomically" unlock the mutex,
-        // allowing others access to the condition variable (for signalling)
-        while (task_pool_.empty() && terminate_ == false) {
-            cond_.Wait();
-        }
+    // if running here, task_pool must not be empty
+    assert(!task_pool_.empty());
 
-        // If termination signal received and queue is empty then exit else continue clearing the queue.
-        if (terminate_ && task_pool_.empty()) {
-            return;
-        }
+    // Get next task in the queue.
+    task = task_pool_.front();
 
-        // if running here, task_pool must not be empty
-        assert(!task_pool_.empty());
+    // Remove it from the queue.
+    task_pool_.pop();
 
-        // Get next task in the queue.
-        task = task_pool_.front();
+    mutex_.UnLock();
 
-        // Remove it from the queue.
-        task_pool_.pop();
+    // Execute the task.
+    task();
 
-        mutex_.UnLock();
-
-        // Execute the task.
-        task();
-
-    } // end while
+  }  // end while
 }
 
 }  // End peloton namespace

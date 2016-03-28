@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * wbl_frontend_logger.h

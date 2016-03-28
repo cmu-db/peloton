@@ -1,3 +1,39 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_record.cpp
+//
+// Identification: src/backend/logging/records/tuple_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_record.cpp
+//
+// Identification: src/backend/logging/records/tuple_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_record.cpp
+//
+// Identification: src/backend/logging/records/tuple_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * tuple_record.cpp
@@ -108,7 +144,7 @@ size_t TupleRecord::GetTupleRecordSize(void) {
   // log_record_type + header_legnth + db_oid + table_oid + txn_id +
   // insert_location + delete_location
   return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) +
-      sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
+         sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
 }
 
 // just for debugging

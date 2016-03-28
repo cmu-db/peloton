@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // delete_executor.cpp
 //
 // Identification: src/backend/executor/delete_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -81,12 +81,14 @@ bool DeleteExecutor::DExecute() {
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
   LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
            source_tile->GetTupleCount());
 
-  LOG_INFO("Transaction ID: %lu", executor_context_->GetTransaction()->GetTransactionId());
+  LOG_INFO("Transaction ID: %lu",
+           executor_context_->GetTransaction()->GetTransactionId());
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
@@ -100,17 +102,19 @@ bool DeleteExecutor::DExecute() {
 
       transaction_manager.SetDeleteVisibility(tile_group_id, physical_tuple_id);
 
-    } 
-    else if (transaction_manager.IsAccessable(tile_group, physical_tuple_id) == true) {
+    } else if (transaction_manager.IsAccessable(tile_group,
+                                                physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transdaction.
 
-      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) ==
+          false) {
         return false;
       }
       // if it is the latest version and not locked by other threads, then
       // insert a new version.
-      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      storage::Tuple *new_tuple =
+          new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
@@ -127,10 +131,11 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
 
-      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
+      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id,
+                                        location);
 
       executor_context_->num_processed += 1;  // deleted one
-      
+
       delete new_tuple;
       new_tuple = nullptr;
     } else {
