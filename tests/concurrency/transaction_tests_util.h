@@ -248,34 +248,40 @@ class TransactionScheduler {
     }
   }
 
-  void AddInsert(int txn_id, int id, int value) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_INSERT, id, value);
-    sequence[time++] = txn_id;
-  }
-  void AddRead(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_READ, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddDelete(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddUpdate(int txn_id, int id, int value) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value);
-    sequence[time++] = txn_id;
-  }
-  void AddScan(int txn_id, int id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0);
-    sequence[time++] = txn_id;
-  }
-  void AddAbort(int txn_id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_ABORT, 0, 0);
-    sequence[time++] = txn_id;
+  TransactionScheduler &Txn(int txn_id) {
+    assert(txn_id < (int)schedules.size());
+    cur_txn_id = txn_id;
+    return *this;
   }
 
-  void AddCommit(int txn_id) {
-    schedules[txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
-    sequence[time++] = txn_id;
+  void Insert(int id, int value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_INSERT, id, value);
+    sequence[time++] = cur_txn_id;
+  }
+  void Read(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Delete(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Update(int id, int value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value);
+    sequence[time++] = cur_txn_id;
+  }
+  void Scan(int id) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void Abort() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_ABORT, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+
+  void Commit() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
+    sequence[time++] = cur_txn_id;
   }
 
   void clear() { schedules.clear(); }
@@ -286,6 +292,7 @@ class TransactionScheduler {
   std::vector<TransactionSchedule> schedules;
   std::vector<TransactionThread> tthreads;
   std::map<int, int> sequence;
+  int cur_txn_id;
 };
 }
 }

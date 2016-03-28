@@ -26,7 +26,7 @@ class IsolationLevelTest : public PelotonTest {};
 static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
                                                   CONCURRENCY_TYPE_2PL};
 
-void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
+void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
@@ -37,10 +37,10 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
     // T2 updates (0, ?) to (0, 2)
     // T1 commits
     // T2 commits
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddUpdate(1, 0, 2);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
@@ -59,10 +59,10 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
 
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddUpdate(1, 0, 2);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Update(0, 2);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
@@ -83,10 +83,10 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
     // T1 update (0, ?) to (0, 3)
     // T0 commit
     // T1 commit
-    scheduler.AddDelete(0, 0);
-    scheduler.AddUpdate(1, 0, 3);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Delete(0);
+    scheduler.Txn(1).Update(0, 3);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
@@ -108,10 +108,10 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
     // T1 delete (1, ?)
     // T0 commit
     // T1 commit
-    scheduler.AddDelete(0, 1);
-    scheduler.AddDelete(1, 1);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Delete(1);
+    scheduler.Txn(1).Delete(1);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
     auto &schedules = scheduler.schedules;
@@ -128,7 +128,7 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
   }
 }
 
-void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
+void DirtyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
@@ -140,10 +140,10 @@ void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T2 reads (0, ?)
     // T1 commit
     // T2 commit
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
@@ -158,10 +158,10 @@ void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T2 reads (0, ?)
     // T2 commit
     // T1 commit
-    scheduler.AddUpdate(0, 0, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
@@ -176,10 +176,10 @@ void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T1 read (0, ?)
     // T0 commit
     // T1 commit
-    scheduler.AddDelete(0, 0);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Delete(0);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
@@ -189,7 +189,7 @@ void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
   }
 }
 
-void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
+void FuzzyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
@@ -200,10 +200,10 @@ void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T1 commit
     // T0 commit
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(1).Update(0, 1);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
@@ -218,10 +218,10 @@ void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T0 commit
     // T1 commit
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(1).Update(0, 1);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
@@ -235,10 +235,10 @@ void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
     // T0 commit
     // T1 commit
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddDelete(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(1).Delete(0);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
     EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
@@ -246,18 +246,18 @@ void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
   }
 }
 
-void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
+void PhantomTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddScan(0, 0);
-    scheduler.AddInsert(1, 5, 0);
-    scheduler.AddScan(0, 0);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Scan(0);
+    scheduler.Txn(1).Insert(5, 0);
+    scheduler.Txn(0).Scan(0);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
     size_t original_tuple_count = 10;
@@ -271,11 +271,11 @@ void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddScan(0, 0);
-    scheduler.AddDelete(1, 4);
-    scheduler.AddScan(0, 0);
-    scheduler.AddCommit(1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Scan(0);
+    scheduler.Txn(1).Delete(4);
+    scheduler.Txn(0).Scan(0);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
@@ -289,19 +289,19 @@ void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
   }
 }
 
-void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
+void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(0, 1, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddUpdate(1, 1, 2);
-    scheduler.AddCommit(0);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Update(1, 1);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(1).Update(1, 2);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
@@ -312,12 +312,12 @@ void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(0, 1, 1);
-    scheduler.AddRead(1, 0);
-    scheduler.AddCommit(0);
-    scheduler.AddUpdate(1, 1, 2);
-    scheduler.AddCommit(1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Update(1, 1);
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Update(1, 2);
+    scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
@@ -327,18 +327,39 @@ void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
   }
 }
 
-void ReadSkewTest(ConcurrencyType test_type __attribute__((unused))) {
+void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.AddRead(0, 0);
-    scheduler.AddUpdate(1, 0, 1);
-    scheduler.AddUpdate(1, 1, 1);
-    scheduler.AddCommit(1);
-    scheduler.AddRead(0, 1);
-    scheduler.AddCommit(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(1).Update(0, 1);
+    scheduler.Txn(1).Update(1, 1);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Read(1);
+    scheduler.Txn(0).Commit();
+
+    scheduler.Run();
+
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      EXPECT_TRUE(scheduler.schedules[0].results[0] ==
+                  scheduler.schedules[0].results[1]);
+    }
+  }
+}
+
+// Look at the SSI paper (http://drkp.net/papers/ssi-vldb12.pdf).
+// This is an anomaly involving three transactions (one of them is a readonly
+// transaction).
+void SIAnomalyTest() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+  {
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    
 
     scheduler.Run();
 
@@ -354,12 +375,12 @@ TEST_F(IsolationLevelTest, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, ISOLATION_LEVEL_TYPE_FULL);
-    DirtyWriteTest(test_type);
-    DirtyReadTest(test_type);
-    FuzzyReadTest(test_type);
-    WriteSkewTest(test_type);
-    ReadSkewTest(test_type);
-    PhantomTest(test_type);
+    DirtyWriteTest();
+    DirtyReadTest();
+    FuzzyReadTest();
+    WriteSkewTest();
+    ReadSkewTest();
+    PhantomTest();
   }
 }
 
