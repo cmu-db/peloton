@@ -448,17 +448,15 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   txn_manager.CommitTransaction();
 
-  std::cout << "\t Original Tile Details ..." << std::endl
-            << std::endl;
-  std::cout << (*tile);
+  LOG_INFO("\t Original Tile Details ...");
+  LOG_INFO("%s", tile->GetInfo().c_str());
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
   storage::Tile *new_tile = tile->CopyTile(BACKEND_TYPE_MM);
 
-  std::cout << "\t Copied Tile Details ..." << std::endl
-            << std::endl;
-  std::cout << (*new_tile);
+  LOG_INFO("\t Copied Tile Details ...");
+  LOG_INFO("%s", new_tile->GetInfo().c_str());
 
   /*
    * Test for equality of old and new tile data

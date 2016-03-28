@@ -62,8 +62,6 @@ class LogRecord {
 
   virtual bool Serialize(CopySerializeOutput &output) = 0;
 
-  virtual void Print(void) = 0;
-
   char *GetMessage(void) const { return message; }
 
   size_t GetMessageLength(void) const { return message_length; }

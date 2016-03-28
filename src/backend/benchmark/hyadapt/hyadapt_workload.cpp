@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+#undef NDEBUG
 
 #include <memory>
 #include <string>
@@ -25,6 +25,7 @@
 
 #include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -33,6 +34,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
@@ -111,16 +113,16 @@ static void WriteOutput(double duration) {
   // Convert to ms
   duration *= 1000;
 
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.layout_mode << " " << state.operator_type << " "
-            << state.projectivity << " " << state.selectivity << " "
-            << state.write_ratio << " " << state.scale_factor << " "
-            << state.column_count << " " << state.subset_experiment_type << " "
-            << state.access_num_groups << " " << state.subset_ratio << " "
-            << state.theta << " " << state.split_point << " "
-            << state.sample_weight << " " << state.tuples_per_tilegroup
-            << " :: ";
-  std::cout << duration << " ms\n";
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %d %lf %lf %lf %d %d %d %d %lf %lf %d %lf %d :: %lf ms",
+           state.layout_mode, state.operator_type,
+           state.projectivity, state.selectivity,
+           state.write_ratio, state.scale_factor,
+           state.column_count, state.subset_experiment_type,
+           state.access_num_groups, state.subset_ratio,
+           state.theta, state.split_point,
+           state.sample_weight, state.tuples_per_tilegroup,
+           duration);
 
   out << state.layout_mode << " ";
   out << state.operator_type << " ";
@@ -781,8 +783,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
 
     case SUBSET_TYPE_INVALID:
     default:
-      std::cout << "Unsupported subset experiment type : " << subset_test_type
-                << "\n";
+      LOG_ERROR("Unsupported subset experiment type : %d", subset_test_type);
       break;
   }
 
@@ -1271,7 +1272,7 @@ static void CollectColumnMapStats() {
 
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
-  std::cout << "TG Count :: " << tile_group_count << "\n";
+  LOG_TRACE("TG Count :: %d", tile_group_count);
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
@@ -1315,14 +1316,6 @@ static void CollectColumnMapStats() {
   oid_t type_itr = 0;
   oid_t type_cnt = 5;
   for (auto col_map_stats_summary_entry : col_map_stats_summary) {
-    // First, print col map stats
-    std::cout << "Type " << type_itr << " -- ";
-
-    for (auto col_stats_itr : col_map_stats_summary_entry.first)
-      std::cout << col_stats_itr.first << " " << col_stats_itr.second << " :: ";
-
-    // Next, print the normalized count
-    std::cout << col_map_stats_summary_entry.second << "\n";
     out << query_itr << " " << type_itr << " "
         << col_map_stats_summary_entry.second << "\n";
     type_itr++;
@@ -1449,7 +1442,7 @@ void RunAdaptExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1629,7 +1622,7 @@ void RunReorgExperiment() {
         state.reorg = true;
       }
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1696,7 +1689,7 @@ void RunDistributionExperiment() {
       state.layout_mode = layout_mode;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1828,7 +1821,7 @@ void RunVersionExperiment() {
   for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    std::cout << "Offset : " << starting_tuple_offset << "\n";
+    LOG_INFO("Offset : %lu", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while (prev_item_pointer.block != INVALID_OID) {
@@ -1888,7 +1881,7 @@ void RunHyriseExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = hyrise_projectivities[0];
       peloton_projectivity = state.projectivity;
@@ -2100,7 +2093,7 @@ void RunConcurrencyExperiment() {
 
   // Go over all scan ratios
   for (auto scan_ratio : scan_ratios) {
-    std::cout << "SCAN RATIO :" << scan_ratio << "\n\n\n";
+    LOG_INFO("SCAN RATIO : %lf \n\n", scan_ratio);
 
     // Go over all layouts
     for (auto layout : layouts) {
@@ -2108,7 +2101,7 @@ void RunConcurrencyExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "LAYOUT :" << layout << "\n";
+      LOG_INFO("LAYOUT : %d", layout);
 
       // Go over all scale factors
       for (auto num_threads : num_threads_list) {
@@ -2142,10 +2135,10 @@ void RunConcurrencyExperiment() {
         auto final_tg_count = hyadapt_table->GetTileGroupCount();
         auto diff_tg_count = final_tg_count - initial_tg_count;
 
-        std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+        LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        std::cout << "Scan count   : " << scan_ctr << "\n";
-        std::cout << "Insert count : " << insert_ctr << "\n";
+        LOG_INFO("Scan count  : %lu", scan_ctr);
+        LOG_INFO("Insert count  : %lu", insert_ctr);
       }
     }
   }

@@ -10,29 +10,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
+
+#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace benchmark {
 namespace hyadapt {
 
-void Usage(FILE *out) {
-  fprintf(out,
-          "Command line options : hyadapt <options> \n"
-          "   -h --help              :  Print help message \n"
-          "   -o --operator-type     :  Operator type \n"
-          "   -k --scale-factor      :  # of tuples \n"
-          "   -s --selectivity       :  Selectivity \n"
-          "   -p --projectivity      :  Projectivity \n"
-          "   -l --layout            :  Layout \n"
-          "   -t --transactions      :  # of transactions \n"
-          "   -e --experiment_type   :  Experiment Type \n"
-          "   -c --column_count      :  # of columns \n"
-          "   -w --write_ratio       :  Fraction of writes \n"
-          "   -g --tuples_per_tg     :  # of tuples per tilegroup \n");
+void Usage() {
+  LOG_INFO("Command line options : hyadapt <options>"
+          "   -h --help              :  Print help message"
+          "   -o --operator-type     :  Operator type"
+          "   -k --scale-factor      :  # of tuples"
+          "   -s --selectivity       :  Selectivity"
+          "   -p --projectivity      :  Projectivity"
+          "   -l --layout            :  Layout"
+          "   -t --transactions      :  # of transactions"
+          "   -e --experiment_type   :  Experiment Type"
+          "   -c --column_count      :  # of columns"
+          "   -w --write_ratio       :  Fraction of writes"
+          "   -g --tuples_per_tg     :  # of tuples per tilegroup");
   exit(EXIT_FAILURE);
 }
 
@@ -62,29 +64,21 @@ void GenerateSequence(oid_t column_count) {
 
 static void ValidateOperator(const configuration &state) {
   if (state.operator_type < 1 || state.operator_type > 4) {
-    std::cout << "Invalid operator type :: " << state.operator_type << "\n";
+    LOG_ERROR("Invalid operator type :: %d", state.operator_type);
     exit(EXIT_FAILURE);
   } else {
     switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "DIRECT" << std::endl;
+        LOG_INFO("%s : DIRECT", "operator_type ");
         break;
       case OPERATOR_TYPE_AGGREGATE:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "AGGREGATE" << std::endl;
+        LOG_INFO("%s : AGGREGATE", "operator_type ");
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "ARITHMETIC" << std::endl;
+        LOG_INFO("%s : ARITHMETIC", "operator_type ");
         break;
       case OPERATOR_TYPE_JOIN:
-        std::cout << std::setw(20) << std::left << "operator_type "
-                  << " : "
-                  << "JOIN" << std::endl;
+        LOG_INFO("%s : JOIN", "operator_type ");
         break;
       default:
         break;
@@ -94,34 +88,27 @@ static void ValidateOperator(const configuration &state) {
 
 static void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-    std::cout << "Invalid scalefactor :: " << state.scale_factor << std::endl;
+    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "scale_factor "
-            << " : " << state.scale_factor << std::endl;
+  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
 }
 
 static void ValidateLayout(const configuration &state) {
   if (state.layout_mode < 0 || state.layout_mode > 2) {
-    std::cout << "Invalid layout :: " << state.layout_mode << "\n";
+    LOG_ERROR("Invalid layout :: %d", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
       case LAYOUT_ROW:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "ROW" << std::endl;
+        LOG_INFO("%s : ROW", "layout ");
         break;
       case LAYOUT_COLUMN:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "COLUMN" << std::endl;
+        LOG_INFO("%s : COLUMN", "layout ");
         break;
       case LAYOUT_HYBRID:
-        std::cout << std::setw(20) << std::left << "layout "
-                  << " : "
-                  << "HYBRID" << std::endl;
+        LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
         break;
@@ -131,65 +118,56 @@ static void ValidateLayout(const configuration &state) {
 
 static void ValidateProjectivity(const configuration &state) {
   if (state.projectivity < 0 || state.projectivity > 1) {
-    std::cout << "Invalid projectivity :: " << state.projectivity << std::endl;
+    LOG_ERROR("Invalid projectivity :: %lf", state.projectivity);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "projectivity "
-            << " : " << state.projectivity << std::endl;
+  LOG_INFO("%s : %lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
   if (state.selectivity < 0 || state.selectivity > 1) {
-    std::cout << "Invalid selectivity :: " << state.selectivity << std::endl;
+    LOG_ERROR("Invalid selectivity :: %lf", state.selectivity);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "selectivity "
-            << " : " << state.selectivity << std::endl;
+  LOG_INFO("%s : %lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
   if (state.experiment_type <= 0 || state.experiment_type > 14) {
-    std::cout << "Invalid experiment_type :: " << state.experiment_type
-              << std::endl;
+    LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type "
-            << " : " << state.experiment_type << std::endl;
+  LOG_INFO("%s : %d", "experiment_type", state.experiment_type);
 }
 
 static void ValidateColumnCount(const configuration &state) {
   if (state.column_count <= 0) {
-    std::cout << "Invalid attribute_count :: " << state.column_count
-              << std::endl;
+    LOG_ERROR("Invalid column_count :: %d", state.column_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "attribute_count "
-            << " : " << state.column_count << std::endl;
+  LOG_INFO("%s : %d", "column_count", state.column_count);
 }
 
 static void ValidateWriteRatio(const configuration &state) {
   if (state.write_ratio < 0 || state.write_ratio > 1) {
-    std::cout << "Invalid write_ratio :: " << state.write_ratio << std::endl;
+    LOG_ERROR("Invalid write_ratio :: %lf", state.write_ratio);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "write_ratio "
-            << " : " << state.write_ratio << std::endl;
+  LOG_INFO("%s : %lf", "write_ratio", state.write_ratio);
 }
 
 static void ValidateTuplesPerTileGroup(const configuration &state) {
   if (state.tuples_per_tilegroup <= 0) {
-    std::cout << "Invalid tuples_per_tilegroup :: "
-              << state.tuples_per_tilegroup << std::endl;
+    LOG_ERROR("Invalid tuples_per_tilegroup :: %d", state.tuples_per_tilegroup);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "tuples_per_tgroup "
-            << " : " << state.tuples_per_tilegroup << std::endl;
+  LOG_INFO("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
 }
 
 int orig_scale_factor;
@@ -260,12 +238,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.tuples_per_tilegroup = atoi(optarg);
         break;
       case 'h':
-        Usage(stderr);
+        Usage();
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
+        LOG_ERROR("Unknown option: -%c-", c);
+        Usage();
     }
   }
 
@@ -280,8 +258,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     ValidateWriteRatio(state);
     ValidateTuplesPerTileGroup(state);
 
-    std::cout << std::setw(20) << std::left << "transactions "
-              << " : " << state.transactions << std::endl;
+    LOG_INFO("%s : %lu", "transactions", state.transactions);
   } else {
     ValidateExperiment(state);
   }

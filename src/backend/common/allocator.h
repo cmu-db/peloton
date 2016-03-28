@@ -33,7 +33,7 @@ class PelotonAllocator {
   typedef T& reference;
   typedef const T& const_reference;
 
-  PelotonAllocator() throw() { printf("PelotonAllocator \n"); }
+  PelotonAllocator() throw() {}
   PelotonAllocator(const PelotonAllocator&) throw() {}
   template <class U>
   PelotonAllocator(const PelotonAllocator<U>&) throw() {}

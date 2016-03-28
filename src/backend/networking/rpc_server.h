@@ -11,14 +11,16 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include "backend/common/thread_manager.h"
-#include "backend/networking/rpc_method.h"
-#include "tcp_listener.h"
 
 #include <iostream>
 #include <string>
 #include <thread>
 #include <map>
+
+#include "backend/common/thread_manager.h"
+#include "backend/common/logger.h"
+#include "backend/networking/rpc_method.h"
+#include "backend/networking/tcp_listener.h"
 
 namespace peloton {
 namespace networking {
@@ -48,7 +50,7 @@ class RpcServer {
 
   // the rpc function can call this to execute something
   static void Callback() {
-    std::cout << "This is server backcall" << std::endl;
+    LOG_TRACE("This is server backcall");
   }
 
   RpcMethodMap rpc_method_map_;

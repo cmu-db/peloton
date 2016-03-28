@@ -38,7 +38,7 @@ TEST_F(ContainerTupleTest, VectorValue) {
   expression::ContainerTuple<std::vector<Value>> ctuple(&values);
 
   for (size_t i = 0; i < values.size(); i++) {
-    std::cout << ctuple.GetValue(i) << "\n";
+    LOG_INFO("%s",  ctuple.GetValue(i).GetInfo().c_str());
     EXPECT_TRUE(values[i].OpEquals(ctuple.GetValue(i)).IsTrue());
   }
 }

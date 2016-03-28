@@ -14,25 +14,28 @@
 #include <algorithm>
 #include <sys/stat.h>
 
+#undef NDEBUG
+
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 
 namespace peloton {
 namespace benchmark {
 namespace logger {
 
-void Usage(FILE* out) {
-  fprintf(out,
-          "Command line options :  logger <options> \n"
-          "   -h --help              :  Print help message \n"
-          "   -l --logging-type      :  Logging type \n"
-          "   -t --tuple-count       :  Tuple count \n"
-          "   -b --backend-count     :  Backend count \n"
-          "   -z --column-count      :  # of columns per tuple \n"
-          "   -c --check-tuple-count :  Check tuple count \n"
-          "   -f --data-file-size    :  Data file size (MB) \n"
-          "   -e --experiment_type   :  Experiment Type \n"
-          "   -w --wait-timeout      :  Wait timeout (us) \n");
+void Usage() {
+  LOG_ERROR(
+      "Command line options :  logger <options> \n"
+      "   -h --help              :  Print help message \n"
+      "   -l --logging-type      :  Logging type \n"
+      "   -t --tuple-count       :  Tuple count \n"
+      "   -b --backend-count     :  Backend count \n"
+      "   -z --column-count      :  # of columns per tuple \n"
+      "   -c --check-tuple-count :  Check tuple count \n"
+      "   -f --data-file-size    :  Data file size (MB) \n"
+      "   -e --experiment_type   :  Experiment Type \n"
+      "   -w --wait-timeout      :  Wait timeout (us) \n");
   exit(EXIT_FAILURE);
 }
 
@@ -48,73 +51,61 @@ static struct option opts[] = {
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
-  std::cout << std::setw(20) << std::left << "logging_type "
-            << " : ";
-
-  std::cout << LoggingTypeToString(state.logging_type) << std::endl;
+  LOG_INFO("Invalid logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
 }
 
 static void ValidateColumnCount(const configuration& state) {
   if (state.column_count <= 0) {
-    std::cout << "Invalid column_count :: " << state.column_count << std::endl;
+    LOG_ERROR("Invalid column_count :: %ld", state.column_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "column_count "
-            << " : " << state.column_count << std::endl;
+  LOG_INFO("column_count :: %ld", state.column_count);
 }
 
 static void ValidateTupleCount(const configuration& state) {
   if (state.tuple_count <= 0) {
-    std::cout << "Invalid tuple_count :: " << state.tuple_count << std::endl;
+    LOG_ERROR("Invalid tuple_count :: %d", state.tuple_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "tuple_count "
-            << " : " << state.tuple_count << std::endl;
+  LOG_INFO("tuple_count :: %d", state.tuple_count);
 }
 
 static void ValidateBackendCount(const configuration& state) {
   if (state.backend_count <= 0) {
-    std::cout << "Invalid backend_count :: " << state.backend_count
-              << std::endl;
+    LOG_ERROR("Invalid backend_count :: %d", state.backend_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "backend_count "
-            << " : " << state.backend_count << std::endl;
+  LOG_INFO("backend_count :: %d", state.backend_count);
 }
 
 static void ValidateDataFileSize(const configuration& state) {
   if (state.data_file_size <= 0) {
-    std::cout << "Invalid pmem_file_size :: " << state.data_file_size
-              << std::endl;
+    LOG_ERROR("Invalid data_file_size :: %lu", state.data_file_size);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "data_file_size "
-            << " : " << state.data_file_size << std::endl;
+  LOG_INFO("data_file_size :: %lu", state.data_file_size);
 }
 
 static void ValidateExperiment(const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
-    std::cout << "Invalid experiment_type :: " << state.experiment_type
-              << std::endl;
+    LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type "
-            << " : " << state.experiment_type << std::endl;
+  LOG_INFO("experiment_type :: %d", state.experiment_type);
 }
 
 static void ValidateWaitTimeout(const configuration& state) {
   if (state.wait_timeout < 0) {
-    std::cout << "Invalid wait_timeout :: " << state.wait_timeout << std::endl;
+    LOG_ERROR("Invalid wait_timeout :: %lu", state.wait_timeout);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "wait_timeout "
-            << " : " << state.wait_timeout << std::endl;
+  LOG_INFO("wait_timeout :: %lu", state.wait_timeout);
 }
 
 static void ValidateLogFileDir(configuration& state) {
@@ -167,8 +158,7 @@ static void ValidateLogFileDir(configuration& state) {
     } break;
   }
 
-  std::cout << std::setw(20) << std::left << "log_file_dir "
-            << " : " << state.log_file_dir << std::endl;
+  LOG_INFO("log_file_dir :: %s", state.log_file_dir.c_str());
 }
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
@@ -222,12 +212,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
 
       case 'h':
-        Usage(stderr);
+        Usage();
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
+        LOG_ERROR("Unknown option: -%c-", c);
+        Usage();
     }
   }
 

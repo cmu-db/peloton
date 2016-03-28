@@ -129,10 +129,8 @@ StorageManager::StorageManager()
     }
   }
 
-  LOG_INFO("DATA DIR :: %s ", data_file_name.c_str());
-
   // TODO:
-  std::cout << "Data path :: " << data_file_name << "\n";
+  LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
   if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
