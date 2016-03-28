@@ -26,6 +26,8 @@
 #include "postgres/include/utils/pg_locale.h"
 #include "postgres/include/utils/ps_status.h"
 
+#include "backend/common/logger.h"
+
 const char *progname;
 
 static void startup_hacks(const char *progname);
@@ -208,78 +210,68 @@ static void init_locale(int category, const char *locale) {
  * Messages emitted in write_console() do not exhibit this problem.
  */
 static void help(const char *progname) {
-  printf(_("%s is the PostgreSQL server.\n\n"), progname);
-  printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
-  printf(_("Options:\n"));
-  printf(_("  -B NBUFFERS        number of shared buffers\n"));
-  printf(_("  -c NAME=VALUE      set run-time parameter\n"));
-  printf(
-      _("  -C NAME            print value of run-time parameter, then exit\n"));
-  printf(_("  -d 1-5             debugging level\n"));
-  printf(_("  -D DATADIR         database directory\n"));
-  printf(_("  -e                 use European date input format (DMY)\n"));
-  printf(_("  -F                 turn fsync off\n"));
-  printf(_("  -h HOSTNAME        host name or IP address to listen on\n"));
-  printf(_("  -i                 enable TCP/IP connections\n"));
-  printf(_("  -k DIRECTORY       Unix-domain socket location\n"));
+  std::string message = std::string(progname) + " is the PostgreSQL server.\n\n";
+  message +="Usage:\n  " + std::string(progname) + " [OPTION]...\n\n";
+  message +="Options:\n";
+  message +="  -B NBUFFERS        number of shared buffers\n";
+  message +="  -c NAME=VALUE      set run-time parameter\n";
+  message +="  -C NAME            print value of run-time parameter, then exit\n";
+  message +="  -d 1-5             debugging level\n";
+  message +="  -D DATADIR         database directory\n";
+  message +="  -e                 use European date input format (DMY)\n";
+  message +="  -F                 turn fsync off\n";
+  message +="  -h HOSTNAME        host name or IP address to listen on\n";
+  message +="  -i                 enable TCP/IP connections\n";
+  message +="  -k DIRECTORY       Unix-domain socket location\n";
 #ifdef USE_SSL
-  printf(_("  -l                 enable SSL connections\n"));
+  message +="  -l                 enable SSL connections\n";
 #endif
-  printf(_("  -N MAX-CONNECT     maximum number of allowed connections\n"));
-  printf(
-      _("  -o OPTIONS         pass \"OPTIONS\" to each server process "
-        "(obsolete)\n"));
-  printf(_("  -p PORT            port number to listen on\n"));
-  printf(_("  -s                 show statistics after each query\n"));
-  printf(_("  -S WORK-MEM        set amount of memory for sorts (in kB)\n"));
-  printf(_("  -V, --version      output version information, then exit\n"));
-  printf(_("  --NAME=VALUE       set run-time parameter\n"));
-  printf(
-      _("  --describe-config  describe configuration parameters, then exit\n"));
-  printf(_("  -?, --help         show this help, then exit\n"));
+  message +="  -N MAX-CONNECT     maximum number of allowed connections\n";
+  message +="  -o OPTIONS         pass \"OPTIONS\" to each server process "
+        "(obsolete)\n";
+  message +="  -p PORT            port number to listen on\n";
+  message +="  -s                 show statistics after each query\n";
+  message +="  -S WORK-MEM        set amount of memory for sorts (in kB)\n";
+  message +="  -V, --version      output version information, then exit\n";
+  message +="  --NAME=VALUE       set run-time parameter\n";
+  message +="  --describe-config  describe configuration parameters, then exit\n";
+  message +="  -?, --help         show this help, then exit\n";
 
-  printf(_("\nDeveloper options:\n"));
-  printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));
-  printf(
-      _("  -n                 do not reinitialize shared memory after abnormal "
-        "exit\n"));
-  printf(_("  -O                 allow system table structure changes\n"));
-  printf(_("  -P                 disable system indexes\n"));
-  printf(_("  -t pa|pl|ex        show timings after each query\n"));
-  printf(
-      _("  -T                 send SIGSTOP to all backend processes if one "
-        "dies\n"));
-  printf(
-      _("  -W NUM             wait NUM seconds to allow attach from a "
-        "debugger\n"));
+  message +="\nDeveloper options:\n";
+  message +="  -f s|i|n|m|h       forbid use of some plan types\n";
+  message +="  -n                 do not reinitialize shared memory after abnormal "
+        "exit\n";
+  message +="  -O                 allow system table structure changes\n";
+  message +="  -P                 disable system indexes\n";
+  message +="  -t pa|pl|ex        show timings after each query\n";
+  message +="  -T                 send SIGSTOP to all backend processes if one "
+        "dies\n";
+  message +="  -W NUM             wait NUM seconds to allow attach from a "
+        "debugger\n";
 
-  printf(_("\nOptions for single-user mode:\n"));
-  printf(
-      _("  --single           selects single-user mode (must be first "
-        "argument)\n"));
-  printf(_("  DBNAME             database name (defaults to user name)\n"));
-  printf(_("  -d 0-5             override debugging level\n"));
-  printf(_("  -E                 echo statement before execution\n"));
-  printf(
-      _("  -j                 do not use newline as interactive query "
-        "delimiter\n"));
-  printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
+  message +="\nOptions for single-user mode:\n";
+  message +="  --single           selects single-user mode (must be first "
+        "argument)\n";
+  message +="  DBNAME             database name (defaults to user name)\n";
+  message +="  -d 0-5             override debugging level\n";
+  message +="  -E                 echo statement before execution\n";
+  message +="  -j                 do not use newline as interactive query "
+        "delimiter\n";
+  message +="  -r FILENAME        send stdout and stderr to given file\n";
 
-  printf(_("\nOptions for bootstrapping mode:\n"));
-  printf(
-      _("  --boot             selects bootstrapping mode (must be first "
-        "argument)\n"));
-  printf(
-      _("  DBNAME             database name (mandatory argument in "
-        "bootstrapping mode)\n"));
-  printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
-  printf(_("  -x NUM             internal use\n"));
+  message +="\nOptions for bootstrapping mode:\n";
+  message +="  --boot             selects bootstrapping mode (must be first "
+        "argument)\n";
+  message +="  DBNAME             database name (mandatory argument in "
+        "bootstrapping mode)\n";
+  message +="  -r FILENAME        send stdout and stderr to given file\n";
+  message +="  -x NUM             internal use\n";
 
-  printf(
-      _("\nPlease read the documentation for the complete list of run-time\n"
+  message +="\nPlease read the documentation for the complete list of run-time\n"
         "configuration settings and how to set them on the command line or in\n"
         "the configuration file.\n\n"
-        "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+        "Report bugs to <pgsql-bugs@postgresql.org>.\n";
+  fprintf(stderr, "%s", message.c_str());
 }
 
 static void check_root(const char *progname) {
