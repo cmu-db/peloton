@@ -165,7 +165,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
-          transaction_manager.PerformRead(tile_group_id, tuple_id);
+          auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+          if(!res){
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                                tuple_id);
@@ -173,7 +177,11 @@ bool IndexScanExecutor::ExecIndexLookup() {
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tile_group_id].push_back(tuple_id);
-            transaction_manager.PerformRead(tile_group_id, tuple_id);
+            auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+            if(!res){
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
           }
         }
         break;

@@ -233,7 +233,7 @@ void ExecutorTestsUtil::PopulateTiles(
   const bool allocate = true;
   txn_manager.BeginTransaction();
   // const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetStartCommitId();
+  // const cid_t commit_id = txn->GetBeginCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {

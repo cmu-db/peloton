@@ -105,10 +105,10 @@ bool DeleteExecutor::DExecute() {
     } else if (transaction_manager.IsAccessable(tile_group,
                                                 physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
-      // transdaction.
+      // transaction.
 
-      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) ==
-          false) {
+      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
       // if it is the latest version and not locked by other threads, then
@@ -131,8 +131,11 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
 
-      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id,
-                                        location);
+      auto res = transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
 
       executor_context_->num_processed += 1;  // deleted one
 

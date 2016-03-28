@@ -107,9 +107,6 @@ class Value;
 
 #define DEFAULT_TUPLES_PER_TILEGROUP 1000
 
-// Ref count starting point
-#define BASE_REF_COUNT 1
-
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
 // 1048576.

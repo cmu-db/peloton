@@ -50,13 +50,13 @@ storage::DataTable *TransactionTestsUtil::CreateTable() {
   // Create index on the id column
   std::vector<oid_t> key_attrs = {0};
   auto tuple_schema = table->GetSchema();
-  bool unique = true;
+  bool unique = false;
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 

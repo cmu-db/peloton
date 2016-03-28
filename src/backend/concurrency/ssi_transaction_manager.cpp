@@ -49,8 +49,8 @@ bool SsiTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
       return false;
     }
   } else {
-    bool activated = (current_txn->GetStartCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetStartCommitId() >= tuple_end_cid);
+    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
@@ -83,7 +83,7 @@ bool SsiTransactionManager::IsOwner(storage::TileGroup *tile_group,
 }
 
 // if the tuple is not owned by any transaction and is visible to current
-// transdaction.
+// transaction.
 bool SsiTransactionManager::IsAccessable(storage::TileGroup *tile_group,
                                          const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
