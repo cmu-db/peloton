@@ -56,7 +56,7 @@ class TransactionManager {
                            const oid_t &tuple_id) = 0;
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location) = 0;
+                             const ItemPointer &new_location) = 0;
 
   virtual bool AcquireTuple(storage::TileGroup *tile_group,
                             const oid_t &physical_tuple_id) = 0;
