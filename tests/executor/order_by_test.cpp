@@ -61,19 +61,10 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
   EXPECT_GT(sort_keys.size(), 0);
   EXPECT_GT(descend_flags.size(), 0);
 
-  // Verify:
-  // Lazy here: just print it out and see it by yourself.
+  // TODO: Verify
   for (auto &tile : result_tiles) {
-    for (oid_t tuple_id : *tile) {
-      std::cout << "<";
-      for (size_t sk = 0; sk < sort_keys.size(); sk++) {
-        std::cout << tile->GetValue(tuple_id, sort_keys[sk]) << ",";
-      }
-      std::cout << ">";
-    }
+    LOG_INFO("%s", tile->GetInfo().c_str());
   }
-
-  std::cout << std::endl;
 }
 
 TEST_F(OrderByTests, IntAscTest) {

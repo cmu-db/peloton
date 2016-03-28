@@ -15,6 +15,8 @@
 #include <iostream>
 #include <memory>
 
+#include "harness.h"
+
 namespace peloton {
 namespace test {
 
@@ -23,24 +25,24 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 struct Foo {
-  Foo() { std::cout << "Foo...\n"; }
-  ~Foo() { std::cout << "~Foo...\n"; }
+  Foo() { LOG_INFO("Foo..."); }
+  ~Foo() { LOG_INFO("~Foo..."); }
 };
 
 TEST(SmartPointerTests, UniquePtr) {
-  std::cout << "Creating new Foo...\n";
+  LOG_INFO("Creating new Foo...");
   std::unique_ptr<Foo> up(new Foo());
 
-  std::cout << "About to release Foo...\n";
+  LOG_INFO("About to release Foo...");
   Foo* fp = up.release();
 
   assert(up.get() == nullptr);
-  std::cout << "Foo is no longer owned by unique_ptr...\n";
+  LOG_INFO("Foo is no longer owned by unique_ptr...");
 
-  std::cout << "Add a new Foo...\n";
+  LOG_INFO("Add a new Foo...");
   up.reset(new Foo());  // calls deleter for the old one
 
-  std::cout << "Release and delete the owned Foo...\n";
+  LOG_INFO("Release and delete the owned Foo...");
   up.reset(nullptr);
 
   EXPECT_EQ(up.get(), nullptr);

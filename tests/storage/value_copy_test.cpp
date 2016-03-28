@@ -46,11 +46,9 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   tuple->SetValue(0, val, pool);
 
-  std::cout << "Going to get value \n";
-
   Value val3 = tuple->GetValue(0);
 
-  std::cout << val3;
+  LOG_INFO("%s", val3.GetInfo().c_str());
 
   delete tuple;
   delete schema;

@@ -18,13 +18,15 @@
 
 #include <iostream>
 
+//===--------------------------------------------------------------------===//
+// Implements AbstractPelotonService
+//===--------------------------------------------------------------------===//
+
 namespace peloton {
 namespace networking {
 
 class PelotonService : public AbstractPelotonService {
  public:
-  // implements AbstractPelotonService
-  // ------------------------------------------
 
   virtual void TransactionInit(::google::protobuf::RpcController* controller,
                                const TransactionInitRequest* request,
@@ -36,9 +38,9 @@ class PelotonService : public AbstractPelotonService {
                                ::google::protobuf::Closure* done);
   virtual void TransactionPrefetch(
       ::google::protobuf::RpcController* controller,
-      const TransactionPrefetchResult* request,
-      TransactionPrefetchAcknowledgement* response,
-      ::google::protobuf::Closure* done);
+       const TransactionPrefetchResult* request,
+       TransactionPrefetchAcknowledgement* response,
+       ::google::protobuf::Closure* done);
   virtual void TransactionMap(::google::protobuf::RpcController* controller,
                               const TransactionMapRequest* request,
                               TransactionMapResponse* response,
@@ -57,8 +59,8 @@ class PelotonService : public AbstractPelotonService {
                                  ::google::protobuf::Closure* done);
   virtual void TransactionRedirect(
       ::google::protobuf::RpcController* controller,
-      const TransactionRedirectRequest* request,
-      TransactionRedirectResponse* response, ::google::protobuf::Closure* done);
+       const TransactionRedirectRequest* request,
+       TransactionRedirectResponse* response, ::google::protobuf::Closure* done);
   virtual void TransactionDebug(::google::protobuf::RpcController* controller,
                                 const TransactionDebugRequest* request,
                                 TransactionDebugResponse* response,
@@ -92,8 +94,6 @@ class PelotonService : public AbstractPelotonService {
                         TimeSyncResponse* response,
                         ::google::protobuf::Closure* done);
 };
-
-// void StartPelotonService();
 
 }  // namespace networking
 }  // namespace peloton

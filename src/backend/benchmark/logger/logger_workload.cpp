@@ -16,6 +16,8 @@
 #include <getopt.h>
 #include <sys/stat.h>
 
+#undef NDEBUG
+
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/value_factory.h"
@@ -61,23 +63,24 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.logging_type << " " << state.column_count << " "
-            << state.tuple_count << " " << state.backend_count << " "
-            << state.wait_timeout << " :: ";
-  std::cout << value << "\n";
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %lu %d %d %lu :: %lf",
+           state.logging_type, state.column_count,
+           state.tuple_count, state.backend_count,
+           state.wait_timeout,
+           value);
 
   auto& storage_manager = storage::StorageManager::GetInstance();
   auto& log_manager = logging::LogManager::GetInstance();
   auto frontend_logger = log_manager.GetFrontendLogger();
-  auto fsync_count = 0;
+  size_t fsync_count = 0;
   if (frontend_logger != nullptr) {
     fsync_count = frontend_logger->GetFsyncCount();
   }
 
-  std::cout << "fsync count : " << fsync_count << " ";
-  std::cout << "clflush count : " << storage_manager.GetClflushCount() << " ";
-  std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
+  LOG_INFO("fsync count : %lu", fsync_count);
+  LOG_INFO("clflush count : %lu", storage_manager.GetClflushCount());
+  LOG_INFO("msync count : %lu", storage_manager.GetMsyncCount());
 
   out << state.logging_type << " ";
   out << state.column_count << " ";
@@ -95,8 +98,6 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
   if (!file_path.empty() && file_path.back() != '/') file_path += '/';
 
   file_path += file_name;
-
-  // std::cout << "File Path :: " << file_path << "\n";
 
   return file_path;
 }
@@ -131,7 +132,7 @@ bool PrepareLogFile(std::string file_name) {
   }
 
   // TODO:
-  std::cout << "Log path :: " << file_path << "\n";
+  LOG_INFO("Log path :: %s", file_path.c_str());
 
   // set log file and logging type
   log_manager.SetLogFileName(file_path);
@@ -322,7 +323,7 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
     WriteOutput(elapsed_milliseconds.count());
   } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
     auto log_file_size = GetLogFileSize();
-    std::cout << "Log file size :: " << log_file_size << "\n";
+    LOG_INFO("Log file size :: %lu", log_file_size);
     WriteOutput(log_file_size);
   }
 
@@ -382,7 +383,7 @@ std::vector<ItemPointer> InsertTuples(
     ItemPointer location = table->InsertTuple(tuple);
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
-      std::cout << "Insert failed \n";
+      LOG_ERROR("Insert failed");
       exit(EXIT_FAILURE);
     }
 
@@ -419,40 +420,6 @@ void DeleteTuples(storage::DataTable* table __attribute__((unused)),
                   const std::vector<ItemPointer>& locations
                   __attribute__((unused)),
                   bool committed __attribute__((unused))) {
-  // for (auto delete_location : locations) {
-  //   auto& txn_manager =
-  //   concurrency::TransactionManagerFactory::GetInstance();
-  //   auto txn = txn_manager.BeginTransaction();
-
-  //   bool status = table->DeleteTuple(txn, delete_location);
-  //   if (status == false) {
-  //     txn->SetResult(Result::RESULT_FAILURE);
-  //     std::cout << "Delete failed \n";
-  //     exit(EXIT_FAILURE);
-  //   }
-
-  //   txn->RecordDelete(delete_location);
-
-  //   // Logging
-  //   {
-  //     auto& log_manager = logging::LogManager::GetInstance();
-
-  //     if (log_manager.IsInLoggingMode()) {
-  //       auto logger = log_manager.GetBackendLogger();
-  //       auto record = logger->GetTupleRecord(
-  //           LOGRECORD_TYPE_TUPLE_DELETE, txn->GetTransactionId(),
-  //           table->GetOid(), INVALID_ITEMPOINTER, delete_location, nullptr,
-  //           LOGGING_TESTS_DATABASE_OID);
-  //       logger->Log(record);
-  //     }
-  //   }
-
-  //   if (committed) {
-  //     txn_manager.CommitTransaction();
-  //   } else {
-  //     txn_manager.AbortTransaction();
-  //   }
-  // }
 }
 
 std::vector<ItemPointer> UpdateTuples(
@@ -462,54 +429,6 @@ std::vector<ItemPointer> UpdateTuples(
     bool committed __attribute__((unused))) {
   // // Inserted locations
   std::vector<ItemPointer> inserted_locations;
-
-  // size_t tuple_itr = 0;
-  // for (auto delete_location : deleted_locations) {
-  //   auto tuple = tuples[tuple_itr];
-  //   tuple_itr++;
-
-  //   auto& txn_manager =
-  //   concurrency::TransactionManagerFactory::GetInstance();
-  //   auto txn = txn_manager.BeginTransaction();
-
-  //   bool status = table->DeleteTuple(txn, delete_location);
-  //   if (status == false) {
-  //     txn->SetResult(Result::RESULT_FAILURE);
-  //     std::cout << "Delete failed \n";
-  //     exit(EXIT_FAILURE);
-  //   }
-
-  //   txn->RecordDelete(delete_location);
-
-  //   ItemPointer insert_location = table->InsertTuple(txn, tuple);
-  //   if (insert_location.block == INVALID_OID) {
-  //     txn->SetResult(Result::RESULT_FAILURE);
-  //     std::cout << "Insert failed \n";
-  //     exit(EXIT_FAILURE);
-  //   }
-  //   txn->RecordInsert(insert_location);
-
-  //   inserted_locations.push_back(insert_location);
-
-  //   // Logging
-  //   {
-  //     auto& log_manager = logging::LogManager::GetInstance();
-  //     if (log_manager.IsInLoggingMode()) {
-  //       auto logger = log_manager.GetBackendLogger();
-  //       auto record = logger->GetTupleRecord(
-  //           LOGRECORD_TYPE_TUPLE_UPDATE, txn->GetTransactionId(),
-  //           table->GetOid(), insert_location, delete_location, tuple,
-  //           LOGGING_TESTS_DATABASE_OID);
-  //       logger->Log(record);
-  //     }
-  //   }
-
-  //   if (committed) {
-  //     txn_manager.CommitTransaction();
-  //   } else {
-  //     txn_manager.AbortTransaction();
-  //   }
-  // }
 
   return inserted_locations;
 }

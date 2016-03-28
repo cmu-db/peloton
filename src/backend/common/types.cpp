@@ -167,9 +167,7 @@ std::string BackendTypeToString(BackendType type) {
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
     default: {
-      char buffer[32];
-      ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
-      ret = buffer;
+      return "UNKNOWN " + std::to_string(type);
     }
   }
   return (ret);
@@ -1153,7 +1151,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
+      LOG_ERROR("INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
       break;
   }
   return constraintType;

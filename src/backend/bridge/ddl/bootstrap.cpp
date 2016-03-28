@@ -49,9 +49,6 @@ bool Bootstrap::BootstrapPeloton(void) {
   // auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   // db->UpdateStats(peloton_status, false);
 
-  // Verbose mode
-  // std::cout << "Print db :: \n"<<*db << std::endl;
-
   elog(DEBUG5, "Finished initializing Peloton");
   return true;
 }

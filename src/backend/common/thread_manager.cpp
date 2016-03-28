@@ -10,15 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/thread_manager.h"
 #include <cassert>
 
-#define NUM_THREAD 10
+#include "backend/common/thread_manager.h"
 
-// for test
-int xthread = 1;
-#include <iostream>
-// end test
+#define NUM_THREAD 10
 
 namespace peloton {
 
@@ -28,19 +24,9 @@ ThreadManager &ThreadManager::GetInstance(void) {
   return thread_manager;
 }
 
-// ThreadManager &ThreadManager::GetServerThreadPool(void) {
-//  static ThreadManager server_thread_pool(NUM_THREAD);
-//  return server_thread_pool;
-//}
-//
-// ThreadManager &ThreadManager::GetClientThreadPool(void) {
-//  static ThreadManager client_thread_pool(NUM_THREAD);
-//  return client_thread_pool;
-//}
-
 ThreadManager::ThreadManager(int threads) : terminate_(false) {
   // Create number of required threads and add them to the thread pool vector.
-  for (int i = 0; i < threads; i++) {
+  for (int thread_itr = 0; thread_itr < threads; thread_itr++) {
     thread_pool_.emplace_back(std::thread(&ThreadManager::Invoke, this));
   }
 }
@@ -125,16 +111,6 @@ ThreadPool &ThreadPool::GetInstance(void) {
   return thread_pool;
 }
 
-// ThreadPool &ThreadPool::GetServerThreadPool(void) {
-//  static ThreadPool server_thread_pool(NUM_THREAD);
-//  return server_thread_pool;
-//}
-//
-// ThreadPool &ThreadPool::GetClientThreadPool(void) {
-//  static ThreadPool client_thread_pool(NUM_THREAD);
-//  return client_thread_pool;
-//}
-
 ThreadPool::ThreadPool(int threads) : cond_(&mutex_), terminate_(false) {
   // Create number of required threads and add them to the thread pool vector.
   for (int i = 0; i < threads; i++) {
@@ -191,9 +167,6 @@ void *ThreadPool::InvokeEntry(void *self) {
 }
 
 void ThreadPool::Invoke() {
-  std::cout << "thread: " << xthread << std::endl;
-  xthread++;
-
   std::function<void()> task;
 
   while (true) {

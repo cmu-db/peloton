@@ -18,7 +18,10 @@
 #include <iostream>
 #include <atomic>
 
+#undef NDEBUG
+
 #include "backend/common/types.h"
+#include "backend/common/logger.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

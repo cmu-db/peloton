@@ -18,6 +18,8 @@ before_script:
     - sudo -H sh ./scripts/installation/packages.sh
 
 script:
+    # first, run validator
+    - python ./scripts/validators/validator.py
     # bootstrap
     - ./bootstrap
     - cd build

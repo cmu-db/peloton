@@ -15,6 +15,8 @@
 #include <iostream>
 #include <cstring>
 
+#include "harness.h"
+
 namespace peloton {
 namespace test {
 
@@ -27,21 +29,21 @@ class RuleOfThree {
  public:
   // user-defined constructor
   RuleOfThree(const char* arg) : cstring(new char[std::strlen(arg) + 1]) {
-    std::cout << "Constructor \n";
+    LOG_INFO("Constructor ");
 
     std::strcpy(cstring, arg);  // populate
   }
 
   // destructor
   ~RuleOfThree() {
-    std::cout << "Destructor \n";
+    LOG_INFO("Destructor ");
 
     delete[] cstring;  // deallocate
   }
 
   // copy constructor
   RuleOfThree(const RuleOfThree& other) {
-    std::cout << "Copy Constructor \n";
+    LOG_INFO("Copy Constructor ");
 
     cstring = new char[std::strlen(other.cstring) + 1];
     std::strcpy(cstring, other.cstring);
@@ -49,7 +51,7 @@ class RuleOfThree {
 
   // copy assignment
   RuleOfThree& operator=(const RuleOfThree& other) {
-    std::cout << "Copy Assignment \n";
+    LOG_INFO("Copy Assignment ");
 
     char* tmp_cstring = new char[std::strlen(other.cstring) + 1];
     std::strcpy(tmp_cstring, other.cstring);
@@ -85,20 +87,20 @@ TEST(RuleTests, RuleOfThreeTest) {
 class RuleOfFive {
  public:
   RuleOfFive(const char* arg) : cstring(new char[std::strlen(arg) + 1]) {
-    std::cout << "Constructor \n";
+    LOG_INFO("Constructor ");
 
     std::strcpy(cstring, arg);  // populate
   }
 
   ~RuleOfFive() {
-    std::cout << "Destructor \n";
+    LOG_INFO("Destructor ");
 
     delete[] cstring;  // deallocate
   }
 
   // copy constructor
   RuleOfFive(const RuleOfFive& other) {
-    std::cout << "Copy Constructor \n";
+    LOG_INFO("Copy Constructor ");
 
     cstring = new char[std::strlen(other.cstring) + 1];
     std::strcpy(cstring, other.cstring);
@@ -106,14 +108,14 @@ class RuleOfFive {
 
   // move constructor
   RuleOfFive(RuleOfFive&& other) : cstring(other.cstring) {
-    std::cout << "Move Constructor \n";
+    LOG_INFO("Move Constructor ");
 
     other.cstring = nullptr;
   }
 
   // copy assignment
   RuleOfFive& operator=(const RuleOfFive& other) {
-    std::cout << "Copy Assignment \n";
+    LOG_INFO("Copy Assignment ");
 
     char* tmp_cstring = new char[std::strlen(other.cstring) + 1];
     std::strcpy(tmp_cstring, other.cstring);
@@ -124,7 +126,7 @@ class RuleOfFive {
 
   // move assignment
   RuleOfFive& operator=(RuleOfFive&& other) {
-    std::cout << "Move Assignment \n";
+    LOG_INFO("Move Assignment ");
 
     delete[] cstring;
     cstring = other.cstring;

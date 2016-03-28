@@ -262,7 +262,7 @@ TEST_F(ExpressionTest, SimpleAddition) {
       ConvertToExpression(e));
 
   Value result = testexp->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*testexp);
+  LOG_INFO("%s", result.GetInfo().c_str());
 
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(result), 5LL);
 }
@@ -286,7 +286,7 @@ TEST_F(ExpressionTest, SimpleMultiplication) {
 
   std::unique_ptr<expression::AbstractExpression> e1(ConvertToExpression(e));
   Value r1 = e1->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*e1);
+  LOG_INFO("%s", r1.GetInfo().c_str());
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r1), 25LL);
 
   // (2 * 5) + 3
@@ -301,7 +301,7 @@ TEST_F(ExpressionTest, SimpleMultiplication) {
 
   std::unique_ptr<expression::AbstractExpression> e2(ConvertToExpression(e));
   Value r2 = e2->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*e2);
+  LOG_INFO("%s", r2.GetInfo().c_str());
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
 }
 
@@ -336,7 +336,7 @@ TEST_F(ExpressionTest, SimpleFilter) {
   tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
-  std::cout << (*equal);
+  LOG_INFO("%s", equal->GetInfo().c_str());
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
@@ -391,8 +391,7 @@ TEST_F(ExpressionTest, SimpleInFilter) {
   tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
-  std::cout << (*equal);
-
+  LOG_INFO("%s", equal->GetInfo().c_str());
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);

@@ -84,7 +84,6 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
 
   // Get the table's schema to get a column
   catalog::Schema *schema = table->GetSchema();
-  std::cout << (*schema);
 
   // Check the first column' name, length and value type
   catalog::Column column = schema->GetColumn(0);
