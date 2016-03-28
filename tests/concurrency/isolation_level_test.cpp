@@ -23,14 +23,11 @@ namespace test {
 
 class IsolationLevelTest : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OCC,
-    CONCURRENCY_TYPE_2PL
-};
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
+                                                  CONCURRENCY_TYPE_2PL};
 
 void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -132,8 +129,7 @@ void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
 }
 
 void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -194,8 +190,7 @@ void DirtyReadTest(ConcurrencyType test_type __attribute__((unused))) {
 }
 
 void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -252,8 +247,7 @@ void FuzzyReadTest(ConcurrencyType test_type __attribute__((unused))) {
 }
 
 void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -267,10 +261,11 @@ void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
 
     scheduler.Run();
     size_t original_tuple_count = 10;
-    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS && 
-      scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
+        scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
       // Should scan no more tuples
-      EXPECT_TRUE(scheduler.schedules[0].results.size() == original_tuple_count*2);
+      EXPECT_TRUE(scheduler.schedules[0].results.size() ==
+                  original_tuple_count * 2);
     }
   }
 
@@ -285,17 +280,17 @@ void PhantomTest(ConcurrencyType test_type __attribute__((unused))) {
     scheduler.Run();
 
     size_t original_tuple_count = 11;
-    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS && 
-      scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
+        scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
       // Should scan no less tuples
-      EXPECT_TRUE(scheduler.schedules[0].results.size() == original_tuple_count*2);
+      EXPECT_TRUE(scheduler.schedules[0].results.size() ==
+                  original_tuple_count * 2);
     }
   }
 }
 
 void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
@@ -333,8 +328,7 @@ void WriteSkewTest(ConcurrencyType test_type __attribute__((unused))) {
 }
 
 void ReadSkewTest(ConcurrencyType test_type __attribute__((unused))) {
-  auto &txn_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
   {
@@ -349,15 +343,17 @@ void ReadSkewTest(ConcurrencyType test_type __attribute__((unused))) {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
-      EXPECT_TRUE(scheduler.schedules[0].results[0] == scheduler.schedules[0].results[1]);
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      EXPECT_TRUE(scheduler.schedules[0].results[0] ==
+                  scheduler.schedules[0].results[1]);
     }
   }
 }
 
 TEST_F(IsolationLevelTest, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type, ISOLATION_LEVEL_TYPE_FULL);
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, ISOLATION_LEVEL_TYPE_FULL);
     DirtyWriteTest(test_type);
     DirtyReadTest(test_type);
     FuzzyReadTest(test_type);
