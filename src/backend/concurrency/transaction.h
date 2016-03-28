@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -43,25 +44,19 @@ class Transaction : public Printable {
  public:
   Transaction()
       : txn_id(INVALID_TXN_ID),
-        start_cid(INVALID_CID),
+        begin_cid(INVALID_CID),
         end_cid(INVALID_CID),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+        outer_dep_count(0),
+        cascading_abort(false) {}
 
-  Transaction(txn_id_t txn_id, cid_t start_cid)
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
       : txn_id(txn_id),
-        start_cid(start_cid),
+        begin_cid(begin_cid),
         end_cid(INVALID_CID),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+        outer_dep_count(0),
+        cascading_abort(false) {}
 
-  ~Transaction() {
-    if (next != nullptr) {
-      next->DecrementRefCount();
-    }
-  }
+  ~Transaction() {}
 
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
@@ -69,7 +64,7 @@ class Transaction : public Printable {
 
   inline txn_id_t GetTransactionId() const { return txn_id; }
 
-  inline cid_t GetStartCommitId() const { return start_cid; }
+  inline cid_t GetBeginCommitId() const { return begin_cid; }
 
   inline cid_t GetEndCommitId() const { return end_cid; }
 
@@ -95,25 +90,47 @@ class Transaction : public Printable {
 
   const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
 
-  // reset inserted tuples and deleted tuples
-  // used by recovery (logging)
-  void ResetState(void);
-
-  // maintain reference counts for transactions
-  inline void IncrementRefCount();
-
-  inline void DecrementRefCount();
-
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
   // Set result and status
-  inline void SetResult(Result result);
+  inline void SetResult(Result result) { result_ = result; }
 
   // Get result and status
-  inline Result GetResult() const;
+  inline Result GetResult() const { return result_; }
 
- protected:
+  // other transactions can register dependency on me.
+  inline void RegisterDependency(const txn_id_t &txn_id) {
+    {
+      std::lock_guard<std::mutex> lock(inner_dep_set_mutex);
+      inner_dep_set.insert(txn_id);
+    }
+  }
+
+  // other transactions can deregister their dependency.
+  inline void ReleaseDependency(const bool is_abort) {
+    if (is_abort == true) {
+      cascading_abort = true;
+    } else{
+      --outer_dep_count;
+    }
+  }
+
+  // this function is called by myself.
+  inline bool CheckDependency(const txn_id_t &txn_id) {
+    // if this dependency has not been registered before.
+    return outer_dep_set.find(txn_id) == outer_dep_set.end();
+  }
+
+  // this function is called by myself.
+  inline void RecordDependency(const txn_id_t &txn_id) {
+    // if this dependency has not been registered before.
+    assert(outer_dep_set.find(txn_id) == outer_dep_set.end());
+    outer_dep_set.insert(txn_id);
+    ++outer_dep_count;
+  }
+
+ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -122,42 +139,23 @@ class Transaction : public Printable {
   txn_id_t txn_id;
 
   // start commit id
-  cid_t start_cid;
+  cid_t begin_cid;
 
   // end commit id
   cid_t end_cid;
 
-  // references
-  std::atomic<size_t> ref_count;
-
-  // waiting for commit ?
-  std::atomic<bool> waiting_to_commit;
-
-  // cid context
-  Transaction *next __attribute__((aligned(16)));
-
   std::map<oid_t, std::map<oid_t, RWType>> rw_set;
 
-  // synch helpers
-  std::mutex txn_mutex;
+  std::mutex inner_dep_set_mutex;
+  std::unordered_set<txn_id_t> inner_dep_set; // transactions that are dependent on me.
+
+  std::unordered_set<txn_id_t> outer_dep_set; // transactions that i am dependent on.
+  std::atomic<size_t> outer_dep_count;
+  std::atomic<bool> cascading_abort;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
 };
-
-inline void Transaction::IncrementRefCount() { ++ref_count; }
-
-inline void Transaction::DecrementRefCount() {
-  // DROP transaction when ref count reaches 0
-  // this returns the value immediately preceding the assignment
-  if (ref_count.fetch_sub(1) == 1) {
-    delete this;
-  }
-}
-
-inline void Transaction::SetResult(Result result) { result_ = result; }
-
-inline Result Transaction::GetResult() const { return result_; }
 
 }  // End concurrency namespace
 }  // End peloton namespace
