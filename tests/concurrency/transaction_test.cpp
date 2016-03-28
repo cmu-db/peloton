@@ -23,10 +23,10 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-// static std::vector<ConcurrencyType> TEST_TYPES = {
-//     CONCURRENCY_TYPE_OCC
-//     // CONCURRENCY_TYPE_2PL
-// };
+static std::vector<ConcurrencyType> TEST_TYPES = {
+    CONCURRENCY_TYPE_OCC,
+    CONCURRENCY_TYPE_2PL
+};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -47,18 +47,20 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
 }
 
 TEST_F(TransactionTests, TransactionTest) {
-  // for (auto test_type : TEST_TYPES) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager =
         concurrency::TransactionManagerFactory::GetInstance();
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
 
     std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
-  // }
+  }
 }
 
 TEST_F(TransactionTests, AbortTest) {
-  // for (auto test_type : TEST_TYPES) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager =
         concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
@@ -89,7 +91,7 @@ TEST_F(TransactionTests, AbortTest) {
       EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(-1, scheduler.schedules[1].results[0]);
     }
-  // }
+  }
 }
 
 }  // End test namespace

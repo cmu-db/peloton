@@ -24,8 +24,8 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OCC
-    // CONCURRENCY_TYPE_2PL
+    CONCURRENCY_TYPE_OCC,
+    CONCURRENCY_TYPE_2PL
 };
 
 void DirtyWriteTest(ConcurrencyType test_type __attribute__((unused))) {
@@ -357,6 +357,7 @@ void ReadSkewTest(ConcurrencyType test_type __attribute__((unused))) {
 
 TEST_F(IsolationLevelTest, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type, ISOLATION_LEVEL_TYPE_FULL);
     DirtyWriteTest(test_type);
     DirtyReadTest(test_type);
     FuzzyReadTest(test_type);

@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// transaction_test.cpp
+// pessimistic_transaction_manager_test.cpp
 //
 // Identification: tests/concurrency/pessimistic_transaction_manager_test.cpp
 //
@@ -21,12 +21,12 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class PessimisticTransactionManagerTest : public PelotonTest {};
+class PessimisticTransactionManagerTests : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OCC
-    // CONCURRENCY_TYPE_2PL
-};
+TEST_F(PessimisticTransactionManagerTests, Test) {
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_2PL);
+  EXPECT_TRUE(true);
+}
 
 }  // End test namespace
 }  // End peloton namespace
