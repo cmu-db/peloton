@@ -23,8 +23,8 @@ namespace test {
 
 class IsolationLevelTest : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC
-                                                  };
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
+                                                  CONCURRENCY_TYPE_2PL};
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
