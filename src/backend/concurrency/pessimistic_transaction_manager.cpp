@@ -296,10 +296,8 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -314,10 +312,8 @@ Result PessimisticTransactionManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
@@ -366,15 +362,13 @@ Result PessimisticTransactionManager::AbortTransaction() {
         if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
             released_rdlock[tile_group_id].find(tuple_slot) ==
                 released_rdlock[tile_group_id].end()) {
-
           bool ret = ReleaseReadLock(tile_group.get(), tuple_slot);
           if (ret == false) {
             assert(false);
           }
           released_rdlock[tile_group_id][tuple_slot] = true;
         }
-      } 
-      else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -387,11 +381,9 @@ Result PessimisticTransactionManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-      } 
-      else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RW_TYPE_DELETE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -404,9 +396,8 @@ Result PessimisticTransactionManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot,
-                                           INITIAL_TXN_ID);
-        
+        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);

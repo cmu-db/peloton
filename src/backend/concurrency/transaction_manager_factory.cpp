@@ -12,10 +12,10 @@
 
 #include "transaction_manager_factory.h"
 
-
 namespace peloton {
 namespace concurrency {
-  ConcurrencyType TransactionManagerFactory::protocol = CONCURRENCY_TYPE_OCC;
-  IsolationLevelType TransactionManagerFactory::isolation_level = ISOLATION_LEVEL_TYPE_FULL;        
+ConcurrencyType TransactionManagerFactory::protocol = CONCURRENCY_TYPE_OCC;
+IsolationLevelType TransactionManagerFactory::isolation_level =
+    ISOLATION_LEVEL_TYPE_FULL;
 }
 }
