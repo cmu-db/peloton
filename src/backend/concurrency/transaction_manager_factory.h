@@ -43,6 +43,7 @@ public:
     return isolation_level;
   }
 
+private:
   static ConcurrencyType protocol;
   static IsolationLevelType isolation_level;
   
