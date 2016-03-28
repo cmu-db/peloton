@@ -391,14 +391,13 @@ void ExecutorTestsUtil::PrintTileVector(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
   for (auto &tile : tile_vec) {
     for (oid_t tuple_id : *tile) {
-      std::cout << "<";
+      LOG_INFO("<");
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        std::cout << tile->GetValue(tuple_id, col_id) << ",";
+        LOG_INFO("%s", tile->GetValue(tuple_id, col_id).GetInfo().c_str());
       }
-      std::cout << ">";
+      LOG_INFO(">");
     }
   }
-  std::cout << std::endl;
 }
 
 }  // namespace test

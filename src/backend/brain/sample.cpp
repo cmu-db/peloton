@@ -88,7 +88,6 @@ const std::string Sample::GetInfo() const {
 
   for (auto column : columns_accessed_) os << std::round(column) << " ";
   os << "  ::  " << std::round(weight_);
-  os << "\n";
 
   return os.str();
 }
