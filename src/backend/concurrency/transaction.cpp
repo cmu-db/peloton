@@ -123,8 +123,6 @@ const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
   return rw_set;
 }
 
-void Transaction::ResetState(void) { rw_set.clear(); }
-
 const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
@@ -133,13 +131,7 @@ const std::string Transaction::GetInfo() const {
      << " End Commit ID : " << std::setw(4) << end_cid
      << " Result : " << result_;
 
-  if (next == nullptr) {
-    os << " Next : " << std::setw(4) << next;
-  } else {
-    os << " Next : " << std::setw(4) << next->txn_id;
-  }
-
-  os << " Ref count : " << std::setw(4) << ref_count << "\n";
+  os << " Ref count : " << std::setw(4) << outer_dep_count << "\n";
   return os.str();
 }
 
