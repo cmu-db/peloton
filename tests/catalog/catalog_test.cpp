@@ -26,8 +26,8 @@ namespace test {
 class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BasicTest) {
-	EXPECT_EQ(1, 1);
-	LOG_INFO("Catalog test");
+  EXPECT_EQ(1, 1);
+  LOG_INFO("Catalog test");
 }
 
 }  // End test namespace

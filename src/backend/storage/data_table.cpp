@@ -180,7 +180,7 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
   }
 
   LOG_TRACE("tile group offset: %lu, tile group id: %lu, address: %p",
-           tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
+            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
