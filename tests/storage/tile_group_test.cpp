@@ -107,7 +107,7 @@ TEST_F(TileGroupTests, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetStartCommitId();
+  // const cid_t commit_id = txn->GetBeginCommitId();
 
   EXPECT_EQ(0, tile_group->GetActiveTupleCount(txn_id));
 
@@ -142,7 +142,7 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group, catalog::Sc
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
   // txn_id_t txn_id = txn->GetTransactionId();
-  // cid_t commit_id = txn->GetStartCommitId();
+  // cid_t commit_id = txn->GetBeginCommitId();
   auto pool = tile_group->GetTilePool(1);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
@@ -291,7 +291,7 @@ TEST_F(TileGroupTests, StressTest) {
 //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 //  auto txn = txn_manager.BeginTransaction();
 //  txn_id_t txn_id1 = txn->GetTransactionId();
-//  cid_t cid1 = txn->GetStartCommitId();
+//  cid_t cid1 = txn->GetBeginCommitId();
 //
 //  tuple->SetValue(2, ValueFactory::GetIntegerValue(0), pool);
 //  tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
@@ -323,7 +323,7 @@ TEST_F(TileGroupTests, StressTest) {
 //  // DELETE
 //  auto txn2 = txn_manager.BeginTransaction();
 //  txn_id_t tid2 = txn2->GetTransactionId();
-//  cid_t lcid2 = txn2->GetStartCommitId();
+//  cid_t lcid2 = txn2->GetBeginCommitId();
 //
 //  tile_group->DeleteTuple(tid2, 2, lcid2);
 //
