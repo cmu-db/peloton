@@ -26,8 +26,6 @@
 #include "postgres/include/utils/pg_locale.h"
 #include "postgres/include/utils/ps_status.h"
 
-#include "backend/common/logger.h"
-
 const char *progname;
 
 static void startup_hacks(const char *progname);

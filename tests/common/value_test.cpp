@@ -1468,10 +1468,6 @@ TEST_F(ValueTest, DecimalProducts) {
   lhs = ValueFactory::GetDecimalValueFromString("2.001");
   product = rhs.OpMultiply(lhs);
   ans = ValueFactory::GetDecimalValueFromString("437762.99433333111");
-  //    cout << "\nlhs " << lhs.debug() << endl;
-  //    cout << "rhs " << rhs.debug() << endl;
-  //    cout << "answer " << ans.debug() << endl;
-  //    cout << "sum    " << sum.debug() << endl;
 
   // can't produce the answer as a double to compare directly
   ASSERT_EQ(VALUE_TYPE_DECIMAL, ValuePeeker::PeekValueType(product));
