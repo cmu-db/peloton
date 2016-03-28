@@ -60,8 +60,11 @@ enum txn_op_t {
   TXN_OP_DELETE,
   TXN_OP_SCAN,
   TXN_OP_ABORT,
-  TXN_OP_COMMIT
+  TXN_OP_COMMIT,
+  TXN_OP_READ_STORE
 };
+
+#define TXN_STORED_VALUE      -10000
 
 class TransactionTestsUtil {
  public:
@@ -104,7 +107,8 @@ struct TransactionSchedule {
   Result txn_result;
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
-  TransactionSchedule() : txn_result(RESULT_FAILURE) {}
+  int stored_value;
+  TransactionSchedule() : txn_result(RESULT_FAILURE), stored_value(0) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -145,6 +149,11 @@ class TransactionThread {
     txn_op_t op = schedule->operations[cur_seq].op;
     int id = schedule->operations[cur_seq].id;
     int value = schedule->operations[cur_seq].value;
+
+    if (id == TXN_STORED_VALUE)
+      id = schedule->stored_value;
+    if (value == TXN_STORED_VALUE)
+      value = schedule->stored_value;
 
     if (cur_seq == 0) txn = txn_manager->BeginTransaction();
     if (schedule->txn_result == RESULT_ABORTED) {
@@ -199,6 +208,14 @@ class TransactionThread {
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction();
         txn = NULL;
+        break;
+      }
+      case TXN_OP_READ_STORE: {
+        int result;
+        execute_result =
+            TransactionTestsUtil::ExecuteRead(txn, table, id, result);
+        schedule->results.push_back(result);
+        schedule->stored_value = result + value;
         break;
       }
     }
@@ -278,13 +295,17 @@ class TransactionScheduler {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_ABORT, 0, 0);
     sequence[time++] = cur_txn_id;
   }
-
   void Commit() {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
     sequence[time++] = cur_txn_id;
   }
-
-  void clear() { schedules.clear(); }
+  // ReadStore will store the (result of read + modify) to the schedule, the 
+  // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
+  // to a schedule. See usage in isolation_level_test SIAnomalyTest.
+  void ReadStore(int id, int modify) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id, modify);
+    sequence[time++] = cur_txn_id;
+  }
 
   concurrency::TransactionManager *txn_manager;
   storage::DataTable *table;
