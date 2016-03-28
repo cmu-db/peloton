@@ -130,22 +130,6 @@ bool IndexScanExecutor::DExecute() {
 bool IndexScanExecutor::ExecIndexLookup() {
   assert(!done_);
 
-  /*
-   * If query is IN+Subquery, the values should be set using context params
-   * for now, the flag params_exec_ is set to 1 only in nestloop join
-   * in this case, the params is the results of the outer plan
-   * We can add more cases in future
-   */
-  // TODO: we probably need to add more for other cases in future
-  if (executor_context_->GetParamsExec() == 1) {
-    values_.clear();
-    std::vector<Value> vecValue = executor_context_->GetParams();
-
-    for (auto val : vecValue) {
-      values_.push_back(val);
-    }
-  }
-
   std::vector<ItemPointer> tuple_locations;
 
   if (0 == key_column_ids_.size()) {

@@ -20,7 +20,7 @@ namespace hyadapt {
 
 extern configuration state;
 
-extern storage::DataTable *hyadapt_table;
+extern std::unique_ptr<storage::DataTable> hyadapt_table;
 
 void CreateTable();
 
