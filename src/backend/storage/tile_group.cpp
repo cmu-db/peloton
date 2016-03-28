@@ -103,7 +103,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 
   // No more slots
   // if (tuple_slot_id == INVALID_OID) {
-  //   LOG_INFO("Failed to get next empty tuple slot within tile group.");
+  //   LOG_TRACE("Failed to get next empty tuple slot within tile group.");
   //   return INVALID_OID;
   // }
 
@@ -156,7 +156,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
-    LOG_INFO("Failed to get next empty tuple slot within tile group.");
+    LOG_WARN("Failed to get next empty tuple slot within tile group.");
     return INVALID_OID;
   }
 
@@ -257,14 +257,14 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
 //                                        last_cid)) {
 //       return true;
 //     } else {
-//       LOG_INFO("Delete failed: not deletable");
+//       LOG_TRACE("Delete failed: not deletable");
 //       tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id);
 //       return false;
 //     }
 //   } else if (tile_group_header->GetTransactionId(tuple_slot_id) ==
 //              transaction_id) {
 //     // is a own insert, is already latched by myself and is safe to set
-//     LOG_INFO("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu",
+//     LOG_TRACE("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu",
 //              tile_group_header->GetTransactionId(tuple_slot_id),
 //              tile_group_header->GetBeginCommitId(tuple_slot_id),
 //              tile_group_header->GetEndCommitId(tuple_slot_id));
@@ -273,7 +273,7 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
 //     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
 //     return true;
 //   } else {
-//     LOG_INFO(
+//     LOG_TRACE(
 //         "Delete failed: Latch failed and Ownership check failed: %lu != %lu",
 //         tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
 //     return false;

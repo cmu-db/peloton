@@ -14,7 +14,7 @@
 
 #include "harness.h"
 
-//#include "backend/catalog/catalog.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace test {
@@ -25,7 +25,10 @@ namespace test {
 
 class CatalogTests : public PelotonTest {};
 
-TEST_F(CatalogTests, BasicTest) { EXPECT_EQ(1, 1); }
+TEST_F(CatalogTests, BasicTest) {
+	EXPECT_EQ(1, 1);
+	LOG_INFO("Catalog test");
+}
 
 }  // End test namespace
 }  // End peloton namespace

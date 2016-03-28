@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// merge_join_executor.cpp
-//
-// Identification: src/backend/executor/merge_join_executor.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// merge_join_executor.cpp
-//
-// Identification: src/backend/executor/merge_join_executor.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * merge_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/merge_join_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include <vector>
 
 #include "backend/common/types.h"

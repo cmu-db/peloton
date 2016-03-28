@@ -66,7 +66,7 @@ bool UpdateExecutor::DExecute() {
   assert(executor_context_);
 
   // We are scanning over a logical tile.
-  LOG_INFO("Update executor :: 1 child ");
+  LOG_TRACE("Update executor :: 1 child ");
 
   if (!children_[0]->Execute()) {
     return false;
@@ -85,7 +85,7 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
@@ -111,7 +111,7 @@ bool UpdateExecutor::DExecute() {
 
       if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) ==
           false) {
-        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
@@ -133,7 +133,7 @@ bool UpdateExecutor::DExecute() {
       if (location.IsNull() == true) {
         delete new_tuple;
         new_tuple = nullptr;
-        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
@@ -147,7 +147,7 @@ bool UpdateExecutor::DExecute() {
       new_tuple = nullptr;
     } else {
       // transaction should be aborted as we cannot update the latest version.
-      LOG_INFO("Fail to update tuple. Set txn failure.");
+      LOG_TRACE("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     }

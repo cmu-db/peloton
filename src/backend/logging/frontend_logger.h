@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// frontend_logger.h
-//
-// Identification: src/backend/logging/frontend_logger.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// frontend_logger.h
-//
-// Identification: src/backend/logging/frontend_logger.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * frontendlogger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/frontendlogger.h
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include <iostream>

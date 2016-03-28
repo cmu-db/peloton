@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// mapper_unique.cpp
-//
-// Identification: src/backend/bridge/dml/mapper/mapper_unique.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// mapper_unique.cpp
-//
-// Identification: src/backend/bridge/dml/mapper/mapper_unique.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         PelotonDB
-//
-// mapper_unique.cpp
-//
-// Identification: src/backend/bridge/dml/mapper/mapper_unique.cpp
-//
-// Copyright (c) 2015, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
 #include "backend/bridge/dml/mapper/mapper.h"
 
 namespace peloton {

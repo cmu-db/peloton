@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// mapper_merge_join.cpp
-//
-// Identification: src/backend/bridge/dml/mapper/mapper_merge_join.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// mapper_merge_join.cpp
-//
-// Identification: src/backend/bridge/dml/mapper/mapper_merge_join.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * mapper_merge_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_merge_join.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/merge_join_plan.h"
 #include "backend/planner/projection_plan.h"

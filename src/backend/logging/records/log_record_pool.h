@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_record_pool.h
-//
-// Identification: src/backend/logging/records/log_record_pool.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_record_pool.h
-//
-// Identification: src/backend/logging/records/log_record_pool.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * log_record_pool.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/records/log_record_pool.h
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include <map>

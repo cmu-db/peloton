@@ -179,7 +179,7 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
     }
   }
 
-  LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
+  LOG_TRACE("tile group offset: %lu, tile group id: %lu, address: %p",
            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
@@ -199,7 +199,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -213,7 +213,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -227,7 +227,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
@@ -281,7 +281,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       default:
         break;
     }
-    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   // (B) Insert into index

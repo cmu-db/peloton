@@ -217,11 +217,6 @@ const std::string Tile::GetInfo() const {
      << " DB: " << database_id << " Table: " << table_id
      << " Tile Group:  " << tile_group_id << " Tile:  " << tile_id << "\n";
 
-  // Columns
-  // os << "\t-----------------------------------------------------------\n";
-  // os << "\tSCHEMA\n";
-  // os << (*schema);
-
   // Tuples
   os << "\t-----------------------------------------------------------\n";
   os << "\tDATA\n";
