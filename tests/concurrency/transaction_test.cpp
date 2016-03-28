@@ -63,10 +63,10 @@ TEST_F(TransactionTests, AbortTest) {
         TransactionTestsUtil::CreateTable());
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      scheduler.AddUpdate(0, 0, 100);
-      scheduler.AddAbort(0);
-      scheduler.AddRead(1, 0);
-      scheduler.AddCommit(1);
+      scheduler.Txn(0).Update(0, 100);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
 
       scheduler.Run();
 
@@ -78,9 +78,9 @@ TEST_F(TransactionTests, AbortTest) {
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       // scheduler.AddInsert(0, 100, 0);
-      scheduler.AddAbort(0);
-      scheduler.AddRead(1, 100);
-      scheduler.AddCommit(1);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(1);
+      scheduler.Txn(1).Commit();
 
       scheduler.Run();
       EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
