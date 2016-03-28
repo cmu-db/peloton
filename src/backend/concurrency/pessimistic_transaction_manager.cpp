@@ -155,7 +155,7 @@ bool PessimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   LOG_INFO("IsAccessable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
-  // FIXME: actually when read count is 0 this tuple is not accessable
+  // FIXME: actually when read count is not 0 this tuple is not accessable
   return EXTRACT_TXNID(tuple_txn_id) == INITIAL_TXN_ID &&
          tuple_end_cid == MAX_CID;
 }
