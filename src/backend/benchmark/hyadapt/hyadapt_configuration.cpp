@@ -22,9 +22,8 @@ namespace peloton {
 namespace benchmark {
 namespace hyadapt {
 
-void Usage(FILE *out) {
-  fprintf(out,
-          "Command line options : hyadapt <options>"
+void Usage() {
+  LOG_INFO("Command line options : hyadapt <options>"
           "   -h --help              :  Print help message"
           "   -o --operator-type     :  Operator type"
           "   -k --scale-factor      :  # of tuples"
@@ -239,12 +238,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.tuples_per_tilegroup = atoi(optarg);
         break;
       case 'h':
-        Usage(stderr);
+        Usage();
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
+        LOG_ERROR("Unknown option: -%c-", c);
+        Usage();
     }
   }
 

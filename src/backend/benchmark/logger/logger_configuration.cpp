@@ -24,18 +24,18 @@ namespace peloton {
 namespace benchmark {
 namespace logger {
 
-void Usage(FILE* out) {
-  fprintf(out,
-          "Command line options :  logger <options> \n"
-          "   -h --help              :  Print help message \n"
-          "   -l --logging-type      :  Logging type \n"
-          "   -t --tuple-count       :  Tuple count \n"
-          "   -b --backend-count     :  Backend count \n"
-          "   -z --column-count      :  # of columns per tuple \n"
-          "   -c --check-tuple-count :  Check tuple count \n"
-          "   -f --data-file-size    :  Data file size (MB) \n"
-          "   -e --experiment_type   :  Experiment Type \n"
-          "   -w --wait-timeout      :  Wait timeout (us) \n");
+void Usage() {
+  LOG_ERROR(
+      "Command line options :  logger <options> \n"
+      "   -h --help              :  Print help message \n"
+      "   -l --logging-type      :  Logging type \n"
+      "   -t --tuple-count       :  Tuple count \n"
+      "   -b --backend-count     :  Backend count \n"
+      "   -z --column-count      :  # of columns per tuple \n"
+      "   -c --check-tuple-count :  Check tuple count \n"
+      "   -f --data-file-size    :  Data file size (MB) \n"
+      "   -e --experiment_type   :  Experiment Type \n"
+      "   -w --wait-timeout      :  Wait timeout (us) \n");
   exit(EXIT_FAILURE);
 }
 
@@ -212,12 +212,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
 
       case 'h':
-        Usage(stderr);
+        Usage();
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
+        LOG_ERROR("Unknown option: -%c-", c);
+        Usage();
     }
   }
 

@@ -163,9 +163,9 @@ Value Value::CastAs(ValueType type) const {
     case VALUE_TYPE_DECIMAL:
       return CastAsDecimal();
     default:
-      char message[128];
-      snprintf(message, 128, "Type %d not a recognized type for casting",
-               (int)type);
+      std::string message =
+          "Type not a recognized type for casting : " +
+          std::to_string(type);
       throw Exception(message);
   }
 }
@@ -605,9 +605,7 @@ void Value::CreateDecimalFromString(const std::string &txt) {
    */
   for (int ii = (setSign ? 1 : 0); ii < static_cast<int>(txt.size()); ii++) {
     if ((txt[ii] < '0' || txt[ii] > '9') && txt[ii] != '.') {
-      char message[4096];
-      snprintf(message, 4096, "Invalid characters in decimal string: %s",
-               txt.c_str());
+      std::string message = "Invalid characters in decimal string: " + txt;
       throw SerializationException(message);
     }
   }
