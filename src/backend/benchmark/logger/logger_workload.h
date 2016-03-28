@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "backend/benchmark/logger/logger_configuration.h"
 
 namespace peloton {
@@ -52,18 +54,22 @@ void DoRecovery(std::string file_name);
 void BuildLog(oid_t db_oid, oid_t table_oid);
 
 void RunBackends(storage::DataTable* table,
-                 const std::vector<storage::Tuple*>& tuples);
+                 const std::vector<std::unique_ptr<storage::Tuple> >& tuples);
 
 std::vector<ItemPointer> InsertTuples(
-    storage::DataTable* table, const std::vector<storage::Tuple*>& tuples,
+    storage::DataTable* table,
+    const std::vector<std::unique_ptr<storage::Tuple> >& tuples,
     bool committed);
 
 void DeleteTuples(storage::DataTable* table,
-                  const std::vector<ItemPointer>& locations, bool committed);
+                  const std::vector<ItemPointer>& locations,
+                  bool committed);
 
 std::vector<ItemPointer> UpdateTuples(
-    storage::DataTable* table, const std::vector<ItemPointer>& locations,
-    const std::vector<storage::Tuple*>& tuples, bool committed);
+    storage::DataTable* table,
+    const std::vector<ItemPointer>& locations,
+    const std::vector<std::unique_ptr<storage::Tuple> >& tuples,
+    bool committed);
 
 //===--------------------------------------------------------------------===//
 // Utility functions
@@ -76,10 +82,6 @@ void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 storage::DataTable* CreateUserTable(oid_t db_oid, oid_t table_oid);
 
 std::vector<catalog::Column> CreateSchema(void);
-
-std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema,
-                                          oid_t num_of_tuples,
-                                          VarlenPool* pool);
 
 void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 
