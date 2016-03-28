@@ -50,7 +50,7 @@ bool DeleteExecutor::DInit() {
   assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
-  LOG_INFO("Delete executor :: 1 child ");
+  LOG_TRACE("Delete executor :: 1 child ");
 
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
@@ -84,17 +84,17 @@ bool DeleteExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
+  LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
            source_tile->GetTupleCount());
 
-  LOG_INFO("Transaction ID: %lu",
+  LOG_TRACE("Transaction ID: %lu",
            executor_context_->GetTransaction()->GetTransactionId());
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
              visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
@@ -126,7 +126,7 @@ bool DeleteExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         delete new_tuple;
         new_tuple = nullptr;
-        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
@@ -140,7 +140,7 @@ bool DeleteExecutor::DExecute() {
       new_tuple = nullptr;
     } else {
       // transaction should be aborted as we cannot update the latest version.
-      LOG_INFO("Fail to update tuple. Set txn failure.");
+      LOG_TRACE("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     }

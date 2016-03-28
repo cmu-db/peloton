@@ -42,15 +42,9 @@ namespace peloton {
 #define LOG_OUTPUT_STREAM stdout
 #define LOG_TIME_MILLISECONDS 1
 
-// Compile time Option
-
-#ifndef LOG_LEVEL
-// Enable debugging mode if needed
-#ifdef DEBUG
+// Compile time debugging level option
 // Defaults to LOG_LEVEL_INFO
 #define LOG_LEVEL LOG_LEVEL_INFO
-#endif
-#endif
 
 // Disable logging if requested
 #ifdef NDEBUG

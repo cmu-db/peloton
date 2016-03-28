@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// cache.cpp
-//
-// Identification: src/backend/common/cache.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// cache.cpp
-//
-// Identification: src/backend/common/cache.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-///===----------------------------------------------------------------------===//
-//
-//                         PelotonDB
-//
-// cache.cpp
-//
-// Identification: src/backend/common/cache.cpp
-//
-// Copyright (c) 2015, Carnegie Mellon Universitry Database Group
-//
-//===----------------------------------------------------------------------===//
-
 #include <cassert>
 
 #include "backend/common/cache.h"

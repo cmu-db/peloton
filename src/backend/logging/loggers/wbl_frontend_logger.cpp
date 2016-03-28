@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// wbl_frontend_logger.cpp
-//
-// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// wbl_frontend_logger.cpp
-//
-// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * wbl_frontend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wbl_frontend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include <sys/stat.h>
 #include <sys/mman.h>
 

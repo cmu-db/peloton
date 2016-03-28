@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// wal_backend_logger.cpp
-//
-// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// wal_backend_logger.cpp
-//
-// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * wal_backend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wal_backend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include <iostream>
 
 #include "backend/logging/records/tuple_record.h"

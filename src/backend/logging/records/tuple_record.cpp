@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// tuple_record.cpp
-//
-// Identification: src/backend/logging/records/tuple_record.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// tuple_record.cpp
-//
-// Identification: src/backend/logging/records/tuple_record.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * tuple_record.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/records/tuple_record.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "backend/logging/records/tuple_record.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tuple.h"

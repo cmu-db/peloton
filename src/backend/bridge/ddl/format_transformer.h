@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// format_transformer.h
-//
-// Identification: src/backend/bridge/ddl/format_transformer.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// format_transformer.h
-//
-// Identification: src/backend/bridge/ddl/format_transformer.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * format_transformer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl/format_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include "backend/common/types.h"

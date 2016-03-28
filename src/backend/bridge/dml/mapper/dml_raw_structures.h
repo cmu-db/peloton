@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// dml_raw_structures.h
-//
-// Identification: src/backend/bridge/dml/mapper/dml_raw_structures.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// dml_raw_structures.h
-//
-// Identification: src/backend/bridge/dml/mapper/dml_raw_structures.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * dml_raw_structures.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/dml_raw_structures.h
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include "postgres.h"

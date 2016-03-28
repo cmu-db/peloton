@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// cache.h
-//
-// Identification: src/backend/common/cache.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// cache.h
-//
-// Identification: src/backend/common/cache.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-///===----------------------------------------------------------------------===//
-//
-//                         PelotonDB
-//
-// cache.h
-//
-// Identification: src/backend/common/cache.h
-//
-// Copyright (c) 2015, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include <list>

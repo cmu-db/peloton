@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_manager.cpp
-//
-// Identification: src/backend/logging/log_manager.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_manager.cpp
-//
-// Identification: src/backend/logging/log_manager.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * logmanager.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logmanager.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "backend/logging/log_manager.h"
 #include "backend/common/logger.h"
 
