@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index.h
 //
 // Identification: src/backend/index/index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,7 +40,7 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata  {
+class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
@@ -132,7 +132,7 @@ class Index : public Printable {
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs,
-      const ScanDirectionType& scan_direction) = 0;
+      const ScanDirectionType &scan_direction) = 0;
 
   // scan the entire index, working like a sort
   virtual std::vector<ItemPointer> ScanAllKeys() = 0;
@@ -202,9 +202,9 @@ class Index : public Printable {
 
   // Set the lower bound tuple for index iteration
   bool ConstructLowerBoundTuple(storage::Tuple *index_key,
-                          const std::vector<Value> &values,
-                          const std::vector<oid_t> &key_column_ids,
-                          const std::vector<ExpressionType> &expr_types);
+                                const std::vector<Value> &values,
+                                const std::vector<oid_t> &key_column_ids,
+                                const std::vector<ExpressionType> &expr_types);
 
   //===--------------------------------------------------------------------===//
   //  Data members

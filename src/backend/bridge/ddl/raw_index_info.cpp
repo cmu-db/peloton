@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// raw_index_info.cpp
+//
+// Identification: src/backend/bridge/ddl/raw_index_info.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/bridge/ddl/raw_index_info.h"
 
 namespace peloton {

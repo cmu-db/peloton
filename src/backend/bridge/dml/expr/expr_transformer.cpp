@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expr_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// expr_transformer.cpp
+//
+// Identification: src/backend/bridge/dml/expr/expr_transformer.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <unordered_map>
 
@@ -613,6 +615,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
+    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP:
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 

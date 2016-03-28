@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * backendlogger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/backendlogger.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// backend_logger.cpp
+//
+// Identification: src/backend/logging/backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend_logger.h"
 

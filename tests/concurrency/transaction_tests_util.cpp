@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// index_test.cpp
+// transaction_tests_util.cpp
 //
-// Identification: tests/index/index_test.cpp
+// Identification: tests/concurrency/transaction_tests_util.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -108,8 +108,8 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   return executor.Execute();
 }
 
-expression::ComparisonExpression<expression::CmpEq>
-    *TransactionTestsUtil::MakePredicate(int id) {
+expression::ComparisonExpression<expression::CmpEq> *
+TransactionTestsUtil::MakePredicate(int id) {
   auto tup_val_exp = new expression::TupleValueExpression(0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// logger_loader.h
 //
-// Identification: benchmark/hyadapt/workload.h
+// Identification: src/backend/benchmark/logger/logger_loader.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,8 +16,6 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
-
-}  // namespace hyadapt
+namespace hyadapt {}  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton

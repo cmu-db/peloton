@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_context.h
 //
 // Identification: src/backend/executor/executor_context.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -72,7 +72,7 @@ class ExecutorContext {
    * 2 unknown yet
    * 3 unknown yet
    */
-  uint32_t params_exec_ = 0; // 1 IN: nestloop+indexscan
+  uint32_t params_exec_ = 0;  // 1 IN: nestloop+indexscan
 };
 
 }  // namespace executor

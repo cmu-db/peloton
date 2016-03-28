@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // value.h
 //
 // Identification: src/backend/common/value.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -660,6 +660,7 @@ class Value {
       case VALUE_TYPE_SMALLINT:
       case VALUE_TYPE_INTEGER:
       case VALUE_TYPE_BIGINT:
+      case VALUE_TYPE_DATE:
       case VALUE_TYPE_TIMESTAMP:
         rt = s_intPromotionTable[vtb];
         break;
@@ -949,12 +950,14 @@ class Value {
   }
 
   const int32_t &GetInteger() const {
-    assert(GetValueType() == VALUE_TYPE_INTEGER);
+    assert(GetValueType() == VALUE_TYPE_INTEGER ||
+           GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
-    assert(GetValueType() == VALUE_TYPE_INTEGER);
+    assert(GetValueType() == VALUE_TYPE_INTEGER ||
+           GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
@@ -970,6 +973,16 @@ class Value {
            (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
            (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<int64_t *>(m_data);
+  }
+
+  const int32_t &GetDate() const {
+    assert(GetValueType() == VALUE_TYPE_DATE);
+    return *reinterpret_cast<const int32_t *>(m_data);
+  }
+
+  int32_t &GetDate() {
+    assert(GetValueType() == VALUE_TYPE_DATE);
+    return *reinterpret_cast<int32_t *>(m_data);
   }
 
   const int64_t &GetTimestamp() const {
@@ -1065,6 +1078,8 @@ class Value {
         return static_cast<int64_t>(GetInteger());
       case VALUE_TYPE_BIGINT:
         return GetBigInt();
+      case VALUE_TYPE_DATE:
+        return static_cast<int64_t>(GetDate());
       case VALUE_TYPE_TIMESTAMP:
         return GetTimestamp();
       default:
@@ -1122,6 +1137,8 @@ class Value {
         return static_cast<double>(GetBigInt());
       case VALUE_TYPE_BIGINT:
         return static_cast<double>(GetBigInt());
+      case VALUE_TYPE_DATE:
+        return static_cast<double>(GetDate());
       case VALUE_TYPE_TIMESTAMP:
         return static_cast<double>(GetTimestamp());
       case VALUE_TYPE_DOUBLE:
@@ -1233,6 +1250,9 @@ class Value {
         break;
       case VALUE_TYPE_BIGINT:
         return *this;
+      case VALUE_TYPE_DATE:
+        retval.GetBigInt() = static_cast<int64_t>(GetDate());
+        break;
       case VALUE_TYPE_TIMESTAMP:
         retval.GetBigInt() = GetTimestamp();
         break;
@@ -1276,6 +1296,9 @@ class Value {
         break;
       case VALUE_TYPE_BIGINT:
         retval.GetTimestamp() = GetBigInt();
+        break;
+      case VALUE_TYPE_DATE:
+        retval.GetTimestamp() = static_cast<int64_t>(GetDate());
         break;
       case VALUE_TYPE_TIMESTAMP:
         retval.GetTimestamp() = GetTimestamp();
@@ -1349,6 +1372,7 @@ class Value {
       case VALUE_TYPE_SMALLINT:
         retval.GetInteger() = static_cast<int32_t>(GetSmallInt());
         break;
+      case VALUE_TYPE_DATE:
       case VALUE_TYPE_INTEGER:
         return *this;
       case VALUE_TYPE_BIGINT:
@@ -1405,6 +1429,9 @@ class Value {
       case VALUE_TYPE_BIGINT:
         retval.narrowToSmallInt(GetBigInt(), type);
         break;
+      case VALUE_TYPE_DATE:
+        retval.narrowToSmallInt(GetDate(), type);
+        break;
       case VALUE_TYPE_TIMESTAMP:
         retval.narrowToSmallInt(GetTimestamp(), type);
         break;
@@ -1454,6 +1481,9 @@ class Value {
       case VALUE_TYPE_BIGINT:
         retval.narrowToTinyInt(GetBigInt(), type);
         break;
+      case VALUE_TYPE_DATE:
+        retval.narrowToTinyInt(GetDate(), type);
+        break;
       case VALUE_TYPE_TIMESTAMP:
         retval.narrowToTinyInt(GetTimestamp(), type);
         break;
@@ -1493,6 +1523,9 @@ class Value {
         break;
       case VALUE_TYPE_BIGINT:
         retval.GetDouble() = static_cast<double>(GetBigInt());
+        break;
+      case VALUE_TYPE_DATE:
+        retval.GetDouble() = static_cast<double>(GetDate());
         break;
       case VALUE_TYPE_TIMESTAMP:
         retval.GetDouble() = static_cast<double>(GetTimestamp());
@@ -1567,6 +1600,11 @@ class Value {
         // Value retval(VALUE_TYPE_VARCHAR);
         // memcpy(retval.m_data, m_data, sizeof(m_data));
         return *this;
+      }
+      case VALUE_TYPE_DATE: {
+        std::stringstream value;
+        value << GetDate();
+        return GetTempStringValue(value.str().c_str(), value.str().length());
       }
       case VALUE_TYPE_TIMESTAMP: {
         std::stringstream value;
@@ -1889,6 +1927,26 @@ class Value {
     }
   }
 
+  int CompareDate(const Value rhs) const {
+    assert(m_valueType == VALUE_TYPE_DATE);
+
+    // Get the right hand side as a bigint
+    if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
+      return CompareDoubleValue(static_cast<double>(GetTimestamp()),
+                                rhs.GetDouble());
+    } else if (rhs.GetValueType() == VALUE_TYPE_DECIMAL) {
+      const TTInt rhsValue = rhs.GetDecimal();
+      TTInt lhsValue(GetTimestamp());
+      lhsValue *= kMaxScaleFactor;
+      return CompareValue<TTInt>(lhsValue, rhsValue);
+    } else {
+      int64_t lhsValue, rhsValue;
+      lhsValue = GetDate();
+      rhsValue = rhs.CastAsBigIntAndGetValue();
+      return CompareValue<int64_t>(lhsValue, rhsValue);
+    }
+  }
+
   int CompareTimestamp(const Value rhs) const {
     assert(m_valueType == VALUE_TYPE_TIMESTAMP);
 
@@ -1931,6 +1989,9 @@ class Value {
         break;
       case VALUE_TYPE_BIGINT:
         rhsValue = static_cast<double>(rhs.GetBigInt());
+        break;
+      case VALUE_TYPE_DATE:
+        rhsValue = static_cast<double>(rhs.GetDate());
         break;
       case VALUE_TYPE_TIMESTAMP:
         rhsValue = static_cast<double>(rhs.GetTimestamp());
@@ -2070,6 +2131,11 @@ class Value {
       }
       case VALUE_TYPE_BIGINT: {
         TTInt rhsValue(rhs.GetBigInt());
+        rhsValue *= kMaxScaleFactor;
+        return CompareValue<TTInt>(GetDecimal(), rhsValue);
+      }
+      case VALUE_TYPE_DATE: {
+        TTInt rhsValue(static_cast<int64_t>(rhs.GetDate()));
         rhsValue *= kMaxScaleFactor;
         return CompareValue<TTInt>(GetDecimal(), rhsValue);
       }
@@ -2361,6 +2427,15 @@ class Value {
     return retval;
   }
 
+  static Value GetDateValue(int64_t value) {
+    Value retval(VALUE_TYPE_DATE);
+    retval.GetDate() = value;
+    if (value == INT32_NULL) {
+      retval.tagAsNull();
+    }
+    return retval;
+  }
+
   static Value GetTimestampValue(int64_t value) {
     Value retval(VALUE_TYPE_TIMESTAMP);
     retval.GetTimestamp() = value;
@@ -2565,6 +2640,7 @@ inline uint16_t Value::GetTupleStorageSize(const ValueType type) {
       return sizeof(int8_t);
     case VALUE_TYPE_SMALLINT:
       return sizeof(int16_t);
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       return sizeof(int32_t);
     case VALUE_TYPE_REAL:
@@ -2627,6 +2703,8 @@ inline int Value::CompareWithoutNull(const Value rhs) const {
       return CompareSmallInt(rhs);
     case VALUE_TYPE_TINYINT:
       return CompareTinyInt(rhs);
+    case VALUE_TYPE_DATE:
+      return CompareDate(rhs);
     case VALUE_TYPE_TIMESTAMP:
       return CompareTimestamp(rhs);
     case VALUE_TYPE_REAL:
@@ -2680,6 +2758,9 @@ inline void Value::SetNull() {
     case VALUE_TYPE_INTEGER:
       GetInteger() = INT32_NULL;
       break;
+    case VALUE_TYPE_DATE:
+      GetDate() = INT32_NULL;
+      break;
     case VALUE_TYPE_TIMESTAMP:
       GetTimestamp() = INT64_NULL;
       break;
@@ -2716,6 +2797,9 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
   const ValueType type = GetValueType();
 
   switch (type) {
+    case VALUE_TYPE_DATE:
+      *reinterpret_cast<int32_t *>(storage) = GetDate();
+      break;
     case VALUE_TYPE_TIMESTAMP:
       *reinterpret_cast<int64_t *>(storage) = GetTimestamp();
       break;
@@ -2788,6 +2872,9 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
                                            const bool isInBytes) const {
   const ValueType type = GetValueType();
   switch (type) {
+    case VALUE_TYPE_DATE:
+      *reinterpret_cast<int32_t *>(storage) = GetDate();
+      break;
     case VALUE_TYPE_TIMESTAMP:
       *reinterpret_cast<int64_t *>(storage) = GetTimestamp();
       break;
@@ -2877,6 +2964,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
     case VALUE_TYPE_SMALLINT:
       *reinterpret_cast<int16_t *>(storage) = input.ReadShort();
       break;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       *reinterpret_cast<int32_t *>(storage) = input.ReadInt();
       break;
@@ -3001,6 +3089,12 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type,
         tagAsNull();
       }
       break;
+    case VALUE_TYPE_DATE:
+      GetDate() = input.ReadInt();
+      if (GetDate() == INT32_NULL) {
+        tagAsNull();
+      }
+      break;
     case VALUE_TYPE_INTEGER:
       GetInteger() = input.ReadInt();
       if (GetInteger() == INT32_NULL) {
@@ -3079,6 +3173,7 @@ inline void Value::SerializeTo(SerializeOutput &output) const {
       output.WriteShort(GetSmallInt());
       break;
     }
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER: {
       output.WriteInt(GetInteger());
       break;
@@ -3128,6 +3223,7 @@ inline void Value::SerializeToExportWithoutNull(
       io.WriteShort(GetSmallInt());
       return;
     }
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER: {
       io.WriteInt(GetInteger());
       return;
@@ -3271,6 +3367,7 @@ inline void Value::HashCombine(std::size_t &seed) const {
     case VALUE_TYPE_SMALLINT:
       hash_combine<int16_t>(seed, GetSmallInt());
       break;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       hash_combine<int32_t>(seed, GetInteger());
       break;
@@ -3364,6 +3461,7 @@ inline Value Value::OpIncrement() const {
       }
       retval.GetSmallInt() = static_cast<int16_t>(GetSmallInt() + 1);
       break;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       if (GetInteger() == INT32_MAX) {
         throw Exception(
@@ -3409,6 +3507,7 @@ inline Value Value::OpDecrement() const {
       }
       retval.GetSmallInt() = static_cast<int16_t>(GetSmallInt() - 1);
       break;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       if (GetInteger() == PELOTON_INT32_MIN) {
         throw Exception(
@@ -3443,6 +3542,7 @@ inline bool Value::IsZero() const {
       return GetTinyInt() == 0;
     case VALUE_TYPE_SMALLINT:
       return GetSmallInt() == 0;
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       return GetInteger() == 0;
     case VALUE_TYPE_BIGINT:
@@ -3467,6 +3567,7 @@ inline Value Value::OpSubtract(const Value &rhs) const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
       return OpSubtractBigInts(CastAsBigIntAndGetValue(),
                                rhs.CastAsBigIntAndGetValue());
@@ -3496,6 +3597,7 @@ inline Value Value::OpAdd(const Value &rhs) const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
       return OpAddBigInts(CastAsBigIntAndGetValue(),
                           rhs.CastAsBigIntAndGetValue());
@@ -3525,6 +3627,7 @@ inline Value Value::OpMod(const Value &rhs) const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
       return GetBigIntValue(CastAsBigIntAndGetValue() %
                             rhs.CastAsBigIntAndGetValue());
@@ -3546,6 +3649,7 @@ inline Value Value::OpMultiply(const Value &rhs) const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
       return OpMultiplyBigInts(CastAsBigIntAndGetValue(),
                                rhs.CastAsBigIntAndGetValue());
@@ -3575,6 +3679,7 @@ inline Value Value::OpDivide(const Value &rhs) const {
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
       return OpDivideBigInts(CastAsBigIntAndGetValue(),
                              rhs.CastAsBigIntAndGetValue());
@@ -3599,6 +3704,7 @@ inline Value Value::OpDivide(const Value &rhs) const {
 inline int32_t Value::MurmurHash3() const {
   const ValueType type = GetValueType();
   switch (type) {
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_TIMESTAMP:
     case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
