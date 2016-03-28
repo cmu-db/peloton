@@ -15,7 +15,8 @@
 
 #include "backend/benchmark/hyadapt/hyadapt.h"
 #include "backend/benchmark/hyadapt/hyadapt_configuration.h"
-#include "hyadapt_workload.h"
+#include "backend/common/logger.h"
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
 
 namespace peloton {
 namespace benchmark {
@@ -54,7 +55,7 @@ void RunBenchmark() {
         break;
 
       default:
-        std::cout << "Unsupported test type : " << state.operator_type << "\n";
+        LOG_ERROR("Unsupported test type : %d", state.operator_type);
         break;
     }
 
@@ -119,8 +120,7 @@ void RunBenchmark() {
         break;
 
       default:
-        std::cout << "Unsupported experiment type : " << state.experiment_type
-                  << "\n";
+        LOG_ERROR("Unsupported experiment_type : %d", state.experiment_type);
         break;
     }
   }

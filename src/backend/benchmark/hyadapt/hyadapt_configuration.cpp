@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
+
 #include <iomanip>
 #include <algorithm>
 
 #include "backend/benchmark/hyadapt/hyadapt_configuration.h"
-
-#undef NDEBUG
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -65,21 +65,21 @@ void GenerateSequence(oid_t column_count) {
 
 static void ValidateOperator(const configuration &state) {
   if (state.operator_type < 1 || state.operator_type > 4) {
-	LOG_ERROR("Invalid operator type :: %d", state.operator_type);
+    LOG_ERROR("Invalid operator type :: %d", state.operator_type);
     exit(EXIT_FAILURE);
   } else {
     switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-    	LOG_INFO("%20s : DIRECT", "operator_type ");
+        LOG_INFO("%s : DIRECT", "operator_type ");
         break;
       case OPERATOR_TYPE_AGGREGATE:
-      	LOG_INFO("%20s : AGGREGATE", "operator_type ");
+        LOG_INFO("%s : AGGREGATE", "operator_type ");
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        LOG_INFO("%20s : ARITHMETIC", "operator_type ");
+        LOG_INFO("%s : ARITHMETIC", "operator_type ");
         break;
       case OPERATOR_TYPE_JOIN:
-        LOG_INFO("%20s : JOIN", "operator_type ");
+        LOG_INFO("%s : JOIN", "operator_type ");
         break;
       default:
         break;
@@ -89,27 +89,27 @@ static void ValidateOperator(const configuration &state) {
 
 static void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-	LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
+    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %d", "scale_factor", state.scale_factor);
+  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
 }
 
 static void ValidateLayout(const configuration &state) {
   if (state.layout_mode < 0 || state.layout_mode > 2) {
-	LOG_ERROR("Invalid layout :: %d", state.layout_mode);
+    LOG_ERROR("Invalid layout :: %d", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
       case LAYOUT_ROW:
-      	LOG_INFO("%20s : ROW", "layout ");
+        LOG_INFO("%s : ROW", "layout ");
         break;
       case LAYOUT_COLUMN:
-        LOG_INFO("%20s : COLUMN", "layout ");
+        LOG_INFO("%s : COLUMN", "layout ");
         break;
       case LAYOUT_HYBRID:
-        LOG_INFO("%20s : HYBRID", "layout ");
+        LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
         break;
@@ -123,7 +123,7 @@ static void ValidateProjectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %lf", "projectivity", state.projectivity);
+  LOG_INFO("%s : %lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
@@ -132,7 +132,7 @@ static void ValidateSelectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %lf", "selectivity", state.selectivity);
+  LOG_INFO("%s : %lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
@@ -141,7 +141,7 @@ static void ValidateExperiment(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %d", "experiment_type", state.experiment_type);
+  LOG_INFO("%s : %d", "experiment_type", state.experiment_type);
 }
 
 static void ValidateColumnCount(const configuration &state) {
@@ -150,7 +150,7 @@ static void ValidateColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %d", "column_count", state.column_count);
+  LOG_INFO("%s : %d", "column_count", state.column_count);
 }
 
 static void ValidateWriteRatio(const configuration &state) {
@@ -159,7 +159,7 @@ static void ValidateWriteRatio(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %lf", "write_ratio", state.write_ratio);
+  LOG_INFO("%s : %lf", "write_ratio", state.write_ratio);
 }
 
 static void ValidateTuplesPerTileGroup(const configuration &state) {
@@ -168,7 +168,7 @@ static void ValidateTuplesPerTileGroup(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%20s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
+  LOG_INFO("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
 }
 
 int orig_scale_factor;
@@ -259,7 +259,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     ValidateWriteRatio(state);
     ValidateTuplesPerTileGroup(state);
 
-    LOG_INFO("%20s : %lu", "transactions", state.transactions);
+    LOG_INFO("%s : %lu", "transactions", state.transactions);
   } else {
     ValidateExperiment(state);
   }
