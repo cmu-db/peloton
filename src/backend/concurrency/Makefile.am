@@ -10,7 +10,8 @@ concurrency_FILES = \
     backend/concurrency/speculative_optimistic_transaction_manager.cpp \
     backend/concurrency/pessimistic_transaction_manager.cpp \
 	backend/concurrency/transaction_manager.cpp \
-	backend/concurrency/transaction.cpp
+	backend/concurrency/transaction.cpp \
+    backend/concurrency/transaction_manager_factory.cpp
 
 concurrency_INCLUDES = \
 				   -I$(srcdir)/concurrency

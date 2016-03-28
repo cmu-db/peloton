@@ -207,8 +207,7 @@ class TransactionThread {
       txn_manager->AbortTransaction();
       txn = NULL;
       LOG_TRACE("ABORT NOW");
-      if (execute_result == false)
-        LOG_TRACE("Executor returns false");
+      if (execute_result == false) LOG_TRACE("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }
