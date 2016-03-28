@@ -39,7 +39,7 @@ namespace peloton {
 namespace benchmark {
 namespace hyadapt {
 
-storage::DataTable *hyadapt_table;
+std::unique_ptr<storage::DataTable> hyadapt_table;
 
 void CreateTable() {
   const oid_t col_count = state.column_count + 1;
@@ -64,14 +64,11 @@ void CreateTable() {
   // Create table.
   /////////////////////////////////////////////////////////
 
-  // Clean up
-  delete hyadapt_table;
-
   bool own_schema = true;
   bool adapt_table = true;
-  hyadapt_table = storage::TableFactory::GetDataTable(
+  hyadapt_table.reset(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      state.tuples_per_tilegroup, own_schema, adapt_table);
+      state.tuples_per_tilegroup, own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (indexes == true) {
