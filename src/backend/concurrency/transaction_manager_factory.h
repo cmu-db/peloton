@@ -19,9 +19,8 @@ namespace peloton {
 namespace concurrency {
 class TransactionManagerFactory {
  public:
-  static TransactionManager &GetInstance(
-      ConcurrencyType concurrency_type = CONCURRENCY_TYPE_OCC) {
-    switch (concurrency_type) {
+  static TransactionManager &GetInstance() {
+    switch (protocol) {
       case CONCURRENCY_TYPE_OCC:
         return OptimisticTransactionManager::GetInstance();
       case CONCURRENCY_TYPE_2PL:
@@ -30,6 +29,20 @@ class TransactionManagerFactory {
         return OptimisticTransactionManager::GetInstance();
     }
   }
+
+  static void Configure(ConcurrencyType protocol_,
+                        IsolationLevelType level_ = ISOLATION_LEVEL_TYPE_FULL) {
+    protocol = protocol_;
+    isolation_level = level_;
+  }
+
+  static ConcurrencyType GetProtocol() { return protocol; }
+
+  static IsolationLevelType GetIsolationLevel() { return isolation_level; }
+
+ private:
+  static ConcurrencyType protocol;
+  static IsolationLevelType isolation_level;
 };
 }
 }
