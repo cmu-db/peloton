@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_header.cpp
 //
 // Identification: src/backend/storage/tile_group_header.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +21,8 @@
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(const BackendType &backend_type, const int &tuple_count)
+TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
+                                 const int &tuple_count)
     : backend_type(backend_type),
       data(nullptr),
       num_tuple_slots(tuple_count),
@@ -45,8 +46,8 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type, const int &tup
     SetEndCommitId(tuple_slot_id, MAX_CID);
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
-    SetInsertCommit(tuple_slot_id, false); // unused
-    SetDeleteCommit(tuple_slot_id, false); // unused
+    SetInsertCommit(tuple_slot_id, false);  // unused
+    SetDeleteCommit(tuple_slot_id, false);  // unused
   }
 }
 
@@ -109,14 +110,12 @@ const std::string TileGroupHeader::GetInfo() const {
     else
       os << "X";
 
-    peloton::ItemPointer location =
-            GetNextItemPointer(header_itr);
+    peloton::ItemPointer location = GetNextItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
-
 
   return os.str();
 }
@@ -217,7 +216,7 @@ oid_t TileGroupHeader::GetActiveTupleCount(const txn_id_t &txn_id) {
 oid_t TileGroupHeader::GetActiveTupleCount() {
   oid_t active_tuple_slots = 0;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  
+
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
@@ -227,7 +226,7 @@ oid_t TileGroupHeader::GetActiveTupleCount() {
       active_tuple_slots++;
     }
   }
-  
+
   return active_tuple_slots;
 }
 

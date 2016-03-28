@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // message_queue.h
 //
-// Identification: src/backend/message/message_queue.h
+// Identification: src/backend/networking/message_queue.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,18 +22,14 @@ namespace networking {
 
 template <typename T>
 class MessageQueue {
-
  public:
-
-  MessageQueue()=default;
-  MessageQueue(const MessageQueue&) = delete;            // disable copying
-  MessageQueue& operator=(const MessageQueue&) = delete; // disable assignment
+  MessageQueue() = default;
+  MessageQueue(const MessageQueue&) = delete;             // disable copying
+  MessageQueue& operator=(const MessageQueue&) = delete;  // disable assignment
 
   T Pop() {
-
     std::unique_lock<std::mutex> mlock(mutex_);
-    while (queue_.empty())
-    {
+    while (queue_.empty()) {
       cond_.wait(mlock);
     }
     auto val = queue_.front();
@@ -42,7 +38,6 @@ class MessageQueue {
   }
 
   void Pop(T& item) {
-
     std::unique_lock<std::mutex> mlock(mutex_);
 
     while (queue_.empty()) {
@@ -54,7 +49,6 @@ class MessageQueue {
   }
 
   void Push(const T& item) {
-
     std::unique_lock<std::mutex> mlock(mutex_);
     queue_.push(item);
     mlock.unlock();
@@ -66,7 +60,6 @@ class MessageQueue {
   std::mutex mutex_;
   std::condition_variable cond_;
 };
-
 
 }  // namespace networking
 }  // namespace peloton

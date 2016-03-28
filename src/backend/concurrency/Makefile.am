@@ -5,11 +5,10 @@
 ######################################################################
 
 concurrency_FILES = \
-    backend/concurrency/to_transaction_manager.cpp \
-    backend/concurrency/optimistic_transaction_manager.cpp \
-    backend/concurrency/pessimistic_transaction_manager.cpp \
-	backend/concurrency/transaction_manager.cpp \
-	backend/concurrency/transaction.cpp
+					backend/concurrency/optimistic_transaction_manager.cpp \
+					backend/concurrency/pessimistic_transaction_manager.cpp \
+					backend/concurrency/transaction_manager.cpp \
+					backend/concurrency/transaction.cpp
 
 concurrency_INCLUDES = \
-				   -I$(srcdir)/concurrency
+					   -I$(srcdir)/concurrency

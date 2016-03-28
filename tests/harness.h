@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // harness.h
 //
 // Identification: tests/harness.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -99,11 +99,9 @@ class PelotonTest : public ::testing::Test {
   virtual void SetUp() {}
 
   virtual void TearDown() {
-
     // shutdown protocol buf library
     google::protobuf::ShutdownProtobufLibrary();
   }
-
 };
 
 }  // End test namespace

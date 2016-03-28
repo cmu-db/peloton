@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// logger_configuration.cpp
 //
-// Identification: benchmark/logger/configuration.cpp
+// Identification: src/backend/benchmark/logger/logger_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,16 +47,14 @@ static struct option opts[] = {
     {"wait-timeout", optional_argument, NULL, 'w'},
     {NULL, 0, NULL, 0}};
 
-static void ValidateLoggingType(
-    const configuration& state) {
+static void ValidateLoggingType(const configuration& state) {
   std::cout << std::setw(20) << std::left << "logging_type "
             << " : ";
 
   std::cout << LoggingTypeToString(state.logging_type) << std::endl;
 }
 
-static void ValidateColumnCount(
-    const configuration& state) {
+static void ValidateColumnCount(const configuration& state) {
   if (state.column_count <= 0) {
     std::cout << "Invalid column_count :: " << state.column_count << std::endl;
     exit(EXIT_FAILURE);
@@ -66,8 +64,7 @@ static void ValidateColumnCount(
             << " : " << state.column_count << std::endl;
 }
 
-static void ValidateTupleCount(
-    const configuration& state) {
+static void ValidateTupleCount(const configuration& state) {
   if (state.tuple_count <= 0) {
     std::cout << "Invalid tuple_count :: " << state.tuple_count << std::endl;
     exit(EXIT_FAILURE);
@@ -77,8 +74,7 @@ static void ValidateTupleCount(
             << " : " << state.tuple_count << std::endl;
 }
 
-static void ValidateBackendCount(
-    const configuration& state) {
+static void ValidateBackendCount(const configuration& state) {
   if (state.backend_count <= 0) {
     std::cout << "Invalid backend_count :: " << state.backend_count
               << std::endl;
@@ -89,8 +85,7 @@ static void ValidateBackendCount(
             << " : " << state.backend_count << std::endl;
 }
 
-static void ValidateDataFileSize(
-    const configuration& state) {
+static void ValidateDataFileSize(const configuration& state) {
   if (state.data_file_size <= 0) {
     std::cout << "Invalid pmem_file_size :: " << state.data_file_size
               << std::endl;
@@ -101,8 +96,7 @@ static void ValidateDataFileSize(
             << " : " << state.data_file_size << std::endl;
 }
 
-static void ValidateExperiment(
-    const configuration& state) {
+static void ValidateExperiment(const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
     std::cout << "Invalid experiment_type :: " << state.experiment_type
               << std::endl;
@@ -113,8 +107,7 @@ static void ValidateExperiment(
             << " : " << state.experiment_type << std::endl;
 }
 
-static void ValidateWaitTimeout(
-    const configuration& state) {
+static void ValidateWaitTimeout(const configuration& state) {
   if (state.wait_timeout < 0) {
     std::cout << "Invalid wait_timeout :: " << state.wait_timeout << std::endl;
     exit(EXIT_FAILURE);
@@ -124,8 +117,7 @@ static void ValidateWaitTimeout(
             << " : " << state.wait_timeout << std::endl;
 }
 
-static void ValidateLogFileDir(
-    configuration& state) {
+static void ValidateLogFileDir(configuration& state) {
   struct stat data_stat;
 
   // Assign log file dir based on logging type
@@ -168,9 +160,9 @@ static void ValidateLogFileDir(
       int status = stat(TMP_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = TMP_DIR;
-      }
-      else {
-        throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+      } else {
+        throw Exception("Could not find temp directory : " +
+                        std::string(TMP_DIR));
       }
     } break;
   }
@@ -179,7 +171,7 @@ static void ValidateLogFileDir(
             << " : " << state.log_file_dir << std::endl;
 }
 
-void ParseArguments(int argc, char* argv[], configuration &state) {
+void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
   state.tuple_count = 10;
 

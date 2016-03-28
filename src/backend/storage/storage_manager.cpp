@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // storage_manager.cpp
 //
 // Identification: src/backend/storage/storage_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,10 +54,10 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-: data_file_address(nullptr),
-  is_pmem(false),
-  data_file_len(0),
-  data_file_offset(0) {
+    : data_file_address(nullptr),
+      is_pmem(false),
+      data_file_len(0),
+      data_file_offset(0) {
   // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
@@ -123,9 +123,9 @@ StorageManager::StorageManager()
     int status = stat(TMP_DIR, &data_stat);
     if (status == 0 && S_ISDIR(data_stat.st_mode)) {
       data_file_name = std::string(TMP_DIR) + std::string(DATA_FILE_NAME);
-    }
-    else {
-      throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+    } else {
+      throw Exception("Could not find temp directory : " +
+                      std::string(TMP_DIR));
     }
   }
 
@@ -167,13 +167,12 @@ StorageManager::~StorageManager() {
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
 
-  // unmap the pmem file
+// unmap the pmem file
 #ifdef NVML
-    if(is_pmem == true) {
-      pmem_unmap(data_file_address, data_file_len);
-    }
+  if (is_pmem == true) {
+    pmem_unmap(data_file_address, data_file_len);
+  }
 #endif
-
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
@@ -227,13 +226,12 @@ void StorageManager::Sync(BackendType type,
     } break;
 
     case BACKEND_TYPE_FILE: {
-      // flush writes for persistence
+// flush writes for persistence
 #ifdef NVML
       if (is_pmem) {
         pmem_persist(address, length);
         clflush_count++;
-      }
-      else{
+      } else {
         pmem_msync(address, length);
         msync_count++;
       }

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expression_util.h
 //
 // Identification: src/backend/expression/expression_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -130,13 +130,13 @@ class ExpressionUtil {
       const std::vector<AbstractExpression *> *args);
 
   static AbstractExpression *CaseExprFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& clauses,
+      ValueType vt, const std::vector<AbstractExpression *> &clauses,
       AbstractExpression *default_result);
   static AbstractExpression *CoalesceFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& values);
+      ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *NullIfFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& values);
+      ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *CaseWhenFactory(ValueType vt,
                                              AbstractExpression *lc,

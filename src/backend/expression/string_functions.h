@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // string_functions.h
 //
 // Identification: src/backend/expression/string_functions.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,8 +39,9 @@ inline Value Value::CallUnary<FUNC_CHAR>() const {
   if (IsNull()) return GetNullValue();
 
   // TODO: Work around boost locale
-  //unsigned int point = static_cast<unsigned int>(CastAsBigIntAndGetValue());
-  //std::string utf8 = boost::locale::conv::utf_to_utf<char>(&point, &point + 1);
+  // unsigned int point = static_cast<unsigned int>(CastAsBigIntAndGetValue());
+  // std::string utf8 = boost::locale::conv::utf_to_utf<char>(&point, &point +
+  // 1);
   std::string utf8 = "";
 
   return GetTempStringValue(utf8.c_str(), utf8.length());

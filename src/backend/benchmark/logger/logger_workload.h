@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// logger_workload.h
 //
-// Identification: benchmark/logger/workload.h
+// Identification: src/backend/benchmark/logger/logger_workload.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,8 +59,7 @@ std::vector<ItemPointer> InsertTuples(
     bool committed);
 
 void DeleteTuples(storage::DataTable* table,
-                  const std::vector<ItemPointer>& locations,
-                  bool committed);
+                  const std::vector<ItemPointer>& locations, bool committed);
 
 std::vector<ItemPointer> UpdateTuples(
     storage::DataTable* table, const std::vector<ItemPointer>& locations,
@@ -87,7 +86,6 @@ void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
 void DropDatabase(oid_t db_oid);
 
 void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
-
 
 }  // namespace logger
 }  // namespace benchmark

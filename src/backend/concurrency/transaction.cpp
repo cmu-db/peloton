@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction.cpp
 //
 // Identification: src/backend/concurrency/transaction.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,7 +37,7 @@ void Transaction::RecordRead(const oid_t &tile_group_id,
 }
 
 void Transaction::RecordUpdate(const oid_t &tile_group_id,
-                              const oid_t &tuple_id) {
+                               const oid_t &tuple_id) {
   if (rw_set.find(tile_group_id) != rw_set.end() &&
       rw_set.at(tile_group_id).find(tuple_id) !=
           rw_set.at(tile_group_id).end()) {
@@ -123,9 +123,7 @@ const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
   return rw_set;
 }
 
-void Transaction::ResetState(void) {
-  rw_set.clear();
-}
+void Transaction::ResetState(void) { rw_set.clear(); }
 
 const std::string Transaction::GetInfo() const {
   std::ostringstream os;

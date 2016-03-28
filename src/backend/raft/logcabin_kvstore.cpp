@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logcabin_kvstore.cpp
 //
-// Identification: src/backend/kvstore/logcabin_kvstore.cpp
+// Identification: src/backend/raft/logcabin_kvstore.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +22,7 @@ namespace kvstore {
  * @return True or false based on success of entry input.
  */
 bool LogcabinKVStore::PutEntry(KVStoreKey *key, KVStoreEntry *entry) {
-	std::cout << "PutEntry() called" << std::endl;
+  std::cout << "PutEntry() called" << std::endl;
 }
 
 /**
@@ -30,10 +30,10 @@ bool LogcabinKVStore::PutEntry(KVStoreKey *key, KVStoreEntry *entry) {
  *
  * @return Object of type Entry.
  */
-KVStoreEntry* LogcabinKVStore::GetEntry(KVStoreKey *key) {
-	std::cout << "GetEntry() called" << std::endl;
-	KVStoreEntry *entry = new KVStoreEntry();
-	return entry;
+KVStoreEntry *LogcabinKVStore::GetEntry(KVStoreKey *key) {
+  std::cout << "GetEntry() called" << std::endl;
+  KVStoreEntry *entry = new KVStoreEntry();
+  return entry;
 }
 
 /**
@@ -42,7 +42,7 @@ KVStoreEntry* LogcabinKVStore::GetEntry(KVStoreKey *key) {
  * @return True or false based on binding.
  */
 bool LogcabinKVStore::RemoveEntry(KVStoreKey *key) {
-	std::cout << "RemoveEntry() called" << std::endl;
+  std::cout << "RemoveEntry() called" << std::endl;
 }
 
 /**
@@ -51,9 +51,8 @@ bool LogcabinKVStore::RemoveEntry(KVStoreKey *key) {
  * @return True or false based on existence of entry
  */
 bool LogcabinKVStore::ContainsEntry(KVStoreKey *key) {
-	std::cout << "ContainsEntry() called" << std::endl;
+  std::cout << "ContainsEntry() called" << std::endl;
 }
-
 
 }  // End kvstore namespace
 }  // End peloton namespace

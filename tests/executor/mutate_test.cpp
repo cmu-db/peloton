@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mutate_test.cpp
 //
 // Identification: tests/executor/mutate_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -218,8 +218,7 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor.Execute();
-  }
-  catch (ConstraintException &ce) {
+  } catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -233,8 +232,7 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  }
-  catch (ConstraintException &ce) {
+  } catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -321,8 +319,9 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);

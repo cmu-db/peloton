@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rpc_channel.h
 //
 // Identification: src/backend/networking/rpc_channel.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,9 +26,9 @@ namespace peloton {
 namespace networking {
 
 class RpcChannel : public google::protobuf::RpcChannel {
-public:
+ public:
   RpcChannel(const std::string& url);
-  //RpcChannel(const long ip, const int port);
+  // RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
 
@@ -40,8 +40,8 @@ public:
 
   void Close();
 
-private:
-    NetworkAddress addr_;
+ private:
+  NetworkAddress addr_;
 };
 
 }  // namespace networking
