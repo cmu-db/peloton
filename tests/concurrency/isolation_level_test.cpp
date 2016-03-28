@@ -23,8 +23,8 @@ namespace test {
 
 class IsolationLevelTest : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
-                                                  CONCURRENCY_TYPE_2PL};
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC
+                                                  };
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -357,16 +357,35 @@ void SIAnomalyTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
+  int current_batch_key = 10000;
+  {
+    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    // Prepare
+    scheduler.Txn(0).Insert(current_batch_key, 100);
+    scheduler.Txn(0).Commit();
+    scheduler.Run();
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+  }
   {
     TransactionScheduler scheduler(3, table.get(), &txn_manager);
-    
+    // Test against anomaly
+    scheduler.Txn(1).ReadStore(current_batch_key, 0);
+    scheduler.Txn(2).Update(current_batch_key, 100+1);
+    scheduler.Txn(2).Commit();
+    scheduler.Txn(0).ReadStore(current_batch_key, -1);
+    scheduler.Txn(0).Read(TXN_STORED_VALUE);
+    scheduler.Txn(1).Insert(TXN_STORED_VALUE, 0);
+    scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Read(TXN_STORED_VALUE);
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
-      EXPECT_TRUE(scheduler.schedules[0].results[0] ==
-                  scheduler.schedules[0].results[1]);
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
+        RESULT_SUCCESS == scheduler.schedules[2].txn_result) {
+      EXPECT_TRUE(scheduler.schedules[0].results[1] == -1 &&
+                  scheduler.schedules[0].results[2] == -1);
     }
   }
 }
@@ -381,6 +400,7 @@ TEST_F(IsolationLevelTest, SerializableTest) {
     WriteSkewTest();
     ReadSkewTest();
     PhantomTest();
+    SIAnomalyTest();
   }
 }
 
