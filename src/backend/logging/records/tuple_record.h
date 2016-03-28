@@ -14,6 +14,7 @@
 
 #include "backend/logging/log_record.h"
 #include "backend/common/serializer.h"
+#include "backend/common/printable.h"
 
 namespace peloton {
 namespace logging {
@@ -22,7 +23,7 @@ namespace logging {
 // TupleRecord
 //===--------------------------------------------------------------------===//
 
-class TupleRecord : public LogRecord {
+class TupleRecord : public LogRecord, Printable {
  public:
   TupleRecord(LogRecordType log_record_type)
       : LogRecord(log_record_type, INVALID_TXN_ID) {
@@ -80,7 +81,8 @@ class TupleRecord : public LogRecord {
 
   static size_t GetTupleRecordSize(void);
 
-  void Print(void);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//

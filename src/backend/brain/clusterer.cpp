@@ -30,8 +30,6 @@ void Clusterer::ProcessSample(const Sample &sample) {
   Sample distance = sample.GetDifference(means_[closest_cluster]);
   Sample mean_drift = distance * new_sample_weight_;
 
-  // std::cout << "mean drift : " << mean_drift << "\n";
-
   // Update the cluster's mean
   means_[closest_cluster] = means_[closest_cluster] + mean_drift;
 }

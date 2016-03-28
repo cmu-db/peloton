@@ -10,15 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tcp_connection.h"
-#include "connection_manager.h"
-#include "peloton_service.h"
-#include "rpc_type.h"
+#include <iostream>
+#include <mutex>
 
 #include <pthread.h>
 
-#include <iostream>
-#include <mutex>
+#include "backend/networking/tcp_connection.h"
+#include "backend/networking/connection_manager.h"
+#include "backend/networking/peloton_service.h"
+#include "backend/networking/rpc_type.h"
+
+namespace peloton {
+namespace networking {
 
 std::mutex send_mutex;
 uint64_t server_response_send_number = 0;  // number of rpc
@@ -28,15 +31,12 @@ struct total_processed {
   size_t n;
 };
 
-namespace peloton {
-namespace networking {
-
 /*
  * A connection includes a bufferevent which must be specified THREAD-SAFE
  */
 Connection::Connection(int fd, struct event_base *base, void *arg,
                        NetworkAddress &addr)
-    : addr_(addr), close_(false), status_(INIT), base_(base) {
+: addr_(addr), close_(false), status_(INIT), base_(base) {
   // we must pass rpc_server when new a connection
   assert(arg != NULL);
   rpc_server_ = (RpcServer *)arg;
@@ -244,36 +244,25 @@ void *Connection::ProcessMessage(void *connection) {
       LOG_TRACE("RpcServer with controller failed:%s ", error.c_str());
     }
 
-    // test
-    //        {
-    //            std::lock_guard < std::mutex > lock(send_mutex);
-    //            server_response_send_number++;
-    //            server_response_send_bytes += (msg_len + HEADERLEN);
-    //
-    //            struct timeval end;
-    //            long useconds;
-    //            gettimeofday(&end, NULL);
-    //            useconds = end.tv_usec -
-    //            ConnectionManager::GetInstance().start_time_;
-    //
-    //            float rpc_speed = 0;
-    //            float bytes_speed = 0;
-    //
-    //            rpc_speed = (float)(server_response_send_number *
-    //            1000000)/useconds;
-    //            bytes_speed = (float)(server_response_send_bytes *
-    //            1000000)/useconds;
-    //
-    //            std::cout << "server_response_send_number: "
-    //                    << server_response_send_number << "
-    //                    speed:-------------------------------------------------"<<
-    //                    rpc_speed << "----------" <<std::endl;
-    //            std::cout << "server_response_send_bytes: "
-    //                    << server_response_send_bytes << "
-    //                    spped:***************************************************"
-    //                    << bytes_speed << "*********" << std::endl;
-    //        }
-    // end test
+/*    {
+      std::lock_guard < std::mutex > lock(send_mutex);
+      server_response_send_number++;
+      server_response_send_bytes += (msg_len + HEADERLEN);
+
+      struct timeval end;
+      long useconds;
+      gettimeofday(&end, NULL);
+      useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
+
+      LOG_INFO("server_response_send_number: %lu", server_response_send_number);
+      LOG_INFO("speed: %f-------------------------------------------------",
+               (float)(server_response_send_number * 1000000)/useconds);
+
+      LOG_INFO("server_response_send_bytes: %lu", server_response_send_bytes);
+      LOG_INFO("speed: %f-------------------------------------------------",
+               (float)(server_response_send_bytes * 1000000)/useconds);
+    }*/
+
   }
 
   return NULL;
@@ -351,13 +340,8 @@ void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
   }
 }
 
-void Connection::BufferCb(struct evbuffer *buffer,
+void Connection::BufferCb(__attribute__((unused)) struct evbuffer *buffer,
                           const struct evbuffer_cb_info *info, void *arg) {
-  std::cout << arg << buffer << "This is BufferCb "
-            << "info->orig_size: " << info->orig_size
-            << "info->n_deleted: " << info->n_deleted
-            << "info->n_added: " << info->n_added << std::endl;
-
   struct total_processed *tp = (total_processed *)arg;
   size_t old_n = tp->n;
   int megabytes, i;
