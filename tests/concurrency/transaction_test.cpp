@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction_test.cpp
 //
 // Identification: tests/concurrency/transaction_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -51,7 +51,7 @@ TEST_F(TransactionTests, TransactionTest) {
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
 
-    std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
+    LOG_INFO("next Commit Id :: %lu", txn_manager.GetNextCommitId());
   }
 }
 

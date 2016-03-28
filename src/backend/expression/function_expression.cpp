@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // function_expression.cpp
 //
 // Identification: src/backend/expression/function_expression.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -274,6 +274,10 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
       case FUNC_SINCE_EPOCH_MICROSECOND:
         ret = new UnaryFunctionExpression<FUNC_SINCE_EPOCH_MICROSECOND>(
             (*arguments)[0]);
+        break;
+      case FUNC_TO_TIMESTAMP_DAY:
+        ret =
+            new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_DAY>((*arguments)[0]);
         break;
       case FUNC_TO_TIMESTAMP_SECOND:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_SECOND>(

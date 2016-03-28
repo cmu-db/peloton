@@ -1,15 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * wbl_frontend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wbl_frontend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
-
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -251,7 +250,8 @@ void WriteBehindFrontendLogger::WriteTransactionLogRecord(
   }
 }
 
-std::set<storage::TileGroupHeader *> WriteBehindFrontendLogger::ToggleCommitMarks(
+std::set<storage::TileGroupHeader *>
+WriteBehindFrontendLogger::ToggleCommitMarks(
     std::vector<txn_id_t> committed_txn_list) {
   // Headers modified
   std::set<storage::TileGroupHeader *> tile_group_headers;

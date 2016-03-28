@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * dml_raw_structures.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/dml_raw_structures.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// dml_raw_structures.h
+//
+// Identification: src/backend/bridge/dml/mapper/dml_raw_structures.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -127,11 +127,10 @@ struct ResultPlanState : public AbstractPlanState {
 };
 
 struct UniquePlanState : public AbstractPlanState {
+  PelotonProjectionInfo *ps_ProjInfo;
+  TupleDesc tts_tupleDescriptor;
 
-	  PelotonProjectionInfo *ps_ProjInfo;
-	  TupleDesc tts_tupleDescriptor;
-
-	  List *targetlist;
+  List *targetlist;
 };
 
 struct AbstractJoinPlanState : public AbstractPlanState {
@@ -145,16 +144,16 @@ struct AbstractJoinPlanState : public AbstractPlanState {
 };
 
 struct NestLoopPlanState : public AbstractJoinPlanState {
-	NestLoop *nl;
+  NestLoop *nl;
 };
 
 struct MergeJoinPlanState : public AbstractJoinPlanState {
   int mj_NumClauses;
-  MergeJoinClause mj_Clauses; // array of length mj_NumClauses
+  MergeJoinClause mj_Clauses;  // array of length mj_NumClauses
 };
 
 struct HashJoinPlanState : public AbstractJoinPlanState {
-	List *outer_hashkeys;
+  List *outer_hashkeys;
 };
 
 struct AggPlanState : public AbstractPlanState {

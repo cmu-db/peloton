@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// transaction_record.cpp
+//
+// Identification: src/backend/logging/records/transaction_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 
@@ -52,10 +63,14 @@ size_t TransactionRecord::GetTransactionRecordSize(void) {
   return sizeof(char) + sizeof(int) + sizeof(long);
 }
 
-void TransactionRecord::Print(void) {
-  std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
-  std::cout << " #Txn ID:" << GetTransactionId() << "\n";
-  std::cout << "\n";
+const std::string TransactionRecord::GetInfo() const {
+  std::ostringstream os;
+
+  os << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
+  os << " #Txn ID:" << GetTransactionId() << "\n";
+  os << "\n";
+
+  return os.str();
 }
 
 }  // namespace logging

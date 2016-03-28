@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expression_util.cpp
 //
 // Identification: src/backend/expression/expression_util.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -550,6 +550,9 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
     case (EXPRESSION_TYPE_EXTRACT):
       ret = new ExtractExpression(first, second);
       break;
+    case (EXPRESSION_TYPE_DATE_TO_TIMESTAMP):
+      ret = new DateToTimestampExpression(first);
+      break;
     case (EXPRESSION_TYPE_OPERATOR_CONCAT):
       throw ExpressionException("Concat operator not yet supported.");
 
@@ -901,18 +904,18 @@ void raiseFunctionFactoryError(const std::string &nameString, int functionId,
 }
 
 AbstractExpression *ExpressionUtil::CaseExprFactory(
-    ValueType vt, const std::vector<AbstractExpression *>& clauses,
+    ValueType vt, const std::vector<AbstractExpression *> &clauses,
     AbstractExpression *default_result) {
   return new expression::CaseExpression(vt, clauses, default_result);
 }
 
 AbstractExpression *ExpressionUtil::CoalesceFactory(
-    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
   return new expression::CoalesceExpression(vt, expressions);
 }
 
 AbstractExpression *ExpressionUtil::NullIfFactory(
-    ValueType vt, const std::vector<AbstractExpression *>& expressions) {
+    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
   return new expression::NullIfExpression(vt, expressions);
 }
 
