@@ -742,7 +742,6 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
 
           /* Prevent portal's commands from being re-executed */
           MarkPortalDone(portal);
-
           /* Always complete at end of RunMulti */
           result = true;
           break;
