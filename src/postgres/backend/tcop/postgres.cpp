@@ -4342,14 +4342,12 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
       auto mc_state = new MemcachedState();
-      exec_simple_query(query_line.c_str(), mc_state);
+      exec_simple_query(&query_line[0], mc_state);
       // proceed to frontend write only if response is not empty
       if (mc_state->result.len > 0) {
-        printf("Entered\n");
         // echo response
         parse_select_result_cols(&mc_state->result, query_result);
-        // printf("\nMC_RESULT:%s\n",query_result.c_str());
-        printf("Create finished Reached\n");
+        printf("\nMC_RESULT:%s\n",query_result.c_str());
         if (!mc_sock.write_response(query_result + "\r\n")) {
           printf("\nWrite line failed, terminating thread\n");
           terminate = true;
@@ -4358,7 +4356,6 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         // clear the result data
         pfree(mc_state->result.data);
       }
-      std::cout << "Create Table finished entered\n";
       delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
