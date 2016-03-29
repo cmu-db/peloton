@@ -28,7 +28,6 @@ class Transaction;
 
 namespace logging {
 
-
 //===--------------------------------------------------------------------===//
 // Write Ahead Frontend Logger
 //===--------------------------------------------------------------------===//
@@ -70,6 +69,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
 
   void TruncateLog(int);
+
+  void SetLogDirectory(char *);
+  void InitLogDirectory();
 
  private:
   std::string GetLogFileName(void);
