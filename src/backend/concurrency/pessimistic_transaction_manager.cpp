@@ -180,7 +180,6 @@ bool PessimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
     return true;
 
   // Try to acquire read lock.
-
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
   // No one is holding the write lock
   if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
@@ -219,20 +218,13 @@ bool PessimisticTransactionManager::PerformUpdate(
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  // Not owner
-  // acquire write lock.
-  bool res = AcquireTuple(tile_group.get(), tuple_id);
-
-  if (res) {
-    SetUpdateVisibility(new_location.block, new_location.offset);
-    tile_group_header->SetNextItemPointer(tuple_id, new_location);
-    current_txn->RecordUpdate(tile_group_id, tuple_id);
-    return true;
-  } else {
-    // AcquireTuple may have changed the txn's result
-    // SetTransactionResult(RESULT_FAILURE);
-    return false;
-  }
+  // The write lock must have been acquired
+  // Notice: if the executor doesn't call PerformUpdate after AcquireTuple, no
+  // one will possibly release the write lock acquired by this txn.
+  SetUpdateVisibility(new_location.block, new_location.offset);
+  tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  current_txn->RecordUpdate(tile_group_id, tuple_id);
+  return true;
 }
 
 bool PessimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
