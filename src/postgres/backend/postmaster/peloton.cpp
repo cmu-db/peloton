@@ -32,6 +32,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/gc/gc_manager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -128,6 +129,10 @@ peloton_bootstrap() {
 
     }
 
+    // Start GC vacuuming thread
+    //TODO: add a check for command line parameter to enable GC
+    auto& gc_manager = peloton::gc::GCManager::GetInstance();
+    std::thread(&peloton::gc::GCManager::Poll, &gc_manager).detach();
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
