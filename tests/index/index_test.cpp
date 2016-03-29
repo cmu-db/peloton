@@ -40,6 +40,7 @@ index::Index *BuildIndex() {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
   IndexType index_type = INDEX_TYPE_BTREE;
+  // FIXME: Try to use BWTREE
   //index_type = INDEX_TYPE_BWTREE;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
