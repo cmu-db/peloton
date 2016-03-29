@@ -34,7 +34,7 @@ DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
-VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout"]
+VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout", " malloc\(", " free\("]
 
 ## ==============================================
 ## 			LOGGING CONFIGURATION
