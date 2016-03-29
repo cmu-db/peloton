@@ -147,45 +147,45 @@ void DirtyReadTest() {
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      // Don't read uncommited value
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+    }
   }
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
 
-    // T1 updates (0, ?) to (0, 1)
-    // T2 reads (0, ?)
-    // T2 commit
-    // T1 commit
-    scheduler.Txn(0).Update(0, 1);
-    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Update(1, 1);
+    scheduler.Txn(1).Read(1);
     scheduler.Txn(1).Commit();
     scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      // Don't read uncommited value
+      EXPECT_EQ(1, scheduler.schedules[1].results[0]);
+    }
   }
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
 
-    // T0 delete (0, ?)
-    // T1 read (0, ?)
-    // T0 commit
-    // T1 commit
-    scheduler.Txn(0).Delete(0);
-    scheduler.Txn(1).Read(0);
+    scheduler.Txn(0).Delete(2);
+    scheduler.Txn(1).Read(2);
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
 
     scheduler.Run();
 
-    // FIXME: both can success as long as T1 reads the original value
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      // Don't read uncommited value
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+    }
   }
 }
 
@@ -194,55 +194,44 @@ void FuzzyReadTest() {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
+  // The constraints are the value of 0 and 1 should be equal
   {
-    // T0 read 0
-    // T1 update (0, 0) to (0, 1)
-    // T1 commit
-    // T0 commit
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
+    scheduler.Txn(1).Update(1, 1);
     scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Read(1);
     scheduler.Txn(0).Commit();
 
     scheduler.Run();
 
-    LOG_TRACE("%lu", scheduler.schedules.size());
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) 
+    {
+      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+    }
   }
 
+  // The constraints are 0 and 1 should both exist or bot not exist
   {
-    // T0 read 0
-    // T1 update (0, 0) to (0, 1)
-    // T0 commit
-    // T1 commit
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(1).Update(0, 1);
-    scheduler.Txn(0).Commit();
-    scheduler.Txn(1).Commit();
-
-    scheduler.Run();
-
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
-  }
-
-  {
-    // T0 read 0
-    // T1 delete 0
-    // T0 commit
-    // T1 commit
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Delete(0);
-    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Delete(1);
     scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Read(1);
+    scheduler.Txn(0).Commit();
 
     scheduler.Run();
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) 
+    {
+      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+    }
   }
 }
 
@@ -295,35 +284,39 @@ void WriteSkewTest() {
       TransactionTestsUtil::CreateTable());
 
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Read(0);
+    // Prepare
+    TransactionScheduler scheduler(1, table.get(), &txn_manager);
     scheduler.Txn(0).Update(1, 1);
-    scheduler.Txn(1).Read(0);
-    scheduler.Txn(1).Update(1, 2);
     scheduler.Txn(0).Commit();
-    scheduler.Txn(1).Commit();
-
     scheduler.Run();
-
-    // Can't all success
-    EXPECT_FALSE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
   }
-
   {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Update(1, 1);
-    scheduler.Txn(1).Read(0);
+    // the database has tuple (0, 0), (1, 1)
+    // T0 will set all 1 to 0
+    // T1 will set all 0 to 1
+    // The results are either (0, 0), (1, 0) or (0, 1), (1, 1) in serilizable
+    // transactions.
+    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+
+    scheduler.Txn(0).Read(0);      
+    scheduler.Txn(0).Update(1, 0); // txn 0 see (1, 1), update it to (1, 0)
+    scheduler.Txn(1).Read(1);      
+    scheduler.Txn(1).Update(0, 1); // txn 1 see (0, 0), update it to (0, 1)
     scheduler.Txn(0).Commit();
-    scheduler.Txn(1).Update(1, 2);
     scheduler.Txn(1).Commit();
+    scheduler.Txn(2).Read(0);
+    scheduler.Txn(2).Read(1);
+    scheduler.Txn(2).Commit();
 
     scheduler.Run();
 
-    // First txn should success
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                RESULT_ABORTED == scheduler.schedules[1].txn_result);
+    EXPECT_TRUE(scheduler.schedules[2].txn_result);
+    // Can't all success
+    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+      EXPECT_TRUE(scheduler.schedules[2].results[0] == scheduler.schedules[2].results[1]);
+    }
   }
 }
 
@@ -353,7 +346,7 @@ void ReadSkewTest() {
 // Look at the SSI paper (http://drkp.net/papers/ssi-vldb12.pdf).
 // This is an anomaly involving three transactions (one of them is a readonly
 // transaction).
-void SIAnomalyTest() {
+void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
@@ -390,6 +383,24 @@ void SIAnomalyTest() {
   }
 }
 
+// This is another version of the SI Anomaly described in this paper:
+// http://cs.nyu.edu/courses/fall15/CSCI-GA.2434-001/p729-cahill.pdf
+// void SIAnomalyTest2() {
+//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//   std::unique_ptr<storage::DataTable> table(
+//       TransactionTestsUtil::CreateTable());
+//   int X = 0, Y = 1, Z = 2;
+//   {
+
+//     TransactionScheduler scheduler(3, table.get(), &txn_manager);
+//     scheduler.Txn(1).Update(Y, 1);
+//     scheduler.Txn(1).Update(Z, 1);
+//     scheduler.Txn(0).Read(Y);
+//     scheduler.Txn(0).Write(X, 1);
+//   }
+//   int X = 3, Y = 4, Z = 5;
+// }
+
 TEST_F(IsolationLevelTest, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
@@ -400,7 +411,7 @@ TEST_F(IsolationLevelTest, SerializableTest) {
     WriteSkewTest();
     ReadSkewTest();
     PhantomTest();
-    SIAnomalyTest();
+    SIAnomalyTest1();
   }
 }
 
