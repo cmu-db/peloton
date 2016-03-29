@@ -1274,7 +1274,7 @@ static void CollectColumnMapStats() {
 
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
-  LOG_TRACE("TG Count :: %d", tile_group_count);
+  LOG_TRACE("TG Count :: %lu", tile_group_count);
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
