@@ -4342,16 +4342,20 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
       auto mc_state = new MemcachedState();
-      exec_simple_query(query_line.c_str(), mc_state);
-      // echo response
-      parse_select_result_cols(&mc_state->result, query_result);
-      // printf("\nMC_RESULT:%s\n",query_result.c_str());
-      if(!mc_sock.write_response(query_result+"\r\n")) {
-        printf("\nWrite line failed, terminating thread\n");
-        terminate = true;
+      exec_simple_query(&query_line[0], mc_state);
+      // proceed to frontend write only if response is not empty
+      if (mc_state->result.len > 0) {
+        // echo response
+        parse_select_result_cols(&mc_state->result, query_result);
+        printf("\nMC_RESULT:%s\n",query_result.c_str());
+        if (!mc_sock.write_response(query_result + "\r\n")) {
+          printf("\nWrite line failed, terminating thread\n");
+          terminate = true;
+        }
+
+        // clear the result data
+        pfree(mc_state->result.data);
       }
-      // clear the result data
-      pfree(mc_state->result.data);
       delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
@@ -4371,21 +4375,21 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result) {
   //    printf("%d\t", buf->data[i]);
   //  }
   //  printf("\n");
-  // base 2 int, 16 bits
   buf->cursor = 0;
+  // base 2 int, 16 bits
   buf->len = 2;
   int nattrs = pq_getmsgint(buf, 2);
   // printf("\nnattrs:%d\n", nattrs);
   int col_length;
   for (int i=0; i < nattrs; i++) {
-      buf->len += 4;
-      col_length = pq_getmsgint(buf, 4);
-      // printf("\nresult:%d\n", col_length);
+    buf->len += 4;
+    col_length = pq_getmsgint(buf, 4);
+    // printf("\nresult:%d\n", col_length);
 
-      buf->len += col_length;
-      result += pq_getmsgbytes(buf, col_length);
-      result += "\t";
-      // printf("\nresult:%s\n", result.c_str());
+    buf->len += col_length;
+    result += pq_getmsgbytes(buf, col_length);
+    result += "\t";
+    // printf("\nresult:%s\n", result.c_str());
   }
 }
 
