@@ -186,8 +186,9 @@ void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
 
   // Clean all children subtrees
   auto children = root->GetChildren();
-  for (auto child : children) {
+  for (auto &child : children) {
     CleanPlan(child);
+    child = nullptr;
   }
 
   // Clean the root
