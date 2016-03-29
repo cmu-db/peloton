@@ -24,6 +24,7 @@ namespace logging {
 void LogFile::SetMaxCommitId(int max_commit_id) {
   max_commit_id_ = max_commit_id;
 }
+
 int LogFile::GetMaxCommitId() { return max_commit_id_; }
 
 int LogFile::GetLogNumber() { return log_number_; }
