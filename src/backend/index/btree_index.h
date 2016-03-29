@@ -16,7 +16,6 @@
 #include <string>
 
 #include "backend/catalog/manager.h"
-#include "backend/common/allocator.h"
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
