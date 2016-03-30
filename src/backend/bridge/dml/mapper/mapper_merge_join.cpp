@@ -28,8 +28,8 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
-    const MergeJoinPlanState *mj_plan_state) {
+const std::shared_ptr<planner::AbstractPlan>
+PlanTransformer::TransformMergeJoin(const MergeJoinPlanState *mj_plan_state) {
   std::shared_ptr<planner::AbstractPlan> result;
   std::shared_ptr<planner::MergeJoinPlan> plan_node;
   PelotonJoinType join_type =
@@ -73,18 +73,16 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    result =
-        std::make_shared<planner::ProjectionPlan>(
-            project_info.release(), project_schema);
+    result = std::make_shared<planner::ProjectionPlan>(project_info.release(),
+                                                       project_schema);
     plan_node = std::make_shared<planner::MergeJoinPlan>(
         join_type, predicate, nullptr, project_schema, join_clauses);
     result.get()->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node =
-        std::make_shared<planner::MergeJoinPlan>(
-            join_type, predicate, project_info.release(), project_schema,
-            join_clauses);
+    plan_node = std::make_shared<planner::MergeJoinPlan>(
+        join_type, predicate, project_info.release(), project_schema,
+        join_clauses);
     result = plan_node;
   }
 

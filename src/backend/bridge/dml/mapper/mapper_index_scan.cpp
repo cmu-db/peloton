@@ -48,8 +48,9 @@ static void BuildRuntimeKey(
  *          8. unary op
  * @return Pointer to the constructed AbstractPlan.
  */
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformIndexScan(
-    const IndexScanPlanState *iss_plan_state, const TransformOptions options) {
+const std::shared_ptr<planner::AbstractPlan>
+PlanTransformer::TransformIndexScan(const IndexScanPlanState *iss_plan_state,
+                                    const TransformOptions options) {
   /* info needed to initialize plan node */
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
@@ -99,9 +100,8 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformIndexScan
   GetGenericInfoFromScanState(parent, predicate, column_ids, iss_plan_state,
                               options.use_projInfo);
 
-  std::shared_ptr<planner::AbstractPlan> scan_node(
-      new planner::IndexScanPlan(table, predicate, column_ids,
-                                 index_scan_desc));
+  std::shared_ptr<planner::AbstractPlan> scan_node(new planner::IndexScanPlan(
+      table, predicate, column_ids, index_scan_desc));
 
   std::shared_ptr<planner::AbstractPlan> rv;
   /* Check whether a parent is presented, connect with the scan node if yes */
@@ -262,7 +262,8 @@ static void BuildRuntimeKey(
  *          8. unary op
  * @return Pointer to the constructed AbstractPlan.
  */
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformIndexOnlyScan(
+const std::shared_ptr<planner::AbstractPlan>
+PlanTransformer::TransformIndexOnlyScan(
     const IndexOnlyScanPlanState *ioss_plan_state,
     const TransformOptions options) {
   /* info needed to initialize plan node */
@@ -311,8 +312,8 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformIndexOnly
   GetGenericInfoFromScanState(parent, predicate, column_ids, ioss_plan_state,
                               options.use_projInfo);
 
-  std::shared_ptr<planner::AbstractPlan> scan_node(
-      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc));
+  std::shared_ptr<planner::AbstractPlan> scan_node(new planner::IndexScanPlan(
+      table, predicate, column_ids, index_scan_desc));
 
   std::shared_ptr<planner::AbstractPlan> rv = nullptr;
   /* Check whether a parent is presented, connect with the scan node if yes */
@@ -333,7 +334,8 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformIndexOnly
  *
  * @return Pointer to the constructed AbstractPlan
  */
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformBitmapHeapScan(
+const std::shared_ptr<planner::AbstractPlan>
+PlanTransformer::TransformBitmapHeapScan(
     const BitmapHeapScanPlanState *bhss_plan_state,
     const TransformOptions options) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
@@ -389,8 +391,8 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformBitmapHea
   GetGenericInfoFromScanState(parent, predicate, column_ids, bhss_plan_state,
                               options.use_projInfo);
 
-  std::shared_ptr<planner::AbstractPlan> scan_node(
-      new planner::IndexScanPlan(table, predicate, column_ids, index_scan_desc));
+  std::shared_ptr<planner::AbstractPlan> scan_node(new planner::IndexScanPlan(
+      table, predicate, column_ids, index_scan_desc));
 
   std::shared_ptr<planner::AbstractPlan> rv;
   /* Check whether a parent is presented, connect with the scan node if yes */
