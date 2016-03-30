@@ -24,8 +24,6 @@ BackendLogger::~BackendLogger() {
   // Wait for flushing
   WaitForFlushing();
 
-  printf("Destroyed backend logger : %p \n", this);
-
 }
 
 /**
@@ -42,9 +40,6 @@ BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
   } else {
     LOG_ERROR("Unsupported logging type");
   }
-
-  printf("Created backend logger : %p \n", backend_logger);
-
 
   return backend_logger;
 }

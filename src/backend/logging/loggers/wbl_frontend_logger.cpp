@@ -197,13 +197,9 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   // Notify the backend loggers
   {
     std::lock_guard<std::mutex> lock(backend_logger_mutex);
-    auto backend_loggers_size = backend_loggers.size();
-    for(oid_t backend_loggers_itr = 0;
-        backend_loggers_itr < backend_loggers_size;
-        backend_loggers_itr++){
-      backend_loggers[backend_loggers_itr]->Commit();
+    for(auto backend_logger : backend_loggers){
+      backend_logger->Commit();
     }
-
   }
 }
 

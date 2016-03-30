@@ -106,7 +106,7 @@ void RunBackend(oid_t thread_id) {
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
-      //RunUpdate();
+      RunUpdate();
     }
     else {
       RunRead();
