@@ -1,17 +1,16 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // peloton_client.h
 //
-// Identification: src/backend/message/peloton_client.h
+// Identification: src/backend/networking/peloton_client.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
-
+#include "backend/common/logger.h"
 #include "backend/networking/rpc_channel.h"
 #include "backend/networking/rpc_controller.h"
 #include "backend/networking/abstract_service.pb.h"
@@ -116,7 +115,7 @@ class PelotonClient {
   }
 
  private:
-  static void Call() { std::cout << "This is backcall:" << std::endl; }
+  static void Call() { LOG_TRACE("This is a backcall"); }
 
   RpcChannel* channel_;
   RpcController* controller_;

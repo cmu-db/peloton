@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// value_Peeker.h
+// value_peeker.h
 //
-// Identification: src/backend/common/value_Peeker.h
+// Identification: src/backend/common/value_peeker.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -68,6 +68,11 @@ class ValuePeeker {
   static inline int64_t PeekBigInt(const Value &value) {
     assert(value.GetValueType() == VALUE_TYPE_BIGINT);
     return value.GetBigInt();
+  }
+
+  static inline int32_t PeekDate(const Value &value) {
+    assert(value.GetValueType() == VALUE_TYPE_DATE);
+    return value.GetDate();
   }
 
   static inline int64_t PeekTimestamp(const Value &value) {

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // abstract_kvstore.h
 //
-// Identification: src/backend/kvstore/abstract_kvstore.h
+// Identification: src/backend/raft/abstract_kvstore.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,6 @@ namespace kvstore {
 
 class AbstractKVStore {
  public:
-
   /** @brief putEntry function to be overridden by derived class. */
   virtual bool PutEntry();
 
