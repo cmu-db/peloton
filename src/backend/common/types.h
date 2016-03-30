@@ -358,8 +358,9 @@ enum ExpressionType {
 enum ConcurrencyType {
   CONCURRENCY_TYPE_OCC = 0,  // optimistic
   CONCURRENCY_TYPE_2PL = 1,  // pessimistic
-  CONCURRENCY_TYPE_TO = 2,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 3   // serializable snapshot isolation
+  CONCURRENCY_TYPE_SPEC = 2, // speculative
+  CONCURRENCY_TYPE_TO = 3,   // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 4   // serializable snapshot isolation
 };
 
 enum IsolationLevelType {

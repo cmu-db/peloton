@@ -130,8 +130,7 @@ const std::string Transaction::GetInfo() const {
      << " Begin Commit ID : " << std::setw(4) << begin_cid_
      << " End Commit ID : " << std::setw(4) << end_cid_
      << " Result : " << result_;
-
-  os << " Ref count : " << std::setw(4) << outer_dep_count_ << "\n";
+     
   return os.str();
 }
 
