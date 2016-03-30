@@ -1,14 +1,16 @@
-/*-------------------------------------------------------------------------
- *
- * wal_frontend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/loggers/wal_frontend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -364,6 +366,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   delete tuple;
+
 }
 
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
@@ -402,6 +405,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     if (max_tg < remove_loc.block) {
       max_tg = remove_loc.block;
     }
+
   }
   InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple);
 

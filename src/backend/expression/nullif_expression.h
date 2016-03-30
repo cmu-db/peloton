@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// vector_expression.h
+// nullif_expression.h
 //
-// Identification: src/backend/expression/case_expression.h
+// Identification: src/backend/expression/nullif_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,16 +19,15 @@ namespace expression {
 // Returns a null value if the two specified expressions are equal.
 // Otherwise, returns the first expression result.
 class NullIfExpression : public AbstractExpression {
-
  public:
-  NullIfExpression(ValueType vt, const std::vector<AbstractExpression *>& expressions)
+  NullIfExpression(ValueType vt,
+                   const std::vector<AbstractExpression *> &expressions)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
         expressions(expressions),
         value_type(vt) {}
 
   virtual ~NullIfExpression() {
-    for (auto value : expressions)
-      delete value;
+    for (auto value : expressions) delete value;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -38,14 +37,12 @@ class NullIfExpression : public AbstractExpression {
     auto left_result = expressions[0]->Evaluate(tuple1, tuple2, context);
     auto right_result = expressions[1]->Evaluate(tuple1, tuple2, context);
 
-    if(left_result == right_result) {
+    if (left_result == right_result) {
       return Value::GetNullValue(value_type);
-    }
-    else {
+    } else {
       // FIXME: Order of expressions got reversed somewhere
       return right_result;
     }
-
   }
 
   std::string DebugInfo(const std::string &spacer) const {
