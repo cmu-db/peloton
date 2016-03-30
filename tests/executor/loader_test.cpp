@@ -21,7 +21,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
 #include "backend/common/pool.h"
-#include "backend/concurrency/optimistic_transaction_manager.h"
+#include "backend/concurrency/rowo_txn_manager.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/insert_executor.h"
@@ -77,7 +77,7 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  oid_t tilegroup_count_per_loader) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
 
   oid_t tuple_count = tilegroup_count_per_loader * DEFAULT_TUPLES_PER_TILEGROUP;
 
