@@ -158,40 +158,5 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
   return peloton_plan;
 }
 
-/**
- * @brief Recursively destroy the nodes in a plan tree.
-bool PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
-  if (!root)
-    return false;
-
-  // Clean all children subtrees
-  auto children = root->GetChildren();
-  for (auto child : children) {
-    auto rv = CleanPlan(child);
-    assert(rv);
-  }
-
-  // Clean the root
-  delete root;
-  return true;
-}
-*/
-
-/**
- * @brief Recursively destroy the nodes in a plan tree.
- */
-void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
-  if (!root) return;
-
-  // Clean all children subtrees
-  auto children = root->GetChildren();
-  for (auto child : children) {
-    CleanPlan(child.get());
-  }
-
-  // Clean the root
-  //delete root;
-}
-
 }  // namespace bridge
 }  // namespace peloton

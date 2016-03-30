@@ -44,7 +44,7 @@ class PlanTransformer {
   PlanTransformer(PlanTransformer &&) = delete;
   PlanTransformer &operator=(PlanTransformer &&) = delete;
 
-  PlanTransformer() : plan_cache_(PLAN_CACHE_SIZE, CleanPlan) {}
+  PlanTransformer() : plan_cache_(PLAN_CACHE_SIZE) {}
 
   /* Plan caching */
   static PlanTransformer &GetInstance();
@@ -61,10 +61,6 @@ class PlanTransformer {
 
   // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan, PlanState *planstate);
-
-  // static bool CleanPlan(const planner::AbstractPlan *root);
-
-  static void CleanPlan(const planner::AbstractPlan *root);
 
   static std::vector<Value> BuildParams(const ParamListInfo param_list);
 
