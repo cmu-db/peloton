@@ -713,7 +713,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
   LOG_INFO("Trying to read log directory");
 
-  dirp = opendir(".");
+  dirp = opendir(peloton_log_directory);
   if (dirp == nullptr) {
     LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
