@@ -33,7 +33,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -148,7 +148,7 @@ bool InsertExecutor::DExecute() {
           auto record = logger->GetTupleRecord(
               LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
               target_table_->GetOid(), target_table_->GetDatabaseOid(),
-			  location, INVALID_ITEMPOINTER,
+              location, INVALID_ITEMPOINTER,
               tuple.get());
 
           logger->Log(record);
