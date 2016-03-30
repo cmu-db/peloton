@@ -212,6 +212,46 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   return update_executor.Execute();
 }
 
+bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
+                                storage::DataTable *table, int old_value, int new_value) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  Value update_val = ValueFactory::GetIntegerValue(new_value);
+
+  // ProjectInfo
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+  target_list.emplace_back(
+      1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
+
+  // Update plan
+  planner::UpdatePlan update_node(
+      table, new planner::ProjectInfo(std::move(target_list),
+                                      std::move(direct_map_list)));
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+
+  // Predicate
+  auto tup_val_exp = new expression::TupleValueExpression(0, 1);
+  auto const_val_exp = new expression::ConstantValueExpression(
+      ValueFactory::GetIntegerValue(old_value));
+  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+
+  // Seq scan
+  std::vector<oid_t> column_ids = {0, 1};
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  update_node.AddChild(&seq_scan_node);
+  update_executor.AddChild(&seq_scan_executor);
+
+  EXPECT_TRUE(update_executor.Init());
+  return update_executor.Execute();
+}
+
 bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
                                        std::vector<int> &results,
                                        storage::DataTable *table, int id) {
