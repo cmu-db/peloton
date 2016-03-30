@@ -241,7 +241,8 @@ Result SsiTransactionManager::CommitTransaction() {
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
       ItemPointer new_version =
           tile_group_header->GetNextItemPointer(tuple_slot);
-
+      ItemPointer old_version(tile_group_id, tuple_slot);
+      log_manager.LogUpdate(current_txn, end_commit_id, old_version, new_version);
       auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
       new_tile_group_header->SetBeginCommitId(new_version.offset,
