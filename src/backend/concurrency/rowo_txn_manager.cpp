@@ -251,6 +251,8 @@ Result RowoTxnManager::CommitTransaction() {
   }
   //////////////////////////////////////////////////////////
 
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -265,6 +267,8 @@ Result RowoTxnManager::CommitTransaction() {
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
+        ItemPointer old_version(tile_group_id, tuple_slot);
+        log_manager.LogUpdate(current_txn, end_commit_id, old_version, new_version);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -282,7 +286,8 @@ Result RowoTxnManager::CommitTransaction() {
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
-
+        ItemPointer delete_location(tile_group_id, tuple_slot);
+        log_manager.LogDelete(end_commit_id, delete_location);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetBeginCommitId(new_version.offset,
@@ -299,6 +304,9 @@ Result RowoTxnManager::CommitTransaction() {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
+        ItemPointer insert_location(tile_group_id, tuple_slot);
+        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -308,6 +316,7 @@ Result RowoTxnManager::CommitTransaction() {
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
+
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
