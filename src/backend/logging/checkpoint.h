@@ -13,6 +13,7 @@
 #pragma once
 #include <cassert>
 #include <string>
+#include <sys/stat.h>
 
 #include "backend/logging/log_manager.h"
 #include "backend/logging/backend_logger.h"
@@ -40,10 +41,14 @@ class Checkpoint {
   virtual bool DoRecovery() = 0;
 
  protected:
-  std::string ConcatFileName(int version);
+  std::string ConcatFileName(std::string checkpoint_dir, int version);
+
+  void InitDirectory();
 
   // variable length memory pool
   std::unique_ptr<VarlenPool> pool;
+
+  std::string checkpoint_dir = "pl_checkpoint";
 
   // the version of next checkpoint
   int checkpoint_version = -1;

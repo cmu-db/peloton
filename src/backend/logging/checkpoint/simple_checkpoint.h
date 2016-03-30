@@ -31,7 +31,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint() : Checkpoint() { InitVersionNumber(); }
+  SimpleCheckpoint();
 
   static SimpleCheckpoint &GetInstance();
 
