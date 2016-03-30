@@ -39,6 +39,7 @@ bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
+  // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       assert(tuple_end_cid == MAX_CID);
@@ -84,6 +85,7 @@ bool RowoTxnManager::IsOwner(storage::TileGroup *tile_group,
 
 // if the tuple is not owned by any transaction and is visible to current
 // transdaction.
+// will only be performed by deletes and updates.
 bool RowoTxnManager::IsAccessable(storage::TileGroup *tile_group,
                                                 const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
@@ -117,9 +119,10 @@ bool RowoTxnManager::PerformInsert(const oid_t &tile_group_id,
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
   // no need to set next item pointer.
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
@@ -128,13 +131,17 @@ bool RowoTxnManager::PerformInsert(const oid_t &tile_group_id,
 bool RowoTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
+  auto transaction_id = current_txn->GetTransactionId();
+  
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
   auto new_tile_group_header = catalog::Manager::GetInstance()
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
+
+  // if we can perform update, then we must already locked the older version.
+  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
   new_tile_group_header->SetEndCommitId(new_location.offset, MAX_CID);
