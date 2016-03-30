@@ -34,7 +34,7 @@ class ProjectionPlan : public AbstractPlan {
   ProjectionPlan &operator=(ProjectionPlan &&) = delete;
 
   ProjectionPlan(const planner::ProjectInfo *project_info,
-                 const std::shared_ptr<catalog::Schema> schema)
+                 const std::shared_ptr<catalog::Schema> &schema)
       : project_info_(project_info), schema_(schema) {}
 
   inline const planner::ProjectInfo *GetProjectInfo() const {

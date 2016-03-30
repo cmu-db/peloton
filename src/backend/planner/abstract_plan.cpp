@@ -29,7 +29,7 @@ AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
-void AbstractPlan::AddChild(const std::shared_ptr<AbstractPlan> child) {
+void AbstractPlan::AddChild(const std::shared_ptr<AbstractPlan> &child) {
   children_.push_back(child);
 }
 
