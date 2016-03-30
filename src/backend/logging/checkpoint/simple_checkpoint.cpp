@@ -427,27 +427,25 @@ void SimpleCheckpoint::Cleanup() {
 void SimpleCheckpoint::InitVersionNumber() {
   // Get checkpoint version
   LOG_INFO("Trying to read checkpoint directory");
-  struct dirent **list;
+  struct dirent *file;
+  DIR *dirp;
 
-  int num_file = scandir(checkpoint_dir.c_str(), &list, 0, alphasort);
-  if (num_file < 0) {
-    LOG_INFO("scandir failed: Errno: %d, error: %s", errno, strerror(errno));
-    return;
+  dirp = opendir(checkpoint_dir.c_str());
+  if (dirp == nullptr) {
+    LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
-
-  // Get the max version
-  for (int i = 0; i < num_file; i++) {
-    if (strncmp(list[i]->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) ==
-        0) {
-      LOG_INFO("Found a checkpoint file with name %s", list[i]->d_name);
-      int version = ExtractNumberFromFileName(list[i]->d_name);
+  while ((file = readdir(dirp)) != NULL) {
+    if (strncmp(file->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) == 0) {
+      // found a checkpoint file!
+      LOG_INFO("Found a checkpoint file with name %s", file->d_name);
+      int version = ExtractNumberFromFileName(file->d_name);
       if (version > checkpoint_version) {
         checkpoint_version = version;
       }
     }
-    free(list[i]);
   }
-  free(list);
+  closedir(dirp);
+
   LOG_INFO("set checkpoint version to: %d", checkpoint_version);
 }
 
