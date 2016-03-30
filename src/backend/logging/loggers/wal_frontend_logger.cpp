@@ -877,6 +877,7 @@ void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
                   this->log_files_[i]->GetLogFileName().c_str());
       }
       // remove entry from list anyway
+      delete this->log_files_[i];
       this->log_files_.erase(this->log_files_.begin() + i);
       i--;  // update cursor
     }
