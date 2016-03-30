@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expr_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// expr_transformer.cpp
+//
+// Identification: src/backend/bridge/dml/expr/expr_transformer.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <unordered_map>
 
@@ -156,13 +158,6 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
   return exprs;
 }
 
-bool ExprTransformer::CleanExprTree(expression::AbstractExpression *root) {
-  // AbstractExpression's destructor already handles deleting children
-  delete root;
-
-  return true;
-}
-
 expression::AbstractExpression *ExprTransformer::TransformConst(
     const ExprState *es) {
   auto const_expr = reinterpret_cast<const Const *>(es->expr);
@@ -215,29 +210,25 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
   }
 
   // A Const Expr has no children.
-  // modified by michael for IN operator
-  // if (false) {
   if (const_expr->consttype == POSTGRES_VALUE_TYPE_TEXT_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT2_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_INT4_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_FLOADT4_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_OID_ARRAY ||
       const_expr->consttype == POSTGRES_VALUE_TYPE_BPCHAR2) {
-    std::vector<expression::AbstractExpression *> *vecExpr =
-        new std::vector<expression::AbstractExpression *>;
-    Value tmpVal;
-    int nElements = value.ArrayLength();
-    for (int i = 0; i < nElements; i++) {
-      tmpVal = value.ItemAtIndex(i);
-      std::string str = tmpVal.GetInfo();
+    std::vector<expression::AbstractExpression *> vec_exprs;
+    Value tmp_value;
+    int vector_length = value.ArrayLength();
+    for (int i = 0; i < vector_length; i++) {
+      tmp_value = value.ItemAtIndex(i);
+      std::string str = tmp_value.GetInfo();
       expression::AbstractExpression *ce =
-          expression::ExpressionUtil::ConstantValueFactory(tmpVal);
-      vecExpr->push_back(ce);
+          expression::ExpressionUtil::ConstantValueFactory(tmp_value);
+      vec_exprs.push_back(ce);
     }
     auto rv =
-        expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vecExpr);
+        expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vec_exprs);
     return rv;
-    // Free val and vector here ?michael vector_expression delete vecExpr
   } else {
     auto rv = expression::ExpressionUtil::ConstantValueFactory(value);
     return rv;
@@ -613,6 +604,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_REPEAT:
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
+    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP:
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 

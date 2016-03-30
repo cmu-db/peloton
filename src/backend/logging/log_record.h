@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * logrecord.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logrecord.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_record.h
+//
+// Identification: src/backend/logging/log_record.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 /* The following entry types are distinguished:
  *
@@ -61,8 +61,6 @@ class LogRecord {
   cid_t GetTransactionId() const { return cid; }
 
   virtual bool Serialize(CopySerializeOutput &output) = 0;
-
-  virtual void Print(void) = 0;
 
   char *GetMessage(void) const { return message; }
 

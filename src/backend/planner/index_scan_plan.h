@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// index_scan_node.h
+// index_scan_plan.h
 //
-// Identification: src/backend/planner/index_scan_node.h
+// Identification: src/backend/planner/index_scan_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
