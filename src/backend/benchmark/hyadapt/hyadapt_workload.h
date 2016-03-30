@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// hyadapt_workload.h
 //
-// Identification: benchmark/hyadapt/workload.h
+// Identification: src/backend/benchmark/hyadapt/hyadapt_workload.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,8 +19,6 @@ namespace benchmark {
 namespace hyadapt {
 
 extern configuration state;
-
-extern storage::DataTable *hyadapt_table;
 
 void CreateAndLoadTable(LayoutType layout_type);
 

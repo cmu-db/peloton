@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // projection_test.cpp
 //
 // Identification: tests/executor/projection_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -65,9 +65,8 @@ TEST_F(ProjectionTests, BasicTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -125,9 +124,8 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -193,9 +191,8 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -229,8 +226,9 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto const_val = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(0, 0);
-  expression::AbstractExpression *expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, tuple_value_expr, const_val);
+  expression::AbstractExpression *expr =
+      expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+                                                  tuple_value_expr, const_val);
 
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);

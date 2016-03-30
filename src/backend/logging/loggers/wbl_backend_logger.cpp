@@ -1,15 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * wbl_backend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wbl_backend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
-
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_backend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 
@@ -40,12 +39,10 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
   }
 }
 
-LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_type,
-                                                txn_id_t txn_id,
-                                                oid_t table_oid,
-                                                ItemPointer insert_location,
-                                                ItemPointer delete_location,
-                                                void *data, oid_t db_oid) {
+LogRecord *WriteBehindBackendLogger::GetTupleRecord(
+    LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
+    ItemPointer insert_location, ItemPointer delete_location, void *data,
+    oid_t db_oid) {
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {

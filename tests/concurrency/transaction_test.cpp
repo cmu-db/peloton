@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction_test.cpp
 //
 // Identification: tests/concurrency/transaction_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,98 +23,20 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-// Execute a schedule, the result for any read will be recorded in
-// schedule->results
-void ExecuteSchedule(concurrency::TransactionManager *txn_manager,
-                     storage::DataTable *table, TransactionSchedule *schedule) {
-  // Sleep for the first operation, this gives the opportunity to schedule
-  // the start time of a txn
-  int last_time = schedule->times[0];
-  std::this_thread::sleep_for(std::chrono::milliseconds(last_time));
-
-  auto transaction = txn_manager->BeginTransaction();
-  for (int i = 0; i < (int)schedule->operations.size(); i++) {
-    // Sleep milliseconds
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(schedule->times[i] - last_time));
-    last_time = schedule->times[i];
-
-    // Prepare data for operation
-    txn_op_t op = schedule->operations[i].op;
-    int id = schedule->operations[i].id;
-    int value = schedule->operations[i].value;
-
-    // Execute the operation
-    switch (op) {
-      case TXN_OP_INSERT: {
-        LOG_TRACE("Execute Insert");
-        TransactionTestsUtil::ExecuteInsert(transaction, table, id, value);
-        break;
-      }
-      case TXN_OP_READ: {
-        LOG_TRACE("Execute Read");
-        int result = TransactionTestsUtil::ExecuteRead(transaction, table, id);
-        schedule->results.push_back(result);
-        break;
-      }
-      case TXN_OP_DELETE: {
-        LOG_TRACE("Execute Delete");
-        TransactionTestsUtil::ExecuteDelete(transaction, table, id);
-        break;
-      }
-      case TXN_OP_UPDATE: {
-        LOG_TRACE("Execute Update");
-        TransactionTestsUtil::ExecuteUpdate(transaction, table, id, value);
-        break;
-      }
-      case TXN_OP_SCAN: {
-        LOG_TRACE("Execute Scan");
-        TransactionTestsUtil::ExecuteScan(transaction, schedule->results, table,
-                                          id);
-        break;
-      }
-      case TXN_OP_ABORT: {
-        LOG_TRACE("Abort");
-        // Assert last operation
-        assert(i == (int)schedule->operations.size() - 1);
-        break;
-      }
-      case TXN_OP_NOTHING: {
-        LOG_TRACE("Do nothing");
-        // Do nothing
-        break;
-      }
-    }
-  }
-
-  if (schedule->operations.rbegin()->op == TXN_OP_ABORT)
-    schedule->txn_result = txn_manager->AbortTransaction();
-  else {
-    schedule->txn_result = txn_manager->CommitTransaction();
-  }
-
-  LOG_TRACE("Txn finished");
-}
-
-void ThreadExecuteSchedule(concurrency::TransactionManager *txn_manager,
-                           storage::DataTable *table,
-                           TransactionSchedules *schedules) {
-  int next_schedule = schedules->next_sched.fetch_add(1);
-  auto schedule = schedules->schedules[next_schedule];
-  ExecuteSchedule(txn_manager, table, schedule);
-}
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
+                                                  CONCURRENCY_TYPE_2PL};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
-  for (oid_t txn_itr = 1; txn_itr <= 100; txn_itr++) {
+  for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
     txn_manager->BeginTransaction();
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
     }
 
-    if (txn_itr % 50 != 0) {
+    if (txn_itr % 25 != 0) {
       txn_manager->CommitTransaction();
     } else {
       txn_manager->AbortTransaction();
@@ -122,170 +44,151 @@ void TransactionTest(concurrency::TransactionManager *txn_manager) {
   }
 }
 
-void DirtyWriteTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-  TransactionSchedules schedules;
-
-  // Update (0, ?) to (0, 1) at 0 ms, commit at 1000 ms
-  TransactionSchedule schedule1;
-  schedule1.AddUpdate(0, 1, 0);
-  schedule1.AddDoNothing(1000);
-  // Update (0, ?) to (0, 2) at 500 ms
-  TransactionSchedule schedule2;
-  schedule2.AddUpdate(0, 2, 500);
-  // Read (0, ?) at 1500 ms, should read 1
-  TransactionSchedule schedule3;
-  schedule3.AddRead(0, 1500);
-
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  schedules.AddSchedule(&schedule3);
-
-  LaunchParallelTest(3, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
-
-  EXPECT_EQ(1, schedule3.results[0]);
-  // When to use RESULT_FAILURE, when RESULT_ABORTED
-  EXPECT_EQ(RESULT_ABORTED, schedule2.txn_result);
-}
-
-void DirtyReadTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  TransactionSchedules schedules;
-
-  // Insert (1, 1) at 500 ms, commit at 1500 ms
-  TransactionSchedule schedule1;
-  schedule1.AddInsert(10, 1, 500);
-  schedule1.AddDoNothing(1500);
-  // Start transaction at 0 ms, but read at 2000 ms, should read nothing
-  TransactionSchedule schedule2;
-  schedule2.AddDoNothing(0);
-  schedule2.AddRead(10, 2000);
-  // Read 1 at 1000 ms, should not read the uncommitted version
-  TransactionSchedule schedule3;
-  schedule3.AddRead(10, 1000);
-  // Read 1 at 2000 ms, should read the committed version
-  TransactionSchedule schedule4;
-  schedule4.AddRead(10, 2000);
-
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  schedules.AddSchedule(&schedule3);
-  schedules.AddSchedule(&schedule4);
-
-  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
-
-  EXPECT_EQ(-1, schedule2.results[0]);
-  EXPECT_EQ(-1, schedule3.results[0]);
-  EXPECT_EQ(1, schedule4.results[0]);
-}
-
-void FuzzyReadTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  TransactionSchedules schedules;
-
-  // T1 Read at 0 ms, T2 update at 500 ms, T1 commit at 1000 ms, T1 should fail
-  TransactionSchedule schedule1;
-  schedule1.AddRead(0, 0);
-  schedule1.AddDoNothing(1000);
-  TransactionSchedule schedule2;
-  schedule2.AddUpdate(0, 1, 500);
-
-  // T1 Read at 0 ms, T2 delete at 500 ms, T1 commit at 1000 ms, T1 should fail
-  TransactionSchedule schedule3;
-  schedule3.AddRead(1, 0);
-  schedule3.AddDoNothing(1000);
-  TransactionSchedule schedule4;
-  schedule4.AddDelete(1, 500);
-
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  schedules.AddSchedule(&schedule3);
-  schedules.AddSchedule(&schedule4);
-
-  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
-
-  EXPECT_EQ(RESULT_SUCCESS, schedule2.txn_result);
-  EXPECT_EQ(RESULT_SUCCESS, schedule4.txn_result);
-  EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
-  EXPECT_EQ(RESULT_ABORTED, schedule3.txn_result);
-}
-
-void PhantomTest() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-
-  TransactionSchedules schedules;
-  // Begin Scan for id>=1 at 0 ms, Insert (5, 0) at 500 ms, Commit at 1000 ms,
-  // should fail
-  TransactionSchedule schedule1;
-  schedule1.AddScan(0, 0);
-  schedule1.AddDoNothing(1000);
-  TransactionSchedule schedule2;
-  schedule2.AddInsert(5, 0, 500);
-  // Another txn scan again, should see the new val
-  TransactionSchedule schedule3;
-  schedule3.AddScan(0, 1500);
-  TransactionSchedule schedule4;
-  schedule4.AddScan(0, 0);
-
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  schedules.AddSchedule(&schedule3);
-  schedules.AddSchedule(&schedule4);
-
-  LaunchParallelTest(4, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
-
-  EXPECT_EQ(RESULT_ABORTED, schedule1.txn_result);
-  EXPECT_EQ(RESULT_SUCCESS, schedule1.txn_result);
-  EXPECT_EQ(11, schedule3.results.size());
-  EXPECT_EQ(10, schedule4.results.size());
-}
-
 TEST_F(TransactionTests, TransactionTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  LaunchParallelTest(8, TransactionTest, &txn_manager);
+    LaunchParallelTest(8, TransactionTest, &txn_manager);
 
-  std::cout << "next Commit Id :: " << txn_manager.GetNextCommitId() << "\n";
+    LOG_INFO("next Commit Id :: %lu", txn_manager.GetNextCommitId());
+  }
+}
+
+TEST_F(TransactionTests, SingleTransactionTest) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    // read, read, read, read, update, read, read not exist
+    // another txn read
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(100);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(0, scheduler.schedules[0].results[3]);
+      EXPECT_EQ(1, scheduler.schedules[0].results[4]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[5]);
+      EXPECT_EQ(1, scheduler.schedules[1].results[0]);
+    }
+
+    // update, update, update, update, read
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Update(0, 2);
+      scheduler.Txn(0).Update(0, 3);
+      scheduler.Txn(0).Update(0, 4);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(4, scheduler.schedules[0].results[0]);
+    }
+
+    // delete not exist, delete exist, read deleted, update deleted,
+    // read deleted, insert back, update inserted, read newly updated
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+
+      scheduler.Txn(0).Delete(100);
+      scheduler.Txn(0).Delete(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Insert(0, 2);
+      scheduler.Txn(0).Update(0, 3);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(3, scheduler.schedules[0].results[2]);
+    }
+
+    // insert, delete inserted, read deleted, insert again, delete again
+    // read deleted, insert again, read inserted, update inserted, read updated
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+
+      scheduler.Txn(0).Insert(1000, 0);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 1);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 2);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Update(1000, 3);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(2, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(3, scheduler.schedules[0].results[3]);
+    }
+  }
 }
 
 TEST_F(TransactionTests, AbortTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-  TransactionSchedules schedules;
-  TransactionSchedule schedule1;
-  TransactionSchedule schedule2;
-  // Schedule one thread to update and abort, another thread to read afterwards
-  schedule1.AddUpdate(0, 100, 0);
-  schedule1.AddAbort(50);
-  schedule2.AddRead(0, 100);
-  schedules.AddSchedule(&schedule1);
-  schedules.AddSchedule(&schedule2);
-  LaunchParallelTest(2, ThreadExecuteSchedule, &txn_manager, table.get(),
-                     &schedules);
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Update(0, 100);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
 
-  EXPECT_EQ(schedule2.results[0], 0);
-}
+      scheduler.Run();
 
-TEST_F(TransactionTests, SerializableTest) {
-  DirtyWriteTest();
-  DirtyReadTest();
-  FuzzyReadTest();
-//  PhantomTest();
+      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+    }
+
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Insert(100, 0);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(100);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(-1, scheduler.schedules[1].results[0]);
+    }
+  }
 }
 
 }  // End test namespace

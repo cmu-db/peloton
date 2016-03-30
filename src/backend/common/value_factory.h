@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // value_factory.h
 //
 // Identification: src/backend/common/value_factory.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,6 +40,10 @@ class ValueFactory {
 
   static inline Value GetBigIntValue(int64_t value) {
     return Value::GetBigIntValue(value);
+  }
+
+  static inline Value GetDateValue(int64_t value) {
+    return Value::GetDateValue(value);
   }
 
   static inline Value GetTimestampValue(int64_t value) {

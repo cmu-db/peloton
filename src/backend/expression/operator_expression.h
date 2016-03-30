@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // operator_expression.h
 //
 // Identification: src/backend/expression/operator_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -118,7 +118,6 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   }
 };
 
-
 class OperatorCaseWhenExpression : public AbstractExpression {
  public:
   OperatorCaseWhenExpression(ValueType vt, AbstractExpression *left,
@@ -148,7 +147,6 @@ class OperatorCaseWhenExpression : public AbstractExpression {
  private:
   ValueType m_returnType;
 };
-
 
 /*
  * Binary operators.

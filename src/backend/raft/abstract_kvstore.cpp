@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // abstract_kvstore.cpp
 //
-// Identification: src/backend/kvstore/abstract_kvstore.cpp
+// Identification: src/backend/raft/abstract_kvstore.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,36 +20,28 @@ namespace kvstore {
  *
  * @return True or false based on success of entry input.
  */
-bool AbstractKVStore::PutEntry() {
-
-}
+bool AbstractKVStore::PutEntry() {}
 
 /**
  * @brief Fetches an entry from the Key Value Store
  *
  * @return Object of type Entry.
  */
-KVStoreEntry AbstractKVStore::GetEntry() {
-
-}
+KVStoreEntry AbstractKVStore::GetEntry() {}
 
 /**
  * @brief Removes an entry from the Key Value Store
  *
  * @return True or false based on binding.
  */
-bool AbstractKVStore::RemoveEntry() {
-
-}
+bool AbstractKVStore::RemoveEntry() {}
 
 /**
  * @brief Checks if an entry exists in Key Value Store
  *
  * @return True or false based on existence of entry
  */
-bool AbstractKVStore::ContainsEntry() {
-
-}
+bool AbstractKVStore::ContainsEntry() {}
 
 }  // namespace kvstore
 }  // namespace peloton

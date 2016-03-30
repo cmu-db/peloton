@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tuple_record.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/records/tuple_record.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_record.cpp
+//
+// Identification: src/backend/logging/records/tuple_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/logging/records/tuple_record.h"
 #include "backend/common/logger.h"
@@ -108,7 +108,7 @@ size_t TupleRecord::GetTupleRecordSize(void) {
   // log_record_type + header_legnth + db_oid + table_oid + txn_id +
   // insert_location + delete_location
   return sizeof(char) + sizeof(int) + sizeof(oid_t) + sizeof(oid_t) +
-      sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
+         sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
 }
 
 void TupleRecord::SetTuple(storage::Tuple *tuple){
@@ -119,17 +119,20 @@ storage::Tuple *TupleRecord::GetTuple(){
   return tuple;
 }
 
-// just for debugging
-void TupleRecord::Print() {
-  std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
-  std::cout << " #Db  ID:" << GetDatabaseOid() << "\n";
-  std::cout << " #Tb  ID:" << GetTableId() << "\n";
-  std::cout << " #Txn ID:" << GetTransactionId() << "\n";
-  std::cout << " #Insert Location :" << GetInsertLocation().block;
-  std::cout << " " << GetInsertLocation().offset << "\n";
-  std::cout << " #Delete Location :" << GetDeleteLocation().block;
-  std::cout << " " << GetDeleteLocation().offset << "\n";
-  std::cout << "\n";
+const std::string TupleRecord::GetInfo() const {
+  std::ostringstream os;
+
+  os << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
+  os << " #Db  ID:" << GetDatabaseOid() << "\n";
+  os << " #Tb  ID:" << GetTableId() << "\n";
+  os << " #Txn ID:" << GetTransactionId() << "\n";
+  os << " #Insert Location :" << GetInsertLocation().block;
+  os << " " << GetInsertLocation().offset << "\n";
+  os << " #Delete Location :" << GetDeleteLocation().block;
+  os << " " << GetDeleteLocation().offset << "\n";
+  os << "\n";
+
+  return os.str();
 }
 
 }  // namespace logging
