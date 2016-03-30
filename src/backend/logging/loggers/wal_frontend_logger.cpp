@@ -733,6 +733,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       this->log_files_.push_back(new_log_file);
     }
   }
+  closedir(dirp);
 
   int num_log_files;
   num_log_files = this->log_files_.size();
