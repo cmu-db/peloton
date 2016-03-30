@@ -437,7 +437,9 @@ void SimpleCheckpoint::InitVersionNumber() {
         checkpoint_version = version;
       }
     }
+    free(list[i]);
   }
+  free(list);
   LOG_INFO("set checkpoint version to: %d", checkpoint_version);
 }
 

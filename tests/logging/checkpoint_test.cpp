@@ -125,6 +125,12 @@ TEST_F(CheckpointTests, BasicTest) {
   for (unsigned int i = 0; i < records.size(); i++) {
     EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
   }
+
+  // Clean up
+  for (auto record : records) {
+	  delete record;
+  }
+
 }
 
 }  // End test namespace
