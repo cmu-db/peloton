@@ -39,7 +39,7 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan(PelotonJoinType joinType,
                    const expression::AbstractExpression *predicate,
                    const ProjectInfo *proj_info,
-                   const catalog::Schema *proj_schema)
+                   const std::shared_ptr<catalog::Schema> proj_schema)
       : AbstractPlan(),
         join_type_(joinType),
         predicate_(predicate),
@@ -73,7 +73,7 @@ class AbstractJoinPlan : public AbstractPlan {
   std::unique_ptr<const ProjectInfo> proj_info_;
 
   /** @brief Projection schema */
-  std::unique_ptr<const catalog::Schema> proj_schema_;
+  std::shared_ptr<const catalog::Schema> proj_schema_;
 };
 
 }  // namespace planner

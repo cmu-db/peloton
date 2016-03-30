@@ -68,8 +68,9 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
 
   LOG_INFO("%s", project_info.get()->Debug().c_str());
 
-  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-      hj_plan_state->tts_tupleDescriptor);
+  std::shared_ptr<catalog::Schema> project_schema(
+      SchemaTransformer::GetSchemaFromTupleDesc(
+          hj_plan_state->tts_tupleDescriptor));
 
   std::vector<oid_t> outer_hashkeys =
       BuildColumnListFromExpStateList(hj_plan_state->outer_hashkeys);

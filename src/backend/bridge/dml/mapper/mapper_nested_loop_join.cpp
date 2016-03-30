@@ -64,8 +64,9 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
 
   std::shared_ptr<planner::AbstractPlan> result;
   std::shared_ptr<planner::NestedLoopJoinPlan> plan_node;
-  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-      nl_plan_state->tts_tupleDescriptor);
+  std::shared_ptr<catalog::Schema> project_schema(
+      SchemaTransformer::GetSchemaFromTupleDesc(
+          nl_plan_state->tts_tupleDescriptor));
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection

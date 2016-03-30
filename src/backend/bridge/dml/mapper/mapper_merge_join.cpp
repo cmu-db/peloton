@@ -64,8 +64,9 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
 
-  auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
-      mj_plan_state->tts_tupleDescriptor);
+  std::shared_ptr<catalog::Schema> project_schema(
+      SchemaTransformer::GetSchemaFromTupleDesc(
+          mj_plan_state->tts_tupleDescriptor));
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
