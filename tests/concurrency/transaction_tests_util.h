@@ -106,7 +106,8 @@ enum txn_op_t {
   TXN_OP_SCAN,
   TXN_OP_ABORT,
   TXN_OP_COMMIT,
-  TXN_OP_READ_STORE
+  TXN_OP_READ_STORE,
+  TXN_OP_UPDATE_BY_VALUE
 };
 
 #define TXN_STORED_VALUE      -10000
@@ -125,6 +126,8 @@ class TransactionTestsUtil {
                             storage::DataTable *table, int id);
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
+  static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
+                            storage::DataTable *table, int old_value, int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
@@ -242,6 +245,13 @@ class TransactionThread {
             txn, schedule->results, table, id);
         break;
       }
+      case TXN_OP_UPDATE_BY_VALUE: {
+        int old_value = id;
+        int new_value = value;
+        execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
+          txn, table, old_value, new_value);
+        break;
+      }
       case TXN_OP_ABORT: {
         LOG_TRACE("Abort");
         // Assert last operation
@@ -342,6 +352,10 @@ class TransactionScheduler {
   }
   void Commit() {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void UpdateByValue(int old_value, int new_value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
     sequence[time++] = cur_txn_id;
   }
   // ReadStore will store the (result of read + modify) to the schedule, the 
