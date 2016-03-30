@@ -23,8 +23,10 @@ namespace test {
 
 class IsolationLevelTest : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
-                                                  CONCURRENCY_TYPE_2PL};
+static std::vector<ConcurrencyType> TEST_TYPES = {
+  CONCURRENCY_TYPE_OCC,
+  CONCURRENCY_TYPE_2PL
+};
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -167,7 +169,7 @@ void DirtyReadTest() {
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
                  RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
-      EXPECT_EQ(1, scheduler.schedules[1].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
   }
 
@@ -229,8 +231,8 @@ void FuzzyReadTest() {
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[1].txn_result) 
     {
-      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
-      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
+      EXPECT_EQ(1, scheduler.schedules[0].results[0]);
+      EXPECT_EQ(1, scheduler.schedules[0].results[1]);
     }
   }
 }
@@ -360,7 +362,7 @@ void SIAnomalyTest1() {
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
-    TransactionScheduler scheduler(3, table.get(), &txn_manager);
+    TransactionScheduler scheduler(4, table.get(), &txn_manager);
     // Test against anomaly
     scheduler.Txn(1).ReadStore(current_batch_key, 0);
     scheduler.Txn(2).Update(current_batch_key, 100+1);
@@ -369,16 +371,17 @@ void SIAnomalyTest1() {
     scheduler.Txn(0).Read(TXN_STORED_VALUE);
     scheduler.Txn(1).Insert(TXN_STORED_VALUE, 0);
     scheduler.Txn(1).Commit();
-    scheduler.Txn(0).Read(TXN_STORED_VALUE);
     scheduler.Txn(0).Commit();
 
+    scheduler.Txn(3).ReadStore(current_batch_key, -1);
+    scheduler.Txn(3).Read(TXN_STORED_VALUE);
+    scheduler.Txn(3).Commit();
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[2].txn_result) {
-      EXPECT_TRUE(scheduler.schedules[0].results[1] == -1 &&
-                  scheduler.schedules[0].results[2] == -1);
+      EXPECT_TRUE(scheduler.schedules[0].results[1] == scheduler.schedules[3].results[1]);
     }
   }
 }
