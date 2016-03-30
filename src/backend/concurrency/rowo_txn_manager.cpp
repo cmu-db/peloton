@@ -327,6 +327,7 @@ Result RowoTxnManager::CommitTransaction() {
       }
     }
   }
+  log_manager.LogCommitTransaction(end_commit_id);
 
   Result ret = current_txn->GetResult();
 
