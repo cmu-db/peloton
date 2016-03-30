@@ -91,55 +91,55 @@ void RunUpdate();
 std::vector<double> durations;
 
 void RunBackend(oid_t thread_id) {
-	auto txn_count = state.transactions;
-	auto update_ratio = state.update_ratio;
+  auto txn_count = state.transactions;
+  auto update_ratio = state.update_ratio;
 
-	UniformGenerator generator;
-	Timer<> timer;
+  UniformGenerator generator;
+  Timer<> timer;
 
-	// Start timer
-	timer.Reset();
-	timer.Start();
+  // Start timer
+  timer.Reset();
+  timer.Start();
 
-	// Run these many transactions
-	for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
-		auto rng_val = generator.GetSample();
+  // Run these many transactions
+  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+    auto rng_val = generator.GetSample();
 
-		if (rng_val < update_ratio) {
-			//RunUpdate();
-		}
-		else {
-			RunRead();
-		}
+    if (rng_val < update_ratio) {
+      //RunUpdate();
+    }
+    else {
+      RunRead();
+    }
 
-	}
+  }
 
-	// Stop timer
-	timer.Stop();
+  // Stop timer
+  timer.Stop();
 
-	// Set duration
-	durations[thread_id] = timer.GetDuration();
+  // Set duration
+  durations[thread_id] = timer.GetDuration();
 }
 
 void RunWorkload() {
 
-	// Execute the workload to build the log
-	std::vector<std::thread> thread_group;
-	oid_t num_threads = state.backend_count;
-	double max_duration = std::numeric_limits<double>::min();
-	durations.reserve(num_threads);
+  // Execute the workload to build the log
+  std::vector<std::thread> thread_group;
+  oid_t num_threads = state.backend_count;
+  double max_duration = std::numeric_limits<double>::min();
+  durations.reserve(num_threads);
 
-	// Launch a group of threads
-	for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-	  thread_group.push_back(std::thread(RunBackend, thread_itr));
-	}
+  // Launch a group of threads
+  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+    thread_group.push_back(std::thread(RunBackend, thread_itr));
+  }
 
-	// Join the threads with the main thread
-	for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-		thread_group[thread_itr].join();
-	}
+  // Join the threads with the main thread
+  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+    thread_group[thread_itr].join();
+  }
 
-	// Compute max duration
+  // Compute max duration
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     max_duration = std::max(max_duration, durations[thread_itr]);
   }
@@ -150,17 +150,17 @@ void RunWorkload() {
 }
 
 static void WriteOutput(double stat) {
-	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.update_ratio << " "
-			<< state.scale_factor << " "
-			<< state.column_count << " :: ";
-	std::cout << stat << " tps\n";
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << state.update_ratio << " "
+      << state.scale_factor << " "
+      << state.column_count << " :: ";
+  std::cout << stat << " tps\n";
 
-	out << state.update_ratio << " ";
-	out << state.scale_factor << " ";
-	out << state.column_count << " ";
-	out << stat << "\n";
-	out.flush();
+  out << state.update_ratio << " ";
+  out << state.scale_factor << " ";
+  out << state.column_count << " ";
+  out << stat << "\n";
+  out.flush();
 }
 
 /////////////////////////////////////////////////////////
@@ -168,25 +168,25 @@ static void WriteOutput(double stat) {
 /////////////////////////////////////////////////////////
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
-	time_point_ start, end;
-	bool status = false;
+  time_point_ start, end;
+  bool status = false;
 
-	// Run all the executors
-	for (auto executor : executors) {
-		status = executor->Init();
-		if (status == false) {
-			throw Exception("Init failed");
-		}
+  // Run all the executors
+  for (auto executor : executors) {
+    status = executor->Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
 
-		std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
-		// Execute stuff
-		while (executor->Execute() == true) {
-			std::unique_ptr<executor::LogicalTile> result_tile(
-					executor->GetOutput());
-			result_tiles.emplace_back(result_tile.release());
-		}
-	}
+    // Execute stuff
+    while (executor->Execute() == true) {
+      std::unique_ptr<executor::LogicalTile> result_tile(
+          executor->GetOutput());
+      result_tiles.emplace_back(result_tile.release());
+    }
+  }
 
 }
 
@@ -195,173 +195,173 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 /////////////////////////////////////////////////////////
 
 void RunRead() {
-	auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
-	auto txn = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
-	/////////////////////////////////////////////////////////
-	// INDEX SCAN + PREDICATE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
 
-	std::unique_ptr<executor::ExecutorContext> context(
-			new executor::ExecutorContext(txn));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-	// Column ids to be added to logical tile after scan.
-	std::vector<oid_t> column_ids;
-	oid_t column_count = state.column_count + 1;
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count + 1;
 
-	for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-		column_ids.push_back(col_itr);
-	}
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
 
-	// Create and set up index scan executor
+  // Create and set up index scan executor
 
-	std::vector<oid_t> key_column_ids;
-	std::vector<ExpressionType> expr_types;
-	std::vector<Value> values;
-	std::vector<expression::AbstractExpression *> runtime_keys;
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-	auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-	auto lookup_key = rand() % tuple_count;
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto lookup_key = rand() % tuple_count;
 
-	key_column_ids.push_back(0);
-	expr_types.push_back(
-			ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-	values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-	auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
-	planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-			ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
 
-	// Create plan node.
-	auto predicate = nullptr;
+  // Create plan node.
+  auto predicate = nullptr;
 
-	planner::IndexScanPlan index_scan_node(user_table,
-			predicate, column_ids,
-			index_scan_desc);
+  planner::IndexScanPlan index_scan_node(user_table,
+                                         predicate, column_ids,
+                                         index_scan_desc);
 
-	// Run the executor
-	executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-			context.get());
+  // Run the executor
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
 
-	/////////////////////////////////////////////////////////
-	// MATERIALIZE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // MATERIALIZE
+  /////////////////////////////////////////////////////////
 
-	// Create and set up materialization executor
-	std::unordered_map<oid_t, oid_t> old_to_new_cols;
-	for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-		old_to_new_cols[col_itr] = col_itr;
-	}
+  // Create and set up materialization executor
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    old_to_new_cols[col_itr] = col_itr;
+  }
 
-	auto output_schema = catalog::Schema::CopySchema(user_table->GetSchema());
-	bool physify_flag = true;  // is going to create a physical tile
-	planner::MaterializationPlan mat_node(old_to_new_cols,
-			output_schema,
-			physify_flag);
+  auto output_schema = catalog::Schema::CopySchema(user_table->GetSchema());
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols,
+                                        output_schema,
+                                        physify_flag);
 
-	executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-	mat_executor.AddChild(&index_scan_executor);
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&index_scan_executor);
 
-	/////////////////////////////////////////////////////////
-	// EXECUTE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
 
-	std::vector<executor::AbstractExecutor *> executors;
-	executors.push_back(&mat_executor);
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&mat_executor);
 
-	ExecuteTest(executors);
+  ExecuteTest(executors);
 
-	txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 void RunUpdate() {
-	auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
-	auto txn = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
-	/////////////////////////////////////////////////////////
-	// INDEX SCAN + PREDICATE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
 
-	std::unique_ptr<executor::ExecutorContext> context(
-			new executor::ExecutorContext(txn));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-	// Column ids to be added to logical tile after scan.
-	std::vector<oid_t> column_ids;
-	oid_t column_count = state.column_count + 1;
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count + 1;
 
-	for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-		column_ids.push_back(col_itr);
-	}
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
 
-	// Create and set up index scan executor
+  // Create and set up index scan executor
 
-	std::vector<oid_t> key_column_ids;
-	std::vector<ExpressionType> expr_types;
-	std::vector<Value> values;
-	std::vector<expression::AbstractExpression *> runtime_keys;
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-	auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-	auto lookup_key = rand() % tuple_count;
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto lookup_key = rand() % tuple_count;
 
-	key_column_ids.push_back(0);
-	expr_types.push_back(
-			ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-	values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-	auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
-	planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-			ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
 
-	// Create plan node.
-	auto predicate = nullptr;
+  // Create plan node.
+  auto predicate = nullptr;
 
-	planner::IndexScanPlan index_scan_node(user_table,
-			predicate, column_ids,
-			index_scan_desc);
+  planner::IndexScanPlan index_scan_node(user_table,
+                                         predicate, column_ids,
+                                         index_scan_desc);
 
-	// Run the executor
-	executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-			context.get());
+  // Run the executor
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
 
-	/////////////////////////////////////////////////////////
-	// UPDATE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // UPDATE
+  /////////////////////////////////////////////////////////
 
-	planner::ProjectInfo::TargetList target_list;
-	planner::ProjectInfo::DirectMapList direct_map_list;
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
 
-	// Update the second attribute
-	for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-		if(col_itr != 1) {
-			direct_map_list.emplace_back(col_itr,
-					std::pair<oid_t, oid_t>(0, col_itr));
-		}
-	}
+  // Update the second attribute
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    if(col_itr != 1) {
+      direct_map_list.emplace_back(col_itr,
+                                   std::pair<oid_t, oid_t>(0, col_itr));
+    }
+  }
 
-	Value update_val = ValueFactory::GetStringValue(std::string("updated"));
-	target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+  Value update_val = ValueFactory::GetStringValue(std::string("updated"));
+  target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
-	planner::UpdatePlan update_node(
-			user_table, new planner::ProjectInfo(std::move(target_list),
-					std::move(direct_map_list)));
+  planner::UpdatePlan update_node(
+      user_table, new planner::ProjectInfo(std::move(target_list),
+                                           std::move(direct_map_list)));
 
-	executor::UpdateExecutor update_executor(&update_node, context.get());
-	update_executor.AddChild(&index_scan_executor);
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+  update_executor.AddChild(&index_scan_executor);
 
-	/////////////////////////////////////////////////////////
-	// EXECUTE
-	/////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
 
-	std::vector<executor::AbstractExecutor *> executors;
-	executors.push_back(&update_executor);
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&update_executor);
 
-	ExecuteTest(executors);
+  ExecuteTest(executors);
 
-	txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace ycsb
