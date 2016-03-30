@@ -21,8 +21,8 @@ namespace peloton {
 namespace logging {
 
 WriteAheadBackendLogger *WriteAheadBackendLogger::GetInstance() {
-  thread_local static WriteAheadBackendLogger aries_backend_logger;
-  return &aries_backend_logger;
+  thread_local static WriteAheadBackendLogger wal_backend_logger;
+  return &wal_backend_logger;
 }
 
 /**
@@ -35,7 +35,7 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
 
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(record);
+    local_queue.push_back(std::unique_ptr<LogRecord>(record));
   }
 }
 

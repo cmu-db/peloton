@@ -35,7 +35,7 @@ class BackendLogger : public Logger {
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
 
   // Get the log record in the local queue at given offset
-  LogRecord *GetLogRecord(oid_t offset);
+  std::unique_ptr<LogRecord> GetLogRecord(oid_t offset);
 
   void Commit(void);
 
@@ -73,7 +73,7 @@ class BackendLogger : public Logger {
  protected:
   bool IsWaitingForFlushing(void);
 
-  std::vector<LogRecord *> local_queue;
+  std::vector<std::unique_ptr<LogRecord>> local_queue;
   std::mutex local_queue_mutex;
 
   // wait for the frontend to flush

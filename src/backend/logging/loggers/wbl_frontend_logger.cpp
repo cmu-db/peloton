@@ -62,11 +62,6 @@ WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
  * @brief clean NVM space
  */
 WriteBehindFrontendLogger::~WriteBehindFrontendLogger() {
-  // Clean up the log records in global queue
-  for (auto log_record : global_queue) {
-    delete log_record;
-  }
-
   // Clean up the global record pool
   global_peloton_log_record_pool.Clear();
 }
@@ -87,15 +82,20 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   // Collect the log records
   //===--------------------------------------------------------------------===//
 
-  for (auto record : global_queue) {
-    switch (record->GetType()) {
+  size_t global_queue_size = global_queue.size();
+  for(oid_t global_queue_itr = 0;
+      global_queue_itr < global_queue_size;
+      global_queue_itr++) {
+
+    switch (global_queue[global_queue_itr]->GetType()) {
       case LOGRECORD_TYPE_TRANSACTION_BEGIN:
         global_peloton_log_record_pool.CreateTransactionLogList(
-            record->GetTransactionId());
+            global_queue[global_queue_itr]->GetTransactionId());
         break;
 
       case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-        committed_txn_list.push_back(record->GetTransactionId());
+        committed_txn_list.push_back(
+            global_queue[global_queue_itr]->GetTransactionId());
         break;
 
       case LOGRECORD_TYPE_TRANSACTION_ABORT:
@@ -108,7 +108,8 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
         // removed here
         // Note that list is not be removed immediately, it is removed only
         // after flush and commit.
-        not_committed_txn_list.push_back(record->GetTransactionId());
+        not_committed_txn_list.push_back(
+            global_queue[global_queue_itr]->GetTransactionId());
         break;
 
       case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
@@ -116,16 +117,15 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
         // Check the commit information,
         auto status =
-            CollectTupleRecord(reinterpret_cast<TupleRecord *>(record));
+            CollectTupleRecord(reinterpret_cast<TupleRecord *>(global_queue[global_queue_itr].get()));
 
         // Delete record if we did not collect it
         if (status.first == false) {
-          delete record;
+          global_queue.erase(global_queue.begin() + global_queue_itr);
         }
         // Else, add it to the set of modified tile groups
         else {
           auto location = status.second.block;
-
           if (location != INVALID_OID) modified_tile_group_set.insert(location);
         }
 
@@ -136,6 +136,7 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
         throw Exception("Invalid or unrecogized log record found");
         break;
     }
+
   }
 
   // Clear the global queue
@@ -219,7 +220,7 @@ size_t WriteBehindFrontendLogger::WriteLogRecords(
 
     // Write out all the records in the list
     for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
-         txn_log_list_itr++) {
+        txn_log_list_itr++) {
       // Write out the log record
       TupleRecord *record = txn_log_list->at(txn_log_list_itr);
       fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
@@ -265,7 +266,7 @@ std::set<storage::TileGroupHeader *> WriteBehindFrontendLogger::ToggleCommitMark
     }
 
     for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
-         txn_log_list_itr++) {
+        txn_log_list_itr++) {
       // Get the log record
       TupleRecord *record = txn_log_list->at(txn_log_list_itr);
       cid_t current_commit_id = INVALID_CID;

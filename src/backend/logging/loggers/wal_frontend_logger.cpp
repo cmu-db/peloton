@@ -85,10 +85,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
  * @brief close logfile
  */
 WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
-  for (auto log_record : global_queue) {
-    delete log_record;
-  }
-
   // close the log file
   int ret = fclose(log_file);
   if (ret != 0) {
@@ -104,9 +100,15 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
  */
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // First, write all the record in the queue
-  for (auto record : global_queue) {
-    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+  size_t global_queue_size = global_queue.size();
+  for(oid_t global_queue_itr = 0;
+      global_queue_itr < global_queue_size;
+      global_queue_itr++) {
+
+    fwrite(global_queue[global_queue_itr]->GetMessage(), sizeof(char),
+           global_queue[global_queue_itr]->GetMessageLength(),
            log_file);
+
   }
 
   // Then, flush
@@ -123,9 +125,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   // Clean up the frontend logger's queue
-  for (auto record : global_queue) {
-    delete record;
-  }
   global_queue.clear();
 
   // Commit each backend logger
