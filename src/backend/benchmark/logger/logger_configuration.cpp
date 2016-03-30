@@ -147,7 +147,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
 
   // Default Values
   ycsb::state.scale_factor = 1;
-  ycsb::state.transactions = 10000;
+  ycsb::state.transaction_count = 10000;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 1;
@@ -178,7 +178,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         ycsb::state.scale_factor = atoi(optarg);
         break;
       case 't':
-        ycsb::state.transactions = atoi(optarg);
+        ycsb::state.transaction_count = atoi(optarg);
         break;
       case 'c':
         ycsb::state.column_count = atoi(optarg);
@@ -213,6 +213,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
+  ycsb::ValidateTransactionCount(ycsb::state);
 
 }
 

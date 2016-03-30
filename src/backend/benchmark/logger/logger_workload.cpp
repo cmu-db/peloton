@@ -108,8 +108,7 @@ bool PrepareLogFile(std::string file_name) {
 
 	// start a thread for logging
 	auto& log_manager = logging::LogManager::GetInstance();
-
-	if (log_manager.ActiveFrontendLoggerCount() > 0) {
+	if (log_manager.ContainsFrontendLogger() == true) {
 		LOG_ERROR("another logging thread is running now");
 		return false;
 	}
@@ -130,13 +129,15 @@ bool PrepareLogFile(std::string file_name) {
 	std::thread thread(&logging::LogManager::StartStandbyMode, &log_manager);
 
 	// wait for the frontend logger to enter STANDBY mode
-	log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
+	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_STANDBY, true);
 
 	// STANDBY -> RECOVERY mode
 	log_manager.StartRecoveryMode();
 
 	// Wait for the frontend logger to enter LOGGING mode
-	log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
+	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
+
+	printf("Build Log \n");
 
 	// Build the log
 	BuildLog();
@@ -177,7 +178,7 @@ void DoRecovery(std::string file_name) {
 
 	// start a thread for logging
 	auto& log_manager = logging::LogManager::GetInstance();
-	if (log_manager.ActiveFrontendLoggerCount() > 0) {
+	if (log_manager.ContainsFrontendLogger() == true) {
 		LOG_ERROR("another logging thread is running now");
 		return;
 	}
@@ -196,13 +197,13 @@ void DoRecovery(std::string file_name) {
 	std::thread thread(&logging::LogManager::StartStandbyMode, &log_manager);
 
 	// wait for the frontend logger to enter STANDBY mode
-	log_manager.WaitForMode(LOGGING_STATUS_TYPE_STANDBY, true);
+	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_STANDBY, true);
 
 	// STANDBY -> RECOVERY mode
 	log_manager.StartRecoveryMode();
 
 	// Wait for the frontend logger to enter LOGGING mode after recovery
-	log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
+	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
 	timer.Stop();
 
@@ -224,9 +225,13 @@ void DoRecovery(std::string file_name) {
 
 void BuildLog() {
 
+  printf("Creating DB \n");
+
 	ycsb::CreateYCSBDatabase();
 
 	ycsb::LoadYCSBDatabase();
+
+  printf("Running workload \n");
 
 	//===--------------------------------------------------------------------===//
 	// ACTIVE PROCESSING

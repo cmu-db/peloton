@@ -82,13 +82,24 @@ void ValidateBackendCount(const configuration &state) {
       << " : " << state.backend_count << std::endl;
 }
 
+void ValidateTransactionCount(const configuration &state) {
+  if (state.transaction_count <= 0) {
+    std::cout << "Invalid transaction_count :: " << state.transaction_count
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "transaction_count "
+      << " : " << state.transaction_count << std::endl;
+}
+
 int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
   state.scale_factor = 1;
-  state.transactions = 10000;
+  state.transaction_count = 10000;
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -105,7 +116,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.scale_factor = atoi(optarg);
         break;
       case 't':
-        state.transactions = atoi(optarg);
+        state.transaction_count = atoi(optarg);
         break;
       case 'c':
         state.column_count = atoi(optarg);
@@ -131,9 +142,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
-
-  std::cout << std::setw(20) << std::left << "transactions "
-      << " : " << state.transactions << std::endl;
+  ValidateTransactionCount(state);
 
 }
 

@@ -110,12 +110,6 @@ void TransactionManager::EndTransaction(Transaction *txn,
       auto record = new logging::TransactionRecord(
           LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
       logger->Log(record);
-
-      // Check for sync commit
-      // If true, wait for the fronted logger to flush the data
-      if (log_manager.GetSyncCommit()) {
-        logger->WaitForFlushing();
-      }
     }
   }
 }

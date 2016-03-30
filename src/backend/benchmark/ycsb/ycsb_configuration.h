@@ -43,7 +43,7 @@ class configuration {
   double update_ratio;
 
   // # of times to run operator
-  unsigned long transactions;
+  unsigned long transaction_count;
 
   // number of backends
   int backend_count;
@@ -60,6 +60,8 @@ void ValidateColumnCount(const configuration &state);
 void ValidateUpdateRatio(const configuration &state);
 
 void ValidateBackendCount(const configuration &state);
+
+void ValidateTransactionCount(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

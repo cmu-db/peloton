@@ -27,6 +27,8 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class BackendLogger : public Logger {
+  friend class FrontendLogger;
+
  public:
   BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; }
 
@@ -34,29 +36,13 @@ class BackendLogger : public Logger {
 
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
 
-  // Get the log record in the local queue at given offset
-  std::unique_ptr<LogRecord> GetLogRecord(oid_t offset);
-
   void Commit(void);
 
-  bool IsConnectedToFrontend(void) const;
-
-  void SetConnectedToFrontend(bool isConnected);
-
-  // Truncate the log file at given offset
-  void TruncateLocalQueue(oid_t offset);
-
   void WaitForFlushing(void);
-
-  size_t GetLocalQueueSize(void);
 
   //===--------------------------------------------------------------------===//
   // Virtual Functions
   //===--------------------------------------------------------------------===//
-
-  /**
-   * Record log
-   */
 
   // Log the given record
   virtual void Log(LogRecord *record) = 0;
@@ -64,8 +50,8 @@ class BackendLogger : public Logger {
   // Construct a log record with tuple information
   virtual LogRecord *GetTupleRecord(LogRecordType log_record_type,
                                     txn_id_t txn_id,
-									oid_t table_oid,
-									oid_t db_oid,
+                                    oid_t table_oid,
+                                    oid_t db_oid,
                                     ItemPointer insert_location,
                                     ItemPointer delete_location,
                                     void *data = nullptr) = 0;
@@ -83,9 +69,6 @@ class BackendLogger : public Logger {
   // Used for notify any waiting thread that backend is flushed
   std::mutex flush_notify_mutex;
   std::condition_variable flush_notify_cv;
-
-  // is this backend connected to frontend ?
-  bool connected_to_frontend = false;
 };
 
 }  // namespace logging
