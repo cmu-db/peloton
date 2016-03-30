@@ -21,7 +21,6 @@
 #include <thread>
 #include <algorithm>
 #include <random>
-#include <future>
 #include <cstddef>
 #include <limits>
 
@@ -89,7 +88,9 @@ void RunUpdate();
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-void RunBackend(std::promise<double> && duration) {
+std::vector<double> durations;
+
+void RunBackend(oid_t thread_id) {
 	auto txn_count = state.transactions;
 	auto update_ratio = state.update_ratio;
 
@@ -105,7 +106,7 @@ void RunBackend(std::promise<double> && duration) {
 		auto rng_val = generator.GetSample();
 
 		if (rng_val < update_ratio) {
-			RunUpdate();
+			//RunUpdate();
 		}
 		else {
 			RunRead();
@@ -116,8 +117,8 @@ void RunBackend(std::promise<double> && duration) {
 	// Stop timer
 	timer.Stop();
 
-	// Set return value
-	duration.set_value(timer.GetDuration());
+	// Set duration
+	durations[thread_id] = timer.GetDuration();
 }
 
 void RunWorkload() {
@@ -126,24 +127,22 @@ void RunWorkload() {
 	std::vector<std::thread> thread_group;
 	oid_t num_threads = state.backend_count;
 	double max_duration = std::numeric_limits<double>::min();
+	durations.reserve(num_threads);
 
 	// Launch a group of threads
 	for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-	  // Set up promise
-	  std::promise<double> duration_promise;
-	  auto duration_ref = duration_promise.get_future();
-
-	  thread_group.push_back(std::thread(RunBackend, std::move(duration_promise)));
-
-	  // Compute max duration
-		auto duration = duration_ref.get();
-		max_duration = std::max(max_duration, duration);
+	  thread_group.push_back(std::thread(RunBackend, thread_itr));
 	}
 
 	// Join the threads with the main thread
 	for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
 		thread_group[thread_itr].join();
 	}
+
+	// Compute max duration
+  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+    max_duration = std::max(max_duration, durations[thread_itr]);
+  }
 
   double throughput = (state.transactions * num_threads)/max_duration;
 

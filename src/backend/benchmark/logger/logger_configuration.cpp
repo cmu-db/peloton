@@ -27,7 +27,6 @@ void Usage(FILE* out) {
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
           "   -l --logging-type      :  Logging type \n"
-          "   -b --backend-count     :  Backend count \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
           "   -w --wait-timeout      :  Wait timeout (us) \n"
@@ -36,12 +35,12 @@ void Usage(FILE* out) {
           "   -t --transactions      :  # of transactions \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
+          "   -b --backend-count     :  Backend count \n"
   );
 }
 
 static struct option opts[] = {
     {"logging-type", optional_argument, NULL, 'l'},
-    {"backend-count", optional_argument, NULL, 'b'},
     {"data-file-size", optional_argument, NULL, 'f'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"wait-timeout", optional_argument, NULL, 'w'},
@@ -49,50 +48,38 @@ static struct option opts[] = {
     {"transactions", optional_argument, NULL, 't'},
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
-	{NULL, 0, NULL, 0}};
+    {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(
     const configuration& state) {
   std::cout << std::setw(20) << std::left << "logging_type "
-            << " : ";
+      << " : ";
 
   std::cout << LoggingTypeToString(state.logging_type) << std::endl;
-}
-
-static void ValidateBackendCount(
-    const configuration& state) {
-  if (state.backend_count <= 0) {
-    std::cout << "Invalid backend_count :: " << state.backend_count
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "backend_count "
-            << " : " << state.backend_count << std::endl;
 }
 
 static void ValidateDataFileSize(
     const configuration& state) {
   if (state.data_file_size <= 0) {
     std::cout << "Invalid pmem_file_size :: " << state.data_file_size
-              << std::endl;
+        << std::endl;
     exit(EXIT_FAILURE);
   }
 
   std::cout << std::setw(20) << std::left << "data_file_size "
-            << " : " << state.data_file_size << std::endl;
+      << " : " << state.data_file_size << std::endl;
 }
 
 static void ValidateExperiment(
     const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
     std::cout << "Invalid experiment_type :: " << state.experiment_type
-              << std::endl;
+        << std::endl;
     exit(EXIT_FAILURE);
   }
 
   std::cout << std::setw(20) << std::left << "experiment_type "
-            << " : " << state.experiment_type << std::endl;
+      << " : " << state.experiment_type << std::endl;
 }
 
 static void ValidateWaitTimeout(
@@ -103,7 +90,7 @@ static void ValidateWaitTimeout(
   }
 
   std::cout << std::setw(20) << std::left << "wait_timeout "
-            << " : " << state.wait_timeout << std::endl;
+      << " : " << state.wait_timeout << std::endl;
 }
 
 static void ValidateLogFileDir(
@@ -145,13 +132,12 @@ static void ValidateLogFileDir(
   }
 
   std::cout << std::setw(20) << std::left << "log_file_dir "
-            << " : " << state.log_file_dir << std::endl;
+      << " : " << state.log_file_dir << std::endl;
 }
 
 void ParseArguments(int argc, char* argv[], configuration &state) {
   // Default Values
   state.logging_type = LOGGING_TYPE_DRAM_NVM;
-  state.backend_count = 1;
 
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
@@ -164,20 +150,18 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::state.transactions = 10000;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
+  ycsb::state.backend_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:b:f:e:w:k:t:c:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
-        break;
-      case 'b':
-        state.backend_count = atoi(optarg);
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
@@ -189,18 +173,21 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         state.wait_timeout = atoi(optarg);
         break;
 
-      // YCSB
+        // YCSB
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
         break;
       case 't':
-    	ycsb::state.transactions = atoi(optarg);
+        ycsb::state.transactions = atoi(optarg);
         break;
       case 'c':
-    	ycsb::state.column_count = atoi(optarg);
+        ycsb::state.column_count = atoi(optarg);
         break;
       case 'u':
-    	ycsb::state.update_ratio = atof(optarg);
+        ycsb::state.update_ratio = atof(optarg);
+        break;
+      case 'b':
+        ycsb::state.backend_count = atoi(optarg);
         break;
 
       case 'h':
@@ -210,13 +197,12 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         break;
 
       default:
-    	break;
+        break;
     }
   }
 
   // Print configuration
   ValidateLoggingType(state);
-  ValidateBackendCount(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
@@ -226,6 +212,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::ValidateScaleFactor(ycsb::state);
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
+  ycsb::ValidateBackendCount(ycsb::state);
 
 }
 
