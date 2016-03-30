@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/ssi_transaction_manager.h
+// Identification: src/backend/concurrency/optimistic_transaction_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@ namespace peloton {
 namespace concurrency {
 
 class SsiTransactionManager : public TransactionManager {
- public:
+public:
   SsiTransactionManager() {}
 
   virtual ~SsiTransactionManager() {}
@@ -40,21 +40,21 @@ class SsiTransactionManager : public TransactionManager {
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
+  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+                             const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
+
   virtual void SetDeleteVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual Result CommitTransaction();

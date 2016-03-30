@@ -14,7 +14,7 @@
 
 #include "backend/concurrency/optimistic_transaction_manager.h"
 #include "backend/concurrency/pessimistic_transaction_manager.h"
-
+#include "backend/concurrency/ssi_transaction_manager.h"
 namespace peloton {
 namespace concurrency {
 class TransactionManagerFactory {
@@ -25,6 +25,8 @@ class TransactionManagerFactory {
         return OptimisticTransactionManager::GetInstance();
       case CONCURRENCY_TYPE_2PL:
         return PessimisticTransactionManager::GetInstance();
+      case CONCURRENCY_TYPE_SSI:
+        return SsiTransactionManager::GetInstance();
       default:
         return OptimisticTransactionManager::GetInstance();
     }
