@@ -44,6 +44,9 @@ class configuration {
 
   // # of times to run operator
   unsigned long transactions;
+
+  // number of backends
+  int backend_count;
 };
 
 extern configuration state;

@@ -25,8 +25,6 @@
 
 namespace peloton {
 
-static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024;  // 1 MB
-
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap
 //===--------------------------------------------------------------------===//
@@ -68,22 +66,12 @@ class VarlenPool {
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  VarlenPool(BackendType backend_type)
-      : backend_type(backend_type),
-        allocation_size(TEMP_POOL_CHUNK_SIZE),
-        max_chunk_count(1),
-        current_chunk_index(0) {
-    Init();
-  }
 
-  VarlenPool(BackendType backend_type, uint64_t allocation_size,
-             uint64_t max_chunk_count)
-      : backend_type(backend_type),
-        allocation_size(allocation_size),
-        max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
-        current_chunk_index(0) {
-    Init();
-  }
+  VarlenPool(BackendType backend_type);
+
+  VarlenPool(BackendType backend_type,
+             uint64_t allocation_size,
+             uint64_t max_chunk_count);
 
   ~VarlenPool();
 

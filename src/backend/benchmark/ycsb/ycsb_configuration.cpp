@@ -27,7 +27,8 @@ void Usage(FILE *out) {
           "   -k --scale-factor      :  # of tuples \n"
           "   -t --transactions      :  # of transactions \n"
           "   -c --column_count      :  # of columns \n"
-          "   -u --write_ratio       :  Fraction of updates \n");
+          "   -u --write_ratio       :  Fraction of updates \n"
+          "   -b --backend_count     :  # of backends \n");
   exit(EXIT_FAILURE);
 }
 
@@ -36,6 +37,7 @@ static struct option opts[] = {
     {"transactions", optional_argument, NULL, 't'},
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -50,12 +52,12 @@ void ValidateScaleFactor(const configuration &state) {
 
 void ValidateColumnCount(const configuration &state) {
   if (state.column_count <= 0) {
-    std::cout << "Invalid attribute_count :: " << state.column_count
+    std::cout << "Invalid column_count :: " << state.column_count
         << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "attribute_count "
+  std::cout << std::setw(20) << std::left << "column_count "
       << " : " << state.column_count << std::endl;
 }
 
@@ -69,6 +71,17 @@ void ValidateUpdateRatio(const configuration &state) {
       << " : " << state.update_ratio << std::endl;
 }
 
+void ValidateBackendCount(const configuration &state) {
+  if (state.backend_count <= 0) {
+    std::cout << "Invalid backend_count :: " << state.backend_count
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "backend_count "
+      << " : " << state.backend_count << std::endl;
+}
+
 int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -78,11 +91,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.transactions = 10000;
   state.column_count = 10;
   state.update_ratio = 0.5;
+  state.backend_count = 2;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:t:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
@@ -99,6 +113,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'u':
         state.update_ratio = atof(optarg);
         break;
+      case 'b':
+        state.backend_count = atoi(optarg);
+        break;
       case 'h':
         Usage(stderr);
         break;
@@ -113,6 +130,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
+  ValidateBackendCount(state);
 
   std::cout << std::setw(20) << std::left << "transactions "
       << " : " << state.transactions << std::endl;
