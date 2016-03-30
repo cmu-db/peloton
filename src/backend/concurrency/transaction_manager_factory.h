@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/concurrency/optimistic_transaction_manager.h"
-#include "backend/concurrency/pessimistic_transaction_manager.h"
+#include "backend/concurrency/rowo_txn_manager.h"
+#include "backend/concurrency/rpwp_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -22,11 +22,11 @@ class TransactionManagerFactory {
   static TransactionManager &GetInstance() {
     switch (protocol) {
       case CONCURRENCY_TYPE_OCC:
-        return OptimisticTransactionManager::GetInstance();
+        return RowoTxnManager::GetInstance();
       case CONCURRENCY_TYPE_2PL:
-        return PessimisticTransactionManager::GetInstance();
+        return RpwpTxnManager::GetInstance();
       default:
-        return OptimisticTransactionManager::GetInstance();
+        return RowoTxnManager::GetInstance();
     }
   }
 
