@@ -137,8 +137,6 @@ bool PrepareLogFile(std::string file_name) {
 	// Wait for the frontend logger to enter LOGGING mode
 	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
-	printf("Build Log \n");
-
 	// Build the log
 	BuildLog();
 
@@ -225,13 +223,9 @@ void DoRecovery(std::string file_name) {
 
 void BuildLog() {
 
-  printf("Creating DB \n");
-
 	ycsb::CreateYCSBDatabase();
 
 	ycsb::LoadYCSBDatabase();
-
-  printf("Running workload \n");
 
 	//===--------------------------------------------------------------------===//
 	// ACTIVE PROCESSING
