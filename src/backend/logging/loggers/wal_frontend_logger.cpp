@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -95,8 +94,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   this->checkpoint.Init();
 
   // abj1 adding code here!
-  // this->SetLogDirectory(peloton_log_directory);
-  LOG_INFO("Log dir is %s", peloton_log_directory);
+  LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
   this->InitLogDirectory();
   this->InitLogFilesList();
   this->log_file_fd = -1;  // this is a restart or a new start
@@ -368,7 +366,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   delete tuple;
-
 }
 
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
@@ -407,7 +404,6 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     if (max_tg < remove_loc.block) {
       max_tg = remove_loc.block;
     }
-
   }
   InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple);
 
@@ -718,7 +714,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
   LOG_INFO("Trying to read log directory");
 
-  dirp = opendir(peloton_log_directory);
+  dirp = opendir(this->peloton_log_directory.c_str());
   if (dirp == nullptr) {
     LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
@@ -739,6 +735,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       this->log_files_.push_back(new_log_file);
     }
   }
+  closedir(dirp);
 
   int num_log_files;
   num_log_files = this->log_files_.size();
@@ -772,8 +769,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   LOG_INFO("new_file_num is %d", new_file_num);
   std::string new_file_name;
 
-  new_file_name = std::string(peloton_log_directory) + "/" + "peloton_log_" +
-                  std::to_string(new_file_num) + ".log";
+  new_file_name = this->GetFileNameFromVersion(new_file_num);
 
   FILE *log_file = fopen(new_file_name.c_str(), "wb");
   if (log_file == NULL) {
@@ -843,8 +839,11 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   }
 
   // open the next file
-  this->log_file = fopen(
-      (std::string(peloton_log_directory) +std::string("/") +this->log_files_[this->log_file_cursor_]->GetLogFileName()).c_str(), "rb");
+  this->log_file =
+      fopen(this->GetFileNameFromVersion(
+                      this->log_files_[this->log_file_cursor_]->GetLogNumber())
+                .c_str(),
+            "rb");
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
@@ -880,6 +879,7 @@ void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
                   this->log_files_[i]->GetLogFileName().c_str());
       }
       // remove entry from list anyway
+      delete this->log_files_[i];
       this->log_files_.erase(this->log_files_.begin() + i);
       i--;  // update cursor
     }
@@ -889,8 +889,8 @@ void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
 void WriteAheadFrontendLogger::InitLogDirectory() {
   int return_val;
 
-  return_val = mkdir(peloton_log_directory, 0700);
-  LOG_INFO("Log directory is: %s", peloton_log_directory);
+  return_val = mkdir(this->peloton_log_directory.c_str(), 0700);
+  LOG_INFO("Log directory is: %s", peloton_log_directory.c_str());
 
   if (return_val == 0) {
     LOG_INFO("Created Log directory successfully");
@@ -903,6 +903,11 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
 
 void WriteAheadFrontendLogger::SetLogDirectory(char *arg __attribute__((unused))) {
   LOG_INFO("%s", arg);
+}
+
+std::string WriteAheadFrontendLogger::GetFileNameFromVersion(int version) {
+  return std::string(this->peloton_log_directory.c_str()) + "/" +
+         LOG_FILE_PREFIX + std::to_string(version) + LOG_FILE_SUFFIX;
 }
 
 }  // namespace logging

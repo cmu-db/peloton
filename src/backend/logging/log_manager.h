@@ -28,9 +28,6 @@
 
 extern LoggingType peloton_logging_mode;
 
-// Directory for peloton logs
-extern char *peloton_log_directory;
-
 namespace peloton {
 namespace logging {
 
@@ -111,9 +108,11 @@ class LogManager {
 
   void LogBeginTransaction(oid_t commit_id);
 
-  void LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version);
+  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &old_version, ItemPointer &new_version);
 
-  void LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location);
+  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &new_location);
 
   void LogDelete(oid_t commit_id, ItemPointer &delete_location);
 
