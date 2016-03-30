@@ -34,13 +34,13 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan(PelotonJoinType join_type,
                const expression::AbstractExpression *predicate,
                const ProjectInfo *proj_info,
-               const std::shared_ptr<catalog::Schema> proj_schema)
+               const std::shared_ptr<catalog::Schema> &proj_schema)
       : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {}
 
   HashJoinPlan(PelotonJoinType join_type,
                const expression::AbstractExpression *predicate,
                const ProjectInfo *proj_info,
-               const std::shared_ptr<catalog::Schema> proj_schema,
+               const std::shared_ptr<catalog::Schema> &proj_schema,
                const std::vector<oid_t> &
                    outer_hashkeys)  // outer_hashkeys is added for IN-subquery
       : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {

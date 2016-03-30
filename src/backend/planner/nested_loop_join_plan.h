@@ -35,7 +35,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(PelotonJoinType join_type,
                      const expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info,
-                     const std::shared_ptr<catalog::Schema> proj_schema)
+                     const std::shared_ptr<catalog::Schema> &proj_schema)
       : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {
     nl_ = nullptr;
   }
@@ -43,7 +43,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(PelotonJoinType join_type,
                      const expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info,
-                     const std::shared_ptr<catalog::Schema> proj_schema,
+                     const std::shared_ptr<catalog::Schema> &proj_schema,
                      NestLoop *nl)
       : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {
     nl_ = nl;

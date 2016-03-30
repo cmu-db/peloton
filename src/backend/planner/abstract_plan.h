@@ -52,7 +52,7 @@ class AbstractPlan : public Printable {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(const std::shared_ptr<AbstractPlan> child);
+  void AddChild(const std::shared_ptr<AbstractPlan> &child);
 
   const std::vector<std::shared_ptr<AbstractPlan>> &GetChildren() const;
 
