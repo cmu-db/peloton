@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // seq_scan_test.cpp
 //
 // Identification: tests/executor/seq_scan_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -139,8 +139,9 @@ expression::AbstractExpression *CreatePredicate(
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
-                            : expression::ExpressionUtil::TupleValueFactory(0, 3);
+    tuple_value_expr =
+        even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
+             : expression::ExpressionUtil::TupleValueFactory(0, 3);
 
     // Second, create constant value expression.
     Value constant_value =
@@ -154,12 +155,13 @@ expression::AbstractExpression *CreatePredicate(
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
-        expression::ExpressionUtil::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
-                                      tuple_value_expr, constant_value_expr);
+        expression::ExpressionUtil::ComparisonFactory(
+            EXPRESSION_TYPE_COMPARE_EQUAL, tuple_value_expr,
+            constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
-    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
-                                               predicate, equality_expr);
+    predicate = expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_OR, predicate, equality_expr);
   }
 
   return predicate;

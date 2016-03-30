@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // delete_executor.cpp
 //
 // Identification: src/backend/executor/delete_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,7 +50,7 @@ bool DeleteExecutor::DInit() {
   assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
-  LOG_INFO("Delete executor :: 1 child ");
+  LOG_TRACE("Delete executor :: 1 child ");
 
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
@@ -78,77 +78,43 @@ bool DeleteExecutor::DExecute() {
 
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
-  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto transaction = executor_context_->GetTransaction();
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
-  LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
-           source_tile->GetTupleCount());
+  LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
+            source_tile->GetTupleCount());
 
-  LOG_INFO("Transaction ID: %lu", transaction->GetTransactionId());
+  LOG_TRACE("Transaction ID: %lu",
+            executor_context_->GetTransaction()->GetTransactionId());
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu ",
-             visible_tuple_id, physical_tuple_id);
+    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+              visible_tuple_id, physical_tuple_id);
 
-    txn_id_t tid = transaction->GetTransactionId();
-    txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(physical_tuple_id);
-    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(physical_tuple_id);
-    cid_t tuple_end_cid = tile_group_header->GetEndCommitId(physical_tuple_id);
-
-    if (transaction_manager.IsOwner(tuple_txn_id) == true) {
+    if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
-      transaction_manager.SetOwnerDeleteVisibility(tile_group_id, physical_tuple_id);
-       // Set MVCC info
-      // assert(tile_group_header->GetTransactionId(physical_tuple_id) == tid);
-      // assert(tile_group_header->GetBeginCommitId(physical_tuple_id) == MAX_CID);
-      // assert(tile_group_header->GetEndCommitId(physical_tuple_id) == MAX_CID);
+      transaction_manager.SetDeleteVisibility(tile_group_id, physical_tuple_id);
 
-      // tile_group_header->SetTransactionId(physical_tuple_id, tid);
-      // tile_group_header->SetBeginCommitId(physical_tuple_id, MAX_CID);
-      // tile_group_header->SetEndCommitId(physical_tuple_id, INVALID_CID);
-      
-      //tile_group_header->SetInsertCommit(physical_tuple_id, false);
-      //tile_group_header->SetDeleteCommit(physical_tuple_id, false);
-
-      // TODO: Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_DELETE, transaction->GetTransactionId(),
-      //       target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
-
-      //     logger->Log(record);
-      //   }
-      // }
-
-    } 
-    else if (transaction_manager.IsAccessable(tuple_txn_id, tuple_begin_cid, tuple_end_cid) == true) {
-    // else if (tile_group_header->GetTransactionId(physical_tuple_id) ==
-    //                INITIAL_TXN_ID &&
-    //            tile_group_header->GetEndCommitId(physical_tuple_id) ==
-    //                MAX_CID) {
+    } else if (transaction_manager.IsAccessable(tile_group,
+                                                physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
-      // transdaction.
+      // transaction.
 
-      if (tile_group_header->LockTupleSlot(physical_tuple_id, tid) == false) {
-        LOG_INFO("Fail to insert new tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
       // if it is the latest version and not locked by other threads, then
       // insert a new version.
-      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+      storage::Tuple *new_tuple =
+          new storage::Tuple(target_table_->GetSchema(), true);
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
@@ -160,41 +126,24 @@ bool DeleteExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         delete new_tuple;
         new_tuple = nullptr;
-        LOG_INFO("Fail to insert new tuple. Set txn failure.");
+        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      transaction_manager.SetDeleteVisibility(location.block, location.offset);      
-      tile_group_header->SetNextItemPointer(physical_tuple_id, location);
 
-      //auto new_tile_group_header =
-      //    target_table_->GetTileGroupById(location.block)->GetHeader();
-
-      //new_tile_group_header->SetEndCommitId(location.offset, INVALID_CID);
+      auto res = transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
 
       executor_context_->num_processed += 1;  // deleted one
 
-      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
-
-      // Logging
-      // {
-      // ItemPointer delete_location(tile_group_id, physical_tuple_id);
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //         LOGRECORD_TYPE_TUPLE_DELETE, transaction->GetTransactionId(),
-      //         target_table_->GetOid(), INVALID_ITEMPOINTER, delete_location);
-
-      //     logger->Log(record);
-      //   }
-      // }
       delete new_tuple;
       new_tuple = nullptr;
     } else {
       // transaction should be aborted as we cannot update the latest version.
-      LOG_INFO("Fail to update tuple. Set txn failure.");
+      LOG_TRACE("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     }

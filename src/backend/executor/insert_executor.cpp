@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // insert_executor.cpp
 //
 // Identification: src/backend/executor/insert_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,14 +63,13 @@ bool InsertExecutor::DExecute() {
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   assert(target_table);
 
-  // TODO: use transaction manager instead of transaction. DONE!!
-  //auto transaction_ = executor_context_->GetTransaction();
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
-    LOG_INFO("Insert executor :: 1 child ");
+    LOG_TRACE("Insert executor :: 1 child ");
 
     if (!children_[0]->Execute()) {
       return false;
@@ -94,15 +93,17 @@ bool InsertExecutor::DExecute() {
         tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
                         executor_pool);
 
-      peloton::ItemPointer location =
-          target_table->InsertTuple(tuple.get());
+      peloton::ItemPointer location = target_table->InsertTuple(tuple.get());
       if (location.block == INVALID_OID) {
-        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
-        transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(
+            peloton::Result::RESULT_FAILURE);
         return false;
       }
-      // transaction_->RecordInsert(location.block, location.offset);
-      transaction_manager.PerformInsert(location.block, location.offset);
+      auto res = transaction_manager.PerformInsert(location.block, location.offset);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -111,7 +112,7 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-    LOG_INFO("Insert executor :: 0 child ");
+    LOG_TRACE("Insert executor :: 0 child ");
 
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
@@ -133,32 +134,19 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // Carry out insertion
       ItemPointer location = target_table->InsertTuple(tuple.get());
-      LOG_INFO("Inserted into location: %lu, %lu", location.block,
-               location.offset);
+      LOG_TRACE("Inserted into location: %lu, %lu", location.block,
+                location.offset);
 
       if (location.block == INVALID_OID) {
-        LOG_INFO("Failed to Insert. Set txn failure.");
-        // transaction_->SetResult(peloton::Result::RESULT_FAILURE);
+        LOG_TRACE("Failed to Insert. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      // transaction_->RecordInsert(location.block, location.offset);
-      transaction_manager.PerformInsert(location.block, location.offset);
-
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //         LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
-      //         target_table_->GetOid(), location, INVALID_ITEMPOINTER,
-      //         tuple.get());
-
-      //     logger->Log(record);
-      //   }
-      // }
+      auto res = transaction_manager.PerformInsert(location.block, location.offset);
+      if(!res){
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
     }
 
     executor_context_->num_processed += 1;  // insert one

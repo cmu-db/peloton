@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// vecotor_compa.Ison_expression.h
+// vector_comparison_expression.h
 //
-// Identification: src/backend/expression/vector_compa.Ison_expression.h
+// Identification: src/backend/expression/vector_comparison_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -102,9 +102,8 @@ class VectorComparisonExpression : public AbstractExpression {
     m_quantifier = quantifier_type;
   }
 
-  Value Evaluate(const AbstractTuple *tuple1,
-                 const AbstractTuple *tuple2,
-				 executor::ExecutorContext *context) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const;
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "VectorComparisonExpression\n");
@@ -150,8 +149,8 @@ struct ValueExtractor {
 
   std::string Debug() const {
     return m_value.GetInfo();
-	// comment out because no member Debug()
-    //return m_value.IsNull() ? "NULL" : m_value.Debug();
+    // comment out because no member Debug()
+    // return m_value.IsNull() ? "NULL" : m_value.Debug();
   }
 
   ValueType m_value;

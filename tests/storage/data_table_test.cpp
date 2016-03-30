@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // data_table_test.cpp
 //
 // Identification: tests/storage/data_table_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,9 +34,8 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tuple_count, false, false,
-                                   true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
+                                   false, true);
   txn_manager.CommitTransaction();
 
   // Create the new column map

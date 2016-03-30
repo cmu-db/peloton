@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // value_copy_test.cpp
 //
 // Identification: tests/storage/value_copy_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,11 +46,9 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   tuple->SetValue(0, val, pool);
 
-  std::cout << "Going to get value \n";
-
   Value val3 = tuple->GetValue(0);
 
-  std::cout << val3;
+  LOG_INFO("%s", val3.GetInfo().c_str());
 
   delete tuple;
   delete schema;

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logical_tile_factory.cpp
 //
 // Identification: src/backend/executor/logical_tile_factory.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -88,8 +88,7 @@ LogicalTile *LogicalTileFactory::WrapTiles(
  * @return Logical tile wrapping tile group.
  */
 LogicalTile *LogicalTileFactory::WrapTileGroup(
-    const std::shared_ptr<storage::TileGroup> &tile_group,
-    txn_id_t txn_id) {
+    const std::shared_ptr<storage::TileGroup> &tile_group, txn_id_t txn_id) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;

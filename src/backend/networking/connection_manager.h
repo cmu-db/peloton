@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // connection_manager.h
 //
-// Identification: /peloton/src/backend/networking/connection_manager.h
+// Identification: src/backend/networking/connection_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,50 +26,48 @@ namespace networking {
 //===--------------------------------------------------------------------===//
 
 class ConnectionManager {
-    ConnectionManager & operator=(const ThreadManager &) = delete;
-    ConnectionManager & operator=(ThreadManager &&) = delete;
+  ConnectionManager& operator=(const ThreadManager&) = delete;
+  ConnectionManager& operator=(ThreadManager&&) = delete;
 
  public:
-    // global singleton
-    static ConnectionManager &GetInstance(void);
+  // global singleton
+  static ConnectionManager& GetInstance(void);
 
-    void ResterRpcServer(RpcServer* server);
-    RpcServer* GetRpcServer();
+  void ResterRpcServer(RpcServer* server);
+  RpcServer* GetRpcServer();
 
-    struct event_base* GetEventBase();
+  struct event_base* GetEventBase();
 
-    Connection* GetConn(std::string& addr);
+  Connection* GetConn(std::string& addr);
 
-    Connection* GetConn(NetworkAddress& addr);
-    Connection* CreateConn(NetworkAddress& addr);
-    Connection* FindConn(NetworkAddress& addr);
-    bool AddConn(NetworkAddress addr, Connection* conn);
-    bool AddConn(struct sockaddr& addr, Connection* conn);
-    bool DeleteConn(NetworkAddress& addr);
-    bool DeleteConn(Connection* conn);
+  Connection* GetConn(NetworkAddress& addr);
+  Connection* CreateConn(NetworkAddress& addr);
+  Connection* FindConn(NetworkAddress& addr);
+  bool AddConn(NetworkAddress addr, Connection* conn);
+  bool AddConn(struct sockaddr& addr, Connection* conn);
+  bool DeleteConn(NetworkAddress& addr);
+  bool DeleteConn(Connection* conn);
 
-    ConnectionManager();
-    ~ConnectionManager();
+  ConnectionManager();
+  ~ConnectionManager();
 
-    long start_time_;
+  long start_time_;
 
  private:
+  // rpc server
+  RpcServer* rpc_server_;
 
-    // rpc server
-    RpcServer* rpc_server_;
+  // all the connections established: addr --> connection instance
+  std::map<NetworkAddress, Connection*> conn_pool_;
 
-    // all the connections established: addr --> connection instance
-    std::map<NetworkAddress, Connection*> conn_pool_;
+  // a connection can be shared among pthreads
+  Mutex mutex_;
+  Condition cond_;
 
-    // a connection can be shared among pthreads
-    Mutex mutex_;
-    Condition cond_;
-
-    //////////////////////////////////////////////
-    // The following is only for performance test
-    //////////////////////////////////////////////
-    std::map<NetworkAddress, Connection*> client_conn_pool_;
-
+  //////////////////////////////////////////////
+  // The following is only for performance test
+  //////////////////////////////////////////////
+  std::map<NetworkAddress, Connection*> client_conn_pool_;
 };
 
 }  // End peloton networking

@@ -93,7 +93,7 @@ void SimpleCheckpoint::DoCheckpoint() {
     // build executor context
     std::unique_ptr<concurrency::Transaction> txn(
         txn_manager.BeginTransaction());
-    start_commit_id = txn->GetStartCommitId();
+    start_commit_id = txn->GetBeginCommitId();
     assert(txn);
     assert(txn.get());
     LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),

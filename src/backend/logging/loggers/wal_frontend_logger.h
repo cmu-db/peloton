@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * wal_frontend_logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wal_frontend_logger.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.h
+//
+// Identification: src/backend/logging/loggers/wal_frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
