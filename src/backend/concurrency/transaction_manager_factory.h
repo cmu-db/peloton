@@ -14,6 +14,7 @@
 
 #include "backend/concurrency/rowo_txn_manager.h"
 #include "backend/concurrency/rpwp_txn_manager.h"
+#include "backend/concurrency/spec_rowo_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -25,6 +26,8 @@ class TransactionManagerFactory {
         return RowoTxnManager::GetInstance();
       case CONCURRENCY_TYPE_2PL:
         return RpwpTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_SPEC:
+        return SpecRowoTxnManager::GetInstance();
       default:
         return RowoTxnManager::GetInstance();
     }

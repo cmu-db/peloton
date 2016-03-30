@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// ssi_transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/ssi_transaction_manager.h
+// Identification: src/backend/concurrency/ssi_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class SsiTransactionManager : public TransactionManager {
+class SsiTxnManager : public TransactionManager {
  public:
-  SsiTransactionManager() {}
+  SsiTxnManager() {}
 
-  virtual ~SsiTransactionManager() {}
+  virtual ~SsiTxnManager() {}
 
-  static SsiTransactionManager &GetInstance();
+  static SsiTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
@@ -40,21 +40,21 @@ class SsiTransactionManager : public TransactionManager {
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual bool PerformWrite(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
+  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+                             const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
+
   virtual void SetDeleteVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
