@@ -155,7 +155,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       // Shallow copy the log record from backend_logger to here
       for (oid_t log_record_itr = 0; log_record_itr < local_queue_size;
            log_record_itr++) {
-        global_queue.push_back(backend_logger->GetLogRecord(log_record_itr));
+        global_queue.push_back(std::move(backend_logger->GetLogRecord(log_record_itr)));
       }
 
       // truncate the local queue

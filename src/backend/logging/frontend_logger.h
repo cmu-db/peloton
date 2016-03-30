@@ -68,7 +68,7 @@ class FrontendLogger : public Logger {
   std::mutex backend_logger_mutex;
 
   // Global queue
-  std::vector<LogRecord *> global_queue;
+  std::vector<std::unique_ptr<LogRecord>> global_queue;
 
   // period with which it collects log records from backend loggers
   // (in microseconds)

@@ -36,7 +36,7 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
 
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(record);
+    local_queue.push_back(std::unique_ptr<LogRecord>(record));
   }
 }
 

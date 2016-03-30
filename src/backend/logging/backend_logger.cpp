@@ -20,9 +20,6 @@ namespace peloton {
 namespace logging {
 
 BackendLogger::~BackendLogger() {
-  for (auto log_record : local_queue) {
-    delete log_record;
-  }
 }
 
 /**
@@ -78,11 +75,11 @@ void BackendLogger::TruncateLocalQueue(oid_t offset) {
  * @brief Get the LogRecord with offset
  * @param offset
  */
-LogRecord *BackendLogger::GetLogRecord(oid_t offset) {
+std::unique_ptr<LogRecord> BackendLogger::GetLogRecord(oid_t offset) {
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     assert(offset < local_queue.size());
-    return local_queue[offset];
+    return std::move(local_queue[offset]);
   }
 }
 
