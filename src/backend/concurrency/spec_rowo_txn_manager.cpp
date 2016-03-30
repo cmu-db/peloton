@@ -4,13 +4,13 @@
 //
 // transaction_manager.cpp
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.cpp
+// Identification: src/backend/concurrency/spec_rowo_txn_manager.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "speculative_optimistic_transaction_manager.h"
+#include "spec_rowo_txn_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -23,13 +23,13 @@
 namespace peloton {
 namespace concurrency {
 
-SpeculativeOptimisticTransactionManager &SpeculativeOptimisticTransactionManager::GetInstance() {
-  static SpeculativeOptimisticTransactionManager txn_manager;
+SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
+  static SpecRowoTxnManager txn_manager;
   return txn_manager;
 }
 
 // Visibility check
-bool SpeculativeOptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
+bool SpecRowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
                                              const cid_t &tuple_begin_cid,
                                              const cid_t &tuple_end_cid) {
   if (tuple_txn_id == INVALID_TXN_ID) {
@@ -64,20 +64,20 @@ bool SpeculativeOptimisticTransactionManager::IsVisible(const txn_id_t &tuple_tx
   }
 }
 
-bool SpeculativeOptimisticTransactionManager::IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id){
+bool SpecRowoTxnManager::IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id){
   auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
-bool SpeculativeOptimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
+bool SpecRowoTxnManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool SpeculativeOptimisticTransactionManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
+bool SpecRowoTxnManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto txn_id = current_txn->GetTransactionId();
 
@@ -89,7 +89,7 @@ bool SpeculativeOptimisticTransactionManager::AcquireTuple(storage::TileGroup *t
   return true;
 }
 
-bool SpeculativeOptimisticTransactionManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool SpecRowoTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -109,7 +109,7 @@ bool SpeculativeOptimisticTransactionManager::PerformRead(const oid_t &tile_grou
   return true;
 }
 
-bool SpeculativeOptimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
+bool SpecRowoTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                  const oid_t &tuple_id) {
   auto tile_group_header = 
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -129,7 +129,7 @@ bool SpeculativeOptimisticTransactionManager::PerformInsert(const oid_t &tile_gr
   return true;
 }
 
-bool SpeculativeOptimisticTransactionManager::PerformUpdate(
+bool SpecRowoTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
@@ -163,7 +163,7 @@ bool SpeculativeOptimisticTransactionManager::PerformUpdate(
   return true;
 }
 
-bool SpeculativeOptimisticTransactionManager::PerformDelete(
+bool SpecRowoTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
@@ -198,7 +198,7 @@ bool SpeculativeOptimisticTransactionManager::PerformDelete(
   return true;
 }
 
-void SpeculativeOptimisticTransactionManager::SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpecRowoTxnManager::SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -218,7 +218,7 @@ void SpeculativeOptimisticTransactionManager::SetDeleteVisibility(const oid_t &t
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void SpeculativeOptimisticTransactionManager::SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpecRowoTxnManager::SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -239,7 +239,7 @@ void SpeculativeOptimisticTransactionManager::SetUpdateVisibility(const oid_t &t
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void SpeculativeOptimisticTransactionManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -262,7 +262,7 @@ void SpeculativeOptimisticTransactionManager::SetInsertVisibility(const oid_t &t
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-Result SpeculativeOptimisticTransactionManager::CommitTransaction() {
+Result SpecRowoTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -381,7 +381,7 @@ Result SpeculativeOptimisticTransactionManager::CommitTransaction() {
   return ret;
 }
 
-Result SpeculativeOptimisticTransactionManager::AbortTransaction() {
+Result SpecRowoTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
