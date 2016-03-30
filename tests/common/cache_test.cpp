@@ -34,8 +34,7 @@ class CacheTest : public PelotonTest {};
 static void fill(
     std::vector<std::shared_ptr<const planner::AbstractPlan> > &vec, int n) {
   for (int i = 0; i < n; i++) {
-    std::shared_ptr<const planner::AbstractPlan> plan(
-        new MockPlan(), bridge::PlanTransformer::CleanPlan);
+    std::shared_ptr<const planner::AbstractPlan> plan(new MockPlan());
     vec.push_back(std::move(plan));
   }
 }
