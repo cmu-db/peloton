@@ -91,7 +91,7 @@ void RunUpdate();
 std::vector<double> durations;
 
 void RunBackend(oid_t thread_id) {
-  auto txn_count = state.transactions;
+  auto txn_count = state.transaction_count;
   auto update_ratio = state.update_ratio;
 
   UniformGenerator generator;
@@ -144,7 +144,7 @@ void RunWorkload() {
     max_duration = std::max(max_duration, durations[thread_itr]);
   }
 
-  double throughput = (state.transactions * num_threads)/max_duration;
+  double throughput = (state.transaction_count * num_threads)/max_duration;
 
   WriteOutput(throughput);
 }
