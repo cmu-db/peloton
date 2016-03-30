@@ -14,8 +14,8 @@
 
 namespace peloton {
 namespace concurrency {
-ConcurrencyType TransactionManagerFactory::protocol = CONCURRENCY_TYPE_OCC;
-IsolationLevelType TransactionManagerFactory::isolation_level =
+ConcurrencyType TransactionManagerFactory::protocol_ = CONCURRENCY_TYPE_OCC;
+IsolationLevelType TransactionManagerFactory::isolation_level_ =
     ISOLATION_LEVEL_TYPE_FULL;
 }
 }
