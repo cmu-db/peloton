@@ -28,7 +28,7 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  *
  */
-const planner::AbstractPlan *PlanTransformer::TransformUnique(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformUnique(
     const UniquePlanState *unique_plan_state) {
   LOG_INFO("Handle Unique");
 

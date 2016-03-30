@@ -28,15 +28,15 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
     const MergeJoinPlanState *mj_plan_state) {
-  planner::AbstractPlan *result = nullptr;
-  planner::MergeJoinPlan *plan_node = nullptr;
+  std::shared_ptr<planner::AbstractPlan> result;
+  std::shared_ptr<planner::MergeJoinPlan> plan_node;
   PelotonJoinType join_type =
       PlanTransformer::TransformJoinType(mj_plan_state->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", mj_plan_state->jointype);
-    return nullptr;
+    return std::shared_ptr<planner::AbstractPlan>();
   }
 
   LOG_INFO("Handle merge join with join type: %d", join_type);
@@ -73,21 +73,23 @@ const planner::AbstractPlan *PlanTransformer::TransformMergeJoin(
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
     result =
-        new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::MergeJoinPlan(join_type, predicate, nullptr,
-                                           project_schema, join_clauses);
-    result->AddChild(plan_node);
+        std::make_shared<planner::ProjectionPlan>(
+            project_info.release(), project_schema);
+    plan_node = std::make_shared<planner::MergeJoinPlan>(
+        join_type, predicate, nullptr, project_schema, join_clauses);
+    result.get()->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
     plan_node =
-        new planner::MergeJoinPlan(join_type, predicate, project_info.release(),
-                                   project_schema, join_clauses);
+        std::make_shared<planner::MergeJoinPlan>(
+            join_type, predicate, project_info.release(), project_schema,
+            join_clauses);
     result = plan_node;
   }
 
-  const planner::AbstractPlan *outer =
+  std::shared_ptr<planner::AbstractPlan> outer =
       PlanTransformer::TransformPlan(outerAbstractPlanState(mj_plan_state));
-  const planner::AbstractPlan *inner =
+  std::shared_ptr<planner::AbstractPlan> inner =
       PlanTransformer::TransformPlan(innerAbstractPlanState(mj_plan_state));
 
   /* Add the children nodes */

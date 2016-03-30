@@ -29,11 +29,11 @@ AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
-void AbstractPlan::AddChild(const AbstractPlan *child) {
+void AbstractPlan::AddChild(const std::shared_ptr<AbstractPlan> child) {
   children_.push_back(child);
 }
 
-const std::vector<const AbstractPlan *> &AbstractPlan::GetChildren() const {
+const std::vector<std::shared_ptr<AbstractPlan>> &AbstractPlan::GetChildren() const {
   return children_;
 }
 
@@ -55,8 +55,8 @@ const std::string AbstractPlan::GetInfo() const {
   std::string child_spacer = "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
        ctr++) {
-    os << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
-    os << children_[ctr]->GetInfo();
+    os << child_spacer << children_[ctr].get()->GetPlanNodeType() << "\n";
+    os << children_[ctr].get()->GetInfo();
   }
 
   return os.str();

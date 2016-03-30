@@ -56,7 +56,7 @@ class PlanTransformer {
   std::shared_ptr<const planner::AbstractPlan> TransformPlan(
       AbstractPlanState *planstate, const char *prepStmtName);
 
-  static const planner::AbstractPlan *TransformPlan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformPlan(
       AbstractPlanState *planstate);
 
   // Analyze the plan
@@ -84,21 +84,21 @@ class PlanTransformer {
 
   static const TransformOptions DefaultOptions;
 
-  static const planner::AbstractPlan *TransformPlan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformPlan(
       AbstractPlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
   // MODIFY TABLE FAMILY
   //===--------------------------------------------------------------------===//
 
-  static const planner::AbstractPlan *TransformModifyTable(
+  static const std::shared_ptr<planner::AbstractPlan> TransformModifyTable(
       const ModifyTablePlanState *planstate, const TransformOptions options);
 
-  static const planner::AbstractPlan *TransformInsert(
+  static const std::shared_ptr<planner::AbstractPlan> TransformInsert(
       const ModifyTablePlanState *planstate, const TransformOptions options);
-  static const planner::AbstractPlan *TransformUpdate(
+  static const std::shared_ptr<planner::AbstractPlan> TransformUpdate(
       const ModifyTablePlanState *planstate, const TransformOptions options);
-  static const planner::AbstractPlan *TransformDelete(
+  static const std::shared_ptr<planner::AbstractPlan> TransformDelete(
       const ModifyTablePlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
@@ -117,51 +117,51 @@ class PlanTransformer {
    * will
    * generate a projection plan node and put it on top of the scan node.
    */
-  static const planner::AbstractPlan *TransformSeqScan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformSeqScan(
       const SeqScanPlanState *planstate, const TransformOptions options);
-  static const planner::AbstractPlan *TransformIndexScan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformIndexScan(
       const IndexScanPlanState *planstate, const TransformOptions options);
-  static const planner::AbstractPlan *TransformIndexOnlyScan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformIndexOnlyScan(
       const IndexOnlyScanPlanState *planstate, const TransformOptions options);
-  static const planner::AbstractPlan *TransformBitmapHeapScan(
+  static const std::shared_ptr<planner::AbstractPlan> TransformBitmapHeapScan(
       const BitmapHeapScanPlanState *planstate, const TransformOptions options);
 
   //===--------------------------------------------------------------------===//
   // JOIN FAMILY
   //===--------------------------------------------------------------------===//
 
-  static const planner::AbstractPlan *TransformNestLoop(
+  static const std::shared_ptr<planner::AbstractPlan> TransformNestLoop(
       const NestLoopPlanState *planstate);
 
-  static const planner::AbstractPlan *TransformMergeJoin(
+  static const std::shared_ptr<planner::AbstractPlan> TransformMergeJoin(
       const MergeJoinPlanState *plan_state);
 
-  static const planner::AbstractPlan *TransformHashJoin(
+  static const std::shared_ptr<planner::AbstractPlan> TransformHashJoin(
       const HashJoinPlanState *plan_state);
 
   //===--------------------------------------------------------------------===//
   // OTHERS
   //===--------------------------------------------------------------------===//
 
-  static const planner::AbstractPlan *TransformLockRows(
+  static const std::shared_ptr<planner::AbstractPlan> TransformLockRows(
       const LockRowsPlanState *planstate);
 
-  static const planner::AbstractPlan *TransformUnique(
+  static const std::shared_ptr<planner::AbstractPlan> TransformUnique(
       const UniquePlanState *planstate);
 
-  static const planner::AbstractPlan *TransformMaterialization(
+  static const std::shared_ptr<planner::AbstractPlan> TransformMaterialization(
       const MaterialPlanState *planstate);
 
-  static const planner::AbstractPlan *TransformLimit(
+  static const std::shared_ptr<planner::AbstractPlan> TransformLimit(
       const LimitPlanState *planstate);
 
-  static const planner::AbstractPlan *TransformAgg(
+  static const std::shared_ptr<planner::AbstractPlan> TransformAgg(
       const AggPlanState *plan_state);
 
-  static const planner::AbstractPlan *TransformSort(
+  static const std::shared_ptr<planner::AbstractPlan> TransformSort(
       const SortPlanState *plan_state);
 
-  static const planner::AbstractPlan *TransformHash(
+  static const std::shared_ptr<planner::AbstractPlan> TransformHash(
       const HashPlanState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);

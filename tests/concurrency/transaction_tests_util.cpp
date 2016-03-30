@@ -165,10 +165,11 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
 
   // Scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  std::shared_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
-  delete_node.AddChild(&seq_scan_node);
+  delete_node.AddChild(seq_scan_node);
   delete_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(delete_executor.Init());
@@ -202,10 +203,11 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  std::shared_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
-  update_node.AddChild(&seq_scan_node);
+  update_node.AddChild(seq_scan_node);
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());

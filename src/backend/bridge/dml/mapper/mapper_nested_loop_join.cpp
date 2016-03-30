@@ -26,7 +26,7 @@ namespace bridge {
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
     const NestLoopPlanState *nl_plan_state) {
   PelotonJoinType peloton_join_type =
       PlanTransformer::TransformJoinType(nl_plan_state->jointype);
@@ -62,8 +62,8 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
 
   LOG_INFO("%s", project_info.get()->Debug().c_str());
 
-  planner::AbstractPlan *result = nullptr;
-  planner::NestedLoopJoinPlan *plan_node = nullptr;
+  std::shared_ptr<planner::AbstractPlan> result;
+  std::shared_ptr<planner::NestedLoopJoinPlan> plan_node;
   auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
       nl_plan_state->tts_tupleDescriptor);
 
@@ -71,22 +71,22 @@ const planner::AbstractPlan *PlanTransformer::TransformNestLoop(
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
 
-    result =
-        new planner::ProjectionPlan(project_info.release(), project_schema);
-    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
-                                                nullptr, project_schema, nl);
-    result->AddChild(plan_node);
+    result = std::make_shared<planner::ProjectionPlan>(
+        project_info.release(), project_schema);
+    plan_node = std::make_shared<planner::NestedLoopJoinPlan>(
+        peloton_join_type, predicate, nullptr, project_schema, nl);
+    result.get()->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::NestedLoopJoinPlan(peloton_join_type, predicate,
-                                                project_info.release(),
-                                                project_schema, nl);
+    plan_node = std::make_shared<planner::NestedLoopJoinPlan>(
+        peloton_join_type, predicate, project_info.release(),
+        project_schema, nl);
     result = plan_node;
   }
 
-  const planner::AbstractPlan *outer =
+  const std::shared_ptr<planner::AbstractPlan> outer =
       PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state));
-  const planner::AbstractPlan *inner =
+  const std::shared_ptr<planner::AbstractPlan> inner =
       PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state));
 
   /* Add the children nodes */

@@ -30,7 +30,7 @@ namespace bridge {
  *
  * Basically, it multiplexes into helper methods based on operation type.
  */
-const planner::AbstractPlan *PlanTransformer::TransformModifyTable(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformModifyTable(
     const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   auto operation = mt_plan_state->operation;
 
@@ -62,10 +62,9 @@ const planner::AbstractPlan *PlanTransformer::TransformModifyTable(
  * @brief Convert ModifyTableState Insert case into AbstractPlan.
  * @return Pointer to the constructed AbstractPlan.
  */
-const planner::AbstractPlan *PlanTransformer::TransformInsert(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformInsert(
     const ModifyTablePlanState *mt_plan_state,
     __attribute__((unused)) const TransformOptions options) {
-  planner::AbstractPlan *plan_node = nullptr;
 
   Oid database_oid = mt_plan_state->database_oid;
   Oid table_oid = mt_plan_state->table_oid;
@@ -88,12 +87,13 @@ const planner::AbstractPlan *PlanTransformer::TransformInsert(
 
   auto project_info = BuildProjectInfo(result_planstate->proj);
 
-  plan_node = new planner::InsertPlan(target_table, project_info);
+  std::shared_ptr<planner::AbstractPlan> plan_node(
+      new planner::InsertPlan(target_table, project_info));
 
   return plan_node;
 }
 
-const planner::AbstractPlan *PlanTransformer::TransformUpdate(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformUpdate(
     const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
@@ -128,8 +128,8 @@ const planner::AbstractPlan *PlanTransformer::TransformUpdate(
 
   auto project_info = BuildProjectInfo(sub_planstate->proj);
 
-  planner::AbstractPlan *plan_node = nullptr;
-  plan_node = new planner::UpdatePlan(target_table, project_info);
+  std::shared_ptr<planner::AbstractPlan> plan_node(
+      new planner::UpdatePlan(target_table, project_info));
 
   TransformOptions new_options = options;
   new_options.use_projInfo = false;
@@ -149,7 +149,7 @@ const planner::AbstractPlan *PlanTransformer::TransformUpdate(
  * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
-const planner::AbstractPlan *PlanTransformer::TransformDelete(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformDelete(
     const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   // Grab Database ID and Table ID
 
@@ -171,7 +171,8 @@ const planner::AbstractPlan *PlanTransformer::TransformDelete(
 
   // Create the peloton plan node
   bool truncate = false;
-  auto plan_node = new planner::DeletePlan(target_table, truncate);
+  std::shared_ptr<planner::AbstractPlan> plan_node(
+      new planner::DeletePlan(target_table, truncate));
 
   // Add child plan node(s)
   TransformOptions new_options = options;
@@ -180,7 +181,7 @@ const planner::AbstractPlan *PlanTransformer::TransformDelete(
   auto sub_planstate = mt_plan_state->mt_plans[0];
   auto child_plan_node = TransformPlan(sub_planstate, new_options);
 
-  plan_node->AddChild(child_plan_node);
+  plan_node.get()->AddChild(child_plan_node);
 
   return plan_node;
 }

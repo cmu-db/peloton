@@ -553,7 +553,7 @@ void PlanTransformer::GetColumnsAccessed(const planner::AbstractPlan *plan,
   // Recurse through children
   auto children = plan->GetChildren();
   for (auto child : children)
-    GetColumnsAccessed(child, target_list, qual, database_oid, table_oid);
+    GetColumnsAccessed(child.get(), target_list, qual, database_oid, table_oid);
 }
 
 }  // namespace bridge
