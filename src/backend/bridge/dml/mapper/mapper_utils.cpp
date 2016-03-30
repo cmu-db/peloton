@@ -104,8 +104,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
         "Non-trivial projections are found. Projection node will be "
         "created. ");
 
-    auto project_schema =
-        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor);
+    std::shared_ptr<catalog::Schema> project_schema(
+        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor));
 
     auto column_ids =
         BuildColumnListFromTargetList(project_info->GetTargetList());

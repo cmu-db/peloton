@@ -537,7 +537,8 @@ void RunArithmeticTest() {
   std::vector<catalog::Column> columns;
   auto orig_schema = hyadapt_table->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
-  auto projection_schema = new catalog::Schema(columns);
+  std::shared_ptr<catalog::Schema> projection_schema(
+      new catalog::Schema(columns));
 
   // target list
   expression::AbstractExpression *sum_expr = nullptr;

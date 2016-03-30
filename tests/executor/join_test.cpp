@@ -59,11 +59,12 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   return join_clauses;
 }
 
-peloton::catalog::Schema *CreateJoinSchema() {
-  return new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                              ExecutorTestsUtil::GetColumnInfo(1),
-                              ExecutorTestsUtil::GetColumnInfo(0),
-                              ExecutorTestsUtil::GetColumnInfo(0)});
+std::shared_ptr<peloton::catalog::Schema> CreateJoinSchema() {
+  return std::shared_ptr<peloton::catalog::Schema>(
+      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(0),
+                           ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 std::vector<PlanNodeType> join_algorithms = {
@@ -360,7 +361,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   oid_t tuples_with_null = 0;
   auto projection = JoinTestsUtil::CreateProjection();
   // setup the projection schema
-  catalog::Schema *schema = CreateJoinSchema();
+  auto schema = CreateJoinSchema();
 
   // Construct predicate
   expression::AbstractExpression *predicate =
