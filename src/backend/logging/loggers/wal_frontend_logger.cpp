@@ -200,7 +200,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       // If that is not possible, then wrap up recovery
       auto record_type =
           this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
-      cid_t commit_id;
+      cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
@@ -261,10 +261,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
       if (!reached_end_of_file) {
         switch (record_type) {
           case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+            assert(commit_id != INVALID_CID);
             StartTransactionRecovery(commit_id);
             break;
 
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+            assert(commit_id != INVALID_CID);
             CommitTransactionRecovery(commit_id);
             break;
 
@@ -900,7 +902,7 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
   }
 }
 
-void WriteAheadFrontendLogger::SetLogDirectory(char *arg) {
+void WriteAheadFrontendLogger::SetLogDirectory(char *arg __attribute__((unused))) {
   LOG_INFO("%s", arg);
 }
 
