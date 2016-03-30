@@ -26,7 +26,7 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  *
  */
-const planner::AbstractPlan *PlanTransformer::TransformResult(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformResult(
     const ResultPlanState *result_state) {
   LOG_INFO("Handle Result");
 

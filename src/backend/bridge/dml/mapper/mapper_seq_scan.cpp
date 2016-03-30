@@ -27,7 +27,7 @@ namespace bridge {
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
-const planner::AbstractPlan *PlanTransformer::TransformSeqScan(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformSeqScan(
     const SeqScanPlanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
@@ -59,17 +59,17 @@ const planner::AbstractPlan *PlanTransformer::TransformSeqScan(
   }
 
   /* Construct and return the Peloton plan node */
-  auto scan_node =
-      new planner::SeqScanPlan(target_table, predicate, column_ids);
+  std::shared_ptr<planner::SeqScanPlan> scan_node(
+      new planner::SeqScanPlan(target_table, predicate, column_ids));
 
-  planner::AbstractPlan *rv = nullptr;
+  std::shared_ptr<planner::AbstractPlan> rv;
 
   /* Check whether a parent is presented, connect with the scan node if yes */
   if (parent) {
     parent->AddChild(scan_node);
-    rv = parent;
+    rv = std::shared_ptr<planner::AbstractPlan>(parent);
   } else {
-    rv = scan_node;
+    rv = std::shared_ptr<planner::AbstractPlan>(scan_node);
   }
 
   return rv;
