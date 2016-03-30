@@ -30,7 +30,7 @@ enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
   // Based on write ahead logging
-  LOGGING_TYPE_DRAM_NVM = 10,
+  LOGGING_TYPE_DRAM_NVM = 1,
   LOGGING_TYPE_DRAM_SSD = 11,
   LOGGING_TYPE_DRAM_HDD = 12,
 
@@ -48,6 +48,10 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 42,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL  = 1,
+};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -682,6 +686,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
+
+static const int INVALID_FILE_DESCRIPTOR = -1;
 
 // ------------------------------------------------------------------
 // Tuple serialization formats

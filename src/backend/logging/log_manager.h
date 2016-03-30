@@ -20,6 +20,7 @@
 
 #include "backend_logger.h"
 #include "frontend_logger.h"
+#include "backend/concurrency/transaction.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -107,6 +108,16 @@ class LogManager {
   //===--------------------------------------------------------------------===//
 
   FrontendLogger *GetFrontendLogger();
+
+  void LogBeginTransaction(oid_t commit_id);
+
+  void LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version);
+
+  void LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location);
+
+  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
+
+  void LogCommitTransaction(oid_t commit_id);
 
  private:
   LogManager();

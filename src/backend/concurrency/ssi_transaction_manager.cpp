@@ -13,12 +13,16 @@
 #include "optimistic_transaction_manager.h"
 
 #include "backend/common/platform.h"
+#include "backend/logging/log_record.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace concurrency {
@@ -140,6 +144,7 @@ bool SsiTransactionManager::PerformDelete(const oid_t &tile_group_id,
   return true;
 }
 
+
 void SsiTransactionManager::SetDeleteVisibility(const oid_t &tile_group_id,
                                                 const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
@@ -222,12 +227,16 @@ Result SsiTransactionManager::CommitTransaction() {
   //////////////////////////////////////////////////////////
 
   auto written_tuples = current_txn->GetWrittenTuples();
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.LogBeginTransaction(end_commit_id);
   // install all updates.
   for (auto entry : written_tuples) {
     oid_t tile_group_id = entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
+      // log new tuple first
+
       // we must guarantee that, at any time point, only one version is visible.
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
       ItemPointer new_version =
@@ -246,18 +255,6 @@ Result SsiTransactionManager::CommitTransaction() {
       tile_group_header->UnlockTupleSlot(tuple_slot,
                                          current_txn->GetTransactionId());
 
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-      //       target_table_->GetOid(), location, old_location, new_tuple);
-
-      //     logger->Log(record);
-      //   }
-      // }
     }
   }
 
@@ -268,6 +265,8 @@ Result SsiTransactionManager::CommitTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
+      ItemPointer insert_location(tile_group_id, tuple_slot);
+      log_manager.LogInsert(current_txn, end_commit_id, insert_location);
       // set the begin commit id to persist insert
       if (tile_group_header->UnlockTupleSlot(tuple_slot,
                                              current_txn->GetTransactionId())) {
@@ -276,18 +275,6 @@ Result SsiTransactionManager::CommitTransaction() {
       // tile_group->CommitInsertedTuple(
       //    tuple_slot, current_txn->GetTransactionId(), end_commit_id);
     }
-    // Logging
-    // {
-    //   auto &log_manager = logging::LogManager::GetInstance();
-    //   if (log_manager.IsInLoggingMode()) {
-    //     auto logger = log_manager.GetBackendLogger();
-    //     auto record = logger->GetTupleRecord(
-    //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-    //       target_table_->GetOid(), location, old_location, new_tuple);
-
-    //     logger->Log(record);
-    //   }
-    // }
   }
 
   // commit delete set.
@@ -297,6 +284,8 @@ Result SsiTransactionManager::CommitTransaction() {
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
     for (auto tuple_slot : entry.second) {
+      ItemPointer delete_location(tile_group_id, tuple_slot);
+      log_manager.LogDelete(end_commit_id, delete_location);
       // we must guarantee that, at any time point, only one version is visible.
 
       tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
@@ -315,21 +304,9 @@ Result SsiTransactionManager::CommitTransaction() {
                                               INVALID_TXN_ID);
       tile_group_header->UnlockTupleSlot(tuple_slot,
                                          current_txn->GetTransactionId());
-
-      // Logging
-      // {
-      //   auto &log_manager = logging::LogManager::GetInstance();
-      //   if (log_manager.IsInLoggingMode()) {
-      //     auto logger = log_manager.GetBackendLogger();
-      //     auto record = logger->GetTupleRecord(
-      //       LOGRECORD_TYPE_TUPLE_UPDATE, transaction_->GetTransactionId(),
-      //       target_table_->GetOid(), location, old_location, new_tuple);
-
-      //     logger->Log(record);
-      //   }
-      // }
     }
   }
+  log_manager.LogCommitTransaction(end_commit_id);
   Result ret = current_txn->GetResult();
   delete current_txn;
   current_txn = nullptr;
