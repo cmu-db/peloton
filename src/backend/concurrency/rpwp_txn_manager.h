@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// pessimistic_transaction_manager.h
+// rpwp_txn_manager.h
 //
-// Identification: src/backend/concurrency/pessimistic_transaction_manager.h
+// Identification: src/backend/concurrency/rpwp_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -20,16 +20,16 @@ namespace concurrency {
 extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
     released_rdlock;
 
-class PessimisticTransactionManager : public TransactionManager {
+class RpwpTxnManager : public TransactionManager {
  public:
-  PessimisticTransactionManager() {
+  RpwpTxnManager() {
     released_rdlock =
         std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>();
   }
 
-  virtual ~PessimisticTransactionManager() {}
+  virtual ~RpwpTxnManager() {}
 
-  static PessimisticTransactionManager &GetInstance();
+  static RpwpTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,

@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/speculative_optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/spec_rowo_txn_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class SpeculativeOptimisticTransactionManager : public TransactionManager {
+class SpecRowoTxnManager : public TransactionManager {
  public:
-  SpeculativeOptimisticTransactionManager() {}
+  SpecRowoTxnManager() {}
 
-  virtual ~SpeculativeOptimisticTransactionManager() {}
+  virtual ~SpecRowoTxnManager() {}
 
-  static SpeculativeOptimisticTransactionManager &GetInstance();
+  static SpecRowoTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
@@ -58,7 +58,7 @@ class SpeculativeOptimisticTransactionManager : public TransactionManager {
                                    const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    Transaction * txn = TransactionManager::BeginTransaction();
+    Transaction *txn = TransactionManager::BeginTransaction();
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
       assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());

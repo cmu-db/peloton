@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// optimistic_transaction_manager.cpp
+// rowo_txn_manager.cpp
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.cpp
+// Identification: src/backend/concurrency/rowo_txn_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimistic_transaction_manager.h"
+#include "rowo_txn_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -23,13 +23,13 @@
 namespace peloton {
 namespace concurrency {
 
-OptimisticTransactionManager &OptimisticTransactionManager::GetInstance() {
-  static OptimisticTransactionManager txn_manager;
+RowoTxnManager &RowoTxnManager::GetInstance() {
+  static RowoTxnManager txn_manager;
   return txn_manager;
 }
 
 // Visibility check
-bool OptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
+bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
                                              const cid_t &tuple_begin_cid,
                                              const cid_t &tuple_end_cid) {
   if (tuple_txn_id == INVALID_TXN_ID) {
@@ -76,7 +76,7 @@ bool OptimisticTransactionManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-bool OptimisticTransactionManager::IsOwner(storage::TileGroup *tile_group,
+bool RowoTxnManager::IsOwner(storage::TileGroup *tile_group,
                                            const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
@@ -84,7 +84,7 @@ bool OptimisticTransactionManager::IsOwner(storage::TileGroup *tile_group,
 
 // if the tuple is not owned by any transaction and is visible to current
 // transdaction.
-bool OptimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
+bool RowoTxnManager::IsAccessable(storage::TileGroup *tile_group,
                                                 const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -92,7 +92,7 @@ bool OptimisticTransactionManager::IsAccessable(storage::TileGroup *tile_group,
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool OptimisticTransactionManager::AcquireTuple(
+bool RowoTxnManager::AcquireTuple(
     storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto txn_id = current_txn->GetTransactionId();
@@ -105,13 +105,13 @@ bool OptimisticTransactionManager::AcquireTuple(
   return true;
 }
 
-bool OptimisticTransactionManager::PerformRead(const oid_t &tile_group_id,
+bool RowoTxnManager::PerformRead(const oid_t &tile_group_id,
                                                const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
 }
 
-bool OptimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
+bool RowoTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                  const oid_t &tuple_id) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -125,7 +125,7 @@ bool OptimisticTransactionManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
-bool OptimisticTransactionManager::PerformUpdate(
+bool RowoTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto tile_group_header =
@@ -144,7 +144,7 @@ bool OptimisticTransactionManager::PerformUpdate(
   return true;
 }
 
-bool OptimisticTransactionManager::PerformDelete(
+bool RowoTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto tile_group_header =
@@ -164,7 +164,7 @@ bool OptimisticTransactionManager::PerformDelete(
   return true;
 }
 
-void OptimisticTransactionManager::SetDeleteVisibility(
+void RowoTxnManager::SetDeleteVisibility(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -178,7 +178,7 @@ void OptimisticTransactionManager::SetDeleteVisibility(
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void OptimisticTransactionManager::SetUpdateVisibility(
+void RowoTxnManager::SetUpdateVisibility(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -193,7 +193,7 @@ void OptimisticTransactionManager::SetUpdateVisibility(
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void OptimisticTransactionManager::SetInsertVisibility(
+void RowoTxnManager::SetInsertVisibility(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -212,7 +212,7 @@ void OptimisticTransactionManager::SetInsertVisibility(
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-Result OptimisticTransactionManager::CommitTransaction() {
+Result RowoTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -326,7 +326,7 @@ Result OptimisticTransactionManager::CommitTransaction() {
   return ret;
 }
 
-Result OptimisticTransactionManager::AbortTransaction() {
+Result RowoTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 

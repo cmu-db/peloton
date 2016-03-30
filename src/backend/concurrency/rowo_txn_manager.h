@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// optimistic_transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/rowo_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class OptimisticTransactionManager : public TransactionManager {
+class RowoTxnManager : public TransactionManager {
  public:
-  OptimisticTransactionManager() {}
+  RowoTxnManager() {}
 
-  virtual ~OptimisticTransactionManager() {}
+  virtual ~RowoTxnManager() {}
 
-  static OptimisticTransactionManager &GetInstance();
+  static RowoTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
