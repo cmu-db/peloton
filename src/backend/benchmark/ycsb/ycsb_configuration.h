@@ -59,6 +59,8 @@ void ValidateColumnCount(const configuration &state);
 
 void ValidateUpdateRatio(const configuration &state);
 
+void ValidateBackendCount(const configuration &state);
+
 void ParseArguments(int argc, char *argv[], configuration &state);
 
 }  // namespace ycsb
