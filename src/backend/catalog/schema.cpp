@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // schema.cpp
 //
 // Identification: src/backend/catalog/schema.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -181,8 +181,7 @@ const std::string Schema::GetInfo() const {
      << " column_count = " << column_count
      << " is_inlined = " << tuple_is_inlined << ","
      << " length = " << length << ","
-     << " uninlined_column_count = " << uninlined_column_count
-     << std::endl;
+     << " uninlined_column_count = " << uninlined_column_count << std::endl;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     os << "\t Column " << column_itr << " :: " << columns[column_itr];

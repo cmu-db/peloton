@@ -4,16 +4,17 @@ drop table if exists VACATION;
 create table VACATION (
 	k integer primary key,
 	destination varchar(30),
-	arrival timestamp
+	arrival timestamp,
+  departure date
 );
 
-insert into VACATION values (1, 'Fort Meyers', '2013-02-16 20:38:40');
-insert into VACATION values (2, 'Tokyo','2013-04-01 13:24:06');
-insert into VACATION values (3, 'Seoul', '2014-03-26 05:30:01');
-insert into VACATION values (4, 'Chengdu', '2014-07-20 08:10:10');
-insert into VACATION values (5, 'Taipei', '2015-03-20 07:52:19');
-insert into VACATION values (6, 'Hakushu distillery', '2015-06-07 08:00:00');
-insert into VACATION values (7, 'Aso-san', '2015-07-12 18:30:00');
+insert into VACATION values (1, 'Fort Meyers', '2013-02-16 20:38:40', '2013-02-18');
+insert into VACATION values (2, 'Tokyo','2013-04-01 13:24:06', '2013-04-18');
+insert into VACATION values (3, 'Seoul', '2014-03-26 05:30:01', '2014-03-29');
+insert into VACATION values (4, 'Chengdu', '2014-07-20 08:10:10', '2014-08-20');
+insert into VACATION values (5, 'Taipei', '2015-03-20 07:52:19', '2015-04-01');
+insert into VACATION values (6, 'Hakushu distillery', '2015-06-07 08:00:00', '2015-12-01');
+insert into VACATION values (7, 'Aso-san', '2015-07-12 18:30:00', '2015-11-12');
 
 select * from VACATION;
 select extract(year from arrival) from vacation;
@@ -38,3 +39,9 @@ select extract(woy from arrival) from vacation;
 select date_part('woy', arrival) from vacation;
 select extract(quarter from arrival) from vacation;
 select date_part('quarter', arrival) from vacation;
+
+select * from VACATION where departure < '2013-04-18';
+select * from VACATION where departure <= '2013-04-18';
+select * from VACATION where departure > '2014-03-29';
+select * from VACATION where departure >= '2014-03-29';
+select * from VACATION where departure = '2015-04-01';

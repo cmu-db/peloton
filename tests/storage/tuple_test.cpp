@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tuple_test.cpp
 //
 // Identification: tests/storage/tuple_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -57,7 +57,7 @@ TEST_F(TupleTests, BasicTest) {
 
   EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
 
-  std::cout << (*tuple);
+  LOG_INFO("%s", tuple->GetInfo().c_str());
 
   delete tuple;
   delete schema;
@@ -92,7 +92,7 @@ TEST_F(TupleTests, VarcharTest) {
   tuple->SetValue(3, val, pool);
   EXPECT_EQ(tuple->GetValue(3), val);
 
-  std::cout << (*tuple);
+  LOG_INFO("%s", tuple->GetInfo().c_str());
 
   Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
   tuple->SetValue(3, val2, pool);
@@ -100,7 +100,7 @@ TEST_F(TupleTests, VarcharTest) {
   EXPECT_NE(tuple->GetValue(3), val);
   EXPECT_EQ(tuple->GetValue(3), val2);
 
-  std::cout << (*tuple);
+  LOG_INFO("%s", tuple->GetInfo().c_str());
 
   delete tuple;
   delete schema;

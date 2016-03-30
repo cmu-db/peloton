@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// subquery_expression.h
+// subquery_expression.cpp
 //
-// Identification: src/backend/expression/subquery_expression.h
+// Identification: src/backend/expression/subquery_expression.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,27 +27,15 @@ namespace expression {
 SubqueryExpression::SubqueryExpression(
     ExpressionType subqueryType, int subqueryId,
     const std::vector<int> &paramIdxs, const std::vector<int> &otherParamIdxs,
-    const std::vector<AbstractExpression *> *tveParams)
+    __attribute__((unused)) const std::vector<AbstractExpression *>& tveParams)
     : AbstractExpression(subqueryType),
       m_subqueryId(subqueryId),
       m_paramIdxs(paramIdxs),
-      m_otherParamIdxs(otherParamIdxs),
-      m_tveParams(tveParams) {
+      m_otherParamIdxs(otherParamIdxs){
   LOG_TRACE("SubqueryExpression %d", subqueryId);
-  assert(
-      (m_tveParams.get() == NULL && m_paramIdxs.empty()) ||
-      (m_tveParams.get() != NULL && m_paramIdxs.size() == m_tveParams->size()));
 }
 
 SubqueryExpression::~SubqueryExpression() {
-  if (m_tveParams.get() != NULL) {
-    // When we support C++11, we should store unique_ptrs
-    // in this vector so cleanup happens automatically.
-    size_t i = m_tveParams->size();
-    while (i--) {
-      delete (*m_tveParams)[i];
-    }
-  }
 }
 
 Value SubqueryExpression::Evaluate(

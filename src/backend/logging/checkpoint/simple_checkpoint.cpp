@@ -73,6 +73,11 @@ SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
   return simple_checkpoint;
 }
 
+SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
+  InitDirectory();
+  InitVersionNumber();
+}
+
 void SimpleCheckpoint::Init() {
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
     return;
@@ -93,7 +98,7 @@ void SimpleCheckpoint::DoCheckpoint() {
     // build executor context
     std::unique_ptr<concurrency::Transaction> txn(
         txn_manager.BeginTransaction());
-    start_commit_id = txn->GetStartCommitId();
+    start_commit_id = txn->GetBeginCommitId();
     assert(txn);
     assert(txn.get());
     LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
@@ -171,7 +176,7 @@ bool SimpleCheckpoint::DoRecovery() {
   if (checkpoint_version < 0) {
     return false;
   }
-  std::string file_name = ConcatFileName(checkpoint_version);
+  std::string file_name = ConcatFileName(checkpoint_dir, checkpoint_version);
   checkpoint_file_ = fopen(file_name.c_str(), "rb");
 
   if (checkpoint_file_ == NULL) {
@@ -354,7 +359,7 @@ std::vector<LogRecord *> SimpleCheckpoint::GetRecords() { return records_; }
 
 void SimpleCheckpoint::CreateFile() {
   // open checkpoint file and file descriptor
-  std::string file_name = ConcatFileName(++checkpoint_version);
+  std::string file_name = ConcatFileName(checkpoint_dir, ++checkpoint_version);
   checkpoint_file_ = fopen(file_name.c_str(), "ab+");
   if (checkpoint_file_ == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
@@ -404,10 +409,14 @@ void SimpleCheckpoint::Cleanup() {
   records_.clear();
 
   // Remove previous version
-  auto previous_version = ConcatFileName(checkpoint_version - 1).c_str();
-  if (remove(previous_version) != 0) {
-    LOG_INFO("Failed to remove file %s", previous_version);
+  if (checkpoint_version > 0) {
+    auto previous_version =
+        ConcatFileName(checkpoint_dir, checkpoint_version - 1).c_str();
+    if (remove(previous_version) != 0) {
+      LOG_INFO("Failed to remove file %s", previous_version);
+    }
   }
+
   // Truncate logs
   auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
   assert(frontend_logger);
@@ -420,8 +429,7 @@ void SimpleCheckpoint::InitVersionNumber() {
   LOG_INFO("Trying to read checkpoint directory");
   struct dirent **list;
 
-  // TODO create sub-directory for checkpoint
-  int num_file = scandir(".", &list, 0, alphasort);
+  int num_file = scandir(checkpoint_dir.c_str(), &list, 0, alphasort);
   if (num_file < 0) {
     LOG_INFO("scandir failed: Errno: %d, error: %s", errno, strerror(errno));
     return;
@@ -437,7 +445,9 @@ void SimpleCheckpoint::InitVersionNumber() {
         checkpoint_version = version;
       }
     }
+    free(list[i]);
   }
+  free(list);
   LOG_INFO("set checkpoint version to: %d", checkpoint_version);
 }
 

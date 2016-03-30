@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// string_functions.h
+// date_expression.h
 //
-// Identification: src/backend/expression/string_functions.h
+// Identification: src/backend/expression/date_expression.h
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -175,5 +175,30 @@ const std::string ExtractExpression::QUARTER_STR = "quarter";
 const std::string ExtractExpression::HOUR_STR = "hour";
 const std::string ExtractExpression::MINUTE_STR = "minute";
 const std::string ExtractExpression::SECOND_STR = "second";
-}
-}
+
+//===--------------------------------------------------------------------===//
+// An expression that converts a DATE type to a TIMESTAMP type
+//===--------------------------------------------------------------------===//
+class DateToTimestampExpression : public AbstractExpression {
+ public:
+  DateToTimestampExpression(AbstractExpression *date_expr)
+      : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, date_expr,
+                           nullptr) {
+    assert(GetLeft() != nullptr);
+    assert(GetRight() == nullptr);
+  }
+
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const {
+    Value date = GetLeft()->Evaluate(tuple1, tuple2, context);
+    assert(date.GetValueType() == VALUE_TYPE_DATE);
+    return date.CallUnary<FUNC_TO_TIMESTAMP_DAY>();
+  }
+
+  std::string DebugInfo(const std::string &spacer) const {
+    return (spacer + "DateToTimestampExpression");
+  }
+};
+
+}  // namespace expression
+}  // namespace peloton

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // hash_set_op_test.cpp
 //
 // Identification: tests/executor/hash_set_op_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -90,14 +90,12 @@ TEST_F(HashSetOptTests, ExceptTest) {
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
                                    false, false);
 
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -108,12 +106,12 @@ TEST_F(HashSetOptTests, ExceptTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
+                                                  txn_id));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -165,23 +163,19 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn,
-                                   data_table1.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn,
-                                   data_table2.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table3(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn,
-                                   data_table3.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table3.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table4(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn,
-                                   data_table4.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table4.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -189,20 +183,20 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table3->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table4->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0),
+                                                  txn_id));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -256,13 +250,11 @@ TEST_F(HashSetOptTests, IntersectTest) {
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -273,12 +265,12 @@ TEST_F(HashSetOptTests, IntersectTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
+                                                  txn_id));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -330,23 +322,19 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table3(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table3.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table3.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table4(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table4.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table4.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -354,20 +342,20 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table1->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table2->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table3->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0),
+                                                  txn_id));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(
-          data_table4->GetTileGroup(0), txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0),
+                                                  txn_id));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);

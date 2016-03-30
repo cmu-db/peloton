@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile.cpp
 //
 // Identification: src/backend/storage/tile.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -215,13 +215,7 @@ const std::string Tile::GetInfo() const {
   os << "\tTILE\n";
   os << "\tCatalog ::"
      << " DB: " << database_id << " Table: " << table_id
-     << " Tile Group:  " << tile_group_id << " Tile:  " << tile_id
-     << "\n";
-
-  // Columns
-  // os << "\t-----------------------------------------------------------\n";
-  // os << "\tSCHEMA\n";
-  // os << (*schema);
+     << " Tile Group:  " << tile_group_id << " Tile:  " << tile_id << "\n";
 
   // Tuples
   os << "\t-----------------------------------------------------------\n";
