@@ -712,8 +712,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   struct dirent *file;
   DIR *dirp;
   // TODO need a better regular expression to match file name
-  std::string base_name =
-      std::string(peloton_log_directory) + "/" + "peloton_log_";
+  std::string base_name = "peloton_log_";
 
   LOG_INFO("Trying to read log directory");
 
@@ -843,7 +842,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   // open the next file
   this->log_file = fopen(
-      this->log_files_[this->log_file_cursor_]->GetLogFileName().c_str(), "rb");
+      (std::string(peloton_log_directory) +std::string("/") +this->log_files_[this->log_file_cursor_]->GetLogFileName()).c_str(), "rb");
 
   if (this->log_file == NULL) {
     LOG_ERROR("Couldn't open next log file");
