@@ -4,7 +4,7 @@
 //
 // rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/rowo_txn_manager.h
+// Identification: src/backend/concurrency/to_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,15 +18,17 @@
 namespace peloton {
 namespace concurrency {
 
-class RowoTxnManager : public TransactionManager {
+class ToTxnManager : public TransactionManager {
  public:
-  RowoTxnManager() {}
+  ToTxnManager() {}
 
-  virtual ~RowoTxnManager() {}
+  virtual ~ToTxnManager() {}
 
-  static RowoTxnManager &GetInstance();
+  static ToTxnManager &GetInstance();
 
-  virtual bool IsVisible(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
+                         const cid_t &tuple_begin_cid,
+                         const cid_t &tuple_end_cid);
 
   virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
 
