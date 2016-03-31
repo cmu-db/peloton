@@ -40,7 +40,7 @@ namespace storage {
  *
  * 	-----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) |
+ *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  * 	-----------------------------------------------------------------------------
  *
@@ -132,6 +132,11 @@ class TileGroupHeader : public Printable {
 
   inline ItemPointer GetNextItemPointer(const oid_t &tuple_slot_id) const {
     return *((ItemPointer *)(TUPLE_HEADER_LOCATION + pointer_offset));
+  }
+
+  // constraint: at most 24 bytes.
+  inline char* GetReservedFieldRef(const oid_t &tuple_slot_id) const {
+    return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
   }
 
   inline bool GetInsertCommit(const oid_t &tuple_slot_id) const {
@@ -258,27 +263,6 @@ class TileGroupHeader : public Printable {
     }
   }
 
-  /**
-   * This is called after latching
-   */
-  // bool IsDeletable(const oid_t tuple_slot_id,
-  //                  __attribute__((unused)) txn_id_t txn_id,
-  //                  __attribute__((unused)) cid_t at_lcid) {
-  //   cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
-
-  //   bool deletable = tuple_end_cid == MAX_CID;
-
-  //   LOG_INFO(
-  //       "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu,
-  //       "
-  //       "%lu), deletable = %d",
-  //       this, tuple_slot_id, GetTransactionId(tuple_slot_id),
-  //       GetBeginCommitId(tuple_slot_id), tuple_end_cid, txn_id, at_lcid,
-  //       deletable);
-
-  //   return deletable;
-  // }
-
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Sync the contents
@@ -291,23 +275,24 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
- //*  -----------------------------------------------------------------------------
- //*  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- //*  | NextItemPointer (16 bytes) |
- //*  | InsertCommit (1 byte) | DeleteCommit (1 byte) 
- //*  -----------------------------------------------------------------------------
+ // *  -----------------------------------------------------------------------------
+ // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
+ // *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
+ // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
+ // *  -----------------------------------------------------------------------------
 
  private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          sizeof(ItemPointer) +
+                                          sizeof(ItemPointer) + 24 +
                                           2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
   static const size_t pointer_offset = end_cid_offset + sizeof(cid_t);
+  static const size_t reserved_field_offset = pointer_offset + sizeof(ItemPointer);
   static const size_t insert_commit_offset =
-      pointer_offset + sizeof(ItemPointer);
+      reserved_field_offset + 24;
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 

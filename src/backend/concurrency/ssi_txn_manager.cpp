@@ -338,7 +338,7 @@ Result SsiTxnManager::CommitTransaction() {
 
   Result ret = current_txn->GetResult();
 
-  EndTransaction();
+  //EndTransaction();
 
   return ret;
 }
@@ -404,7 +404,7 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
-  EndTransaction();
+  //EndTransaction();
   return Result::RESULT_ABORTED;
 }
 
