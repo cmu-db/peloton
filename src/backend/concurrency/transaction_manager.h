@@ -77,6 +77,12 @@ class TransactionManager {
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
+  /*
+   * Write a virtual function to push deleted and verified (acc to optimistic
+   * concurrency control) tuples into possibly free from all underlying
+   * concurrency implementations of transactions.
+   */
+
   void SetTransactionResult(const Result result) {
     current_txn->SetResult(result);
   }
