@@ -306,6 +306,9 @@ Result RowoTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        /*
+         * Call transaction_manager.cpp's AddToPossiblyFreeList(TxnId, tuple_slot);
+         */
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
