@@ -42,13 +42,13 @@ class TransactionManager {
 
   cid_t GetNextCommitId() { return next_cid_++; }
 
-  virtual bool IsVisible(storage::TileGroup *tile_group,
+  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header,
                          const oid_t &tuple_id) = 0;
 
-  virtual bool IsOwner(storage::TileGroup *tile_group,
+  virtual bool IsOwner(const storage::TileGroup * const tile_group,
                        const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group,
+  virtual bool IsAccessable(const storage::TileGroup * const tile_group,
                             const oid_t &tuple_id) = 0;
 
   virtual bool PerformRead(const oid_t &tile_group_id,

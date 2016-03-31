@@ -29,8 +29,8 @@ class TransactionManagerFactory {
         return RpwpTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SPEC:
         return SpecRowoTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_SSI:
-        return SsiTxnManager::GetInstance();
+//      case CONCURRENCY_TYPE_SSI:
+//        return SsiTxnManager::GetInstance();
       default:
         return RowoTxnManager::GetInstance();
     }
