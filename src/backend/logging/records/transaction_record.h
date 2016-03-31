@@ -26,8 +26,8 @@ namespace logging {
 class TransactionRecord : public LogRecord, Printable  {
  public:
   TransactionRecord(LogRecordType log_record_type,
-                    const txn_id_t txn_id = INVALID_TXN_ID)
-      : LogRecord(log_record_type, txn_id) {}
+                    const cid_t cid = INVALID_CID)
+      : LogRecord(log_record_type, cid) {}
 
   ~TransactionRecord() {
     // Clean up the message

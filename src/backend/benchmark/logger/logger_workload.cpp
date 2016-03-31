@@ -254,7 +254,7 @@ void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected) {
 
   oid_t active_tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = table->GetTileGroup(tile_group_itr);
     active_tuple_count += tile_group->GetActiveTupleCount(INVALID_TXN_ID);
   }
@@ -274,7 +274,7 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
   std::chrono::duration<double, std::milli> elapsed_milliseconds;
 
   // Build a pool
-  auto logging_pool = new VarlenPool(BACKEND_TYPE_MM);
+  std::unique_ptr<VarlenPool> logging_pool(new VarlenPool(BACKEND_TYPE_MM));
 
   // Create db
   CreateDatabase(db_oid);
@@ -291,8 +291,26 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
   oid_t per_backend_tuple_count = state.tuple_count / state.backend_count;
 
   // Create Tuples
-  auto tuples =
-      CreateTuples(table->GetSchema(), per_backend_tuple_count, logging_pool);
+  auto schema = table->GetSchema();
+  std::vector<std::unique_ptr<storage::Tuple> > tuples;
+  const bool allocate = true;
+  const size_t string_length = 100;
+  std::string dummy_string('-', string_length);
+
+  for (oid_t tuple_itr = 0; tuple_itr < per_backend_tuple_count; tuple_itr++) {
+    // Build tuple
+    storage::Tuple* tuple = new storage::Tuple(schema, allocate);
+
+    Value user_id_value = ValueFactory::GetIntegerValue(tuple_itr);
+    tuple->SetValue(0, user_id_value, nullptr);
+
+    for (oid_t col_itr = 1; col_itr < state.column_count; col_itr++) {
+      Value field_value = ValueFactory::GetStringValue(dummy_string, logging_pool.get());
+      tuple->SetValue(col_itr, field_value, logging_pool.get());
+    }
+
+    tuples.push_back(std::unique_ptr<storage::Tuple>(tuple));
+  }
 
   //===--------------------------------------------------------------------===//
   // ACTIVE PROCESSING
@@ -306,7 +324,7 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
 
   // Launch a group of threads
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::thread(RunBackends, table, tuples));
+    thread_group.push_back(std::thread(RunBackends, table, std::move(tuples)));
   }
 
   // Join the threads with the main thread
@@ -327,11 +345,6 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
     WriteOutput(log_file_size);
   }
 
-  // Clean up data
-  for (auto tuple : tuples) {
-    delete tuple;
-  }
-
   // Check the tuple count if needed
   if (state.check_tuple_count) {
     oid_t total_expected = 0;
@@ -346,7 +359,7 @@ void BuildLog(oid_t db_oid, oid_t table_oid) {
 }
 
 void RunBackends(storage::DataTable* table,
-                 const std::vector<storage::Tuple*>& tuples) {
+                 const std::vector<std::unique_ptr<storage::Tuple> >& tuples) {
   bool commit = true;
 
   // Insert tuples
@@ -372,15 +385,17 @@ void RunBackends(storage::DataTable* table,
 
 // Do insert and create insert tuple log records
 std::vector<ItemPointer> InsertTuples(
-    storage::DataTable* table, const std::vector<storage::Tuple*>& tuples,
+    storage::DataTable* table,
+    const std::vector<std::unique_ptr<storage::Tuple> >& tuples,
     bool committed) {
   std::vector<ItemPointer> locations;
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  for (auto tuple : tuples) {
+  auto tuple_count = tuples.size();
+  for(oid_t tuple_itr = 0; tuple_itr < tuple_count ; tuple_itr++){
     auto txn = txn_manager.BeginTransaction();
-    ItemPointer location = table->InsertTuple(tuple);
+    ItemPointer location = table->InsertTuple(tuples[tuple_itr].get());
     if (location.block == INVALID_OID) {
       txn->SetResult(Result::RESULT_FAILURE);
       LOG_ERROR("Insert failed");
@@ -399,7 +414,7 @@ std::vector<ItemPointer> InsertTuples(
         auto logger = log_manager.GetBackendLogger();
         auto record = logger->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
-            table->GetOid(), location, INVALID_ITEMPOINTER, tuple,
+            table->GetOid(), location, INVALID_ITEMPOINTER, tuples[tuple_itr].get(),
             LOGGING_TESTS_DATABASE_OID);
         logger->Log(record);
       }
@@ -411,6 +426,7 @@ std::vector<ItemPointer> InsertTuples(
     } else {
       txn_manager.AbortTransaction();
     }
+
   }
 
   return locations;
@@ -425,7 +441,7 @@ void DeleteTuples(storage::DataTable* table __attribute__((unused)),
 std::vector<ItemPointer> UpdateTuples(
     storage::DataTable* table __attribute__((unused)),
     const std::vector<ItemPointer>& deleted_locations __attribute__((unused)),
-    const std::vector<storage::Tuple*>& tuples __attribute__((unused)),
+    const std::vector<std::unique_ptr<storage::Tuple> >& tuples __attribute__((unused)),
     bool committed __attribute__((unused))) {
   // // Inserted locations
   std::vector<ItemPointer> inserted_locations;
@@ -490,32 +506,6 @@ std::vector<catalog::Column> CreateSchema() {
   }
 
   return columns;
-}
-
-std::vector<storage::Tuple*> CreateTuples(catalog::Schema* schema,
-                                          oid_t num_of_tuples,
-                                          VarlenPool* pool) {
-  std::vector<storage::Tuple*> tuples;
-  const bool allocate = true;
-  const size_t string_length = 100;
-  std::string dummy_string('-', string_length);
-
-  for (oid_t tuple_itr = 0; tuple_itr < num_of_tuples; tuple_itr++) {
-    // Build tuple
-    storage::Tuple* tuple = new storage::Tuple(schema, allocate);
-
-    Value user_id_value = ValueFactory::GetIntegerValue(tuple_itr);
-    tuple->SetValue(0, user_id_value, nullptr);
-
-    for (oid_t col_itr = 1; col_itr < state.column_count; col_itr++) {
-      Value field_value = ValueFactory::GetStringValue(dummy_string, pool);
-      tuple->SetValue(col_itr, field_value, pool);
-    }
-
-    tuples.push_back(tuple);
-  }
-
-  return tuples;
 }
 
 void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid) {

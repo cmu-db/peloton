@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// pessimistic_transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/pessimistic_transaction_manager.h
+// Identification: src/backend/concurrency/ssi_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,30 +13,30 @@
 #pragma once
 
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace concurrency {
 
-extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    released_rdlock;
+  struct SsiTxnContext {
+    Transaction *transaction_;
+    bool in_conflict_;
+    bool out_conflict_;
+  };
 
-class PessimisticTransactionManager : public TransactionManager {
+class SsiTxnManager : public TransactionManager {
  public:
-  PessimisticTransactionManager() {
-    released_rdlock =
-        std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>();
-  }
+  SsiTxnManager() {}
 
-  virtual ~PessimisticTransactionManager() {}
+  virtual ~SsiTxnManager() {}
 
-  static PessimisticTransactionManager &GetInstance();
+  static SsiTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
                          const cid_t &tuple_end_cid);
 
-  virtual bool IsOwner(storage::TileGroup *tile_group,
-                       const txn_id_t &tuple_txn_id);
+  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
 
   virtual bool IsAccessable(storage::TileGroup *tile_group,
                             const oid_t &tuple_id);
@@ -63,22 +63,25 @@ class PessimisticTransactionManager : public TransactionManager {
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
+  virtual Transaction *BeginTransaction() {
+    Transaction *txn = TransactionManager::BeginTransaction();
+    {
+      std::lock_guard<std::mutex> lock(running_txns_mutex_);
+      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
+      running_txns_[txn->GetTransactionId()];
+    }
+    return txn;
+  }
+
+  virtual void EndTransaction() {}
+
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
 
- private:
-#define READ_COUNT_MASK 0xFF
-#define TXNID_MASK 0x00FFFFFFFFFFFFFF
-  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
-    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
-  }
-  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
-  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
-    return (txn_id >> 56) & READ_COUNT_MASK;
-  }
-
-  bool ReleaseReadLock(storage::TileGroup *tile_group, const oid_t &tuple_id);
+private:
+  std::mutex running_txns_mutex_;
+  std::map<txn_id_t, std::pair<SsiTxnContext> running_txns_;
 };
 }
 }

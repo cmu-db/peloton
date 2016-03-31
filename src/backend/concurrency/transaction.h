@@ -43,18 +43,25 @@ class Transaction : public Printable {
 
  public:
   Transaction()
-      : txn_id(INVALID_TXN_ID),
-        begin_cid(INVALID_CID),
-        end_cid(INVALID_CID),
-        outer_dep_count(0),
-        cascading_abort(false) {}
+      : txn_id_(INVALID_TXN_ID),
+        begin_cid_(INVALID_CID),
+        end_cid_(INVALID_CID) {}
+        //outer_dep_count_(0),
+        //cascading_abort_(false) {}
+
+  Transaction(const txn_id_t &txn_id)
+      : txn_id_(txn_id),
+        begin_cid_(INVALID_CID),
+        end_cid_(INVALID_CID) {}
+        //outer_dep_count_(0),
+        //cascading_abort_(false) {}
 
   Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
-      : txn_id(txn_id),
-        begin_cid(begin_cid),
-        end_cid(INVALID_CID),
-        outer_dep_count(0),
-        cascading_abort(false) {}
+      : txn_id_(txn_id),
+        begin_cid_(begin_cid),
+        end_cid_(INVALID_CID) {}
+        //outer_dep_count_(0),
+        //cascading_abort_(false) {}
 
   ~Transaction() {}
 
@@ -62,11 +69,11 @@ class Transaction : public Printable {
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
 
-  inline txn_id_t GetTransactionId() const { return txn_id; }
+  inline txn_id_t GetTransactionId() const { return txn_id_; }
 
-  inline cid_t GetBeginCommitId() const { return begin_cid; }
+  inline cid_t GetBeginCommitId() const { return begin_cid_; }
 
-  inline cid_t GetEndCommitId() const { return end_cid; }
+  inline cid_t GetEndCommitId() const { return end_cid_; }
 
   // record read set
   void RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -99,36 +106,51 @@ class Transaction : public Printable {
   // Get result and status
   inline Result GetResult() const { return result_; }
 
+  ///////////////////////////////////////////////////////////
   // other transactions can register dependency on me.
-  inline void RegisterDependency(const txn_id_t &txn_id) {
-    {
-      std::lock_guard<std::mutex> lock(inner_dep_set_mutex);
-      inner_dep_set.insert(txn_id);
-    }
-  }
+  // if A depends on B, then A calls this function when performing read.
+  // inline void RegisterDependency(const txn_id_t &txn_id) {
+  //   {
+  //     std::lock_guard<std::mutex> lock(inner_dep_set_mutex_);
+  //     inner_dep_set_.insert(txn_id);
+  //   }
+  // }
 
-  // other transactions can deregister their dependency.
-  inline void ReleaseDependency(const bool is_abort) {
-    if (is_abort == true) {
-      cascading_abort = true;
-    } else{
-      --outer_dep_count;
-    }
-  }
+  // other transactions can notify their commit or abort.
+  // if A depends on B, then B calls this function before final commitment.
+  // inline void NotifyDependency(const bool is_abort) {
+  //   if (is_abort == true) {
+  //     cascading_abort_ = true;
+  //   } else{
+  //     --outer_dep_count_;
+  //   }
+  // }
+
+  // inline std::unordered_set<txn_id_t> &GetChildTxnIds() const {
+  //   return inner_dep_set_;
+  // }
+
+  /////////////////////////////////////////////////////////////
+  // this function is called by myself.
+  // inline bool CheckDependency(const txn_id_t &txn_id) {
+  //   // if this dependency has not been registered before.
+  //   // if A depends on B and A has already registered its dependency on B,
+  //   // then return false.
+  //   return outer_dep_set_.find(txn_id) == outer_dep_set_.end();
+  // }
 
   // this function is called by myself.
-  inline bool CheckDependency(const txn_id_t &txn_id) {
-    // if this dependency has not been registered before.
-    return outer_dep_set.find(txn_id) == outer_dep_set.end();
-  }
+  // inline void RecordDependency(const txn_id_t &txn_id) {
+  //   // if this dependency has not been registered before.
+  //   assert(outer_dep_set_.find(txn_id) == outer_dep_set_.end());
+  //   outer_dep_set_.insert(txn_id);
+  //   ++outer_dep_count_;
+  // }
 
   // this function is called by myself.
-  inline void RecordDependency(const txn_id_t &txn_id) {
-    // if this dependency has not been registered before.
-    assert(outer_dep_set.find(txn_id) == outer_dep_set.end());
-    outer_dep_set.insert(txn_id);
-    ++outer_dep_count;
-  }
+  // inline bool IsCommittable() {
+  //   return outer_dep_count_ == 0;
+  // }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -136,25 +158,33 @@ class Transaction : public Printable {
   //===--------------------------------------------------------------------===//
 
   // transaction id
-  txn_id_t txn_id;
+  txn_id_t txn_id_;
 
   // start commit id
-  cid_t begin_cid;
+  cid_t begin_cid_;
 
   // end commit id
-  cid_t end_cid;
+  cid_t end_cid_;
 
-  std::map<oid_t, std::map<oid_t, RWType>> rw_set;
-
-  std::mutex inner_dep_set_mutex;
-  std::unordered_set<txn_id_t> inner_dep_set; // transactions that are dependent on me.
-
-  std::unordered_set<txn_id_t> outer_dep_set; // transactions that i am dependent on.
-  std::atomic<size_t> outer_dep_count;
-  std::atomic<bool> cascading_abort;
+  std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
+
+  // //================================
+  // // the following structures are for building transaction dependency graph.
+  // std::mutex inner_dep_set_mutex_;
+
+  // // transactions that are dependent on me.
+  // // other transactions can register their dependencies on me through txn manager.
+  // std::unordered_set<txn_id_t> inner_dep_set_; 
+  
+  // // transactions that i am dependent on.
+  // // this structure is manipulated by myself.
+  // std::unordered_set<txn_id_t> outer_dep_set_; 
+  
+  // std::atomic<size_t> outer_dep_count_;
+  // std::atomic<bool> cascading_abort_;
 };
 
 }  // End concurrency namespace

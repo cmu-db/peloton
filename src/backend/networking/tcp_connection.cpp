@@ -45,11 +45,6 @@ Connection::Connection(int fd, struct event_base *base, void *arg,
   bev_ = bufferevent_socket_new(base_, fd,
                                 BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
 
-  struct total_processed *tp = (total_processed *)malloc(sizeof(*tp));
-  tp->n = 0;
-  /* we can add callback function with output and input evbuffer */
-  // evbuffer_add_cb(bufferevent_get_output(bev_), BufferCb, tp);
-
   // set read callback and event callback
   bufferevent_setcb(bev_, ReadCb, NULL, EventCb, this);
 
