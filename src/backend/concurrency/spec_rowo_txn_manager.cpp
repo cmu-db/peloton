@@ -23,6 +23,8 @@
 namespace peloton {
 namespace concurrency {
 
+thread_local SpecTxnContext spec_txn_context;
+
 SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
   static SpecRowoTxnManager txn_manager;
   return txn_manager;
@@ -78,7 +80,7 @@ bool SpecRowoTxnManager::IsOwner(storage::TileGroup *tile_group, const oid_t &tu
 }
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
-// will only be performed by deletes and updates.
+// will be invoked only by deletes and updates.
 bool SpecRowoTxnManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -86,6 +88,7 @@ bool SpecRowoTxnManager::IsAccessable(storage::TileGroup *tile_group, const oid_
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
+// will be invoked only by deletes and updates.
 bool SpecRowoTxnManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto txn_id = current_txn->GetTransactionId();
@@ -105,18 +108,10 @@ bool SpecRowoTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tu
   auto current_txn_id = current_txn->GetTransactionId();
   // if the tuple is owned by other transaction, then register dependency.
   if (tuple_txn_id != INITIAL_TXN_ID && tuple_txn_id != INVALID_TXN_ID && tuple_txn_id != current_txn_id) {
-    RegisterDependency(tuple_txn_id);
-    // // if this dependency has not been registered before.
-    // if (current_txn->CheckDependency(tuple_txn_id) == true) {
-    //   // it is possible that at the same time point, the dependent txn has committed.
-    //   // if registration succeeded.
-    //   if (RegisterDependency(tuple_txn_id, current_txn_id) == true) {
-    //     // record this dependency locally.
-    //     current_txn->RecordDependency(tuple_txn_id);
-    //   }
-    //   // else, the transaction has been committed (or aborted).
-    //   // actually, we can now validate whether this speculative read succeeds.
-    // }
+    RegisterRetType ret_type = RegisterDependency(tuple_txn_id);
+    if (ret_type == REGISTER_RET_TYPE_NOT_FOUND) {
+      // actually, we can now validate whether this speculative read succeeds.
+    }
   }
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
@@ -289,19 +284,11 @@ Result SpecRowoTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // a simple solution: we do not start validation until the all the dependencies have been cleared.
-  // TODO: optimize it!
-  int commit_ret = 0;
-  while (1){
-    commit_ret = IsCommittable();
-    if (commit_ret != 0) {
-      break;
-    }
+  // we do not start validation until the all the dependencies have been cleared.
+  // TODO: optimize it??
+  if (IsCommittable() == false) {
+    AbortTransaction();
   }
-  if (commit_ret == -1) {
-    return AbortTransaction();
-  }
-  assert(commit_ret == 1);
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
