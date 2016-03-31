@@ -18,6 +18,12 @@
 namespace peloton {
 namespace concurrency {
 
+  struct SsiTxnContext {
+    Transaction *transaction_;
+    bool in_conflict_;
+    bool out_conflict_;
+  };
+
 class SsiTxnManager : public TransactionManager {
  public:
   SsiTxnManager() {}
@@ -57,9 +63,25 @@ class SsiTxnManager : public TransactionManager {
   virtual void SetUpdateVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
+  virtual Transaction *BeginTransaction() {
+    Transaction *txn = TransactionManager::BeginTransaction();
+    {
+      std::lock_guard<std::mutex> lock(running_txns_mutex_);
+      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
+      running_txns_[txn->GetTransactionId()];
+    }
+    return txn;
+  }
+
+  virtual void EndTransaction() {}
+
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
+
+private:
+  std::mutex running_txns_mutex_;
+  std::map<txn_id_t, std::pair<SsiTxnContext> running_txns_;
 };
 }
 }

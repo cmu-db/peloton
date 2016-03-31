@@ -19,8 +19,8 @@ namespace peloton {
 namespace concurrency {
 
 
-struct TxnDep {
-  TxnDep() : outer_dep_count_(0), is_cascading_abort_(false) {}
+struct SpecTxnContext {
+  SpecTxnContext() : outer_dep_count_(0), is_cascading_abort_(false) {}
   std::unordered_set<txn_id_t> inner_dep_set_;
   std::unordered_set<txn_id_t> outer_dep_set_;
   size_t outer_dep_count_; // default: 0
@@ -169,7 +169,7 @@ class SpecRowoTxnManager : public TransactionManager {
     // should be changed to libcuckoo.
     std::mutex running_txns_mutex_;
     // records all running transactions.
-    std::unordered_map<txn_id_t, TxnDep> running_txns_;
+    std::unordered_map<txn_id_t, SpecTxnContext> running_txns_;
 
 };
 }
