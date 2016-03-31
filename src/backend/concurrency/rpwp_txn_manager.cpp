@@ -35,9 +35,13 @@ RpwpTxnManager &RpwpTxnManager::GetInstance() {
 }
 
 // // Visibility check
-bool RpwpTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                              const cid_t &tuple_begin_cid,
-                                              const cid_t &tuple_end_cid) {
+bool RpwpTxnManager::IsVisible(storage::TileGroup *tile_group,
+                                             const oid_t &tuple_id) {
+  auto tile_group_header = tile_group->GetHeader();
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
   if (EXTRACT_TXNID(tuple_txn_id) == EXTRACT_TXNID(INVALID_TXN_ID)) {
     // the tuple is not available.
     return false;
@@ -45,14 +49,16 @@ bool RpwpTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   bool own = (current_txn->GetTransactionId() == EXTRACT_TXNID(tuple_txn_id));
 
   // there are exactly two versions that can be owned by a transaction.
+  // unless it is an insertion.
   if (own == true) {
-    if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      assert(tuple_end_cid == MAX_CID);
+    if (tuple_begin_cid == MAX_CID) {
       // the only version that is visible is the newly inserted one.
-      return true;
-    } else {
-      // the older version is not visible.
+      // but we must return the older version, as it may be updated or deleted,
+      // in which case the status recorded in the rw set should be changed.
       return false;
+    } else {
+      // the older version is returned.
+      return true;
     }
   } else {
     bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);

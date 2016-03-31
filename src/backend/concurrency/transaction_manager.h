@@ -42,9 +42,8 @@ class TransactionManager {
 
   cid_t GetNextCommitId() { return next_cid_++; }
 
-  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid) = 0;
+  virtual bool IsVisible(storage::TileGroup *tile_group,
+                         const oid_t &tuple_id) = 0;
 
   virtual bool IsOwner(storage::TileGroup *tile_group,
                        const oid_t &tuple_id) = 0;

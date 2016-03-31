@@ -29,9 +29,12 @@ RowoTxnManager &RowoTxnManager::GetInstance() {
 }
 
 // Visibility check
-bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                             const cid_t &tuple_begin_cid,
-                                             const cid_t &tuple_end_cid) {
+bool RowoTxnManager::IsVisible(storage::TileGroup *tile_group,
+                                             const oid_t &tuple_id) {
+  auto tile_group_header = tile_group->GetHeader();
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
@@ -41,13 +44,14 @@ bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
-    if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      assert(tuple_end_cid == MAX_CID);
+    if (tuple_begin_cid == MAX_CID) {
       // the only version that is visible is the newly inserted one.
-      return true;
-    } else {
-      // the older version is not visible.
+      // but we must return the older version, as it may be updated or deleted,
+      // in which case the status recorded in the rw set should be changed.
       return false;
+    } else {
+      // the older version is returned.
+      return true;
     }
   } else {
     bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
@@ -55,7 +59,7 @@ bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
-        // currently, we do not handle cascading abort. so never read an
+        // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
         return false;
       } else {
