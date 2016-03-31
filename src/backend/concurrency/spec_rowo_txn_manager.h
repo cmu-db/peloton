@@ -86,7 +86,7 @@ class SpecRowoTxnManager : public TransactionManager {
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
       assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
-      running_txns_[txn->GetTransactionId()];
+      running_txns_[txn->GetTransactionId()] = &spec_txn_context;
     }
     return txn;
   }
@@ -118,7 +118,7 @@ class SpecRowoTxnManager : public TransactionManager {
       if (running_txns_.find(dst_txn_id) == running_txns_.end()) {
         return REGISTER_RET_TYPE_NOT_FOUND;
       }
-      auto &dst_txn_context = running_txns_.at(dst_txn_id);
+      auto &dst_txn_context = *(running_txns_.at(dst_txn_id));
       dst_txn_context.inner_dep_set_.insert(src_txn_id);
     }
 
@@ -146,7 +146,7 @@ class SpecRowoTxnManager : public TransactionManager {
         if (running_txns_.find(child_txn_id) == running_txns_.end()) {
           continue;
         }
-        auto &child_txn_context = running_txns_.at(child_txn_id);
+        auto &child_txn_context = *(running_txns_.at(child_txn_id));
         assert(child_txn_context.outer_dep_count_ > 0);
         child_txn_context.outer_dep_count_--;
       }
@@ -161,7 +161,7 @@ class SpecRowoTxnManager : public TransactionManager {
         if (running_txns_.find(child_txn_id) == running_txns_.end()) {
           continue;
         }
-        auto &child_txn_context = running_txns_.at(child_txn_id);
+        auto &child_txn_context = *(running_txns_.at(child_txn_id));
         child_txn_context.is_cascading_abort_ = true;
       }
     }
@@ -175,7 +175,7 @@ class SpecRowoTxnManager : public TransactionManager {
     // should be changed to libcuckoo.
     std::mutex running_txns_mutex_;
     // records all running transactions.
-    std::unordered_map<txn_id_t, SpecTxnContext> running_txns_;
+    std::unordered_map<txn_id_t, SpecTxnContext*> running_txns_;
 
 };
 }
