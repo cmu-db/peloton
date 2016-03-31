@@ -40,7 +40,7 @@ namespace storage {
  *
  * 	-----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
+ *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  * 	-----------------------------------------------------------------------------
  *
@@ -78,6 +78,12 @@ class TileGroupHeader : public Printable {
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
+      // check if there are recycled tuple slots
+      if (!free_list.empty()) {
+        auto tuple_slot_id = free_list.front();
+        free_list.pop_front();
+        return tuple_slot_id;
+      }
       // check tile group capacity
       if (next_tuple_slot < num_tuple_slots) {
         tuple_slot_id = next_tuple_slot;
@@ -277,7 +283,7 @@ class TileGroupHeader : public Printable {
 
  // *  -----------------------------------------------------------------------------
  // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- // *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
+ // *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)
  // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  // *  -----------------------------------------------------------------------------
 
@@ -316,6 +322,10 @@ class TileGroupHeader : public Printable {
 
   // synch helpers
   std::mutex tile_header_mutex;
+
+  // free lists, recycle tuple slots
+  std::vector<oid_t> free_list;
+
 };
 
 }  // End storage namespace
