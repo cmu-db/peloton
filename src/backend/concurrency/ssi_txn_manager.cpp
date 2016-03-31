@@ -152,19 +152,25 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
   auto transaction_id = current_txn->GetTransactionId();
   auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
-  // get read lock
-  ReadList *reader = new ReadList(transaction_id);
-  txn_id_t *lock_addr = GetLockAddr(reserved_area);
-  ReadList** head_addr = GetListAddr(reserved_area);
-  {
-    LOG_INFO("SI read phase 1 txn %ld group %ld tid %ld", transaction_id, tile_group_id, tuple_id);
-    GetReadLock(lock_addr, transaction_id);
-    reader->next = *head_addr;
-    *head_addr = reader;
-    if(reader->next != nullptr){
-      LOG_INFO("reader next is %ld", reader->next->txnId);
+  auto& rw_set = current_txn->GetRWSet();
+  if(rw_set.count(tile_group_id) == 0 ||
+    rw_set.at(tile_group_id).count(tuple_id) == 0) {
+    // previously, this tuple hasn't been read
+
+    // get read lock
+    ReadList *reader = new ReadList(transaction_id);
+    txn_id_t *lock_addr = GetLockAddr(reserved_area);
+    ReadList **head_addr = GetListAddr(reserved_area);
+    {
+      LOG_INFO("SI read phase 1 txn %ld group %ld tid %ld", transaction_id, tile_group_id, tuple_id);
+      GetReadLock(lock_addr, transaction_id);
+      reader->next = *head_addr;
+      *head_addr = reader;
+      if (reader->next != nullptr) {
+        LOG_INFO("reader next is %ld", reader->next->txnId);
+      }
+      ReleaseReadLock(lock_addr, transaction_id);
     }
-    ReleaseReadLock(lock_addr, transaction_id);
   }
 
   // existing SI code
@@ -437,6 +443,7 @@ Result SsiTxnManager::CommitTransaction() {
   }
   //EndTransaction();
 
+  CleanUp();
   return ret;
 }
 
@@ -512,6 +519,8 @@ Result SsiTxnManager::AbortTransaction() {
 
   delete current_txn;
   current_txn = nullptr;
+
+  CleanUp();
   //EndTransaction();
   return Result::RESULT_ABORTED;
 }
@@ -559,7 +568,7 @@ bool SsiTxnManager::ReleaseReadLock(txn_id_t *lock_addr, txn_id_t holder){
 }
 
 
-// clean up should runs in lock protection
+// removeReader should be protected in running_txns_mutex_
 void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   LOG_INFO("release SILock");
   assert(running_txns_.count(txn_id) > 0);
@@ -576,7 +585,7 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
     for (auto &tuple_entry : tile_group_entry.second) {
 
       auto tuple_slot = tuple_entry.first;
-      LOG_INFO("in group %ld tuple %ld", tile_group_id, tuple_slot);
+
       // we don't have reader lock on insert type
       if (tuple_entry.second == RW_TYPE_INSERT) {
         continue;
@@ -599,10 +608,8 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
           if(next->txnId == txn_id){
             find = true;
             prev->next = next->next;
+            LOG_INFO("find in %ld group %ld tuple %ld", next->txnId, tile_group_id, tuple_slot);
             delete next;
-            if(prev->next != nullptr){
-              LOG_INFO("find! next is %ld", prev->next->txnId);
-            }
             break;
           }
           prev = next;
@@ -618,6 +625,55 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   LOG_INFO("release SILock finish");
 }
 
+
+void SsiTxnManager::CleanUp() {
+  std::lock_guard<std::mutex> lock(running_txns_mutex_);
+
+  if(running_txns_.empty()){
+    return;
+  }
+
+  // find smallest begin cid of the running transaction
+
+  // init it as max() for the case that all transactions are committed
+  cid_t min_begin = std::numeric_limits<cid_t >::max();
+  for(auto& item : running_txns_){
+    auto &ctx = item.second;
+    if(ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID){
+      // the first running transaction's beginning time
+      // must be the smallest
+      min_begin = ctx.transaction_->GetBeginCommitId();
+      break;
+    }
+  }
+
+  auto itr = running_txns_.begin();
+  while(itr != running_txns_.end()){
+    auto &ctx = itr->second;
+    auto end_cid = ctx.transaction_->GetEndCommitId();
+    if(end_cid == INVALID_TXN_ID){
+      // running transaction
+      break;
+    }
+
+    if(end_cid < min_begin){
+      // we can safely remove it from table
+
+      // remove its reader mark
+      LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
+      RemoveReader(ctx.transaction_->GetTransactionId());
+
+      // delete transaction
+      delete ctx.transaction_;
+
+      // remove from table
+      itr = running_txns_.erase(itr);
+    }else{
+      itr++;
+    }
+  }
+
+}
 
 }  // End storage namespace
 }  // End peloton namespace
