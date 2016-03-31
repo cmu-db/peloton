@@ -324,7 +324,7 @@ class TileGroupHeader : public Printable {
   std::mutex tile_header_mutex;
 
   // free lists, recycle tuple slots
-  std::vector<oid_t> free_list;
+  std::deque<oid_t> free_list;
 
 };
 
