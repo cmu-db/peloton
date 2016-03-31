@@ -129,10 +129,14 @@ void RunWorkload() {
   double max_duration = std::numeric_limits<double>::min();
   durations.reserve(num_threads);
 
+  printf("Launching Threads \n");
+
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group.push_back(std::thread(RunBackend, thread_itr));
   }
+
+  printf("Joining Threads \n");
 
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {

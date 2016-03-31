@@ -27,16 +27,16 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class BackendLogger : public Logger {
-  friend class FrontendLogger;
+ friend class FrontendLogger;
 
  public:
-  BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; }
+  BackendLogger();
 
   ~BackendLogger();
 
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
 
-  void Commit(void);
+  void FinishedFlushing(void);
 
   void WaitForFlushing(void);
 
@@ -57,14 +57,9 @@ class BackendLogger : public Logger {
                                     void *data = nullptr) = 0;
 
  protected:
-  bool IsWaitingForFlushing(void);
 
   std::vector<std::unique_ptr<LogRecord>> local_queue;
   std::mutex local_queue_mutex;
-
-  // wait for the frontend to flush
-  // need to ensure synchronous commit
-  bool wait_for_flushing = false;
 
   // Used for notify any waiting thread that backend is flushed
   std::mutex flush_notify_mutex;

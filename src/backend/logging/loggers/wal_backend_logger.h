@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/common/types.h"
 #include "backend/logging/backend_logger.h"
 
 namespace peloton {
@@ -28,7 +29,7 @@ class WriteAheadBackendLogger : public BackendLogger {
   WriteAheadBackendLogger(WriteAheadBackendLogger &&) = delete;
   WriteAheadBackendLogger &operator=(WriteAheadBackendLogger &&) = delete;
 
-  static WriteAheadBackendLogger *GetInstance(void);
+  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   void Log(LogRecord *record);
 
@@ -36,11 +37,10 @@ class WriteAheadBackendLogger : public BackendLogger {
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,
-							ItemPointer insert_location,
+                            ItemPointer insert_location,
                             ItemPointer delete_location, void *data = nullptr);
 
  private:
-  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   CopySerializeOutput output_buffer;
 };

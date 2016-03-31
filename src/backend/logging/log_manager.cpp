@@ -23,12 +23,14 @@ namespace logging {
 #define LOG_FILE_NAME "wal.log"
 
 // Each thread gets a backend logger
-thread_local static BackendLogger* raw_backend_logger = nullptr;
+thread_local static BackendLogger* backend_logger = nullptr;
 
 LogManager::LogManager() {
+  printf("Creating Log Manager \n");
 }
 
 LogManager::~LogManager() {
+  printf("Destroying Log Manager \n");
 }
 
 /**
@@ -124,12 +126,12 @@ BackendLogger *LogManager::GetBackendLogger() {
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
-  if (raw_backend_logger == nullptr) {
-    raw_backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
-    frontend_logger->AddBackendLogger(raw_backend_logger);
+  if (backend_logger == nullptr) {
+    backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
+    frontend_logger->AddBackendLogger(backend_logger);
   }
 
-  return raw_backend_logger;
+  return backend_logger;
 }
 
 /**

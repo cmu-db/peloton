@@ -29,9 +29,18 @@ FrontendLogger::FrontendLogger() {
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;
+
+  printf("Creating Frontend Logger \n");
 }
 
 FrontendLogger::~FrontendLogger() {
+
+  for(auto backend_logger : backend_loggers){
+    delete backend_logger;
+  }
+
+  printf("Destroying Frontend Logger \n");
+
 }
 
 /** * @brief Return the frontend logger based on logging type
@@ -109,9 +118,6 @@ void FrontendLogger::MainLoop(void) {
   // TERMINATE MODE
   /////////////////////////////////////////////////////////////////////
 
-  // force the last check to be done without waiting
-  need_to_collect_new_log_records = true;
-
   // flush any remaining log records
   CollectLogRecordsFromBackendLoggers();
   FlushLogRecords();
@@ -130,21 +136,10 @@ void FrontendLogger::MainLoop(void) {
  * @brief Collect the log records from BackendLoggers
  */
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
-  /*
-   * Don't use "while(!need_to_collect_new_log_records)",
-   * we want the frontend check all backend periodically even no backend
-   * notifies.
-   * So that large txn can submit its log records piece by piece
-   * instead of a huge submission when the txn is committed.
-   */
-  if (need_to_collect_new_log_records == false) {
-    auto sleep_period = std::chrono::microseconds(wait_timeout);
-    std::this_thread::sleep_for(sleep_period);
-  }
+  auto sleep_period = std::chrono::microseconds(wait_timeout);
+  std::this_thread::sleep_for(sleep_period);
 
   {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-
     // Look at the local queues of the backend loggers
     for(auto backend_logger : backend_loggers){
       {
@@ -169,8 +164,6 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     }
 
   }
-
-  need_to_collect_new_log_records = false;
 }
 
 /**
@@ -178,11 +171,10 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger) {
-  {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
-    backend_loggers.push_back(backend_logger);
-  }
+  // Add backend logger to the list of backend loggers
+  backend_loggers.push_back(backend_logger);
 }
+
 
 }  // namespace logging
 }
