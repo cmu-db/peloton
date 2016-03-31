@@ -154,16 +154,17 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
   // get read lock
   ReadList *reader = new ReadList(transaction_id);
-  std::mutex *read_lock = *GetLockAddr(reserved_area);
-  ReadList *head = *GetListAddr(reserved_area);
+  txn_id_t *lock_addr = GetLockAddr(reserved_area);
+  ReadList** head_addr = GetListAddr(reserved_area);
   {
     LOG_INFO("SI read phase 1 txn %ld group %ld tid %ld", transaction_id, tile_group_id, tuple_id);
-    std::lock_guard<std::mutex> lock(*read_lock);
-    reader->next = head->next;
-    head->next = reader;
+    GetReadLock(lock_addr, transaction_id);
+    reader->next = *head_addr;
+    *head_addr = reader;
     if(reader->next != nullptr){
       LOG_INFO("reader next is %ld", reader->next->txnId);
     }
+    ReleaseReadLock(lock_addr, transaction_id);
   }
 
   // existing SI code
@@ -444,8 +445,10 @@ Result SsiTxnManager::AbortTransaction() {
 
   {
     std::lock_guard<std::mutex> lock(running_txns_mutex_);
-    assert(running_txns_.count(current_txn->GetTransactionId()) > 0);
-    CleanUp();
+    auto txn_id = current_txn->GetTransactionId();
+    assert(running_txns_.count(txn_id) > 0);
+    RemoveReader(txn_id);
+    running_txns_.erase(txn_id);
   }
 
   auto &manager = catalog::Manager::GetInstance();
@@ -507,7 +510,8 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
-
+  delete current_txn;
+  current_txn = nullptr;
   //EndTransaction();
   return Result::RESULT_ABORTED;
 }
@@ -532,20 +536,37 @@ void SsiTxnManager::InitTupleReserved(const txn_id_t t, const oid_t tile_group_i
   auto reserved_area = GetReservedAreaAddr(tile_group_id, tuple_id);
 
   *GetCreatorAddr(reserved_area) = t;
-  *GetLockAddr(reserved_area) = new std::mutex();
-  *GetListAddr(reserved_area) = new ReadList();
+  *GetLockAddr(reserved_area) = INITIAL_TXN_ID;
+  *GetListAddr(reserved_area) = nullptr;
   assert(*GetCreatorAddr(reserved_area) == t);
+}
+
+bool SsiTxnManager::GetReadLock(txn_id_t *lock_addr, txn_id_t who){
+  while(true){
+    // check cache
+    while(*lock_addr != INITIAL_TXN_ID);
+    if(atomic_cas(lock_addr, INITIAL_TXN_ID, who)){
+      return true;
+    }
+  }
+}
+
+bool SsiTxnManager::ReleaseReadLock(txn_id_t *lock_addr, txn_id_t holder){
+  assert(*lock_addr == holder);
+  auto res = atomic_cas(lock_addr, holder, INITIAL_TXN_ID);
+  assert(res);
+  return res;
 }
 
 
 // clean up should runs in lock protection
-void SsiTxnManager::CleanUp() {
+void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   LOG_INFO("release SILock");
-  auto txn_id = current_txn->GetTransactionId();
   assert(running_txns_.count(txn_id) > 0);
 
   // remove read lock
-  auto &rw_set = current_txn->GetRWSet();
+  auto& my_ctx = running_txns_.at(txn_id);
+  auto &rw_set = my_ctx.transaction_->GetRWSet();
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -556,17 +577,24 @@ void SsiTxnManager::CleanUp() {
 
       auto tuple_slot = tuple_entry.first;
       LOG_INFO("in group %ld tuple %ld", tile_group_id, tuple_slot);
+      // we don't have reader lock on insert type
       if (tuple_entry.second == RW_TYPE_INSERT) {
         continue;
       }
 
       auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_slot);
-      ReadList* prev = *GetListAddr(reserved_area);
-      ReadList* next = prev->next;
-      auto read_lock = *GetLockAddr(reserved_area);
+      // find and delete reader whose txnId == txn_id
+      auto lock_addr = GetLockAddr(reserved_area);
       {
-        std::lock_guard<std::mutex> lock(*read_lock);
+        GetReadLock(lock_addr, txn_id);
+
+        ReadList** head_addr = GetListAddr(reserved_area);
+        ReadList fake_header;
+        fake_header.next = *head_addr;
+        auto prev = &fake_header;
+        auto next = prev->next;
         bool find = false;
+
         while(next != nullptr){
           if(next->txnId == txn_id){
             find = true;
@@ -581,12 +609,13 @@ void SsiTxnManager::CleanUp() {
           next = next->next;
         }
 
+        *head_addr = fake_header.next;
+        ReleaseReadLock(lock_addr, txn_id);
         assert(find);
       }
     }
   }
   LOG_INFO("release SILock finish");
-  running_txns_.erase(txn_id);
 }
 
 
