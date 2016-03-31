@@ -71,7 +71,10 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   void TruncateLog(int);
 
   void SetLogDirectory(char *);
+
   void InitLogDirectory();
+
+  std::string GetFileNameFromVersion(int);
 
  private:
   std::string GetLogFileName(void);
@@ -105,6 +108,12 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   int log_file_counter_;
 
   int log_file_cursor_;
+
+  std::string peloton_log_directory = "peloton_log";
+
+  std::string LOG_FILE_PREFIX = "peloton_log_";
+
+  std::string LOG_FILE_SUFFIX = ".log";
 };
 
 }  // namespace logging
