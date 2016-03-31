@@ -21,11 +21,6 @@
 namespace peloton {
 namespace logging {
 
-WriteBehindBackendLogger *WriteBehindBackendLogger::GetInstance() {
-  thread_local static WriteBehindBackendLogger instance;
-  return &instance;
-}
-
 /**
  * @brief log LogRecord
  * @param log record

@@ -196,9 +196,8 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 
   // Notify the backend loggers
   {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
     for(auto backend_logger : backend_loggers){
-      backend_logger->Commit();
+      backend_logger->FinishedFlushing();
     }
   }
 }

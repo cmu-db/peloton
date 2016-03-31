@@ -10,20 +10,27 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend_logger.h"
-
 #include "backend/common/logger.h"
+#include "backend/logging/backend_logger.h"
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
+#include "backend/logging/log_record.h"
 
 namespace peloton {
 namespace logging {
+
+BackendLogger::BackendLogger() {
+  logger_type = LOGGER_TYPE_BACKEND;
+
+  printf("Creating Backend Logger : %p \n", this);
+}
 
 BackendLogger::~BackendLogger() {
 
   // Wait for flushing
   WaitForFlushing();
 
+  printf("Destroying Backend Logger : %p \n", this);
 }
 
 /**
@@ -34,9 +41,9 @@ BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
   BackendLogger *backend_logger = nullptr;
 
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
-    backend_logger = WriteAheadBackendLogger::GetInstance();
+    backend_logger = new WriteAheadBackendLogger();
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
-    backend_logger = WriteBehindBackendLogger::GetInstance();
+    backend_logger = new WriteBehindBackendLogger();
   } else {
     LOG_ERROR("Unsupported logging type");
   }
@@ -47,38 +54,30 @@ BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
 /**
  * @brief set the wait flush to false
  */
-void BackendLogger::Commit(void) {
-  std::lock_guard<std::mutex> lock(flush_notify_mutex);
-  // Only need to commit if they are waiting for us to flush
-  if (wait_for_flushing) {
-    wait_for_flushing = false;
+void BackendLogger::FinishedFlushing(void) {
+  {
+    std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
+
+    // Only need to commit if they are waiting for us to flush
     flush_notify_cv.notify_all();
   }
 }
 
-/**
- * @brief if we still have log record in local queue or waiting for flushing
- * @return true otherwise false
- */
-bool BackendLogger::IsWaitingForFlushing(void) {
-  // Sometimes, the backend logger has some log records even if
-  // wait_for_flushing is false. For example, if backend logger enqueues the log
-  // record right after the frontend logger collected data and not truncated yet.
+void BackendLogger::WaitForFlushing(void) {
+  size_t local_queue_size = 0;
+
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
-
-    if (wait_for_flushing || local_queue.size() > 0) {
-      return true;
-    } else {
-      return false;
-    }
+    local_queue_size = local_queue.size();
   }
-}
 
-void BackendLogger::WaitForFlushing(void) {
-  std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
-  while (IsWaitingForFlushing()) {
-    flush_notify_cv.wait(wait_lock);
+  {
+    std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
+
+    if (local_queue_size > 0) {
+      printf("Wait for flushing \n");
+      flush_notify_cv.wait(wait_lock);
+    }
   }
 }
 
