@@ -21,16 +21,12 @@ namespace logging {
 
 BackendLogger::BackendLogger() {
   logger_type = LOGGER_TYPE_BACKEND;
-
-  printf("Creating Backend Logger : %p \n", this);
 }
 
 BackendLogger::~BackendLogger() {
 
   // Wait for flushing
   WaitForFlushing();
-
-  printf("Destroying Backend Logger : %p \n", this);
 }
 
 /**
@@ -75,7 +71,6 @@ void BackendLogger::WaitForFlushing(void) {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
     if (local_queue_size > 0) {
-      printf("Wait for flushing \n");
       flush_notify_cv.wait(wait_lock);
     }
   }

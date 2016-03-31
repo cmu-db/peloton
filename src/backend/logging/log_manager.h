@@ -106,6 +106,8 @@ class LogManager {
 
   FrontendLogger *GetFrontendLogger();
 
+  void ResetFrontendLogger();
+
  private:
   LogManager();
   ~LogManager();
