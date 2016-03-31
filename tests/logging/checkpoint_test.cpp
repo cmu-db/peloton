@@ -15,6 +15,7 @@
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/logging/records/tuple_record.h"
+#include "backend/bridge/dml/mapper/mapper.h"
 
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -23,6 +24,8 @@
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
+
+#define DEFAULT_RECOVERY_CID 15
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -76,6 +79,7 @@ void ExpectNormalTileResults(
     }
   }
 }
+
 std::vector<logging::TupleRecord> BuildTupleRecords(
     std::vector<storage::Tuple *> &tuples, size_t tile_group_size,
     size_t table_tile_group_count) {
@@ -144,51 +148,72 @@ std::vector<storage::Tuple *> BuildTuples(storage::DataTable *table,
   return tuples;
 }
 
+oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  txn_manager.SetNextCid(next_cid);
+
+  txn_manager.BeginTransaction();
+
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  oid_t total_tuple_count = 0;
+  for (size_t tile_group_id = 1; tile_group_id <= table_tile_group_count;
+       tile_group_id++) {
+    auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
+    total_tuple_count += tile_group->GetActiveTupleCount();
+  }
+  txn_manager.CommitTransaction();
+  return total_tuple_count;
+}
+
 TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
-  MockExecutor table_scan_executor;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   size_t table_tile_group_count = 3;
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
-
-  // Left table has 3 tile groups
-  std::unique_ptr<storage::DataTable> table(
+  // table has 3 tile groups
+  std::unique_ptr<storage::DataTable> target_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(txn, table.get(),
+  ExecutorTestsUtil::PopulateTable(txn, target_table.get(),
                                    tile_group_size * table_tile_group_count,
                                    false, false, false);
   txn_manager.CommitTransaction();
 
-  // Wrap the input tables with logical tiles
-  std::vector<std::unique_ptr<executor::LogicalTile>> table_logical_tile_ptrs;
-  for (size_t table_tile_group_itr = 0;
-       table_tile_group_itr < table_tile_group_count; table_tile_group_itr++) {
-    std::unique_ptr<executor::LogicalTile> table_logical_tile(
-        executor::LogicalTileFactory::WrapTileGroup(
-            table->GetTileGroup(table_tile_group_itr), txn_id));
-    table_logical_tile_ptrs.push_back(std::move(table_logical_tile));
-  }
+  // create scan executor
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(
+          txn, bridge::PlanTransformer::BuildParams(nullptr)));
 
-  // scan executor returns logical tiles from the left table
-  EXPECT_CALL(table_scan_executor, DInit()).WillOnce(Return(true));
+  auto schema = target_table->GetSchema();
+  assert(schema);
+  expression::AbstractExpression *predicate = nullptr;
+  std::vector<oid_t> column_ids;
+  column_ids.resize(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
 
-  ExpectNormalTileResults(table_tile_group_count, &table_scan_executor,
-                          table_logical_tile_ptrs);
+  /* Construct the Peloton plan node */
+  LOG_TRACE("Initializing the executor tree");
+  std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
+      new planner::SeqScanPlan(target_table.get(), predicate, column_ids));
+  std::unique_ptr<executor::SeqScanExecutor> scan_executor(
+      new executor::SeqScanExecutor(scan_plan_node.get(),
+                                    executor_context.get()));
 
+  // create checkpoint
   logging::SimpleCheckpoint simple_checkpoint;
   logging::WriteAheadBackendLogger *logger =
       logging::WriteAheadBackendLogger::GetInstance();
-
   simple_checkpoint.SetLogger(logger);
   auto checkpoint_txn = txn_manager.BeginTransaction();
 
-  simple_checkpoint.Execute(&table_scan_executor, checkpoint_txn, table.get(),
-                            1);
+  simple_checkpoint.Execute(scan_executor.get(), checkpoint_txn,
+                            target_table.get(), DEFAULT_DB_ID);
+  txn_manager.CommitTransaction();
 
+  // verify results
   auto records = simple_checkpoint.GetRecords();
   EXPECT_EQ(records.size(),
             TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
@@ -209,6 +234,7 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   std::unique_ptr<storage::DataTable> recovery_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
 
+  // prepare tuples
   auto mutate = true;
   auto random = false;
   int num_rows = tile_group_size * table_tile_group_count;
@@ -217,19 +243,27 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   std::vector<logging::TupleRecord> records =
       BuildTupleRecords(tuples, tile_group_size, table_tile_group_count);
 
+  // recovery tuples from checkpoint
   logging::SimpleCheckpoint simple_checkpoint;
-  cid_t commit_id = 10;
   for (auto record : records) {
     auto tuple = record.GetTuple();
     auto target_location = record.GetInsertLocation();
-
     // recovery checkpoint from these records
     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(), target_location,
-                                   commit_id);
+                                   DEFAULT_RECOVERY_CID);
   }
 
-  // TODO verify tile group header information
-  // recovery_table->GetTileGroup(0)
+  // recovered tuples are not visible until DEFAULT_RECOVERY_CID - 1
+  auto total_tuple_count =
+      GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID - 1);
+  EXPECT_EQ(total_tuple_count, 0);
+
+  // recovered tuples are visible from DEFAULT_RECOVERY_CID
+  total_tuple_count =
+      GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID);
+  EXPECT_EQ(total_tuple_count, tile_group_size * table_tile_group_count);
+
+  // Clean up
   for (auto tuple : tuples) {
     delete tuple;
   }
