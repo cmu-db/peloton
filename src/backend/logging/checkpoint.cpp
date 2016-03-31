@@ -39,5 +39,33 @@ void Checkpoint::InitDirectory() {
   }
 }
 
+void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
+                              ItemPointer target_location, cid_t commit_id) {
+  auto tile_group_id = target_location.block;
+  auto tuple_slot = target_location.offset;
+
+  LOG_INFO("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
+           tuple_slot);
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+
+  // Create new tile group if table doesn't already have that tile group
+  if (tile_group == nullptr) {
+    table->AddTileGroupWithOid(tile_group_id);
+    tile_group = manager.GetTileGroup(tile_group_id);
+  }
+
+  // Do the insert!
+  auto inserted_tuple_slot =
+      tile_group->InsertTupleFromCheckpoint(tuple_slot, tuple, commit_id);
+
+  if (inserted_tuple_slot == INVALID_OID) {
+    // TODO: We need to abort on failure!
+  } else {
+    table->SetNumberOfTuples(table->GetNumberOfTuples() + 1);
+  }
+}
+
 }  // namespace logging
 }  // namespace peloton
