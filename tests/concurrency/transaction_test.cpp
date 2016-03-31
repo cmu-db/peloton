@@ -109,7 +109,6 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // read deleted, insert back, update inserted, read newly updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
-
       scheduler.Txn(0).Delete(100);
       scheduler.Txn(0).Delete(0);
       scheduler.Txn(0).Read(0);

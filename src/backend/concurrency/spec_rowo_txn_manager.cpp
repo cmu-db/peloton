@@ -38,19 +38,23 @@ SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
 // then it is possible that we obtain two versions.
 // in this case, we rely on validation to abort this transaction.
 // CONSIDER: any optimization??
-bool SpecRowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                             const cid_t &tuple_begin_cid,
-                                             const cid_t &tuple_end_cid) {
-  if (tuple_txn_id == INVALID_TXN_ID) {
-    // the tuple is not available.
-    return false;
-  }
-  auto txn_begin_cid = current_txn->GetBeginCommitId();
-  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+bool SpecRowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
+                                   const oid_t &tuple_id) {
+    txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+    cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+    txn_id_t txn_begin_cid = current_txn->GetBeginCommitId();
+
+    if (tuple_txn_id == INVALID_TXN_ID) {
+      // the tuple is not available.
+      return false;
+    }
+    bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
+    // TODO: fix me
     if (tuple_end_cid != INVALID_CID) {
       // a transaction will immediately write ts to the version.
       assert(tuple_begin_cid == txn_begin_cid);
@@ -74,14 +78,14 @@ bool SpecRowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-bool SpecRowoTxnManager::IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id){
+bool SpecRowoTxnManager::IsOwner(const storage::TileGroup * const tile_group, const oid_t &tuple_id){
   auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
 // will be invoked only by deletes and updates.
-bool SpecRowoTxnManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
+bool SpecRowoTxnManager::IsAccessable(const storage::TileGroup * const tile_group, const oid_t &tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
