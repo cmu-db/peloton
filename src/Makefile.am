@@ -34,6 +34,7 @@ include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
 include $(srcdir)/postgres/pl/Makefile.am
+include $(srcdir)/postgres/tutorial/Makefile.am
 include $(top_srcdir)/third_party/Makefile.am
 
 bin_PROGRAMS = \
@@ -44,6 +45,7 @@ bin_PROGRAMS = \
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la
 lib_LTLIBRARIES += libplpgsql.la
+lib_LTLIBRARIES += libtutorial.la
 
 DEFAULT_INCLUDES =
 
@@ -136,6 +138,28 @@ libplpgsql_la_CXXFLAGS = $(AM_CXXFLAGS) \
 
 libplpgsql_la_LDFLAGS = -lprotobuf
 
+######################################################################
+# Tutorial
+######################################################################
+
+libtutorial_la_SOURCES = \
+			$(postgres_tutorial_FILES)
+
+libtutorial_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 $(third_party_INCLUDES)
+
+libtutorial_la_CXXFLAGS = $(AM_CXXFLAGS) \
+			  -Wno-unused-variable -Wno-unused-but-set-variable \
+			  -Wno-unused-parameter -Wno-missing-field-initializers \
+			  -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
+			  -Wno-sign-compare -Wno-write-strings \
+			  -msse4.2
+
+libtutorial_la_LDFLAGS = -lprotobuf
 
 
 ######################################################################
