@@ -26,11 +26,9 @@ namespace logging {
 thread_local static BackendLogger* backend_logger = nullptr;
 
 LogManager::LogManager() {
-  printf("Creating Log Manager \n");
 }
 
 LogManager::~LogManager() {
-  printf("Destroying Log Manager \n");
 }
 
 /**
@@ -175,6 +173,10 @@ void LogManager::SetLogFileName(std::string log_file) {
 std::string LogManager::GetLogFileName(void) {
   assert(log_file_name.empty() == false);
   return log_file_name;
+}
+
+void LogManager::ResetFrontendLogger() {
+  frontend_logger.reset(FrontendLogger::GetFrontendLogger(peloton_logging_mode));
 }
 
 }  // namespace logging

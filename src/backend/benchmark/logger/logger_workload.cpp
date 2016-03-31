@@ -174,13 +174,6 @@ void DoRecovery(std::string file_name) {
 
 	ycsb::CreateYCSBDatabase();
 
-	// start a thread for logging
-	auto& log_manager = logging::LogManager::GetInstance();
-	if (log_manager.ContainsFrontendLogger() == true) {
-		LOG_ERROR("another logging thread is running now");
-		return;
-	}
-
 	//===--------------------------------------------------------------------===//
 	// RECOVERY
 	//===--------------------------------------------------------------------===//
@@ -188,7 +181,11 @@ void DoRecovery(std::string file_name) {
 	Timer<std::milli> timer;
 	timer.Start();
 
-	// set log file and logging type
+  // reset frontend logger to reopen log file
+  auto& log_manager = logging::LogManager::GetInstance();
+  log_manager.ResetFrontendLogger();
+
+  // set log file and logging type
 	log_manager.SetLogFileName(file_path);
 
 	// start off the frontend logger of appropriate type in STANDBY mode
@@ -206,8 +203,9 @@ void DoRecovery(std::string file_name) {
 	timer.Stop();
 
 	// Recovery time
-	if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY)
+	if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
 		WriteOutput(timer.GetDuration());
+	}
 
 	if (log_manager.EndLogging()) {
 		thread.join();
@@ -243,7 +241,6 @@ void BuildLog() {
 		WriteOutput(timer.GetDuration());
 	} else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
 		auto log_file_size = GetLogFileSize();
-		std::cout << "Log file size :: " << log_file_size << "\n";
 		WriteOutput(log_file_size);
 	}
 

@@ -149,6 +149,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // Go over the log size if needed
   if (log_file_size > 0) {
     bool reached_end_of_file = false;
+    oid_t recovery_log_record_count = 0;
 
     // Start the recovery transaction
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -162,6 +163,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
       auto record_type = GetNextLogRecordType(log_file, log_file_size);
+      recovery_log_record_count++;
 
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
@@ -204,11 +206,14 @@ void WriteAheadFrontendLogger::DoRecovery() {
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
 
+    std::cout << "Recovery_log_record_count : "<< recovery_log_record_count << "\n";
+
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
     auto &manager = catalog::Manager::GetInstance();
     manager.SetNextOid(max_oid);
   }
+
 }
 
 /**

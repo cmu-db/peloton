@@ -29,8 +29,6 @@ FrontendLogger::FrontendLogger() {
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;
-
-  printf("Creating Frontend Logger \n");
 }
 
 FrontendLogger::~FrontendLogger() {
@@ -38,8 +36,6 @@ FrontendLogger::~FrontendLogger() {
   for(auto backend_logger : backend_loggers){
     delete backend_logger;
   }
-
-  printf("Destroying Frontend Logger \n");
 
 }
 
@@ -126,7 +122,7 @@ void FrontendLogger::MainLoop(void) {
   // SLEEP MODE
   /////////////////////////////////////////////////////////////////////
 
-  LOG_TRACE("Frontendlogger] Sleep Mode");
+  LOG_TRACE("Frontendlogger Sleep Mode");
 
   // Setting frontend logger status to sleep
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_SLEEP);
