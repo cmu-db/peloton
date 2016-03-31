@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// raw_column_info.cpp
+//
+// Identification: src/backend/bridge/ddl/raw_column_info.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/bridge/ddl/raw_column_info.h"
 
 namespace peloton {

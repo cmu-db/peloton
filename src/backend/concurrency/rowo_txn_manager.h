@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/rowo_txn_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class SsiTransactionManager : public TransactionManager {
-public:
-  SsiTransactionManager() {}
+class RowoTxnManager : public TransactionManager {
+ public:
+  RowoTxnManager() {}
 
-  virtual ~SsiTransactionManager() {}
+  virtual ~RowoTxnManager() {}
 
-  static SsiTransactionManager &GetInstance();
+  static RowoTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,

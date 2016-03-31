@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // abstract_expression.cpp
 //
 // Identification: src/backend/expression/abstract_expression.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -181,8 +181,8 @@ AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
     // to read. yes, the per-class data really does follow the
     // child serializations.
 
-    return ExpressionUtil::ExpressionFactory(obj, peek_type, value_type, value_size, left_child,
-                             right_child);
+    return ExpressionUtil::ExpressionFactory(
+        obj, peek_type, value_type, value_size, left_child, right_child);
   } catch (ExpressionException &ex) {
     // clean up children
     delete left_child;

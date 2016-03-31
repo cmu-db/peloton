@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * hash_join.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/hash_join_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// hash_join_executor.h
+//
+// Identification: src/backend/executor/hash_join_executor.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -46,7 +46,6 @@ class HashJoinExecutor : public AbstractJoinExecutor {
   // logical tile iterators
   size_t left_logical_tile_itr_ = 0;
   size_t right_logical_tile_itr_ = 0;
-
 };
 
 }  // namespace executor

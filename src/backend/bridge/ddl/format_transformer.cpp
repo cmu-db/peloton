@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * format_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl/format_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// format_transformer.cpp
+//
+// Identification: src/backend/bridge/ddl/format_transformer.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/ddl/format_transformer.h"
 #include "backend/common/logger.h"

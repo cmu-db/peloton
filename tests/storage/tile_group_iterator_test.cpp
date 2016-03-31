@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_iterator_test.cpp
 //
 // Identification: tests/storage/tile_group_iterator_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,9 +39,8 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tuple_count, false, false,
-                                   true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
+                                   false, true);
   txn_manager.CommitTransaction();
 
   storage::TileGroupIterator tile_group_itr(data_table.get());

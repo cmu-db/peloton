@@ -1,20 +1,22 @@
-/*-------------------------------------------------------------------------
- *
- * frontendlogger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/frontendlogger.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// frontend_logger.cpp
+//
+// Identification: src/backend/logging/frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <thread>
 
 #include "backend/common/logger.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/frontend_logger.h"
+#include "backend/logging/checkpoint.h"
+#include "backend/logging/checkpoint_factory.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 
@@ -24,7 +26,7 @@ extern int64_t peloton_wait_timeout;
 namespace peloton {
 namespace logging {
 
-FrontendLogger::FrontendLogger() {
+FrontendLogger::FrontendLogger() : checkpoint(CheckpointFactory::GetInstance()) {
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout
