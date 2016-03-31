@@ -136,8 +136,8 @@ bool IndexScanExecutor::ExecIndexLookup() {
    * in this case, the params is the results of the outer plan
    * We can add more cases in future
    */
-  //TODO: we probably need to add more for other cases in future
-  if (executor_context_->GetParamsExec() == 1) {
+  //TODO: we probably need to add more for other cases in the future
+  if (executor_context_->GetParamsExecFlag() == IN_NESTLOOP) {
 	  values_.clear();
 	  std::vector<Value> vecValue = executor_context_->GetParams();
 
