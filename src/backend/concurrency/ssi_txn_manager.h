@@ -18,9 +18,9 @@
 namespace peloton {
 namespace concurrency {
 
-
 struct SsiTxnContext {
-  SsiTxnContext(Transaction *t) : transaction_(t), in_conflict_(false), out_conflict_(false) {}
+  SsiTxnContext(Transaction *t)
+      : transaction_(t), in_conflict_(false), out_conflict_(false) {}
   Transaction *transaction_;
   bool in_conflict_;
   bool out_conflict_;
@@ -32,7 +32,6 @@ struct ReadList {
   ReadList() : txnId(INVALID_TXN_ID), next(nullptr) {}
   ReadList(txn_id_t t) : txnId(t), next(nullptr) {}
 };
-
 
 class SsiTxnManager : public TransactionManager {
  public:
@@ -77,9 +76,11 @@ class SsiTxnManager : public TransactionManager {
     Transaction *txn = TransactionManager::BeginTransaction();
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
-      //running_txns_[txn->GetTransactionId()] = SsiTxnContext(txn);
-      running_txns_.insert(std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
+      assert(running_txns_.find(txn->GetTransactionId()) ==
+             running_txns_.end());
+      // running_txns_[txn->GetTransactionId()] = SsiTxnContext(txn);
+      running_txns_.insert(
+          std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
     }
     return txn;
   }
@@ -90,17 +91,24 @@ class SsiTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
-private:
+ private:
   std::mutex running_txns_mutex_;
   std::map<txn_id_t, SsiTxnContext> running_txns_;
 
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
   // The txn_id could only be the cur_txn's txn id.
-  void InitTupleReserved(const txn_id_t txn_id, const oid_t tile_group_id, const oid_t tuple_id);
-  inline txn_id_t * GetCreatorAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + CREATOR_OFFSET)); }
-  inline txn_id_t * GetLockAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + LOCK_OFFSET)); }
-  inline ReadList ** GetListAddr(const char *reserved_area) { return ((ReadList **)(reserved_area + LIST_OFFSET)); }
+  void InitTupleReserved(const txn_id_t txn_id, const oid_t tile_group_id,
+                         const oid_t tuple_id);
+  inline txn_id_t *GetCreatorAddr(const char *reserved_area) {
+    return ((txn_id_t *)(reserved_area + CREATOR_OFFSET));
+  }
+  inline txn_id_t *GetLockAddr(const char *reserved_area) {
+    return ((txn_id_t *)(reserved_area + LOCK_OFFSET));
+  }
+  inline ReadList **GetListAddr(const char *reserved_area) {
+    return ((ReadList **)(reserved_area + LIST_OFFSET));
+  }
   char *GetReservedAreaAddr(const oid_t tile_group_id, const oid_t tuple_id);
 
   bool GetReadLock(txn_id_t *lock_addr, txn_id_t who);
