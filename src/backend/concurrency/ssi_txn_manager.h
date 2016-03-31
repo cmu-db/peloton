@@ -95,15 +95,19 @@ private:
   std::map<txn_id_t, SsiTxnContext> running_txns_;
 
   // init reserved area of a tuple
-  // creator | lock | read list
-  void InitTupleReserved(const txn_id_t t, const oid_t tile_group_id, const oid_t tuple_id);
+  // creator txnid | lock (for read list) | read list head
+  // The txn_id could only be the cur_txn's txn id.
+  void InitTupleReserved(const txn_id_t txn_id, const oid_t tile_group_id, const oid_t tuple_id);
   inline txn_id_t * GetCreatorAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + CREATOR_OFFSET)); }
   inline txn_id_t * GetLockAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + LOCK_OFFSET)); }
   inline ReadList ** GetListAddr(const char *reserved_area) { return ((ReadList **)(reserved_area + LIST_OFFSET)); }
   char *GetReservedAreaAddr(const oid_t tile_group_id, const oid_t tuple_id);
+
   bool GetReadLock(txn_id_t *lock_addr, txn_id_t who);
   bool ReleaseReadLock(txn_id_t *lock_addr, txn_id_t holder);
   void RemoveReader(txn_id_t txn_id);
+
+  // Free contexts for SSI manager
   void CleanUp();
   static const int CREATOR_OFFSET = 0;
   static const int LOCK_OFFSET = (CREATOR_OFFSET + sizeof(txn_id_t));
