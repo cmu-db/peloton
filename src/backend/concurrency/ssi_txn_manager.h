@@ -104,7 +104,7 @@ private:
   bool GetReadLock(txn_id_t *lock_addr, txn_id_t who);
   bool ReleaseReadLock(txn_id_t *lock_addr, txn_id_t holder);
   void RemoveReader(txn_id_t txn_id);
-
+  void CleanUp();
   static const int CREATOR_OFFSET = 0;
   static const int LOCK_OFFSET = (CREATOR_OFFSET + sizeof(txn_id_t));
   static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
