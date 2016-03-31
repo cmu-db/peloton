@@ -33,7 +33,7 @@ class SubqueryExpression : public AbstractExpression {
   SubqueryExpression(ExpressionType subqueryType, int subqueryId,
                      const std::vector<int> &paramIdxs,
                      const std::vector<int> &otherParamIdxs,
-                     const std::vector<AbstractExpression *> *tveParams);
+                     const std::vector<AbstractExpression *>& tveParams);
 
   ~SubqueryExpression();
 
@@ -54,8 +54,6 @@ class SubqueryExpression : public AbstractExpression {
   // T.Is originate at the grandparent levels.
   std::vector<int> m_otherParamIdxs;
 
-  // The .Ist of the corresponding TVE for each parameter index
-  boost::scoped_ptr<const std::vector<AbstractExpression *>> m_tveParams;
 };
 
 }  // End expression namespace

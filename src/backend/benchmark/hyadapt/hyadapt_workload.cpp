@@ -25,7 +25,10 @@
 
 #include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
+
 #include "backend/benchmark/hyadapt/hyadapt_workload.h"
+#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -34,7 +37,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
@@ -70,7 +73,6 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
-#include "hyadapt_loader.h"
 
 namespace peloton {
 namespace benchmark {
@@ -261,7 +263,7 @@ void RunDirectTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -314,7 +316,7 @@ void RunDirectTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -364,7 +366,7 @@ void RunAggregateTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -470,7 +472,7 @@ void RunAggregateTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -520,7 +522,7 @@ void RunArithmeticTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -613,7 +615,7 @@ void RunArithmeticTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -663,9 +665,9 @@ void RunJoinTest() {
   auto left_table_predicate = CreatePredicate(lower_bound);
   auto right_table_predicate = CreatePredicate(lower_bound);
   planner::SeqScanPlan left_table_seq_scan_node(
-      hyadapt_table, left_table_predicate, column_ids);
+      hyadapt_table.get(), left_table_predicate, column_ids);
   planner::SeqScanPlan right_table_seq_scan_node(
-      hyadapt_table, right_table_predicate, column_ids);
+      hyadapt_table.get(), right_table_predicate, column_ids);
 
   executor::SeqScanExecutor left_table_scan_executor(&left_table_seq_scan_node,
                                                      context.get());
@@ -789,7 +791,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -873,7 +875,7 @@ void RunInsertTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -920,7 +922,7 @@ void RunUpdateTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -940,7 +942,7 @@ void RunUpdateTest() {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list),
                                                std::move(direct_map_list));
-  planner::UpdatePlan update_node(hyadapt_table, project_info);
+  planner::UpdatePlan update_node(hyadapt_table.get(), project_info);
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -1272,7 +1274,7 @@ static void CollectColumnMapStats() {
 
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
-  LOG_TRACE("TG Count :: %d", tile_group_count);
+  LOG_TRACE("TG Count :: %lu", tile_group_count);
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
@@ -2010,7 +2012,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -2062,7 +2064,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 
   auto bulk_insert_count = 1;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 

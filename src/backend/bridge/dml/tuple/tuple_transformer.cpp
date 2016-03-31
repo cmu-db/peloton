@@ -117,7 +117,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       for (int it = 0; it < nelems; ++it) {
         char *pText = TextDatumGetCString(elems[it]);
         std::string str(pText);
-        LOG_TRACE("%s %lu", pText, ARR_ELEMTYPE(arr));
+        LOG_TRACE("%s %u", pText, ARR_ELEMTYPE(arr));
         VarlenPool *data_pool = nullptr;
         LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
         Value val = ValueFactory::GetStringValue(str, data_pool);
@@ -134,7 +134,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       char *varchar = static_cast<char *>(VARDATA(varlenptr));
       VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
-      LOG_TRACE("len = %d , varchar = \"%s\"", len, str.c_str());
+      LOG_TRACE("len = %u , varchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
     } break;
 
@@ -144,7 +144,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       char *varchar = static_cast<char *>(VARDATA(textptr));
       VarlenPool *data_pool = nullptr;
       std::string str(varchar, len);
-      LOG_TRACE("len = %d , text = \"%s\"", len, str.c_str());
+      LOG_TRACE("len = %u , text = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
     } break;
 
@@ -168,7 +168,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       for (i = 0; i < nelems; ++i) {
         char *pText = TextDatumGetCString(elems[i]);
         std::string str(pText);
-        LOG_TRACE("%s %lu", pText, ARR_ELEMTYPE(arr));
+        LOG_TRACE("%s %u", pText, ARR_ELEMTYPE(arr));
         VarlenPool *data_pool = nullptr;
         LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
         Value val = ValueFactory::GetStringValue(str, data_pool);
