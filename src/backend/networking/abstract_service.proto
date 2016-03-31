@@ -2,6 +2,8 @@ option cc_generic_services = true;
 
 package peloton.networking;
 
+import queryplan.proto
+
 enum Status {
     // Everything is ok with the transaction and it is allowed
     // to proceed to the next processing stage
