@@ -161,7 +161,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
       // cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
       // if the tuple is visible.
-      if (transaction_manager.IsVisible(tile_group, tuple_id)) {
+      if (transaction_manager.IsVisible(tile_group->GetHeader(), tuple_id)) {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);

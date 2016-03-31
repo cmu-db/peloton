@@ -26,11 +26,11 @@ class RowoTxnManager : public TransactionManager {
 
   static RowoTxnManager &GetInstance();
 
-  virtual bool IsVisible(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroup * const tile_group, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group,
+  virtual bool IsAccessable(const storage::TileGroup * const tile_group,
                             const oid_t &tuple_id);
 
   virtual bool AcquireTuple(storage::TileGroup *tile_group,

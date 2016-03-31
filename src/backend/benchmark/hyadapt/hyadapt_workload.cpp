@@ -1813,8 +1813,11 @@ void RunVersionExperiment() {
   // Create a version chain
   oid_t block_id = 0;
   header->SetNextItemPointer(0, INVALID_ITEMPOINTER);
+  header->SetPrevItemPointer(0, INVALID_ITEMPOINTER);
+
   for (oid_t tuple_itr = 1; tuple_itr < tuple_count; tuple_itr++) {
     header->SetNextItemPointer(tuple_itr, ItemPointer(block_id, tuple_itr - 1));
+    header->SetPrevItemPointer(tuple_itr - 1, ItemPointer(block_id, tuple_itr));
   }
 
   start = std::chrono::system_clock::now();

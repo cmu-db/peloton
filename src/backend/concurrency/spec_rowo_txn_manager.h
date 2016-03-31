@@ -50,13 +50,11 @@ class SpecRowoTxnManager : public TransactionManager {
 
   static SpecRowoTxnManager &GetInstance();
 
-  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid);
+  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroup * const tile_group, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group,
+  virtual bool IsAccessable(const storage::TileGroup * const tile_group,
                             const oid_t &tuple_id);
 
   virtual bool AcquireTuple(storage::TileGroup *tile_group,
