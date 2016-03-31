@@ -32,7 +32,7 @@ void Checkpoint::InitDirectory() {
 
   if (return_val == 0) {
     LOG_INFO("Created checkpoint directory successfully");
-  } else if (return_val == EEXIST) {
+  } else if (errno == EEXIST) {
     LOG_INFO("Checkpoint Directory already exists");
   } else {
     LOG_ERROR("Creating checkpoint directory failed: %s", strerror(errno));
@@ -44,8 +44,8 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  LOG_INFO("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
-           tuple_slot);
+  LOG_TRACE("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
+            tuple_slot);
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -63,6 +63,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
   if (inserted_tuple_slot == INVALID_OID) {
     // TODO: We need to abort on failure!
   } else {
+    // TODO this is not thread safe
     table->SetNumberOfTuples(table->GetNumberOfTuples() + 1);
   }
 }

@@ -894,7 +894,7 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
 
   if (return_val == 0) {
     LOG_INFO("Created Log directory successfully");
-  } else if (return_val == EEXIST) {
+  } else if (errno == EEXIST) {
     LOG_INFO("Log Directory already exists");
   } else {
     LOG_ERROR("Creating log directory failed: %s", strerror(errno));

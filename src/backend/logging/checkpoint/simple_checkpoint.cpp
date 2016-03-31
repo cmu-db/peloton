@@ -151,6 +151,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         }
       }
     }
+
     // if anything other than begin record is added
     if (records_.size() > 1) {
       LogRecord *commit_record = new TransactionRecord(
@@ -320,7 +321,8 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
-        LOG_INFO("Insert a new record for checkpoint");
+        LOG_TRACE("Insert a new record for checkpoint (%lu, %lu)",
+                  tile_group_id, tuple_id);
         records_.push_back(record);
       }
     }
