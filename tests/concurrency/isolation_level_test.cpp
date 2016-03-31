@@ -25,7 +25,8 @@ class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OCC,
-  CONCURRENCY_TYPE_2PL
+  CONCURRENCY_TYPE_2PL,
+  CONCURRENCY_TYPE_SSI
 };
 
 void DirtyWriteTest() {

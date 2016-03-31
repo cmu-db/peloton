@@ -1,17 +1,23 @@
-/*-------------------------------------------------------------------------
- *
- * logmanager.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logmanager.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.cpp
+//
+// Identification: src/backend/logging/log_manager.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/logging/log_manager.h"
+#include "backend/logging/records/transaction_record.h"
 #include "backend/common/logger.h"
+#include "backend/executor/executor_context.h"
+#include "backend/catalog/manager.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace logging {
@@ -81,7 +87,7 @@ void LogManager::WaitForMode(LoggingStatus logging_status_, bool is_equal) {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
 
     while ((!is_equal && logging_status == logging_status_) ||
-        (is_equal && logging_status != logging_status_)) {
+           (is_equal && logging_status != logging_status_)) {
       logging_status_cv.wait(wait_lock);
     }
   }
@@ -115,6 +121,90 @@ bool LogManager::EndLogging() {
 //===--------------------------------------------------------------------===//
 // Utility Functions
 //===--------------------------------------------------------------------===//
+
+void LogManager::LogBeginTransaction(cid_t commit_id){
+  if (this->IsInLoggingMode()) {
+	auto logger = this->GetBackendLogger();
+	auto record = new TransactionRecord(
+		LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
+	logger->Log(record);
+  }
+}
+
+void LogManager::LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version){
+  if (this->IsInLoggingMode()) {
+    auto executor_context = new executor::ExecutorContext(curr_txn);
+      auto executor_pool = executor_context->GetExecutorContextPool();
+    auto &manager = catalog::Manager::GetInstance();
+
+    auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
+
+    auto logger = this->GetBackendLogger();
+    auto schema =
+	manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
+				new_tuple_tile_group->GetTableId())->GetSchema();
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
+      tuple->SetValue(col, new_tuple_tile_group->GetValue(new_version.offset, col),
+		      executor_pool);
+    }
+    auto record = logger->GetTupleRecord(
+	LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+	new_tuple_tile_group->GetTableId(), new_version, old_version, tuple.get());
+    logger->Log(record);
+    delete executor_context;
+  }
+}
+
+void LogManager::LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location){
+  if (this->IsInLoggingMode()) {
+    auto logger = this->GetBackendLogger();
+    auto &manager = catalog::Manager::GetInstance();
+
+    auto new_tuple_tile_group = manager.GetTileGroup(new_location.block);
+    auto executor_context = new executor::ExecutorContext(curr_txn);
+    auto executor_pool = executor_context->GetExecutorContextPool();
+
+    auto tile_group = manager.GetTileGroup(new_location.block);
+    auto schema =
+	manager.GetTableWithOid(tile_group->GetDatabaseId(),
+				tile_group->GetTableId())->GetSchema();
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
+      tuple->SetValue(col, new_tuple_tile_group->GetValue(new_location.offset, col),
+		      executor_pool);
+    }
+    auto record =
+	logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, commit_id,
+			       tile_group->GetTableId(), new_location,
+			       INVALID_ITEMPOINTER, tuple.get());
+    delete executor_context;
+    logger->Log(record);
+  }
+}
+
+void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location){
+  if (this->IsInLoggingMode()) {
+    auto logger = this->GetBackendLogger();
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(delete_location.block);
+    auto record = logger->GetTupleRecord(
+	LOGRECORD_TYPE_TUPLE_DELETE, commit_id,
+	tile_group->GetTableId(), INVALID_ITEMPOINTER, delete_location);
+    logger->Log(record);
+  }
+
+}
+
+void LogManager::LogCommitTransaction(cid_t commit_id){
+	if (this->IsInLoggingMode()) {
+		auto logger = this->GetBackendLogger();
+		auto record = new TransactionRecord(
+			LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
+		logger->Log(record);
+		logger->WaitForFlushing();
+	  }
+}
 
 /**
  * @brief Return the backend logger based on logging type

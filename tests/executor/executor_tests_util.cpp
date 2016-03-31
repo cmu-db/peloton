@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_tests_util.cpp
 //
 // Identification: tests/executor/executor_tests_util.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -115,7 +115,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  *
  * @return Pointer to tile group.
  */
-  std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
+std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
+    int tuple_count) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
 
@@ -137,12 +138,14 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-    std::shared_ptr<storage::TileGroup> tile_group_ptr(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID,
-      TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-      column_map, tuple_count));
+  std::shared_ptr<storage::TileGroup> tile_group_ptr(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, tuple_count));
 
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(), tile_group_ptr);
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(),
+                                               tile_group_ptr);
   return tile_group_ptr;
 }
 
@@ -151,7 +154,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(__attribute__((unused)) concurrency::Transaction *transaction,
+void ExecutorTestsUtil::PopulateTable(__attribute__((unused))
+                                      concurrency::Transaction *transaction,
                                       storage::DataTable *table, int num_rows,
                                       bool mutate, bool random, bool group_by) {
   // Random values
@@ -207,7 +211,6 @@ void ExecutorTestsUtil::PopulateTable(__attribute__((unused)) concurrency::Trans
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     txn_manager.PerformInsert(tuple_slot_id.block, tuple_slot_id.offset);
   }
-
 }
 
 /**
@@ -247,7 +250,7 @@ void ExecutorTestsUtil::PopulateTiles(
 
     oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot_id);
-//    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
+    //    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
   }
 
   txn_manager.CommitTransaction();
@@ -352,9 +355,8 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ExecutorTestsUtil::PopulateTable(txn, table,
-                                   tuple_count * DEFAULT_TILEGROUP_COUNT,
-                                   false, false, false);
+  ExecutorTestsUtil::PopulateTable(
+      txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false);
   txn_manager.CommitTransaction();
 
   return table;
@@ -389,14 +391,13 @@ void ExecutorTestsUtil::PrintTileVector(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
   for (auto &tile : tile_vec) {
     for (oid_t tuple_id : *tile) {
-      std::cout << "<";
+      LOG_INFO("<");
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        std::cout << tile->GetValue(tuple_id, col_id) << ",";
+        LOG_INFO("%s", tile->GetValue(tuple_id, col_id).GetInfo().c_str());
       }
-      std::cout << ">";
+      LOG_INFO(">");
     }
   }
-  std::cout << std::endl;
 }
 
 }  // namespace test

@@ -5,14 +5,12 @@
 ######################################################################
 
 concurrency_FILES = \
-    backend/concurrency/to_transaction_manager.cpp \
-    backend/concurrency/optimistic_transaction_manager.cpp \
-    backend/concurrency/speculative_optimistic_transaction_manager.cpp \
-    backend/concurrency/pessimistic_transaction_manager.cpp \
-    backend/concurrency/ssi_transaction_manager.cpp \
-	backend/concurrency/transaction_manager.cpp \
-	backend/concurrency/transaction.cpp \
+    backend/concurrency/rowo_txn_manager.cpp \
+    backend/concurrency/rpwp_txn_manager.cpp \
+    backend/concurrency/spec_rowo_txn_manager.cpp \
+    backend/concurrency/ssi_txn_manager.cpp \
+    backend/concurrency/transaction_manager.cpp \
+    backend/concurrency/transaction.cpp \
     backend/concurrency/transaction_manager_factory.cpp
-
 concurrency_INCLUDES = \
-				   -I$(srcdir)/concurrency
+					   -I$(srcdir)/concurrency

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// rpc_server.h
+// rpc_server.cpp
 //
 // Identification: src/backend/networking/rpc_server.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,27 +25,24 @@
 namespace peloton {
 namespace networking {
 
-RpcServer::RpcServer(const int port) :
-    listener_(port) {
-
-    // We have listener here, so we also have event base
-    ConnectionManager::GetInstance().ResterRpcServer(this);
+RpcServer::RpcServer(const int port) : listener_(port) {
+  // We have listener here, so we also have event base
+  ConnectionManager::GetInstance().ResterRpcServer(this);
 }
 
-RpcServer::~RpcServer() {
-
-    RemoveService();
-}
+RpcServer::~RpcServer() { RemoveService(); }
 
 /*
- * @brief service is implemented by programer, suach as from peloton service interface
- * Therefore, a service has several methods. These methods can be registered using
+ * @brief service is implemented by programer, suach as from peloton service
+ * interface
+ * Therefore, a service has several methods. These methods can be registered
+ * using
  * this function
  */
 bool RpcServer::RegisterService(google::protobuf::Service *service) {
-
   // Get the service descriptor
-  const google::protobuf::ServiceDescriptor *descriptor = service->GetDescriptor();
+  const google::protobuf::ServiceDescriptor *descriptor =
+      service->GetDescriptor();
   std::hash<std::string> string_hash_fn;
 
   /*
@@ -55,13 +52,14 @@ bool RpcServer::RegisterService(google::protobuf::Service *service) {
    * response msg type is HeartbeatResponse
    */
   for (int i = 0; i < descriptor->method_count(); ++i) {
-
     // Get the method descriptor
     const google::protobuf::MethodDescriptor *method = descriptor->method(i);
 
     // Get request and response type through method descriptor
-    const google::protobuf::Message *request = &service->GetRequestPrototype(method);
-    const google::protobuf::Message *response = &service->GetResponsePrototype(method);
+    const google::protobuf::Message *request =
+        &service->GetRequestPrototype(method);
+    const google::protobuf::Message *response =
+        &service->GetResponsePrototype(method);
 
     // Create the corresponding method structure
     RpcMethod *rpc_method = new RpcMethod(service, request, response, method);
@@ -69,55 +67,49 @@ bool RpcServer::RegisterService(google::protobuf::Service *service) {
     // Put the method into rpc_method_map_: hashcode-->method
     std::string methodname = std::string(method->full_name());
     // TODO:
-    //uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
+    // uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
 
-    // although the return type is size_t, again we should specify the size of the type
+    // although the return type is size_t, again we should specify the size of
+    // the type
     uint64_t hash = string_hash_fn(methodname);
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
     if (iter == rpc_method_map_.end()) {
-        auto pair = std::make_pair(hash, rpc_method);
-        rpc_method_map_.insert(pair);
+      auto pair = std::make_pair(hash, rpc_method);
+      rpc_method_map_.insert(pair);
     }
-
   }
 
   return true;
 }
 
-void RpcServer::Start() {
-    listener_.Run(this);
-}
+void RpcServer::Start() { listener_.Run(this); }
 
 void RpcServer::RemoveService() {
-
-    for (RpcMethodMap::iterator iter = rpc_method_map_.begin(); iter != rpc_method_map_.end(); iter++) {
-      RpcMethod *rpc_method = iter->second;
-
-      if ( rpc_method != NULL ) {
-          delete rpc_method;
-      }
-
-    }
-}
-
-RpcMethod* RpcServer::FindMethod(uint64_t opcode) {
-
-    // Get the method iter from local map
-    RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
-    if (iter == rpc_method_map_.end()) {
-        return NULL;
-    }
-
-    // Get the rpc method meta info: method descriptor
+  for (RpcMethodMap::iterator iter = rpc_method_map_.begin();
+       iter != rpc_method_map_.end(); iter++) {
     RpcMethod *rpc_method = iter->second;
 
-    return rpc_method;
+    if (rpc_method != NULL) {
+      delete rpc_method;
+    }
+  }
+}
+
+RpcMethod *RpcServer::FindMethod(uint64_t opcode) {
+  // Get the method iter from local map
+  RpcMethodMap::const_iterator iter = rpc_method_map_.find(opcode);
+  if (iter == rpc_method_map_.end()) {
+    return NULL;
+  }
+
+  // Get the rpc method meta info: method descriptor
+  RpcMethod *rpc_method = iter->second;
+
+  return rpc_method;
 }
 
 // get listener
-Listener* RpcServer::GetListener() {
-    return &listener_;
-}
+Listener *RpcServer::GetListener() { return &listener_; }
 
 }  // namespace networking
 }  // namespace peloton

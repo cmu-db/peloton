@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// materialization_test.cpp
+// tile_group_layout_test.cpp
 //
-// Identification: tests/executor/materialization_test.cpp
+// Identification: tests/executor/tile_group_layout_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -208,7 +208,7 @@ void ExecuteTileGroupTest() {
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
 
-  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
+  LOG_INFO("duration :: %lf s \n", elapsed_seconds.count());
 }
 
 TEST_F(TileGroupLayoutTest, RowLayout) {

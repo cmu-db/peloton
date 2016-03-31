@@ -1,50 +1,53 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.h
+// transaction_manager_factory.h
 //
 // Identification: src/backend/concurrency/transaction_manager_factory.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/concurrency/optimistic_transaction_manager.h"
-#include "backend/concurrency/pessimistic_transaction_manager.h"
-#include "backend/concurrency/ssi_transaction_manager.h"
+#include "backend/concurrency/rowo_txn_manager.h"
+#include "backend/concurrency/rpwp_txn_manager.h"
+#include "backend/concurrency/spec_rowo_txn_manager.h"
+#include "backend/concurrency/ssi_txn_manager.h"
 namespace peloton {
 namespace concurrency {
 class TransactionManagerFactory {
- public:
+public:
   static TransactionManager &GetInstance() {
-    switch (protocol_) {
+    switch (protocol) {
       case CONCURRENCY_TYPE_OCC:
-        return OptimisticTransactionManager::GetInstance();
+        return RowoTxnManager::GetInstance();
       case CONCURRENCY_TYPE_2PL:
-        return PessimisticTransactionManager::GetInstance();
+        return RpwpTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_SPEC:
+        return SpecRowoTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SSI:
-        return SsiTransactionManager::GetInstance();
+        return SsiTxnManager::GetInstance();
       default:
-        return OptimisticTransactionManager::GetInstance();
+        return RowoTxnManager::GetInstance();
     }
   }
 
-  static void Configure(ConcurrencyType protocol,
-                        IsolationLevelType level = ISOLATION_LEVEL_TYPE_FULL) {
-    protocol_ = protocol;
-    isolation_level_ = level;
+  static void Configure(ConcurrencyType protocol_,
+                        IsolationLevelType level_ = ISOLATION_LEVEL_TYPE_FULL) {
+    protocol = protocol_;
+    isolation_level = level_;
   }
 
-  static ConcurrencyType GetProtocol() { return protocol_; }
+  static ConcurrencyType GetProtocol() { return protocol; }
 
-  static IsolationLevelType GetIsolationLevel() { return isolation_level_; }
+  static IsolationLevelType GetIsolationLevel() { return isolation_level; }
 
- private:
-  static ConcurrencyType protocol_;
-  static IsolationLevelType isolation_level_;
+private:
+  static ConcurrencyType protocol;
+  static IsolationLevelType isolation_level;
 };
 }
 }

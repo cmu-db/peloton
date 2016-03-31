@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/speculative_optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/ssi_txn_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,13 +18,29 @@
 namespace peloton {
 namespace concurrency {
 
-class SpeculativeOptimisticTransactionManager : public TransactionManager {
+
+struct SsiTxnContext {
+  SsiTxnContext(Transaction *t) : transaction_(t), in_conflict_(false), out_conflict_(false) {}
+  Transaction *transaction_;
+  bool in_conflict_;
+  bool out_conflict_;
+};
+
+struct ReadList {
+  txn_id_t txnId;
+  ReadList *next;
+  ReadList() : txnId(INVALID_TXN_ID), next(nullptr) {}
+  ReadList(txn_id_t t) : txnId(t), next(nullptr) {}
+};
+
+
+class SsiTxnManager : public TransactionManager {
  public:
-  SpeculativeOptimisticTransactionManager() {}
+  SsiTxnManager() {}
 
-  virtual ~SpeculativeOptimisticTransactionManager() {}
+  virtual ~SsiTxnManager() {}
 
-  static SpeculativeOptimisticTransactionManager &GetInstance();
+  static SsiTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
@@ -41,7 +57,7 @@ class SpeculativeOptimisticTransactionManager : public TransactionManager {
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
+                             const ItemPointer &new_location);
 
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
@@ -58,46 +74,38 @@ class SpeculativeOptimisticTransactionManager : public TransactionManager {
                                    const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    Transaction * txn = TransactionManager::BeginTransaction();
+    Transaction *txn = TransactionManager::BeginTransaction();
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
       assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
-      running_txns_[txn->GetTransactionId()] = txn;
+      //running_txns_[txn->GetTransactionId()] = SsiTxnContext(txn);
+      running_txns_.insert(std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
     }
     return txn;
   }
 
-  virtual void EndTransaction() {
-    {
-      std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(current_txn->GetTransactionId()) != running_txns_.end());
-      running_txns_.erase(current_txn->GetTransactionId());
-    }
-    TransactionManager::EndTransaction();
-  }
-
-  bool RegisterDependency(const txn_id_t &depend_txn_id, const txn_id_t &current_txn_id) {
-    {
-      std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      if (running_txns_.find(depend_txn_id) == running_txns_.end()) {
-        return false;
-      } else{
-        Transaction *txn = running_txns_.at(depend_txn_id);
-        txn->RegisterDependency(current_txn_id);
-        return true;
-      }
-    }
-  }
+  virtual void EndTransaction() {}
 
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
 
-  private:
-    // should be changed to libcuckoo.
-    std::mutex running_txns_mutex_;
-    std::unordered_map<txn_id_t, Transaction*> running_txns_;
+private:
+  std::mutex running_txns_mutex_;
+  std::map<txn_id_t, SsiTxnContext> running_txns_;
 
+  // init reserved area of a tuple
+  // creator | lock | read list
+  void InitTupleReserved(const txn_id_t t, const oid_t tile_group_id, const oid_t tuple_id);
+  inline txn_id_t * GetCreatorAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + CREATOR_OFFSET)); }
+  inline std::mutex ** GetLockAddr(const char *reserved_area) { return ((std::mutex **)(reserved_area + LOCK_OFFSET)); }
+  inline ReadList ** GetListAddr(const char *reserved_area) { return ((ReadList **)(reserved_area + LIST_OFFSET)); }
+  char *GetReservedAreaAddr(const oid_t tile_group_id, const oid_t tuple_id);
+  void CleanUp();
+
+  static const int CREATOR_OFFSET = 0;
+  static const int LOCK_OFFSET = 8;
+  static const int LIST_OFFSET = 16;
 };
 }
 }

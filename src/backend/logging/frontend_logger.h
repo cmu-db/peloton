@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * frontendlogger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/frontendlogger.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// frontend_logger.h
+//
+// Identification: src/backend/logging/frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -21,9 +21,12 @@
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
 #include "backend/logging/backend_logger.h"
+#include "backend/logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {
+
+class Checkpoint;
 
 //===--------------------------------------------------------------------===//
 // Frontend Logger
@@ -55,9 +58,9 @@ class FrontendLogger : public Logger {
   // Restore database
   virtual void DoRecovery(void) = 0;
 
-  size_t GetFsyncCount() const {
-    return fsync_count;
-  }
+  size_t GetFsyncCount() const { return fsync_count; }
+
+  void ReplayLog(const char *, size_t len);
 
  protected:
   // Associated backend loggers
@@ -79,6 +82,9 @@ class FrontendLogger : public Logger {
 
   // stats
   size_t fsync_count = 0;
+
+  // checkpoint
+  Checkpoint &checkpoint;
 };
 
 }  // namespace logging

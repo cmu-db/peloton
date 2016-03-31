@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * logmanager.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logmanager.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.h
+//
+// Identification: src/backend/logging/log_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -20,15 +20,13 @@
 
 #include "backend_logger.h"
 #include "frontend_logger.h"
+#include "backend/concurrency/transaction.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
 extern LoggingType peloton_logging_mode;
-
-// Directory for peloton logs
-extern char *peloton_log_directory;
 
 namespace peloton {
 namespace logging {
@@ -107,6 +105,18 @@ class LogManager {
   //===--------------------------------------------------------------------===//
 
   FrontendLogger *GetFrontendLogger();
+
+  void LogBeginTransaction(oid_t commit_id);
+
+  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &old_version, ItemPointer &new_version);
+
+  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &new_location);
+
+  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
+
+  void LogCommitTransaction(oid_t commit_id);
 
  private:
   LogManager();

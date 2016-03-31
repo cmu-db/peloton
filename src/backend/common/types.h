@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // types.h
 //
 // Identification: src/backend/common/types.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
   // Based on write ahead logging
-  LOGGING_TYPE_DRAM_NVM = 10,
+  LOGGING_TYPE_DRAM_NVM = 1,
   LOGGING_TYPE_DRAM_SSD = 11,
   LOGGING_TYPE_DRAM_HDD = 12,
 
@@ -48,6 +48,10 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 42,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL  = 1,
+};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -155,6 +159,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_VARCHAR = 1015,
   POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
 
+  POSTGRES_VALUE_TYPE_DATE = 1082,
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
@@ -182,6 +187,7 @@ enum ValueType {
   VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
+  VALUE_TYPE_DATE = 10,       // 4 bytes int
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
   VALUE_TYPE_DECIMAL = 22,    // decimal(p,s)
   VALUE_TYPE_BOOLEAN =
@@ -332,6 +338,7 @@ enum ExpressionType {
   // Date operators
   // -----------------------------
   EXPRESSION_TYPE_EXTRACT = 600,
+  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
@@ -353,16 +360,17 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-    CONCURRENCY_TYPE_OCC = 0, // optimistic
-    CONCURRENCY_TYPE_2PL = 1, // pessimistic
-    CONCURRENCY_TYPE_TO = 2, // timestamp ordering
-    CONCURRENCY_TYPE_SSI = 3 // serializable snapshot isolation
+  CONCURRENCY_TYPE_OCC = 0,  // optimistic
+  CONCURRENCY_TYPE_2PL = 1,  // pessimistic
+  CONCURRENCY_TYPE_SPEC = 2, // speculative
+  CONCURRENCY_TYPE_TO = 3,   // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 4   // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
-    ISOLATION_LEVEL_TYPE_FULL = 0, // full serializability
-    ISOLATION_LEVEL_TYPE_SNAPSHOT = 1, // snapshot isolation
-    ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2 // repeatable read
+  ISOLATION_LEVEL_TYPE_FULL = 0,            // full serializability
+  ISOLATION_LEVEL_TYPE_SNAPSHOT = 1,        // snapshot isolation
+  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2  // repeatable read
 };
 
 enum BackendType {
@@ -680,6 +688,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
 
+static const int INVALID_FILE_DESCRIPTOR = -1;
+
 // ------------------------------------------------------------------
 // Tuple serialization formats
 // ------------------------------------------------------------------
@@ -747,9 +757,7 @@ struct ItemPointer {
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
-  bool IsNull() {
-    return (block == INVALID_OID && offset == INVALID_OID);
-  }
+  bool IsNull() { return (block == INVALID_OID && offset == INVALID_OID); }
 };
 
 extern ItemPointer INVALID_ITEMPOINTER;
