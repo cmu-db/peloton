@@ -157,7 +157,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
   std::mutex *read_lock = *GetLockAddr(reserved_area);
   ReadList *head = *GetListAddr(reserved_area);
   {
-    LOG_INFO("SI read phrase 1 txn %ld group %ld tid %ld", transaction_id, tile_group_id, tuple_id);
+    LOG_INFO("SI read phase 1 txn %ld group %ld tid %ld", transaction_id, tile_group_id, tuple_id);
     std::lock_guard<std::mutex> lock(*read_lock);
     reader->next = head->next;
     head->next = reader;
@@ -174,7 +174,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     std::lock_guard<std::mutex> lock(running_txns_mutex_);
     assert(running_txns_.count(current_txn->GetTransactionId()) > 0);
     auto& my_cxt = running_txns_.at(current_txn->GetTransactionId());
-    LOG_INFO("SI read phrase 2");
+    LOG_INFO("SI read phase 2");
     auto tid = tuple_id;
     while (true) {
       ItemPointer next_item = tile_group_header->GetNextItemPointer(tid);
