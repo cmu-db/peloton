@@ -98,14 +98,16 @@ private:
   // creator | lock | read list
   void InitTupleReserved(const txn_id_t t, const oid_t tile_group_id, const oid_t tuple_id);
   inline txn_id_t * GetCreatorAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + CREATOR_OFFSET)); }
-  inline std::mutex ** GetLockAddr(const char *reserved_area) { return ((std::mutex **)(reserved_area + LOCK_OFFSET)); }
+  inline txn_id_t * GetLockAddr(const char *reserved_area) { return ((txn_id_t *)(reserved_area + LOCK_OFFSET)); }
   inline ReadList ** GetListAddr(const char *reserved_area) { return ((ReadList **)(reserved_area + LIST_OFFSET)); }
   char *GetReservedAreaAddr(const oid_t tile_group_id, const oid_t tuple_id);
-  void CleanUp();
+  bool GetReadLock(txn_id_t *lock_addr, txn_id_t who);
+  bool ReleaseReadLock(txn_id_t *lock_addr, txn_id_t holder);
+  void RemoveReader(txn_id_t txn_id);
 
   static const int CREATOR_OFFSET = 0;
-  static const int LOCK_OFFSET = 8;
-  static const int LIST_OFFSET = 16;
+  static const int LOCK_OFFSET = (CREATOR_OFFSET + sizeof(txn_id_t));
+  static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
 };
 }
 }
