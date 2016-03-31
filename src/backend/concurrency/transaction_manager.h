@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <unordered_map>
+#include <list>
 
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
@@ -87,10 +88,20 @@ class TransactionManager {
     Transaction *txn =
         new Transaction(GetNextTransactionId(), GetNextCommitId());
     current_txn = txn;
+    {
+      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
+      assert(std::find(running_txns_list_.begin(), running_txns_list_.end(), txn->GetTransactionId()) == running_txns_list_.end());
+      running_txns_list_.push_back(txn->GetTransactionId());
+    }
     return txn;
   }
 
   virtual void EndTransaction() {
+    {
+      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
+      assert(std::find(running_txns_list_.begin(), running_txns_list_.end(), current_txn->GetTransactionId()) != running_txns_list_.end());
+      running_txns_list_.remove(current_txn->GetTransactionId());
+    }
     delete current_txn;
     current_txn = nullptr;
   }
@@ -107,6 +118,9 @@ class TransactionManager {
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
+  // records all running transactions.
+  std::mutex running_txns_list_mutex_;
+  std::list<txn_id_t> running_txns_list_;
 };
 }  // End storage namespace
 }  // End peloton namespace
