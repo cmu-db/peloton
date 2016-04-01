@@ -40,6 +40,7 @@
 #include "backend/common/generator.h"
 
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
@@ -195,7 +196,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 /////////////////////////////////////////////////////////
 
 void RunRead() {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -273,11 +274,11 @@ void RunRead() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void RunUpdate() {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -361,7 +362,7 @@ void RunUpdate() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 }  // namespace ycsb

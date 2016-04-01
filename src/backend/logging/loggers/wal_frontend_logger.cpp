@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <algorithm>
+#include <dirent.h>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -139,12 +140,19 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   if (global_queue.size() != 0 && this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
   }
-  for (auto record : global_queue) {
+
+  size_t global_queue_size = global_queue.size();
+  for(oid_t global_queue_itr = 0;
+      global_queue_itr < global_queue_size;
+      global_queue_itr++) {
     if (this->FileSwitchCondIsTrue()) {
       fflush_and_sync(log_file, log_file_fd, fsync_count);
       this->CreateNewLogFile(true);
     }
-    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+
+    fwrite(global_queue[global_queue_itr]->GetMessage(),
+           sizeof(char),
+           global_queue[global_queue_itr]->GetMessageLength(),
            log_file);
   }
 

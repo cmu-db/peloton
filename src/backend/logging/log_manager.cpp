@@ -141,14 +141,20 @@ void LogManager::LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, 
     auto schema =
         manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
                                 new_tuple_tile_group->GetTableId())->GetSchema();
+
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
       tuple->SetValue(col, new_tuple_tile_group->GetValue(new_version.offset, col),
                       executor_pool);
     }
-    auto record = logger->GetTupleRecord(
-        LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
-        new_tuple_tile_group->GetTableId(), new_version, old_version, tuple.get());
+    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
+                                         commit_id,
+                                         new_tuple_tile_group->GetTableId(),
+                                         new_tuple_tile_group->GetDatabaseId(),
+                                         new_version,
+                                         old_version,
+                                         tuple.get());
+
     logger->Log(record);
     delete executor_context;
   }
@@ -172,10 +178,15 @@ void LogManager::LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, 
       tuple->SetValue(col, new_tuple_tile_group->GetValue(new_location.offset, col),
                       executor_pool);
     }
-    auto record =
-        logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, commit_id,
-                               tile_group->GetTableId(), new_location,
-                               INVALID_ITEMPOINTER, tuple.get());
+
+    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+                                         commit_id,
+                                         tile_group->GetTableId(),
+                                         new_tuple_tile_group->GetDatabaseId(),
+                                         new_location,
+                                         INVALID_ITEMPOINTER,
+                                         tuple.get());
+
     delete executor_context;
     logger->Log(record);
   }
@@ -186,9 +197,14 @@ void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location){
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(delete_location.block);
-    auto record = logger->GetTupleRecord(
-        LOGRECORD_TYPE_TUPLE_DELETE, commit_id,
-        tile_group->GetTableId(), INVALID_ITEMPOINTER, delete_location);
+
+    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
+                                         commit_id,
+                                         tile_group->GetTableId(),
+                                         tile_group->GetDatabaseId(),
+                                         INVALID_ITEMPOINTER,
+                                         delete_location);
+
     logger->Log(record);
   }
 
