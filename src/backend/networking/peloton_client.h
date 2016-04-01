@@ -115,6 +115,10 @@ class PelotonClient {
     stub_->TimeSync(controller_, request, response, NULL);
   }
 
+  void QueryPlan(const AbstractPlan* request, SeqScanPlan* response) {
+    stub_->QueryPlan(controller_, request, response, NULL);
+  }
+
  private:
   static void Call() { std::cout << "This is backcall:" << std::endl; }
 

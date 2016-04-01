@@ -90,6 +90,10 @@ public:
             const TimeSyncRequest* request,
             TimeSyncResponse* response,
             ::google::protobuf::Closure* done);
+    virtual void QueryPlan(::google::protobuf::RpcController* controller,
+            const AbstractPlan* request,
+            SeqScanPlan* response,
+            ::google::protobuf::Closure* done);
 };
 
 //void StartPelotonService();

@@ -2,7 +2,7 @@ option cc_generic_services = true;
 
 package peloton.networking;
 
-import queryplan.proto
+import "queryplan.proto";
 
 enum Status {
     // Everything is ok with the transaction and it is allowed
@@ -526,4 +526,5 @@ service AbstractPelotonService {
     rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
     rpc UnevictData(UnevictDataRequest) returns (UnevictDataResponse);
     rpc TimeSync(TimeSyncRequest) returns (TimeSyncResponse);
+    rpc QueryPlan(AbstractPlan) returns (SeqScanPlan);
 }

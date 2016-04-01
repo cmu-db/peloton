@@ -374,25 +374,47 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
         done->Run();
     }
 }
-/*
-void StartPelotonService() {
-    ::google::protobuf::Service* service = NULL;
-    try {
-        RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
-        service = new PelotonService();
-        rpc_server.RegisterService(service);
-        rpc_server.Start();
-    } catch (peloton::message::exception& e) {
-        std::cerr << "NN EXCEPTION : " << e.what() << std::endl;
-        delete service;
-    } catch (std::exception& e) {
-        std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-        delete service;
-    } catch (...) {
-        std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
-        delete service;
+void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
+        const AbstractPlan* request,
+        SeqScanPlan* response,
+        ::google::protobuf::Closure* done) {
+
+    // TODO: controller should be set, we probably use it in the future
+    if (controller->Failed()) {
+        std::string error = controller->ErrorText();
+        LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str() );
+    }
+
+
+    /*
+     * If request is not null, this is a rpc  call, server should handle the reqeust
+     */
+    if (request != NULL) {
+        LOG_TRACE("Received a queryplan, the type is: %s",
+                request->type().c_str());
+
+        if (request->type() == "Scan") {
+            AbstractScan* scan_plan = (AbstractScan*)request;
+            int test = scan_plan->itest();
+            LOG_TRACE("The test number is: %d", test);
+        } else {
+            LOG_TRACE("Unknow queryplan type!");
+        }
+
+        // if callback exist, run it
+        if (done) {
+            done->Run();
+        }
+    }
+    /*
+     * Here is for the client callback for Heartbeat
+     */
+    else {
+        // proecess the response
+        LOG_TRACE("proecess the Query response");
+        std::cout << response;
     }
 }
-*/
+
 }  // namespace networking
 }  // namespace peloton

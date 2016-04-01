@@ -115,6 +115,9 @@ RpcClient::~RpcClient() {
    stub_->TimeSync(controller_, request, response, NULL);
  }
 
+ void RpcClient::QueryPlan(const AbstractPlan* request, SeqScanPlan* response) {
+   stub_->QueryPlan(controller_, request, response, NULL);
+ }
 
 }  // namespace networking
 }  // namespace peloton
