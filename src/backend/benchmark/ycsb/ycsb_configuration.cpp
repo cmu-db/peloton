@@ -10,11 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
+#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
 
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace benchmark {
@@ -42,58 +44,48 @@ static struct option opts[] = {
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-    std::cout << "Invalid scalefactor :: " << state.scale_factor << std::endl;
+    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "scale_factor "
-      << " : " << state.scale_factor << std::endl;
+  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
 }
 
 void ValidateColumnCount(const configuration &state) {
   if (state.column_count <= 0) {
-    std::cout << "Invalid column_count :: " << state.column_count
-        << std::endl;
+    LOG_ERROR("Invalid column_count :: %d", state.column_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "column_count "
-      << " : " << state.column_count << std::endl;
+  LOG_INFO("%s : %d", "column_count", state.column_count);
 }
 
 void ValidateUpdateRatio(const configuration &state) {
   if (state.update_ratio < 0 || state.update_ratio > 1) {
-    std::cout << "Invalid update_ratio :: " << state.update_ratio << std::endl;
+    LOG_ERROR("Invalid update_ratio :: %lf", state.update_ratio);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "update_ratio "
-      << " : " << state.update_ratio << std::endl;
+  LOG_INFO("%s : %lf", "update_ratio", state.update_ratio);
 }
 
 void ValidateBackendCount(const configuration &state) {
   if (state.backend_count <= 0) {
-    std::cout << "Invalid backend_count :: " << state.backend_count
-        << std::endl;
+    LOG_ERROR("Invalid backend_count :: %d", state.backend_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "backend_count "
-      << " : " << state.backend_count << std::endl;
+  LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
 void ValidateTransactionCount(const configuration &state) {
   if (state.transaction_count <= 0) {
-    std::cout << "Invalid transaction_count :: " << state.transaction_count
-        << std::endl;
+    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "transaction_count "
-      << " : " << state.transaction_count << std::endl;
+  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
 }
-
-int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
