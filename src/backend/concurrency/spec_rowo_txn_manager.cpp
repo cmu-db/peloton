@@ -85,7 +85,7 @@ bool SpecRowoTxnManager::IsOwner(const storage::TileGroupHeader * const tile_gro
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
 // will be invoked only by deletes and updates.
-bool SpecRowoTxnManager::IsAccessable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
+bool SpecRowoTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;

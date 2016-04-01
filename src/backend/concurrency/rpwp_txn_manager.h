@@ -18,15 +18,11 @@ namespace peloton {
 namespace concurrency {
 
 extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    released_rdlock;
+    rpwp_released_rdlock;
 
 class RpwpTxnManager : public TransactionManager {
  public:
-  RpwpTxnManager() {
-    released_rdlock =
-        std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>();
-  }
-
+  RpwpTxnManager() {}
   virtual ~RpwpTxnManager() {}
 
   static RpwpTxnManager &GetInstance();
@@ -36,7 +32,7 @@ class RpwpTxnManager : public TransactionManager {
   virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
                        const oid_t &tuple_id);
 
-  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
   virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,

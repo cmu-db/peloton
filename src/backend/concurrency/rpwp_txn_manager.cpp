@@ -27,7 +27,7 @@ namespace peloton {
 namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    released_rdlock;
+    rpwp_released_rdlock;
 
 RpwpTxnManager &RpwpTxnManager::GetInstance() {
   static RpwpTxnManager txn_manager;
@@ -93,11 +93,11 @@ bool RpwpTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_h
 }
 
 // No others own the tuple
-bool RpwpTxnManager::IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+bool RpwpTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                                                  const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  LOG_INFO("IsAccessable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
+  LOG_INFO("IsOwnable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
   // FIXME: actually when read count is not 0 this tuple is not accessable
   return EXTRACT_TXNID(tuple_txn_id) == INITIAL_TXN_ID &&
          tuple_end_cid == MAX_CID;
@@ -145,7 +145,7 @@ bool RpwpTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_gro
   auto res = ReleaseReadLock(tile_group_header, tuple_id);
   // Must success
   assert(res);
-  released_rdlock[tile_group_id][tuple_id] = true;
+  rpwp_released_rdlock[tile_group_id][tuple_id] = true;
 
   // Try get write lock
   auto new_txn_id = current_txn->GetTransactionId();
@@ -296,14 +296,14 @@ Result RpwpTxnManager::CommitTransaction() {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
         // Release read locks
-        if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
-            released_rdlock[tile_group_id].find(tuple_slot) ==
-                released_rdlock[tile_group_id].end()) {
+        if (rpwp_released_rdlock.find(tile_group_id) == rpwp_released_rdlock.end() ||
+            rpwp_released_rdlock[tile_group_id].find(tuple_slot) ==
+                rpwp_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
           if (ret == false) {
             assert(false);
           }
-          released_rdlock[tile_group_id][tuple_slot] = true;
+          rpwp_released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
@@ -368,7 +368,7 @@ Result RpwpTxnManager::CommitTransaction() {
 
   EndTransaction();
   
-  released_rdlock.clear();
+  rpwp_released_rdlock.clear();
   return ret;
 }
 
@@ -386,14 +386,14 @@ Result RpwpTxnManager::AbortTransaction() {
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
-        if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
-            released_rdlock[tile_group_id].find(tuple_slot) ==
-                released_rdlock[tile_group_id].end()) {
+        if (rpwp_released_rdlock.find(tile_group_id) == rpwp_released_rdlock.end() ||
+            rpwp_released_rdlock[tile_group_id].find(tuple_slot) ==
+                rpwp_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
           if (ret == false) {
             assert(false);
           }
-          released_rdlock[tile_group_id][tuple_slot] = true;
+          rpwp_released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -445,7 +445,7 @@ Result RpwpTxnManager::AbortTransaction() {
 
   EndTransaction();
 
-  released_rdlock.clear();
+  rpwp_released_rdlock.clear();
   return Result::RESULT_ABORTED;
 }
 
