@@ -1,10 +1,10 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
-// rowo_txn_manager.cpp
+// ssi_txn_manager.cpp
 //
-// Identification: src/backend/concurrency/rowo_txn_manager.cpp
+// Identification: src/backend/concurrency/ssi_txn_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

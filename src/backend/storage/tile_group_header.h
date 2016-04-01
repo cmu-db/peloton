@@ -38,11 +38,11 @@ namespace storage {
  *
  * Layout :
  *
- * 	-----------------------------------------------------------------------------
+ *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
+ *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) | ReservedField (24 bytes)
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
- * 	-----------------------------------------------------------------------------
+ *  -----------------------------------------------------------------------------
  *
  */
 
@@ -131,7 +131,11 @@ class TileGroupHeader : public Printable {
   }
 
   inline ItemPointer GetNextItemPointer(const oid_t &tuple_slot_id) const {
-    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + pointer_offset));
+    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset));
+  }
+
+  inline ItemPointer GetPrevItemPointer(const oid_t &tuple_slot_id) const {
+    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset));
   }
 
   // constraint: at most 24 bytes.
@@ -165,7 +169,12 @@ class TileGroupHeader : public Printable {
 
   inline void SetNextItemPointer(const oid_t &tuple_slot_id,
                                  const ItemPointer &item) const {
-    *((ItemPointer *)(TUPLE_HEADER_LOCATION + pointer_offset)) = item;
+    *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset)) = item;
+  }
+
+  inline void SetPrevItemPointer(const oid_t &tuple_slot_id,
+                                 const ItemPointer &item) const {
+    *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset)) = item;
   }
 
   inline void SetInsertCommit(const oid_t &tuple_slot_id,
@@ -184,7 +193,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline bool CASTxnId(const oid_t &tuple_slot_id, const txn_id_t &new_txn_id,
-                       txn_id_t expected, txn_id_t *old_value) {
+                       txn_id_t expected, txn_id_t *old_value) const {
     txn_id_t *txn_idp = (txn_id_t *)(TUPLE_HEADER_LOCATION);
     *old_value = __sync_val_compare_and_swap(txn_idp, expected, new_txn_id);
 
@@ -192,7 +201,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline bool LockTupleSlot(const oid_t &tuple_slot_id,
-                            const txn_id_t &transaction_id) {
+                            const txn_id_t &transaction_id) const {
     txn_id_t *txn_id = (txn_id_t *)(TUPLE_HEADER_LOCATION);
     if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
       return true;
@@ -277,20 +286,21 @@ class TileGroupHeader : public Printable {
 
  // *  -----------------------------------------------------------------------------
  // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- // *  | NextItemPointer (16 bytes) | ReservedField (24 bytes)  
+ // *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) | ReservedField (24 bytes)
  // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  // *  -----------------------------------------------------------------------------
 
  private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          sizeof(ItemPointer) + 24 +
+                                          2 * sizeof(ItemPointer) + 24 +
                                           2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
-  static const size_t pointer_offset = end_cid_offset + sizeof(cid_t);
-  static const size_t reserved_field_offset = pointer_offset + sizeof(ItemPointer);
+  static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
+  static const size_t prev_pointer_offset = next_pointer_offset + sizeof(ItemPointer);
+  static const size_t reserved_field_offset = prev_pointer_offset + sizeof(ItemPointer);
   static const size_t insert_commit_offset =
       reserved_field_offset + 24;
   static const size_t delete_commit_offset =

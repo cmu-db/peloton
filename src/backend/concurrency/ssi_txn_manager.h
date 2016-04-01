@@ -1,8 +1,8 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
-// rowo_txn_manager.h
+// ssi_txn_manager.h
 //
 // Identification: src/backend/concurrency/ssi_txn_manager.h
 //
