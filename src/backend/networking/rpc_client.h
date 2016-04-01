@@ -85,7 +85,7 @@ class RpcClient {
   void TimeSync(const TimeSyncRequest* request,
                 TimeSyncResponse* response);
 
-  void QueryPlan(const AbstractPlan* request,
+  void QueryPlan(const QueryPlanRequest* request,
                 SeqScanPlan* response);
 
  private:

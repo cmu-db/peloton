@@ -584,12 +584,19 @@ void TestSend() {
 
             peloton::networking::AbstractPlan abstract_plan;
             abstract_plan.set_include_children(false);
-            abstract_plan.set_type("Scan");
 
-            peloton::networking::AbstractScan request;
-            request.set_allocated_base(&abstract_plan);
-            request.set_include_column_ids(false);
-            request.set_itest(111);
+            peloton::networking::AbstractScan abstract_scan;
+            abstract_scan.set_allocated_base(&abstract_plan);
+            abstract_scan.set_itest(100);
+
+            peloton::networking::SeqScanPlan seq_plan;
+            seq_plan.set_allocated_base(&abstract_scan);
+            seq_plan.set_itest(200);
+
+            peloton::networking::QueryPlanRequest request;
+            request.set_type("Scan");
+            request.set_allocated_scan_plan(&abstract_scan);
+            request.set_allocated_seqscan_plan(&seq_plan);
 
             pclient->QueryPlan(&request, NULL);
         }
