@@ -150,8 +150,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         for (oid_t log_record_itr = 0;
             log_record_itr < local_queue_size;
             log_record_itr++) {
-          global_queue.push_back(
-              std::move(backend_logger->local_queue[log_record_itr]));
+          global_queue.push_back(std::move(backend_logger->local_queue[log_record_itr]));
         }
 
         // cleanup the local queue

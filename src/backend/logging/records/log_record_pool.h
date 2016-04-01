@@ -24,6 +24,8 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class LogRecordPool {
+  friend class WriteBehindFrontendLogger;
+
  public:
   //===--------------------------------------------------------------------===//
   // Accessor
@@ -32,20 +34,20 @@ class LogRecordPool {
 
   bool IsEmpty() const { return txn_log_table.empty(); }
 
-  int CreateTransactionLogList(txn_id_t txn_id);
+  int CreateTxnLogList(txn_id_t txn_id);
 
-  int AddLogRecord(TupleRecord *record);
+  int AddLogRecord(std::unique_ptr<TupleRecord> record);
 
-  void RemoveTransactionLogList(txn_id_t txn_id);
+  void RemoveTxnLogRecordList(txn_id_t txn_id);
 
-  std::vector<TupleRecord *> *SearchLogRecordList(txn_id_t txn_id);
+  bool ExistsTxnLogRecordList(txn_id_t txn_id);
 
  private:
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
   // Transient record for fast access to log records
-  std::map<txn_id_t, std::vector<TupleRecord *>> txn_log_table;
+  std::map<txn_id_t, std::vector<std::unique_ptr<TupleRecord>>> txn_log_table;
 };
 
 }  // namespace logging
