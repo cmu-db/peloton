@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_tests_util.h
 //
 // Identification: tests/executor/executor_tests_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ class Column;
 class Manager;
 }
 
-namespace concurrency{
+namespace concurrency {
 class Transaction;
 }
 
@@ -57,7 +57,7 @@ class ExecutorTestsUtil {
    * @brief Creates a basic tile group with allocated but not populated
    *        tuples.
    */
-  static storage::TileGroup *CreateTileGroup(
+  static std::shared_ptr<storage::TileGroup> CreateTileGroup(
       int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
   /** @brief Creates a basic table with allocated but not populated tuples */

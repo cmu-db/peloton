@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // subquery_expression.h
 //
 // Identification: src/backend/expression/subquery_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -33,7 +33,7 @@ class SubqueryExpression : public AbstractExpression {
   SubqueryExpression(ExpressionType subqueryType, int subqueryId,
                      const std::vector<int> &paramIdxs,
                      const std::vector<int> &otherParamIdxs,
-                     const std::vector<AbstractExpression *> *tveParams);
+                     const std::vector<AbstractExpression *>& tveParams);
 
   ~SubqueryExpression();
 
@@ -54,8 +54,6 @@ class SubqueryExpression : public AbstractExpression {
   // T.Is originate at the grandparent levels.
   std::vector<int> m_otherParamIdxs;
 
-  // The .Ist of the corresponding TVE for each parameter index
-  boost::scoped_ptr<const std::vector<AbstractExpression *>> m_tveParams;
 };
 
 }  // End expression namespace

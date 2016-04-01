@@ -1,22 +1,22 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// rpc_connection.h
+// tcp_connection.h
 //
-// Identification: /peloton/src/backend/networking/tcp_connection.h
+// Identification: src/backend/networking/tcp_connection.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/common/logger.h"
 #include "rpc_server.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "tcp_address.h"
+#include "backend/common/logger.h"
 
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -29,97 +29,137 @@
 namespace peloton {
 namespace networking {
 
-#define HEADERLEN  4    // the length should be equal with sizeof uint32_t
-#define OPCODELEN  8    // the length should be equal with sizeof uint64_t
+////////////////////////////////////////////////////////////////////////////////
+//                  message structure:
+// --Header:  message length (Type+Opcode+request),      uint32_t (4bytes)
+// --Type:    message type: REQUEST or RESPONSE          uint16_t (2bytes)
+// --Opcode:  std::hash(methodname)-->Opcode,            uint64_t (8bytes)
+// --Content: the serialization result of protobuf       Header-8-2
+//
+// TODO: We did not add checksum code in this version     ///////////////
 
+#define HEADERLEN 4  // the length should be equal with sizeof uint32_t
+#define OPCODELEN 8  // the length should be equal with sizeof uint64_t
+#define TYPELEN 2    // the length should be equal with sizeof uint16_t
+                     /*
+                      * Connection is thread-safe
+                      */
 class Connection {
+  typedef enum {
+    INIT,
+    CONNECTED,  // we probably do not need CONNECTED
+    SENDING,
+    RECVING
+  } ConnStatus;
 
-public:
+ public:
+  /*
+   * @brief A connection has its own evenbase.
+   * @param fd is the socket
+   *            If a connection is created by server, fd(socket) is passed by
+   * listener
+   *            If a connection is created by client, fd(socket) is -1.
+   *        arg is used to pass the rpc_server pointer
+   */
+  Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr);
+  ~Connection();
 
-    /*
-     * @brief A connection has its own evenbase.
-     * @param fd is the socket
-     *            If a connection is created by server, fd(socket) is passed by listener
-     *            If a connection is created by client, fd(socket) is -1.
-     *        arg is used to pass the rpc_server pointer
-     */
-    Connection(int fd, void* arg);
-    ~Connection();
+  static void ReadCb(struct bufferevent* bev, void* ctx);
+  static void EventCb(struct bufferevent* bev, short events, void* ctx);
+  static void* ProcessMessage(void* connection);
 
-    static void Dispatch(std::shared_ptr<Connection> conn);
+  static void BufferCb(struct evbuffer* buffer,
+                       const struct evbuffer_cb_info* info, void* arg);
 
-    static void ServerReadCb(struct bufferevent *bev, void *ctx);
-    static void ClientReadCb(struct bufferevent *bev, void *ctx);
-    static void ServerEventCb(struct bufferevent *bev, short events, void *ctx);
-    static void ClientEventCb(struct bufferevent *bev, short events, void *ctx);
+  RpcServer* GetRpcServer();
+  NetworkAddress& GetAddr();
 
-    RpcServer* GetRpcServer();
-//    RpcChannel* GetRpcClient();
+  /*
+   * set the connection status
+   */
+  void SetStatus(ConnStatus status);
 
-    /*
-     * @brief After a connection is created, you can use this function to connect to
-     *        any server with the given address
-     */
-    bool Connect(const NetworkAddress& addr);
+  /*
+   * get the connection status
+   */
+  ConnStatus GetStatus();
 
-    /*
-     * @brief a rpc will be closed by client after it recvs the response by server
-     *        close frees the socket event
-     */
-    void Close();
+  /*
+   * @brief After a connection is created, you can use this function to connect
+   * to
+   *        any server with the given address
+   */
+  bool Connect(const NetworkAddress& addr);
 
-    /*
-     * This is used by client to execute callback function
-     */
-    void SetMethodName(std::string name);
+  /*
+   * @brief a rpc will be closed by client after it recvs the response by server
+   *        close frees the socket event
+   */
+  void Close();
 
-    /*
-     * This is used by client to execute callback function
-     */
-    const char* GetMethodName();
+  /*
+   * This is used by client to execute callback function
+   */
+  void SetMethodName(std::string name);
 
-    // Get the readable length of the read buf
-    int GetReadBufferLen();
+  /*
+   * This is used by client to execute callback function
+   */
+  const char* GetMethodName();
 
-    /*
-     * Get the len data from read buf and then save them in the give buffer
-     * If the data in read buf are less than len, get all of the data
-     * Return the length of moved data
-     * Note: the len data are deleted from read buf after this operation
-     */
-    int GetReadData(char *buffer, int len);
+  /*
+   * Get the readable length of the read buf
+   */
+  int GetReadBufferLen();
 
-    /*
-     * copy data (len) from read buf into the given buffer,
-     * if the total data is less than len, then copy all of the data
-     * return the length of the copied data
-     * the data still exist in the read buf after this operation
-     */
-    int CopyReadBuffer(char *buffer, int len);
+  /*
+   * Get the len data from read buf and then save them in the give buffer
+   * If the data in read buf are less than len, get all of the data
+   * Return the length of moved data
+   * Note: the len data are deleted from read buf after this operation
+   */
+  int GetReadData(char* buffer, int len);
 
-    // Get the lengh a write buf
-    int GetWriteBufferLen();
+  /*
+   * copy data (len) from read buf into the given buffer,
+   * if the total data is less than len, then copy all of the data
+   * return the length of the copied data
+   * the data still exist in the read buf after this operation
+   */
+  int CopyReadBuffer(char* buffer, int len);
 
-    /*
-     * Add data to write buff,
-     * return true on success, false on failure.
-     */
-    bool AddToWriteBuffer(char *buffer, int len);
+  /*
+   * Get the lengh a write buf
+   */
+  int GetWriteBufferLen();
 
-    // Forward data in read buf into write buf
-    void MoveBufferData();
+  /*
+   * Add data to write buff,
+   * return true on success, false on failure.
+   */
+  bool AddToWriteBuffer(char* buffer, int len);
 
-private:
+  /*
+   * Forward data in read buf into write buf
+   */
+  void MoveBufferData();
 
-    int socket_;
-    bool close_;
+ private:
+  // addr is the other side address
+  NetworkAddress addr_;
+  bool close_;
 
-    RpcServer* rpc_server_;
+  ConnStatus status_;
 
-    bufferevent* bev_;
-    event_base* base_;
+  RpcServer* rpc_server_;
 
-    std::string method_name_;
+  struct bufferevent* bev_;
+  struct event_base* base_;
+
+  std::string method_name_;
+
+  // this can be used in buffer cb
+  // int total_send_;
 };
 
 }  // namespace networking

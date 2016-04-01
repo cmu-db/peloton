@@ -1,15 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * wbl_backend_logger.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wbl_backend_logger.cpp
- *
- *-------------------------------------------------------------------------
- */
-
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_backend_logger.cpp
+//
+// Identification: src/backend/logging/loggers/wbl_backend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// kvstore_key.h
+// abstract_kvstore_key.h
 //
-// Identification: src/backend/kvstore/kvstore_key.h
+// Identification: src/backend/raft/abstract_kvstore_key.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,16 +1,18 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// logger_workload.h
 //
-// Identification: benchmark/logger/workload.h
+// Identification: src/backend/benchmark/logger/logger_workload.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
+#include <memory>
 
 #include "backend/benchmark/logger/logger_configuration.h"
 

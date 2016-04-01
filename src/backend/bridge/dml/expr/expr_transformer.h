@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expr_transformer.h
 //
 // Identification: src/backend/bridge/dml/expr/expr_transformer.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,8 +39,6 @@ class ExprTransformer {
   static std::vector<std::unique_ptr<const expression::AbstractExpression>>
   TransformExprList(const ExprState *expr_state);
 
-  static bool CleanExprTree(expression::AbstractExpression *root);
-
  private:
   /*
    * This set of TransformYYY methods should transform an PG ExprState tree
@@ -50,9 +48,8 @@ class ExprTransformer {
 
   static expression::AbstractExpression *TransformConst(const ExprState *es);
   static expression::AbstractExpression *TransformOp(const ExprState *es);
-  static expression::AbstractExpression *TransformOp(const Expr *ex);
   static expression::AbstractExpression *TransformScalarArrayOp(
-      const ExprState *es);
+      const ExprState *es);  // added by michael for IN operator
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);
@@ -62,12 +59,8 @@ class ExprTransformer {
       const Expr *es);  // added by Michael for IN: where TITLE in (). Here
                         // TITLE is varchar(20)
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
-  static expression::AbstractExpression *TransformFunc(const Expr *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
-  static expression::AbstractExpression *TransformCaseExpr(
-      const ExprState *es);  // added by Heqing
-  static expression::AbstractExpression *TransformCoalesce(const ExprState *es);
-  static expression::AbstractExpression *TransformNullIf(const ExprState *es);
+
   static expression::AbstractExpression *TransformConst(const Expr *es);
   static expression::AbstractExpression *TransformVar(const Expr *es);
   static expression::AbstractExpression *TransformBool(const Expr *es);
@@ -79,9 +72,6 @@ class ExprTransformer {
   /* Utilities */
   static expression::AbstractExpression *ReMapPgFunc(Oid pg_func_id,
                                                      List *args);
-  // the content in args are different from above.
-  static expression::AbstractExpression *ReMapPgExprFunc(Oid pg_func_id,
-                                                         List *args);
 };
 
 }  // namespace bridge

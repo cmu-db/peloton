@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index_scan_test.cpp
 //
 // Identification: tests/executor/index_scan_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/index_scan_executor.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/value_factory.h"
 
 #include "executor/executor_tests_util.h"
@@ -69,7 +70,7 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -134,7 +135,7 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   planner::IndexScanPlan node(data_table.get(), predicate, column_ids,
                               index_scan_desc);
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

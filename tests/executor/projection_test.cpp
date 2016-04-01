@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // projection_test.cpp
 //
 // Identification: tests/executor/projection_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +23,7 @@
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -59,14 +60,13 @@ TEST_F(ProjectionTests, BasicTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -119,14 +119,13 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -187,14 +186,13 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -228,8 +226,9 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto const_val = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(0, 0);
-  expression::AbstractExpression *expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, tuple_value_expr, const_val);
+  expression::AbstractExpression *expr =
+      expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+                                                  tuple_value_expr, const_val);
 
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);

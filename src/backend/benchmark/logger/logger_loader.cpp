@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// loader.cpp
+// logger_loader.cpp
 //
-// Identification: benchmark/hyadapt/loader.cpp
+// Identification: src/backend/benchmark/logger/logger_loader.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,8 +23,6 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
-
-}  // namespace hyadapt
+namespace hyadapt {}  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton

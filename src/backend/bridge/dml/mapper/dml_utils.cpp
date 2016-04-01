@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // dml_utils.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/dml_utils.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -128,9 +128,7 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_ResultState:
-      // TODO: How to handle this ?
-      child_planstate =
-          PrepareResultState(reinterpret_cast<ResultState *>(planstate));
+      // TODO: Do we need to handle this ?
       break;
 
     case T_HashState:
@@ -139,7 +137,8 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_UniqueState: {
-      child_planstate = PrepareUniqueState(reinterpret_cast<UniqueState*>(planstate));
+      child_planstate =
+          PrepareUniqueState(reinterpret_cast<UniqueState *>(planstate));
     } break;
 
     default:
@@ -306,25 +305,25 @@ void DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
 ResultPlanState *DMLUtils::PrepareResultState(ResultState *result_plan_state) {
   ResultPlanState *info = (ResultPlanState *)palloc(sizeof(ResultPlanState));
   info->type = result_plan_state->ps.type;
+
   return info;
 }
 
-
-UniquePlanState *
-DMLUtils::PrepareUniqueState(UniqueState *unique_plan_state) {
-  UniquePlanState *info = (UniquePlanState*) palloc(sizeof(UniquePlanState));
+UniquePlanState *DMLUtils::PrepareUniqueState(UniqueState *unique_plan_state) {
+  UniquePlanState *info = (UniquePlanState *)palloc(sizeof(UniquePlanState));
   info->type = unique_plan_state->ps.type;
 
-//  // Copy target list
-//  info->targetlist = CopyExprStateList(unique_plan_state->ps.targetlist);
-//
-//  // Copy tuple desc
-//  auto tup_desc = unique_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
-//  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
-//
-//  // Construct projection info
-//  info->ps_ProjInfo = BuildProjectInfo(unique_plan_state->ps.ps_ProjInfo,
-//                                               tup_desc->natts);
+  //  // Copy target list
+  //  info->targetlist = CopyExprStateList(unique_plan_state->ps.targetlist);
+  //
+  //  // Copy tuple desc
+  //  auto tup_desc =
+  //  unique_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor;
+  //  info->tts_tupleDescriptor = CreateTupleDescCopy(tup_desc);
+  //
+  //  // Construct projection info
+  //  info->ps_ProjInfo = BuildProjectInfo(unique_plan_state->ps.ps_ProjInfo,
+  //                                               tup_desc->natts);
 
   return info;
 }
@@ -435,7 +434,7 @@ NestLoopPlanState *DMLUtils::PrepareNestLoopState(NestLoopState *nl_state) {
       (NestLoopPlanState *)palloc(sizeof(NestLoopPlanState));
 
   info->type = nl_state->js.ps.type;
-  info->nl = (NestLoop *) nl_state->js.ps.plan;
+  info->nl = (NestLoop *)nl_state->js.ps.plan;
 
   PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
                                nl_state->js);
@@ -463,9 +462,9 @@ HashJoinPlanState *DMLUtils::PrepareHashJoinState(HashJoinState *hj_state) {
   HashJoinPlanState *info =
       (HashJoinPlanState *)palloc(sizeof(HashJoinPlanState));
   info->type = hj_state->js.ps.type;
-  info->outer_hashkeys = hj_state->hj_OuterHashKeys; // for the final join
+  info->outer_hashkeys = hj_state->hj_OuterHashKeys;  // for the final join
 
-  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState*>(info),
+  PrepareAbstractJoinPlanState(static_cast<AbstractJoinPlanState *>(info),
                                hj_state->js);
 
   return info;
@@ -542,8 +541,9 @@ IndexScanPlanState *DMLUtils::PrepareIndexScanState(
 
   // Copy runtime scan keys
   info->iss_NumRuntimeKeys = iss_plan_state->iss_NumRuntimeKeys;
-  info->iss_RuntimeKeys = CopyRuntimeKeys(iss_plan_state->iss_RuntimeKeys,
-                                          iss_plan_state->iss_NumRuntimeKeys); // not copy scankey is it OK??
+  info->iss_RuntimeKeys = CopyRuntimeKeys(
+      iss_plan_state->iss_RuntimeKeys,
+      iss_plan_state->iss_NumRuntimeKeys);  // not copy scankey is it OK??
 
   info->iss_RuntimeContext = iss_plan_state->iss_RuntimeContext;
 
@@ -892,7 +892,8 @@ IndexRuntimeKeyInfo *CopyRuntimeKeys(IndexRuntimeKeyInfo *from,
     // NB: No need to copy scan_key?
     retval[key_itr].scan_key->sk_argument = from[key_itr].scan_key->sk_argument;
     retval[key_itr].scan_key->sk_attno = from[key_itr].scan_key->sk_attno;
-    retval[key_itr].scan_key->sk_collation = from[key_itr].scan_key->sk_collation;
+    retval[key_itr].scan_key->sk_collation =
+        from[key_itr].scan_key->sk_collation;
     retval[key_itr].scan_key->sk_flags = from[key_itr].scan_key->sk_flags;
     retval[key_itr].scan_key->sk_func = from[key_itr].scan_key->sk_func;
     retval[key_itr].scan_key->sk_strategy = from[key_itr].scan_key->sk_strategy;

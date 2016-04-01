@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // order_by_test.cpp
 //
 // Identification: tests/executor/order_by_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +25,7 @@
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -60,19 +61,10 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
   EXPECT_GT(sort_keys.size(), 0);
   EXPECT_GT(descend_flags.size(), 0);
 
-  // Verify:
-  // Lazy here: just print it out and see it by yourself.
+  // TODO: Verify
   for (auto &tile : result_tiles) {
-    for (oid_t tuple_id : *tile) {
-      std::cout << "<";
-      for (size_t sk = 0; sk < sort_keys.size(); sk++) {
-        std::cout << tile->GetValue(tuple_id, sort_keys[sk]) << ",";
-      }
-      std::cout << ">";
-    }
+    LOG_INFO("%s", tile->GetInfo().c_str());
   }
-
-  std::cout << std::endl;
 }
 
 TEST_F(OrderByTests, IntAscTest) {
@@ -99,14 +91,13 @@ TEST_F(OrderByTests, IntAscTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -149,14 +140,13 @@ TEST_F(OrderByTests, IntDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -199,14 +189,13 @@ TEST_F(OrderByTests, StringDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 
@@ -249,7 +238,7 @@ TEST_F(OrderByTests, IntAscStringDescTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -301,14 +290,13 @@ TEST_F(OrderByTests, StringDescIntAscTest) {
 
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 2, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 2, false,
                                    random, false);
   txn_manager.CommitTransaction();
 

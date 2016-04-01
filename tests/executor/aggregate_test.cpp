@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregate_test.cpp
 //
 // Identification: tests/executor/aggregate_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,6 +27,7 @@
 #include "backend/planner/abstract_plan.h"
 #include "backend/planner/aggregate_plan.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -47,15 +48,14 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   2 * tuple_count, false,
-                                   false, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, false, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -148,15 +148,14 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   2 * tuple_count, false,
-                                   false, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, false, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -181,8 +180,9 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumb(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::ExpressionUtil::TupleValueFactory(0, 1));
+  planner::AggregatePlan::AggTerm sumb(
+      EXPRESSION_TYPE_AGGREGATE_SUM,
+      expression::ExpressionUtil::TupleValueFactory(0, 1));
   agg_terms.push_back(sumb);
 
   // 4) Set up predicate (empty)
@@ -252,14 +252,14 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
 
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count, false,
-                                   false, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, false, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -284,10 +284,12 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumb(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::ExpressionUtil::TupleValueFactory(0, 1));
-  planner::AggregatePlan::AggTerm maxc(EXPRESSION_TYPE_AGGREGATE_MAX,
-                                       expression::ExpressionUtil::TupleValueFactory(0, 2));
+  planner::AggregatePlan::AggTerm sumb(
+      EXPRESSION_TYPE_AGGREGATE_SUM,
+      expression::ExpressionUtil::TupleValueFactory(0, 1));
+  planner::AggregatePlan::AggTerm maxc(
+      EXPRESSION_TYPE_AGGREGATE_MAX,
+      expression::ExpressionUtil::TupleValueFactory(0, 2));
   agg_terms.push_back(sumb);
   agg_terms.push_back(maxc);
 
@@ -360,14 +362,13 @@ TEST_F(AggregateTests, HashDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   2 * tuple_count, false,
-                                   true,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, true,
                                    true);  // let it be random
   txn_manager.CommitTransaction();
 
@@ -453,14 +454,13 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   2 * tuple_count, false,
-                                   true, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, true, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -485,8 +485,9 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumC(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::ExpressionUtil::TupleValueFactory(0, 2));
+  planner::AggregatePlan::AggTerm sumC(
+      EXPRESSION_TYPE_AGGREGATE_SUM,
+      expression::ExpressionUtil::TupleValueFactory(0, 2));
   agg_terms.push_back(sumC);
 
   // 4) Set up predicate (empty)
@@ -536,7 +537,6 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   /* FIXME This should pass */
   //  EXPECT_GE(3, result_tile->GetTupleCount());
-  //  std::cout << *result_tile;
 }
 
 TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
@@ -546,14 +546,14 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count, false,
-                                   true, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, true, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -578,11 +578,13 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm countB(EXPRESSION_TYPE_AGGREGATE_COUNT,
-                                         expression::ExpressionUtil::TupleValueFactory(0, 1),
-                                         false);  // Flag distinct
+  planner::AggregatePlan::AggTerm countB(
+      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      expression::ExpressionUtil::TupleValueFactory(0, 1),
+      false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::ExpressionUtil::TupleValueFactory(0, 1),
+      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      expression::ExpressionUtil::TupleValueFactory(0, 1),
       true);  // Flag distinct
   agg_terms.push_back(countB);
   agg_terms.push_back(countDistinctB);
@@ -655,15 +657,14 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   2 * tuple_count, false,
-                                   true, true);
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
+                                   false, true, true);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -688,14 +689,16 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  planner::AggregatePlan::AggTerm sumA(EXPRESSION_TYPE_AGGREGATE_SUM,
-                                       expression::ExpressionUtil::TupleValueFactory(0, 0),
-                                       false);
-  planner::AggregatePlan::AggTerm countB(EXPRESSION_TYPE_AGGREGATE_COUNT,
-                                         expression::ExpressionUtil::TupleValueFactory(0, 1),
-                                         false);  // Flag distinct
+  planner::AggregatePlan::AggTerm sumA(
+      EXPRESSION_TYPE_AGGREGATE_SUM,
+      expression::ExpressionUtil::TupleValueFactory(0, 0), false);
+  planner::AggregatePlan::AggTerm countB(
+      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      expression::ExpressionUtil::TupleValueFactory(0, 1),
+      false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT, expression::ExpressionUtil::TupleValueFactory(0, 1),
+      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      expression::ExpressionUtil::TupleValueFactory(0, 1),
       true);  // Flag distinct
   agg_terms.push_back(sumA);
   agg_terms.push_back(countB);

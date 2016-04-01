@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_unique.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_unique.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@ namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
-// mapper_unique
+// Mapper Unique
 //===--------------------------------------------------------------------===//
 
 /**
@@ -30,14 +30,13 @@ namespace bridge {
  */
 const planner::AbstractPlan *PlanTransformer::TransformUnique(
     const UniquePlanState *unique_plan_state) {
-
   LOG_INFO("Handle Unique");
 
   // get the underlying plan
-  AbstractPlanState *outer_plan_state = outerAbstractPlanState(unique_plan_state);
+  AbstractPlanState *outer_plan_state =
+      outerAbstractPlanState(unique_plan_state);
 
   return PlanTransformer::TransformPlan(outer_plan_state);
-
 }
 
 }  // namespace bridge

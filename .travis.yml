@@ -18,10 +18,11 @@ before_script:
     - sudo -H sh ./scripts/installation/packages.sh
 
 script:
+    # first, run validator
+    - python ./scripts/validators/validator.py
     # bootstrap
     - ./bootstrap
     - cd build
-    # build
-    - ../configure CXXFLAGS="-O0"
+    - ../configure CXXFLAGS="-O0" --enable-debug
     - make
     - make check

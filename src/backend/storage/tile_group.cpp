@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group.cpp
 //
 // Identification: src/backend/storage/tile_group.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -82,6 +82,10 @@ oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
   return tile_group_header->GetActiveTupleCount(txn_id);
 }
 
+oid_t TileGroup::GetActiveTupleCount() const {
+  return tile_group_header->GetActiveTupleCount();
+}
+
 //===--------------------------------------------------------------------===//
 // Operations
 //===--------------------------------------------------------------------===//
@@ -91,19 +95,17 @@ oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
-oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
-  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
+void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
+  // oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
-  if (tuple_slot_id == INVALID_OID) {
-    LOG_INFO("Failed to get next empty tuple slot within tile group.");
-    return INVALID_OID;
-  }
-
-  // tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id);
+  // if (tuple_slot_id == INVALID_OID) {
+  //   LOG_TRACE("Failed to get next empty tuple slot within tile group.");
+  //   return INVALID_OID;
+  // }
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -129,15 +131,69 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   }
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  // assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
+  // transaction_id);
+  // assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  // assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
-  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
-  tile_group_header->SetInsertCommit(tuple_slot_id, false);
-  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+  // tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+  // tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+  // tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  // tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  // tile_group_header->SetDeleteCommit(tuple_slot_id, false);
+}
+
+/**
+ * Grab next slot (thread-safe) and fill in the tuple
+ *
+ * Returns slot where inserted (INVALID_ID if not inserted)
+ */
+oid_t TileGroup::InsertTuple(const Tuple *tuple) {
+  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
+
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+            tile_group_id, tuple_slot_id, num_tuple_slots);
+
+  // No more slots
+  if (tuple_slot_id == INVALID_OID) {
+    LOG_WARN("Failed to get next empty tuple slot within tile group.");
+    return INVALID_OID;
+  }
+
+  oid_t tile_column_count;
+  oid_t column_itr = 0;
+
+  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+    const catalog::Schema &schema = tile_schemas[tile_itr];
+    tile_column_count = schema.GetColumnCount();
+
+    storage::Tile *tile = GetTile(tile_itr);
+    assert(tile);
+    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
+    assert(tile_tuple_location);
+
+    // NOTE:: Only a tuple wrapper
+    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+
+    for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
+         tile_column_itr++) {
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
+                          tile->GetPool());
+      column_itr++;
+    }
+  }
+
+  //  // Set MVCC info
+  //  assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
+  //  INVALID_TXN_ID);
+  //  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  //  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  //
+  //  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+  //  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+  //  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  //  tile_group_header->SetInsertCommit(tuple_slot_id, false);
+  //  tile_group_header->SetDeleteCommit(tuple_slot_id, false);
 
   return tuple_slot_id;
 }
@@ -186,75 +242,43 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetInsertCommit(tuple_slot_id, false);
   tile_group_header->SetDeleteCommit(tuple_slot_id, false);
-  tile_group_header->SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+  tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
   return tuple_slot_id;
 }
 
 // delete tuple at given slot if it is neither already locked nor deleted in
 // future.
-bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
-                            cid_t last_cid) {
-  // do a dirty delete
-  if (tile_group_header->LatchTupleSlot(tuple_slot_id, transaction_id)) {
-    if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id,
-                                       last_cid)) {
-      return true;
-    } else {
-      LOG_INFO("Delete failed: not deletable");
-      tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id);
-      return false;
-    }
-  } else if (tile_group_header->GetTransactionId(tuple_slot_id) ==
-             transaction_id) {
-    // is a own insert, is already latched by myself and is safe to set
-    LOG_INFO("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu",
-             tile_group_header->GetTransactionId(tuple_slot_id),
-             tile_group_header->GetBeginCommitId(tuple_slot_id),
-             tile_group_header->GetEndCommitId(tuple_slot_id));
-    assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-    assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
-    tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-    return true;
-  } else {
-    LOG_INFO(
-        "Delete failed: Latch failed and Ownership check failed: %lu != %lu",
-        tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
-    return false;
-  }
-}
-
-void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id,
-                                    txn_id_t transaction_id, cid_t commit_id) {
-  // set the begin commit id to persist insert
-  if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
-    tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
-  }
-}
-
-void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
-                                   cid_t commit_id) {
-  // set the end commit id to persist delete
-  if (tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id)) {
-    tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
-  }
-}
-/**
- * It is either a insert or a self-deleted insert
- */
-void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id) {
-  tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-
-  // undo insert (we don't reset MVCC info currently)
-  // TODO: can reclaim tuple here ?
-  // ReclaimTuple(tuple_slot_id);
-}
-
-void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id,
-                                  txn_id_t transaction_id) {
-  // undo deletion
-  tile_group_header->ReleaseTupleSlot(tuple_slot_id, transaction_id);
-}
+// bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+//                             cid_t last_cid) {
+//   // do a dirty delete
+//   if (tile_group_header->LockTupleSlot(tuple_slot_id, transaction_id)) {
+//     if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id,
+//                                        last_cid)) {
+//       return true;
+//     } else {
+//       LOG_TRACE("Delete failed: not deletable");
+//       tile_group_header->UnlockTupleSlot(tuple_slot_id, transaction_id);
+//       return false;
+//     }
+//   } else if (tile_group_header->GetTransactionId(tuple_slot_id) ==
+//              transaction_id) {
+//     // is a own insert, is already latched by myself and is safe to set
+//     LOG_TRACE("is this a own insert? txn_id = %lu, cbeg = %lu, cend = %lu",
+//              tile_group_header->GetTransactionId(tuple_slot_id),
+//              tile_group_header->GetBeginCommitId(tuple_slot_id),
+//              tile_group_header->GetEndCommitId(tuple_slot_id));
+//     assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+//     assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+//     tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+//     return true;
+//   } else {
+//     LOG_TRACE(
+//         "Delete failed: Latch failed and Ownership check failed: %lu != %lu",
+//         tile_group_header->GetTransactionId(tuple_slot_id), transaction_id);
+//     return false;
+//   }
+// }
 
 // Sets the tile id and column id w.r.t that tile corresponding to
 // the specified tile group column id.

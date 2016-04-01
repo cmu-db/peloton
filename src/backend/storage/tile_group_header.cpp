@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_header.cpp
 //
 // Identification: src/backend/storage/tile_group_header.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,14 +14,15 @@
 #include <iomanip>
 #include <sstream>
 
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/storage/storage_manager.h"
 #include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {
 
-TileGroupHeader::TileGroupHeader(BackendType backend_type, int tuple_count)
+TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
+                                 const int &tuple_count)
     : backend_type(backend_type),
       data(nullptr),
       num_tuple_slots(tuple_count),
@@ -43,8 +44,10 @@ TileGroupHeader::TileGroupHeader(BackendType backend_type, int tuple_count)
     SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     SetBeginCommitId(tuple_slot_id, MAX_CID);
     SetEndCommitId(tuple_slot_id, MAX_CID);
-    SetInsertCommit(tuple_slot_id, false);
-    SetDeleteCommit(tuple_slot_id, false);
+    SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+
+    SetInsertCommit(tuple_slot_id, false);  // unused
+    SetDeleteCommit(tuple_slot_id, false);  // unused
   }
 }
 
@@ -107,14 +110,12 @@ const std::string TileGroupHeader::GetInfo() const {
     else
       os << "X";
 
-    peloton::ItemPointer location =
-        GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location = GetNextItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
-
 
   return os.str();
 }
@@ -176,7 +177,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     else
       os << "X";
 
-    peloton::ItemPointer location = GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location = GetNextItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]";  //<<
 
@@ -194,19 +195,38 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
   os << "\t-----------------------------------------------------------\n";
 
-  std::cout << os.str().c_str();
+  LOG_TRACE("%s", os.str().c_str());
 }
 
-oid_t TileGroupHeader::GetActiveTupleCount(txn_id_t txn_id) {
+oid_t TileGroupHeader::GetActiveTupleCount(const txn_id_t &txn_id) {
   oid_t active_tuple_slots = 0;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  cid_t last_cid = txn_manager.GetLastCommitId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // FIXME: this is a bug
+  cid_t last_cid = txn_manager.GetNextCommitId();
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
     if (IsVisible(tuple_slot_id, txn_id, last_cid)) {
       active_tuple_slots++;
     }
   }
+
+  return active_tuple_slots;
+}
+
+oid_t TileGroupHeader::GetActiveTupleCount() {
+  oid_t active_tuple_slots = 0;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+       tuple_slot_id++) {
+    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
+    cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
+    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
+    if (txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid)) {
+      active_tuple_slots++;
+    }
+  }
+
   return active_tuple_slots;
 }
 

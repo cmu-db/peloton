@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expression_test.cpp
 //
 // Identification: tests/expression/expression_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -262,7 +262,7 @@ TEST_F(ExpressionTest, SimpleAddition) {
       ConvertToExpression(e));
 
   Value result = testexp->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*testexp);
+  LOG_INFO("%s", result.GetInfo().c_str());
 
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(result), 5LL);
 }
@@ -286,7 +286,7 @@ TEST_F(ExpressionTest, SimpleMultiplication) {
 
   std::unique_ptr<expression::AbstractExpression> e1(ConvertToExpression(e));
   Value r1 = e1->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*e1);
+  LOG_INFO("%s", r1.GetInfo().c_str());
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r1), 25LL);
 
   // (2 * 5) + 3
@@ -301,7 +301,7 @@ TEST_F(ExpressionTest, SimpleMultiplication) {
 
   std::unique_ptr<expression::AbstractExpression> e2(ConvertToExpression(e));
   Value r2 = e2->Evaluate(&junk, nullptr, nullptr);
-  std::cout << (*e2);
+  LOG_INFO("%s", r2.GetInfo().c_str());
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
 }
 
@@ -336,7 +336,7 @@ TEST_F(ExpressionTest, SimpleFilter) {
   tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
-  std::cout << (*equal);
+  LOG_INFO("%s", equal->GetInfo().c_str());
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
@@ -391,8 +391,7 @@ TEST_F(ExpressionTest, SimpleInFilter) {
   tuple->SetValue(0, ValueFactory::GetIntegerValue(20), nullptr);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45), nullptr);
 
-  std::cout << (*equal);
-
+  LOG_INFO("%s", equal->GetInfo().c_str());
   EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50), nullptr);
@@ -416,6 +415,8 @@ TEST_F(ExpressionTest, SimpleCase) {
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(1));
   expression::ConstantValueExpression *const_val_exp_2 =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(2));
+  expression::ConstantValueExpression *const_val_exp_3 =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(3));
 
   expression::ComparisonExpression<expression::CmpEq> *case_when_cond =
       new expression::ComparisonExpression<expression::CmpEq>(
@@ -425,12 +426,11 @@ TEST_F(ExpressionTest, SimpleCase) {
       new expression::OperatorCaseWhenExpression(
           VALUE_TYPE_INTEGER, case_when_cond, const_val_exp_2);
 
-
   std::vector<expression::AbstractExpression *> clauses;
   clauses.push_back(case_when_clause);
 
   expression::CaseExpression *case_expression = new expression::CaseExpression(
-      VALUE_TYPE_INTEGER, clauses, const_val_exp_2);
+      VALUE_TYPE_INTEGER, clauses, const_val_exp_3);
   // TUPLE
 
   std::vector<catalog::Column> columns;
@@ -450,7 +450,7 @@ TEST_F(ExpressionTest, SimpleCase) {
 
   Value result = case_expression->Evaluate(tuple, nullptr, nullptr);
 
-  // Test with A = 20, should get 100
+  // Test with A = 1, should get 2
   EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 2);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(2), nullptr);
@@ -458,8 +458,8 @@ TEST_F(ExpressionTest, SimpleCase) {
 
   result = case_expression->Evaluate(tuple, nullptr, nullptr);
 
-  // Test with A = 10, should get 0
-  EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 2);
+  // Test with A = 2, should get 3
+  EXPECT_EQ(ValuePeeker::PeekAsInteger(result), 3);
 
   delete case_expression;
   delete schema;

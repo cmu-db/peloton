@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// cache_test.cpp
+// thread_manager_test.cpp
 //
-// Identification: tests/common/cache_test.cpp
+// Identification: tests/common/thread_manager_test.cpp
 //
-// Copyright (c) 201CACHE_SIZE, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,23 +37,12 @@ TEST_F(ThreadManagerTests, BasicTest) {
 }
 */
 
-TEST_F(ThreadManagerTests, BasicTest) {
+TEST_F(ThreadManagerTests, BasicTest1) {
+  auto& thread_manager1 = ThreadManager::GetInstance();
+  auto& thread_manager2 = ThreadManager::GetInstance();
 
-  auto& server_thread_manager1 = ThreadManager::GetServerThreadPool();
-  auto& server_thread_manager2 = ThreadManager::GetServerThreadPool();
-
-  bool status = (&server_thread_manager1 == &server_thread_manager2);
+  bool status = (&thread_manager1 == &thread_manager2);
   EXPECT_EQ(status, true);
-
-  auto& client_thread_manager1 = ThreadManager::GetClientThreadPool();
-  auto& client_thread_manager2 = ThreadManager::GetClientThreadPool();
-
-  status = (&client_thread_manager1 == &client_thread_manager2);
-  EXPECT_EQ(status, true);
-
-  status = (&server_thread_manager1 == &client_thread_manager2);
-  EXPECT_EQ(status, false);
-
 }
 
 }  // End test namespace

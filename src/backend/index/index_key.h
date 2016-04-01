@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index_key.h
 //
 // Identification: src/backend/index/index_key.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -382,15 +382,18 @@ class IntsEqualityChecker {
  */
 template <std::size_t KeySize>
 struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
-  IntsHasher(catalog::Schema *key_schema) {}
+  IntsHasher(index::IndexMetadata *metadata)
+      : schema(metadata->GetKeySchema()) {}
 
   inline size_t operator()(IntsKey<KeySize> const &p) const {
     size_t seed = 0;
-    for (int ii = 0; ii < KeySize; ii++) {
+    for (size_t ii = 0; ii < KeySize; ii++) {
       boost::hash_combine(seed, p.data[ii]);
     }
     return seed;
   }
+
+  const catalog::Schema *schema;
 };
 
 /**
@@ -579,6 +582,20 @@ class TupleKey {
   // Pointer a persistent tuple in non-ephemeral case.
   char *key_tuple;
   const catalog::Schema *key_tuple_schema;
+};
+
+struct TupleKeyHasher {
+  /** Type information passed to the constuctor as it's not in the key itself */
+  TupleKeyHasher(index::IndexMetadata *metadata)
+      : schema(metadata->GetKeySchema()) {}
+
+  /** Generate a 64-bit number for the key value */
+  inline size_t operator()(const TupleKey &p) const {
+    storage::Tuple pTuple = p.GetTupleForComparison(p.key_tuple_schema);
+    return pTuple.HashCode();
+  }
+
+  const catalog::Schema *schema;
 };
 
 class TupleKeyComparator {

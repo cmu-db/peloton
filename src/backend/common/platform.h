@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // platform.h
 //
 // Identification: src/backend/common/platform.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,6 +28,8 @@ template <typename T>
 inline bool atomic_cas(T *object, T old_value, T new_value) {
   return __sync_bool_compare_and_swap(object, old_value, new_value);
 }
+
+#define COMPILER_MEMORY_FENCE asm volatile("" ::: "memory")
 
 //===--------------------------------------------------------------------===//
 // Reader/Writer lock
@@ -98,6 +100,8 @@ struct PelotonWriteLock {
 // Spinlock
 //===--------------------------------------------------------------------===//
 
+enum LockState : bool { Locked, Unlocked };
+
 class Spinlock {
  public:
   Spinlock() : spin_lock_state(Unlocked) {}
@@ -122,7 +126,7 @@ class Spinlock {
   }
 
  private:
-  typedef enum { Locked, Unlocked } LockState;
+  // typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/
