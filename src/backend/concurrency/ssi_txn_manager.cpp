@@ -129,7 +129,7 @@ bool SsiTxnManager::AcquireTuple(storage::TileGroup *tile_group,
                owner);
       } else {
         // Owner has commited and ownner commit after I start
-        if (end_cid > current_txn->GetBeginCommitId()) {
+        if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner)) {
           should_abort = true;
           LOG_INFO("abort in acquire");
           break;
