@@ -112,6 +112,15 @@ class TransactionManager {
     current_txn = nullptr;
   }
 
+  virtual txn_id_t GetOldestLiveTransaction(){
+    {
+      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
+      if(running_txns_list_.size() == 0)
+        return INVALID_TXN_ID;
+      return running_txns_list_.front();
+    }
+  }
+
   virtual Result CommitTransaction() = 0;
 
   virtual Result AbortTransaction() = 0;
