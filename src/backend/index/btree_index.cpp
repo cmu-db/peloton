@@ -33,13 +33,15 @@ template <typename KeyType, typename ValueType, class KeyComparator, class KeyEq
 bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::InsertEntry(
     const storage::Tuple *key, const ItemPointer location) {
   KeyType index_key;
+
   index_key.SetFromKey(key);
+  std::pair<KeyType, ValueType> entry = std::make_pair(index_key, location);
 
   {
     index_lock.WriteLock();
 
     // Insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(index_key, location));
+    container.insert(entry);
 
     index_lock.Unlock();
   }
@@ -94,26 +96,26 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   std::vector<ItemPointer> result;
   KeyType index_key;
 
+  // Check if we have leading (leftmost) column equality
+  // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
+  oid_t leading_column_id = 0;
+  auto key_column_ids_itr = std::find(
+      key_column_ids.begin(), key_column_ids.end(), leading_column_id);
+
+  // SPECIAL CASE : leading column id is one of the key column ids
+  // and is involved in a equality constraint
+  bool special_case = false;
+  if (key_column_ids_itr != key_column_ids.end()) {
+    auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+      special_case = true;
+    }
+  }
+
+  LOG_TRACE("Special case : %d ", special_case);
+
   {
     index_lock.ReadLock();
-
-    // Check if we have leading (leftmost) column equality
-    // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
-    oid_t leading_column_id = 0;
-    auto key_column_ids_itr = std::find(
-        key_column_ids.begin(), key_column_ids.end(), leading_column_id);
-
-    // SPECIAL CASE : leading column id is one of the key column ids
-    // and is involved in a equality constraint
-    bool special_case = false;
-    if (key_column_ids_itr != key_column_ids.end()) {
-      auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-        special_case = true;
-      }
-    }
-
-    LOG_TRACE("Special case : %d ", special_case);
 
     auto scan_begin_itr = container.begin();
     std::unique_ptr<storage::Tuple> start_key;
