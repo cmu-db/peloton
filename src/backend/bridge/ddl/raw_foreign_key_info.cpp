@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// raw_foreign_key_info.cpp
+//
+// Identification: src/backend/bridge/ddl/raw_foreign_key_info.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/bridge/ddl/raw_foreign_key_info.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"

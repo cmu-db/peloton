@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // pool.h
 //
 // Identification: src/backend/common/pool.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <climits>
 #include <string.h>
-
 #include <mutex>
 
 #include "backend/storage/storage_manager.h"

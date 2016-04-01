@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * logmanager.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logmanager.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_manager.h
+//
+// Identification: src/backend/logging/log_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

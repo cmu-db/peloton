@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// workload.cpp
+// ycsb_workload.cpp
 //
-// Identification: benchmark/ycsb/workload.cpp
+// Identification: benchmark/ycsb/ycsb_workload.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

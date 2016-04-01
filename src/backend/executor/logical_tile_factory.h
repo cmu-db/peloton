@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logical_tile_factory.h
 //
 // Identification: src/backend/executor/logical_tile_factory.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,12 +40,10 @@ class LogicalTileFactory {
       const std::vector<std::shared_ptr<storage::Tile>> &base_tile_refs);
 
   static LogicalTile *WrapTileGroup(
-      const std::shared_ptr<storage::TileGroup> &tile_group,
-      txn_id_t txn_id);
+      const std::shared_ptr<storage::TileGroup> &tile_group, txn_id_t txn_id);
 
-  static std::vector<LogicalTile *> WrapTileGroups(
-      const std::vector<ItemPointer> tuple_locations,
-      const std::vector<oid_t> column_ids, txn_id_t txn_id, cid_t commit_id);
+  static LogicalTile *WrapTileGroup(
+      const std::shared_ptr<storage::TileGroup> &tile_group);
 };
 
 }  // namespace executor

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // clusterer_test.cpp
 //
 // Identification: tests/brain/clusterer_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,26 +63,21 @@ TEST_F(ClustererTests, BasicTest) {
     clusterer.ProcessSample(sample);
   }
 
-  std::cout << clusterer;
+  LOG_INFO("%s", clusterer.GetInfo().c_str());
 
   auto partitioning1 = clusterer.GetPartitioning(2);
 
-  std::cout << "COLUMN "
-            << "\t"
-            << " TILE"
-            << "\n";
-  for (auto entry : partitioning1)
-    std::cout << entry.first << "\t" << entry.second.first << " : "
-              << entry.second.second << "\n";
+  LOG_INFO("COLUMN \t TILE");
+  for (auto entry : partitioning1) {
+    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first, entry.second.second);
+  }
 
   auto partitioning2 = clusterer.GetPartitioning(4);
-  std::cout << "COLUMN "
-            << "\t"
-            << " TILE"
-            << "\n";
-  for (auto entry : partitioning2)
-    std::cout << entry.first << "\t" << entry.second.first << " : "
-              << entry.second.second << "\n";
+  LOG_INFO("COLUMN \t TILE");
+  for (auto entry : partitioning2) {
+    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first, entry.second.second);
+  }
+
 }
 
 }  // End test namespace

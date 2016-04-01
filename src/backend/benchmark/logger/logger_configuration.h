@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.h
+// logger_configuration.h
 //
-// Identification: benchmark/logger/configuration.h
+// Identification: src/backend/benchmark/logger/logger_configuration.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

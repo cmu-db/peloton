@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // vector_expression.h
 //
 // Identification: src/backend/expression/vector_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -53,13 +53,6 @@ class VectorExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    for (auto argument : arguments) {
-      ExpressionType expression_type = argument->GetExpressionType();
-      int value_type = argument->GetValueType();
-      ConstantValueExpression *pcs = (ConstantValueExpression *)argument;
-      std::cout << pcs->DebugInfo("") << expression_type << value_type;
-    }
-
     std::vector<Value> in_values;
     for (auto argument : arguments) {
       auto in_value = argument->Evaluate(tuple1, tuple2, context);

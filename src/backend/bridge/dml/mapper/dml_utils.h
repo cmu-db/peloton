@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // dml_utils.h
 //
 // Identification: src/backend/bridge/dml/mapper/dml_utils.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -105,8 +105,7 @@ class DMLUtils {
       /* Find the operator___ in pg_amop */
       if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
                                       &strategy)) {
-        elog(ERROR, "operator %u is not a valid ordering operator",
-             orderingOp);
+        elog(ERROR, "operator %u is not a valid ordering operator", orderingOp);
       }
 
       bool reverse = (strategy == BTGreaterStrategyNumber);

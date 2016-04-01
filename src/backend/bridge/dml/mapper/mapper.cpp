@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -148,11 +148,6 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
           reinterpret_cast<const UniquePlanState *>(planstate));
       break;
 
-    case T_ResultState:
-      peloton_plan = PlanTransformer::TransformResult(
-          reinterpret_cast<const ResultPlanState *>(planstate));
-      break;
-
     default: {
       LOG_ERROR("PlanTransformer :: Unsupported Postgres Plan Tag: %u ",
                 nodeTag(planstate));
@@ -191,8 +186,9 @@ void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
 
   // Clean all children subtrees
   auto children = root->GetChildren();
-  for (auto child : children) {
+  for (auto &child : children) {
     CleanPlan(child);
+    child = nullptr;
   }
 
   // Clean the root

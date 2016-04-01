@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // bridge_test_helper.cpp
 //
 // Identification: src/backend/bridge/ddl/tests/bridge_test_helper.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -140,8 +140,8 @@ bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
  * @param _fk_column_names to be compared with foreign key's fk_column_names
  * @param fk_update_action foreign key update action to be compared with foreign
  * key's update action
- * @param fk_delete_action foreign key delete action to be compared with foreign
- * key's delete action
+ * @param fk_delete_action foreign key delete_action to be compared with foreign
+ * key's delete_action
  * @return the true if we pass all
  */
 bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,

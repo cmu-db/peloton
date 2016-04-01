@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // nested_loop_join_executor.cpp
 //
 // Identification: src/backend/executor/nested_loop_join_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -62,10 +62,6 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
-  const planner::NestedLoopJoinPlan &nl_plan_node =
-      GetPlanNode<planner::NestedLoopJoinPlan>();
-  const NestLoop *nl = nl_plan_node.GetNestLoop();
-
   // Loop until we have non-empty result tile or exit
   for (;;) {
     // Build outer join output when done
@@ -112,38 +108,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         left_result_itr_ = left_result_tiles_.size() - 1;
       }
     }
-
-    /*
-     * Go over every pair of tuples in left (outer plan)
-     * and pass the joinkey to the executor and inner plan (right)
-     */
-    if (nl != nullptr) {  // nl is supposed to be set but here is for the
-                          // original version
-      left_tile = left_result_tiles_.back().get();
-      for (auto left_tile_row_itr : *left_tile) {
-        expression::ContainerTuple<executor::LogicalTile> left_tuple(
-            left_tile, left_tile_row_itr);
-        ListCell *lc = nullptr;
-        foreach (lc, nl->nestParams) {
-          NestLoopParam *nlp = (NestLoopParam *)lfirst(lc);
-          // int			paramno = nlp->paramno;
-          // Var		   *paramval = nlp->paramval;
-
-          /*
-           * pass the joinkeys to executor params and set the flag = 1
-           */
-          Value value = left_tuple.GetValue(nlp->paramval->varattno - 1);
-          executor_context_->ClearParams();
-          executor_context_->SetParams(value);
-          executor_context_->SetParamsExec(1);
-          children_[1]->ClearContext();
-          children_[1]->SetContext(value, 1);
-
-          /* Flag parameter value as changed */
-          // innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
-        }  // end foreach
-      }    // end for
-    }      // end if
 
     if (advance_right_child == true || right_result_tiles_.empty()) {
       // return if right tile is empty

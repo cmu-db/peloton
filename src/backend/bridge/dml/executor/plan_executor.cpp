@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // plan_executor.cpp
 //
 // Identification: src/backend/bridge/dml/executor/plan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/executors.h"
 #include "backend/executor/executor_context.h"
 #include "backend/storage/tuple_iterator.h"
@@ -55,7 +55,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   bool single_statement_txn = false;
   List *slots = NULL;
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = peloton::concurrency::current_txn;
   // This happens for single statement queries in PG
   if (txn == nullptr) {
@@ -67,12 +67,12 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  auto executor_context = BuildExecutorContext(param_list, txn);
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      BuildExecutorContext(param_list, txn));
 
   // Build the executor tree
-
-  executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, executor_context);
+  std::unique_ptr<executor::AbstractExecutor> executor_tree(
+      BuildExecutorTree(nullptr, plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -134,23 +134,20 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        txn_manager.CommitTransaction();
+        p_status.m_result = txn_manager.CommitTransaction();
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-        txn_manager.AbortTransaction();
+        p_status.m_result = txn_manager.AbortTransaction();
     }
   }
+
   // clean up executor tree
-  CleanExecutorTree(executor_tree);
+  CleanExecutorTree(executor_tree.get());
 
-  // Clean executor context
-  delete executor_context;
-
-  p_status.m_result = txn->GetResult();
   return p_status;
 }
 
@@ -297,9 +294,6 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   for (auto child : children) {
     CleanExecutorTree(child);
   }
-
-  // Cleanup self
-  delete root;
 }
 
 }  // namespace bridge

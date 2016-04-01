@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * format_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl/format_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// format_transformer.cpp
+//
+// Identification: src/backend/bridge/ddl/format_transformer.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/ddl/format_transformer.h"
 #include "backend/common/logger.h"
@@ -44,6 +44,7 @@ PelotonValueFormat FormatTransformer::TransformValueFormat(
       peloton_column_length = 65535;
       break;
     case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
     case VALUE_TYPE_TIMESTAMP:
       peloton_column_length = 8;

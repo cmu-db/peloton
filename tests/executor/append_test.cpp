@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // append_test.cpp
 //
 // Identification: tests/executor/append_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/append_executor.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -78,13 +79,12 @@ TEST_F(AppendTests, AppendTwoTest) {
       .WillOnce(Return(false));
 
   size_t tile_size = 10;
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 5, false,
                                    false, false);
   txn_manager.CommitTransaction();
 

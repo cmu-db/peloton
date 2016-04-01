@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// logger_configuration.cpp
 //
-// Identification: benchmark/logger/configuration.cpp
+// Identification: src/backend/benchmark/logger/logger_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,10 @@
 #include <algorithm>
 #include <sys/stat.h>
 
+#undef NDEBUG
+
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 
@@ -32,10 +35,8 @@ void Usage(FILE* out) {
           "   -w --wait-timeout      :  Wait timeout (us) \n"
           "   -h --help              :  Print help message \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transactions      :  # of transactions \n"
-          "   -c --column_count      :  # of columns \n"
+          "   -t --transaction-count :  # of transactions \n"
           "   -u --write_ratio       :  Fraction of updates \n"
-          "   -b --backend-count     :  Backend count \n"
   );
 }
 
@@ -45,56 +46,43 @@ static struct option opts[] = {
     {"experiment-type", optional_argument, NULL, 'e'},
     {"wait-timeout", optional_argument, NULL, 'w'},
     {"scale-factor", optional_argument, NULL, 'k'},
-    {"transactions", optional_argument, NULL, 't'},
-    {"column_count", optional_argument, NULL, 'c'},
+    {"transaction_count", optional_argument, NULL, 't'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {NULL, 0, NULL, 0}};
 
-static void ValidateLoggingType(
-    const configuration& state) {
-  std::cout << std::setw(20) << std::left << "logging_type "
-      << " : ";
 
-  std::cout << LoggingTypeToString(state.logging_type) << std::endl;
+static void ValidateLoggingType(const configuration& state) {
+  LOG_INFO("Invalid logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
 }
 
-static void ValidateDataFileSize(
-    const configuration& state) {
+static void ValidateDataFileSize(const configuration& state) {
   if (state.data_file_size <= 0) {
-    std::cout << "Invalid pmem_file_size :: " << state.data_file_size
-        << std::endl;
+    LOG_ERROR("Invalid data_file_size :: %lu", state.data_file_size);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "data_file_size "
-      << " : " << state.data_file_size << std::endl;
+  LOG_INFO("data_file_size :: %lu", state.data_file_size);
 }
 
-static void ValidateExperiment(
-    const configuration& state) {
+static void ValidateExperiment(const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
-    std::cout << "Invalid experiment_type :: " << state.experiment_type
-        << std::endl;
+    LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type "
-      << " : " << state.experiment_type << std::endl;
+  LOG_INFO("experiment_type :: %d", state.experiment_type);
 }
 
-static void ValidateWaitTimeout(
-    const configuration& state) {
+static void ValidateWaitTimeout(const configuration& state) {
   if (state.wait_timeout < 0) {
-    std::cout << "Invalid wait_timeout :: " << state.wait_timeout << std::endl;
+    LOG_ERROR("Invalid wait_timeout :: %lu", state.wait_timeout);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "wait_timeout "
-      << " : " << state.wait_timeout << std::endl;
+  LOG_INFO("wait_timeout :: %lu", state.wait_timeout);
 }
 
-static void ValidateLogFileDir(
-    configuration& state) {
+static void ValidateLogFileDir(configuration& state) {
   struct stat data_stat;
 
   // Assign log file dir based on logging type
@@ -124,18 +112,17 @@ static void ValidateLogFileDir(
       int status = stat(TMP_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = TMP_DIR;
-      }
-      else {
-        throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+      } else {
+        throw Exception("Could not find temp directory : " +
+                        std::string(TMP_DIR));
       }
     } break;
   }
 
-  std::cout << std::setw(20) << std::left << "log_file_dir "
-      << " : " << state.log_file_dir << std::endl;
+  LOG_INFO("log_file_dir :: %s", state.log_file_dir.c_str());
 }
 
-void ParseArguments(int argc, char* argv[], configuration &state) {
+void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
   state.logging_type = LOGGING_TYPE_DRAM_NVM;
 
@@ -192,12 +179,11 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
 
       case 'h':
         Usage(stderr);
-        ycsb::Usage(stderr);
-        exit(EXIT_FAILURE);
         break;
 
       default:
-        break;
+        LOG_ERROR("Unknown option: -%c-", c);
+        Usage(stderr);
     }
   }
 

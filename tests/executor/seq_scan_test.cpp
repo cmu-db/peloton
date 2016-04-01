@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // seq_scan_test.cpp
 //
 // Identification: tests/executor/seq_scan_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,6 +22,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
@@ -138,8 +139,9 @@ expression::AbstractExpression *CreatePredicate(
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
-                            : expression::ExpressionUtil::TupleValueFactory(0, 3);
+    tuple_value_expr =
+        even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
+             : expression::ExpressionUtil::TupleValueFactory(0, 3);
 
     // Second, create constant value expression.
     Value constant_value =
@@ -153,12 +155,13 @@ expression::AbstractExpression *CreatePredicate(
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
-        expression::ExpressionUtil::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL,
-                                      tuple_value_expr, constant_value_expr);
+        expression::ExpressionUtil::ComparisonFactory(
+            EXPRESSION_TYPE_COMPARE_EQUAL, tuple_value_expr,
+            constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
-    predicate = expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
-                                               predicate, equality_expr);
+    predicate = expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_OR, predicate, equality_expr);
   }
 
   return predicate;
@@ -249,7 +252,7 @@ TEST_F(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
                             column_ids);
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -275,7 +278,7 @@ TEST_F(SeqScanTests, NonLeafNodePredicateTest) {
   std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
   // Set up executor and its child.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

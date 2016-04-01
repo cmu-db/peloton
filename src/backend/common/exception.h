@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // exception.h
 //
 // Identification: src/backend/common/exception.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <cxxabi.h>
 #include <signal.h>
+#include <memory>
 
 namespace peloton {
 
@@ -135,12 +136,11 @@ class Exception : public std::runtime_error {
     }
 
     /// resolve addresses into strings containing "filename(function+address)",
-    /// this array must be free()-ed
-    char **symbol_list = backtrace_symbols(addrlist, addrlen);
+    char** symbol_list = backtrace_symbols(addrlist, addrlen);
 
     /// allocate string which will be filled with the demangled function name
     size_t func_name_size = 1024;
-    char *func_name = (char *)malloc(func_name_size);
+    std::unique_ptr<char> func_name(new char[func_name_size]);
 
     /// iterate over the returned symbol lines. skip the first, it is the
     /// address of this function.
@@ -169,11 +169,11 @@ class Exception : public std::runtime_error {
         /// mangled name is now in [begin_name, begin_offset) and caller
         /// offset in [begin_offset, end_offset). now apply  __cxa_demangle():
         int status;
-        char *ret = abi::__cxa_demangle(begin_name, func_name, &func_name_size,
+        char *ret = abi::__cxa_demangle(begin_name, func_name.get(), &func_name_size,
                                         &status);
         if (status == 0) {
-          func_name = ret;  // use possibly realloc()-ed string
-          ::fprintf(out, "  %s : %s+%s\n", symbol_list[i], func_name,
+          func_name.reset(ret);  // use possibly realloc()-ed string
+          ::fprintf(out, "  %s : %s+%s\n", symbol_list[i], func_name.get(),
                     begin_offset);
         } else {
           /// demangling failed. Output function name as a C function with
@@ -187,8 +187,6 @@ class Exception : public std::runtime_error {
       }
     }
 
-    free(func_name);
-    free(symbol_list);
   }
 
  private:

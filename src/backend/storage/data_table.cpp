@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // data_table.cpp
 //
 // Identification: src/backend/storage/data_table.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,6 +26,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -42,13 +43,13 @@ bool peloton_fsm;
 namespace peloton {
 namespace storage {
 
-bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-                          const concurrency::Transaction *transaction);
+// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
+//                           const concurrency::Transaction *transaction);
 
-DataTable::DataTable(catalog::Schema *schema, std::string table_name,
-                     oid_t database_oid, oid_t table_oid,
-                     size_t tuples_per_tilegroup, bool own_schema,
-                     bool adapt_table)
+DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
+                     const oid_t &database_oid, const oid_t &table_oid,
+                     const size_t &tuples_per_tilegroup, const bool own_schema,
+                     const bool adapt_table)
     : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
       tuples_per_tilegroup(tuples_per_tilegroup),
       adapt_table(adapt_table) {
@@ -87,27 +88,32 @@ DataTable::~DataTable() {
 /**
  * Check if the locations contains at least one visible entry to the transaction
  */
-bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-                          const concurrency::Transaction *transaction) {
-  auto &manager = catalog::Manager::GetInstance();
+// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
+//                           const concurrency::Transaction *transaction
+//                           __attribute__((unused))) {
+//   auto &manager = catalog::Manager::GetInstance();
 
-  for (auto loc : locations) {
-    oid_t tile_group_id = loc.block;
-    oid_t tuple_offset = loc.offset;
+//   for (auto loc : locations) {
+//     oid_t tile_group_id = loc.block;
+//     oid_t tuple_offset = loc.offset;
 
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto header = tile_group->GetHeader();
+//     auto tile_group = manager.GetTileGroup(tile_group_id);
+//     auto header = tile_group->GetHeader();
 
-    auto transaction_id = transaction->GetTransactionId();
-    auto last_commit_id = transaction->GetLastCommitId();
-    bool visible =
-        header->IsVisible(tuple_offset, transaction_id, last_commit_id);
+//     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
+//     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
+//     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
+//     auto &txn_manager =
+//     concurrency::TransactionManagerFactory::GetInstance();
 
-    if (visible) return true;
-  }
+//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
+//     tuple_end_cid);
 
-  return false;
-}
+//     if (visible) return true;
+//   }
+
+//   return false;
+// }
 
 //===--------------------------------------------------------------------===//
 // TUPLE HELPER OPERATIONS
@@ -137,23 +143,20 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
                               std::string(tuple->GetInfo()));
     return false;
   }
-
   return true;
 }
 
-ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple) {
+ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
+                                    bool check_constraint) {
   assert(tuple);
-
-  if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
+  if (check_constraint == true && CheckConstraints(tuple) == false) {
+    return INVALID_ITEMPOINTER;
+  }
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
-  auto transaction_id = transaction->GetTransactionId();
-
-  LOG_TRACE("DataTable :: transaction_id %lu \n", transaction_id);
 
   while (tuple_slot == INVALID_OID) {
     // First, figure out last tile group
@@ -167,7 +170,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
 
-    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    tuple_slot = tile_group->InsertTuple(tuple);
     tile_group_id = tile_group->GetTileGroupId();
 
     if (tuple_slot == INVALID_OID) {
@@ -176,8 +179,8 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
     }
   }
 
-  LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
-           tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group offset: %lu, tile group id: %lu, address: %p",
+            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -188,20 +191,46 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-
-ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple) {
+ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
+  ItemPointer location = GetTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+
+  IncreaseNumberOfTuplesBy(1);
+  return location;
+}
+
+ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(tuple, true);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+
+  IncreaseNumberOfTuplesBy(1);
+  return location;
+}
+
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(tuple);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
-  if (InsertInIndexes(transaction, tuple, location) == false) {
+  if (InsertInIndexes(tuple, location) == false) {
     LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
@@ -223,8 +252,8 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
-                                const storage::Tuple *tuple,
+// TODO: this function MUST be rewritten!!! --Yingjun
+bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   int index_count = GetIndexCount();
 
@@ -240,19 +269,19 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        auto locations = index->ScanKey(key.get());
-        auto exist_visible = ContainsVisibleEntry(locations, transaction);
-        if (exist_visible) {
-          LOG_WARN("A visible index entry exists.");
-          return false;
-        }
+        // auto locations = index->ScanKey(key.get());
+        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        // if (exist_visible) {
+        //   LOG_WARN("A visible index entry exists.");
+        //   return false;
+        // }
       } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
         break;
     }
-    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   // (B) Insert into index
@@ -285,30 +314,31 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
  * NB: location.block should be the tile_group's \b ID, not \b offset.
  * @return True on success, false on failure.
  */
-bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
-                            ItemPointer location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+// bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
+//                             ItemPointer location) {
+//   oid_t tile_group_id = location.block;
+//   oid_t tuple_id = location.offset;
 
-  auto tile_group = GetTileGroupById(tile_group_id);
-  txn_id_t transaction_id = transaction->GetTransactionId();
-  cid_t last_cid = transaction->GetLastCommitId();
+//   auto tile_group = GetTileGroupById(tile_group_id);
+//   txn_id_t transaction_id = transaction->GetTransactionId();
+//   cid_t last_cid = transaction->GetBeginCommitId();
 
-  // Delete slot in underlying tile group
-  auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
-  if (status == false) {
-    LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
-             tile_group_id, transaction_id);
-    return false;
-  }
+//   // Delete slot in underlying tile group
+//   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
+//   if (status == false) {
+//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu
+//     ",
+//              tile_group_id, transaction_id);
+//     return false;
+//   }
 
-  LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
-            location.offset);
-  // Decrease the table's number of tuples by 1
-  DecreaseNumberOfTuplesBy(1);
+//   LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
+//             location.offset);
+//   // Decrease the table's number of tuples by 1
+//   DecreaseNumberOfTuplesBy(1);
 
-  return true;
-}
+//   return true;
+// }
 
 //===--------------------------------------------------------------------===//
 // STATS
@@ -318,7 +348,7 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
-void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
+void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
   number_of_tuples += amount;
   dirty = true;
 }
@@ -327,7 +357,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
  * @brief Decrease the number of tuples in this table
  * @param amount amount to decrease
  */
-void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
+void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
   number_of_tuples -= amount;
   dirty = true;
 }
@@ -336,7 +366,7 @@ void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
  * @brief Set the number of tuples in this table
  * @param num_tuples number of tuples
  */
-void DataTable::SetNumberOfTuples(const float num_tuples) {
+void DataTable::SetNumberOfTuples(const float &num_tuples) {
   number_of_tuples = num_tuples;
   dirty = true;
 }
@@ -479,7 +509,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-oid_t DataTable::AddTileGroupWithOid(oid_t tile_group_id) {
+oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
   assert(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
@@ -530,14 +560,14 @@ size_t DataTable::GetTileGroupCount() const {
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
-    oid_t tile_group_offset) const {
+    const oid_t &tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
   auto tile_group_id = tile_groups[tile_group_offset];
   return GetTileGroupById(tile_group_id);
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
-    oid_t tile_group_id) const {
+    const oid_t &tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
   return manager.GetTileGroup(tile_group_id);
 }
@@ -590,14 +620,14 @@ void DataTable::AddIndex(index::Index *index) {
   }
 }
 
-index::Index *DataTable::GetIndexWithOid(const oid_t index_oid) const {
+index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
   for (auto index : indexes)
     if (index->GetOid() == index_oid) return index;
 
   return nullptr;
 }
 
-void DataTable::DropIndexWithOid(const oid_t index_id) {
+void DataTable::DropIndexWithOid(const oid_t &index_id) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -613,7 +643,7 @@ void DataTable::DropIndexWithOid(const oid_t index_id) {
   }
 }
 
-index::Index *DataTable::GetIndex(const oid_t index_offset) const {
+index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
   assert(index_offset < indexes.size());
   auto index = indexes.at(index_offset);
   return index;
@@ -641,13 +671,13 @@ void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   }
 }
 
-catalog::ForeignKey *DataTable::GetForeignKey(const oid_t key_offset) const {
+catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
   catalog::ForeignKey *key = nullptr;
   key = foreign_keys.at(key_offset);
   return key;
 }
 
-void DataTable::DropForeignKey(const oid_t key_offset) {
+void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
     assert(key_offset < foreign_keys.size());
@@ -732,12 +762,11 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   *new_header = *header;
 }
 
-storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_offset,
-                                                  double theta) {
+storage::TileGroup *DataTable::TransformTileGroup(
+    const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu ",
-              tile_group_offset);
+    LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
     return nullptr;
   }
 
@@ -833,8 +862,8 @@ void DataTable::UpdateDefaultPartition() {
 // UTILS
 //===--------------------------------------------------------------------===//
 
-column_map_type DataTable::GetStaticColumnMap(std::string table_name,
-                                              oid_t column_count) {
+column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
+                                              const oid_t &column_count) {
   column_map_type column_map;
 
   // HYADAPT

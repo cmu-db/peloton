@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // limit_test.cpp
 //
 // Identification: tests/executor/limit_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +25,7 @@
 #include "backend/executor/limit_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -80,13 +81,12 @@ TEST_F(LimitTests, NonLeafLimitOffsetTest) {
       .WillOnce(Return(true));  // even no need to call the child for 3rd time
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 
@@ -125,7 +125,7 @@ TEST_F(LimitTests, NonLeafSkipAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
@@ -169,13 +169,12 @@ TEST_F(LimitTests, NonLeafReturnAllTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 
@@ -214,14 +213,13 @@ TEST_F(LimitTests, NonLeafHugeLimitTest) {
       .WillOnce(Return(false));
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 3, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 3, false,
                                    false, false);
   txn_manager.CommitTransaction();
 

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // expression_util.h
 //
 // Identification: src/backend/expression/expression_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,7 +32,7 @@ class ExpressionUtil {
   static AbstractExpression *ExpressionFactory(
       PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
       AbstractExpression *lc, AbstractExpression *rc,
-      const std::vector<AbstractExpression *> *arguments);
+      const std::vector<AbstractExpression *>& arguments);
 
   static AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                                ExpressionType et, ValueType vt,
@@ -91,7 +91,7 @@ class ExpressionUtil {
   // Implemented in functionexpression.cpp because function expression
   // handling.Is a system unto itself.
   static AbstractExpression *FunctionFactory(
-      int functionId, const std::vector<AbstractExpression *> *arguments);
+      int functionId, const std::vector<AbstractExpression *>& arguments);
 
   static AbstractExpression *CastFactory(ValueType vt, AbstractExpression *lc);
 
@@ -100,7 +100,7 @@ class ExpressionUtil {
       AbstractExpression *child = nullptr);
 
   static AbstractExpression *VectorFactory(
-      ValueType vt, const std::vector<AbstractExpression *> *args);
+      ValueType vt, const std::vector<AbstractExpression *>& args);
   static AbstractExpression *ParameterValueFactory(int idx);
   static AbstractExpression *ParameterValueFactory(PlannerDomValue obj,
                                                    ExpressionType et,
@@ -127,16 +127,16 @@ class ExpressionUtil {
 
   static AbstractExpression *SubqueryFactory(
       ExpressionType subqueryType, PlannerDomValue obj,
-      const std::vector<AbstractExpression *> *args);
+      const std::vector<AbstractExpression *>& rgs);
 
   static AbstractExpression *CaseExprFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& clauses,
+      ValueType vt, const std::vector<AbstractExpression *> &clauses,
       AbstractExpression *default_result);
   static AbstractExpression *CoalesceFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& values);
+      ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *NullIfFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& values);
+      ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *CaseWhenFactory(ValueType vt,
                                              AbstractExpression *lc,

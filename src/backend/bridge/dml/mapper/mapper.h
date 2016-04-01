@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper.h
 //
 // Identification: src/backend/bridge/dml/mapper/mapper.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -164,9 +164,6 @@ class PlanTransformer {
   static const planner::AbstractPlan *TransformHash(
       const HashPlanState *plan_state);
 
-  static const planner::AbstractPlan *TransformResult(
-      const ResultPlanState *plan_state);
-
   static PelotonJoinType TransformJoinType(const JoinType type);
 
   //===--------------------------------------------------------------------===//
@@ -204,7 +201,7 @@ class PlanTransformer {
       const expression::AbstractExpression *expression);
 
   static const std::vector<oid_t> BuildColumnListFromExpStateList(
-		  List* expr_state_list);
+      List *expr_state_list);
 
   static const planner::ProjectInfo *BuildProjectInfoFromTLSkipJunk(
       List *targetLis);

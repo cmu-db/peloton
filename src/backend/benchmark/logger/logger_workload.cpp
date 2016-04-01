@@ -1,20 +1,25 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.cpp
+// logger_workload.cpp
 //
-// Identification: benchmark/logger/workload.cpp
+// Identification: src/backend/benchmark/logger/logger_workload.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <thread>
 #include <string>
 #include <getopt.h>
 #include <sys/stat.h>
+
+#undef NDEBUG
+
+#include "backend/bridge/ddl/ddl_database.h"
+#include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/common/value_factory.h"
 
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
@@ -55,28 +60,30 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.logging_type << " " << state.backend_count << " "
-			<< state.wait_timeout << " :: ";
-	std::cout << value << "\n";
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %d %lu :: %lf",
+           state.logging_type,
+           state.backend_count,
+           state.wait_timeout,
+           value);
 
-	auto &storage_manager = storage::StorageManager::GetInstance();
-	auto& log_manager = logging::LogManager::GetInstance();
-	auto frontend_logger = log_manager.GetFrontendLogger();
-	auto fsync_count = 0;
-	if(frontend_logger != nullptr){
-		fsync_count = frontend_logger->GetFsyncCount();
-	}
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  auto& log_manager = logging::LogManager::GetInstance();
+  auto frontend_logger = log_manager.GetFrontendLogger();
+  size_t fsync_count = 0;
+  if (frontend_logger != nullptr) {
+    fsync_count = frontend_logger->GetFsyncCount();
+  }
 
-	std::cout << "fsync count : " << fsync_count << " ";
-	std::cout << "clflush count : " << storage_manager.GetClflushCount() << " ";
-	std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
+  LOG_INFO("fsync count : %lu", fsync_count);
+  LOG_INFO("clflush count : %lu", storage_manager.GetClflushCount());
+  LOG_INFO("msync count : %lu", storage_manager.GetMsyncCount());
 
-	out << state.logging_type << " ";
-	out << state.backend_count << " ";
-	out << state.wait_timeout << " ";
-	out << value << "\n";
-	out.flush();
+  out << state.logging_type << " ";
+  out << state.backend_count << " ";
+  out << state.wait_timeout << " ";
+  out << value << "\n";
+  out.flush();
 }
 
 std::string GetFilePath(std::string directory_path, std::string file_name) {
@@ -87,9 +94,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 
 	file_path += file_name;
 
-	// std::cout << "File Path :: " << file_path << "\n";
-
-	return file_path;
+  return file_path;
 }
 
 /**
@@ -118,9 +123,6 @@ bool PrepareLogFile(std::string file_name) {
 		BuildLog();
 		return true;
 	}
-
-	// TODO:
-	std::cout << "Log path :: " << file_path << "\n";
 
 	// set log file and logging type
 	log_manager.SetLogFileName(file_path);
@@ -157,8 +159,8 @@ bool PrepareLogFile(std::string file_name) {
 void ResetSystem() {
 	// XXX Initialize oid since we assume that we restart the system
 
-	auto& txn_manager = concurrency::TransactionManager::GetInstance();
-	txn_manager.ResetStates();
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.ResetStates();
 }
 
 /**
@@ -212,7 +214,6 @@ void DoRecovery(std::string file_name) {
 	} else {
 		LOG_ERROR("Failed to terminate logging thread");
 	}
-
 }
 
 //===--------------------------------------------------------------------===//

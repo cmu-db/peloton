@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// materialization_test.cpp
+// tile_group_layout_test.cpp
 //
-// Identification: tests/executor/materialization_test.cpp
+// Identification: tests/executor/tile_group_layout_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,6 +37,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
@@ -118,7 +119,7 @@ void ExecuteTileGroupTest() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
@@ -133,10 +134,10 @@ void ExecuteTileGroupTest() {
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    txn->RecordInsert(tuple_slot_id);
+    txn_manager.PerformInsert(tuple_slot_id.block, tuple_slot_id.offset);
   }
 
   txn_manager.CommitTransaction();

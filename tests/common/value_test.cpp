@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // value_test.cpp
 //
 // Identification: tests/common/value_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -48,9 +48,9 @@ TEST_F(ValueTest, CloneString) {
 
   ASSERT_TRUE(v1 == v2);
   ASSERT_TRUE(ValuePeeker::PeekObjectLengthWithoutNull(v1) ==
-              ValuePeeker::PeekObjectLengthWithoutNull(v2));
+      ValuePeeker::PeekObjectLengthWithoutNull(v2));
   ASSERT_FALSE(ValuePeeker::PeekObjectValue(v1) ==
-               ValuePeeker::PeekObjectValue(v2));
+      ValuePeeker::PeekObjectValue(v2));
 }
 
 TEST_F(ValueTest, DeserializeDecimal) {
@@ -108,10 +108,10 @@ TEST_F(ValueTest, DeserializeDecimal) {
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
   ASSERT_EQ(value, TTInt(
-                       "-9999999999"  // 10 digits
-                       "9999999999"   // 20 digits
-                       "9999999999"   // 30 digits
-                       "99999999"));
+      "-9999999999"  // 10 digits
+      "9999999999"   // 20 digits
+      "9999999999"   // 30 digits
+      "99999999"));
   ASSERT_FALSE(strcmp(str.c_str(),
                       "-9999999999"  // 10 digits
                       "9999999999"   // 20 digits
@@ -128,10 +128,10 @@ TEST_F(ValueTest, DeserializeDecimal) {
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
   ASSERT_EQ(value, TTInt(
-                       "9999999999"  // 10 digits
-                       "9999999999"  // 20 digits
-                       "9999999999"  // 30 digits
-                       "99999999"));
+      "9999999999"  // 10 digits
+      "9999999999"  // 20 digits
+      "9999999999"  // 30 digits
+      "99999999"));
   ASSERT_FALSE(strcmp(str.c_str(),
                       "9999999999"   // 10 digits
                       "9999999999"   // 20 digits
@@ -240,7 +240,7 @@ TEST_F(ValueTest, TestCastToBigInt) {
   bool caught = false;
   try {
     Value stringCastToBigInt = ValueFactory::CastAsBigInt(stringValue);
-    std::cout << stringCastToBigInt << std::endl;
+    LOG_INFO("%s", stringCastToBigInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -256,7 +256,7 @@ TEST_F(ValueTest, TestCastToBigInt) {
   caught = false;
   try {
     Value doubleCastToBigInt = ValueFactory::CastAsBigInt(doubleOutOfRangeH);
-    std::cout << doubleCastToBigInt << std::endl;
+    LOG_INFO("%s", doubleCastToBigInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -265,7 +265,7 @@ TEST_F(ValueTest, TestCastToBigInt) {
   caught = false;
   try {
     Value doubleCastToBigInt = ValueFactory::CastAsBigInt(doubleOutOfRangeL);
-    std::cout << doubleCastToBigInt << std::endl;
+    LOG_INFO("%s", doubleCastToBigInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -298,7 +298,7 @@ TEST_F(ValueTest, TestCastToInteger) {
   bool caught = false;
   try {
     Value stringCast = ValueFactory::CastAsInteger(stringValue);
-    std::cout << stringCast << std::endl;
+    LOG_INFO("%s", stringCast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -314,7 +314,7 @@ TEST_F(ValueTest, TestCastToInteger) {
   caught = false;
   try {
     Value doubleCastToInteger = ValueFactory::CastAsInteger(doubleOutOfRangeH);
-    std::cout << doubleCastToInteger << std::endl;
+    LOG_INFO("%s", doubleCastToInteger.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -323,7 +323,7 @@ TEST_F(ValueTest, TestCastToInteger) {
   caught = false;
   try {
     Value doubleCastToInteger = ValueFactory::CastAsInteger(doubleOutOfRangeL);
-    std::cout << doubleCastToInteger << std::endl;
+    LOG_INFO("%s", doubleCastToInteger.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -335,7 +335,7 @@ TEST_F(ValueTest, TestCastToInteger) {
   caught = false;
   try {
     Value bigIntCastToInteger = ValueFactory::CastAsInteger(bigIntOutOfRangeH);
-    std::cout << bigIntCastToInteger << std::endl;
+    LOG_INFO("%s", bigIntCastToInteger.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -344,7 +344,7 @@ TEST_F(ValueTest, TestCastToInteger) {
   caught = false;
   try {
     Value bigIntCastToInteger = ValueFactory::CastAsInteger(bigIntOutOfRangeL);
-    std::cout << bigIntCastToInteger << std::endl;
+    LOG_INFO("%s", bigIntCastToInteger.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -377,7 +377,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   bool caught = false;
   try {
     Value stringCast = ValueFactory::CastAsSmallInt(stringValue);
-    std::cout << stringCast << std::endl;
+    LOG_INFO("%s", stringCast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -394,7 +394,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value doubleCastToSmallInt =
         ValueFactory::CastAsSmallInt(doubleOutOfRangeH);
-    std::cout << doubleCastToSmallInt << std::endl;
+    LOG_INFO("%s", doubleCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -404,7 +404,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value doubleCastToSmallInt =
         ValueFactory::CastAsSmallInt(doubleOutOfRangeL);
-    std::cout << doubleCastToSmallInt << std::endl;
+    LOG_INFO("%s", doubleCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -417,7 +417,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value bigIntCastToSmallInt =
         ValueFactory::CastAsSmallInt(bigIntOutOfRangeH);
-    std::cout << bigIntCastToSmallInt << std::endl;
+    LOG_INFO("%s", bigIntCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -427,7 +427,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value bigIntCastToSmallInt =
         ValueFactory::CastAsSmallInt(bigIntOutOfRangeL);
-    std::cout << bigIntCastToSmallInt << std::endl;
+    LOG_INFO("%s", bigIntCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -440,7 +440,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value integerCastToSmallInt =
         ValueFactory::CastAsSmallInt(integerOutOfRangeH);
-    std::cout << integerCastToSmallInt << std::endl;
+    LOG_INFO("%s", integerCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -450,7 +450,7 @@ TEST_F(ValueTest, TestCastToSmallInt) {
   try {
     Value integerCastToSmallInt =
         ValueFactory::CastAsSmallInt(integerOutOfRangeL);
-    std::cout << integerCastToSmallInt << std::endl;
+    LOG_INFO("%s", integerCastToSmallInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -483,7 +483,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   bool caught = false;
   try {
     Value stringCast = ValueFactory::CastAsTinyInt(stringValue);
-    std::cout << stringCast << std::endl;
+    LOG_INFO("%s", stringCast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -500,7 +500,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   caught = false;
   try {
     Value doubleCastToTinyInt = ValueFactory::CastAsTinyInt(doubleOutOfRangeH);
-    std::cout << doubleCastToTinyInt << std::endl;
+    LOG_INFO("%s", doubleCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -509,7 +509,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   caught = false;
   try {
     Value doubleCastToTinyInt = ValueFactory::CastAsTinyInt(doubleOutOfRangeL);
-    std::cout << doubleCastToTinyInt << std::endl;
+    LOG_INFO("%s", doubleCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -521,7 +521,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   caught = false;
   try {
     Value bigIntCastToTinyInt = ValueFactory::CastAsTinyInt(bigIntOutOfRangeH);
-    std::cout << bigIntCastToTinyInt << std::endl;
+    LOG_INFO("%s", bigIntCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -530,7 +530,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   caught = false;
   try {
     Value bigIntCastToTinyInt = ValueFactory::CastAsTinyInt(bigIntOutOfRangeL);
-    std::cout << bigIntCastToTinyInt << std::endl;
+    LOG_INFO("%s", bigIntCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -543,7 +543,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   try {
     Value integerCastToTinyInt =
         ValueFactory::CastAsTinyInt(integerOutOfRangeH);
-    std::cout << integerCastToTinyInt << std::endl;
+    LOG_INFO("%s", integerCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -553,7 +553,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   try {
     Value integerCastToTinyInt =
         ValueFactory::CastAsTinyInt(integerOutOfRangeL);
-    std::cout << integerCastToTinyInt << std::endl;
+    LOG_INFO("%s", integerCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -566,7 +566,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   try {
     Value smallIntCastToTinyInt =
         ValueFactory::CastAsTinyInt(smallIntOutOfRangeH);
-    std::cout << smallIntCastToTinyInt << std::endl;
+    LOG_INFO("%s", smallIntCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -576,7 +576,7 @@ TEST_F(ValueTest, TestCastToTinyInt) {
   try {
     Value smallIntCastToTinyInt =
         ValueFactory::CastAsTinyInt(smallIntOutOfRangeL);
-    std::cout << smallIntCastToTinyInt << std::endl;
+    LOG_INFO("%s", smallIntCastToTinyInt.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -615,7 +615,7 @@ TEST_F(ValueTest, TestCastToDouble) {
   bool caught = false;
   try {
     Value decimalCast = ValueFactory::CastAsDouble(decimalValue);
-    std::cout << decimalCast << std::endl;
+    LOG_INFO("%s", decimalCast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -625,7 +625,7 @@ TEST_F(ValueTest, TestCastToDouble) {
   caught = false;
   try {
     Value stringCast = ValueFactory::CastAsDouble(stringValue);
-    std::cout << stringCast << std::endl;
+    LOG_INFO("%s", stringCast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -642,7 +642,8 @@ TEST_F(ValueTest, TestCastToString) {
   bool caught = false;
   try {
     Value cast = ValueFactory::CastAsString(tinyInt);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
+
   } catch (...) {
     caught = true;
   }
@@ -651,7 +652,8 @@ TEST_F(ValueTest, TestCastToString) {
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(smallInt);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
+
   } catch (...) {
     caught = true;
   }
@@ -660,7 +662,8 @@ TEST_F(ValueTest, TestCastToString) {
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(integer);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
+
   } catch (...) {
     caught = true;
   }
@@ -669,7 +672,8 @@ TEST_F(ValueTest, TestCastToString) {
   caught = false;
   try {
     Value cast = ValueFactory::CastAsString(bigInt);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
+
   } catch (...) {
     caught = true;
   }
@@ -697,7 +701,7 @@ TEST_F(ValueTest, TestCastToDecimal) {
   bool caught = false;
   try {
     Value cast = ValueFactory::CastAsDecimal(doubleValue);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -707,7 +711,7 @@ TEST_F(ValueTest, TestCastToDecimal) {
   caught = false;
   try {
     Value cast = ValueFactory::CastAsDecimal(stringValue);
-    std::cout << cast << std::endl;
+    LOG_INFO("%s", cast.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -723,7 +727,7 @@ TEST_F(ValueTest, TestCastToDecimal) {
   caught = false;
   try {
     Value doubleCastToDecimal = ValueFactory::CastAsDecimal(doubleOutOfRangeH);
-    std::cout << doubleCastToDecimal << std::endl;
+    LOG_INFO("%s", doubleCastToDecimal.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -732,7 +736,7 @@ TEST_F(ValueTest, TestCastToDecimal) {
   caught = false;
   try {
     Value doubleCastToDecimal = ValueFactory::CastAsDecimal(doubleOutOfRangeL);
-    std::cout << doubleCastToDecimal << std::endl;
+    LOG_INFO("%s", doubleCastToDecimal.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -747,7 +751,7 @@ TEST_F(ValueTest, TestBigIntOpAddOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpAdd(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -758,7 +762,7 @@ TEST_F(ValueTest, TestBigIntOpAddOverflow) {
   caught = false;
   try {
     Value result = lhs.OpAdd(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -768,7 +772,7 @@ TEST_F(ValueTest, TestBigIntOpAddOverflow) {
   lhs = ValueFactory::GetBigIntValue(1);
   rhs = ValueFactory::GetBigIntValue(4);
   Value result = lhs.OpAdd(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 // Subtraction can only overflow BigInt since they are all cast to BigInt before
@@ -779,7 +783,7 @@ TEST_F(ValueTest, TestBigIntOpSubtractOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpSubtract(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -790,7 +794,7 @@ TEST_F(ValueTest, TestBigIntOpSubtractOverflow) {
   caught = false;
   try {
     Value result = lhs.OpSubtract(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -800,7 +804,7 @@ TEST_F(ValueTest, TestBigIntOpSubtractOverflow) {
   lhs = ValueFactory::GetBigIntValue(1);
   rhs = ValueFactory::GetBigIntValue(4);
   Value result = lhs.OpSubtract(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 // Multiplication can only overflow BigInt since they are all cast to BigInt
@@ -811,7 +815,7 @@ TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -822,7 +826,7 @@ TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -833,7 +837,7 @@ TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -844,7 +848,7 @@ TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -854,7 +858,7 @@ TEST_F(ValueTest, TestBigIntOpMultiplyOverflow) {
   lhs = ValueFactory::GetBigIntValue(1);
   rhs = ValueFactory::GetBigIntValue(4);
   Value result = lhs.OpMultiply(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 TEST_F(ValueTest, TestDoubleOpAddOverflow) {
@@ -864,7 +868,7 @@ TEST_F(ValueTest, TestDoubleOpAddOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpAdd(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -878,7 +882,7 @@ TEST_F(ValueTest, TestDoubleOpAddOverflow) {
   caught = false;
   try {
     Value result = lhs.OpAdd(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -888,7 +892,7 @@ TEST_F(ValueTest, TestDoubleOpAddOverflow) {
   lhs = ValueFactory::GetDoubleValue(1);
   rhs = ValueFactory::GetDoubleValue(4);
   Value result = lhs.OpAdd(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 TEST_F(ValueTest, TestDoubleOpSubtractOverflow) {
@@ -899,7 +903,7 @@ TEST_F(ValueTest, TestDoubleOpSubtractOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpSubtract(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -912,7 +916,7 @@ TEST_F(ValueTest, TestDoubleOpSubtractOverflow) {
   caught = false;
   try {
     Value result = lhs.OpSubtract(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -922,7 +926,7 @@ TEST_F(ValueTest, TestDoubleOpSubtractOverflow) {
   lhs = ValueFactory::GetDoubleValue(1.23);
   rhs = ValueFactory::GetDoubleValue(4.2345346);
   Value result = lhs.OpSubtract(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 TEST_F(ValueTest, TestDoubleOpMultiplyOverflow) {
@@ -932,7 +936,7 @@ TEST_F(ValueTest, TestDoubleOpMultiplyOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -945,7 +949,7 @@ TEST_F(ValueTest, TestDoubleOpMultiplyOverflow) {
   caught = false;
   try {
     Value result = lhs.OpMultiply(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -955,7 +959,7 @@ TEST_F(ValueTest, TestDoubleOpMultiplyOverflow) {
   lhs = ValueFactory::GetDoubleValue(1.23);
   rhs = ValueFactory::GetDoubleValue(4.2345346);
   Value result = lhs.OpMultiply(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 TEST_F(ValueTest, TestDoubleOpDivideOverflow) {
@@ -965,7 +969,7 @@ TEST_F(ValueTest, TestDoubleOpDivideOverflow) {
   bool caught = false;
   try {
     Value result = lhs.OpDivide(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -978,7 +982,7 @@ TEST_F(ValueTest, TestDoubleOpDivideOverflow) {
   caught = false;
   try {
     Value result = lhs.OpDivide(rhs);
-    std::cout << result << std::endl;
+    LOG_INFO("%s", result.GetInfo().c_str());
   } catch (...) {
     caught = true;
   }
@@ -988,7 +992,7 @@ TEST_F(ValueTest, TestDoubleOpDivideOverflow) {
   lhs = ValueFactory::GetDoubleValue(1.23);
   rhs = ValueFactory::GetDoubleValue(4.2345346);
   Value result = lhs.OpDivide(rhs);
-  std::cout << result << std::endl;
+  LOG_INFO("%s", result.GetInfo().c_str());
 }
 
 TEST_F(ValueTest, TestOpIncrementOverflow) {
@@ -1464,10 +1468,6 @@ TEST_F(ValueTest, DecimalProducts) {
   lhs = ValueFactory::GetDecimalValueFromString("2.001");
   product = rhs.OpMultiply(lhs);
   ans = ValueFactory::GetDecimalValueFromString("437762.99433333111");
-  //    cout << "\nlhs " << lhs.debug() << endl;
-  //    cout << "rhs " << rhs.debug() << endl;
-  //    cout << "answer " << ans.debug() << endl;
-  //    cout << "sum    " << sum.debug() << endl;
 
   // can't produce the answer as a double to compare directly
   ASSERT_EQ(VALUE_TYPE_DECIMAL, ValuePeeker::PeekValueType(product));

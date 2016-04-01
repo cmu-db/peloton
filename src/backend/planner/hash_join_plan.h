@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// hash_join_node.h
+// hash_join_plan.h
 //
-// Identification: src/backend/planner/hash_join_node.h
+// Identification: src/backend/planner/hash_join_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
