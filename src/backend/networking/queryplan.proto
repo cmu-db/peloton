@@ -1,41 +1,24 @@
 package peloton.networking;
 
-// -----------------------------------
-// Query plan
-// -----------------------------------
 message AbstractPlan {
     // A plan node can have multiple children
     repeated AbstractPlan children = 1;
+    // associated with children
     optional bool include_children = 2;
-
+    // the parent node
     optional AbstractPlan parent = 3;
-}
-
-message AbstractScan {
-    required AbstractPlan base = 1;
-  
-    // Columns from tile group to be added to logical tile output
-    repeated uint64 column_ids = 2;
-    optional bool include_column_ids = 3;
-    
-    // for test
-    required int32 itest = 4;
+    // only for test
+    required int32 test_number = 4;
 }
 
 message SeqScanPlan {
+    // the base abstract plan
     required AbstractScan base = 1;
-
-    // for test
-    required int32 itest = 2;
+    // only for test
+    required int32 test_number = 2;
 }
-
 
 message QueryPlanRequest {
     required string type = 1;
-    optional AbstractScan scan_plan = 2;
-    optional SeqScanPlan seqscan_plan = 3;
+    optional SeqScanPlan seqscan_plan = 2;
 }
-
-// -----------------------------------
-// Query response
-// -----------------------------------
