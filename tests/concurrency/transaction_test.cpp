@@ -23,8 +23,8 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_OCC,
-                                                  CONCURRENCY_TYPE_2PL};
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_SSI};
+                                                  // CONCURRENCY_TYPE_2PL};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
