@@ -3,10 +3,7 @@ package peloton.networking;
 // -----------------------------------
 // Query plan
 // -----------------------------------
-
-// a query plan is tree
 message AbstractPlan {
-
     // A plan node can have multiple children
     repeated AbstractPlan children = 1;
     optional bool include_children = 2;
@@ -16,13 +13,8 @@ message AbstractPlan {
 
 message AbstractScan {
     required AbstractPlan base = 1;
-    
-    // Pointer to table to scan from--storage::DataTable *target_table_ = nullptr;
-
-    //Selection predicate--std::unique_ptr<expression::AbstractExpression> predicate_;
-
+  
     // Columns from tile group to be added to logical tile output
-    // we use uint64 to represent oid_t: std::vector<oid_t> column_ids_;
     repeated uint64 column_ids = 2;
     optional bool include_column_ids = 3;
     
@@ -32,18 +24,15 @@ message AbstractScan {
 
 message SeqScanPlan {
     required AbstractScan base = 1;
-    
+
     // for test
     required int32 itest = 2;
 }
 
 
 message QueryPlanRequest {
-
     required string type = 1;
-    
     optional AbstractScan scan_plan = 2;
-    
     optional SeqScanPlan seqscan_plan = 3;
 }
 

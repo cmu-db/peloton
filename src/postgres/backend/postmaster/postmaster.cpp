@@ -582,23 +582,7 @@ void TestSend() {
 //            request.set_sender_site(i);
 //            request.set_last_transaction_id(i*10);
 
-            peloton::networking::AbstractPlan abstract_plan;
-            abstract_plan.set_include_children(false);
-
-            peloton::networking::AbstractScan abstract_scan;
-            abstract_scan.set_allocated_base(&abstract_plan);
-            abstract_scan.set_itest(100);
-
-            peloton::networking::SeqScanPlan seq_plan;
-            seq_plan.set_allocated_base(&abstract_scan);
-            seq_plan.set_itest(200);
-
-            peloton::networking::QueryPlanRequest request;
-            request.set_type("Scan");
-            request.set_allocated_scan_plan(&abstract_scan);
-            request.set_allocated_seqscan_plan(&seq_plan);
-
-            pclient->QueryPlan(&request, NULL);
+//            pclient->QueryPlan(&request, NULL);
         }
 
     } catch (std::exception& e) {
@@ -1310,8 +1294,8 @@ void PostmasterMain(int argc, char *argv[]) {
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
   // comment this to shutdown rpc test
-  std::thread testsend(TestSend);
-  testsend.detach();
+//  std::thread testsend(TestSend);
+//  testsend.detach();
 
   status = ServerLoop();
 
