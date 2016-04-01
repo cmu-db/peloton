@@ -23,6 +23,8 @@
 namespace peloton {
 namespace concurrency {
 
+thread_local SpecTxnContext spec_txn_context;
+
 SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
   static SpecRowoTxnManager txn_manager;
   return txn_manager;
@@ -36,19 +38,23 @@ SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
 // then it is possible that we obtain two versions.
 // in this case, we rely on validation to abort this transaction.
 // CONSIDER: any optimization??
-bool SpecRowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                             const cid_t &tuple_begin_cid,
-                                             const cid_t &tuple_end_cid) {
+bool SpecRowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
+                                   const oid_t &tuple_id) {
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  txn_id_t txn_begin_cid = current_txn->GetBeginCommitId();
+
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
   }
-  auto txn_begin_cid = current_txn->GetBeginCommitId();
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
+    // TODO: fix me
     if (tuple_end_cid != INVALID_CID) {
       // a transaction will immediately write ts to the version.
       assert(tuple_begin_cid == txn_begin_cid);
@@ -72,25 +78,24 @@ bool SpecRowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-bool SpecRowoTxnManager::IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id){
-  auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
+bool SpecRowoTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id){
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
-// will only be performed by deletes and updates.
-bool SpecRowoTxnManager::IsAccessable(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+// will be invoked only by deletes and updates.
+bool SpecRowoTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool SpecRowoTxnManager::AcquireTuple(storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+// will be invoked only by deletes and updates.
+bool SpecRowoTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(physical_tuple_id, txn_id) == false){
+  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false){
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
@@ -105,18 +110,10 @@ bool SpecRowoTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tu
   auto current_txn_id = current_txn->GetTransactionId();
   // if the tuple is owned by other transaction, then register dependency.
   if (tuple_txn_id != INITIAL_TXN_ID && tuple_txn_id != INVALID_TXN_ID && tuple_txn_id != current_txn_id) {
-    RegisterDependency(tuple_txn_id);
-    // // if this dependency has not been registered before.
-    // if (current_txn->CheckDependency(tuple_txn_id) == true) {
-    //   // it is possible that at the same time point, the dependent txn has committed.
-    //   // if registration succeeded.
-    //   if (RegisterDependency(tuple_txn_id, current_txn_id) == true) {
-    //     // record this dependency locally.
-    //     current_txn->RecordDependency(tuple_txn_id);
-    //   }
-    //   // else, the transaction has been committed (or aborted).
-    //   // actually, we can now validate whether this speculative read succeeds.
-    // }
+    RegisterRetType ret_type = RegisterDependency(tuple_txn_id);
+    if (ret_type == REGISTER_RET_TYPE_NOT_FOUND) {
+      // actually, we can now validate whether this speculative read succeeds.
+    }
   }
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
@@ -140,6 +137,29 @@ bool SpecRowoTxnManager::PerformInsert(const oid_t &tile_group_id,
   // no need to set next item pointer.
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
+}
+
+void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
+
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  //tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  //tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+  
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 // at any time point, we must guarantee at least one version of a tuple is visible.
@@ -170,6 +190,7 @@ bool SpecRowoTxnManager::PerformUpdate(
   // before linking the new version to the old one,
   // we must guarantee the txn_id and begin_cid has been set. 
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   COMPILER_MEMORY_FENCE;
 
@@ -179,6 +200,27 @@ bool SpecRowoTxnManager::PerformUpdate(
 
   current_txn->RecordUpdate(tile_group_id, tuple_id);
   return true;
+}
+
+void SpecRowoTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
+
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  // Set MVCC info
+  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
+  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 // the logic is the same as PerformUpdate.
@@ -209,6 +251,7 @@ bool SpecRowoTxnManager::PerformDelete(
   COMPILER_MEMORY_FENCE;
   
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   COMPILER_MEMORY_FENCE;
 
@@ -218,7 +261,7 @@ bool SpecRowoTxnManager::PerformDelete(
   return true;
 }
 
-void SpecRowoTxnManager::SetDeleteVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpecRowoTxnManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -238,50 +281,6 @@ void SpecRowoTxnManager::SetDeleteVisibility(const oid_t &tile_group_id, const o
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void SpecRowoTxnManager::SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  // Set MVCC info
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  //tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  //tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-  
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
 Result SpecRowoTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
@@ -289,19 +288,11 @@ Result SpecRowoTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // a simple solution: we do not start validation until the all the dependencies have been cleared.
-  // TODO: optimize it!
-  int commit_ret = 0;
-  while (1){
-    commit_ret = IsCommittable();
-    if (commit_ret != 0) {
-      break;
-    }
+  // we do not start validation until the all the dependencies have been cleared.
+  // TODO: optimize it??
+  if (IsCommittable() == false) {
+    AbortTransaction();
   }
-  if (commit_ret == -1) {
-    return AbortTransaction();
-  }
-  assert(commit_ret == 1);
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
