@@ -577,18 +577,21 @@ void TestSend() {
         // it is not necessary to use smart point here
         auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
 
-        for (int i = 1; i < 10001; i++) {
-            peloton::networking::HeartbeatRequest request;
-            request.set_sender_site(i);
-            request.set_last_transaction_id(i*10);
+        for (int i = 1; i < 2; i++) {
+//            peloton::networking::HeartbeatRequest request;
+//            request.set_sender_site(i);
+//            request.set_last_transaction_id(i*10);
 
-            // it is not necessary to use smart point here
-            //auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_INTER);
+            peloton::networking::AbstractPlan abstract_plan;
+            abstract_plan.set_include_children(false);
+            abstract_plan.set_type("Scan");
 
-            //peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
-            //client.Heartbeat(&request, &response);
+            peloton::networking::AbstractScan request;
+            request.set_allocated_base(&abstract_plan);
+            request.set_include_column_ids(false);
+            request.set_itest(111);
 
-            pclient->Heartbeat(&request, NULL);
+            pclient->QueryPlan(&request, NULL);
         }
 
     } catch (std::exception& e) {
@@ -1300,8 +1303,8 @@ void PostmasterMain(int argc, char *argv[]) {
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
   // comment this to shutdown rpc test
-//  std::thread testsend(TestSend);
-//  testsend.detach();
+  std::thread testsend(TestSend);
+  testsend.detach();
 
   status = ServerLoop();
 
