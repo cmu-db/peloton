@@ -45,20 +45,20 @@ class TransactionManager {
   virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header,
                          const oid_t &tuple_id) = 0;
 
-  virtual bool IsOwner(const storage::TileGroup * const tile_group,
+  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(const storage::TileGroup * const tile_group,
+  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id) = 0;
+
+  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+                            const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   virtual bool PerformRead(const oid_t &tile_group_id,
                            const oid_t &tuple_id) = 0;
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location) = 0;
-
-  virtual bool AcquireTuple(storage::TileGroup *tile_group,
-                            const oid_t &physical_tuple_id) = 0;
 
   virtual bool PerformInsert(const oid_t &tile_group_id,
                              const oid_t &tuple_id) = 0;
@@ -69,10 +69,10 @@ class TransactionManager {
   virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
-  virtual void SetDeleteVisibility(const oid_t &tile_group_id,
+  virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
-  virtual void SetUpdateVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   void SetTransactionResult(const Result result) {

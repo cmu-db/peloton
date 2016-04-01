@@ -94,8 +94,8 @@
 //  return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 //}
 //
-//bool SsiTxnManager::AcquireTuple(
-//    storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
+//bool SsiTxnManager::AcquireLock(
+//    storage::TileGroup *tile_group, const oid_t &tuple_id) {
 //  auto tile_group_header = tile_group->GetHeader();
 //  auto txn_id = current_txn->GetTransactionId();
 //
@@ -171,7 +171,7 @@
 //  return true;
 //}
 //
-//void SsiTxnManager::SetDeleteVisibility(
+//void SsiTxnManager::PerformDelete(
 //    const oid_t &tile_group_id, const oid_t &tuple_id) {
 //  auto &manager = catalog::Manager::GetInstance();
 //  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -185,7 +185,7 @@
 //  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 //}
 //
-//void SsiTxnManager::SetUpdateVisibility(
+//void SsiTxnManager::PerformUpdate(
 //    const oid_t &tile_group_id, const oid_t &tuple_id) {
 //  auto &manager = catalog::Manager::GetInstance();
 //  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();

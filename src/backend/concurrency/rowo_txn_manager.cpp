@@ -79,29 +79,27 @@ bool RowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group
   }
 }
 
-bool RowoTxnManager::IsOwner(const storage::TileGroup * const tile_group,
+bool RowoTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
                                            const oid_t &tuple_id) {
-  auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current
 // transdaction.
 // will only be performed by deletes and updates.
-bool RowoTxnManager::IsAccessable(const storage::TileGroup * const tile_group,
+bool RowoTxnManager::IsAccessable(const storage::TileGroupHeader * const tile_group_header,
                                                 const oid_t &tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool RowoTxnManager::AcquireTuple(
-    storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+bool RowoTxnManager::AcquireLock(
+    const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(physical_tuple_id, txn_id) == false) {
+  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
@@ -170,7 +168,7 @@ bool RowoTxnManager::PerformUpdate(
   return true;
 }
 
-void RowoTxnManager::SetUpdateVisibility(
+void RowoTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -217,7 +215,7 @@ bool RowoTxnManager::PerformDelete(
   return true;
 }
 
-void RowoTxnManager::SetDeleteVisibility(
+void RowoTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
