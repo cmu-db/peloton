@@ -51,43 +51,7 @@ void DoRecovery(std::string file_name);
 // WRITING LOG RECORD
 //===--------------------------------------------------------------------===//
 
-void BuildLog(oid_t db_oid, oid_t table_oid);
-
-void RunBackends(storage::DataTable* table,
-                 const std::vector<std::unique_ptr<storage::Tuple> >& tuples);
-
-std::vector<ItemPointer> InsertTuples(
-    storage::DataTable* table,
-    const std::vector<std::unique_ptr<storage::Tuple> >& tuples,
-    bool committed);
-
-void DeleteTuples(storage::DataTable* table,
-                  const std::vector<ItemPointer>& locations,
-                  bool committed);
-
-std::vector<ItemPointer> UpdateTuples(
-    storage::DataTable* table,
-    const std::vector<ItemPointer>& locations,
-    const std::vector<std::unique_ptr<storage::Tuple> >& tuples,
-    bool committed);
-
-//===--------------------------------------------------------------------===//
-// Utility functions
-//===--------------------------------------------------------------------===//
-
-void CreateDatabase(oid_t db_oid);
-
-void CreateDatabaseAndTable(oid_t db_oid, oid_t table_oid);
-
-storage::DataTable* CreateUserTable(oid_t db_oid, oid_t table_oid);
-
-std::vector<catalog::Column> CreateSchema(void);
-
-void DropDatabaseAndTable(oid_t db_oid, oid_t table_oid);
-
-void DropDatabase(oid_t db_oid);
-
-void CheckTupleCount(oid_t db_oid, oid_t table_oid, oid_t expected);
+void BuildLog();
 
 }  // namespace logger
 }  // namespace benchmark
