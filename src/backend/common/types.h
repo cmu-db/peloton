@@ -41,6 +41,10 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 31,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL  = 1,
+};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -348,10 +352,13 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OCC = 0,  // optimistic
-  CONCURRENCY_TYPE_2PL = 1,  // pessimistic
-  CONCURRENCY_TYPE_TO = 2,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 3   // serializable snapshot isolation
+  CONCURRENCY_TYPE_ROWO = 0,  // optimistic read + optimistic write
+  CONCURRENCY_TYPE_ROWP = 2,  // optimistic read + pessimistic write
+  CONCURRENCY_TYPE_RPWO = 3,  // pessimistic read + optimistic write
+  CONCURRENCY_TYPE_RPWP = 4,  // pessimistic read + pessimistic write
+  CONCURRENCY_TYPE_SPEC = 5, // speculative
+  CONCURRENCY_TYPE_TO = 6,   // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 7   // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
@@ -674,6 +681,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
+
+static const int INVALID_FILE_DESCRIPTOR = -1;
 
 // ------------------------------------------------------------------
 // Tuple serialization formats
