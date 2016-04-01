@@ -96,6 +96,7 @@ bool SsiTxnManager::IsAccessable(storage::TileGroup *tile_group,
 
 bool SsiTxnManager::AcquireTuple(storage::TileGroup *tile_group,
                                  const oid_t &physical_tuple_id) {
+  LOG_INFO("Acquire tuple");
   auto tile_group_header = tile_group->GetHeader();
   auto txn_id = current_txn->GetTransactionId();
 
@@ -149,6 +150,7 @@ bool SsiTxnManager::AcquireTuple(storage::TileGroup *tile_group,
 bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
                                 const oid_t &tuple_id) {
 
+  LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
@@ -157,12 +159,13 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
   auto &rw_set = current_txn->GetRWSet();
   if (rw_set.count(tile_group_id) == 0 ||
       rw_set.at(tile_group_id).count(tuple_id) == 0) {
+    LOG_INFO("Not read before");
     // previously, this tuple hasn't been read
 
     AddSIReader(tile_group.get(), tuple_id);
 
     auto writer = tile_group_header->GetTransactionId(tuple_id);
-    if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID) {
+    if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID && writer != txn_id) {
       SetInConflict(writer);
       SetOutConflict(txn_id);
     }
@@ -187,7 +190,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
       if (txn_table_.count(creator) == 0 || creator == txn_id) {
         if (creator == txn_id) LOG_INFO("check in read, escape myself");
-        next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.block);
+        next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
         continue;
       }
 
@@ -213,6 +216,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
 bool SsiTxnManager::PerformInsert(const oid_t &tile_group_id,
                                   const oid_t &tuple_id) {
+  LOG_INFO("Perform insert %lu %lu", tile_group_id, tuple_id);
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -231,6 +235,8 @@ bool SsiTxnManager::PerformInsert(const oid_t &tile_group_id,
 bool SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                   const oid_t &tuple_id,
                                   const ItemPointer &new_location) {
+  LOG_INFO("Perform Update %lu %lu", tile_group_id, tuple_id);
+
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =
@@ -339,6 +345,7 @@ Result SsiTxnManager::CommitTransaction() {
   }
 
   if (should_abort) {
+    LOG_INFO("Abort because RW conflict");
     return AbortTransaction();
   }
 
