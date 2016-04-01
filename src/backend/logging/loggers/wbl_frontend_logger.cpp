@@ -518,8 +518,7 @@ void WriteBehindFrontendLogger::DoRecovery() {
       WriteTransactionLogRecord(
           TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
 
-      std::cout << "Recovery_log_record_count : "<< recovery_log_record_count << "\n";
-
+      LOG_INFO("Recovery_log_record_count : %lu", recovery_log_record_count);
     }
 
     // After finishing recovery, set the next oid with maximum oid
