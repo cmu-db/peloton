@@ -451,7 +451,7 @@ void WriteBehindFrontendLogger::DoRecovery() {
     // if yes, need to replay all log records before we hit
     // LOGRECORD_TYPE_TRANSACTION_DONE
     bool need_recovery = NeedRecovery();
-    printf("Need recovery : %d \n", need_recovery);
+    LOG_TRACE("Need recovery : %d", need_recovery);
 
     if (need_recovery == true) {
       TransactionRecord dummy_transaction_record(LOGRECORD_TYPE_INVALID);

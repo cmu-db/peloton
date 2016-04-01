@@ -149,7 +149,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // Go over the log size if needed
   if (log_file_size > 0) {
     bool reached_end_of_file = false;
-    oid_t recovery_log_record_count = 0;
+    __attribute__((unused)) oid_t recovery_log_record_count = 0;
 
     // Start the recovery transaction
     auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -205,8 +205,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
-
-    std::cout << "Recovery_log_record_count : "<< recovery_log_record_count << "\n";
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
