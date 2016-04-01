@@ -919,7 +919,7 @@ std::string LoggingTypeToString(LoggingType type) {
       return "HDD_HDD";
 
     default:
-      throw Exception("Invalid logging_type :: " + std::to_string(type));
+      LOG_ERROR("Invalid logging_type :: %d", type);
       exit(EXIT_FAILURE);
   }
   return "INVALID";
