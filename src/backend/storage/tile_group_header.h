@@ -193,7 +193,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline bool CASTxnId(const oid_t &tuple_slot_id, const txn_id_t &new_txn_id,
-                       txn_id_t expected, txn_id_t *old_value) {
+                       txn_id_t expected, txn_id_t *old_value) const {
     txn_id_t *txn_idp = (txn_id_t *)(TUPLE_HEADER_LOCATION);
     *old_value = __sync_val_compare_and_swap(txn_idp, expected, new_txn_id);
 
@@ -201,7 +201,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline bool LockTupleSlot(const oid_t &tuple_slot_id,
-                            const txn_id_t &transaction_id) {
+                            const txn_id_t &transaction_id) const {
     txn_id_t *txn_id = (txn_id_t *)(TUPLE_HEADER_LOCATION);
     if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
       return true;

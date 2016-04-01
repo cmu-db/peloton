@@ -52,13 +52,13 @@ class SpecRowoTxnManager : public TransactionManager {
 
   virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroup * const tile_group, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(const storage::TileGroup * const tile_group,
+  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
-  virtual bool AcquireTuple(storage::TileGroup *tile_group,
-                            const oid_t &physical_tuple_id);
+  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+                            const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
@@ -73,10 +73,10 @@ class SpecRowoTxnManager : public TransactionManager {
   virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
-  virtual void SetDeleteVisibility(const oid_t &tile_group_id,
+  virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
-  virtual void SetUpdateVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {

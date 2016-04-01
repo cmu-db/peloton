@@ -118,8 +118,7 @@ bool SeqScanExecutor::DExecute() {
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
-
-      // auto tile_group_header = tile_group->GetHeader();
+      auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
@@ -135,7 +134,7 @@ bool SeqScanExecutor::DExecute() {
         // cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tile_group->GetHeader(), tuple_id)) {
+        if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
