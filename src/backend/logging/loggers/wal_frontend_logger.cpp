@@ -213,6 +213,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           TransactionRecord txn_rec(record_type);
           if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
               false) {
+            this->log_file_fd = -1;
             return;
           }
           commit_id = txn_rec.GetTransactionId();
@@ -225,6 +226,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
               false) {
             LOG_ERROR("Could not read tuple record header.");
+            this->log_file_fd = -1;
             return;
           }
 
@@ -232,14 +234,16 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
             LOG_ERROR("Insert txd id %d not found in recovery txn table",
                       (int)cid);
+
+            this->log_file_fd = -1;
             return;
           }
 
           auto table = GetTable(*tuple_record);
-          if (!table){
-              SkipTupleRecordBody(log_file, log_file_size);
-              delete tuple_record;
-              continue;
+          if (!table) {
+            SkipTupleRecordBody(log_file, log_file_size);
+            delete tuple_record;
+            continue;
           }
 
           // Read off the tuple record body from the log
@@ -252,6 +256,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           // Check for torn log write
           if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
               false) {
+            this->log_file_fd = -1;
             return;
           }
 
@@ -259,6 +264,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
             LOG_TRACE("Delete txd id %d not found in recovery txn table",
                       (int)cid);
+            this->log_file_fd = -1;
             return;
           }
           break;
@@ -306,6 +312,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     concurrency::TransactionManagerFactory::GetInstance().SetNextCid(max_cid);
   }
+  this->log_file_fd = -1;
 }
 
 /**
@@ -366,9 +373,9 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
-  if (!table){
-      delete tuple;
-      return;
+  if (!table) {
+    delete tuple;
+    return;
   }
   assert(table);
   if (tile_group == nullptr) {
@@ -391,9 +398,9 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
-  if (!table){
-        return;
-    }
+  if (!table) {
+    return;
+  }
   assert(table);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
@@ -415,10 +422,10 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
-  if (!table){
-        delete tuple;
-        return;
-    }
+  if (!table) {
+    delete tuple;
+    return;
+  }
   assert(table);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
@@ -567,19 +574,26 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
 LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
     FILE *log_file, size_t log_file_size) {
   char buffer;
+  bool is_truncated = false;
+  int ret;
+
+  LOG_INFO("Inside GetNextLogRecordForRecovery");
 
   LOG_INFO("File is at position %d", (int)ftell(log_file));
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
     LOG_ERROR("Log file is truncated");
-    return LOGRECORD_TYPE_INVALID;
+    // return LOGRECORD_TYPE_INVALID;
+    is_truncated = true;
   }
 
-  LOG_INFO("Inside GetNextLogRecordForRecovery");
   // Otherwise, read the log record type
-  int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
-  if (ret <= 0) {
-    LOG_INFO("Failed an fread. Call OpenNextLogFile");
+  if (!is_truncated) {
+    ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+    LOG_INFO("Failed an fread");
+  }
+  if (is_truncated || ret <= 0) {
+    LOG_INFO("Call OpenNextLogFile");
     this->OpenNextLogFile();
     if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
 
@@ -694,7 +708,7 @@ storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
  * @param pool
  * @return tuple
  */
-void SkipTupleRecordBody( FILE *log_file, size_t log_file_size) {
+void SkipTupleRecordBody(FILE *log_file, size_t log_file_size) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(log_file, log_file_size);
   if (body_size == 0) {
@@ -709,7 +723,6 @@ void SkipTupleRecordBody( FILE *log_file, size_t log_file_size) {
   }
 
   CopySerializeInputBE tuple_body(body, body_size);
-
 }
 
 /**
@@ -722,14 +735,14 @@ storage::DataTable *GetTable(TupleRecord tuple_record) {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db =
       manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
-  if (!db){
-      return nullptr;
+  if (!db) {
+    return nullptr;
   }
   assert(db);
 
   auto table = db->GetTableWithOid(tuple_record.GetTableId());
-  if (!table){
-      return nullptr;
+  if (!table) {
+    return nullptr;
   }
   assert(table);
 
@@ -956,7 +969,8 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
   }
 }
 
-void WriteAheadFrontendLogger::SetLogDirectory(char *arg __attribute__((unused))) {
+void WriteAheadFrontendLogger::SetLogDirectory(char *arg
+                                               __attribute__((unused))) {
   LOG_INFO("%s", arg);
 }
 
