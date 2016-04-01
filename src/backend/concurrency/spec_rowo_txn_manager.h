@@ -54,7 +54,7 @@ class SpecRowoTxnManager : public TransactionManager {
 
   virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
   virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,

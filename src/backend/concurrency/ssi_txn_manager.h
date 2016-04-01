@@ -38,7 +38,7 @@
 //
 //  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
 //
-//  virtual bool IsAccessable(storage::TileGroup *tile_group,
+//  virtual bool IsOwnable(storage::TileGroup *tile_group,
 //                            const oid_t &tuple_id);
 //
 //  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,

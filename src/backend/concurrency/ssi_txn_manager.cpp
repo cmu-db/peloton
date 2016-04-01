@@ -84,9 +84,9 @@
 //}
 //
 //// if the tuple is not owned by any transaction and is visible to current
-//// transdaction.
+//// transaction.
 //// will only be performed by deletes and updates.
-//bool SsiTxnManager::IsAccessable(storage::TileGroup *tile_group,
+//bool SsiTxnManager::IsOwnable(storage::TileGroup *tile_group,
 //                                                const oid_t &tuple_id) {
 //  auto tile_group_header = tile_group->GetHeader();
 //  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);

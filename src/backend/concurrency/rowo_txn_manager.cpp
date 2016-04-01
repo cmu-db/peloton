@@ -86,9 +86,9 @@ bool RowoTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_h
 }
 
 // if the tuple is not owned by any transaction and is visible to current
-// transdaction.
+// transaction.
 // will only be performed by deletes and updates.
-bool RowoTxnManager::IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+bool RowoTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                                                 const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);

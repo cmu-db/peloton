@@ -48,7 +48,7 @@ class TransactionManager {
   virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id) = 0;
 
   virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
