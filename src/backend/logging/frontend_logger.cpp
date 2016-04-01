@@ -166,6 +166,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger) {
+
   // Add backend logger to the list of backend loggers
   backend_loggers.push_back(backend_logger);
 }

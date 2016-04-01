@@ -444,12 +444,15 @@ void WriteBehindFrontendLogger::DoRecovery() {
   // Go over the log size if needed
   if (log_file_size > 0) {
     bool reached_end_of_file = false;
+    oid_t recovery_log_record_count = 0;
 
     // check whether first item is LOGRECORD_TYPE_TRANSACTION_COMMIT
     // if not, no need to do recovery.
     // if yes, need to replay all log records before we hit
     // LOGRECORD_TYPE_TRANSACTION_DONE
     bool need_recovery = NeedRecovery();
+    printf("Need recovery : %d \n", need_recovery);
+
     if (need_recovery == true) {
       TransactionRecord dummy_transaction_record(LOGRECORD_TYPE_INVALID);
       cid_t current_commit_id = INVALID_CID;
@@ -459,6 +462,7 @@ void WriteBehindFrontendLogger::DoRecovery() {
         // Read the first byte to identify log record type
         // If that is not possible, then wrap up recovery
         LogRecordType log_type = GetNextLogRecordType(log_file, log_file_size);
+        recovery_log_record_count++;
 
         switch (log_type) {
           case LOGRECORD_TYPE_TRANSACTION_DONE:
@@ -513,6 +517,9 @@ void WriteBehindFrontendLogger::DoRecovery() {
       // to avoid redo next time during recovery
       WriteTransactionLogRecord(
           TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
+
+      std::cout << "Recovery_log_record_count : "<< recovery_log_record_count << "\n";
+
     }
 
     // After finishing recovery, set the next oid with maximum oid
