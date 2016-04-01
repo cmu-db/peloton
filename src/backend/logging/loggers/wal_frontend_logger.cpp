@@ -602,7 +602,8 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
   // Otherwise, read the log record type
   if (!is_truncated) {
     ret = fread((void *)&buffer, 1, sizeof(char), log_file);
-    LOG_INFO("Failed an fread");
+    if (ret <= 0)
+      LOG_INFO("Failed an fread");
   }
   if (is_truncated || ret <= 0) {
     LOG_INFO("Call OpenNextLogFile");
