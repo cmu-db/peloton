@@ -401,12 +401,12 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                 int test1 = -1;
                 int test2 = -1;
 
-                if ( seq_plan.has_itest()) {
-                    test1 = seq_plan.itest();
+                if ( seq_plan.has_test_number()) {
+                    test1 = seq_plan.test_number();
                 }
 
-                if (seq_plan.base().has_itest()) {
-                   test2 = seq_plan.base().itest();
+                if (seq_plan.base().has_test_number()) {
+                   test2 = seq_plan.base().test_number();
                 }
 
                 LOG_TRACE("The test number is test1: %d, test2: %d", test1, test2);

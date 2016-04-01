@@ -13,7 +13,7 @@ message AbstractPlan {
 
 message SeqScanPlan {
     // the base abstract plan
-    required AbstractScan base = 1;
+    required AbstractPlan base = 1;
     // only for test
     required int32 test_number = 2;
 }
