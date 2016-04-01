@@ -23,11 +23,16 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
+<<<<<<< HEAD
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_SSI,
   CONCURRENCY_TYPE_2PL,
   CONCURRENCY_TYPE_SSI
 };
+=======
+static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_ROWO,
+                                                  CONCURRENCY_TYPE_RPWP};
+>>>>>>> 93ef41f17939f884f8d0767568aa6948f953c086
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -112,7 +117,6 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // read deleted, insert back, update inserted, read newly updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
-
       scheduler.Txn(0).Delete(100);
       scheduler.Txn(0).Delete(0);
       scheduler.Txn(0).Read(0);

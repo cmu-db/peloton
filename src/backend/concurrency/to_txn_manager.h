@@ -4,7 +4,7 @@
 //
 // rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/rpwo_txn_manager.h
+// Identification: src/backend/concurrency/to_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,13 +18,13 @@
 namespace peloton {
 namespace concurrency {
 
-class RpwoTxnManager : public TransactionManager {
+class ToTxnManager : public TransactionManager {
  public:
-  RpwoTxnManager() {}
+  ToTxnManager() {}
 
-  virtual ~RpwoTxnManager() {}
+  virtual ~ToTxnManager() {}
 
-  static RpwoTxnManager &GetInstance();
+  static ToTxnManager &GetInstance();
 
   virtual bool IsVisible(const txn_id_t &tuple_txn_id,
                          const cid_t &tuple_begin_cid,
