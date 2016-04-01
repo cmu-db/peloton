@@ -6,6 +6,7 @@
 
 concurrency_FILES = \
     backend/concurrency/rowo_txn_manager.cpp \
+    backend/concurrency/rpwo_txn_manager.cpp \
     backend/concurrency/rpwp_txn_manager.cpp \
     backend/concurrency/spec_rowo_txn_manager.cpp \
     backend/concurrency/transaction_manager.cpp \
