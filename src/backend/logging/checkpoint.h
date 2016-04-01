@@ -18,6 +18,9 @@
 #include "backend/logging/log_manager.h"
 #include "backend/logging/backend_logger.h"
 #include "backend/common/pool.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/database.h"
+#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace logging {
@@ -40,10 +43,14 @@ class Checkpoint {
   // Do recovery from most recent version of checkpoint
   virtual bool DoRecovery() = 0;
 
+  void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
+                    ItemPointer target_location, cid_t commit_id);
+
  protected:
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
+
 
   // variable length memory pool
   std::unique_ptr<VarlenPool> pool;
