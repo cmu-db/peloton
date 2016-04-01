@@ -619,7 +619,6 @@ size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
   // Read next 4 bytes as an integer
   CopySerializeInputBE frameCheck(buffer, sizeof(buffer));
   frame_size = (frameCheck.ReadInt()) + sizeof(buffer);
-  ;
 
   // Move back by 4 bytes
   // So that tuple deserializer works later as expected

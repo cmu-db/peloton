@@ -56,6 +56,7 @@ WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
   if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
+
 }
 
 /**
@@ -64,6 +65,9 @@ WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
 WriteBehindFrontendLogger::~WriteBehindFrontendLogger() {
   // Clean up the global record pool
   global_peloton_log_record_pool.Clear();
+
+  // Clean up the frontend logger's queue
+  global_queue.clear();
 }
 
 //===--------------------------------------------------------------------===//
@@ -87,9 +91,13 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       global_queue_itr < global_queue_size;
       global_queue_itr++) {
 
+    if(global_queue[global_queue_itr] == nullptr) {
+      continue;
+    }
+
     switch (global_queue[global_queue_itr]->GetType()) {
       case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        global_peloton_log_record_pool.CreateTransactionLogList(
+        global_peloton_log_record_pool.CreateTxnLogList(
             global_queue[global_queue_itr]->GetTransactionId());
         break;
 
@@ -115,18 +123,20 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
       case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
       case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-        // Check the commit information,
-        auto status =
-            CollectTupleRecord(reinterpret_cast<TupleRecord *>(global_queue[global_queue_itr].get()));
 
-        // Delete record if we did not collect it
-        if (status.first == false) {
-          global_queue.erase(global_queue.begin() + global_queue_itr);
-        }
-        // Else, add it to the set of modified tile groups
-        else {
+        LogRecord* log_record = global_queue[global_queue_itr].release();
+        TupleRecord* tuple_record = reinterpret_cast<TupleRecord*>(log_record);
+
+        // Check the commit information
+        auto status =
+            CollectTupleRecord(std::unique_ptr<TupleRecord>(tuple_record));
+
+        // Add it to the set of modified tile groups
+        if (status.first == true) {
           auto location = status.second.block;
-          if (location != INVALID_OID) modified_tile_group_set.insert(location);
+          if (location != INVALID_OID) {
+            modified_tile_group_set.insert(location);
+          }
         }
 
       } break;
@@ -139,7 +149,7 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 
   }
 
-  // Clear the global queue
+  // Clean up the frontend logger's queue
   global_queue.clear();
 
   //===--------------------------------------------------------------------===//
@@ -191,7 +201,7 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 
   // remove any finished txn logs
   for (txn_id_t txn_id : not_committed_txn_list) {
-    global_peloton_log_record_pool.RemoveTransactionLogList(txn_id);
+    global_peloton_log_record_pool.RemoveTxnLogRecordList(txn_id);
   }
 
   // Notify the backend loggers
@@ -200,35 +210,41 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       backend_logger->FinishedFlushing();
     }
   }
+
 }
 
 size_t WriteBehindFrontendLogger::WriteLogRecords(
     std::vector<txn_id_t> committed_txn_list) {
-  size_t written_log_record_count = 0;
+  size_t total_txn_log_records = 0;
 
   // Write out the log records of all the committed transactions to log file
   for (txn_id_t txn_id : committed_txn_list) {
     // Locate the transaction log list for this txn id
-    auto txn_log_list =
-        global_peloton_log_record_pool.SearchLogRecordList(txn_id);
-    if (txn_log_list == nullptr) {
+    auto exists_txn_log_list =
+        global_peloton_log_record_pool.ExistsTxnLogRecordList(txn_id);
+    if (exists_txn_log_list == false) {
       continue;
     }
 
-    written_log_record_count += txn_log_list->size();
+    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    size_t txn_log_record_list_size = txn_log_record_list.size();
+    total_txn_log_records += txn_log_record_list_size;
 
     // Write out all the records in the list
-    for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
+    for (size_t txn_log_list_itr = 0;
+        txn_log_list_itr < txn_log_record_list_size;
         txn_log_list_itr++) {
+
+      TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
+
       // Write out the log record
-      TupleRecord *record = txn_log_list->at(txn_log_list_itr);
       fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
              log_file);
     }
   }
 
   // No need to flush now, will flush later in WriteTxnLog
-  return written_log_record_count;
+  return total_txn_log_records;
 }
 
 void WriteBehindFrontendLogger::WriteTransactionLogRecord(
@@ -258,16 +274,21 @@ std::set<storage::TileGroupHeader *> WriteBehindFrontendLogger::ToggleCommitMark
 
   // Toggle commit marks
   for (txn_id_t txn_id : committed_txn_list) {
-    auto txn_log_list =
-        global_peloton_log_record_pool.SearchLogRecordList(txn_id);
-    if (txn_log_list == nullptr) {
+    auto exists_txn_log_list =
+        global_peloton_log_record_pool.ExistsTxnLogRecordList(txn_id);
+    if (exists_txn_log_list == false) {
       continue;
     }
 
-    for (size_t txn_log_list_itr = 0; txn_log_list_itr < txn_log_list->size();
+    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    size_t txn_log_record_list_size = txn_log_record_list.size();
+
+    for (size_t txn_log_list_itr = 0;
+        txn_log_list_itr < txn_log_record_list_size;
         txn_log_list_itr++) {
+
       // Get the log record
-      TupleRecord *record = txn_log_list->at(txn_log_list_itr);
+      TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
       cid_t current_commit_id = INVALID_CID;
 
       auto record_type = record->GetType();
@@ -313,7 +334,7 @@ std::set<storage::TileGroupHeader *> WriteBehindFrontendLogger::ToggleCommitMark
     }
 
     // TODO: All records are committed, its safe to remove them now
-    global_peloton_log_record_pool.RemoveTransactionLogList(txn_id);
+    global_peloton_log_record_pool.RemoveTxnLogRecordList(txn_id);
   }
 
   return tile_group_headers;
@@ -340,7 +361,7 @@ void WriteBehindFrontendLogger::SyncTileGroups(std::set<oid_t> tile_group_set) {
 }
 
 std::pair<bool, ItemPointer> WriteBehindFrontendLogger::CollectTupleRecord(
-    TupleRecord *record) {
+    std::unique_ptr<TupleRecord> record) {
   if (record == nullptr) {
     return std::make_pair(false, INVALID_ITEMPOINTER);
   }
@@ -350,7 +371,8 @@ std::pair<bool, ItemPointer> WriteBehindFrontendLogger::CollectTupleRecord(
       record_type == LOGRECORD_TYPE_WBL_TUPLE_DELETE ||
       record_type == LOGRECORD_TYPE_WBL_TUPLE_UPDATE) {
     // Collect this log record
-    auto status = global_peloton_log_record_pool.AddLogRecord(record);
+    auto insert_location = record->GetInsertLocation();
+    auto status = global_peloton_log_record_pool.AddLogRecord(std::move(record));
 
     if (status != 0) {
       return std::make_pair(false, INVALID_ITEMPOINTER);
@@ -358,7 +380,6 @@ std::pair<bool, ItemPointer> WriteBehindFrontendLogger::CollectTupleRecord(
 
     // Return the insert location associated with this tuple record
     // The location is valid only for insert and update records
-    auto insert_location = record->GetInsertLocation();
     return std::make_pair(true, insert_location);
   }
 
