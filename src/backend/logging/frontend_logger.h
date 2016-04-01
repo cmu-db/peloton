@@ -48,8 +48,6 @@ class FrontendLogger : public Logger {
 
   void AddBackendLogger(BackendLogger *backend_logger);
 
-  BackendLogger* GetBackendLogger();
-
   //===--------------------------------------------------------------------===//
   // Virtual Functions
   //===--------------------------------------------------------------------===//
