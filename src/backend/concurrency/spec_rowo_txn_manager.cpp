@@ -40,16 +40,16 @@ SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
 // CONSIDER: any optimization??
 bool SpecRowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
                                    const oid_t &tuple_id) {
-    txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
-    cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-    txn_id_t txn_begin_cid = current_txn->GetBeginCommitId();
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  txn_id_t txn_begin_cid = current_txn->GetBeginCommitId();
 
-    if (tuple_txn_id == INVALID_TXN_ID) {
-      // the tuple is not available.
-      return false;
-    }
-    bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  if (tuple_txn_id == INVALID_TXN_ID) {
+    // the tuple is not available.
+    return false;
+  }
+  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
@@ -141,6 +141,29 @@ bool SpecRowoTxnManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
+void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
+
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  //tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  //tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+  
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
+}
+
 // at any time point, we must guarantee at least one version of a tuple is visible.
 bool SpecRowoTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
@@ -169,6 +192,7 @@ bool SpecRowoTxnManager::PerformUpdate(
   // before linking the new version to the old one,
   // we must guarantee the txn_id and begin_cid has been set. 
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   COMPILER_MEMORY_FENCE;
 
@@ -178,6 +202,27 @@ bool SpecRowoTxnManager::PerformUpdate(
 
   current_txn->RecordUpdate(tile_group_id, tuple_id);
   return true;
+}
+
+void SpecRowoTxnManager::SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
+
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  // Set MVCC info
+  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
+  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 // the logic is the same as PerformUpdate.
@@ -208,6 +253,7 @@ bool SpecRowoTxnManager::PerformDelete(
   COMPILER_MEMORY_FENCE;
   
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   COMPILER_MEMORY_FENCE;
 
@@ -232,50 +278,6 @@ void SpecRowoTxnManager::SetDeleteVisibility(const oid_t &tile_group_id, const o
   COMPILER_MEMORY_FENCE;
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void SpecRowoTxnManager::SetUpdateVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  // Set MVCC info
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  //tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  //tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
   
   // tile_group_header->SetInsertCommit(tuple_id, false); // unused
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
