@@ -35,9 +35,9 @@ class LogFile {
 
   virtual ~LogFile(void){};
 
-  void SetMaxCommitId(int);
+  void SetMaxCommitId(txn_id_t);
 
-  int GetMaxCommitId();
+  txn_id_t GetMaxCommitId();
 
   int GetLogNumber();
 
@@ -52,7 +52,7 @@ class LogFile {
  private:
   FILE *log_file_;
   std::string log_file_name_;
-  int max_commit_id_;  // we may not need this later..
+  int max_commit_id_;
   int log_file_fd_;
   int log_file_size_;
   int log_number_;

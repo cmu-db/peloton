@@ -97,7 +97,8 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
   LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
   this->InitLogDirectory();
   this->InitLogFilesList();
-  this->log_file_fd = -1;  // this is a restart or a new start
+  this->log_file_fd = -1;   // this is a restart or a new start
+  this->max_commit_id = 0;  // 0 is unused
 }
 
 /**
@@ -148,6 +149,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     }
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
            log_file);
+    if (record->GetTransactionId() > this->max_commit_id) {
+      this->max_commit_id = record->GetTransactionId();
+    }
   }
 
   fflush_and_sync(log_file, log_file_fd, fsync_count);
@@ -796,6 +800,8 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
       fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
       this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
       // TODO set max commit_id here!
+      this->log_files_[file_list_size - 1]->SetMaxCommitId(this->max_commit_id);
+      this->max_commit_id = 0;  // reset
     }
   }
 
@@ -865,7 +871,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   LOG_INFO("Cursor is now %d", (int)this->log_file_cursor_);
 }
 
-void WriteAheadFrontendLogger::TruncateLog(int max_commit_id) {
+void WriteAheadFrontendLogger::TruncateLog(txn_id_t max_commit_id) {
   int return_val;
 
   // delete stale log files except the one currently being used

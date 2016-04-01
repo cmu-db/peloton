@@ -68,7 +68,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
 
-  void TruncateLog(int);
+  void TruncateLog(txn_id_t);
 
   void SetLogDirectory(char *);
 
@@ -114,6 +114,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   std::string LOG_FILE_PREFIX = "peloton_log_";
 
   std::string LOG_FILE_SUFFIX = ".log";
+
+  txn_id_t max_commit_id;
 };
 
 }  // namespace logging
