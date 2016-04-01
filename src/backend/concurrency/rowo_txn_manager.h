@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// optimistic_transaction_manager.h
+// rowo_txn_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_transaction_manager.h
+// Identification: src/backend/concurrency/rowo_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,25 +18,23 @@
 namespace peloton {
 namespace concurrency {
 
-class OptimisticTransactionManager : public TransactionManager {
+class RowoTxnManager : public TransactionManager {
  public:
-  OptimisticTransactionManager() {}
+  RowoTxnManager() {}
 
-  virtual ~OptimisticTransactionManager() {}
+  virtual ~RowoTxnManager() {}
 
-  static OptimisticTransactionManager &GetInstance();
+  static RowoTxnManager &GetInstance();
 
-  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid);
+  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsOwner(storage::TileGroup *tile_group, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
-  virtual bool AcquireTuple(storage::TileGroup *tile_group,
-                            const oid_t &physical_tuple_id);
+  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+                            const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
@@ -51,10 +49,10 @@ class OptimisticTransactionManager : public TransactionManager {
   virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
-  virtual void SetDeleteVisibility(const oid_t &tile_group_id,
+  virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
-  virtual void SetUpdateVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual Result CommitTransaction();

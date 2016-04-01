@@ -19,15 +19,13 @@
 #include "backend/logging/logger.h"
 #include "backend_logger.h"
 #include "frontend_logger.h"
+#include "backend/concurrency/transaction.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
 extern LoggingType peloton_logging_mode;
-
-// Directory for peloton logs
-extern char *peloton_log_directory;
 
 namespace peloton {
 namespace logging {
@@ -107,6 +105,18 @@ class LogManager {
   FrontendLogger *GetFrontendLogger();
 
   void ResetFrontendLogger();
+
+  void LogBeginTransaction(oid_t commit_id);
+
+  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &old_version, ItemPointer &new_version);
+
+  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
+                 ItemPointer &new_location);
+
+  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
+
+  void LogCommitTransaction(oid_t commit_id);
 
  private:
   LogManager();

@@ -49,8 +49,8 @@ namespace logging {
 
 class LogRecord {
  public:
-  LogRecord(LogRecordType log_record_type, txn_id_t txn_id)
-      : log_record_type(log_record_type), txn_id(txn_id) {
+  LogRecord(LogRecordType log_record_type, cid_t cid)
+      : log_record_type(log_record_type), cid(cid) {
     assert(log_record_type != LOGRECORD_TYPE_INVALID);
   }
 
@@ -58,7 +58,7 @@ class LogRecord {
 
   LogRecordType GetType() const { return log_record_type; }
 
-  txn_id_t GetTransactionId() const { return txn_id; }
+  cid_t GetTransactionId() const { return cid; }
 
   virtual bool Serialize(CopySerializeOutput &output) = 0;
 
@@ -69,7 +69,7 @@ class LogRecord {
  protected:
   LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
 
-  txn_id_t txn_id;
+  cid_t cid;
 
   // serialized message
   char *message = nullptr;
