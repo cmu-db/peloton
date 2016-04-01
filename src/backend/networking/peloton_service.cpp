@@ -394,14 +394,26 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                 request->type().c_str());
 
         if (request->type() == "Scan") {
-            const AbstractScan scan = request->scan_plan();
-            const SeqScanPlan seq_plan = request->seqscan_plan();
+            //const AbstractScan scan = request->scan_plan();
+            if (request->has_seqscan_plan()) {
+                const SeqScanPlan seq_plan = request->seqscan_plan();
 
-            int test1 = scan.itest();
-            int test2 = seq_plan.itest();
-            int test3 = seq_plan.base().itest();
+                int test1 = -1;
+                int test2 = -1;
 
-            LOG_TRACE("The test number is test1: %d, test12: %d, test3: %d", test1, test2, test3);
+                if ( seq_plan.has_itest()) {
+                    test1 = seq_plan.itest();
+                }
+
+                if (seq_plan.base().has_itest()) {
+                   test2 = seq_plan.base().itest();
+                }
+
+                LOG_TRACE("The test number is test1: %d, test2: %d", test1, test2);
+            } else {
+                LOG_TRACE("the message doen't have seq_scan");
+            }
+
         } else {
             LOG_TRACE("Unknow queryplan type!");
         }
