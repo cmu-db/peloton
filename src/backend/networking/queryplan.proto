@@ -1,5 +1,9 @@
 package peloton.networking;
 
+message BaseTest {
+    required int32 test_base = 1;
+}
+
 message AbstractPlan {
     // A plan node can have multiple children
     repeated AbstractPlan children = 1;
@@ -9,6 +13,8 @@ message AbstractPlan {
     optional AbstractPlan parent = 3;
     // only for test
     required int32 test_number = 4;
+    // base test
+    required BaseTest base = 5; 
 }
 
 message SeqScanPlan {
