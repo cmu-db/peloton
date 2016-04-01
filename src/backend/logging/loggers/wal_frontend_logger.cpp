@@ -58,6 +58,8 @@ bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
 storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
                                     FILE *log_file, size_t log_file_size);
 
+void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
+
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 // Wrappers
@@ -202,7 +204,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       // If that is not possible, then wrap up recovery
       auto record_type =
           this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
-      cid_t commit_id;
+      cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
@@ -234,6 +236,11 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto table = GetTable(*tuple_record);
+          if (!table){
+              SkipTupleRecordBody(log_file, log_file_size);
+              delete tuple_record;
+              continue;
+          }
 
           // Read off the tuple record body from the log
           tuple_record->SetTuple(ReadTupleRecordBody(
@@ -263,10 +270,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
       if (!reached_end_of_file) {
         switch (record_type) {
           case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+            assert(commit_id != INVALID_CID);
             StartTransactionRecovery(commit_id);
             break;
 
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+            assert(commit_id != INVALID_CID);
             CommitTransactionRecovery(commit_id);
             break;
 
@@ -357,6 +366,10 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
+  if (!table){
+      delete tuple;
+      return;
+  }
   assert(table);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(insert_loc.block);
@@ -378,6 +391,9 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
+  if (!table){
+        return;
+    }
   assert(table);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
@@ -399,6 +415,10 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(db);
 
   auto table = db->GetTableWithOid(table_id);
+  if (!table){
+        delete tuple;
+        return;
+    }
   assert(table);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
@@ -430,6 +450,7 @@ void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *record) {
   DeleteTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation());
+  delete record;
 }
 
 /**
@@ -668,6 +689,30 @@ storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
 }
 
 /**
+ * @brief Read TupleRecordBody
+ * @param schema
+ * @param pool
+ * @return tuple
+ */
+void SkipTupleRecordBody( FILE *log_file, size_t log_file_size) {
+  // Check if the frame is broken
+  size_t body_size = GetNextFrameSize(log_file, log_file_size);
+  if (body_size == 0) {
+    LOG_ERROR("Body size is zero ");
+  }
+
+  // Read Body
+  char body[body_size];
+  int ret = fread(body, 1, sizeof(body), log_file);
+  if (ret <= 0) {
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInputBE tuple_body(body, body_size);
+
+}
+
+/**
  * @brief Read get table based on tuple record
  * @param tuple record
  * @return data table
@@ -677,9 +722,15 @@ storage::DataTable *GetTable(TupleRecord tuple_record) {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db =
       manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
+  if (!db){
+      return nullptr;
+  }
   assert(db);
 
   auto table = db->GetTableWithOid(tuple_record.GetTableId());
+  if (!table){
+      return nullptr;
+  }
   assert(table);
 
   return table;
@@ -898,14 +949,14 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
 
   if (return_val == 0) {
     LOG_INFO("Created Log directory successfully");
-  } else if (return_val == EEXIST) {
+  } else if (errno == EEXIST) {
     LOG_INFO("Log Directory already exists");
   } else {
     LOG_ERROR("Creating log directory failed: %s", strerror(errno));
   }
 }
 
-void WriteAheadFrontendLogger::SetLogDirectory(char *arg) {
+void WriteAheadFrontendLogger::SetLogDirectory(char *arg __attribute__((unused))) {
   LOG_INFO("%s", arg);
 }
 

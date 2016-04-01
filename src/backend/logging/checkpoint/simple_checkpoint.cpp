@@ -28,8 +28,6 @@
 #include "backend/executor/executor_context.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/catalog/manager.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/database.h"
 
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
@@ -153,6 +151,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         }
       }
     }
+
     // if anything other than begin record is added
     if (records_.size() > 1) {
       LogRecord *commit_record = new TransactionRecord(
@@ -251,9 +250,8 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   auto table = GetTable(tuple_record);
 
   // Read off the tuple record body from the log
-  auto tuple = ReadTupleRecordBody(table->GetSchema(), pool.get(),
-                                   checkpoint_file_, checkpoint_file_size_);
-
+  std::unique_ptr<storage::Tuple> tuple(ReadTupleRecordBody(
+      table->GetSchema(), pool.get(), checkpoint_file_, checkpoint_file_size_));
   // Check for torn log write
   if (tuple == nullptr) {
     LOG_ERROR("Torn checkpoint write.");
@@ -262,31 +260,10 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
 
   auto target_location = tuple_record.GetInsertLocation();
   auto tile_group_id = target_location.block;
-  auto tuple_slot = target_location.offset;
-
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-
-  // Create new tile group if table doesn't already have that tile group
-  if (tile_group == nullptr) {
-    table->AddTileGroupWithOid(tile_group_id);
-    tile_group = manager.GetTileGroup(tile_group_id);
-    if (max_oid_ < tile_group_id) {
-      max_oid_ = tile_group_id;
-    }
+  RecoverTuple(tuple.get(), table, target_location, commit_id);
+  if (max_oid_ < target_location.block) {
+    max_oid_ = tile_group_id;
   }
-
-  // Do the insert!
-  auto inserted_tuple_slot =
-      tile_group->InsertTupleFromCheckpoint(tuple_slot, tuple, commit_id);
-
-  if (inserted_tuple_slot == INVALID_OID) {
-    // TODO: We need to abort on failure!
-  } else {
-    // txn->RecordInsert(target_location);
-    table->SetNumberOfTuples(table->GetNumberOfTuples() + 1);
-  }
-  delete tuple;
 }
 
 bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
@@ -344,7 +321,8 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
-        LOG_INFO("Insert a new record for checkpoint");
+        LOG_TRACE("Insert a new record for checkpoint (%lu, %lu)",
+                  tile_group_id, tuple_id);
         records_.push_back(record);
       }
     }
