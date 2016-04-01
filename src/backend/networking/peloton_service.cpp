@@ -400,6 +400,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
 
                 int test1 = -1;
                 int test2 = -1;
+                int test3 = -1;
 
                 if ( seq_plan.has_test_number()) {
                     test1 = seq_plan.test_number();
@@ -409,7 +410,11 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                    test2 = seq_plan.base().test_number();
                 }
 
-                LOG_TRACE("The test number is test1: %d, test2: %d", test1, test2);
+                if (seq_plan.base().base().has_test_base()) {
+                   test3 = seq_plan.base().base().test_base();
+                }
+
+                LOG_TRACE("The test number-- test1: %d, test2: %d, test3: %d", test1, test2, test3);
             } else {
                 LOG_TRACE("the message doen't have seq_scan");
             }
