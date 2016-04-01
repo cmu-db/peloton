@@ -89,7 +89,7 @@ TEST_F(ProjectionTests, BasicTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
@@ -150,7 +150,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   columns.push_back(orig_schema->GetColumn(1));
   columns.push_back(orig_schema->GetColumn(3));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap map0 =
@@ -215,7 +215,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   columns.push_back(orig_schema->GetColumn(0));
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =

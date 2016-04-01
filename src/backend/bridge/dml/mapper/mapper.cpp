@@ -52,7 +52,7 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::GetCachedPlan(
   }
 }
 
-const planner::AbstractPlan *PlanTransformer::TransformPlan(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
     AbstractPlanState *planstate) {
   return TransformPlan(planstate, DefaultOptions);
 }
@@ -60,8 +60,7 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
 std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(
     AbstractPlanState *planstate, const char *prepStmtName) {
   auto mapped_plan = TransformPlan(planstate, DefaultOptions);
-  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan,
-                                                               CleanPlan);
+  std::shared_ptr<const planner::AbstractPlan> mapped_plan_ptr(mapped_plan);
   if (prepStmtName) {
     std::string name_str(prepStmtName);
     plan_cache_.insert(std::make_pair(std::move(name_str), mapped_plan_ptr));
@@ -73,14 +72,14 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(
  * @brief Convert Postgres Plan (tree) into AbstractPlan (tree).
  * @return Pointer to the constructed AbstractPlan Node.
  */
-const planner::AbstractPlan *PlanTransformer::TransformPlan(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
     AbstractPlanState *planstate, const TransformOptions options) {
   assert(planstate);
 
   // Ignore empty plans
   if (planstate == nullptr) return nullptr;
 
-  const planner::AbstractPlan *peloton_plan = nullptr;
+  std::shared_ptr<planner::AbstractPlan> peloton_plan;
 
   switch (nodeTag(planstate)) {
     case T_ModifyTableState:
@@ -157,42 +156,6 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
   }
 
   return peloton_plan;
-}
-
-/**
- * @brief Recursively destroy the nodes in a plan tree.
-bool PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
-  if (!root)
-    return false;
-
-  // Clean all children subtrees
-  auto children = root->GetChildren();
-  for (auto child : children) {
-    auto rv = CleanPlan(child);
-    assert(rv);
-  }
-
-  // Clean the root
-  delete root;
-  return true;
-}
-*/
-
-/**
- * @brief Recursively destroy the nodes in a plan tree.
- */
-void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
-  if (!root) return;
-
-  // Clean all children subtrees
-  auto children = root->GetChildren();
-  for (auto &child : children) {
-    CleanPlan(child);
-    child = nullptr;
-  }
-
-  // Clean the root
-  delete root;
 }
 
 }  // namespace bridge

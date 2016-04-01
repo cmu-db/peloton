@@ -19,7 +19,7 @@
 namespace peloton {
 namespace bridge {
 
-const planner::AbstractPlan *PlanTransformer::TransformAgg(
+const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
     const AggPlanState *plan_state) {
   // Alias all I need
   const Agg *agg = plan_state->agg_plan;
@@ -157,7 +157,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
   retval->AddChild(lchild);
 
-  return retval;
+  return std::shared_ptr<planner::AbstractPlan>(retval);
 }
 }
 }
