@@ -115,6 +115,10 @@ TEST(LoggingTests, BasicInsertTest) {
       curr_rec.SetTuple(nullptr);
   }
 
+  auto tg_header = recovery_table->GetTileGroupById(10)->GetHeader();
+  EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
+  EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
+
   EXPECT_TRUE(val0.Compare(recovery_table->GetTileGroupById(10)->GetValue(5, 0)) == 0);
   EXPECT_TRUE(val1.Compare(recovery_table->GetTileGroupById(10)->GetValue(5, 1)) == 0);
   EXPECT_TRUE(val2.Compare(recovery_table->GetTileGroupById(10)->GetValue(5, 2)) == 0);
