@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -23,7 +25,6 @@
 #include <random>
 #include <cstddef>
 #include <limits>
-
 
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
@@ -152,11 +153,11 @@ void RunWorkload() {
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-   LOG_INFO("%lf %d %d :: %lf tps",
-            state.update_ratio,
-            state.scale_factor,
-            state.column_count,
-            stat);
+  LOG_INFO("%lf %d %d :: %lf tps",
+           state.update_ratio,
+           state.scale_factor,
+           state.column_count,
+           stat);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
