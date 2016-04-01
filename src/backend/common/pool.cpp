@@ -16,13 +16,29 @@
 
 namespace peloton {
 
+static const size_t TEMP_POOL_CHUNK_SIZE = 512;  // 512 B
+
+VarlenPool::VarlenPool(BackendType backend_type)
+    : backend_type(backend_type),
+      allocation_size(TEMP_POOL_CHUNK_SIZE),
+      max_chunk_count(1),
+      current_chunk_index(0) {
+  Init();
+}
+
+VarlenPool::VarlenPool(BackendType backend_type, uint64_t allocation_size,
+           uint64_t max_chunk_count)
+    : backend_type(backend_type),
+      allocation_size(allocation_size),
+      max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
+      current_chunk_index(0) {
+  Init();
+}
+
 void VarlenPool::Init() {
   auto &storage_manager = storage::StorageManager::GetInstance();
   char *storage = reinterpret_cast<char *>(
       storage_manager.Allocate(backend_type, allocation_size));
-
-  // zero out the data
-  std::memset(storage, 0, allocation_size);
 
   chunks.push_back(Chunk(allocation_size, storage));
 }
