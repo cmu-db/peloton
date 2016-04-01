@@ -43,24 +43,23 @@ class TransactionManager {
 
   cid_t GetNextCommitId() { return next_cid_++; }
 
-  virtual bool IsVisible(const txn_id_t &tuple_txn_id,
-                         const cid_t &tuple_begin_cid,
-                         const cid_t &tuple_end_cid) = 0;
+  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header,
+                         const oid_t &tuple_id) = 0;
 
-  virtual bool IsOwner(storage::TileGroup *tile_group,
+  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(storage::TileGroup *tile_group,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id) = 0;
+
+  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+                            const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   virtual bool PerformRead(const oid_t &tile_group_id,
                            const oid_t &tuple_id) = 0;
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location) = 0;
-
-  virtual bool AcquireTuple(storage::TileGroup *tile_group,
-                            const oid_t &physical_tuple_id) = 0;
 
   virtual bool PerformInsert(const oid_t &tile_group_id,
                              const oid_t &tuple_id) = 0;
@@ -71,10 +70,10 @@ class TransactionManager {
   virtual void SetInsertVisibility(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
-  virtual void SetDeleteVisibility(const oid_t &tile_group_id,
+  virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
-  virtual void SetUpdateVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   /*
