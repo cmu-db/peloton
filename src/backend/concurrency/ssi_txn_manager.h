@@ -145,6 +145,7 @@ class SsiTxnManager : public TransactionManager {
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
+    LOG_INFO("Add SSI reader");
     auto txn_id = current_txn->GetTransactionId();
     ReadList *reader = new ReadList(txn_id);
     reader->txn_id = txn_id;
@@ -203,10 +204,12 @@ class SsiTxnManager : public TransactionManager {
   }
 
   void SetInConflict(txn_id_t txn_id) {
+    LOG_INFO("Set in conflict %lu", txn_id);
     txn_table_.at(txn_id).in_conflict_ = true;
   }
 
   void SetOutConflict(txn_id_t txn_id) {
+    LOG_INFO("Set out conflict %lu", txn_id);
     txn_table_.at(txn_id).out_conflict_ = true;
   }
 

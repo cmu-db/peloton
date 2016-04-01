@@ -24,8 +24,8 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OCC,
-  CONCURRENCY_TYPE_2PL,
+  // CONCURRENCY_TYPE_OCC,
+  // CONCURRENCY_TYPE_2PL,
   CONCURRENCY_TYPE_SSI
 };
 
@@ -357,6 +357,7 @@ void SIAnomalyTest1() {
     TransactionScheduler scheduler(1, table.get(), &txn_manager);
     // Prepare
     scheduler.Txn(0).Insert(current_batch_key, 100);
+    scheduler.Txn(0).Update(100, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
@@ -369,7 +370,7 @@ void SIAnomalyTest1() {
     scheduler.Txn(2).Commit();
     scheduler.Txn(0).ReadStore(current_batch_key, -1);
     scheduler.Txn(0).Read(TXN_STORED_VALUE);
-    scheduler.Txn(1).Insert(TXN_STORED_VALUE, 0);
+    scheduler.Txn(1).Update(TXN_STORED_VALUE, 2);
     scheduler.Txn(1).Commit();
     scheduler.Txn(0).Commit();
 
