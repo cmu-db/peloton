@@ -526,5 +526,5 @@ service AbstractPelotonService {
     rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
     rpc UnevictData(UnevictDataRequest) returns (UnevictDataResponse);
     rpc TimeSync(TimeSyncRequest) returns (TimeSyncResponse);
-    rpc QueryPlan(AbstractPlan) returns (SeqScanPlan);
+    rpc QueryPlan(QueryPlanRequest) returns (SeqScanPlan);
 }

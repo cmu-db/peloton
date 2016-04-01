@@ -375,7 +375,7 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
     }
 }
 void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
-        const AbstractPlan* request,
+        const QueryPlanRequest* request,
         SeqScanPlan* response,
         ::google::protobuf::Closure* done) {
 
@@ -394,9 +394,14 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                 request->type().c_str());
 
         if (request->type() == "Scan") {
-            AbstractScan* scan_plan = (AbstractScan*)request;
-            int test = scan_plan->itest();
-            LOG_TRACE("The test number is: %d", test);
+            const AbstractScan scan = request->scan_plan();
+            const SeqScanPlan seq_plan = request->seqscan_plan();
+
+            int test1 = scan.itest();
+            int test2 = seq_plan.itest();
+            int test3 = seq_plan.base().itest();
+
+            LOG_TRACE("The test number is test1: %d, test12: %d, test3: %d", test1, test2, test3);
         } else {
             LOG_TRACE("Unknow queryplan type!");
         }

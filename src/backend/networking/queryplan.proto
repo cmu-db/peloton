@@ -12,9 +12,6 @@ message AbstractPlan {
     optional bool include_children = 2;
 
     optional AbstractPlan parent = 3;
-    
-    // type
-    required string type = 4;
 }
 
 message AbstractScan {
@@ -35,8 +32,20 @@ message AbstractScan {
 
 message SeqScanPlan {
     required AbstractScan base = 1;
+    
+    // for test
+    required int32 itest = 2;
 }
 
+
+message QueryPlanRequest {
+
+    required string type = 1;
+    
+    optional AbstractScan scan_plan = 2;
+    
+    optional SeqScanPlan seqscan_plan = 3;
+}
 
 // -----------------------------------
 // Query response
