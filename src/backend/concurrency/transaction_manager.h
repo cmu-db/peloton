@@ -22,6 +22,7 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
+#include "backend/catalog/manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -69,11 +70,10 @@ class TransactionManager {
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              __attribute__((unused)) const ItemPointer &new_location) {
-    auto tile_group_header =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
     tile_group_header -> RecycleTupleSlot(tuple_id);
     return true;
-
   }
 
   virtual void PerformUpdate(const oid_t &tile_group_id,
@@ -81,13 +81,10 @@ class TransactionManager {
 
   virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) {
-    auto tile_group_header =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
     tile_group_header -> RecycleTupleSlot(tuple_id);
   }
-
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id) = 0;
 
   /*
    * Write a virtual function to push deleted and verified (acc to optimistic
