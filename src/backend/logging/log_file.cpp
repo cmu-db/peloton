@@ -39,5 +39,7 @@ FILE *LogFile::GetFilePtr() { return log_file_; }
 
 void LogFile::SetLogFileFD(int fd) { log_file_fd_ = fd; }
 
+void LogFile::SetFilePtr(FILE *fp) { log_file_ = fp; }
+
 }  // namespace logging
 }  // namespace peloton
