@@ -48,6 +48,7 @@ static struct option opts[] = {
     {"transactions", optional_argument, NULL, 't'},
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(

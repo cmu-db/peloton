@@ -72,10 +72,6 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-std::ofstream out("outputfile.summary");
-
-static void WriteOutput(double stat);
-
 /////////////////////////////////////////////////////////
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
@@ -121,7 +117,7 @@ void RunBackend(oid_t thread_id) {
   durations[thread_id] = timer.GetDuration();
 }
 
-void RunWorkload() {
+double RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
@@ -146,21 +142,7 @@ void RunWorkload() {
 
   double throughput = (state.transaction_count * num_threads)/max_duration;
 
-  WriteOutput(throughput);
-}
-
-static void WriteOutput(double stat) {
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.update_ratio << " "
-      << state.scale_factor << " "
-      << state.column_count << " :: ";
-  std::cout << stat << " tps\n";
-
-  out << state.update_ratio << " ";
-  out << state.scale_factor << " ";
-  out << state.column_count << " ";
-  out << stat << "\n";
-  out.flush();
+  return throughput;
 }
 
 /////////////////////////////////////////////////////////
