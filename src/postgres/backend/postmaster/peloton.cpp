@@ -91,7 +91,6 @@ peloton_bootstrap() {
   try {
     // Process the utility statement
     peloton::bridge::Bootstrap::BootstrapPeloton();
-
     // Sart logging
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
@@ -129,10 +128,16 @@ peloton_bootstrap() {
 
     }
 
-    // Start GC vacuuming thread
-    //TODO: add a check for command line parameter to enable GC
-    auto& gc_manager = peloton::gc::GCManager::GetInstance();
-    std::thread(&peloton::gc::GCManager::Poll, &gc_manager).detach();
+    peloton_gc_mode = GC_TYPE_VACUUM; //FIXME: get through config
+    if(peloton_gc_mode == GC_TYPE_VACUUM) {
+      // Start GC vacuuming thread
+      auto& gc_manager = peloton::gc::GCManager::GetInstance();
+      if(gc_manager.GetStatus() != GC_STATUS_RUNNING) {
+        printf("***** starting GC thread ******\n");
+        std::thread(&peloton::gc::GCManager::Poll, &gc_manager).detach();
+        gc_manager.SetStatus(GC_STATUS_RUNNING);
+      }
+    }
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
