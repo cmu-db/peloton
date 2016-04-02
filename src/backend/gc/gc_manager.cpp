@@ -40,7 +40,7 @@ void GCManager::SetStatus(GCStatus status) {
 }
 
 void GCManager::Poll() {
-  LOG_INFO("Polling GC thread...");
+  LOG_DEBUG("Polling GC thread...");
   /*
    * Check if we can move anything from the possibly free list to the free
    * list.
@@ -54,8 +54,10 @@ void GCManager::Poll() {
       if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {
         auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(tm.database_id, tm.table_id));
         if(free_map_it != free_map.end()) {
+          LOG_INFO("Recycling inside Poll function");
           auto free_list = free_map_it->second;
           free_list.push_back(tm);
+          LOG_INFO("The free_list size is %lu", free_list.size());
           free_map.erase(free_map_it);
           std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
           free_map[key] = free_list;
@@ -72,7 +74,7 @@ void GCManager::Poll() {
     }
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   Poll();
 }
 

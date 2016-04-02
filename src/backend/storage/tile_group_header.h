@@ -85,6 +85,9 @@ class TileGroupHeader : public Printable {
       auto free_slot = gc_manager.ReturnFreeSlot(0, tile_group->GetTableId()); //FIXME:: harcoded DB ID
       if(free_slot != INVALID_OID) {
         tuple_slot_id = free_slot;
+        this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+        this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
+        this -> SetEndCommitId(tuple_slot_id, MAX_CID);
       } else if (next_tuple_slot < num_tuple_slots) {
         // check tile group capacity
         tuple_slot_id = next_tuple_slot;
@@ -92,6 +95,7 @@ class TileGroupHeader : public Printable {
       }
     }
     LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
+    LOG_INFO("###### TUPLE SLOT USED = %lu", tuple_slot_id);
     return tuple_slot_id;
   }
 
