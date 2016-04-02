@@ -76,6 +76,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
+  txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
+
  private:
   std::string GetLogFileName(void);
 
