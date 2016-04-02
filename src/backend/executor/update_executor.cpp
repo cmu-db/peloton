@@ -77,6 +77,7 @@ bool UpdateExecutor::DExecute() {
   auto &pos_lists = source_tile.get()->GetPositionLists();
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
   auto tile_group_id = tile_group->GetTileGroupId();
 
   auto &transaction_manager =
@@ -88,7 +89,7 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
       storage::Tuple *new_tuple =
           new storage::Tuple(target_table_->GetSchema(), true);
@@ -100,16 +101,16 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
       tile_group->CopyTuple(new_tuple, physical_tuple_id);
 
-      transaction_manager.SetUpdateVisibility(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id);
       delete new_tuple;
       new_tuple = nullptr;
 
-    } else if (transaction_manager.IsAccessable(tile_group,
+    } else if (transaction_manager.IsOwnable(tile_group_header,
                                                 physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
-      // transdaction.
+      // transaction.
 
-      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) ==
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) ==
           false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);

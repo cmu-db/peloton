@@ -230,8 +230,7 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  /** @return True if it's a same-key update and it's successful */
-  bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, ItemPointer location);
 
  private:
   //===--------------------------------------------------------------------===//

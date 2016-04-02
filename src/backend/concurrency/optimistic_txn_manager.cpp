@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// rowo_txn_manager.cpp
+// optimistic_txn_manager.cpp
 //
-// Identification: src/backend/concurrency/rowo_txn_manager.cpp
+// Identification: src/backend/concurrency/optimistic_txn_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "rowo_txn_manager.h"
+#include "optimistic_txn_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -23,15 +23,17 @@
 namespace peloton {
 namespace concurrency {
 
-RowoTxnManager &RowoTxnManager::GetInstance() {
-  static RowoTxnManager txn_manager;
+OptimisticTxnManager &OptimisticTxnManager::GetInstance() {
+  static OptimisticTxnManager txn_manager;
   return txn_manager;
 }
 
 // Visibility check
-bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                             const cid_t &tuple_begin_cid,
-                                             const cid_t &tuple_end_cid) {
+bool OptimisticTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
+                                             const oid_t &tuple_id) {
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
@@ -55,7 +57,7 @@ bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
-        // currently, we do not handle cascading abort. so never read an
+        // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
         return false;
       } else {
@@ -77,29 +79,27 @@ bool RowoTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-bool RowoTxnManager::IsOwner(storage::TileGroup *tile_group,
+bool OptimisticTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
                                            const oid_t &tuple_id) {
-  auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current
-// transdaction.
+// transaction.
 // will only be performed by deletes and updates.
-bool RowoTxnManager::IsAccessable(storage::TileGroup *tile_group,
+bool OptimisticTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                                                 const oid_t &tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool RowoTxnManager::AcquireTuple(
-    storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+bool OptimisticTxnManager::AcquireOwnership(
+    const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(physical_tuple_id, txn_id) == false) {
+  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
@@ -107,100 +107,23 @@ bool RowoTxnManager::AcquireTuple(
   return true;
 }
 
-bool RowoTxnManager::PerformRead(const oid_t &tile_group_id,
+bool OptimisticTxnManager::PerformRead(const oid_t &tile_group_id,
                                                const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
   return true;
 }
 
-bool RowoTxnManager::PerformInsert(const oid_t &tile_group_id,
+bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                  const oid_t &tuple_id) {
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  SetInsertVisibility(tile_group_id, tuple_id);
   // no need to set next item pointer.
+
+  // Add the new tuple into the insert set
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
 
-bool RowoTxnManager::PerformUpdate(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
-  auto transaction_id = current_txn->GetTransactionId();
-  
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-  auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
-
-  // if we can perform update, then we must already locked the older version.
-  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-
-  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
-  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
-  new_tile_group_header->SetEndCommitId(new_location.offset, MAX_CID);
-
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  current_txn->RecordUpdate(tile_group_id, tuple_id);
-  return true;
-}
-
-bool RowoTxnManager::PerformDelete(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
-
-  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
-  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
-  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
-
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  current_txn->RecordDelete(tile_group_id, tuple_id);
-  return true;
-}
-
-void RowoTxnManager::SetDeleteVisibility(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void RowoTxnManager::SetUpdateVisibility(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  // Set MVCC info
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void RowoTxnManager::SetInsertVisibility(
+void OptimisticTxnManager::SetInsertVisibility(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -215,11 +138,102 @@ void RowoTxnManager::SetInsertVisibility(
   tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
 
+}
+
+bool OptimisticTxnManager::PerformUpdate(
+    const oid_t &tile_group_id, const oid_t &tuple_id,
+    const ItemPointer &new_location) {
+  auto transaction_id = current_txn->GetTransactionId();
+
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto new_tile_group_header = catalog::Manager::GetInstance()
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
+
+  // if we can perform update, then we must already locked the older version.
+  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  // Set double linked list
+  tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
+  new_tile_group_header->SetEndCommitId(new_location.offset, MAX_CID);
+
+  // Add the old tuple into the update set
+  current_txn->RecordUpdate(tile_group_id, tuple_id);
+  return true;
+}
+
+void OptimisticTxnManager::PerformUpdate(
+    const oid_t &tile_group_id, const oid_t &tuple_id) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+
+  // Set MVCC info
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+
+  // Add the old tuple into the update set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // Update an inserted version
+    current_txn->RecordUpdate(old_location.block, old_location.offset);
+  }
   // tile_group_header->SetInsertCommit(tuple_id, false); // unused
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-Result RowoTxnManager::CommitTransaction() {
+bool OptimisticTxnManager::PerformDelete(
+    const oid_t &tile_group_id, const oid_t &tuple_id,
+    const ItemPointer &new_location) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  auto new_tile_group_header = catalog::Manager::GetInstance()
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
+
+  // Set up double linked list
+  tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
+  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
+
+  // Add the old tuple into the delete set
+  current_txn->RecordDelete(tile_group_id, tuple_id);
+  return true;
+}
+
+void OptimisticTxnManager::PerformDelete(
+    const oid_t &tile_group_id, const oid_t &tuple_id) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
+
+  // Add the old tuple into the delete set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // delete an inserted version
+    current_txn->RecordDelete(old_location.block, old_location.offset);
+  }
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
+}
+
+Result OptimisticTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -343,7 +357,7 @@ Result RowoTxnManager::CommitTransaction() {
   return ret;
 }
 
-Result RowoTxnManager::AbortTransaction() {
+Result OptimisticTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 

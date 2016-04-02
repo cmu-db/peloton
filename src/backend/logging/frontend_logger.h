@@ -17,6 +17,8 @@
 #include <condition_variable>
 #include <vector>
 #include <unistd.h>
+#include <map>
+#include <thread>
 
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
@@ -46,8 +48,6 @@ class FrontendLogger : public Logger {
 
   void AddBackendLogger(BackendLogger *backend_logger);
 
-  bool RemoveBackendLogger(BackendLogger *backend_logger);
-
   //===--------------------------------------------------------------------===//
   // Virtual Functions
   //===--------------------------------------------------------------------===//
@@ -64,21 +64,14 @@ class FrontendLogger : public Logger {
 
  protected:
   // Associated backend loggers
-  std::vector<BackendLogger *> backend_loggers;
-
-  // Since backend loggers can add themselves into the list above
-  // via log manager, we need to protect the backend_loggers list
-  std::mutex backend_logger_mutex;
+  std::vector<BackendLogger*> backend_loggers;
 
   // Global queue
-  std::vector<LogRecord *> global_queue;
+  std::vector<std::unique_ptr<LogRecord>> global_queue;
 
   // period with which it collects log records from backend loggers
   // (in microseconds)
   int64_t wait_timeout;
-
-  // used to indicate if backend has new logs
-  bool need_to_collect_new_log_records = false;
 
   // stats
   size_t fsync_count = 0;
