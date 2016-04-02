@@ -469,7 +469,6 @@ void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *record) {
   DeleteTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation());
-  delete record;
 }
 
 /**
