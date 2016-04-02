@@ -43,6 +43,8 @@ TileGroup *TileGroupFactory::GetTileGroup(
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,
                                         schemas, column_map, tuple_count);
 
+  tile_header -> SetTileGroup(tile_group);
+
   tile_group->database_id = database_id;
   tile_group->tile_group_id = tile_group_id;
   tile_group->table_id = table_id;
