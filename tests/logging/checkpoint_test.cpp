@@ -113,7 +113,7 @@ TEST_F(CheckpointTests, BasicTest) {
 
   logging::SimpleCheckpoint simple_checkpoint;
   logging::WriteAheadBackendLogger *logger =
-      logging::WriteAheadBackendLogger::GetInstance();
+      new logging::WriteAheadBackendLogger();
 
   simple_checkpoint.SetLogger(logger);
   auto checkpoint_txn = txn_manager.BeginTransaction();
@@ -131,6 +131,7 @@ TEST_F(CheckpointTests, BasicTest) {
 	  delete record;
   }
 
+  delete logger;
 }
 
 }  // End test namespace
