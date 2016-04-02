@@ -18,6 +18,10 @@
 namespace peloton {
 namespace concurrency {
 
+//===--------------------------------------------------------------------===//
+// timestamp ordering
+//===--------------------------------------------------------------------===//
+
 class TsOrderTxnManager : public TransactionManager {
  public:
   TsOrderTxnManager() {}
@@ -37,7 +41,7 @@ class TsOrderTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void SetOwnership(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 

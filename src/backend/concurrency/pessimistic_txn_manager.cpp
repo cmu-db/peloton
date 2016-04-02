@@ -211,7 +211,7 @@ bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
   return true;
 }
 
-void PessimisticTxnManager::SetInsertVisibility(
+void PessimisticTxnManager::SetOwnership(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -230,7 +230,7 @@ void PessimisticTxnManager::SetInsertVisibility(
 bool PessimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                   const oid_t &tuple_id) {
   LOG_TRACE("Perform insert");
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }

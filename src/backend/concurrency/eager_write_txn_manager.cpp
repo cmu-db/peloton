@@ -243,7 +243,7 @@ bool EagerWriteTxnManager::PerformUpdate(
 bool EagerWriteTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                   const oid_t &tuple_id) {
   LOG_TRACE("Perform insert");
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
@@ -486,7 +486,7 @@ void EagerWriteTxnManager::PerformUpdate(
   }
 }
 
-void EagerWriteTxnManager::SetInsertVisibility(
+void EagerWriteTxnManager::SetOwnership(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
