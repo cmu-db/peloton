@@ -58,6 +58,26 @@ class TsOrderTxnManager : public TransactionManager {
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
+
+private:
+  inline cid_t GetLastReaderCid(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
+    char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
+    cid_t read_ts = 0;
+    memcpy(&read_ts, reserved_field, sizeof(cid_t));
+    return read_ts;
+  }
+
+  inline void SetLastReaderCid(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id, const cid_t &last_read_ts) {
+    char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
+    cid_t read_ts = 0;
+    memcpy(&read_ts, reserved_field, sizeof(cid_t));
+    if (last_read_ts > read_ts) {
+      memcpy(reserved_field, &last_read_ts, sizeof(cid_t));
+    }
+  }
+
+
 };
+
 }
 }

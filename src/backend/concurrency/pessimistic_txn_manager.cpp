@@ -103,6 +103,34 @@ bool PessimisticTxnManager::IsOwnable(const storage::TileGroupHeader * const til
          tuple_end_cid == MAX_CID;
 }
 
+bool PessimisticTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
+                                  const oid_t &tile_group_id, const oid_t &tuple_id) {
+  LOG_TRACE("AcquireOwnership");
+  // acquire write lock.
+  assert(IsOwner(tile_group_header, tuple_id) == false);
+
+  auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
+  // No writer, release read lock that is acquired before
+  auto res = ReleaseReadLock(tile_group_header, tuple_id);
+  // Must success
+  assert(res);
+  pessimistic_released_rdlock[tile_group_id][tuple_id] = true;
+
+  // Try get write lock
+  auto new_txn_id = current_txn->GetTransactionId();
+  res = tile_group_header->CASTxnId(tuple_id, new_txn_id, INITIAL_TXN_ID,
+                                    &old_txn_id);
+
+  if (res) {
+    return true;
+  } else {
+    // LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    // SetTransactionResult(Result::RESULT_FAILURE);
+    return false;
+  }
+}
+
 
 bool PessimisticTxnManager::ReleaseReadLock(
     const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
@@ -133,34 +161,6 @@ bool PessimisticTxnManager::ReleaseReadLock(
   return true;
 }
 
-bool PessimisticTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
-                                  const oid_t &tile_group_id, const oid_t &tuple_id) {
-  LOG_TRACE("AcquireOwnership");
-  // acquire write lock.
-  assert(IsOwner(tile_group_header, tuple_id) == false);
-
-  auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
-
-  // No writer, release read lock that is acquired before
-  auto res = ReleaseReadLock(tile_group_header, tuple_id);
-  // Must success
-  assert(res);
-  pessimistic_released_rdlock[tile_group_id][tuple_id] = true;
-
-  // Try get write lock
-  auto new_txn_id = current_txn->GetTransactionId();
-  res = tile_group_header->CASTxnId(tuple_id, new_txn_id, INITIAL_TXN_ID,
-                                    &old_txn_id);
-
-  if (res) {
-    return true;
-  } else {
-    // LOG_INFO("Fail to acquire write lock. Set txn failure.");
-    // SetTransactionResult(Result::RESULT_FAILURE);
-    return false;
-  }
-}
-
 bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
                                                 const oid_t &tuple_id) {
   LOG_TRACE("Perform read");
@@ -177,8 +177,9 @@ bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
     }
   }
 
-  if (IsOwner(tile_group->GetHeader(), tuple_id))
+  if (IsOwner(tile_group_header, tuple_id)) {
     return true;
+  }
 
   // Try to acquire read lock.
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);

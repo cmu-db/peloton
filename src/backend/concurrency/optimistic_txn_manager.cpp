@@ -138,8 +138,6 @@ void OptimisticTxnManager::SetInsertVisibility(
   tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
 
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 bool OptimisticTxnManager::PerformUpdate(
