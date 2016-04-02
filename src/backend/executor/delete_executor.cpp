@@ -104,7 +104,7 @@ bool DeleteExecutor::DExecute() {
       transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
-                                                physical_tuple_id) == true) {
+                                             physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
