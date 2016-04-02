@@ -56,8 +56,10 @@ size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
 	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.logging_type << " " << state.backend_count << " "
-			<< state.wait_timeout << " :: ";
+	std::cout << state.logging_type << " "
+	    << ycsb::state.update_ratio << " "
+	    << ycsb::state.scale_factor << " "
+	    << ycsb::state.backend_count << " :: ";
 	std::cout << value << "\n";
 
 	auto &storage_manager = storage::StorageManager::GetInstance();
@@ -73,8 +75,9 @@ static void WriteOutput(double value) {
 	std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
 
 	out << state.logging_type << " ";
-	out << state.backend_count << " ";
-	out << state.wait_timeout << " ";
+	out << ycsb::state.update_ratio << " ";
+	out << ycsb::state.scale_factor << " ";
+  out << ycsb::state.backend_count << " ";
 	out << value << "\n";
 	out.flush();
 }
@@ -231,14 +234,15 @@ void BuildLog() {
 	Timer<std::milli> timer;
 	timer.Start();
 
-	ycsb::RunWorkload();
+	auto stat = ycsb::RunWorkload();
 
 	timer.Stop();
 
 	// Build log time
-	if (state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
+	if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
+	    state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
 			state.experiment_type == EXPERIMENT_TYPE_WAIT) {
-		WriteOutput(timer.GetDuration());
+		WriteOutput(stat);
 	} else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
 		auto log_file_size = GetLogFileSize();
 		WriteOutput(log_file_size);

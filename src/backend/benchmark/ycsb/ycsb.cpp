@@ -23,6 +23,22 @@ namespace ycsb {
 
 configuration state;
 
+std::ofstream out("outputfile.summary");
+
+static void WriteOutput(double stat) {
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << state.update_ratio << " "
+      << state.scale_factor << " "
+      << state.column_count << " :: ";
+  std::cout << stat << " tps\n";
+
+  out << state.update_ratio << " ";
+  out << state.scale_factor << " ";
+  out << state.column_count << " ";
+  out << stat << "\n";
+  out.flush();
+}
+
 // Main Entry Point
 void RunBenchmark() {
 
@@ -32,8 +48,9 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Run the workload
-  RunWorkload();
+  auto stat = RunWorkload();
 
+  WriteOutput(stat);
 }
 
 }  // namespace ycsb
