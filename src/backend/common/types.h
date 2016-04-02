@@ -355,7 +355,9 @@ enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
   BACKEND_TYPE_MM = 1,   // on volatile memory
-  BACKEND_TYPE_FILE = 2  // on mmap file
+  BACKEND_TYPE_NVM = 2,  // on non-volatile memory
+  BACKEND_TYPE_SSD = 3,  // on ssd
+  BACKEND_TYPE_HDD = 4   // on hdd
 };
 
 //===--------------------------------------------------------------------===//
@@ -752,9 +754,11 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+
+BackendType GetBackendType(const LoggingType& logging_type);
 
 //===--------------------------------------------------------------------===//
 // Transformers

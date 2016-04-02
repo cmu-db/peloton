@@ -156,8 +156,12 @@ std::string BackendTypeToString(BackendType type) {
   switch (type) {
     case (BACKEND_TYPE_MM):
       return "MM";
-    case (BACKEND_TYPE_FILE):
-      return "FILE";
+    case (BACKEND_TYPE_NVM):
+      return "NVM";
+    case (BACKEND_TYPE_SSD):
+      return "SSD";
+    case (BACKEND_TYPE_HDD):
+      return "HDD";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
     default: {
@@ -174,8 +178,12 @@ BackendType StringToBackendType(std::string str) {
     return BACKEND_TYPE_INVALID;
   } else if (str == "MM") {
     return BACKEND_TYPE_MM;
-  } else if (str == "FILE") {
-    return BACKEND_TYPE_FILE;
+  } else if (str == "NVM") {
+    return BACKEND_TYPE_NVM;
+  } else if (str == "SSD") {
+    return BACKEND_TYPE_SSD;
+  } else if (str == "HDD") {
+    return BACKEND_TYPE_HDD;
   }
   return BACKEND_TYPE_INVALID;
 }
@@ -275,7 +283,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
   return true;
 }
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type) {
   bool status = false;
 
   switch (logging_type) {
@@ -292,7 +300,7 @@ bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   return status;
 }
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type) {
   bool status = true;
 
   switch (logging_type) {
@@ -310,6 +318,28 @@ bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
   }
 
   return status;
+}
+
+BackendType GetBackendType(const LoggingType& logging_type) {
+  // Default backend type
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_NVM_HDD:
+      backend_type = BACKEND_TYPE_NVM;
+      break;
+
+    case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_HDD_HDD:
+      backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    default:
+      break;
+  }
+
+  return backend_type;
 }
 
 //===--------------------------------------------------------------------===//
