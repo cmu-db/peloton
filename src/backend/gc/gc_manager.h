@@ -39,9 +39,11 @@ class GCManager {
   // Get status of whether GC thread is running or not
   bool GetStatus();
 
+  void SetStatus(GCStatus status);
   void Poll();
 
  private:
+  GCStatus status;
   GCManager();
   ~GCManager();
   //===--------------------------------------------------------------------===//

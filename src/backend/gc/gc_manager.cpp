@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/common/types.h"
 #include "backend/gc/gc_manager.h"
 
 namespace peloton {
@@ -23,16 +24,22 @@ GCManager &GCManager::GetInstance() {
   return gc_manager;
 }
 
-GCManager::GCManager() {}
+GCManager::GCManager() {
+  this->status = GC_STATUS_OFF;
+}
 
 GCManager::~GCManager() {}
 
 bool GCManager::GetStatus() {
-  return true;
+  return this->status;
+}
+
+void GCManager::SetStatus(GCStatus status) {
+  this->status = status;
 }
 
 void GCManager::Poll() {
-  LOG_DEBUG("Polling GC thread...");
+  LOG_INFO("Polling GC thread...");
   std::this_thread::sleep_for(std::chrono::seconds(5));
   Poll();
 }
