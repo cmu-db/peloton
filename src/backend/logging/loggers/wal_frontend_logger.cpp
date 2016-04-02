@@ -932,6 +932,7 @@ bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
   if (this->log_file_fd == -1) return false;
 
   fstat(this->log_file_fd, &stat_buf);
+  this->log_file_size = stat_buf.st_size;
   return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
 }
 
