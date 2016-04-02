@@ -754,6 +754,17 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t database_id;
+  oid_t table_id;
+  oid_t tile_group_id;
+  oid_t tuple_slot_id;
+  txn_id_t transaction_id; // the last transaction which modified this tuple.
+};
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 

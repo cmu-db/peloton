@@ -16,6 +16,8 @@
 #include "backend/common/platform.h"
 #include "backend/common/printable.h"
 #include "backend/logging/log_manager.h"
+#include "backend/gc/gc_manager.h"
+#include "backend/expression/container_tuple.h"
 
 #include <atomic>
 #include <mutex>
@@ -79,11 +81,11 @@ class TileGroupHeader : public Printable {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
       // check if there are recycled tuple slots
-      if (!free_list.empty()) {
+      /*if (!free_list.empty()) {
         auto tuple_slot_id = free_list.front();
         free_list.pop_front();
         return tuple_slot_id;
-      }
+      }*/
       // check tile group capacity
       if (next_tuple_slot < num_tuple_slots) {
         tuple_slot_id = next_tuple_slot;
@@ -112,7 +114,17 @@ class TileGroupHeader : public Printable {
     }
   }
 
-  inline void RecycleTupleSlot(const oid_t tuple_id) { possibly_free_list.push_back(tuple_id); }
+  inline void RecycleTupleSlot(const oid_t db_id, const oid_t tb_id, const oid_t tg_id, const oid_t t_id, const txn_id_t t) {
+    auto& gc_manager = gc::GCManager::GetInstance();
+    struct TupleMetadata tm;
+    tm.database_id = db_id;
+    tm.tile_group_id = tg_id;
+    tm.table_id = tb_id;
+    tm.tuple_slot_id = t_id;
+    tm.transaction_id = t;
+    gc_manager.AddPossiblyFreeTuple(tm);
+    //possibly_free_list.push_back(tuple_id);
+  }
 
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }
 
@@ -334,10 +346,6 @@ class TileGroupHeader : public Printable {
 
   // synch helpers
   std::mutex tile_header_mutex;
-
-  // free lists, recycle tuple slots
-  std::deque<oid_t> free_list;
-  std::deque<oid_t> possibly_free_list;
 
 };
 
