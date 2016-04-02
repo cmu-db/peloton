@@ -192,7 +192,8 @@ void OptimisticTxnManager::PerformUpdate(
 bool OptimisticTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
-  TransactionManager::PerformDelete(tile_group_id, tuple_id);
+  //TransactionManager::PerformDelete(tile_group_id, tuple_id);
+  RecycleTupleSlot(tile_group_id, tuple_id);
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -216,7 +217,9 @@ bool OptimisticTxnManager::PerformDelete(
 
 void OptimisticTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
-  TransactionManager::PerformDelete(tile_group_id, tuple_id);
+  //TransactionManager::PerformDelete(tile_group_id, tuple_id);
+  RecycleTupleSlot(tile_group_id, tuple_id);
+
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();

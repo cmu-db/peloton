@@ -71,21 +71,15 @@ class TransactionManager {
                              const ItemPointer &new_location) = 0;
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
-                             __attribute__((unused)) const ItemPointer &new_location) {
-    auto &manager = catalog::Manager::GetInstance();
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
-    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-    auto transaction_id = current_txn->GetTransactionId();
-    tile_group_header -> RecycleTupleSlot(0, tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id); // FIXME: get DB ID
-    return true;
-  }
+                             const ItemPointer &new_location) = 0;
 
   virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id) {
+                                   const oid_t &tuple_id) = 0;
+
+  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
     auto &manager = catalog::Manager::GetInstance();
     storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
     expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
