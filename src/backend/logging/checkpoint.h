@@ -32,7 +32,7 @@ class Checkpoint {
  public:
   Checkpoint() { pool.reset(new VarlenPool(BACKEND_TYPE_MM)); }
 
-  virtual ~Checkpoint(void) {}
+  virtual ~Checkpoint(void) { pool.reset(); }
 
   // Do checkpoint periodically
   virtual void DoCheckpoint() = 0;
@@ -50,7 +50,6 @@ class Checkpoint {
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
-
 
   // variable length memory pool
   std::unique_ptr<VarlenPool> pool;
