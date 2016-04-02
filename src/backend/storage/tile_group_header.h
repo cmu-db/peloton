@@ -81,18 +81,18 @@ class TileGroupHeader : public Printable {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
       // check if there are recycled tuple slots
-      /*if (!free_list.empty()) {
-        auto tuple_slot_id = free_list.front();
-        free_list.pop_front();
-        return tuple_slot_id;
-      }*/
+      auto& gc_manager = gc::GCManager::GetInstance();
+      auto free_slot = gc_manager.ReturnFreeSlot(0, tile_group->GetTableId()); //FIXME:: harcoded DB ID
+      if(free_slot != INVALID_OID) {
+        return free_slot;
+      }
+
       // check tile group capacity
       if (next_tuple_slot < num_tuple_slots) {
         tuple_slot_id = next_tuple_slot;
         next_tuple_slot++;
       }
     }
-
     return tuple_slot_id;
   }
 
@@ -123,7 +123,6 @@ class TileGroupHeader : public Printable {
     tm.tuple_slot_id = t_id;
     tm.transaction_id = t;
     gc_manager.AddPossiblyFreeTuple(tm);
-    //possibly_free_list.push_back(tuple_id);
   }
 
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }

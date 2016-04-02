@@ -15,6 +15,8 @@
 #include <mutex>
 #include <thread>
 #include <deque>
+#include <map>
+#include <list>
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -44,11 +46,13 @@ class GCManager {
   void Poll();
 
   void AddPossiblyFreeTuple(struct TupleMetadata tm);
+  oid_t ReturnFreeSlot(oid_t db_id, oid_t tb_id);
 
  private:
   GCStatus status;
-  std::deque<oid_t> free_list;
-  std::deque<struct TupleMetadata> possibly_free_list;
+  std::map<std::pair<oid_t, oid_t>, std::deque<struct TupleMetadata>> free_map;
+  std::list<struct TupleMetadata> possibly_free_list;
+  std::mutex gc_mutex;
   GCManager();
   ~GCManager();
   //===--------------------------------------------------------------------===//
