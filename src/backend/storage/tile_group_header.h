@@ -84,15 +84,14 @@ class TileGroupHeader : public Printable {
       auto& gc_manager = gc::GCManager::GetInstance();
       auto free_slot = gc_manager.ReturnFreeSlot(0, tile_group->GetTableId()); //FIXME:: harcoded DB ID
       if(free_slot != INVALID_OID) {
-        return free_slot;
-      }
-
-      // check tile group capacity
-      if (next_tuple_slot < num_tuple_slots) {
+        tuple_slot_id = free_slot;
+      } else if (next_tuple_slot < num_tuple_slots) {
+        // check tile group capacity
         tuple_slot_id = next_tuple_slot;
         next_tuple_slot++;
       }
     }
+    LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
     return tuple_slot_id;
   }
 
