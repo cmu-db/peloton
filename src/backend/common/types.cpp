@@ -291,7 +291,6 @@ bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   switch (logging_type) {
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_DRAM_HDD:
-    case LOGGING_TYPE_DRAM_SSD:
       status = true;
       break;
 
@@ -308,15 +307,9 @@ bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
 
   switch (logging_type) {
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_NVM_HDD:
 
-    case LOGGING_TYPE_SSD_NVM:
-    case LOGGING_TYPE_SSD_SSD:
-    case LOGGING_TYPE_SSD_HDD:
-
     case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_SSD:
     case LOGGING_TYPE_HDD_HDD:
       status = true;
       break;
@@ -928,34 +921,21 @@ std::string LoggingTypeToString(LoggingType type) {
       return "DRAM_NVM";
     case LOGGING_TYPE_DRAM_HDD:
       return "DRAM_HDD";
-    case LOGGING_TYPE_DRAM_SSD:
-      return "DRAM_SSD";
 
     // WBL Based
 
     case LOGGING_TYPE_NVM_NVM:
       return "NVM_NVM";
-    case LOGGING_TYPE_NVM_SSD:
-      return "NVM_SSD";
     case LOGGING_TYPE_NVM_HDD:
       return "NVM_HDD";
 
     case LOGGING_TYPE_HDD_NVM:
       return "HDD_NVM";
-    case LOGGING_TYPE_HDD_SSD:
-      return "HDD_SSD";
     case LOGGING_TYPE_HDD_HDD:
       return "HDD_HDD";
 
-    case LOGGING_TYPE_SSD_NVM:
-      return "SSD_NVM";
-    case LOGGING_TYPE_SSD_SSD:
-      return "SSD_SSD";
-    case LOGGING_TYPE_SSD_HDD:
-      return "SSD_HDD";
-
     default:
-      throw Exception("Invalid logging_type :: " + std::to_string(type));
+      LOG_ERROR("Invalid logging_type :: %d", type);
       exit(EXIT_FAILURE);
   }
   return "INVALID";

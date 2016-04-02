@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hyadapt.h
+// ycsb_workload.h
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt.h
+// Identification: src/backend/benchmark/ycsb_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,14 +12,23 @@
 
 #pragma once
 
-#include "hyadapt_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
+
+namespace storage{
+class DataTable;
+}
+
 namespace benchmark {
-namespace hyadapt {
+namespace ycsb {
 
 extern configuration state;
 
-}  // namespace hyadapt
+extern storage::DataTable *user_table;
+
+void RunWorkload();
+
+}  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton
