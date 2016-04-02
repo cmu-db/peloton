@@ -36,6 +36,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
  public:
   WriteAheadFrontendLogger(void);
 
+  WriteAheadFrontendLogger(bool for_testing);
+
   ~WriteAheadFrontendLogger(void);
 
   void FlushLogRecords(void);
@@ -110,6 +112,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   int log_file_counter_;
 
   int log_file_cursor_;
+
+  //for recovery from in memory buffer instead of file.
+  char * input_log_buffer;
 
   std::string peloton_log_directory = "peloton_log";
 

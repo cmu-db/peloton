@@ -71,7 +71,15 @@ int ExtractNumberFromFileName(const char *name);
  * @brief Open logfile and file descriptor
  */
 
-WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
+WriteAheadFrontendLogger::WriteAheadFrontendLogger() : WriteAheadFrontendLogger(false) {
+
+}
+
+/**
+ * @brief Open logfile and file descriptor
+ */
+
+WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
 
   /*LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
@@ -91,16 +99,20 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+  if(for_testing){
+    this->log_file = nullptr;
 
-  // TODO cleanup later
-  this->checkpoint.Init();
+  }else{
+    // TODO cleanup later
+    this->checkpoint.Init();
 
-  // abj1 adding code here!
-  LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
-  this->InitLogDirectory();
-  this->InitLogFilesList();
-  this->log_file_fd = -1;   // this is a restart or a new start
-  this->max_commit_id = 0;  // 0 is unused
+    // abj1 adding code here!
+    LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
+    this->InitLogDirectory();
+    this->InitLogFilesList();
+    this->log_file_fd = -1;   // this is a restart or a new start
+    this->max_commit_id = 0;  // 0 is unused
+  }
 }
 
 /**
@@ -112,11 +124,12 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   }
 
   // close the log file
-  int ret = fclose(log_file);
-  if (ret != 0) {
-    LOG_ERROR("Error occured while closing LogFile");
+  if (log_file != nullptr){
+    int ret = fclose(log_file);
+    if (ret != 0) {
+      LOG_ERROR("Error occured while closing LogFile");
+    }
   }
-
   // clean up pool
   delete recovery_pool;
 }
@@ -387,6 +400,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
+  table->IncreaseNumberOfTuplesBy(1);
   delete tuple;
 }
 
@@ -409,7 +423,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = delete_loc.block;
     }
   }
-
+  table->DecreaseNumberOfTuplesBy(1);
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
 }
 
@@ -457,7 +471,6 @@ void WriteAheadFrontendLogger::DeleteTuple(TupleRecord *record) {
   DeleteTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation());
-  delete record;
 }
 
 /**
