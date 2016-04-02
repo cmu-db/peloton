@@ -76,6 +76,13 @@ SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
   InitVersionNumber();
 }
 
+SimpleCheckpoint::~SimpleCheckpoint() {
+  for (auto &record : records_) {
+    record.reset();
+  }
+  records_.clear();
+}
+
 void SimpleCheckpoint::Init() {
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
     return;
@@ -112,8 +119,8 @@ void SimpleCheckpoint::DoCheckpoint() {
     bool failure = false;
 
     // Add txn begin record
-    LogRecord *begin_record = new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id);
+    std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
+        LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id));
     CopySerializeOutput begin_output_buffer;
     begin_record->Serialize(begin_output_buffer);
     records_.push_back(begin_record);
@@ -133,7 +140,6 @@ void SimpleCheckpoint::DoCheckpoint() {
 
         auto schema = target_table->GetSchema();
         assert(schema);
-        expression::AbstractExpression *predicate = nullptr;
         std::vector<oid_t> column_ids;
         column_ids.resize(schema->GetColumnCount());
         std::iota(column_ids.begin(), column_ids.end(), 0);
@@ -141,7 +147,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         /* Construct the Peloton plan node */
         LOG_TRACE("Initializing the executor tree");
         std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
-            new planner::SeqScanPlan(target_table, predicate, column_ids));
+            new planner::SeqScanPlan(target_table, nullptr, column_ids));
         std::unique_ptr<executor::SeqScanExecutor> scan_executor(
             new executor::SeqScanExecutor(scan_plan_node.get(),
                                           executor_context.get()));
@@ -154,8 +160,8 @@ void SimpleCheckpoint::DoCheckpoint() {
 
     // if anything other than begin record is added
     if (records_.size() > 1) {
-      LogRecord *commit_record = new TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id);
+      std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
       CopySerializeOutput commit_output_buffer;
       commit_record->Serialize(commit_output_buffer);
       records_.push_back(commit_record);
@@ -314,10 +320,10 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         }
         ItemPointer location(tile_group_id, tuple_id);
         assert(logger_);
-        auto record = logger_->GetTupleRecord(
+        std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
             target_table->GetOid(), location, INVALID_ITEMPOINTER, tuple.get(),
-            database_oid);
+            database_oid));
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
@@ -331,7 +337,9 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
 }
 void SimpleCheckpoint::SetLogger(BackendLogger *logger) { logger_ = logger; }
 
-std::vector<LogRecord *> SimpleCheckpoint::GetRecords() { return records_; }
+std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
+  return records_;
+}
 
 // Private Functions
 
@@ -382,7 +390,7 @@ void SimpleCheckpoint::Persist() {
 void SimpleCheckpoint::Cleanup() {
   // Clean up the record queue
   for (auto record : records_) {
-    delete record;
+    record.reset();
   }
   records_.clear();
 

@@ -32,6 +32,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint();
+  ~SimpleCheckpoint();
 
   static SimpleCheckpoint &GetInstance();
 
@@ -52,7 +53,7 @@ class SimpleCheckpoint : public Checkpoint {
   // Getters and Setters
   void SetLogger(BackendLogger *logger);
 
-  std::vector<LogRecord *> GetRecords();
+  std::vector<std::shared_ptr<LogRecord>> GetRecords();
 
  private:
   void CreateFile();
@@ -63,7 +64,7 @@ class SimpleCheckpoint : public Checkpoint {
 
   void InitVersionNumber();
 
-  std::vector<LogRecord *> records_;
+  std::vector<std::shared_ptr<LogRecord>> records_;
 
   FILE *checkpoint_file_ = nullptr;
 
