@@ -50,6 +50,8 @@ class LogFile {
 
   void SetLogFileFD(int);
 
+  void SetFilePtr(FILE *);
+
  private:
   FILE *log_file_;
   std::string log_file_name_;

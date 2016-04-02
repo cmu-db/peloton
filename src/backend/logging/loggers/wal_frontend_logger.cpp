@@ -71,9 +71,8 @@ int ExtractNumberFromFileName(const char *name);
  * @brief Open logfile and file descriptor
  */
 
-WriteAheadFrontendLogger::WriteAheadFrontendLogger() : WriteAheadFrontendLogger(false) {
-
-}
+WriteAheadFrontendLogger::WriteAheadFrontendLogger()
+    : WriteAheadFrontendLogger(false) {}
 
 /**
  * @brief Open logfile and file descriptor
@@ -99,10 +98,10 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
-  if(for_testing){
+  if (for_testing) {
     this->log_file = nullptr;
 
-  }else{
+  } else {
     // TODO cleanup later
     this->checkpoint.Init();
 
@@ -124,7 +123,7 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   }
 
   // close the log file
-  if (log_file != nullptr){
+  if (log_file != nullptr) {
     int ret = fclose(log_file);
     if (ret != 0) {
       LOG_ERROR("Error occured while closing LogFile");
@@ -851,34 +850,44 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 }
 
 void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
-  int new_file_num = log_file_counter_;
+  int new_file_num;
   std::string new_file_name;
   txn_id_t default_commit_id = 0;
+  struct stat log_stats;
+  int fd;
+
+  new_file_num = log_file_counter_;
 
   if (close_old_file) {  // must close last opened file
     int file_list_size = this->log_files_.size();
 
     if (file_list_size != 0) {
-      // TODO size is not being updated
-      this->log_files_[file_list_size - 1]->SetLogFileSize(this->log_file_size);
-
-      LOG_INFO("The log file to be closed has size %d",
-               (int)this->log_file_size);
-
       fseek(this->log_files_[file_list_size - 1]->GetFilePtr(), 0, SEEK_SET);
 
       fwrite((void *)&(this->max_commit_id), sizeof(this->max_commit_id), 1,
              this->log_files_[file_list_size - 1]->GetFilePtr());
-
-      fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
-
-      this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
 
       this->log_files_[file_list_size - 1]->SetMaxCommitId(this->max_commit_id);
       LOG_INFO("MaxCommitID of the last closed file is %d",
                (int)this->max_commit_id);
 
       this->max_commit_id = 0;  // reset
+
+      fd = fileno(this->log_files_[file_list_size - 1]->GetFilePtr());
+
+      fstat(fd, &log_stats);
+      this->log_file_size = log_stats.st_size;
+
+      LOG_INFO("The log file to be closed has size %d",
+               (int)this->log_file_size);
+
+      this->log_files_[file_list_size - 1]->SetLogFileSize(this->log_file_size);
+
+      fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
+
+      this->log_files_[file_list_size - 1]->SetFilePtr(nullptr);
+
+      this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
     }
   }
 
@@ -911,6 +920,8 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
       new LogFile(log_file, new_file_name, log_file_fd, new_file_num, 0);
 
   this->log_files_.push_back(new_log_file_object);
+
+  this->log_file_size = 0;
 
   log_file_counter_++;  // finally, increment log_file_counter_
   LOG_INFO("log_file_counter is %d", log_file_counter_);
