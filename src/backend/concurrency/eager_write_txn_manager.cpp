@@ -252,6 +252,7 @@ bool EagerWriteTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
+  TransactionManager::PerformDelete(tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -367,7 +368,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   Result ret = current_txn->GetResult();
 
   EndTransaction();
-  
+
   eager_write_released_rdlock.clear();
   return ret;
 }
@@ -451,6 +452,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
 void EagerWriteTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
+  TransactionManager::PerformDelete(tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
