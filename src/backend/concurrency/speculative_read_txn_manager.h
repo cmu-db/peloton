@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/spec_rowo_txn_manager.h
+// Identification: src/backend/concurrency/speculative_read_txn_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -42,41 +42,41 @@ enum RegisterRetType {
   REGISTER_RET_TYPE_NOT_FOUND = 2
 };
 
-class SpecRowoTxnManager : public TransactionManager {
+class SpeculativeReadTxnManager : public TransactionManager {
  public:
-  SpecRowoTxnManager() {}
+  SpeculativeReadTxnManager() {}
 
-  virtual ~SpecRowoTxnManager() {}
+  virtual ~SpeculativeReadTxnManager() {}
 
-  static SpecRowoTxnManager &GetInstance();
+  static SpeculativeReadTxnManager &GetInstance();
 
   virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
+                       const oid_t &tuple_id);
 
   virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
-  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
-
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+                             const ItemPointer &new_location);
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-
   virtual void PerformUpdate(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
+  
+  virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {

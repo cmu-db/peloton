@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// rpwo_txn_manager.h
+// eager_write_txn_manager.h
 //
-// Identification: src/backend/concurrency/rpwo_txn_manager.h
+// Identification: src/backend/concurrency/eager_write_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,14 +18,14 @@ namespace peloton {
 namespace concurrency {
 
 extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    rpwo_released_rdlock;
+    eager_write_released_rdlock;
 
-class RpwoTxnManager : public TransactionManager {
+class EagerWriteTxnManager : public TransactionManager {
  public:
-  RpwoTxnManager() {}
-  virtual ~RpwoTxnManager() {}
+  EagerWriteTxnManager() {}
+  virtual ~EagerWriteTxnManager() {}
 
-  static RpwoTxnManager &GetInstance();
+  static EagerWriteTxnManager &GetInstance();
 
   virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
 
@@ -35,27 +35,27 @@ class RpwoTxnManager : public TransactionManager {
   virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id);
 
-  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
-
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
-
+  
   virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
 

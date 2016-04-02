@@ -360,13 +360,12 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_ROWO = 0,  // optimistic read + optimistic write
-  CONCURRENCY_TYPE_ROWP = 2,  // optimistic read + pessimistic write
-  CONCURRENCY_TYPE_RPWO = 3,  // pessimistic read + optimistic write
-  CONCURRENCY_TYPE_RPWP = 4,  // pessimistic read + pessimistic write
-  CONCURRENCY_TYPE_SPEC = 5, // speculative
-  CONCURRENCY_TYPE_TO = 6,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 7   // serializable snapshot isolation
+  CONCURRENCY_TYPE_OPTIMISTIC = 0, // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1, // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2, // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3, // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,   // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5   // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
