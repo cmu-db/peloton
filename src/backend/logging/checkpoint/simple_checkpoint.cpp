@@ -60,6 +60,8 @@ bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
 storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
                                     FILE *log_file, size_t log_file_size);
 
+void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
+
 // Wrappers
 storage::DataTable *GetTable(TupleRecord tupleRecord);
 
@@ -72,6 +74,9 @@ SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
 }
 
 SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
+  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
+    return;
+  }
   InitDirectory();
   InitVersionNumber();
 }
@@ -254,6 +259,11 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   }
 
   auto table = GetTable(tuple_record);
+  if (!table) {
+    // the table was deleted
+    SkipTupleRecordBody(checkpoint_file_, checkpoint_file_size_);
+    return;
+  }
 
   // Read off the tuple record body from the log
   std::unique_ptr<storage::Tuple> tuple(ReadTupleRecordBody(
@@ -414,11 +424,10 @@ void SimpleCheckpoint::InitVersionNumber() {
   // Get checkpoint version
   LOG_INFO("Trying to read checkpoint directory");
   struct dirent *file;
-  DIR *dirp;
-
-  dirp = opendir(checkpoint_dir.c_str());
+  auto dirp = opendir(checkpoint_dir.c_str());
   if (dirp == nullptr) {
     LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
+    return;
   }
   while ((file = readdir(dirp)) != NULL) {
     if (strncmp(file->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) == 0) {
@@ -431,7 +440,6 @@ void SimpleCheckpoint::InitVersionNumber() {
     }
   }
   closedir(dirp);
-
   LOG_INFO("set checkpoint version to: %d", checkpoint_version);
 }
 
