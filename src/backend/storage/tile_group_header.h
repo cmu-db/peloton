@@ -172,6 +172,8 @@ class TileGroupHeader : public Printable {
   }
 
   // Setters
+
+  inline void SetTileGroup(TileGroup* tile_group) { this -> tile_group = tile_group; }
   inline void SetTransactionId(const oid_t &tuple_slot_id,
                                const txn_id_t &transaction_id) {
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
@@ -332,6 +334,9 @@ class TileGroupHeader : public Printable {
 
   // Backend
   BackendType backend_type;
+
+  // Associated tile_group
+  TileGroup* tile_group;
 
   size_t header_size;
 
