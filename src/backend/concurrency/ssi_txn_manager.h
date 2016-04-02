@@ -2,7 +2,7 @@
 ////
 ////                         Peloton
 ////
-//// rowo_txn_manager.h
+//// optimistic_txn_manager.h
 ////
 //// Identification: src/backend/concurrency/ssi_txn_manager.h
 ////
@@ -41,7 +41,7 @@
 //  virtual bool IsOwnable(storage::TileGroup *tile_group,
 //                            const oid_t &tuple_id);
 //
-//  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+//  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
 //                            const oid_t &tuple_id);
 //
 //  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);

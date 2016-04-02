@@ -4,13 +4,13 @@
 //
 // transaction_manager.cpp
 //
-// Identification: src/backend/concurrency/spec_rowo_txn_manager.cpp
+// Identification: src/backend/concurrency/speculative_read_txn_manager.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "spec_rowo_txn_manager.h"
+#include "speculative_read_txn_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -25,8 +25,8 @@ namespace concurrency {
 
 thread_local SpecTxnContext spec_txn_context;
 
-SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
-  static SpecRowoTxnManager txn_manager;
+SpeculativeReadTxnManager &SpeculativeReadTxnManager::GetInstance() {
+  static SpeculativeReadTxnManager txn_manager;
   return txn_manager;
 }
 
@@ -38,7 +38,7 @@ SpecRowoTxnManager &SpecRowoTxnManager::GetInstance() {
 // then it is possible that we obtain two versions.
 // in this case, we rely on validation to abort this transaction.
 // CONSIDER: any optimization??
-bool SpecRowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
+bool SpeculativeReadTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
                                    const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
@@ -78,21 +78,21 @@ bool SpecRowoTxnManager::IsVisible(const storage::TileGroupHeader * const tile_g
   }
 }
 
-bool SpecRowoTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id){
+bool SpeculativeReadTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id){
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current transaction.
 // will be invoked only by deletes and updates.
-bool SpecRowoTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
+bool SpeculativeReadTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
 // will be invoked only by deletes and updates.
-bool SpecRowoTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+bool SpeculativeReadTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false){
@@ -103,7 +103,7 @@ bool SpecRowoTxnManager::AcquireLock(const storage::TileGroupHeader * const tile
   return true;
 }
 
-bool SpecRowoTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool SpeculativeReadTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -119,7 +119,7 @@ bool SpecRowoTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tu
   return true;
 }
 
-bool SpecRowoTxnManager::PerformInsert(const oid_t &tile_group_id,
+bool SpeculativeReadTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                  const oid_t &tuple_id) {
   auto tile_group_header = 
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -139,7 +139,7 @@ bool SpecRowoTxnManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
-void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpeculativeReadTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -163,7 +163,7 @@ void SpecRowoTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const o
 }
 
 // at any time point, we must guarantee at least one version of a tuple is visible.
-bool SpecRowoTxnManager::PerformUpdate(
+bool SpeculativeReadTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
@@ -202,7 +202,7 @@ bool SpecRowoTxnManager::PerformUpdate(
   return true;
 }
 
-void SpecRowoTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -224,7 +224,7 @@ void SpecRowoTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &
 }
 
 // the logic is the same as PerformUpdate.
-bool SpecRowoTxnManager::PerformDelete(
+bool SpeculativeReadTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
@@ -261,7 +261,7 @@ bool SpecRowoTxnManager::PerformDelete(
   return true;
 }
 
-void SpecRowoTxnManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -281,7 +281,7 @@ void SpecRowoTxnManager::PerformDelete(const oid_t &tile_group_id, const oid_t &
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-Result SpecRowoTxnManager::CommitTransaction() {
+Result SpeculativeReadTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -408,7 +408,7 @@ Result SpecRowoTxnManager::CommitTransaction() {
   return ret;
 }
 
-Result SpecRowoTxnManager::AbortTransaction() {
+Result SpeculativeReadTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 

@@ -4,7 +4,7 @@
 //
 // pessimistic_transaction_manager_test.cpp
 //
-// Identification: tests/concurrency/spec_rowo_txn_manager_test.cpp
+// Identification: tests/concurrency/speculative_read_txn_manager_test.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -21,10 +21,10 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class SpecRowoTxnManagerTests : public PelotonTest {};
+class SpecOptimisticTxnManagerTests : public PelotonTest {};
 
-TEST_F(SpecRowoTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_SPEC);
+TEST_F(SpecOptimisticTxnManagerTests, Test) {
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_SPECULATIVE_READ);
   EXPECT_TRUE(true);
 }
 
