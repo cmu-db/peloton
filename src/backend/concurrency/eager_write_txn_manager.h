@@ -20,6 +20,11 @@ namespace concurrency {
 extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
     eager_write_released_rdlock;
 
+
+//===--------------------------------------------------------------------===//
+// pessimistic concurrency control with eager writes
+//===--------------------------------------------------------------------===//
+
 class EagerWriteTxnManager : public TransactionManager {
  public:
   EagerWriteTxnManager() {}
@@ -38,7 +43,7 @@ class EagerWriteTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void SetOwnership(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 

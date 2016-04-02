@@ -200,7 +200,7 @@
 //  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 //}
 //
-//void SsiTxnManager::SetInsertVisibility(
+//void SsiTxnManager::SetOwnership(
 //    const oid_t &tile_group_id, const oid_t &tuple_id) {
 //  auto &manager = catalog::Manager::GetInstance();
 //  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();

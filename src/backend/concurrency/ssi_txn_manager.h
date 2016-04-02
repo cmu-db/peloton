@@ -54,7 +54,7 @@
 //  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
 //                             const ItemPointer &new_location);
 //
-//  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+//  virtual void SetOwnership(const oid_t &tile_group_id,
 //                                   const oid_t &tuple_id);
 //
 //  virtual void PerformDelete(const oid_t &tile_group_id,

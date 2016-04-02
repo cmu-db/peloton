@@ -139,7 +139,7 @@ bool SpeculativeReadTxnManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
-void SpeculativeReadTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id){
+void SpeculativeReadTxnManager::SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id){
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();

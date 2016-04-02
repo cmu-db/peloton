@@ -25,8 +25,6 @@
 namespace peloton {
 namespace concurrency {
 
-// class Transaction;
-
 extern thread_local Transaction *current_txn;
 
 class TransactionManager {
@@ -54,7 +52,7 @@ class TransactionManager {
   virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void SetOwnership(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   virtual bool PerformInsert(const oid_t &tile_group_id,
