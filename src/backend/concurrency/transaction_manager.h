@@ -68,13 +68,23 @@ class TransactionManager {
                              const ItemPointer &new_location) = 0;
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
-                             const ItemPointer &new_location) = 0;
+                             __attribute__((unused)) const ItemPointer &new_location) {
+    auto tile_group_header =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+    tile_group_header -> RecycleTupleSlot(tuple_id);
+    return true;
+
+  }
 
   virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id) = 0;
+                                   const oid_t &tuple_id) {
+    auto tile_group_header =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+    tile_group_header -> RecycleTupleSlot(tuple_id);
+  }
 
   virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;

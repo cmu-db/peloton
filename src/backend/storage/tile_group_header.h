@@ -112,6 +112,8 @@ class TileGroupHeader : public Printable {
     }
   }
 
+  inline void RecycleTupleSlot(const oid_t tuple_id) { possibly_free_list.push_back(tuple_id); }
+
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }
 
   oid_t GetActiveTupleCount(const txn_id_t &txn_id);
@@ -335,6 +337,7 @@ class TileGroupHeader : public Printable {
 
   // free lists, recycle tuple slots
   std::deque<oid_t> free_list;
+  std::deque<oid_t> possibly_free_list;
 
 };
 
