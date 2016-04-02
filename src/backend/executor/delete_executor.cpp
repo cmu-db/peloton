@@ -108,7 +108,7 @@ bool DeleteExecutor::DExecute() {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireLock(tile_group_header, tile_group_id, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }

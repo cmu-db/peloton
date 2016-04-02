@@ -2,9 +2,9 @@
 ////
 ////                         Peloton
 ////
-//// rowo_txn_manager.cpp
+//// optimistic_txn_manager.cpp
 ////
-//// Identification: src/backend/concurrency/rowo_txn_manager.cpp
+//// Identification: src/backend/concurrency/optimistic_txn_manager.cpp
 ////
 //// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 ////
@@ -94,7 +94,7 @@
 //  return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 //}
 //
-//bool SsiTxnManager::AcquireLock(
+//bool SsiTxnManager::AcquireOwnership(
 //    storage::TileGroup *tile_group, const oid_t &tuple_id) {
 //  auto tile_group_header = tile_group->GetHeader();
 //  auto txn_id = current_txn->GetTransactionId();
