@@ -4,7 +4,7 @@
 //
 // checkpoint_test.cpp
 //
-// Identification: tests/planner/checkpoint_test.cpp
+// Identification: tests/logging/checkpoint_test.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
