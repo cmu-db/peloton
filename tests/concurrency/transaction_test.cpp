@@ -24,8 +24,8 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_SSI,
-  CONCURRENCY_TYPE_2PL,
+  CONCURRENCY_TYPE_OPTIMISTIC,
+  CONCURRENCY_TYPE_PESSIMISTIC,
   CONCURRENCY_TYPE_SSI
 };
 
@@ -112,7 +112,6 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // read deleted, insert back, update inserted, read newly updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
-
       scheduler.Txn(0).Delete(100);
       scheduler.Txn(0).Delete(0);
       scheduler.Txn(0).Read(0);

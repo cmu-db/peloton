@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// logger.h
+// ycsb_loader.h
 //
-// Identification: src/backend/benchmark/logger/logger.h
+// Identification: benchmark/ycsb/ycsb_loader.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,14 +12,18 @@
 
 #pragma once
 
-#include "backend/benchmark/logger/logger_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace logger {
+namespace ycsb {
 
 extern configuration state;
 
-}  // namespace logger
+void CreateYCSBDatabase();
+
+void LoadYCSBDatabase();
+
+}  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton
