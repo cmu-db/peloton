@@ -23,6 +23,8 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/catalog/manager.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 namespace concurrency {
@@ -71,8 +73,11 @@ class TransactionManager {
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              __attribute__((unused)) const ItemPointer &new_location) {
     auto &manager = catalog::Manager::GetInstance();
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
+    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-    tile_group_header -> RecycleTupleSlot(tuple_id);
+    auto transaction_id = current_txn->GetTransactionId();
+    tile_group_header -> RecycleTupleSlot(0, tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id); // FIXME: get DB ID
     return true;
   }
 
@@ -82,8 +87,11 @@ class TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) {
     auto &manager = catalog::Manager::GetInstance();
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
+    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-    tile_group_header -> RecycleTupleSlot(tuple_id);
+    auto transaction_id = current_txn->GetTransactionId();
+    tile_group_header -> RecycleTupleSlot(0, tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id); // FIXME: get DB ID
   }
 
   /*
