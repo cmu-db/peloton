@@ -216,8 +216,8 @@ void StorageManager::Release(BackendType type, void *address) {
 }
 
 void StorageManager::Sync(BackendType type,
-                          __attribute__((unused)) void *address,
-                          __attribute__((unused)) size_t length) {
+                          void *address,
+                          size_t length) {
   switch (type) {
     case BACKEND_TYPE_MM: {
       // Nothing to do here
