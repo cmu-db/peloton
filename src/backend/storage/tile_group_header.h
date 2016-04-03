@@ -74,21 +74,25 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
-  oid_t GetNextEmptyTupleSlot() {
+  oid_t GetNextEmptyTupleSlot(int get_recycled) {
     oid_t tuple_slot_id = INVALID_OID;
 
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-      // check if there are recycled tuple slots
-      auto& gc_manager = gc::GCManager::GetInstance();
-      auto free_slot = gc_manager.ReturnFreeSlot(0, tile_group->GetTableId()); //FIXME:: harcoded DB ID
-      if(free_slot != INVALID_OID) {
-        tuple_slot_id = free_slot;
-        this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-        this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
-        this -> SetEndCommitId(tuple_slot_id, MAX_CID);
-      } else if (next_tuple_slot < num_tuple_slots) {
+      if(get_recycled) {
+        // check if there are recycled tuple slots
+        auto& gc_manager = gc::GCManager::GetInstance();
+        auto free_slot = gc_manager.ReturnFreeSlot(tile_group->GetDatabaseId(), tile_group->GetTableId());
+        if(free_slot != INVALID_OID) {
+          tuple_slot_id = free_slot;
+          this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+          this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
+          this -> SetEndCommitId(tuple_slot_id, MAX_CID);
+        }
+      }
+
+      if ((tuple_slot_id == INVALID_OID) && (next_tuple_slot < num_tuple_slots)) {
         // check tile group capacity
         tuple_slot_id = next_tuple_slot;
         next_tuple_slot++;

@@ -85,7 +85,7 @@ class TransactionManager {
     expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
     auto transaction_id = current_txn->GetTransactionId();
-    tile_group_header -> RecycleTupleSlot(0, tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id); // FIXME: get DB ID
+    tile_group_header -> RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id);
   }
 
   /*
