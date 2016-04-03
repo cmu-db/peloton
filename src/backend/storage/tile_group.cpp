@@ -149,10 +149,6 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
  */
 oid_t TileGroup::InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
                              const Tuple *tuple) {
-  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
-
-  // No more slots
-  if (status == false) return INVALID_OID;
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
@@ -275,6 +276,9 @@ class DataTable : public AbstractTable {
 
   // samples for clustering
   std::vector<brain::Sample> samples;
+
+  // list of free slots
+  std::queue<ItemPointer> free_slots;
 };
 
 }  // End storage namespace

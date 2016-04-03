@@ -97,7 +97,7 @@ class Value;
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
+extern int DEFAULT_TUPLES_PER_TILEGROUP;
 
 // Ref count starting point
 #define BASE_REF_COUNT 1

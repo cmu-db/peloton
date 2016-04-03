@@ -148,29 +148,47 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
 
   std::shared_ptr<storage::TileGroup> tile_group;
-  oid_t tuple_slot = INVALID_OID;
+  oid_t tuple_slot_id = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
   auto transaction_id = transaction->GetTransactionId();
 
   LOG_TRACE("DataTable :: transaction_id %lu \n", transaction_id);
 
-  while (tuple_slot == INVALID_OID) {
+  while (tuple_slot_id == INVALID_OID) {
     // First, figure out last tile group
     {
       std::lock_guard<std::mutex> lock(table_mutex);
-      assert(GetTileGroupCount() > 0);
-      tile_group_offset = GetTileGroupCount() - 1;
+
+      // Grab a free slot if available
+      if(free_slots.empty() == false) {
+        auto free_slot = free_slots.back();
+        free_slots.pop();
+        tuple_slot_id = free_slot.offset;
+        tile_group_id = free_slot.block;
+        LOG_TRACE("Pop free slot : %lu %lu \n", free_slot.block, free_slot.offset);
+      }
+      else {
+        assert(GetTileGroupCount() > 0);
+        tile_group_offset = GetTileGroupCount() - 1;
+      }
       LOG_TRACE("Tile group offset :: %lu ", tile_group_offset);
     }
 
-    // Then, try to grab a slot in the tile group header
-    tile_group = GetTileGroup(tile_group_offset);
+    // Put it into the available empty slot
+    if(tuple_slot_id != INVALID_OID) {
+      tile_group = GetTileGroupById(tile_group_id);
+      tile_group->InsertTuple(transaction_id, tuple_slot_id, tuple);
+      LOG_TRACE("Reused free slot : %lu %lu \n", tile_group_offset, tuple_slot_id);
+    }
+    // Otherwise, try to grab a slot in the tile group header
+    else {
+      tile_group = GetTileGroup(tile_group_offset);
+      tile_group_id = tile_group->GetTileGroupId();
+      tuple_slot_id = tile_group->InsertTuple(transaction_id, tuple);
+    }
 
-    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
-    tile_group_id = tile_group->GetTileGroupId();
-
-    if (tuple_slot == INVALID_OID) {
+    if (tuple_slot_id == INVALID_OID) {
       // XXX Should we put this in a critical section?
       AddDefaultTileGroup();
     }
@@ -180,7 +198,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
-  ItemPointer location(tile_group_id, tuple_slot);
+  ItemPointer location(tile_group_id, tuple_slot_id);
 
   return location;
 }
@@ -306,6 +324,13 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
             location.offset);
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
+
+  // Add the empty slot to the list of reusable slots
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    LOG_TRACE("Push free slot : %lu %lu \n", location.block, location.offset);
+    free_slots.push(location);
+  }
 
   return true;
 }
