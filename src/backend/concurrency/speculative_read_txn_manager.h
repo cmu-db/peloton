@@ -42,6 +42,10 @@ enum RegisterRetType {
   REGISTER_RET_TYPE_NOT_FOUND = 2
 };
 
+//===--------------------------------------------------------------------===//
+// optimistic concurrency control with speculative reads
+//===--------------------------------------------------------------------===//
+
 class SpeculativeReadTxnManager : public TransactionManager {
  public:
   SpeculativeReadTxnManager() {}
@@ -61,7 +65,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void SetOwnership(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 

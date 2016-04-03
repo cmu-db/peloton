@@ -126,7 +126,7 @@ bool SsiTxnManager::AcquireOwnership(
       // Owner is running
       if (end_cid == INVALID_TXN_ID) {
         SetInConflict(txn_id);
-        SetOutConflict(owner);  
+        SetOutConflict(owner);
         LOG_INFO("set %ld in, set %ld out", current_txn->GetTransactionId(),
                owner);
       } else {
@@ -136,7 +136,7 @@ bool SsiTxnManager::AcquireOwnership(
           LOG_INFO("abort in acquire");
           break;
         }
-      }      
+      }
 
       header = header->next;
     }
@@ -219,7 +219,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 bool SsiTxnManager::PerformInsert(const oid_t &tile_group_id,
                                   const oid_t &tuple_id) {
   LOG_INFO("Perform insert %lu %lu", tile_group_id, tuple_id);
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
   current_txn->RecordInsert(tile_group_id, tuple_id);
 
@@ -323,7 +323,7 @@ void SsiTxnManager::PerformDelete(
 
 
 
-void SsiTxnManager::SetInsertVisibility(const oid_t &tile_group_id,
+void SsiTxnManager::SetOwnership(const oid_t &tile_group_id,
                                         const oid_t &tuple_id) {
   auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
