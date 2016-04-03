@@ -27,7 +27,6 @@ void Transaction::RecordRead(const oid_t &tile_group_id,
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
-    // RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     assert(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
            rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
     return;

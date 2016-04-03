@@ -29,6 +29,8 @@ OptimisticTxnManager &OptimisticTxnManager::GetInstance() {
 }
 
 // Visibility check
+// check whether a tuple is visible to current transaction.
+// in this protocol, we require that a transaction cannot see other transaction's local copy.
 bool OptimisticTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
                                              const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -79,6 +81,8 @@ bool OptimisticTxnManager::IsVisible(const storage::TileGroupHeader * const tile
   }
 }
 
+// check whether the current transaction owns the tuple.
+// this function is called by update/delete executors.
 bool OptimisticTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
                                            const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
