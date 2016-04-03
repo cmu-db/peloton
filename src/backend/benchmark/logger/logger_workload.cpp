@@ -156,10 +156,6 @@ bool PrepareLogFile(std::string file_name) {
   timer.Stop();
 
   auto duration = timer.GetDuration();
-  printf("Duration : %lf \n", duration);
-  printf("Txn count : %lu \n", ycsb::state.transaction_count);
-  printf("Backend count : %d \n", ycsb::state.backend_count);
-
   auto throughput = (ycsb::state.transaction_count * ycsb::state.backend_count)/duration;
 
   // Log the build log time
