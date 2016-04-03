@@ -233,7 +233,12 @@ void StorageManager::Sync(BackendType type,
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       // sync the mmap'ed file to SSD or HDD
-      msync(data_file_address, data_file_len, MS_SYNC);
+      int status = msync(data_file_address, data_file_len, MS_SYNC);
+      if(status != 0) {
+        perror("msync");
+        exit(EXIT_FAILURE);
+      }
+
       msync_count++;
     } break;
 
