@@ -103,7 +103,7 @@ bool SpeculativeReadTxnManager::AcquireOwnership(
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false) {
+  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;

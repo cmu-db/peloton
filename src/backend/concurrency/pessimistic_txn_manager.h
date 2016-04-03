@@ -17,7 +17,7 @@
 namespace peloton {
 namespace concurrency {
 
-extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
+extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
     pessimistic_released_rdlock;
 
 //===--------------------------------------------------------------------===//

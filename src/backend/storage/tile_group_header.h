@@ -198,34 +198,15 @@ class TileGroupHeader : public Printable {
     return ((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
-  inline bool CASTxnId(const oid_t &tuple_slot_id, const txn_id_t &new_txn_id,
-                       txn_id_t expected, txn_id_t *old_value) const {
-    txn_id_t *txn_idp = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    *old_value = __sync_val_compare_and_swap(txn_idp, expected, new_txn_id);
-
-    return *old_value == expected;
+  inline txn_id_t SetAtomicTransactionId(const oid_t &tuple_slot_id, const txn_id_t &old_txn_id, const txn_id_t &new_txn_id) const {
+    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    return __sync_val_compare_and_swap(txn_id_ptr, old_txn_id, new_txn_id);
   }
 
-  inline bool LockTupleSlot(const oid_t &tuple_slot_id,
+  inline bool SetAtomicTransactionId(const oid_t &tuple_slot_id,
                             const txn_id_t &transaction_id) const {
-    txn_id_t *txn_id = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  inline bool UnlockTupleSlot(const oid_t &tuple_slot_id,
-                              const txn_id_t &transaction_id) {
-    txn_id_t *txn_id = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    if (!atomic_cas(txn_id, transaction_id, INITIAL_TXN_ID)) {
-      LOG_INFO("Release failed, expecting a deleted own insert: %lu",
-               GetTransactionId(tuple_slot_id));
-      assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-      return false;
-    }
-    return true;
+    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    return __sync_bool_compare_and_swap(txn_id_ptr, INITIAL_TXN_ID, transaction_id);
   }
 
   bool IsVisible(const oid_t &tuple_slot_id, const txn_id_t &txn_id,

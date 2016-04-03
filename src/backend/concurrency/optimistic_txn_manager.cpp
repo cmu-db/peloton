@@ -94,7 +94,7 @@ bool OptimisticTxnManager::IsOwner(
 
 // if the tuple is not owned by any transaction and is visible to current
 // transaction.
-// will only be performed by deletes and updates.
+// this function is called by update/delete executors.
 bool OptimisticTxnManager::IsOwnable(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -110,7 +110,7 @@ bool OptimisticTxnManager::AcquireOwnership(
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false) {
+  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;

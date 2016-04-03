@@ -336,7 +336,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 // bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
 //                             cid_t last_cid) {
 //   // do a dirty delete
-//   if (tile_group_header->LockTupleSlot(tuple_slot_id, transaction_id)) {
+//   if (tile_group_header->SetAtomicTransactionId(tuple_slot_id, transaction_id)) {
 //     if (tile_group_header->IsDeletable(tuple_slot_id, transaction_id,
 //                                        last_cid)) {
 //       return true;
