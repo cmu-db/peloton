@@ -130,9 +130,9 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
     }
   }
 
-  // Set MVCC info
-  // assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
-  // transaction_id);
+  // assert MVCC info
+  //assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
+  //transaction_id);
   // assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   // assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
@@ -184,10 +184,10 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   }
 
   //  // Set MVCC info
-  //  assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
-  //  INVALID_TXN_ID);
-  //  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-  //  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+   assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
+   INVALID_TXN_ID);
+   assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+   assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
   //
   //  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
   //  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);

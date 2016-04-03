@@ -89,6 +89,7 @@ bool OptimisticTxnManager::IsOwner(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
@@ -165,9 +166,12 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   // if we can perform update, then we must have already locked the older
   // version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) == MAX_CID);
+  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  
+  
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
   new_tile_group_header->SetPrevItemPointer(
@@ -213,8 +217,9 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   // if we can perform update, then we must have already locked the older
   // version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) == MAX_CID);
+  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
