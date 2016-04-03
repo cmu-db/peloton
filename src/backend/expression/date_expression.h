@@ -203,6 +203,10 @@ class DateToTimestampExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "DateToTimestampExpression");
   }
+
+    AbstractExpression *Copy() const {
+      return new DateToTimestampExpression(CopyUtil(GetLeft()));
+    }
 };
 
 }  // namespace expression
