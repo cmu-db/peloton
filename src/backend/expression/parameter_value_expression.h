@@ -52,9 +52,9 @@ class ParameterValueExpression : public AbstractExpression {
 
   int GetParameterId() const { return this->m_valueIdx; }
 
-    AbstractExpression *Copy() const {
-      return new ParameterValueExpression(m_valueIdx, m_paramValue);
-    }
+  AbstractExpression *Copy() const {
+    return new ParameterValueExpression(m_valueIdx, m_paramValue);
+  }
 
  private:
   size_t m_valueIdx;

@@ -33,7 +33,7 @@ class SubqueryExpression : public AbstractExpression {
   SubqueryExpression(ExpressionType subqueryType, int subqueryId,
                      const std::vector<int> &paramIdxs,
                      const std::vector<int> &otherParamIdxs,
-                     const std::vector<AbstractExpression *>& tveParams);
+                     const std::vector<AbstractExpression *> &tveParams);
 
   ~SubqueryExpression();
 
@@ -42,14 +42,13 @@ class SubqueryExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const;
 
-    AbstractExpression *Copy() const {
-      return new SubqueryExpression(GetExpressionType(), m_subqueryId,
-                                    m_paramIdxs, m_otherParamIdxs,
-                                    std::vector<AbstractExpression *>());
-    }
+  AbstractExpression *Copy() const {
+    return new SubqueryExpression(GetExpressionType(), m_subqueryId,
+                                  m_paramIdxs, m_otherParamIdxs,
+                                  std::vector<AbstractExpression *>());
+  }
 
-
-private:
+ private:
   const int m_subqueryId;
 
   // The .Ist of parameter indexes that need to be set by this subquery
@@ -60,7 +59,6 @@ private:
   // also including its child subqueries.
   // T.Is originate at the grandparent levels.
   std::vector<int> m_otherParamIdxs;
-
 };
 
 }  // End expression namespace

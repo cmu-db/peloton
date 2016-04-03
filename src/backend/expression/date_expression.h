@@ -117,10 +117,9 @@ class ExtractExpression : public AbstractExpression {
     return (spacer + "ExtractExpression");
   }
 
-    AbstractExpression *Copy() const {
-      return new ExtractExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
-    }
-
+  AbstractExpression *Copy() const {
+    return new ExtractExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 
  private:
   TimestampSubfield subfield;
@@ -204,9 +203,9 @@ class DateToTimestampExpression : public AbstractExpression {
     return (spacer + "DateToTimestampExpression");
   }
 
-    AbstractExpression *Copy() const {
-      return new DateToTimestampExpression(CopyUtil(GetLeft()));
-    }
+  AbstractExpression *Copy() const {
+    return new DateToTimestampExpression(CopyUtil(GetLeft()));
+  }
 };
 
 }  // namespace expression

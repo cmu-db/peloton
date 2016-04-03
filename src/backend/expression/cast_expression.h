@@ -76,9 +76,9 @@ class CastExpression : public AbstractExpression {
     return (buffer.str());
   }
 
-    AbstractExpression *Copy() const {
-     return new CastExpression(type_, CopyUtil(child_));
-    }
+  AbstractExpression *Copy() const {
+    return new CastExpression(type_, CopyUtil(child_));
+  }
 
  private:
   PostgresValueType type_;

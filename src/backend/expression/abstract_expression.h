@@ -105,15 +105,14 @@ class AbstractExpression : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-    virtual AbstractExpression *Copy() const = 0;
+  virtual AbstractExpression *Copy() const = 0;
 
-    inline AbstractExpression *CopyUtil(
+  inline AbstractExpression *CopyUtil(
       const AbstractExpression *expression) const {
-      return (expression == nullptr) ? nullptr : expression->Copy();
-    }
+    return (expression == nullptr) ? nullptr : expression->Copy();
+  }
 
-
-protected:
+ protected:
   AbstractExpression();
   AbstractExpression(ExpressionType type);
   AbstractExpression(ExpressionType type, AbstractExpression *left,
