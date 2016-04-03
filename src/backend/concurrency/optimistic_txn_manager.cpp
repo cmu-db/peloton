@@ -115,7 +115,7 @@ bool OptimisticTxnManager::PerformRead(const oid_t &tile_group_id,
 
 bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                  const oid_t &tuple_id) {
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -123,7 +123,7 @@ bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
-void OptimisticTxnManager::SetInsertVisibility(
+void OptimisticTxnManager::SetOwnership(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
