@@ -45,17 +45,23 @@ class Transaction : public Printable {
   Transaction()
       : txn_id_(INVALID_TXN_ID),
         begin_cid_(INVALID_CID),
-        end_cid_(INVALID_CID) {}
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
 
   Transaction(const txn_id_t &txn_id)
       : txn_id_(txn_id),
         begin_cid_(INVALID_CID),
-        end_cid_(INVALID_CID) {}
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
 
   Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
       : txn_id_(txn_id),
         begin_cid_(begin_cid),
-        end_cid_(INVALID_CID) {}
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
 
   ~Transaction() {}
 
@@ -102,6 +108,10 @@ class Transaction : public Printable {
   // Get result and status
   inline Result GetResult() const { return result_; }
 
+  inline bool IsReadOnly() const {
+    return is_written_ == false && insert_count_ == 0;
+  }
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -120,6 +130,9 @@ class Transaction : public Printable {
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
+
+  bool is_written_;
+  size_t insert_count_;
 };
 
 }  // End concurrency namespace
