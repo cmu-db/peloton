@@ -119,7 +119,9 @@ class TileGroupHeader : public Printable {
   // Getters
 
   inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
-    return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
+    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    return __atomic_load_n(txn_id_ptr, __ATOMIC_RELAXED);
+    //return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
   inline cid_t GetBeginCommitId(const oid_t &tuple_slot_id) const {

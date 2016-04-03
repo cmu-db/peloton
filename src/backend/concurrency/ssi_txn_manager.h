@@ -136,8 +136,9 @@ class SsiTxnManager : public TransactionManager {
     txn_id_t *lock_addr = (txn_id_t *)(tile_group_header->GetReservedFieldRef(tuple_id)
                                 + LOCK_OFFSET);
 
-    auto res = atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
-    assert(res);
+    atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
+    //auto res = atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
+    //assert(res);
   }
 
 
@@ -186,7 +187,9 @@ class SsiTxnManager : public TransactionManager {
     *headp = fake_header.next;
 
     ReleaseReadLock(tile_group->GetHeader(), tuple_id, txn_id);
-    assert(find);
+    if (find == false){
+      assert(false);
+    }
   }
 
   ReadList *GetReaderList(const storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id) {
