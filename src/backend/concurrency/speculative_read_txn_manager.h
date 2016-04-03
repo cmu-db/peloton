@@ -30,8 +30,8 @@ struct SpecTxnContext {
 
   std::unordered_set<txn_id_t> inner_dep_set_;
   std::unordered_set<txn_id_t> outer_dep_set_;
-  std::atomic<size_t> outer_dep_count_; // default: 0
-  std::atomic<bool> is_cascading_abort_; // default: false
+  std::atomic<size_t> outer_dep_count_;   // default: 0
+  std::atomic<bool> is_cascading_abort_;  // default: false
 };
 
 extern thread_local SpecTxnContext spec_txn_context;
@@ -54,19 +54,22 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   static SpeculativeReadTxnManager &GetInstance();
 
-  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsVisible(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
-  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tuple_id);
+  virtual bool IsOwnable(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool AcquireOwnership(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -77,17 +80,16 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-  
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
     Transaction *txn = TransactionManager::BeginTransaction();
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
+      assert(running_txns_.find(txn->GetTransactionId()) ==
+             running_txns_.end());
       running_txns_[txn->GetTransactionId()] = &spec_txn_context;
     }
     return txn;
@@ -96,7 +98,8 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual void EndTransaction() {
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(current_txn->GetTransactionId()) != running_txns_.end());
+      assert(running_txns_.find(current_txn->GetTransactionId()) !=
+             running_txns_.end());
       running_txns_.erase(current_txn->GetTransactionId());
     }
     spec_txn_context.Clear();
@@ -108,11 +111,11 @@ class SpeculativeReadTxnManager : public TransactionManager {
   RegisterRetType RegisterDependency(const txn_id_t &dst_txn_id) {
     txn_id_t src_txn_id = current_txn->GetTransactionId();
     // if this dependency has been registered before, then return.
-    if (spec_txn_context.outer_dep_set_.find(dst_txn_id) != 
-          spec_txn_context.outer_dep_set_.end()) {
+    if (spec_txn_context.outer_dep_set_.find(dst_txn_id) !=
+        spec_txn_context.outer_dep_set_.end()) {
       return REGISTER_RET_TYPE_DUPLICATE;
     }
-    
+
     // critical section.
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
@@ -128,7 +131,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     spec_txn_context.outer_dep_count_++;
     return REGISTER_RET_TYPE_SUCCESS;
   }
- 
+
   bool IsCommittable() {
     while (true) {
       if (spec_txn_context.outer_dep_count_ == 0) {
@@ -173,11 +176,11 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
-  private:
-    // should be changed to libcuckoo.
-    std::mutex running_txns_mutex_;
-    // records all running transactions.
-    std::unordered_map<txn_id_t, SpecTxnContext*> running_txns_;
+ private:
+  // should be changed to libcuckoo.
+  std::mutex running_txns_mutex_;
+  // records all running transactions.
+  std::unordered_map<txn_id_t, SpecTxnContext *> running_txns_;
 
 };
 }

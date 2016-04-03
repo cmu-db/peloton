@@ -32,8 +32,9 @@ TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
 }
 
 // Visibility check
-bool TsOrderTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
-                                             const oid_t &tuple_id) {
+bool TsOrderTxnManager::IsVisible(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
@@ -83,18 +84,24 @@ bool TsOrderTxnManager::IsVisible(const storage::TileGroupHeader * const tile_gr
   }
 }
 
-bool TsOrderTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {  
+bool TsOrderTxnManager::IsOwner(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-bool TsOrderTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
+bool TsOrderTxnManager::IsOwnable(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool TsOrderTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header, const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+bool TsOrderTxnManager::AcquireOwnership(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
   // acquire write lock.
@@ -111,11 +118,12 @@ bool TsOrderTxnManager::AcquireOwnership(const storage::TileGroupHeader * const 
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
-  // change timestamp 
+  // change timestamp
   return true;
 }
 
-void TsOrderTxnManager::SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id) {
+void TsOrderTxnManager::SetOwnership(const oid_t &tile_group_id,
+                                     const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -130,13 +138,15 @@ void TsOrderTxnManager::SetOwnership(const oid_t &tile_group_id, const oid_t &tu
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
 }
 
-bool TsOrderTxnManager::PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool TsOrderTxnManager::PerformInsert(const oid_t &tile_group_id,
+                                      const oid_t &tuple_id) {
   SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
 
-bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id,
+                                    const oid_t &tuple_id) {
   LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -148,11 +158,12 @@ bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tup
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   if (tuple_txn_id == INITIAL_TXN_ID) {
-    SetLastReaderCid(tile_group_header, tuple_id, current_txn->GetBeginCommitId());
+    SetLastReaderCid(tile_group_header, tuple_id,
+                     current_txn->GetBeginCommitId());
 
-  current_txn->RecordRead(tile_group_id, tuple_id);
+    current_txn->RecordRead(tile_group_id, tuple_id);
 
-  return true;
+    return true;
 
   } else {
     // if the version we want to read is uncommitted, then abort.
@@ -160,9 +171,9 @@ bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id, const oid_t &tup
   }
 }
 
-bool TsOrderTxnManager::PerformUpdate(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+bool TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                      const oid_t &tuple_id,
+                                      const ItemPointer &new_location) {
   LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
 
   auto &manager = catalog::Manager::GetInstance();
@@ -170,15 +181,16 @@ bool TsOrderTxnManager::PerformUpdate(
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-    .GetTileGroup(new_location.block)
-    ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // The write lock must have been acquired
-  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership, no
+  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
+  // no
   // one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
@@ -190,22 +202,22 @@ bool TsOrderTxnManager::PerformUpdate(
   return true;
 }
 
-bool TsOrderTxnManager::PerformDelete(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+bool TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                      const oid_t &tuple_id,
+                                      const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-    .GetTileGroup(new_location.block)
-    ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
@@ -215,7 +227,8 @@ bool TsOrderTxnManager::PerformDelete(
   return true;
 }
 
-void TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id) {
+void TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                      const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -234,7 +247,8 @@ void TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id, const oid_t &t
 
 }
 
-void TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id) {
+void TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                      const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -401,7 +415,6 @@ Result TsOrderTxnManager::AbortTransaction() {
   EndTransaction();
   return Result::RESULT_ABORTED;
 }
-
 
 }
 }
