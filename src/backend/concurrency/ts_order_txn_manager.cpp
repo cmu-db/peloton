@@ -113,7 +113,7 @@ bool TsOrderTxnManager::AcquireOwnership(
     return false;
   }
 
-  if (tile_group_header->LockTupleSlot(tuple_id, txn_id) == false) {
+  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
