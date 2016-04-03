@@ -75,6 +75,8 @@ class Transaction : public Printable {
 
   inline cid_t GetEndCommitId() const { return end_cid_; }
 
+  inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
+
   // record read set
   void RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 

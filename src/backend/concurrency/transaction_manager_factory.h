@@ -20,7 +20,7 @@
 namespace peloton {
 namespace concurrency {
 class TransactionManagerFactory {
- public:
+public:
   static TransactionManager &GetInstance() {
     switch (protocol_) {
       case CONCURRENCY_TYPE_OPTIMISTIC:
@@ -29,8 +29,8 @@ class TransactionManagerFactory {
         return PessimisticTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SPECULATIVE_READ:
         return SpeculativeReadTxnManager::GetInstance();
-//      case CONCURRENCY_TYPE_SSI:
-//        return SsiTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_SSI:
+        return SsiTxnManager::GetInstance();
       default:
         return OptimisticTxnManager::GetInstance();
     }
