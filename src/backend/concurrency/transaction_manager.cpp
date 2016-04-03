@@ -110,6 +110,9 @@ void TransactionManager::EndTransaction(Transaction *txn,
       auto record = new logging::TransactionRecord(
           LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
       logger->Log(record);
+
+      // TODO: Wait for flushing ?
+      //logger->WaitForFlushing();
     }
   }
 }

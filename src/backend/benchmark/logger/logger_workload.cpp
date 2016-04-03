@@ -116,41 +116,63 @@ bool PrepareLogFile(std::string file_name) {
 		return false;
 	}
 
-	// INVALID MODE
-	if (peloton_logging_mode == LOGGING_TYPE_INVALID) {
-		BuildLog();
-		return true;
+  Timer<> timer;
+  std::thread thread;
+
+  timer.Start();
+
+  // Start frontend logger if in a valid logging mode
+	if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+	  // TODO:
+	  std::cout << "Log path :: " << file_path << "\n";
+
+	  // set log file and logging type
+	  log_manager.SetLogFileName(file_path);
+
+	  // start off the frontend logger of appropriate type in STANDBY mode
+	  thread = std::thread(&logging::LogManager::StartStandbyMode, &log_manager);
+
+	  // wait for the frontend logger to enter STANDBY mode
+	  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_STANDBY, true);
+
+	  // STANDBY -> RECOVERY mode
+	  log_manager.StartRecoveryMode();
+
+	  // Wait for the frontend logger to enter LOGGING mode
+	  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 	}
-
-	// TODO:
-	std::cout << "Log path :: " << file_path << "\n";
-
-	// set log file and logging type
-	log_manager.SetLogFileName(file_path);
-
-	// start off the frontend logger of appropriate type in STANDBY mode
-	std::thread thread(&logging::LogManager::StartStandbyMode, &log_manager);
-
-	// wait for the frontend logger to enter STANDBY mode
-	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_STANDBY, true);
-
-	// STANDBY -> RECOVERY mode
-	log_manager.StartRecoveryMode();
-
-	// Wait for the frontend logger to enter LOGGING mode
-	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
 	// Build the log
 	BuildLog();
 
-	//  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-	if (log_manager.EndLogging()) {
-		thread.join();
-		return true;
-	}
+  // Stop frontend logger if in a valid logging mode
+  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+    //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
+    if (log_manager.EndLogging()) {
+      thread.join();
+    }
+  }
 
-	LOG_ERROR("Failed to terminate logging thread");
-	return false;
+  timer.Stop();
+
+  auto duration = timer.GetDuration();
+  printf("Duration : %lf \n", duration);
+  printf("Txn count : %lu \n", ycsb::state.transaction_count);
+  printf("Backend count : %d \n", ycsb::state.backend_count);
+
+  auto throughput = (ycsb::state.transaction_count * ycsb::state.backend_count)/duration;
+
+  // Log the build log time
+  if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
+      state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
+      state.experiment_type == EXPERIMENT_TYPE_WAIT) {
+    WriteOutput(throughput);
+  } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
+    auto log_file_size = GetLogFileSize();
+    WriteOutput(log_file_size);
+  }
+
+  return true;
 }
 
 //===--------------------------------------------------------------------===//
@@ -203,18 +225,18 @@ void DoRecovery(std::string file_name) {
 	// Wait for the frontend logger to enter LOGGING mode after recovery
 	log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
-	timer.Stop();
-
-	// Recovery time
-	if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
-		WriteOutput(timer.GetDuration());
-	}
-
 	if (log_manager.EndLogging()) {
 		thread.join();
 	} else {
 		LOG_ERROR("Failed to terminate logging thread");
 	}
+
+  timer.Stop();
+
+  // Recovery time (in ms)
+  if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
+    WriteOutput(timer.GetDuration());
+  }
 
 }
 
@@ -231,22 +253,7 @@ void BuildLog() {
 	//===--------------------------------------------------------------------===//
 	// ACTIVE PROCESSING
 	//===--------------------------------------------------------------------===//
-	Timer<std::milli> timer;
-	timer.Start();
-
-	auto stat = ycsb::RunWorkload();
-
-	timer.Stop();
-
-	// Build log time
-	if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
-	    state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
-			state.experiment_type == EXPERIMENT_TYPE_WAIT) {
-		WriteOutput(stat);
-	} else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
-		auto log_file_size = GetLogFileSize();
-		WriteOutput(log_file_size);
-	}
+	ycsb::RunWorkload();
 
 }
 
