@@ -133,7 +133,7 @@ peloton_bootstrap() {
       // Start GC vacuuming thread
       auto& gc_manager = peloton::gc::GCManager::GetInstance();
       if(gc_manager.GetStatus() != GC_STATUS_RUNNING) {
-        printf("***** starting GC thread ******\n");
+        elog(DEBUG2, "Starting GC Vacuuming thread.");
         std::thread(&peloton::gc::GCManager::Poll, &gc_manager).detach();
         gc_manager.SetStatus(GC_STATUS_RUNNING);
       }
