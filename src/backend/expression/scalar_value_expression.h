@@ -29,10 +29,9 @@ class ScalarValueExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const;
 
-    AbstractExpression *Copy() const {
-     return new ScalarValueExpression(CopyUtil(GetLeft()));
-    }
-
+  AbstractExpression *Copy() const {
+    return new ScalarValueExpression(CopyUtil(GetLeft()));
+  }
 };
 
 }  // End expression namespace

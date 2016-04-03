@@ -53,18 +53,18 @@ class CaseExpression : public AbstractExpression {
     return spacer + "CaseExpression";
   }
 
-    AbstractExpression *Copy() const {
-      std::vector<AbstractExpression *> copied_clauses;
-      for (AbstractExpression *clause : clauses) {
-        if (clause == nullptr) {
-          continue;
-        }
-        copied_clauses.push_back(clause->Copy());
+  AbstractExpression *Copy() const {
+    std::vector<AbstractExpression *> copied_clauses;
+    for (AbstractExpression *clause : clauses) {
+      if (clause == nullptr) {
+        continue;
       }
-
-      return new CaseExpression(case_type, copied_clauses,
-                                default_result->Copy());
+      copied_clauses.push_back(clause->Copy());
     }
+
+    return new CaseExpression(case_type, copied_clauses,
+                              default_result->Copy());
+  }
 
  private:
   // Case expression clauses

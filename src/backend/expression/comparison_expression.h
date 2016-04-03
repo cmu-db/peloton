@@ -247,8 +247,8 @@ class ComparisonExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "ComparisonExpression\n");
   }
-  
-    AbstractExpression *Copy() const {
+
+  AbstractExpression *Copy() const {
     AbstractExpression *copied_left =
         ((m_left == nullptr) ? nullptr : m_left->Copy());
     AbstractExpression *copied_right =

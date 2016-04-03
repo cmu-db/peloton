@@ -40,8 +40,7 @@ class TupleAddressExpression : public AbstractExpression {
     return spacer + "TupleAddressExpression\n";
   }
 
-    AbstractExpression *Copy() const { return new TupleAddressExpression(); }
-
+  AbstractExpression *Copy() const { return new TupleAddressExpression(); }
 };
 
 }  // End expression namespace
