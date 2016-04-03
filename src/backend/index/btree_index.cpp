@@ -92,6 +92,58 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
+    class KeyEqualityChecker>
+bool BTreeIndex<KeyType, ValueType, KeyComparator,
+        KeyEqualityChecker>::UpdateEntry(__attribute__((unused)) const storage::Tuple *oldkey,
+         __attribute__((unused)) const storage::Tuple *newkey,
+         __attribute__((unused)) const ItemPointer &location) {
+
+  // atomically delete old key and insert new key
+  KeyType index_delete_key, index_insert_key;
+  index_delete_key.SetFromKey(oldkey);
+  index_insert_key.SetFromKey(newkey);
+
+  int deleted_kv_num = 0;
+
+  {
+    index_lock.WriteLock();
+
+    // Delete the < old_key, location > pair
+    bool try_again = true;
+    while (try_again == true) {
+      // Unset try again
+      try_again = false;
+
+      // Lookup matching entries
+      auto entries = container.equal_range(index_delete_key);
+      for (auto iterator = entries.first; iterator != entries.second;
+           iterator++) {
+        ItemPointer value = iterator->second;
+
+        if ((value.block == location.block) &&
+            (value.offset == location.offset)) {
+          container.erase(iterator);
+          deleted_kv_num ++;
+
+          // Set try again
+          try_again = true;
+          break;
+        }
+      }
+    }
+
+    // Insert the key, val pair
+    while (deleted_kv_num--) {
+      container.insert(std::pair<KeyType, ValueType>(index_insert_key, location));
+    }
+
+    index_lock.Unlock();
+  }
+
+  return true;
+};
+
+template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 std::vector<ItemPointer>
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(

@@ -48,6 +48,10 @@ class HashIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
+  bool UpdateEntry(__attribute__((unused)) const storage::Tuple *oldkey,
+                   __attribute__((unused)) const storage::Tuple *newkey,
+                   __attribute__((unused)) const ItemPointer &location);
+
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types,

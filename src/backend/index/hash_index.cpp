@@ -85,6 +85,16 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
+    class KeyComparator, class KeyEqualityChecker>
+bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
+         KeyEqualityChecker>::UpdateEntry(__attribute__((unused)) const storage::Tuple *oldkey,
+           __attribute__((unused)) const storage::Tuple *newkey,
+           __attribute__((unused)) const ItemPointer &location) {
+
+  return false;
+}
+
+template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
 HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>::

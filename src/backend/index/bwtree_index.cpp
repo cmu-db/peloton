@@ -56,6 +56,17 @@ bool BWTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
+    class KeyEqualityChecker>
+bool BWTreeIndex<KeyType, ValueType, KeyComparator,
+       KeyEqualityChecker>::UpdateEntry(__attribute__((unused)) const storage::Tuple *oldkey,
+       __attribute__((unused)) const storage::Tuple *newkey,
+       __attribute__((unused)) const ItemPointer &location) {
+
+  // Add your implementation here
+  return false;
+}
+
+template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 std::vector<ItemPointer>
 BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
