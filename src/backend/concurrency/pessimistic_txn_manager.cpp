@@ -356,17 +356,17 @@ Result PessimisticTxnManager::CommitTransaction() {
         auto tuple_slot = tuple_entry.first;
         // if this tuple is not newly inserted.
         if (tuple_entry.second == RW_TYPE_READ) {
-          if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID &&
-              tile_group_header->GetBeginCommitId(tuple_slot) <=
-                  current_txn->GetBeginCommitId() &&
-              tile_group_header->GetEndCommitId(tuple_slot) >=
-                  current_txn->GetBeginCommitId()) {
-            // the version is not owned by other txns and is still visible.
-            continue;
+          // Release read locks
+          if (pessimistic_released_rdlock.find(tile_group_id) ==
+                  pessimistic_released_rdlock.end() ||
+              pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
+                  pessimistic_released_rdlock[tile_group_id].end()) {
+            bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
+            if (ret == false) {
+              assert(false);
+            }
+            pessimistic_released_rdlock[tile_group_id].insert(tuple_slot);
           }
-          // otherwise, validation fails. abort transaction.
-          return AbortTransaction();
         } else {
           assert(tuple_entry.second == RW_TYPE_INS_DEL);
         }
