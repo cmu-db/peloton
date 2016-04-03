@@ -222,6 +222,52 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor){
 
 }
 
+TEST_F(IndexTests, NonUniqueUpdateTest) {
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  std::vector<ItemPointer> locations;
+
+  // INDEX
+  std::unique_ptr<index::Index> index(BuildIndex(false));
+
+
+  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> key5(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> keynonce(new storage::Tuple(key_schema, true));
+  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
+  key5->SetValue(0, ValueFactory::GetIntegerValue(600), pool);
+  key5->SetValue(1, ValueFactory::GetStringValue("f"), pool);
+
+
+  // Single threaded test
+  size_t scale_factor = 1;
+  LaunchParallelTest(1, InsertTest, index.get(), pool, scale_factor);
+  index->DeleteEntry(key1.get(), item2);
+  index->DeleteEntry(key1.get(), item0);
+
+  // Checks
+  locations = index->ScanAllKeys();
+  EXPECT_EQ(locations.size(), 7);
+
+  locations = index->ScanKey(key1.get());
+  EXPECT_EQ(locations.size(), 3);
+  EXPECT_EQ(locations[0].block, item1.block);
+  EXPECT_EQ(locations[1].block, item1.block);
+  EXPECT_EQ(locations[2].block, item1.block);
+
+  index->UpdateEntry(key1.get(), key5.get(), item1);
+  locations = index->ScanKey(key1.get());
+  EXPECT_EQ(locations.size(), 0);
+
+  locations = index->ScanKey(key5.get());
+  EXPECT_EQ(locations.size(), 3);
+  EXPECT_EQ(locations[0].block, item1.block);
+  EXPECT_EQ(locations[1].block, item1.block);
+  EXPECT_EQ(locations[2].block, item1.block);
+
+  delete tuple_schema;
+}
+
 TEST_F(IndexTests, MultiMapInsertTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer> locations;

@@ -283,6 +283,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // TODO: get unique tuple from primary index.
 
+        // index->insert(key, location) -- >{success, realloc}
+        //
+
         // auto locations = index->ScanKey(key.get());
         // auto exist_visible = ContainsVisibleEntry(locations, transaction);
         // if (exist_visible) {

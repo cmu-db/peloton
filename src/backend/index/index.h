@@ -122,6 +122,10 @@ class Index : public Printable {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer &location) = 0;
 
+  // update the index entry linked to given tuple and location
+  virtual bool UpdateEntry(__attribute__((unused)) const storage::Tuple *oldkey,
+                           __attribute__((unused)) const storage::Tuple *newkey,
+                           __attribute__((unused)) const ItemPointer &location) = 0;
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
