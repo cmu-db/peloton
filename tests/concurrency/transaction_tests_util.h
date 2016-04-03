@@ -106,7 +106,8 @@ enum txn_op_t {
   TXN_OP_SCAN,
   TXN_OP_ABORT,
   TXN_OP_COMMIT,
-  TXN_OP_READ_STORE
+  TXN_OP_READ_STORE,
+  TXN_OP_UPDATE_BY_VALUE
 };
 
 #define TXN_STORED_VALUE      -10000
@@ -125,6 +126,8 @@ class TransactionTestsUtil {
                             storage::DataTable *table, int id);
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
+  static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
+                            storage::DataTable *table, int old_value, int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
@@ -166,7 +169,7 @@ class TransactionThread {
         table(table_),
         cur_seq(0),
         go(false) {
-    LOG_TRACE("Thread has %d ops", (int)sched->operations.size());
+    LOG_INFO("Thread has %d ops", (int)sched->operations.size());
   }
 
   void RunLoop() {
@@ -212,13 +215,13 @@ class TransactionThread {
     // Execute the operation
     switch (op) {
       case TXN_OP_INSERT: {
-        LOG_TRACE("Execute Insert");
+        LOG_INFO("Execute Insert");
         execute_result =
             TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
         break;
       }
       case TXN_OP_READ: {
-        LOG_TRACE("Execute Read");
+        LOG_INFO("Execute Read");
         int result;
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
@@ -226,24 +229,31 @@ class TransactionThread {
         break;
       }
       case TXN_OP_DELETE: {
-        LOG_TRACE("Execute Delete");
+        LOG_INFO("Execute Delete");
         execute_result = TransactionTestsUtil::ExecuteDelete(txn, table, id);
         break;
       }
       case TXN_OP_UPDATE: {
-        LOG_TRACE("Execute Update");
+        LOG_INFO("Execute Update");
         execute_result =
             TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
         break;
       }
       case TXN_OP_SCAN: {
-        LOG_TRACE("Execute Scan");
+        LOG_INFO("Execute Scan");
         execute_result = TransactionTestsUtil::ExecuteScan(
             txn, schedule->results, table, id);
         break;
       }
+      case TXN_OP_UPDATE_BY_VALUE: {
+        int old_value = id;
+        int new_value = value;
+        execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
+          txn, table, old_value, new_value);
+        break;
+      }
       case TXN_OP_ABORT: {
-        LOG_TRACE("Abort");
+        LOG_INFO("Abort");
         // Assert last operation
         assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction();
@@ -268,8 +278,8 @@ class TransactionThread {
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
-      LOG_TRACE("ABORT NOW");
-      if (execute_result == false) LOG_TRACE("Executor returns false");
+      LOG_INFO("ABORT NOW");
+      if (execute_result == false) LOG_INFO("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }
@@ -300,13 +310,13 @@ class TransactionScheduler {
       tthreads[i].Run();
     }
     for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-      LOG_TRACE("Execute %d", (int)itr->second);
+      LOG_INFO("Execute %d", (int)itr->second);
       tthreads[itr->second].go = true;
       while (tthreads[itr->second].go) {
         std::chrono::milliseconds sleep_time(1);
         std::this_thread::sleep_for(sleep_time);
       }
-      LOG_TRACE("Done %d", (int)itr->second);
+      LOG_INFO("Done %d", (int)itr->second);
     }
   }
 
@@ -342,6 +352,10 @@ class TransactionScheduler {
   }
   void Commit() {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void UpdateByValue(int old_value, int new_value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
     sequence[time++] = cur_txn_id;
   }
   // ReadStore will store the (result of read + modify) to the schedule, the 
