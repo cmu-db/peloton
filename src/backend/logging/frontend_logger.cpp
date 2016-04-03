@@ -132,7 +132,7 @@ void FrontendLogger::MainLoop(void) {
  * @brief Collect the log records from BackendLoggers
  */
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
-  auto sleep_period = std::chrono::microseconds(wait_timeout);
+  auto sleep_period = std::chrono::milliseconds(wait_timeout);
   std::this_thread::sleep_for(sleep_period);
 
   {

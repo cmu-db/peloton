@@ -144,7 +144,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   state.data_file_size = 512;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
-  state.wait_timeout = 100;
+  state.wait_timeout = 200;
 
   // Default Values
   ycsb::state.scale_factor = 1;
