@@ -44,6 +44,18 @@ class CoalesceExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "CoalesceExpression";
   }
+  
+    AbstractExpression *Copy() const {
+    std::vector<AbstractExpression *> copied_expression;
+    for (AbstractExpression *expression : expressions) {
+      if (expression == nullptr) {
+        continue;
+      }
+      copied_expression.push_back(expression->Copy());
+    }
+
+    return new CoalesceExpression(value_type, copied_expression);
+  }
 
  private:
   // Expression arguments
