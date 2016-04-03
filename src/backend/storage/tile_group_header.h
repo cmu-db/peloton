@@ -118,10 +118,14 @@ class TileGroupHeader : public Printable {
 
   // Getters
 
+  // DOUBLE CHECK: whether we need atomic load???
+  // it is possible that some other transactions are modifying the txn_id,
+  // but the current transaction reads the txn_id.
+  // the returned value seems to be uncertain.
   inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
-    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    return __atomic_load_n(txn_id_ptr, __ATOMIC_RELAXED);
-    //return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
+    //txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    //return __atomic_load_n(txn_id_ptr, __ATOMIC_RELAXED);
+    return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
   inline cid_t GetBeginCommitId(const oid_t &tuple_slot_id) const {
