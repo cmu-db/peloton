@@ -117,6 +117,11 @@ class ExtractExpression : public AbstractExpression {
     return (spacer + "ExtractExpression");
   }
 
+    AbstractExpression *Copy() const {
+      return new ExtractExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+    }
+
+
  private:
   TimestampSubfield subfield;
   static std::string const YEAR_STR;

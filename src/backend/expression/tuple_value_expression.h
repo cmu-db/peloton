@@ -67,6 +67,10 @@ class TupleValueExpression : public AbstractExpression {
 
   int GetTupleIdx() const { return this->tuple_idx; }
 
+    AbstractExpression *Copy() const {
+      return new TupleValueExpression(tuple_idx, value_idx);
+    }
+
  protected:
   const int tuple_idx;  // which tuple. defaults to tuple1
   const int value_idx;  // which (offset) column of the tuple
