@@ -44,8 +44,6 @@ storage::Database* ycsb_database;
 
 storage::DataTable* user_table;
 
-static const oid_t ycsb_field_length = 100;
-
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
@@ -136,6 +134,7 @@ void LoadYCSBDatabase() {
   const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
   auto table_schema = user_table->GetSchema();
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -154,7 +153,7 @@ void LoadYCSBDatabase() {
 
     storage::Tuple tuple(table_schema, allocate);
     auto key_value = ValueFactory::GetIntegerValue(rowid);
-    auto field_value = ValueFactory::GetStringValue(std::to_string(rowid));
+    auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
     tuple.SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {

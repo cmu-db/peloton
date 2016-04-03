@@ -324,7 +324,8 @@ void RunUpdate() {
     }
   }
 
-  Value update_val = ValueFactory::GetStringValue(std::string("updated"));
+  std::string update_raw_value(ycsb_field_length - 1, 'u');
+  Value update_val = ValueFactory::GetStringValue(update_raw_value);
   target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
   planner::UpdatePlan update_node(
