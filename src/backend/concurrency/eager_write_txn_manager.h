@@ -20,7 +20,6 @@ namespace concurrency {
 extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
     eager_write_released_rdlock;
 
-
 //===--------------------------------------------------------------------===//
 // pessimistic concurrency control with eager writes
 //===--------------------------------------------------------------------===//
@@ -32,19 +31,22 @@ class EagerWriteTxnManager : public TransactionManager {
 
   static EagerWriteTxnManager &GetInstance();
 
-  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsVisible(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
-  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tuple_id);
+  virtual bool IsOwnable(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool AcquireOwnership(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -55,12 +57,9 @@ class EagerWriteTxnManager : public TransactionManager {
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-  
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
 
+  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
 
@@ -80,15 +79,18 @@ class EagerWriteTxnManager : public TransactionManager {
   }
 
   inline txn_id_t PACK_TXN_ID(txn_id_t writer_id, int read_count) {
-    return txn_id_t(((long)(read_count & READER_COUNT_MASK) << 56) | (writer_id & WRITER_ID_MASK));
+    return txn_id_t(((long)(read_count & READER_COUNT_MASK) << 56) |
+                    (writer_id & WRITER_ID_MASK));
   }
 
-  // inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
+  // inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id &
+  // TXNID_MASK; }
   // inline int EXTRACT_READ_COUNT(txn_id_t txn_id) {
   //   return int((txn_id >> 56) & READ_COUNT_MASK);
   // }
 
-  bool ReleaseReadLock(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  bool ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 };
 }
 }

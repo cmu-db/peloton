@@ -35,8 +35,9 @@ PessimisticTxnManager &PessimisticTxnManager::GetInstance() {
 }
 
 // Visibility check
-bool PessimisticTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
-                                             const oid_t &tuple_id) {
+bool PessimisticTxnManager::IsVisible(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
@@ -86,15 +87,17 @@ bool PessimisticTxnManager::IsVisible(const storage::TileGroupHeader * const til
   }
 }
 
-bool PessimisticTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
-                                            const oid_t &tuple_id) {
+bool PessimisticTxnManager::IsOwner(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return EXTRACT_TXNID(tuple_txn_id) == current_txn->GetTransactionId();
 }
 
 // No others own the tuple
-bool PessimisticTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header,
-                                                 const oid_t &tuple_id) {
+bool PessimisticTxnManager::IsOwnable(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   LOG_INFO("IsOwnable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
@@ -103,8 +106,9 @@ bool PessimisticTxnManager::IsOwnable(const storage::TileGroupHeader * const til
          tuple_end_cid == MAX_CID;
 }
 
-bool PessimisticTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
-                                  const oid_t &tile_group_id, const oid_t &tuple_id) {
+bool PessimisticTxnManager::AcquireOwnership(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tile_group_id, const oid_t &tuple_id) {
   LOG_TRACE("AcquireOwnership");
   // acquire write lock.
   assert(IsOwner(tile_group_header, tuple_id) == false);
@@ -131,9 +135,9 @@ bool PessimisticTxnManager::AcquireOwnership(const storage::TileGroupHeader * co
   }
 }
 
-
 bool PessimisticTxnManager::ReleaseReadLock(
-    const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
@@ -162,7 +166,7 @@ bool PessimisticTxnManager::ReleaseReadLock(
 }
 
 bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
-                                                const oid_t &tuple_id) {
+                                        const oid_t &tuple_id) {
   LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -211,8 +215,8 @@ bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
   return true;
 }
 
-void PessimisticTxnManager::SetOwnership(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
+void PessimisticTxnManager::SetOwnership(const oid_t &tile_group_id,
+                                         const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -228,16 +232,16 @@ void PessimisticTxnManager::SetOwnership(
 }
 
 bool PessimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
-                                                  const oid_t &tuple_id) {
+                                          const oid_t &tuple_id) {
   LOG_TRACE("Perform insert");
   SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
 
-bool PessimisticTxnManager::PerformUpdate(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+bool PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                          const oid_t &tuple_id,
+                                          const ItemPointer &new_location) {
   LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
 
   auto &manager = catalog::Manager::GetInstance();
@@ -245,15 +249,16 @@ bool PessimisticTxnManager::PerformUpdate(
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-    .GetTileGroup(new_location.block)
-    ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // The write lock must have been acquired
-  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership, no
+  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
+  // no
   // one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
@@ -265,21 +270,21 @@ bool PessimisticTxnManager::PerformUpdate(
   return true;
 }
 
-bool PessimisticTxnManager::PerformDelete(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+bool PessimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                          const oid_t &tuple_id,
+                                          const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
   auto &manager = catalog::Manager::GetInstance();
   auto transaction_id = current_txn->GetTransactionId();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-    .GetTileGroup(new_location.block)
-    ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, ItemPointer(tile_group_id, tuple_id));
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
@@ -289,8 +294,8 @@ bool PessimisticTxnManager::PerformDelete(
   return true;
 }
 
-void PessimisticTxnManager::PerformUpdate(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
+void PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                          const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -308,8 +313,8 @@ void PessimisticTxnManager::PerformUpdate(
   }
 }
 
-void PessimisticTxnManager::PerformDelete(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
+void PessimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                          const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -325,7 +330,6 @@ void PessimisticTxnManager::PerformDelete(
     current_txn->RecordDelete(old_location.block, old_location.offset);
   }
 }
-
 
 Result PessimisticTxnManager::CommitTransaction() {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
@@ -345,7 +349,8 @@ Result PessimisticTxnManager::CommitTransaction() {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
         // Release read locks
-        if (pessimistic_released_rdlock.find(tile_group_id) == pessimistic_released_rdlock.end() ||
+        if (pessimistic_released_rdlock.find(tile_group_id) ==
+                pessimistic_released_rdlock.end() ||
             pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
                 pessimistic_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
@@ -416,7 +421,7 @@ Result PessimisticTxnManager::CommitTransaction() {
   Result ret = current_txn->GetResult();
 
   EndTransaction();
-  
+
   pessimistic_released_rdlock.clear();
   return ret;
 }
@@ -435,7 +440,8 @@ Result PessimisticTxnManager::AbortTransaction() {
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
-        if (pessimistic_released_rdlock.find(tile_group_id) == pessimistic_released_rdlock.end() ||
+        if (pessimistic_released_rdlock.find(tile_group_id) ==
+                pessimistic_released_rdlock.end() ||
             pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
                 pessimistic_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
