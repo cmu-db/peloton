@@ -115,7 +115,7 @@ bool TsOrderTxnManager::AcquireOwnership(const storage::TileGroupHeader * const 
   return true;
 }
 
-void TsOrderTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oid_t &tuple_id) {
+void TsOrderTxnManager::SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -131,7 +131,7 @@ void TsOrderTxnManager::SetInsertVisibility(const oid_t &tile_group_id, const oi
 }
 
 bool TsOrderTxnManager::PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id) {
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }

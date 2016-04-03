@@ -53,7 +53,7 @@ class SsiTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                                 const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void SetOwnership(const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
@@ -135,7 +135,7 @@ class SsiTxnManager : public TransactionManager {
   void ReleaseReadLock(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id, txn_id_t txn_id) {
     txn_id_t *lock_addr = (txn_id_t *)(tile_group_header->GetReservedFieldRef(tuple_id)
                                 + LOCK_OFFSET);
-    
+
     auto res = atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
     assert(res);
   }
@@ -150,7 +150,7 @@ class SsiTxnManager : public TransactionManager {
     ReadList **headp = (ReadList **)(tile_group->GetHeader()->GetReservedFieldRef(tuple_id)
                                + LIST_OFFSET);
     GetReadLock(tile_group->GetHeader(), tuple_id, txn_id);
-    
+
     reader->next = *headp;
     *headp = reader;
 
