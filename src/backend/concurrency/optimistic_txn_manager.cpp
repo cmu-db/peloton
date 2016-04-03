@@ -324,6 +324,9 @@ Result OptimisticTxnManager::CommitTransaction() {
             continue;
           }
         }
+        LOG_INFO("transaction id=%lu", tile_group_header->GetTransactionId(tuple_slot));
+        LOG_INFO("begin commit id=%lu", tile_group_header->GetBeginCommitId(tuple_slot));
+        LOG_INFO("end commit id=%lu", tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
       }
