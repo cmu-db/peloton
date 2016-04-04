@@ -45,7 +45,7 @@ namespace planner {
    * TODO: parent_ seems never be set or used
    */
 
-bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
+bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
 
     // A placeholder for the total size written at the end
     size_t start = output.Position();
@@ -82,7 +82,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
         output.WriteByte(static_cast<int8_t>(expr_type));
 
         // Write predicate
-        Predicate()->SerializeTo(output);
+        GetPredicate()->SerializeTo(output);
     }
 
     // Write parent, but parent seems never be set or used right now
@@ -95,7 +95,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
         output.WriteByte(static_cast<int8_t>(parent_type));
 
         // Write parent
-        Parent()->SerializeTo(output);
+        GetParent()->SerializeTo(output);
     }
 
     // Write the total length

@@ -40,6 +40,8 @@ class AbstractScan : public AbstractPlan {
                const std::vector<oid_t> &column_ids)
       : target_table_(table), predicate_(predicate), column_ids_(column_ids) {}
 
+  AbstractScan():target_table_(nullptr), predicate_(nullptr) {}
+
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }

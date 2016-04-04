@@ -111,7 +111,7 @@ class AbstractExpression : public Printable {
   // Each sub-class will have to implement this function
   // After the implementation for each sub-class, we should set it to pure virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output) {
+  virtual bool SerializeTo(SerializeOutput &output) const {
       ASSERT(&output != nullptr);
       return false;
   }

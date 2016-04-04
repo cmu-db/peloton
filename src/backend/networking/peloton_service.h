@@ -91,8 +91,8 @@ public:
             TimeSyncResponse* response,
             ::google::protobuf::Closure* done);
     virtual void QueryPlan(::google::protobuf::RpcController* controller,
-            const QueryPlanRequest* request,
-            SeqScanPlan* response,
+            const QueryPlanExecRequest* request,
+            QueryPlanExecResponse* response,
             ::google::protobuf::Closure* done);
 };
 
