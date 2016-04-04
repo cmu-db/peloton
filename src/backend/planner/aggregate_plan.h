@@ -40,6 +40,10 @@ class AggregatePlan : public AbstractPlan {
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
             bool distinct = false)
         : aggtype(et), expression(expr), distinct(distinct) {}
+
+    AggTerm Copy() const {
+      return AggTerm(aggtype, expression->Copy(), distinct);
+    }
   };
 
   AggregatePlan(const planner::ProjectInfo *project_info,
@@ -92,6 +96,19 @@ class AggregatePlan : public AbstractPlan {
   }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
+
+  const AbstractPlan *Copy() const {
+    std::vector<AggTerm> copied_agg_terms;
+    for (const AggTerm &term : unique_agg_terms_) {
+      copied_agg_terms.push_back(term.Copy());
+    }
+    std::vector<oid_t> copied_groupby_col_ids(groupby_col_ids_);
+    AggregatePlan *new_plan = new AggregatePlan(
+      project_info_->Copy(), predicate_->Copy(), std::move(copied_agg_terms),
+      std::move(copied_groupby_col_ids),
+      catalog::Schema::CopySchema(output_schema_.get()), agg_strategy_);
+    return new_plan;
+  }
 
  private:
   /* For projection */

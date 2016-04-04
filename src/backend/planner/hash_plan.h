@@ -44,6 +44,14 @@ class HashPlan : public AbstractPlan {
     return this->hash_keys_;
   }
 
+  const AbstractPlan *Copy() const {
+    std::vector<HashKeyPtrType> copied_hash_keys;
+    for (const auto &key : hash_keys_) {
+      copied_hash_keys.push_back(std::unique_ptr<HashKeyType>(key->Copy()));
+    }
+    return new HashPlan(copied_hash_keys);
+  }
+
  private:
   std::vector<HashKeyPtrType> hash_keys_;
 };

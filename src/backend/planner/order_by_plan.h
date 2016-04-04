@@ -53,6 +53,10 @@ class OrderByPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "OrderBy"; }
 
+  const AbstractPlan *Copy() const {
+    return new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_);
+  }
+
  private:
   /** @brief Column Ids to sort keys w.r.t input tiles.
    *  Primary sort key comes first, secondary comes next, etc.

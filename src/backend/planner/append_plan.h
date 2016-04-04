@@ -34,7 +34,9 @@ class AppendPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Append"; }
 
- private:
+  const AbstractPlan *Copy() const { return new AppendPlan(); }
+
+private:
   // nothing
 };
 }

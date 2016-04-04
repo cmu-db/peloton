@@ -105,6 +105,11 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
+  const AbstractPlan *Copy() const {
+    return new InsertPlan(target_table_, project_info_->Copy(),
+                          bulk_insert_count);
+  }
+
  private:
   /** @brief index associated with index scan. */
   index::Index *index_;
