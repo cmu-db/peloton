@@ -52,6 +52,10 @@ class OperatorNotExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorNotExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorNotExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorIsNullExpression : public AbstractExpression {
@@ -75,6 +79,10 @@ class OperatorIsNullExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorIsNullExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorIsNullExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorCastExpression : public AbstractExpression {
@@ -92,6 +100,10 @@ class OperatorCastExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "CastExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorCastExpression(m_targetType, CopyUtil(m_left));
   }
 
  private:
@@ -115,6 +127,10 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorNotExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorUnaryMinusExpression(CopyUtil(m_left));
   }
 };
 
@@ -142,6 +158,11 @@ class OperatorCaseWhenExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "Operator CASE WHEN Expression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorCaseWhenExpression(m_returnType, CopyUtil(GetLeft()),
+                                          CopyUtil(GetRight()));
   }
 
  private:
@@ -206,6 +227,12 @@ class OperatorExpression : public AbstractExpression {
     return (spacer + "OptimizedOperatorExpression");
   }
 
+  AbstractExpression *Copy() const {
+    // TODO: How about OPER oper?
+    return new OperatorExpression<OPER>(
+        GetExpressionType(), CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
+
  private:
   OPER oper;
 };
@@ -220,6 +247,10 @@ class OperatorExistsExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorE.IstsExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorExistsExpression(CopyUtil(GetLeft()));
   }
 };
 
