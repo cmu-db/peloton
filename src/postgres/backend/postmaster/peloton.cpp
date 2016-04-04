@@ -25,6 +25,7 @@
 #include <map>
 
 #include "backend/common/logger.h"
+#include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -191,6 +192,10 @@ peloton_dml(PlanState *planstate,
     auto plan_state = peloton::bridge::DMLUtils::peloton_prepare_data(planstate);
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
+
+  peloton::CopySerializeOutput output;
+  mapped_plan_ptr->SerializeTo(output);
+  peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
 
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {
