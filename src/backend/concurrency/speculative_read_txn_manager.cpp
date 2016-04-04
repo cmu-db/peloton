@@ -55,11 +55,9 @@ bool SpeculativeReadTxnManager::IsVisible(
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
-    // TODO: fix me
-    if (tuple_end_cid != INVALID_CID) {
+    if (tuple_end_cid == MAX_CID) {
       // a transaction will immediately write ts to the version.
       assert(tuple_begin_cid == txn_begin_cid);
-      assert(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
     } else {
@@ -111,6 +109,25 @@ bool SpeculativeReadTxnManager::AcquireOwnership(
   return true;
 }
 
+void SpeculativeReadTxnManager::SetOwnership(const oid_t &tile_group_id,
+                                             const oid_t &tuple_id) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+  auto txn_begin_id = current_txn->GetBeginCommitId();
+
+  // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
+  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
+
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+}
+
 bool SpeculativeReadTxnManager::PerformRead(const oid_t &tile_group_id,
                                             const oid_t &tuple_id) {
   auto tile_group_header =
@@ -136,6 +153,7 @@ bool SpeculativeReadTxnManager::PerformInsert(const oid_t &tile_group_id,
   auto transaction_id = current_txn->GetTransactionId();
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
@@ -149,32 +167,10 @@ bool SpeculativeReadTxnManager::PerformInsert(const oid_t &tile_group_id,
   return true;
 }
 
-void SpeculativeReadTxnManager::SetOwnership(const oid_t &tile_group_id,
-                                             const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  //tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  //tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
 // at any time point, we must guarantee at least one version of a tuple is
 // visible.
+// this function is invoked when it is the first time to update the tuple.
+// the tuple passed into this function is the global version.
 bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                               const oid_t &tuple_id,
                                               const ItemPointer &new_location) {
@@ -187,7 +183,7 @@ bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
       .GetTileGroup(new_location.block)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
@@ -195,7 +191,7 @@ bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
 
   // do we need this fence??
-  //COMPILER_MEMORY_FENCE;
+  COMPILER_MEMORY_FENCE;
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
@@ -216,26 +212,24 @@ bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
   return true;
 }
 
+// this function is invoked when it is NOT the first time to update the tuple.
+// the tuple passed into this function is the local version created by this txn.
 void SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                               const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
-
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
+  
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == current_txn->GetBeginCommitId());
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  // Set MVCC info
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
+  // Add the old tuple into the update set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // if this version is not newly inserted.
+    current_txn->RecordUpdate(old_location.block, old_location.offset);
+  }
 }
 
 // the logic is the same as PerformUpdate.
@@ -251,7 +245,7 @@ bool SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
       .GetTileGroup(new_location.block)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
@@ -283,21 +277,24 @@ void SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
                                               const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
 
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == txn_begin_id);
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == current_txn->GetBeginCommitId());
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
-  COMPILER_MEMORY_FENCE;
+  // Add the old tuple into the delete set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // if this version is not newly inserted.
+    current_txn->RecordDelete(old_location.block, old_location.offset);
+  } else {
+    // if this version is newly inserted.
+    current_txn->RecordDelete(tile_group_id, tuple_id);
+  }
 
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 Result SpeculativeReadTxnManager::CommitTransaction() {

@@ -282,12 +282,11 @@ void PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                           const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
+  
   // Set MVCC info
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+  assert(tile_group_header->GetTransactionId(tuple_id) == current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
   auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
@@ -330,10 +329,12 @@ void PessimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                           const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
 
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
@@ -341,6 +342,9 @@ void PessimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   if (old_location.IsNull() == false) {
     // delete an inserted version
     current_txn->RecordDelete(old_location.block, old_location.offset);
+  } else {
+    // if this version is newly inserted.
+    current_txn->RecordDelete(tile_group_id, tuple_id);
   }
 }
 
