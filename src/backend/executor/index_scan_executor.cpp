@@ -156,9 +156,6 @@ bool IndexScanExecutor::ExecIndexLookup() {
     auto tuple_id = tuple_location.offset;
 
     while (true) {
-      // txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-      // cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
-      // cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
       // if the tuple is visible.
       if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
