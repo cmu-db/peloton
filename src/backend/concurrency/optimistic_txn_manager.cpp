@@ -207,6 +207,7 @@ void OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
 bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id,
                                          const ItemPointer &new_location) {
+  RecycleTupleSlot(tile_group_id, tuple_id);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =
@@ -236,6 +237,7 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 
 void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
+  RecycleTupleSlot(tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -398,6 +400,9 @@ Result OptimisticTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        /*
+         * Call transaction_manager.cpp's AddToPossiblyFreeList(TxnId, tuple_slot);
+         */
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==

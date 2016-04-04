@@ -149,7 +149,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
-  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
+  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot(1);
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
