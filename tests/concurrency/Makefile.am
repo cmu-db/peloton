@@ -7,9 +7,9 @@
 check_PROGRAMS += \
 		transaction_test \
         isolation_level_test \
-        rpwp_txn_manager_test \
-        rowo_txn_manager_test \
-        spec_rowo_txn_manager_test
+        pessimistic_txn_manager_test \
+        optimistic_txn_manager_test \
+        speculative_read_txn_manager_test
 #        ssi_txn_manager_test
 
 transaction_test_common = \
@@ -24,16 +24,16 @@ isolation_level_test_SOURCES = \
                            concurrency/isolation_level_test.cpp \
                            $(transaction_test_common)
 
-rpwp_txn_manager_test_SOURCES = \
-                           concurrency/rpwp_txn_manager_test.cpp \
+pessimistic_txn_manager_test_SOURCES = \
+                           concurrency/pessimistic_txn_manager_test.cpp \
                            $(transaction_test_common)
 
-rowo_txn_manager_test_SOURCES = \
-                           concurrency/rowo_txn_manager_test.cpp \
+optimistic_txn_manager_test_SOURCES = \
+                           concurrency/optimistic_txn_manager_test.cpp \
                            $(transaction_test_common)
 
-spec_rowo_txn_manager_test_SOURCES = \
-                           concurrency/spec_rowo_txn_manager_test.cpp \
+speculative_read_txn_manager_test_SOURCES = \
+                           concurrency/speculative_read_txn_manager_test.cpp \
                            $(transaction_test_common)
 
 #ssi_txn_manager_test_SOURCES = \
@@ -42,7 +42,7 @@ spec_rowo_txn_manager_test_SOURCES = \
 
 transaction_test_LDADD =  $(peloton_tests_common_ld)
 isolation_level_test_LDADD =  $(peloton_tests_common_ld)
-rpwp_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
-rowo_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
-spec_rowo_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
+pessimistic_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
+optimistic_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
+speculative_read_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 #ssi_txn_manager_test_LDADD =  $(peloton_tests_common_ld)

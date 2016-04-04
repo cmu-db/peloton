@@ -23,8 +23,11 @@ namespace test {
 
 class TransactionTests : public PelotonTest {};
 
-static std::vector<ConcurrencyType> TEST_TYPES = {CONCURRENCY_TYPE_ROWO,
-                                                  CONCURRENCY_TYPE_RPWP};
+static std::vector<ConcurrencyType> TEST_TYPES = {
+  CONCURRENCY_TYPE_OPTIMISTIC,
+  CONCURRENCY_TYPE_PESSIMISTIC,
+  CONCURRENCY_TYPE_SSI
+};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -172,6 +175,7 @@ TEST_F(TransactionTests, AbortTest) {
 
       EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
       EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      //printf("==========result=%d\n", int(scheduler.schedules[1].results[0]));
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
 
