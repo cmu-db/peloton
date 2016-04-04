@@ -156,7 +156,7 @@ bool AggregateExecutor::DExecute() {
       tuple->SetAllNulls();
       auto location = output_table->InsertTuple(tuple.get());
       assert(location.block != INVALID_OID);
-      concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(
+      concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
           location.block, location.offset);
     } else {
       done = true;
