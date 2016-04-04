@@ -16,6 +16,8 @@
 #include "backend/common/platform.h"
 #include "backend/common/printable.h"
 #include "backend/logging/log_manager.h"
+#include "backend/gc/gc_manager.h"
+#include "backend/expression/container_tuple.h"
 
 #include <atomic>
 #include <mutex>
@@ -72,19 +74,32 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
-  oid_t GetNextEmptyTupleSlot() {
+  oid_t GetNextEmptyTupleSlot(int get_recycled) {
     oid_t tuple_slot_id = INVALID_OID;
 
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-      // check tile group capacity
-      if (next_tuple_slot < num_tuple_slots) {
+      if(get_recycled) {
+        // check if there are recycled tuple slots
+        auto& gc_manager = gc::GCManager::GetInstance();
+        auto free_slot = gc_manager.ReturnFreeSlot(tile_group->GetDatabaseId(), tile_group->GetTableId());
+        if(free_slot != INVALID_OID) {
+          tuple_slot_id = free_slot;
+          this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+          this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
+          this -> SetEndCommitId(tuple_slot_id, MAX_CID);
+        }
+      }
+
+      if ((tuple_slot_id == INVALID_OID) && (next_tuple_slot < num_tuple_slots)) {
+        // check tile group capacity
         tuple_slot_id = next_tuple_slot;
         next_tuple_slot++;
       }
     }
-
+    LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
+    LOG_INFO("###### TUPLE SLOT USED = %lu", tuple_slot_id);
     return tuple_slot_id;
   }
 
@@ -104,6 +119,17 @@ class TileGroupHeader : public Printable {
         return false;
       }
     }
+  }
+
+  inline void RecycleTupleSlot(const oid_t db_id, const oid_t tb_id, const oid_t tg_id, const oid_t t_id, const txn_id_t t) {
+    auto& gc_manager = gc::GCManager::GetInstance();
+    struct TupleMetadata tm;
+    tm.database_id = db_id;
+    tm.tile_group_id = tg_id;
+    tm.table_id = tb_id;
+    tm.tuple_slot_id = t_id;
+    tm.transaction_id = t;
+    gc_manager.AddPossiblyFreeTuple(tm);
   }
 
   oid_t GetNextTupleSlot() const { return next_tuple_slot; }
@@ -158,6 +184,8 @@ class TileGroupHeader : public Printable {
   }
 
   // Setters
+
+  inline void SetTileGroup(TileGroup* tile_group) { this -> tile_group = tile_group; }
   inline void SetTransactionId(const oid_t &tuple_slot_id,
                                const txn_id_t &transaction_id) {
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
@@ -300,6 +328,9 @@ class TileGroupHeader : public Printable {
   // Backend
   BackendType backend_type;
 
+  // Associated tile_group
+  TileGroup* tile_group;
+
   size_t header_size;
 
   // set of fixed-length tuple slots
@@ -313,6 +344,7 @@ class TileGroupHeader : public Printable {
 
   // synch helpers
   std::mutex tile_header_mutex;
+
 };
 
 }  // End storage namespace
