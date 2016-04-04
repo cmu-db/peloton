@@ -351,6 +351,7 @@ Result OptimisticTxnManager::CommitTransaction() {
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer old_version(tile_group_id, tuple_slot);
 
+        // logging.
         log_manager.LogUpdate(current_txn, end_commit_id, old_version,
                               new_version);
 
@@ -375,10 +376,11 @@ Result OptimisticTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-        // logging.
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer delete_location(tile_group_id, tuple_slot);
+        
+        // logging.
         log_manager.LogDelete(end_commit_id, delete_location);
 
         // we do not change begin cid for old tuple.
@@ -432,12 +434,9 @@ Result OptimisticTxnManager::CommitTransaction() {
   }
   log_manager.LogCommitTransaction(end_commit_id);
 
-  // is it always true???
-  Result ret = current_txn->GetResult();
-
   EndTransaction();
 
-  return ret;
+  return Result::RESULT_SUCCESS;
 }
 
 Result OptimisticTxnManager::AbortTransaction() {
