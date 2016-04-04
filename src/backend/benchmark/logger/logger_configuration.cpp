@@ -36,7 +36,6 @@ void Usage(FILE* out) {
           "   -c --column_count      :  # of columns \n"
           "   -u --write-ratio       :  Fraction of updates \n"
           "   -b --backend-count     :  Backend count \n"
-          "   -r --relation-count    :  Relation count \n"
   );
 }
 
@@ -50,7 +49,6 @@ static struct option opts[] = {
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
-    {"relation_count", optional_argument, NULL, 'r'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(
@@ -154,12 +152,11 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 1;
-  ycsb::state.relation_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:r:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
@@ -193,9 +190,6 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
       case 'b':
         ycsb::state.backend_count = atoi(optarg);
         break;
-      case 'r':
-        ycsb::state.relation_count = atoi(optarg);
-        break;
 
       case 'h':
         Usage(stderr);
@@ -222,7 +216,6 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
   ycsb::ValidateTransactionCount(ycsb::state);
-  ycsb::ValidateRelationCount(ycsb::state);
 
 }
 

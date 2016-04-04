@@ -25,7 +25,7 @@ namespace ycsb {
 
 extern configuration state;
 
-extern std::vector<storage::DataTable*> user_tables;
+extern storage::DataTable* user_table;
 
 double RunWorkload();
 
