@@ -268,6 +268,12 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   int index_count = GetIndexCount();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
+      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
+                  std::placeholders::_1, std::placeholders::_2);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -281,7 +287,11 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+          return false;
+        }
 
         // auto locations = index->ScanKey(key.get());
         // auto exist_visible = ContainsVisibleEntry(locations, transaction);
@@ -317,6 +327,12 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   int index_count = GetIndexCount();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
+  = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
+              std::placeholders::_1, std::placeholders::_2);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -330,6 +346,12 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+          return false;
+        }
+
         // auto locations = index->ScanKey(key.get());
         // auto exist_visible = ContainsVisibleEntry(locations, transaction);
         // if (exist_visible) {
@@ -346,32 +368,32 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   }
 
   // (B) Insert into index
-  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-    auto index = GetIndex(index_itr);
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-    switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // auto locations = index->ScanKey(key.get());
-        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
-        // if (exist_visible) {
-        //   LOG_WARN("A visible index entry exists.");
-        //   return false;
-        // }
-      } break;
-
-      case INDEX_CONSTRAINT_TYPE_DEFAULT:
-      default:
-        auto status = index->InsertEntry(key.get(), location);
-        (void)status;
-        assert(status);
-        break;
-    }
-  }
+//  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+//    auto index = GetIndex(index_itr);
+//    auto index_schema = index->GetKeySchema();
+//    auto indexed_columns = index_schema->GetIndexedColumns();
+//    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+//    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+//
+//    switch (index->GetIndexType()) {
+//      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+//      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+//        // auto locations = index->ScanKey(key.get());
+//        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
+//        // if (exist_visible) {
+//        //   LOG_WARN("A visible index entry exists.");
+//        //   return false;
+//        // }
+//      } break;
+//
+//      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+//      default:
+//        auto status = index->InsertEntry(key.get(), location);
+//        (void)status;
+//        assert(status);
+//        break;
+//    }
+//  }
   return true;
 }
 
